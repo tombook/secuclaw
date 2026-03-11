@@ -1,0 +1,321 @@
+[
+  {
+    "id": "threat_001",
+    "name": "APT29",
+    "aliases": ["Cozy Bear", "The Dukes", "Office Monsoon"],
+    "type": "nation-state",
+    "motivation": ["espionage", "intelligence gathering"],
+    "capabilities": {
+      "sophistication": "advanced",
+      "techniques": ["T1566", "T1078", "T1055", "T1059", "T1087"],
+      "tools": ["PowerShell Empire", "CosmicDuke", "MiniDuke"],
+      "malware": ["CozyCar", "MiniDuke", "SeaDuke"]
+    },
+    "campaigns": [
+      {
+        "id": "campaign_001",
+        "name": "SolarWinds Supply Chain Attack",
+        "startDate": 1704067200000,
+        "description": "Supply chain attack targeting SolarWinds and multiple US government agencies",
+        "techniques": ["T1195", "T1078", "T1199"]
+      }
+    ],
+    "targets": ["government", "defense", "energy", "technology"],
+    "indicators": ["ioc_001", "ioc_002", "ioc_003"],
+    "sources": [
+      {
+        "provider": "Mandiant",
+        "confidence": 95,
+        "lastUpdated": 1709234567890
+      },
+      {
+        "provider": "CrowdStrike",
+        "confidence": 92,
+        "lastUpdated": 1709234567890
+      }
+    ]
+  },
+  {
+    "id": "threat_002",
+    "name": "APT41",
+    "aliases": ["Winnti", "Barium", "PassCV"],
+    "type": "nation-state",
+    "motivation": ["espionage", "financial gain"],
+    "capabilities": {
+      "sophistication": "advanced",
+      "techniques": ["T1566", "T1059", "T1071", "T1003"],
+      "tools": ["China Chopper", "Derusbi", "FunnyDream"],
+      "malware": ["PlugX", "Sogou", "ShadowPad"]
+    },
+    "campaigns": [
+      {
+        "id": "campaign_002",
+        "name": "Operation Cloud Hopper",
+        "startDate": 1704067200000,
+        "description": "Long-running espionage campaign targeting managed service providers",
+        "techniques": ["T1566", "T1078", "T1003"]
+      }
+    ],
+    "targets": ["technology", "healthcare", "manufacturing", "retail"],
+    "indicators": ["ioc_004", "ioc_005", "ioc_006"],
+    "sources": [
+      {
+        "provider": "FireEye",
+        "confidence": 90,
+        "lastUpdated": 1709234567890
+      }
+    ]
+  },
+  {
+    "id": "threat_003",
+    "name": "LockBit",
+    "aliases": ["LockBit Black", "ABCD"],
+    "type": "cybercrime",
+    "motivation": ["financial gain"],
+    "capabilities": {
+      "sophistication": "intermediate",
+      "techniques": ["T1486", "T1490", "T1027", "T1048"],
+      "tools": ["LockBit Encryptor", "StealBit"],
+      "malware": ["LockBit Ransomware", "StealBit Information Stealer"]
+    },
+    "campaigns": [
+      {
+        "id": "campaign_003",
+        "name": "LockBit Global Campaign 2024",
+        "startDate": 1704067200000,
+        "description": "Global ransomware campaign targeting organizations worldwide",
+        "techniques": ["T1486", "T1490", "T1021"]
+      }
+    ],
+    "targets": ["healthcare", "manufacturing", "government", "education"],
+    "indicators": ["ioc_007", "ioc_008", "ioc_009"],
+    "sources": [
+      {
+        "provider": "VirusTotal",
+        "confidence": 98,
+        "lastUpdated": 1709234567890
+      },
+      {
+        "provider": "AlienVault OTX",
+        "confidence": 95,
+        "lastUpdated": 1709234567890
+      }
+    ]
+  },
+  {
+    "id": "ioc_001",
+    "type": "ip",
+    "value": "185.141.63.120",
+    "threatActor": "threat_001",
+    "classification": {
+      "category": "c2",
+      "confidence": 95,
+      "severity": "critical"
+    },
+    "context": {
+      "firstSeen": 1704067200000,
+      "lastSeen": 1709234567890,
+      "sightings": 156,
+      "relatedIOCs": ["ioc_002", "ioc_003"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["firewall_main", "firewall_backup"],
+      "alerts": ["alert_001", "alert_002"]
+    }
+  },
+  {
+    "id": "ioc_002",
+    "type": "domain",
+    "value": "malicious-update.com",
+    "threatActor": "threat_001",
+    "classification": {
+      "category": "malware",
+      "confidence": 90,
+      "severity": "high"
+    },
+    "context": {
+      "firstSeen": 1704153600000,
+      "lastSeen": 1709234567890,
+      "sightings": 89,
+      "relatedIOCs": ["ioc_001", "ioc_003"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["dns_filter"],
+      "alerts": ["alert_003"]
+    }
+  },
+  {
+    "id": "ioc_003",
+    "type": "hash",
+    "value": "a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab",
+    "threatActor": "threat_001",
+    "classification": {
+      "category": "malware",
+      "confidence": 100,
+      "severity": "critical"
+    },
+    "context": {
+      "firstSeen": 1704067200000,
+      "lastSeen": 1709234567890,
+      "sightings": 234,
+      "relatedIOCs": ["ioc_001", "ioc_002"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["edr_main", "edr_backup"],
+      "alerts": ["alert_004", "alert_005"]
+    }
+  },
+  {
+    "id": "ioc_004",
+    "type": "url",
+    "value": "http://malicious-site.com/payload.exe",
+    "threatActor": "threat_002",
+    "classification": {
+      "category": "malware",
+      "confidence": 85,
+      "severity": "high"
+    },
+    "context": {
+      "firstSeen": 1704153600000,
+      "lastSeen": 1709234567890,
+      "sightings": 45,
+      "relatedIOCs": ["ioc_005", "ioc_006"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["web_proxy"],
+      "alerts": ["alert_006"]
+    }
+  },
+  {
+    "id": "ioc_005",
+    "type": "hash",
+    "value": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    "threatActor": "threat_002",
+    "classification": {
+      "category": "malware",
+      "confidence": 92,
+      "severity": "high"
+    },
+    "context": {
+      "firstSeen": 1704240000000,
+      "lastSeen": 1709234567890,
+      "sightings": 67,
+      "relatedIOCs": ["ioc_004", "ioc_006"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["av_main"],
+      "alerts": ["alert_007"]
+    }
+  },
+  {
+    "id": "ioc_006",
+    "type": "email",
+    "value": "phishing@malicious-domain.com",
+    "threatActor": "threat_002",
+    "classification": {
+      "category": "phishing",
+      "confidence": 88,
+      "severity": "medium"
+    },
+    "context": {
+      "firstSeen": 1704326400000,
+      "lastSeen": 1709234567890,
+      "sightings": 23,
+      "relatedIOCs": ["ioc_004", "ioc_005"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["email_filter"],
+      "alerts": ["alert_008"]
+    }
+  },
+  {
+    "id": "ioc_007",
+    "type": "ip",
+    "value": "45.155.203.89",
+    "threatActor": "threat_003",
+    "classification": {
+      "category": "c2",
+      "confidence": 90,
+      "severity": "high"
+    },
+    "context": {
+      "firstSeen": 1704067200000,
+      "lastSeen": 1709234567890,
+      "sightings": 345,
+      "relatedIOCs": ["ioc_008", "ioc_009"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["firewall_main", "ids_main"],
+      "alerts": ["alert_009", "alert_010"]
+    }
+  },
+  {
+    "id": "ioc_008",
+    "type": "domain",
+    "value": "lockbit-payment-gateway.com",
+    "threatActor": "threat_003",
+    "classification": {
+      "category": "c2",
+      "confidence": 95,
+      "severity": "critical"
+    },
+    "context": {
+      "firstSeen": 1704153600000,
+      "lastSeen": 1709234567890,
+      "sightings": 567,
+      "relatedIOCs": ["ioc_007", "ioc_009"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["dns_filter", "firewall_main"],
+      "alerts": ["alert_011", "alert_012"]
+    }
+  },
+  {
+    "id": "ioc_009",
+    "type": "hash",
+    "value": "lockbit1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+    "threatActor": "threat_003",
+    "classification": {
+      "category": "malware",
+      "confidence": 100,
+      "severity": "critical"
+    },
+    "context": {
+      "firstSeen": 1704240000000,
+      "lastSeen": 1709234567890,
+      "sightings": 890,
+      "relatedIOCs": ["ioc_007", "ioc_008"]
+    },
+    "status": "active",
+    "expirationDate": 1711923200000,
+    "response": {
+      "blocked": true,
+      "blockList": ["edr_all", "av_all"],
+      "alerts": ["alert_013", "alert_014", "alert_015"]
+    }
+  }
+]

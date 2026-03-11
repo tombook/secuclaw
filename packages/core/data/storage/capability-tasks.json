@@ -1,0 +1,90 @@
+[
+  {
+    "id": "task_1773034293287_2i0mhf699",
+    "domainId": "light",
+    "capabilityId": "light-baseline-001",
+    "title": "安全基线检测",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-expert",
+    "createdAt": 1773034293287,
+    "updatedAt": 1773037384293
+  },
+  {
+    "id": "task_1773037306817_8qcnlokl6",
+    "domainId": "light",
+    "capabilityId": "light-baseline-001",
+    "title": "安全基线检测",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-expert",
+    "createdAt": 1773037306817,
+    "updatedAt": 1773037391458
+  },
+  {
+    "id": "task_1773037308104_zuat3wskk",
+    "domainId": "light",
+    "capabilityId": "light-baseline-001",
+    "title": "安全基线检测",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-expert",
+    "createdAt": 1773037308104,
+    "updatedAt": 1773037389240
+  },
+  {
+    "id": "task_1773037308367_8cr7htiyd",
+    "domainId": "light",
+    "capabilityId": "light-baseline-001",
+    "title": "安全基线检测",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-expert",
+    "createdAt": 1773037308367,
+    "updatedAt": 1773037386905
+  },
+  {
+    "id": "task_1773037315540_k7p573exm",
+    "domainId": "light",
+    "capabilityId": "light-alert-001",
+    "title": "告警降噪与响应Runbook",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-ops",
+    "createdAt": 1773037315540,
+    "updatedAt": 1773037362065
+  },
+  {
+    "id": "task_1773037342022_ug60xygvr",
+    "domainId": "light",
+    "capabilityId": "light-alert-001",
+    "title": "告警降噪与响应Runbook",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-ops",
+    "createdAt": 1773037342022,
+    "updatedAt": 1773037359355
+  },
+  {
+    "id": "task_1773037344133_smannwyv2",
+    "domainId": "light",
+    "capabilityId": "light-alert-001",
+    "title": "告警降噪与响应Runbook",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-ops",
+    "createdAt": 1773037344133,
+    "updatedAt": 1773037355753
+  },
+  {
+    "id": "task_1773037348721_o1ckj8w70",
+    "domainId": "light",
+    "capabilityId": "light-alert-001",
+    "title": "告警降噪与响应Runbook",
+    "priority": "P2",
+    "status": "done",
+    "assigneeRole": "security-ops",
+    "createdAt": 1773037348721,
+    "updatedAt": 1773037351940
+  }
+]

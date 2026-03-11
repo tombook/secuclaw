@@ -1,0 +1,128 @@
+[
+  {
+    "id": "light",
+    "name": "光明面",
+    "nameEn": "Light Side",
+    "description": "安全健康分、基线合规率、漏洞闭环趋势、事件处置看板",
+    "descriptionEn": "Security health score, baseline compliance, vulnerability closure trends, incident response dashboard",
+    "icon": "shield-check",
+    "color": "#10B981",
+    "ownerRoles": ["security-expert", "security-ops", "security-architect"],
+    "partnerRoles": ["ciso", "secuclaw-commander"],
+    "kpi": {
+      "riskScore": 35,
+      "closureRate": 78,
+      "slaRate": 92,
+      "trend": 0.15,
+      "updatedAt": 1709875200000
+    },
+    "capabilityCount": 8,
+    "enabled": true,
+    "order": 1
+  },
+  {
+    "id": "dark",
+    "name": "黑暗面",
+    "nameEn": "Dark Side",
+    "description": "攻击面图谱、攻击路径热力图、红蓝演练结果、紫队覆盖率",
+    "descriptionEn": "Attack surface mapping, attack path heatmap, red/blue team exercises, purple team coverage",
+    "icon": "target",
+    "color": "#EF4444",
+    "ownerRoles": ["security-expert", "security-ops", "security-architect", "supply-chain-security"],
+    "partnerRoles": ["secuclaw-commander", "ciso"],
+    "kpi": {
+      "riskScore": 45,
+      "closureRate": 65,
+      "slaRate": 88,
+      "trend": -0.05,
+      "updatedAt": 1709875200000
+    },
+    "capabilityCount": 6,
+    "enabled": true,
+    "order": 2
+  },
+  {
+    "id": "security",
+    "name": "安全技术",
+    "nameEn": "Security Technology",
+    "description": "SOC态势总览、资产暴露面、检测规则效果、MITRE覆盖度",
+    "descriptionEn": "SOC overview, asset exposure, detection rule effectiveness, MITRE coverage",
+    "icon": "radar",
+    "color": "#3B82F6",
+    "ownerRoles": ["security-ops"],
+    "partnerRoles": ["security-expert", "security-architect", "ciso"],
+    "kpi": {
+      "riskScore": 40,
+      "closureRate": 72,
+      "slaRate": 85,
+      "trend": 0.08,
+      "updatedAt": 1709875200000
+    },
+    "capabilityCount": 7,
+    "enabled": true,
+    "order": 3
+  },
+  {
+    "id": "legal",
+    "name": "法律合规",
+    "nameEn": "Legal & Compliance",
+    "description": "法规义务清单、差距矩阵、审计证据库、整改进度",
+    "descriptionEn": "Regulatory obligations, gap matrix, audit evidence library, remediation progress",
+    "icon": "scale",
+    "color": "#8B5CF6",
+    "ownerRoles": ["privacy-officer", "ciso", "supply-chain-security"],
+    "partnerRoles": ["secuclaw-commander", "security-expert"],
+    "kpi": {
+      "riskScore": 25,
+      "closureRate": 85,
+      "slaRate": 95,
+      "trend": 0.12,
+      "updatedAt": 1709875200000
+    },
+    "capabilityCount": 5,
+    "enabled": true,
+    "order": 4
+  },
+  {
+    "id": "technology",
+    "name": "技术架构",
+    "nameEn": "Technology Architecture",
+    "description": "架构风险图、零信任成熟度、关键控制点状态、技术债风险",
+    "descriptionEn": "Architecture risk map, zero-trust maturity, critical control points, technical debt risk",
+    "icon": "git-branch",
+    "color": "#F59E0B",
+    "ownerRoles": ["security-architect"],
+    "partnerRoles": ["ciso", "secuclaw-commander", "security-expert"],
+    "kpi": {
+      "riskScore": 38,
+      "closureRate": 68,
+      "slaRate": 82,
+      "trend": 0.05,
+      "updatedAt": 1709875200000
+    },
+    "capabilityCount": 5,
+    "enabled": true,
+    "order": 5
+  },
+  {
+    "id": "business",
+    "name": "业务运营",
+    "nameEn": "Business Operations",
+    "description": "风险货币化、业务影响热图、预算ROI、供应商风险排名",
+    "descriptionEn": "Risk monetization, business impact heatmap, budget ROI, vendor risk ranking",
+    "icon": "trending-up",
+    "color": "#EC4899",
+    "ownerRoles": ["business-security-officer"],
+    "partnerRoles": ["ciso", "supply-chain-security", "secuclaw-commander"],
+    "kpi": {
+      "riskScore": 30,
+      "closureRate": 75,
+      "slaRate": 90,
+      "trend": 0.1,
+      "updatedAt": 1709875200000
+    },
+    "capabilityCount": 5,
+    "enabled": true,
+    "order": 6
+  }
+]

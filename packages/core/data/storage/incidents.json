@@ -1,0 +1,348 @@
+[
+  {
+    "id": "incident_001",
+    "ticketId": "INC-2024-001",
+    "info": {
+      "title": "Suspicious Login Activity Detected",
+      "description": "Multiple failed login attempts detected from external IP addresses targeting admin accounts",
+      "category": "intrusion",
+      "severity": "P1",
+      "priority": 1
+    },
+    "timeline": {
+      "detectedAt": 1709200000000,
+      "reportedAt": 1709200030000,
+      "acknowledgedAt": 1709200100000,
+      "containingAt": 1709200300000,
+      "eradicatedAt": 1709200500000,
+      "recoveredAt": 1709200700000,
+      "closedAt": 1709200900000
+    },
+    "sla": {
+      "responseDeadline": 1709200360000,
+      "resolutionDeadline": 1709286400000,
+      "responseBreached": false,
+      "resolutionBreached": false
+    },
+    "workflow": {
+      "status": "closed",
+      "assignee": "user_002",
+      "previousStatus": "recovering"
+    },
+    "impact": {
+      "affectedAssets": ["asset_001", "asset_003"],
+      "affectedUsers": 5,
+      "dataTypes": ["credentials"],
+      "businessImpact": "Potential credential compromise",
+      "estimatedLoss": 50000
+    },
+    "attack": {
+      "attackVector": "Password Spraying",
+      "threatActor": "threat_001",
+      "mitreTechniques": ["T1110", "T1078"],
+      "iocs": ["ioc_001"]
+    },
+    "handlers": [
+      {
+        "user": "user_002",
+        "role": "Security Operations",
+        "joinedAt": 1709200100000,
+        "actions": ["Investigated source IPs", "Blocked malicious IPs", "Reset compromised credentials"]
+      },
+      {
+        "user": "user_001",
+        "role": "Security Expert",
+        "joinedAt": 1709200200000,
+        "actions": ["Analyzed attack pattern", "Identified threat actor"]
+      }
+    ],
+    "evidence": {
+      "artifacts": ["evidence/incident_001_logs.txt", "evidence/incident_001_screenshots/"],
+      "chainOfCustody": ["user_002", "user_001", "system"]
+    },
+    "postMortem": {
+      "rootCause": "Weak password policy allowing common passwords",
+      "lessonsLearned": [
+        "Implement stronger password policy",
+        "Enable multi-factor authentication for admin accounts",
+        "Increase monitoring for failed login attempts"
+      ],
+      "recommendations": [
+        "Deploy MFA for all privileged accounts",
+        "Implement account lockout policy",
+        "Enhance SIEM alerting for brute force attempts"
+      ],
+      "completed": true
+    }
+  },
+  {
+    "id": "incident_002",
+    "ticketId": "INC-2024-002",
+    "info": {
+      "title": "Malware Detected on Production Server",
+      "description": "Suspicious process detected on production database server indicating possible compromise",
+      "category": "malware",
+      "severity": "P0",
+      "priority": 1
+    },
+    "timeline": {
+      "detectedAt": 1709234567890,
+      "reportedAt": 1709234568000,
+      "acknowledgedAt": 1709234570000,
+      "containingAt": null,
+      "eradicatedAt": null,
+      "recoveredAt": null,
+      "closedAt": null
+    },
+    "sla": {
+      "responseDeadline": 1709235467890,
+      "resolutionDeadline": 1709320167890,
+      "responseBreached": false,
+      "resolutionBreached": false
+    },
+    "workflow": {
+      "status": "analyzing",
+      "assignee": "user_002",
+      "previousStatus": "confirmed"
+    },
+    "impact": {
+      "affectedAssets": ["asset_002"],
+      "affectedUsers": 0,
+      "dataTypes": ["system_files", "database_data"],
+      "businessImpact": "Potential data breach and service disruption",
+      "estimatedLoss": 500000
+    },
+    "attack": {
+      "attackVector": "Malware Infection",
+      "threatActor": "threat_003",
+      "mitreTechniques": ["T1486", "T1490", "T1027"],
+      "iocs": ["ioc_009"]
+    },
+    "handlers": [
+      {
+        "user": "user_002",
+        "role": "Security Operations",
+        "joinedAt": 1709234570000,
+        "actions": ["Isolated affected server", "Initiated forensic analysis", "Collected memory dump"]
+      }
+    ],
+    "evidence": {
+      "artifacts": ["evidence/incident_002_memory.dmp", "evidence/incident_002_logs.txt"],
+      "chainOfCustody": ["user_002"]
+    },
+    "postMortem": {
+      "rootCause": "",
+      "lessonsLearned": [],
+      "recommendations": [],
+      "completed": false
+    }
+  },
+  {
+    "id": "incident_003",
+    "ticketId": "INC-2024-003",
+    "info": {
+      "title": "Phishing Campaign Targeting Employees",
+      "description": "Widespread phishing emails targeting company employees with malicious attachments",
+      "category": "phishing",
+      "severity": "P1",
+      "priority": 1
+    },
+    "timeline": {
+      "detectedAt": 1709145600000,
+      "reportedAt": 1709145630000,
+      "acknowledgedAt": 1709145660000,
+      "containingAt": 1709145720000,
+      "eradicatedAt": 1709145780000,
+      "recoveredAt": 1709145840000,
+      "closedAt": 1709145900000
+    },
+    "sla": {
+      "responseDeadline": 1709146280000,
+      "resolutionDeadline": 1709234560000,
+      "responseBreached": false,
+      "resolutionBreached": false
+    },
+    "workflow": {
+      "status": "closed",
+      "assignee": "user_001",
+      "previousStatus": "recovering"
+    },
+    "impact": {
+      "affectedAssets": ["asset_001", "asset_003"],
+      "affectedUsers": 25,
+      "dataTypes": ["credentials", "personal_data"],
+      "businessImpact": "Potential credential harvesting, data exposure",
+      "estimatedLoss": 100000
+    },
+    "attack": {
+      "attackVector": "Email Phishing",
+      "threatActor": "threat_002",
+      "mitreTechniques": ["T1566", "T1193"],
+      "iocs": ["ioc_004", "ioc_006"]
+    },
+    "handlers": [
+      {
+        "user": "user_001",
+        "role": "Security Expert",
+        "joinedAt": 1709145660000,
+        "actions": ["Analyzed phishing emails", "Identified malicious domains", "Traced attack source"]
+      },
+      {
+        "user": "user_002",
+        "role": "Security Operations",
+        "joinedAt": 1709145680000,
+        "actions": ["Blocked malicious domains", "Reset affected credentials", "Notified affected users"]
+      }
+    ],
+    "evidence": {
+      "artifacts": ["evidence/incident_003_emails.eml", "evidence/incident_003_analysis.txt"],
+      "chainOfCustody": ["user_001", "user_002"]
+    },
+    "postMortem": {
+      "rootCause": "Lack of email security awareness training",
+      "lessonsLearned": [
+        "Implement email security awareness program",
+        "Deploy advanced email filtering",
+        "Regular phishing simulation exercises"
+      ],
+      "recommendations": [
+        "Conduct security awareness training",
+        "Implement DMARC/DKIM/SPF",
+        "Deploy anti-phishing solution"
+      ],
+      "completed": true
+    }
+  },
+  {
+    "id": "incident_004",
+    "ticketId": "INC-2024-004",
+    "info": {
+      "title": "DDoS Attack on API Gateway",
+      "description": "Distributed denial of service attack targeting public API endpoints",
+      "category": "ddos",
+      "severity": "P1",
+      "priority": 1
+    },
+    "timeline": {
+      "detectedAt": 1709056400000,
+      "reportedAt": 1709056430000,
+      "acknowledgedAt": 1709056460000,
+      "containingAt": 1709056500000,
+      "eradicatedAt": 1709056560000,
+      "recoveredAt": 1709056600000,
+      "closedAt": 1709056660000
+    },
+    "sla": {
+      "responseDeadline": 1709057100000,
+      "resolutionDeadline": 1709141600000,
+      "responseBreached": false,
+      "resolutionBreached": false
+    },
+    "workflow": {
+      "status": "closed",
+      "assignee": "user_002",
+      "previousStatus": "recovering"
+    },
+    "impact": {
+      "affectedAssets": ["asset_003"],
+      "affectedUsers": 0,
+      "dataTypes": [],
+      "businessImpact": "API service disruption for 15 minutes",
+      "estimatedLoss": 25000
+    },
+    "attack": {
+      "attackVector": "DDoS",
+      "threatActor": null,
+      "mitreTechniques": ["T1498", "T1499"],
+      "iocs": ["ioc_007"]
+    },
+    "handlers": [
+      {
+        "user": "user_002",
+        "role": "Security Operations",
+        "joinedAt": 1709056460000,
+        "actions": ["Enabled DDoS protection", "Rate limited suspicious traffic", "Coordinated with CDN provider"]
+      }
+    ],
+    "evidence": {
+      "artifacts": ["evidence/incident_004_traffic_logs.txt", "evidence/incident_004_mitigation.txt"],
+      "chainOfCustody": ["user_002"]
+    },
+    "postMortem": {
+      "rootCause": "Insufficient DDoS protection capacity",
+      "lessonsLearned": [
+        "Increase DDoS protection capacity",
+        "Implement traffic analysis",
+        "Create incident response playbooks for DDoS"
+      ],
+      "recommendations": [
+        "Upgrade DDoS protection tier",
+        "Implement real-time traffic monitoring",
+        "Develop automated response playbooks"
+      ],
+      "completed": true
+    }
+  },
+  {
+    "id": "incident_005",
+    "ticketId": "INC-2024-005",
+    "info": {
+      "title": "Unauthorized Access Attempt Detected",
+      "description": "Multiple failed access attempts to sensitive database records",
+      "category": "intrusion",
+      "severity": "P2",
+      "priority": 2
+    },
+    "timeline": {
+      "detectedAt": 1709234567890,
+      "reportedAt": 1709234570000,
+      "acknowledgedAt": 1709234580000,
+      "containingAt": null,
+      "eradicatedAt": null,
+      "recoveredAt": null,
+      "closedAt": null
+    },
+    "sla": {
+      "responseDeadline": 1709235480000,
+      "resolutionDeadline": 1709320160000,
+      "responseBreached": false,
+      "resolutionBreached": false
+    },
+    "workflow": {
+      "status": "analyzing",
+      "assignee": "user_001",
+      "previousStatus": "confirmed"
+    },
+    "impact": {
+      "affectedAssets": ["asset_002"],
+      "affectedUsers": 3,
+      "dataTypes": ["customer_data", "financial_records"],
+      "businessImpact": "Potential data access violation",
+      "estimatedLoss": 75000
+    },
+    "attack": {
+      "attackVector": "Unauthorized Access",
+      "threatActor": null,
+      "mitreTechniques": ["T1078", "T1087"],
+      "iocs": []
+    },
+    "handlers": [
+      {
+        "user": "user_001",
+        "role": "Security Expert",
+        "joinedAt": 1709234580000,
+        "actions": ["Analyzing access logs", "Reviewing user permissions", "Checking for data exfiltration"]
+      }
+    ],
+    "evidence": {
+      "artifacts": ["evidence/incident_005_access_logs.txt"],
+      "chainOfCustody": ["user_001"]
+    },
+    "postMortem": {
+      "rootCause": "",
+      "lessonsLearned": [],
+      "recommendations": [],
+      "completed": false
+    }
+  }
+]

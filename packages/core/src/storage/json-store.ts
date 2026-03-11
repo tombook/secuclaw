@@ -1,0 +1,82 @@
+import { mkdir, readFile, writeFile, unlink, access } from 'fs/promises';
+import { join, dirname } from 'path';
+
+const logger = {
+  info: (...args: any[]) => console.log('[JsonStore]', ...args),
+  error: (...args: any[]) => console.error('[JsonStore]', ...args),
+  debug: (...args: any[]) => console.log('[JsonStore:DEBUG]', ...args),
+};
+
+export class JsonStore {
+  private basePath: string;
+
+  constructor(basePath: string) {
+    this.basePath = basePath;
+  }
+
+  private async ensureDir(filePath: string): Promise<void> {
+    const dir = dirname(filePath);
+    await mkdir(dir, { recursive: true });
+  }
+
+  private resolvePath(key: string): string {
+    return join(this.basePath, key);
+  }
+
+  async get<T = unknown>(key: string): Promise<T | null> {
+    try {
+      const filePath = this.resolvePath(key);
+      const content = await readFile(filePath, 'utf-8');
+      return JSON.parse(content) as T;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async set<T>(key: string, value: T): Promise<void> {
+    const filePath = this.resolvePath(key);
+    await this.ensureDir(filePath);
+    
+    // Write to temp file first, then rename (atomic write)
+    const tempPath = `${filePath}.tmp`;
+    await writeFile(tempPath, JSON.stringify(value, null, 2), 'utf-8');
+    
+    // Rename temp to actual (atomic on most systems)
+    const fs = await import('fs/promises');
+    await fs.rename(tempPath, filePath);
+    
+    logger.debug(`Saved: ${key}`);
+  }
+
+  async delete(key: string): Promise<boolean> {
+    try {
+      const filePath = this.resolvePath(key);
+      await unlink(filePath);
+      logger.debug(`Deleted: ${key}`);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async exists(key: string): Promise<boolean> {
+    try {
+      const filePath = this.resolvePath(key);
+      await access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async list(prefix: string): Promise<string[]> {
+    try {
+      const dir = this.resolvePath(prefix);
+      const fs = await import('fs/promises');
+      const files = await fs.readdir(dir);
+      return files.filter((f) => f.endsWith('.json'));
+    } catch {
+      return [];
+    }
+  }
+}

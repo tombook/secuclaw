@@ -1,0 +1,15 @@
+[
+  {
+    "id": "provider_1773017574931",
+    "name": "ollama",
+    "type": "local",
+    "baseUrl": "http://127.0.0.1:11434",
+    "apiKey": "",
+    "models": [
+      "qwen3:8b"
+    ],
+    "enabled": true,
+    "createdAt": 1773017574931,
+    "updatedAt": 1773018519283
+  }
+]

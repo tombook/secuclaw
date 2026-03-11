@@ -1,0 +1,268 @@
+[
+  {
+    "id": "vuln_001",
+    "info": {
+      "cveId": "CVE-2024-1234",
+      "title": "Apache Log4j Remote Code Execution",
+      "description": "Apache Log4j2 JNDILookup JMSI Deserialization RCE Vulnerability",
+      "cvss": {
+        "score": 9.8,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
+        "severity": "critical"
+      },
+      "cwe": ["CWE-502", "CWE-94"],
+      "affectedProducts": ["Apache Log4j 2.14.1", "Log4j 1.217.0"],
+      "exploitAvailable": true,
+      "exploitInWild": true
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset_001",
+        "componentName": "log4j-core",
+        "componentVersion": "2.14.1",
+        "fixVersion": "2.17.1"
+      },
+      {
+        "assetId": "asset_003",
+        "componentName": "log4j-core",
+        "componentVersion": "2.14.1",
+        "fixVersion": "2.17.1"
+      }
+    ],
+    "remediation": {
+      "status": "open",
+      "priority": 98,
+      "assignedTo": "user_002",
+      "dueDate": 1709321600000,
+      "slaDeadline": 1709238400000,
+      "fixAvailable": true,
+      "fixSteps": [
+        "Update log4j to version 2.17.1 or later",
+        "If using Spring Boot, add log4j-spring-boot-starter 2.17.1",
+        "Set LOG4J_FORMAT_MSG_NO_LOOKUPS=true environment variable"
+        "Review and apply mitigations from official advisory"
+      ]
+    },
+    "risk": {
+      "baseScore": 9.8,
+      "adjustedScore": 9.5,
+      "businessImpact": 10,
+      "exposureScore": 95,
+      "threatScore": 100
+    },
+    "evidence": {
+      "scanSource": "Nessus Professional",
+      "firstDetected": 1709145600000,
+      "lastDetected": 1709234567890,
+      "proofOfConcept": "https://github.com/advisories/GHSA-...",
+      "screenshot": "evidence/vuln_001_screenshot.png"
+    },
+    "createdBy": "system",
+    "createdAt": 1709145600000,
+    "updatedBy": "system",
+    "updatedAt": 1709234567890,
+    "history": [
+      {
+        "timestamp": 1709145600000,
+        "action": "created",
+        "userId": "system",
+        "details": "Vulnerability detected by automated scan"
+      },
+      {
+        "timestamp": 1709200000000,
+        "action": "priority_updated",
+        "userId": "ai_system",
+        "details": "Priority adjusted to 98 based on exploit availability and business impact"
+      }
+    ]
+  },
+  {
+    "id": "vuln_002",
+    "info": {
+      "cveId": "CVE-2024-5678",
+      "title": "Spring Framework RCE Vulnerability",
+      "description": "Spring Framework remote code execution via data binding",
+      "cvss": {
+        "score": 8.5,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
+        "severity": "high"
+      },
+      "cwe": ["CWE-502"],
+      "affectedProducts": ["Spring Framework 5.3.0-6.0.0"],
+      "exploitAvailable": true,
+      "exploitInWild": false
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset_003",
+        "componentName": "spring-core",
+        "componentVersion": "5.3.20",
+        "fixVersion": "6.0.0"
+      }
+    ],
+    "remediation": {
+      "status": "in_progress",
+      "priority": 75,
+      "assignedTo": "user_003",
+      "dueDate": 1709496960000,
+      "slaDeadline": 1709408000000,
+      "fixAvailable": true,
+      "fixSteps": [
+        "Upgrade Spring Framework to version 6.0.0 or later",
+        "Review and apply Spring Security configuration",
+        "Consider using spring-boot-starter-security"
+      ]
+    },
+    "risk": {
+      "baseScore": 8.5,
+      "adjustedScore": 7.8,
+      "businessImpact": 7,
+      "exposureScore": 85,
+      "threatScore": 65
+    },
+    "evidence": {
+      "scanSource": "Qualys",
+      "firstDetected": 1709182400000,
+      "lastDetected": 1709234567890,
+      "proofOfConcept": "https://qualys.com/...",
+      "screenshot": ""
+    },
+    "createdBy": "system",
+    "createdAt": 1709182400000,
+    "updatedBy": "user_003",
+    "updatedAt": 1709234567890,
+    "history": []
+  },
+  {
+    "id": "vuln_003",
+    "info": {
+      "cveId": "CVE-2024-9999",
+      "title": "PostgreSQL Privilege Escalation",
+      "description": "PostgreSQL privilege escalation vulnerability in certain configurations",
+      "cvss": {
+        "score": 7.5,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
+        "severity": "high"
+      },
+      "cwe": ["CWE-269"],
+      "affectedProducts": ["PostgreSQL 12.0-14.2"],
+      "exploitAvailable": false,
+      "exploitInWild": false
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset_002",
+        "componentName": "postgresql",
+        "componentVersion": "14.2",
+        "fixVersion": "15.0"
+      }
+    ],
+    "remediation": {
+      "status": "open",
+      "priority": 55,
+      "assignedTo": "user_005",
+      "dueDate": 1709580400000,
+      "slaDeadline": 1709493440000,
+      "fixAvailable": true,
+      "fixSteps": [
+        "Upgrade PostgreSQL to version 15.0 or later",
+        "Review and update postgresql.conf access controls",
+        "Implement least privilege principle for database users"
+      ]
+    },
+    "risk": {
+      "baseScore": 7.5,
+      "adjustedScore": 6.2,
+      "businessImpact": 5,
+      "exposureScore": 45,
+      "threatScore": 30
+    },
+    "evidence": {
+      "scanSource": "Internal Assessment",
+      "firstDetected": 1709153600000,
+      "lastDetected": 1709234567890,
+      "proofOfConcept": "",
+      "screenshot": ""
+    },
+    "createdBy": "user_005",
+    "createdAt": 1709153600000,
+    "updatedBy": "system",
+    "updatedAt": 1709234567890,
+    "history": []
+  },
+  {
+    "id": "vuln_004",
+    "info": {
+      "cveId": "CVE-2024-1111",
+      "title": "Nginx Request Smuggling Vulnerability",
+      "description": "Nginx request smuggling vulnerability in certain configurations",
+      "cvss": {
+        "score": 6.5,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
+        "severity": "medium"
+      },
+      "cwe": ["CWE-444"],
+      "affectedProducts": ["Nginx 1.18.0-1.25.0"],
+      "exploitAvailable": false,
+      "exploitInWild": false
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset_001",
+        "componentName": "nginx",
+        "componentVersion": "1.18.0",
+        "fixVersion": "1.25.0"
+      },
+      {
+        "assetId": "asset_003",
+        "componentName": "nginx",
+        "componentVersion": "1.25.0",
+        "fixVersion": "1.26.0"
+      }
+    ],
+    "remediation": {
+      "status": "fixed",
+      "priority": 35,
+      "assignedTo": "user_001",
+      "dueDate": 1709014400000,
+      "slaDeadline": 1709014400000,
+      "fixAvailable": true,
+      "fixSteps": [
+        "Upgrade Nginx to version 1.26.0 or later",
+        "Review and update nginx.conf configuration"
+      ]
+    },
+    "risk": {
+      "baseScore": 6.5,
+      "adjustedScore": 3.0,
+      "businessImpact": 4,
+      "exposureScore": 90,
+      "threatScore": 25
+    },
+    "evidence": {
+      "scanSource": "Nessus Professional",
+      "firstDetected": 1708923200000,
+      "lastDetected": 1709014400000,
+      "proofOfConcept": "",
+      "screenshot": ""
+    },
+    "createdBy": "system",
+    "createdAt": 1708923200000,
+    "updatedBy": "user_001",
+    "updatedAt": 1709014400000,
+    "history": [
+      {
+        "timestamp": 1708923200000,
+        "action": "created",
+        "userId": "system",
+        "details": "Vulnerability detected by automated scan"
+      },
+      {
+        "timestamp": 1709014400000,
+        "action": "status_updated",
+        "userId": "user_001",
+        "details": "Marked as fixed after patch deployment"
+      }
+    ]
+  }
+]

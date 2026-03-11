@@ -1,0 +1,30 @@
+{
+  "server": {
+    "port": 3000,
+    "gatewayPort": 21981,
+    "host": "127.0.0.1"
+  },
+  "database": {
+    "path": "./data/secuclaw.db",
+    "journalMode": "WAL"
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": ["console", "file"]
+  },
+  "features": {
+    "channels": true,
+    "skillsMarket": true,
+    "aiExperts": true,
+    "knowledgeBase": true
+  },
+  "i18n": {
+    "defaultLocale": "zh-CN",
+    "supportedLocales": ["zh-CN", "en", "zh-TW"]
+  },
+  "theme": {
+    "default": "dark",
+    "options": ["light", "dark", "system"]
+  }
+}

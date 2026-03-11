@@ -1,0 +1,258 @@
+[
+  {
+    "id": "asset_001",
+    "name": "prod-web-01",
+    "type": "server",
+    "category": "production",
+    "environment": "on-premise",
+    "location": {
+      "datacenter": "DC-Beijing",
+      "region": "cn-north-1",
+      "zone": "zone-a"
+    },
+    "network": {
+      "ip": "10.0.1.100",
+      "mac": "00:1a:2b:3c:4d:5e:6f",
+      "hostname": "prod-web-01.example.com",
+      "ports": [22, 443, 8080],
+      "fqdn": "prod-web-01.example.com"
+    },
+    "technology": {
+      "os": "Ubuntu",
+      "osVersion": "22.04 LTS",
+      "software": [
+        {"name": "Nginx", "version": "1.18.0", "vendor": "NGINX"},
+        {"name": "Node.js", "version": "18.17.0", "vendor": "Node.js"}
+      ],
+      "services": [
+        {"name": "nginx", "port": 443, "protocol": "https"},
+        {"name": "node-app", "port": 3000, "protocol": "http"}
+      ]
+    },
+    "business": {
+      "owner": "user_001",
+      "department": "Engineering",
+      "criticality": "critical",
+      "dataClassification": "confidential",
+      "businessImpact": 9
+    },
+    "security": {
+      "attackSurface": 75,
+      "exposureLevel": "internet-facing",
+      "lastScanDate": 1709234567890,
+      "vulnerabilities": ["vuln_001", "vuln_002"],
+      "compliance": ["ctrl_001", "ctrl_002"]
+    },
+    "status": "active",
+    "lastSeen": 1709234567890,
+    "firstSeen": 1697234567890,
+    "tags": ["production", "web", "critical"],
+    "customFields": {},
+    "createdAt": 1697234567890,
+    "updatedAt": 1709234567890
+  },
+  {
+    "id": "asset_002",
+    "name": "prod-db-01",
+    "type": "database",
+    "category": "production",
+    "environment": "on-premise",
+    "location": {
+      "datacenter": "DC-Beijing",
+      "region": "cn-north-1",
+      "zone": "zone-a"
+    },
+    "network": {
+      "ip": "10.0.1.200",
+      "mac": "00:1a:2b:3c:4d:5e:6f",
+      "hostname": "prod-db-01.example.com",
+      "ports": [5432, 6379],
+      "fqdn": "prod-db-01.example.com"
+    },
+    "technology": {
+      "os": "CentOS",
+      "osVersion": "7.9",
+      "software": [
+        {"name": "PostgreSQL", "version": "14.2", "vendor": "PostgreSQL"},
+        {"name": "Redis", "version": "6.2", "vendor": "Redis"}
+      ],
+      "services": [
+        {"name": "postgresql", "port": 5432, "protocol": "tcp"},
+        {"name": "redis", "port": 6379, "protocol": "tcp"}
+      ]
+    },
+    "business": {
+      "owner": "user_002",
+      "department": "Engineering",
+      "criticality": "critical",
+      "dataClassification": "restricted",
+      "businessImpact": 10
+    },
+    "security": {
+      "attackSurface": 45,
+      "exposureLevel": "internal",
+      "lastScanDate": 1709234567890,
+      "vulnerabilities": ["vuln_003"],
+      "compliance": ["ctrl_003", "ctrl_004"]
+    },
+    "status": "active",
+    "lastSeen": 1709234567890,
+    "firstSeen": 1697234567890,
+    "tags": ["production", "database", "critical"],
+    "customFields": {},
+    "createdAt": 1697234567890,
+    "updatedAt": 1709234567890
+  },
+  {
+    "id": "asset_003",
+    "name": "api.example.com",
+    "type": "application",
+    "category": "production",
+    "environment": "cloud",
+    "location": {
+      "datacenter": "AWS-cn-north-1",
+      "region": "cn-north-1",
+      "zone": "public-subnet-1"
+    },
+    "network": {
+      "ip": "52.83.45.67",
+      "mac": "",
+      "hostname": "",
+      "ports": [443],
+      "fqdn": "api.example.com"
+    },
+    "technology": {
+      "os": "Linux",
+      "osVersion": "5.15",
+      "software": [
+        {"name": "Java", "version": "17.0", "vendor": "Oracle"},
+        {"name": "Spring Boot", "version": "3.2.0", "vendor": "Spring"}
+      ],
+      "services": [
+        {"name": "https", "port": 443, "protocol": "https"}
+      ]
+    },
+    "business": {
+      "owner": "user_003",
+      "department": "Engineering",
+      "criticality": "high",
+      "dataClassification": "confidential",
+      "businessImpact": 8
+    },
+    "security": {
+      "attackSurface": 85,
+      "exposureLevel": "internet-facing",
+      "lastScanDate": 1709234567890,
+      "vulnerabilities": ["vuln_004"],
+      "compliance": ["ctrl_005"]
+    },
+    "status": "active",
+    "lastSeen": 1709234567890,
+    "firstSeen": 1697234567890,
+    "tags": ["production", "api", "cloud"],
+    "customFields": {},
+    "createdAt": 1697234567890,
+    "updatedAt": 1709234567890
+  },
+  {
+    "id": "asset_004",
+    "name": "dev-vm-01",
+    "type": "server",
+    "category": "development",
+    "environment": "on-premise",
+    "location": {
+      "datacenter": "DC-Beijing",
+      "region": "cn-north-1",
+      "zone": "zone-b"
+    },
+    "network": {
+      "ip": "10.0.2.100",
+      "mac": "00:1a:2b:3c:4d:5e:7f",
+      "hostname": "dev-vm-01.example.com",
+      "ports": [22, 80],
+      "fqdn": "dev-vm-01.example.com"
+    },
+    "technology": {
+      "os": "Ubuntu",
+      "osVersion": "22.04 LTS",
+      "software": [
+        {"name": "Docker", "version": "24.0", "vendor": "Docker"}
+      ],
+      "services": [
+        {"name": "ssh", "port": 22, "protocol": "tcp"}
+      ]
+    },
+    "business": {
+      "owner": "user_004",
+      "department": "Development",
+      "criticality": "low",
+      "dataClassification": "internal",
+      "businessImpact": 3
+    },
+    "security": {
+      "attackSurface": 25,
+      "exposureLevel": "internal",
+      "lastScanDate": 1709234567890,
+      "vulnerabilities": [],
+      "compliance": []
+    },
+    "status": "active",
+    "lastSeen": 1709234567890,
+    "firstSeen": 1697234567890,
+    "tags": ["development", "vm"],
+    "customFields": {},
+    "createdAt": 1697234567890,
+    "updatedAt": 1709234567890
+  },
+  {
+    "id": "asset_005",
+    "name": "backup-nas",
+    "type": "server",
+    "category": "production",
+    "environment": "on-premise",
+    "location": {
+      "datacenter": "DC-Beijing",
+      "region": "cn-north-1",
+      "zone": "zone-a"
+    },
+    "network": {
+      "ip": "10.0.1.50",
+      "mac": "00:1a:2b:3c:4d:5e:8f",
+      "hostname": "backup-nas.example.com",
+      "ports": [22, 445, 2049],
+      "fqdn": "backup-nas.example.com"
+    },
+    "technology": {
+      "os": "TrueNAS",
+      "osVersion": "13.0",
+      "software": [
+        {"name": "TrueNAS", "version": "13.0", "vendor": "iXsystems"}
+      ],
+      "services": [
+        {"name": "smb", "port": 445, "protocol": "tcp"},
+        {"name": "nfs", "port": 2049, "protocol": "tcp"}
+      ]
+    },
+    "business": {
+      "owner": "user_005",
+      "department": "Operations",
+      "criticality": "high",
+      "dataClassification": "confidential",
+      "businessImpact": 7
+    },
+    "security": {
+      "attackSurface": 15,
+      "exposureLevel": "internal",
+      "lastScanDate": 1709234567890,
+      "vulnerabilities": [],
+      "compliance": ["ctrl_006"]
+    },
+    "status": "maintenance",
+    "lastSeen": 1709234567890,
+    "firstSeen": 1697234567890,
+    "tags": ["production", "storage", "backup"],
+    "customFields": {},
+    "createdAt": 1697234567890,
+    "updatedAt": 1709234567890
+  }
+]

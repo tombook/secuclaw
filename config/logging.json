@@ -1,0 +1,25 @@
+{
+  "level": "info",
+  "format": "json",
+  "outputs": [
+    {
+      "type": "console",
+      "colorize": true
+    },
+    {
+      "type": "file",
+      "path": "./logs/secuclaw.log",
+      "rotation": {
+        "enabled": true,
+        "maxSize": "10m",
+        "maxFiles": 5
+      }
+    }
+  ],
+  "categories": {
+    "gateway": "debug",
+    "knowledge": "info",
+    "llm": "debug",
+    "channels": "info"
+  }
+}

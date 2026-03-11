@@ -1,0 +1,37 @@
+{
+  "name": "secuclaw",
+  "version": "1.0.0",
+  "description": "SecuClaw Security Commander System - AI-powered security decision platform with 8 security roles",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"pnpm run dev:ui\" \"pnpm run dev:core\"",
+    "dev:ui": "pnpm --filter ui dev",
+    "dev:core": "pnpm --filter @secuclaw/core dev",
+    "build": "pnpm run build:core && pnpm run build:ui",
+    "build:ui": "pnpm --filter ui build",
+    "build:core": "pnpm --filter @secuclaw/core build",
+    "start": "pnpm --filter @secuclaw/core start",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "keywords": [
+    "security",
+    "commander",
+    "mitre-attack",
+    "scf",
+    "ai",
+    "llm"
+  ],
+  "author": "SecuClaw Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  }
+}
