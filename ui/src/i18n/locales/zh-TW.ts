@@ -33,20 +33,14 @@ export const zh_TW = {
     incidents: '安全事件',
     vulnerabilities: '漏洞管理',
     compliance: '合規審計',
-    reports: '分析報告',
-    risk: '安全風險',
     warRoom: '作戰室',
     capabilities: '能力中心',
     knowledgeBase: '知識庫',
     skillsMarket: '技能市集',
     channels: '通訊管理',
     settings: '系統設定',
-    // Tool demo pages
-    baseline: '基線檢查',
-    vulnScan: '漏洞掃描',
-    pentest: '滲透測試',
-    threatHunt: '威脅狩獵',
-    alerts: '告警處置',
+    // Security Operations Center
+    securityOps: '安全營運中心',
   },
 
   roles: {

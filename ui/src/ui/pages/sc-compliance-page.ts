@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
+import { dataService } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -110,13 +111,26 @@ export class ScCompliancePage extends LitElement {
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+
+    .page-title-section {
+      flex: 1;
     }
 
     .page-title {
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
 
     .header-actions {
@@ -446,6 +460,37 @@ export class ScCompliancePage extends LitElement {
   private async loadComplianceData() {
     this.loading = true;
     try {
+      // Load from API
+      try {
+        const regs = await dataService.getComplianceList({ pageSize: 50 });
+        if (regs.length > 0) {
+          this.frameworks = regs.map(r => ({
+            id: r.id,
+            name: r.name,
+            shortName: r.fullName?.substring(0, 10) || r.name,
+            version: r.version,
+            totalControls: r.controlFramework?.totalControls || 0,
+            compliantControls: r.compliance?.compliant || 0,
+            status: r.compliance?.score > 80 ? 'compliant' : r.compliance?.score > 50 ? 'partial' : 'non-compliant',
+            lastAssessment: r.compliance?.lastAudit ? new Date(r.compliance.lastAudit) : new Date(),
+            nextAssessment: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+            icon: this.getComplianceIcon(r.jurisdiction)
+          }));
+        }
+        
+        const stats = await dataService.getComplianceStats();
+        if (stats) {
+          this.complianceStats = {
+            overallScore: stats.avgScore || 0,
+            frameworksCount: stats.total || 0,
+            controlsCount: 0,
+            auditCount: 0
+          };
+        }
+      } catch (e) {
+        console.error('Failed to load from API:', e);
+      }
+      
       await this.loadFrameworks();
       await this.loadControls();
       await this.loadAuditTasks();
@@ -453,6 +498,16 @@ export class ScCompliancePage extends LitElement {
     } finally {
       this.loading = false;
     }
+  }
+
+  private getComplianceIcon(jurisdiction: string): string {
+    const map: Record<string, string> = {
+      'European Union': '🇪🇺',
+      "People's Republic of China": '🇨🇳',
+      'United States': '🇺🇸',
+      'International': '🏛️'
+    };
+    return map[jurisdiction] || '📋';
   }
 
   private async loadFrameworks() {
@@ -512,7 +567,15 @@ export class ScCompliancePage extends LitElement {
       <div class="compliance-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">${this.i18n.t('nav.compliance') || '合规审计'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>✅</span>
+                ${this.i18n.t('nav.compliance') || '合规审计'}
+              </h1>
+              <div class="page-description">
+                <span>确保企业符合各项法规要求，准备好随时应对审计</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📊 合规报告</button>
               <button class="btn btn-primary">+ 新建评估</button>

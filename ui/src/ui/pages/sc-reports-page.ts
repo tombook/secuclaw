@@ -87,12 +87,23 @@ export class ScReportsPage extends LitElement {
     .page-header{
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+    .page-title-section {
+      flex: 1;
     }
     .page-title{
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
     .header-actions{
       display: flex;
@@ -383,7 +394,15 @@ export class ScReportsPage extends LitElement {
       <div class="reports-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">${this.i18n.t('nav.reports') || '分析报告'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>📄</span>
+                ${this.i18n.t('nav.reports') || '分析报告'}
+              </h1>
+              <div class="page-description">
+                <span>快速生成专业安全报告，满足不同汇报场景需求</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📅 计划任务</button>
               <button class="btn btn-primary">+ 新建报告</button>

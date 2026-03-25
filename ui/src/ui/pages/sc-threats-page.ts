@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
+import { dataService } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -119,13 +120,26 @@ export class ScThreatsPage extends LitElement {
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+
+    .page-title-section {
+      flex: 1;
     }
 
     .page-title {
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
 
     .header-actions {
@@ -455,6 +469,38 @@ export class ScThreatsPage extends LitElement {
     this.loading = true;
     
     try {
+      // Load from API
+      try {
+        const threats = await dataService.getThreats({ pageSize: 50 });
+        if (threats.length > 0) {
+          // Convert to UI format
+          this.threatActors = threats.map(t => ({
+            id: t.id,
+            name: t.name,
+            aliases: t.aliases,
+            type: t.type,
+            motivation: t.motivation,
+            sophistication: t.capabilities?.sophistication,
+            techniqueCount: t.capabilities?.techniques?.length || 0,
+            campaignCount: t.campaigns?.length || 0,
+            lastActivity: t.campaigns?.[0]?.startDate,
+            risk: this.calculateThreatRisk(t)
+          }));
+        }
+        
+        const stats = await dataService.getThreatStats();
+        if (stats) {
+          this.threatStats = {
+            totalActors: stats.total || 0,
+            activeCampaigns: 0,
+            iocCount: 0,
+            avgConfidence: stats.avgConfidence || 0
+          };
+        }
+      } catch (e) {
+        console.error('Failed to load from API:', e);
+      }
+      
       await this.loadIOCs();
       await this.loadThreatSources();
       await this.loadMITREData();
@@ -464,6 +510,16 @@ export class ScThreatsPage extends LitElement {
     } finally {
       this.loading = false;
     }
+  }
+
+  private calculateThreatRisk(threat: any): number {
+    const sophisticationMap: Record<string, number> = {
+      'advanced': 90, 'moderate': 60, 'low': 30
+    };
+    const baseScore = sophisticationMap[threat.capabilities?.sophistication] || 50;
+    const techniqueBonus = (threat.capabilities?.techniques?.length || 0) * 2;
+    const campaignBonus = (threat.campaigns?.length || 0) * 5;
+    return Math.min(100, baseScore + techniqueBonus + campaignBonus);
   }
 
   private async loadIOCs() {
@@ -834,7 +890,15 @@ export class ScThreatsPage extends LitElement {
       <div class="threats-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">${this.i18n.t('nav.threats') || '威胁情报'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>🔍</span>
+                ${this.i18n.t('nav.threats') || '威胁情报'}
+              </h1>
+              <div class="page-description">
+                <span>监控外部威胁动态，提前预警潜在攻击</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📤 导出报告</button>
               <button class="btn btn-primary">+ 添加IOC</button>

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openclaw models list)",
+      "Bash(openclaw channels status --probe)",
+      "Bash(openclaw agent --agent coordinator -m \"创建一个Python计算器程序，支持加减乘除运算\" 2>&1)",
+      "Bash(openclaw agent --agent coordinator --local -m \"创建一个Python计算器程序，支持加减乘除运算\" 2>&1 | head -50)"
+    ]
+  }
+}

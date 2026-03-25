@@ -1,9 +1,8 @@
 export type Locale = 'zh-CN' | 'en' | 'zh-TW';
 export type TranslationMap = Record<string, string | TranslationMap>;
 
-// Vite import.meta.glob -声明为 any 以避免类型错误
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const localeModules: any = (globalThis as any).import?.meta?.glob?.('../locales/*.ts') || {};
+// Vite import.meta.glob - 直接使用，不要通过 globalThis
+const localeModules = import.meta.glob('../locales/*.ts', { eager: true });
 
 interface I18nConfig {
   defaultLocale: Locale;
@@ -33,17 +32,15 @@ class I18nManager {
 
   private async loadLocale(locale: Locale): Promise<void> {
     const modulePath = `../locales/${locale}.ts`;
-    const loader = localeModules[modulePath];
-    if (!loader) {
-      console.warn('[i18n] Locale file not found:', locale, 'Available:', Object.keys(localeModules));
+    const module = localeModules[modulePath];
+    if (!module) {
+      console.warn('[i18n] Locale file not found:', locale);
       return;
     }
-    const module = await loader() as Record<string, unknown>;
+    // With eager: true, modules are already loaded
     const localeKey = locale.replace('-', '_');
-    console.log('[i18n] Module loaded:', { locale, localeKey, module, keys: Object.keys(module) });
     // Try default export first, then named export (zh_CN, en, zh_TW)
-    const translations = module.default || (module as Record<string, unknown>)[localeKey] || {};
-    console.log('[i18n] Final translations:', translations);
+    const translations = (module as Record<string, unknown>).default || (module as Record<string, unknown>)[localeKey] || {};
     this.translations.set(locale, translations as TranslationMap);
   }
 

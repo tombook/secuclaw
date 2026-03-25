@@ -8,6 +8,7 @@ import { LitElement, html, css, svg } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AnomalyAlert, type TrendPrediction, type AIRecommendation } from '../ai-service.js';
+import { dataService, type IncidentStats, type VulnerabilityStats } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 import '../components/sc-metric-card.js';
@@ -66,6 +67,12 @@ export class ScDashboard extends LitElement {
   @state()
   private securityScore = 0;
 
+  @state()
+  private incidentStats: IncidentStats | null = null;
+
+  @state()
+  private vulnStats: VulnerabilityStats | null = null;
+
   // ============ 样式 ============
 
   static styles = css`
@@ -88,28 +95,38 @@ export class ScDashboard extends LitElement {
       padding-right: var(--sc-spacing-md, 16px);
     }
 
-    @media (max-width: 1200px) {
-      .dashboard-container {
-        grid-template-columns: 1fr;
-      }
-    }
-
     /* 页面头部 */
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+
+    .page-title-section {
+      flex: 1;
     }
 
     .page-title {
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
     }
 
-    .header-actions {
+    /* 一句话说明 - SMART原则 */
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
       display: flex;
-      gap: var(--sc-spacing-sm, 8px);
+      align-items: center;
+      gap: var(--sc-spacing-xs, 6px);
+    }
+
+    .page-description-icon {
+      opacity: 0.7;
     }
 
     .btn {
@@ -464,10 +481,14 @@ export class ScDashboard extends LitElement {
     this.loading = true;
     
     try {
-      // 模拟数据加载
-      await this.loadMetrics();
-      await this.loadCompliance();
-      await this.loadAIInsights();
+      // 加载真实数据
+      await Promise.all([
+        this.loadMetrics(),
+        this.loadCompliance(),
+        this.loadAIInsights(),
+        this.loadIncidentStats(),
+        this.loadVulnStats(),
+      ]);
       
       this.securityScore = this.calculateSecurityScore();
     } catch (error) {
@@ -571,6 +592,40 @@ export class ScDashboard extends LitElement {
       });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
+    }
+  }
+
+  private async loadIncidentStats() {
+    try {
+      this.incidentStats = await dataService.getIncidentStats();
+      // Update metrics with real data
+      if (this.incidentStats) {
+        const metric = this.metrics.find(m => m.id === 'open-incidents');
+        if (metric) {
+          metric.value = this.incidentStats.open;
+          metric.status = this.incidentStats.open > 10 ? 'critical' : this.incidentStats.open > 5 ? 'warning' : 'healthy';
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load incident stats:', error);
+    }
+  }
+
+  private async loadVulnStats() {
+    try {
+      this.vulnStats = await dataService.getVulnerabilityStats();
+      // Update metrics with real data
+      if (this.vulnStats) {
+        const critical = this.vulnStats.bySeverity?.critical || 0;
+        const high = this.vulnStats.bySeverity?.high || 0;
+        const metric = this.metrics.find(m => m.id === 'critical-vulns');
+        if (metric) {
+          metric.value = critical + high;
+          metric.status = metric.value > 5 ? 'critical' : metric.value > 2 ? 'warning' : 'healthy';
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load vulnerability stats:', error);
     }
   }
 
@@ -827,8 +882,23 @@ export class ScDashboard extends LitElement {
       <div class="dashboard-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">${this.i18n.t('nav.dashboard') || '仪表盘'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>🛡️</span>
+                ${this.i18n.t('nav.dashboard') || '安全仪表盘'}
+              </h1>
+              <!-- 一句话说明 - SMART原则 -->
+              <div class="page-description">
+                <span class="page-description-icon">💡</span>
+                <span>一眼看清企业整体安全健康状态，快速发现需要关注的问题</span>
+              </div>
+            </div>
             <div class="header-actions">
+              <select class="btn btn-secondary" style="padding: 8px 12px;">
+                <option>今日</option>
+                <option>本周</option>
+                <option>本月</option>
+              </select>
               <button class="btn btn-secondary" @click=${() => this.loadDashboardData()}>
                 🔄 刷新
               </button>

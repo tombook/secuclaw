@@ -31,8 +31,6 @@ export const en = {
     incidents: 'Incidents',
     vulnerabilities: 'Vulnerabilities',
     compliance: 'Compliance',
-    reports: 'Reports',
-    risk: 'Risk',
     warRoom: 'War Room',
     aiExperts: 'AI Experts',
     capabilities: 'Capabilities',
@@ -40,13 +38,8 @@ export const en = {
     skillsMarket: 'Skills Market',
     channels: 'Channels',
     settings: 'Settings',
-    // Tool demo pages
-    baseline: 'Baseline',
-    vulnScan: 'Vuln Scan',
-    pentest: 'Pentest',
-    threatHunt: 'Threat Hunt',
-    alerts: 'Alerts',
-    dataCenter: 'Data Resource Center',
+    // Security Operations Center
+    securityOps: 'Security Ops',
   },
 
   roles: {

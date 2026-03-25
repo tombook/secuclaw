@@ -5,7 +5,7 @@
  * 用于展示安全数据列表（漏洞、事件、威胁等）
  */
 
-import { LitElement, html, css, PropertyValues } from 'lit';
+import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state, query } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { repeat } from 'lit/directives/repeat.js';

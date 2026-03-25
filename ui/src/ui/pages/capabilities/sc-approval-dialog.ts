@@ -10,7 +10,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
-import type { SecurityTask, Approval, DomainId } from '../../capabilities-client.js';
+import type { SecurityTask, Approval } from '../../capabilities-client.js';
 import { capabilitiesClient } from '../../capabilities-client.js';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired';
@@ -50,7 +50,7 @@ export class ScApprovalDialog extends LitElement {
   private submitting = false;
 
   @state()
-  private error: string | '';
+  private error = '';
 
   static styles = css`
     :host {

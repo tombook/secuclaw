@@ -41,12 +41,23 @@ export class ScDataOverview extends LitElement {
     .page-header{
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+    .page-title-section {
+      flex: 1;
     }
     .page-title{
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
     .header-actions{
       display: flex;
@@ -297,7 +308,15 @@ export class ScDataOverview extends LitElement {
       <div class="data-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">🗄️ 数据资源中心</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>🗄️</span>
+                数据资源中心
+              </h1>
+              <div class="page-description">
+                <span>统一管理企业安全数据资产，确保数据质量、可追溯血缘</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn btn-secondary">🔄 同步全部</button>
               <button class="btn btn-primary">+ 添加数据源</button>

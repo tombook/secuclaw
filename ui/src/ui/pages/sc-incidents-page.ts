@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
+import { dataService, type SecurityIncident, type IncidentQueryParams } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -70,6 +71,10 @@ export class ScIncidentsPage extends LitElement {
   @state()
   private incidents: Incident[] = [];
 
+  // Real data from API
+  @state()
+  private realIncidents: SecurityIncident[] = [];
+
   @state()
   private selectedIncident: Incident | null = null;
 
@@ -116,13 +121,26 @@ export class ScIncidentsPage extends LitElement {
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+
+    .page-title-section {
+      flex: 1;
     }
 
     .page-title {
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
 
     .header-actions {
@@ -513,7 +531,48 @@ export class ScIncidentsPage extends LitElement {
   }
 
   private async loadIncidents() {
-    // 模拟事件数据
+    // Try to load from API
+    try {
+      const params: IncidentQueryParams = {};
+      if (this.filterStatus !== 'all') {
+        params.status = this.filterStatus;
+      }
+      this.realIncidents = await dataService.getIncidents(params);
+      
+      // Convert to UI format
+      if (this.realIncidents.length > 0) {
+        this.incidents = this.realIncidents.map(inc => ({
+          id: inc.ticketId,
+          title: inc.info.title,
+          description: inc.info.description,
+          severity: this.mapSeverity(inc.info.severity),
+          status: this.mapStatus(inc.workflow.status),
+          category: inc.info.category as IncidentCategory,
+          assignee: inc.workflow.assignee,
+          affectedAssets: inc.impact.affectedAssets,
+          timeline: inc.handlers.map((h, i) => ({
+            id: `t${i}`,
+            timestamp: new Date(h.joinedAt),
+            type: 'action' as const,
+            description: h.actions.join(', '),
+            actor: h.user
+          })),
+          sla: {
+            responseDue: inc.sla.responseDeadline ? new Date(inc.sla.responseDeadline) : new Date(),
+            resolutionDue: inc.sla.resolutionDeadline ? new Date(inc.sla.resolutionDeadline) : new Date(),
+            responseTime: inc.sla.responseTimeMinutes,
+            resolutionTime: inc.sla.resolutionTimeMinutes
+          },
+          evidence: [],
+          relatedIncidents: []
+        }));
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to load incidents from API:', error);
+    }
+    
+    // Fallback to mock data
     this.incidents = [
       {
         id: 'INC-001',
@@ -868,6 +927,24 @@ export class ScIncidentsPage extends LitElement {
     `;
   }
 
+  // ============ API Data Mapping ============
+
+  private mapSeverity(sev: string): IncidentSeverity {
+    const map: Record<string, IncidentSeverity> = {
+      'P0': 'critical', 'P1': 'high', 'P2': 'medium', 'P3': 'low', 'P4': 'low'
+    };
+    return map[sev] || 'medium';
+  }
+
+  private mapStatus(status: string): IncidentStatus {
+    const map: Record<string, IncidentStatus> = {
+      'detected': 'new', 'reported': 'new', 'acknowledged': 'confirmed',
+      'investigating': 'confirmed', 'containing': 'containment',
+      'eradicating': 'eradication', 'recovering': 'recovery', 'closed': 'closed'
+    };
+    return map[status] || 'new';
+  }
+
   render() {
     if (this.loading) {
       return html`
@@ -882,7 +959,16 @@ export class ScIncidentsPage extends LitElement {
       <div class="incidents-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">${this.i18n.t('nav.incidents') || '安全事件'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>🚨</span>
+                ${this.i18n.t('nav.incidents') || '安全事件'}
+              </h1>
+              <!-- 一句话说明 -->
+              <div class="page-description">
+                <span>跟踪和管理所有安全事件的处理进度，快速响应减少损失</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn-icon ${this.viewMode === 'kanban' ? 'active' : ''}" @click=${() => this.viewMode = 'kanban'}>📊</button>
               <button class="btn-icon ${this.viewMode === 'list' ? 'active' : ''}" @click=${() => this.viewMode = 'list'}>📋</button>

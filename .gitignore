@@ -44,3 +44,4 @@ temp/
 
 # Config with secrets
 config/secrets.json
+.opencode/

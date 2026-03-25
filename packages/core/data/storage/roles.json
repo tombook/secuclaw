@@ -1,0 +1,95 @@
+[
+  {
+    "id": "role_admin",
+    "name": "系统管理员",
+    "code": "admin",
+    "description": "系统最高权限管理员",
+    "permissions": [
+      "*"
+    ],
+    "level": 100,
+    "isSystem": true,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "role_ciso",
+    "name": "首席信息安全官",
+    "code": "ciso",
+    "description": "负责企业安全战略和合规管理",
+    "permissions": [
+      "assets.read",
+      "assets.write",
+      "vulnerabilities.read",
+      "vulnerabilities.write",
+      "incidents.read",
+      "incidents.write",
+      "compliance.read",
+      "compliance.write",
+      "roles.read",
+      "roles.write",
+      "users.read",
+      "users.write",
+      "reports.read",
+      "reports.write"
+    ],
+    "level": 50,
+    "isSystem": true,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "role_security_expert",
+    "name": "安全专家",
+    "code": "security-expert",
+    "description": "安全技术专家",
+    "permissions": [
+      "assets.read",
+      "vulnerabilities.read",
+      "vulnerabilities.write",
+      "incidents.read",
+      "incidents.write",
+      "threats.read",
+      "compliance.read"
+    ],
+    "level": 30,
+    "isSystem": true,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "role_security_ops",
+    "name": "安全运维",
+    "code": "security-ops",
+    "description": "安全运维人员",
+    "permissions": [
+      "assets.read",
+      "assets.write",
+      "vulnerabilities.read",
+      "incidents.read",
+      "incidents.write",
+      "threats.read"
+    ],
+    "level": 20,
+    "isSystem": true,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "role_auditor",
+    "name": "审计员",
+    "code": "auditor",
+    "description": "安全审计人员",
+    "permissions": [
+      "assets.read",
+      "vulnerabilities.read",
+      "incidents.read",
+      "compliance.read",
+      "reports.read"
+    ],
+    "level": 10,
+    "isSystem": true,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  }
+]

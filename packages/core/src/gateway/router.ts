@@ -11,12 +11,25 @@ const logger = {
   warn: (...args: any[]) => console.warn('[Router]', ...args),
 };
 
+import { IncidentsService } from '../incidents/service.js';
+import { VulnerabilitiesService } from '../vulnerabilities/service.js';
+import { ThreatsService } from '../threats/service.js';
+import { ComplianceService } from '../compliance/service.js';
+import { AssetsService } from '../assets/service.js';
+import { AIService } from '../ai/service.js';
+
 interface RouterDeps {
   skillLoader: any;
   mitreLoader: any;
   scfLoader: any;
   jsonStore: any;
   capabilitiesService?: CapabilitiesService;
+  incidentsService?: IncidentsService;
+  vulnerabilitiesService?: VulnerabilitiesService;
+  threatsService?: ThreatsService;
+  complianceService?: ComplianceService;
+  assetsService?: AssetsService;
+  aiService?: AIService;
 }
 
 type Handler = (params: Record<string, unknown>) => Promise<unknown>;
@@ -87,6 +100,46 @@ export class Router {
     this.handlers.set('capabilities.evidence.create', this.handleCapabilitiesEvidenceCreate.bind(this));
     this.handlers.set('capabilities.evidence.list', this.handleCapabilitiesEvidenceList.bind(this));
     this.handlers.set('capabilities.overview.metrics', this.handleCapabilitiesOverviewMetrics.bind(this));
+
+    // Incidents
+    this.handlers.set('incidents.list', this.handleIncidentsList.bind(this));
+    this.handlers.set('incidents.get', this.handleIncidentsGet.bind(this));
+    this.handlers.set('incidents.create', this.handleIncidentsCreate.bind(this));
+    this.handlers.set('incidents.update', this.handleIncidentsUpdate.bind(this));
+    this.handlers.set('incidents.delete', this.handleIncidentsDelete.bind(this));
+    this.handlers.set('incidents.updateStatus', this.handleIncidentsUpdateStatus.bind(this));
+    this.handlers.set('incidents.stats', this.handleIncidentsStats.bind(this));
+
+    // Vulnerabilities
+    this.handlers.set('vulnerabilities.list', this.handleVulnerabilitiesList.bind(this));
+    this.handlers.set('vulnerabilities.get', this.handleVulnerabilitiesGet.bind(this));
+    this.handlers.set('vulnerabilities.updateStatus', this.handleVulnerabilitiesUpdateStatus.bind(this));
+    this.handlers.set('vulnerabilities.assign', this.handleVulnerabilitiesAssign.bind(this));
+    this.handlers.set('vulnerabilities.stats', this.handleVulnerabilitiesStats.bind(this));
+
+    // Threats
+    this.handlers.set('threats.list', this.handleThreatsList.bind(this));
+    this.handlers.set('threats.get', this.handleThreatsGet.bind(this));
+    this.handlers.set('threats.stats', this.handleThreatsStats.bind(this));
+    this.handlers.set('threats.search', this.handleThreatsSearch.bind(this));
+
+    // Compliance
+    this.handlers.set('compliance.list', this.handleComplianceList.bind(this));
+    this.handlers.set('compliance.get', this.handleComplianceGet.bind(this));
+    this.handlers.set('compliance.stats', this.handleComplianceStats.bind(this));
+
+    // Assets
+    this.handlers.set('assets.list', this.handleAssetsList.bind(this));
+    this.handlers.set('assets.get', this.handleAssetsGet.bind(this));
+    this.handlers.set('assets.stats', this.handleAssetsStats.bind(this));
+
+    // AI
+    this.handlers.set('ai.insights', this.handleAIInsights.bind(this));
+    this.handlers.set('ai.anomalies', this.handleAIAnomalies.bind(this));
+    this.handlers.set('ai.trend', this.handleAITrend.bind(this));
+    this.handlers.set('ai.recommendations', this.handleAIRecommendations.bind(this));
+    this.handlers.set('ai.anomaly.acknowledge', this.handleAIAnomalyAcknowledge.bind(this));
+    this.handlers.set('ai.anomaly.resolve', this.handleAIAnomalyResolve.bind(this));
   }
 
   private normalizeProvider(input: unknown, index: number): { provider: any; changed: boolean } {
@@ -650,6 +703,277 @@ export class Router {
 
   private async handleCapabilitiesOverviewMetrics(params: Record<string, unknown>) {
     return this.getCapabilitiesService().getOverviewMetrics();
+  }
+
+  // ==================== Incidents Handlers ====================
+
+  private getIncidentsService(): IncidentsService {
+    if (!this.deps.incidentsService) {
+      const { IncidentsRepository } = require('../incidents/repository.js');
+      const repo = new IncidentsRepository(this.deps.jsonStore);
+      this.deps.incidentsService = new IncidentsService(repo);
+    }
+    return this.deps.incidentsService;
+  }
+
+  private async handleIncidentsList(params: Record<string, unknown>) {
+    return this.getIncidentsService().list({
+      status: params.status as any,
+      severity: params.severity as any,
+      category: params.category as any,
+      assignee: params.assignee as string,
+      domainId: params.domainId as any,
+      fromDate: params.fromDate as number,
+      toDate: params.toDate as number,
+      page: params.page as number,
+      pageSize: params.pageSize as number,
+    });
+  }
+
+  private async handleIncidentsGet(params: Record<string, unknown>) {
+    const { id } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getIncidentsService().get(id as string);
+  }
+
+  private async handleIncidentsCreate(params: Record<string, unknown>) {
+    return this.getIncidentsService().create({
+      domainId: params.domainId as any,
+      title: params.title as string,
+      description: params.description as string,
+      category: params.category as any,
+      severity: params.severity as any,
+      source: params.source as string,
+      affectedAssets: params.affectedAssets as any,
+      affectedUsers: params.affectedUsers as number,
+      dataTypes: params.dataTypes as any,
+      businessImpact: params.businessImpact as string,
+      attackVector: params.attackVector as string,
+      mitreTechniques: params.mitreTechniques as any,
+    });
+  }
+
+  private async handleIncidentsUpdate(params: Record<string, unknown>) {
+    const { id, ...data } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getIncidentsService().update(id as string, data);
+  }
+
+  private async handleIncidentsDelete(params: Record<string, unknown>) {
+    const { id } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getIncidentsService().delete(id as string);
+  }
+
+  private async handleIncidentsUpdateStatus(params: Record<string, unknown>) {
+    const { id, status, actor, note } = params;
+    if (!id || !status) throw new Error('Missing required parameters: id, status');
+    return this.getIncidentsService().updateStatus(
+      id as string, 
+      status as any, 
+      actor as string, 
+      note as string
+    );
+  }
+
+  private async handleIncidentsStats() {
+    return this.getIncidentsService().getStats();
+  }
+
+  // ==================== Vulnerabilities Handlers ====================
+
+  private getVulnerabilitiesService(): VulnerabilitiesService {
+    if (!this.deps.vulnerabilitiesService) {
+      const { VulnerabilitiesRepository } = require('../vulnerabilities/repository.js');
+      const repo = new VulnerabilitiesRepository(this.deps.jsonStore);
+      this.deps.vulnerabilitiesService = new VulnerabilitiesService(repo);
+    }
+    return this.deps.vulnerabilitiesService;
+  }
+
+  private async handleVulnerabilitiesList(params: Record<string, unknown>) {
+    return this.getVulnerabilitiesService().list({
+      status: params.status as string,
+      severity: params.severity as string,
+      cveId: params.cveId as string,
+      assetId: params.assetId as string,
+      assignedTo: params.assignedTo as string,
+      page: params.page as number,
+      pageSize: params.pageSize as number,
+    });
+  }
+
+  private async handleVulnerabilitiesGet(params: Record<string, unknown>) {
+    const { id } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getVulnerabilitiesService().get(id as string);
+  }
+
+  private async handleVulnerabilitiesUpdateStatus(params: Record<string, unknown>) {
+    const { id, status, assignedTo, user } = params;
+    if (!id || !status) throw new Error('Missing required parameters: id, status');
+    return this.getVulnerabilitiesService().updateRemediation(
+      id as string, 
+      status as any,
+      assignedTo as string,
+      user as string
+    );
+  }
+
+  private async handleVulnerabilitiesAssign(params: Record<string, unknown>) {
+    const { id, assignedTo, user } = params;
+    if (!id || !assignedTo) throw new Error('Missing required parameters: id, assignedTo');
+    return this.getVulnerabilitiesService().assign(id as string, assignedTo as string, user as string);
+  }
+
+  private async handleVulnerabilitiesStats() {
+    return this.getVulnerabilitiesService().getStats();
+  }
+
+  // ==================== Threats Handlers ====================
+
+  private getThreatsService(): ThreatsService {
+    if (!this.deps.threatsService) {
+      const { ThreatsRepository } = require('../threats/repository.js');
+      const repo = new ThreatsRepository(this.deps.jsonStore);
+      this.deps.threatsService = new ThreatsService(repo);
+    }
+    return this.deps.threatsService;
+  }
+
+  private async handleThreatsList(params: Record<string, unknown>) {
+    return this.getThreatsService().list({
+      type: params.type as string,
+      motivation: params.motivation as string,
+      target: params.target as string,
+      page: params.page as number,
+      pageSize: params.pageSize as number,
+    });
+  }
+
+  private async handleThreatsGet(params: Record<string, unknown>) {
+    const { id } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getThreatsService().get(id as string);
+  }
+
+  private async handleThreatsStats() {
+    return this.getThreatsService().getStats();
+  }
+
+  private async handleThreatsSearch(params: Record<string, unknown>) {
+    const { keyword } = params;
+    if (!keyword) throw new Error('Missing required parameter: keyword');
+    return this.getThreatsService().search(keyword as string);
+  }
+
+  // ==================== Compliance Handlers ====================
+
+  private getComplianceService(): ComplianceService {
+    if (!this.deps.complianceService) {
+      const { ComplianceRepository } = require('../compliance/repository.js');
+      const repo = new ComplianceRepository(this.deps.jsonStore);
+      this.deps.complianceService = new ComplianceService(repo);
+    }
+    return this.deps.complianceService;
+  }
+
+  private async handleComplianceList(params: Record<string, unknown>) {
+    return this.getComplianceService().list({
+      jurisdiction: params.jurisdiction as string,
+      page: params.page as number,
+      pageSize: params.pageSize as number,
+    });
+  }
+
+  private async handleComplianceGet(params: Record<string, unknown>) {
+    const { id } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getComplianceService().get(id as string);
+  }
+
+  private async handleComplianceStats() {
+    return this.getComplianceService().getStats();
+  }
+
+  // ==================== Assets Handlers ====================
+
+  private getAssetsService(): AssetsService {
+    if (!this.deps.assetsService) {
+      const { AssetsRepository } = require('../assets/repository.js');
+      const repo = new AssetsRepository(this.deps.jsonStore);
+      this.deps.assetsService = new AssetsService(repo);
+    }
+    return this.deps.assetsService;
+  }
+
+  private async handleAssetsList(params: Record<string, unknown>) {
+    return this.getAssetsService().list({
+      type: params.type as string,
+      category: params.category as string,
+      environment: params.environment as string,
+      criticality: params.criticality as string,
+      status: params.status as string,
+      owner: params.owner as string,
+      department: params.department as string,
+      page: params.page as number,
+      pageSize: params.pageSize as number,
+    });
+  }
+
+  private async handleAssetsGet(params: Record<string, unknown>) {
+    const { id } = params;
+    if (!id) throw new Error('Missing required parameter: id');
+    return this.getAssetsService().get(id as string);
+  }
+
+  private async handleAssetsStats() {
+    return this.getAssetsService().getStats();
+  }
+
+  // ==================== AI Handlers ====================
+
+  private getAIService(): AIService {
+    if (!this.deps.aiService) {
+      this.deps.aiService = new AIService(this.deps.jsonStore);
+    }
+    return this.deps.aiService;
+  }
+
+  private async handleAIInsights(params: Record<string, unknown>) {
+    const context = (params.context as string) || 'general';
+    return this.getAIService().generateInsights(context, params.data);
+  }
+
+  private async handleAIAnomalies(params: Record<string, unknown>) {
+    const context = (params.context as string) || 'general';
+    return this.getAIService().detectAnomalies(context, params.data);
+  }
+
+  private async handleAITrend(params: Record<string, unknown>) {
+    const metric = (params.metric as string) || 'risk-score';
+    const timeframe = (params.timeframe as string) || '30d';
+    return this.getAIService().predictTrend(metric, timeframe);
+  }
+
+  private async handleAIRecommendations(params: Record<string, unknown>) {
+    const context = (params.context as string) || 'general';
+    return this.getAIService().generateRecommendations(context, params.data);
+  }
+
+  private async handleAIAnomalyAcknowledge(params: Record<string, unknown>) {
+    const { anomalyId, acknowledgedBy } = params;
+    if (!anomalyId) throw new Error('Missing required parameter: anomalyId');
+    return this.getAIService().acknowledgeAnomaly(
+      anomalyId as string,
+      (acknowledgedBy as string) || 'system'
+    );
+  }
+
+  private async handleAIAnomalyResolve(params: Record<string, unknown>) {
+    const { anomalyId } = params;
+    if (!anomalyId) throw new Error('Missing required parameter: anomalyId');
+    return this.getAIService().resolveAnomaly(anomalyId as string);
   }
 
   // ==================== AI Experts Config Handlers ====================

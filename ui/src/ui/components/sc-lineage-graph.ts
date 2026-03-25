@@ -5,7 +5,7 @@
  * 用于展示数据流向、资产关系、攻击路径等场景
  */
 
-import { LitElement, html, css, svg, SVGTemplateResult } from 'lit';
+import { LitElement, html, css, svg, type SVGTemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { classMap } from 'lit/directives/class-map.js';

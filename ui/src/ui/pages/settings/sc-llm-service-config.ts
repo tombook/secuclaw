@@ -301,8 +301,6 @@ export class ScLlmServiceConfig extends LitElement {
         return;
       }
       
-      console.log('[sc-llm-service-config] Migrating', legacyProviders.length, 'providers from localStorage to backend...');
-      
       // Add each provider to backend
       for (const provider of legacyProviders) {
         await gatewayClient.request<LLMProvider>('llm.providers.add', {
@@ -321,8 +319,6 @@ export class ScLlmServiceConfig extends LitElement {
       // Mark as migrated and clean up
       localStorage.setItem(MIGRATION_FLAG_KEY, 'true');
       localStorage.removeItem(LEGACY_STORAGE_KEY);
-      
-      console.log('[sc-llm-service-config] Migration completed successfully');
     } catch (error) {
       console.error('[sc-llm-service-config] Migration failed:', error);
     }

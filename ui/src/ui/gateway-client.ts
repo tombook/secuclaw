@@ -51,7 +51,6 @@ class GatewayClient {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
-        console.log('[Gateway] Connected to', this.url);
         this.status = 'connected';
         this.reconnectAttempts = 0;
         this.flushMessageQueue();
@@ -60,7 +59,6 @@ class GatewayClient {
       };
 
       this.ws.onclose = (event) => {
-        console.log('[Gateway] Disconnected:', event.code, event.reason);
         this.status = 'disconnected';
         this.notifyConnectionHandlers(false);
         this.scheduleReconnect();
@@ -101,7 +99,6 @@ class GatewayClient {
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-    console.log(`[Gateway] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
     setTimeout(() => {
       this.connect().catch(console.error);

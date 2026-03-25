@@ -1,0 +1,418 @@
+// SecuClaw Database Schema
+// Week 2 - DB-002: Vulnerability, DB-003: Incident, DB-004: Task
+// Generated: 2026-03-12
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// DB-002: 漏洞库 (Vulnerability Database)
+// ============================================
+
+model Vulnerability {
+  id          String   @id @default(cuid())
+  cveId       String   @unique // CVE编号，如 CVE-2024-1234
+  title       String
+  description String   @db.Text
+
+  // CVSS 评分
+  cvssScore   Float?
+  cvssVector  String?
+  severity    Severity @default(LOW) // critical, high, medium, low, info
+
+  // CWE 信息
+  cweIds      String[] // CWE-79, CWE-89 等
+
+  // 影响产品
+  affectedProducts String[]
+
+  // 漏洞状态
+  status      VulnStatus @default(OPEN)
+  priority    String?    // P0, P1, P2, P3, P4
+
+  // 利用信息
+  exploitAvailable Boolean @default(false)
+  exploitInWild    Boolean @default(false)
+
+  // 修复信息
+  fixAvailable Boolean @default(false)
+  fixVersion    String?
+  fixSteps      String? @db.Text
+
+  // AI 风险评分
+  aiPriority      Int     @default(0)
+  businessImpact  Int     @default(0) // 1-10
+  exposureScore   Int     @default(0) // 0-100
+  threatScore     Int     @default(0)
+
+  // 扫描信息
+  scanSource     String?
+  firstDetected  DateTime @default(now())
+  lastDetected   DateTime @default(now())
+  proofOfConcept String?  @db.Text
+
+  // 关联资产
+  affectedAssets VulnerabilityAsset[]
+
+  // 修复进度
+  assignedTo     String?
+  dueDate        DateTime?
+  slaDeadline    DateTime?
+
+  // 审计字段
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedBy      String
+  updatedAt      DateTime @default(now())
+  history        AuditLog[]
+
+  @@index([severity])
+  @@index([status])
+  @@index([cveId])
+}
+
+model VulnerabilityAsset {
+  id              String       @id @default(cuid())
+  vulnerabilityId String
+  assetId         String
+  assetName       String       // 冗余存储便于查询
+  componentName   String?
+  componentVersion String?
+  fixVersion      String?
+
+  // 关联
+  vulnerability   Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
+
+  @@unique([vulnerabilityId, assetId])
+}
+
+// 漏洞状态枚举
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum VulnStatus {
+  OPEN
+  IN_PROGRESS
+  FIXED
+  WONT_FIX
+  RISK_ACCEPTED
+}
+
+// ============================================
+// DB-003: 事件库 (Incident Database)
+// ============================================
+
+model Incident {
+  id          String   @id @default(cuid())
+  ticketId    String   @unique // 工单编号，如 INC-2026-001
+
+  // 基本信息
+  title       String
+  description String   @db.Text
+  category    IncidentCategory
+  severity    IncidentSeverity // P0, P1, P2, P3, P4
+  priority    Int      @default(50) // 1-100
+
+  // 时间线
+  detectedAt    DateTime?
+  reportedAt    DateTime?
+  acknowledgedAt DateTime?
+  containingAt  DateTime?
+  eradicatedAt  DateTime?
+  recoveredAt   DateTime?
+  closedAt       DateTime?
+
+  // SLA
+  responseDeadline   DateTime?
+  resolutionDeadline DateTime?
+  responseBreached  Boolean  @default(false)
+  resolutionBreached Boolean @default(false)
+
+  // 工作流状态
+  status      IncidentStatus
+  assignee    String?
+  previousStatus String?
+
+  // 影响范围
+  affectedAssets String[] // 资产ID列表
+  affectedUsers  Int       @default(0)
+  dataTypes     String[]
+  businessImpact String?   @db.Text
+  estimatedLoss Decimal?   @db.Decimal(15, 2)
+
+  // 攻击信息
+  attackVector   String?
+  threatActor    String?
+  mitreTechniques String[]
+  iocs           String[] // IOC ID列表
+
+  // 处理人员
+  handlers IncidentHandler[]
+
+  // 证据
+  artifacts          String[]
+  chainOfCustody     String[]
+
+  // 复盘报告
+  rootCause      String?   @db.Text
+  lessonsLearned String[]
+  recommendations String[]
+  postMortemCompleted Boolean @default(false)
+
+  // 审计字段
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedBy      String
+  updatedAt      DateTime @default(now())
+
+  // 关联
+  timeline       IncidentTimelineEvent[]
+
+  @@index([severity])
+  @@index([status])
+  @@index([ticketId])
+}
+
+model IncidentHandler {
+  id          String   @id @default(cuid())
+  incidentId  String
+  userId      String
+  role        String   // handler, lead, coordinator
+  joinedAt    DateTime @default(now())
+  actions     String[] // 操作记录
+
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model IncidentTimelineEvent {
+  id          String   @id @default(cuid())
+  incidentId  String
+  timestamp   DateTime @default(now())
+  action      String
+  description String?  @db.Text
+  userId      String?
+
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+}
+
+// 事件分类
+enum IncidentCategory {
+  MALWARE
+  INTRUSION
+  PHISHING
+  DDOS
+  DATA_BREACH
+  INSIDER
+  OTHER
+}
+
+// 事件严重程度
+enum IncidentSeverity {
+  P0
+  P1
+  P2
+  P3
+  P4
+}
+
+// 事件状态
+enum IncidentStatus {
+  NEW
+  CONFIRMED
+  ANALYZING
+  CONTAINING
+  ERADICATING
+  RECOVERING
+  CLOSED
+  REOPENED
+  FALSE_POSITIVE
+}
+
+// ============================================
+// DB-004: 任务库 (Task Database)
+// ============================================
+
+model Task {
+  id          String   @id @default(cuid())
+  taskId      String   @unique // 任务编号，如 TASK-2026-001
+
+  // 基本信息
+  name        String
+  description String?  @db.Text
+  type        TaskType
+  category    String?  // 自定义分类
+
+  // 状态机
+  status      TaskStatus @default(PENDING)
+  
+  // 优先级
+  priority    Int       @default(50) // 1-100
+  urgency     TaskUrgency @default(MEDIUM)
+
+  // 时间信息
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  dueDate     DateTime?
+
+  // 执行信息
+  estimatedHours Float?
+  actualHours   Float?
+
+  // 分配信息
+  creatorId    String
+  ownerId      String?  // 负责人
+  assigneeId   String? // 执行者
+  approverId   String? // 审批人
+
+  // 审批流程
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedBy     String?
+  approvedAt     DateTime?
+  approvalNote   String?
+
+  // 依赖关系
+  dependsOn    String[] // 依赖的任务ID
+
+  // 标签
+  tags         String[]
+
+  // 回调/钩子
+  webhookUrl   String?
+  notifyOnComplete Boolean @default(false)
+
+  // 审计字段
+  createdBy    String
+  updatedBy    String
+  updatedAt    DateTime @default(now())
+  history      AuditLog[]
+
+  // 执行日志
+  executions   TaskExecution[]
+
+  @@index([status])
+  @@index([type])
+  @@index([ownerId])
+  @@index([assigneeId])
+}
+
+model TaskExecution {
+  id          String   @id @default(cuid())
+  taskId      String
+  
+  // 执行信息
+  attempt     Int      @default(1)
+  status      TaskExecutionStatus
+  
+  // 时间
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  durationMs  Int?     // 毫秒
+  
+  // 执行结果
+  output      String?  @db.Text
+  error       String?  @db.Text
+  exitCode    Int?
+  
+  // 执行者
+  executedBy  String?
+  
+  // 重试信息
+  retryCount  Int      @default(0)
+  maxRetries  Int      @default(3)
+
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}
+
+// 任务类型
+enum TaskType {
+  SCAN
+  REMEDIATION
+  NOTIFICATION
+  REPORT
+  COMPLIANCE
+  AUTOMATION
+  MANUAL
+  OTHER
+}
+
+// 任务状态
+enum TaskStatus {
+  PENDING
+  READY
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+  PAUSED
+}
+
+// 任务紧急度
+enum TaskUrgency {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+// 审批状态
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SKIPPED
+}
+
+// 执行状态
+enum TaskExecutionStatus {
+  STARTED
+  SUCCESS
+  FAILED
+  TIMEOUT
+  CANCELLED
+}
+
+// ============================================
+// 通用模型
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  
+  // 关联类型 (vulnerability, incident, task)
+  entityType  String
+  entityId    String
+  
+  // 操作
+  action      String
+  details     String?  @db.Text
+  
+  // 执行者
+  userId      String
+  
+  // 时间戳
+  timestamp   DateTime @default(now())
+
+  // 关联 (使用字符串引用，避免循环依赖)
+  vulnerabilityId String?
+  incidentId      String?
+  taskId           String?
+
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}

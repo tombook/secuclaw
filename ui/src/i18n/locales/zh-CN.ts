@@ -31,8 +31,6 @@ export const zh_CN = {
     incidents: '安全事件',
     vulnerabilities: '漏洞管理',
     compliance: '合规审计',
-    reports: '分析报告',
-    risk: '安全风险',
     warRoom: '作战室',
     aiExperts: 'AI安全专家',
     capabilities: '能力中心',
@@ -40,13 +38,8 @@ export const zh_CN = {
     skillsMarket: '技能市场',
     channels: '通讯管理',
     settings: '系统设置',
-    // Tool demo pages
-    baseline: '基线检查',
-    vulnScan: '漏洞扫描',
-    pentest: '渗透测试',
-    threatHunt: '威胁狩猎',
-    alerts: '告警处置',
-    dataCenter: '数据资源中心',
+    // Security Operations Center
+    securityOps: '安全运营中心',
   },
 
   roles: {

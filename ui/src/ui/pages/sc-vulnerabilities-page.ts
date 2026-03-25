@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation, type TrendPrediction } from '../ai-service.js';
+import { dataService, type Vulnerability as VulnData, type VulnerabilityQueryParams } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -129,13 +130,26 @@ export class ScVulnerabilitiesPage extends LitElement {
     .page-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+
+    .page-title-section {
+      flex: 1;
     }
 
     .page-title {
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
 
     .header-actions {
@@ -524,7 +538,61 @@ export class ScVulnerabilitiesPage extends LitElement {
   }
 
   private async loadVulnerabilities() {
-    // 模拟漏洞数据
+    // Try to load from API
+    try {
+      const params: VulnerabilityQueryParams = {};
+      if (this.severityFilter !== 'all') {
+        params.severity = this.severityFilter;
+      }
+      if (this.statusFilter !== 'all') {
+        params.status = this.statusFilter;
+      }
+      if (this.searchQuery) {
+        params.cveId = this.searchQuery;
+      }
+      
+      const realVulns = await dataService.getVulnerabilities(params);
+      
+      if (realVulns.length > 0) {
+        this.vulnerabilities = realVulns.map(v => ({
+          id: v.id,
+          cve: v.info.cveId,
+          title: v.info.title,
+          description: v.info.description,
+          severity: v.info.cvss.severity as VulnerabilitySeverity,
+          cvssScore: v.info.cvss.score,
+          epssScore: 0,
+          status: v.remediation.status === 'resolved' ? 'fixed' : 
+                  v.remediation.status === 'in_progress' ? 'in-progress' :
+                  v.remediation.status as VulnerabilityStatus,
+          asset: v.affectedAssets[0] ? {
+            id: v.affectedAssets[0].assetId,
+            name: v.affectedAssets[0].componentName,
+            type: 'server' as AssetType,
+            criticality: 'high'
+          } : { id: '', name: 'Unknown', type: 'server' as AssetType, criticality: 'medium' },
+          discoveredAt: new Date(v.createdAt),
+          dueDate: v.remediation.dueDate ? new Date(v.remediation.dueDate) : undefined,
+          assignee: v.remediation.assignedTo,
+          fixAvailable: v.remediation.fixAvailable,
+          exploitAvailable: v.info.exploitInWild,
+          tags: v.info.cwe,
+          aiPriority: v.risk.totalRiskScore,
+          aiRecommendation: v.remediation.fixSteps[0] || '',
+          remediationSteps: v.remediation.fixSteps,
+          affectedVersions: v.info.affectedProducts,
+          mitreTechniques: [],
+          relatedEvents: [],
+          aiCorrelation: ''
+        }));
+        this.filteredVulns = this.vulnerabilities;
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to load vulnerabilities from API:', error);
+    }
+    
+    // Fallback to mock data
     this.vulnerabilities = [
       {
         id: 'vuln-1',
@@ -1018,7 +1086,15 @@ export class ScVulnerabilitiesPage extends LitElement {
       <div class="vulns-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">${this.i18n.t('nav.vulnerabilities') || '漏洞管理'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>🐛</span>
+                ${this.i18n.t('nav.vulnerabilities') || '漏洞管理'}
+              </h1>
+              <div class="page-description">
+                <span>发现和跟踪系统漏洞，按优先级修复，降低被攻击风险</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📤 导出报告</button>
               <button class="btn btn-primary">+ 开始扫描</button>

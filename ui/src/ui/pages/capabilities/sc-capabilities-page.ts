@@ -41,6 +41,13 @@ export class ScCapabilitiesPage extends LitElement {
     .page-header{
       padding: var(--sc-spacing-xl);
       border-bottom: 1px solid var(--sc-border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .page-title-section {
+      flex: 1;
     }
     
     .page-title{
@@ -48,12 +55,40 @@ export class ScCapabilitiesPage extends LitElement {
       font-weight: 600;
       color: var(--sc-text-primary);
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
     }
     
-    .page-subtitle{
+    .page-subtitle, .page-description {
       font-size: var(--sc-font-size-sm);
       color: var(--sc-text-tertiary);
       margin-top: var(--sc-spacing-xs);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+
+    .btn {
+      padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
+      border-radius: var(--sc-radius-md, 8px);
+      font-size: var(--sc-font-size-sm, 14px);
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background-color: var(--sc-primary, #3b82f6);
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: var(--sc-bg-secondary, #f8fafc);
+      color: var(--sc-text-primary, #1e293b);
+      border: 1px solid var(--sc-border-color, #e2e8f0);
     }
     
     .tabs-container{
@@ -176,8 +211,17 @@ export class ScCapabilitiesPage extends LitElement {
     return html`
       <div class="page-container">
         <div class="page-header">
-          <h1 class="page-title">${this.i18n.t('capabilities.title')}</h1>
-          <p class="page-subtitle">${this.i18n.t('capabilities.subtitle')}</p>
+          <div class="page-title-section">
+            <h1 class="page-title">
+              <span>⚔️</span>
+              ${this.i18n.t('capabilities.title')}
+            </h1>
+            <p class="page-description">查看和管理6大安全能力域，执行和跟踪安全任务</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-primary">+ 执行任务</button>
+            <button class="btn btn-secondary">📋 审批</button>
+          </div>
         </div>
         
         <div class="tabs-container">

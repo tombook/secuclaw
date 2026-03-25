@@ -21,6 +21,17 @@ import './pages/settings/sc-ai-experts-config.js';
 import './pages/capabilities/sc-capabilities-page.js';
 import './pages/tools/sc-tool-demo-base.js';
 import './pages/tools/sc-tool-baseline.js';
+import './pages/tools/sc-tool-baseline-v2.js';
+import './pages/tools/sc-security-tools.js';
+import './pages/sc-secops-center.js';
+import './pages/sc-baseline-page.js';
+import './pages/sc-vulnscan-page.js';
+import './pages/sc-pentest-page.js';
+import './pages/sc-threathunt-page.js';
+import './pages/sc-datacenter-page.js';
+import './pages/sc-reports-pro.js';
+import './pages/sc-risk-page.js';
+import './pages/sc-risk-center.js';
 import './pages/tools/sc-tool-all.js';
 
 import { gatewayClient } from './gateway-client.js';
@@ -68,19 +79,24 @@ export class ScApp extends LitElement {
       { path: '/settings/llm-config', component: 'sc-llm-service-config' },
       { path: '/settings/ai-experts-config', component: 'sc-ai-experts-config' },
       { path: '/capabilities', component: 'sc-capabilities-page' },
-      // Tool Demo Pages - 按现有模块整合
-      { path: '/tools/baseline', component: 'sc-tool-baseline' },
-      { path: '/tools/vuln-scan', component: 'sc-tool-vuln' },
-      { path: '/tools/config-check', component: 'sc-tool-config' },
-      { path: '/tools/pentest', component: 'sc-tool-pentest' },
-      { path: '/tools/attack-path', component: 'sc-tool-attack-path' },
-      { path: '/tools/threat-hunt', component: 'sc-tool-threat-hunt' },
-      { path: '/tools/supply-chain', component: 'sc-tool-supply-chain' },
-      { path: '/tools/alerts', component: 'sc-tool-alerts' },
-      { path: '/tools/edr', component: 'sc-tool-edr' },
-      { path: '/tools/compliance', component: 'sc-tool-compliance' },
-      { path: '/tools/dpia', component: 'sc-tool-dpia' },
-      { path: '/tools/risk', component: 'sc-tool-risk' },
+      // Professional Design Pages
+      { path: '/tools/baseline', component: 'sc-baseline-page' },
+      { path: '/tools/vuln-scan', component: 'sc-vulnscan-page' },
+      { path: '/tools/pentest', component: 'sc-pentest-page' },
+      { path: '/tools/threat-hunt', component: 'sc-threathunt-page' },
+      { path: '/tools/security-ops', component: 'sc-secops-center' },
+      { path: '/data-center', component: 'sc-datacenter-page' },
+      { path: '/reports-pro', component: 'sc-reports-pro' },
+      { path: '/risk-center', component: 'sc-risk-page' },
+      // Legacy tool routes (redirect to secops center)
+      { path: '/tools/config-check', component: 'sc-secops-center' },
+      { path: '/tools/attack-path', component: 'sc-secops-center' },
+      { path: '/tools/supply-chain', component: 'sc-secops-center' },
+      { path: '/tools/alerts', component: 'sc-secops-center' },
+      { path: '/tools/edr', component: 'sc-secops-center' },
+      { path: '/tools/compliance', component: 'sc-secops-center' },
+      { path: '/tools/dpia', component: 'sc-secops-center' },
+      { path: '/tools/risk', component: 'sc-secops-center' },
       { path: '(.*)', redirect: '/' },
     ]);
     (window as any).__router = router;

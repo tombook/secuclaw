@@ -79,12 +79,23 @@ export class ScWarRoomPage extends LitElement {
     .page-header{
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+    }
+    .page-title-section {
+      flex: 1;
     }
     .page-title{
       font-size: var(--sc-font-size-2xl, 24px);
       font-weight: 600;
       color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+    .page-description {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-top: var(--sc-spacing-xs, 4px);
     }
     .header-actions{
       display: flex;
@@ -462,7 +473,15 @@ export class ScWarRoomPage extends LitElement {
       <div class="warroom-container">
         <div class="main-content">
           <div class="page-header">
-            <h1 class="page-title">🎯 ${this.i18n.t('nav.warRoom') || '作战室'}</h1>
+            <div class="page-title-section">
+              <h1 class="page-title">
+                <span>🎯</span>
+                ${this.i18n.t('nav.warRoom') || '作战室'}
+              </h1>
+              <div class="page-description">
+                <span>实时协同指挥，应对正在发生的安全事件</span>
+              </div>
+            </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📋 运行日志</button>
               <button class="btn btn-primary">🚨 紧急事件</button>
