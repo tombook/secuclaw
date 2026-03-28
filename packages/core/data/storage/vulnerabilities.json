@@ -1,268 +1,189 @@
 [
   {
-    "id": "vuln_001",
+    "id": "vuln-001",
     "info": {
-      "cveId": "CVE-2024-1234",
-      "title": "Apache Log4j Remote Code Execution",
-      "description": "Apache Log4j2 JNDILookup JMSI Deserialization RCE Vulnerability",
+      "cveId": "CVE-2024-21762",
+      "title": "FortiOS SSL VPN远程代码执行漏洞",
+      "description": "FortiOS SSL VPN存在远程代码执行漏洞，CVSS评分9.8",
       "cvss": {
         "score": 9.8,
-        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
         "severity": "critical"
       },
-      "cwe": ["CWE-502", "CWE-94"],
-      "affectedProducts": ["Apache Log4j 2.14.1", "Log4j 1.217.0"],
+      "cwe": [
+        "CWE-1225"
+      ],
+      "affectedProducts": [
+        "FortiOS 7.4.0-7.4.2"
+      ],
       "exploitAvailable": true,
       "exploitInWild": true
     },
     "affectedAssets": [
       {
-        "assetId": "asset_001",
-        "componentName": "log4j-core",
-        "componentVersion": "2.14.1",
-        "fixVersion": "2.17.1"
-      },
-      {
-        "assetId": "asset_003",
-        "componentName": "log4j-core",
-        "componentVersion": "2.14.1",
-        "fixVersion": "2.17.1"
+        "assetId": "asset-001",
+        "componentName": "FortiGate-100F",
+        "componentVersion": "7.4.1",
+        "fixVersion": "7.4.3"
       }
     ],
     "remediation": {
       "status": "open",
-      "priority": 98,
-      "assignedTo": "user_002",
-      "dueDate": 1709321600000,
-      "slaDeadline": 1709238400000,
+      "priority": 1,
       "fixAvailable": true,
       "fixSteps": [
-        "Update log4j to version 2.17.1 or later",
-        "If using Spring Boot, add log4j-spring-boot-starter 2.17.1",
-        "Set LOG4J_FORMAT_MSG_NO_LOOKUPS=true environment variable"
-        "Review and apply mitigations from official advisory"
+        "升级到7.4.3"
       ]
     },
     "risk": {
       "baseScore": 9.8,
-      "adjustedScore": 9.5,
+      "adjustedScore": 9.8,
       "businessImpact": 10,
-      "exposureScore": 95,
-      "threatScore": 100
+      "exposureScore": 8,
+      "totalRiskScore": 9.8
     },
-    "evidence": {
-      "scanSource": "Nessus Professional",
-      "firstDetected": 1709145600000,
-      "lastDetected": 1709234567890,
-      "proofOfConcept": "https://github.com/advisories/GHSA-...",
-      "screenshot": "evidence/vuln_001_screenshot.png"
-    },
-    "createdBy": "system",
-    "createdAt": 1709145600000,
-    "updatedBy": "system",
-    "updatedAt": 1709234567890,
-    "history": [
-      {
-        "timestamp": 1709145600000,
-        "action": "created",
-        "userId": "system",
-        "details": "Vulnerability detected by automated scan"
-      },
-      {
-        "timestamp": 1709200000000,
-        "action": "priority_updated",
-        "userId": "ai_system",
-        "details": "Priority adjusted to 98 based on exploit availability and business impact"
-      }
-    ]
+    "createdAt": 1774049869698,
+    "updatedAt": 1774309069698
   },
   {
-    "id": "vuln_002",
+    "id": "vuln-002",
     "info": {
-      "cveId": "CVE-2024-5678",
-      "title": "Spring Framework RCE Vulnerability",
-      "description": "Spring Framework remote code execution via data binding",
+      "cveId": "CVE-2024-3400",
+      "title": "Palo Alto PAN-OS命令注入漏洞",
+      "description": "Palo Alto PAN-OS存在命令注入漏洞",
       "cvss": {
-        "score": 8.5,
-        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
-        "severity": "high"
+        "score": 10,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+        "severity": "critical"
       },
-      "cwe": ["CWE-502"],
-      "affectedProducts": ["Spring Framework 5.3.0-6.0.0"],
+      "cwe": [
+        "CWE-77"
+      ],
+      "affectedProducts": [
+        "PAN-OS 10.2",
+        "PAN-OS 11.0"
+      ],
       "exploitAvailable": true,
       "exploitInWild": false
     },
     "affectedAssets": [
       {
-        "assetId": "asset_003",
-        "componentName": "spring-core",
-        "componentVersion": "5.3.20",
-        "fixVersion": "6.0.0"
+        "assetId": "asset-003",
+        "componentName": "PA-460",
+        "componentVersion": "10.2.8",
+        "fixVersion": "10.2.9-h1"
       }
     ],
     "remediation": {
       "status": "in_progress",
-      "priority": 75,
-      "assignedTo": "user_003",
-      "dueDate": 1709496960000,
-      "slaDeadline": 1709408000000,
+      "priority": 1,
+      "assignedTo": "李运维",
       "fixAvailable": true,
       "fixSteps": [
-        "Upgrade Spring Framework to version 6.0.0 or later",
-        "Review and apply Spring Security configuration",
-        "Consider using spring-boot-starter-security"
+        "应用PAN-OS补丁"
       ]
     },
     "risk": {
-      "baseScore": 8.5,
-      "adjustedScore": 7.8,
-      "businessImpact": 7,
-      "exposureScore": 85,
-      "threatScore": 65
+      "baseScore": 10,
+      "adjustedScore": 10,
+      "businessImpact": 10,
+      "exposureScore": 9,
+      "totalRiskScore": 10
     },
-    "evidence": {
-      "scanSource": "Qualys",
-      "firstDetected": 1709182400000,
-      "lastDetected": 1709234567890,
-      "proofOfConcept": "https://qualys.com/...",
-      "screenshot": ""
-    },
-    "createdBy": "system",
-    "createdAt": 1709182400000,
-    "updatedBy": "user_003",
-    "updatedAt": 1709234567890,
-    "history": []
+    "createdAt": 1774136269698,
+    "updatedAt": 1774395469698
   },
   {
-    "id": "vuln_003",
+    "id": "vuln-003",
     "info": {
-      "cveId": "CVE-2024-9999",
-      "title": "PostgreSQL Privilege Escalation",
-      "description": "PostgreSQL privilege escalation vulnerability in certain configurations",
+      "cveId": "CVE-2023-22515",
+      "title": "Confluence模板注入漏洞",
+      "description": "Atlassian Confluence存在模板注入漏洞",
       "cvss": {
-        "score": 7.5,
-        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
-        "severity": "high"
+        "score": 9.1,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+        "severity": "critical"
       },
-      "cwe": ["CWE-269"],
-      "affectedProducts": ["PostgreSQL 12.0-14.2"],
+      "cwe": [
+        "CWE-1336"
+      ],
+      "affectedProducts": [
+        "Confluence 7.19-8.5"
+      ],
+      "exploitAvailable": true,
+      "exploitInWild": true
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset-006",
+        "componentName": "Confluence DC",
+        "componentVersion": "8.5.0",
+        "fixVersion": "8.5.3"
+      }
+    ],
+    "remediation": {
+      "status": "resolved",
+      "priority": 2,
+      "assignedTo": "张安全",
+      "fixAvailable": true,
+      "fixSteps": [
+        "已升级到8.5.3"
+      ]
+    },
+    "risk": {
+      "baseScore": 9.1,
+      "adjustedScore": 0,
+      "businessImpact": 8,
+      "exposureScore": 6,
+      "totalRiskScore": 0
+    },
+    "createdAt": 1773617869698,
+    "updatedAt": 1774049869698
+  },
+  {
+    "id": "vuln-004",
+    "info": {
+      "cveId": "CVE-2024-0056",
+      "title": "Microsoft SQL Server权限提升漏洞",
+      "description": "Microsoft SQL Server存在权限提升漏洞",
+      "cvss": {
+        "score": 6.5,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
+        "severity": "medium"
+      },
+      "cwe": [
+        "CWE-269"
+      ],
+      "affectedProducts": [
+        "SQL Server 2019"
+      ],
       "exploitAvailable": false,
       "exploitInWild": false
     },
     "affectedAssets": [
       {
-        "assetId": "asset_002",
-        "componentName": "postgresql",
-        "componentVersion": "14.2",
-        "fixVersion": "15.0"
+        "assetId": "asset-007",
+        "componentName": "SQL Server 2019",
+        "componentVersion": "15.0.4355",
+        "fixVersion": "15.0.4400"
       }
     ],
     "remediation": {
       "status": "open",
-      "priority": 55,
-      "assignedTo": "user_005",
-      "dueDate": 1709580400000,
-      "slaDeadline": 1709493440000,
+      "priority": 3,
       "fixAvailable": true,
       "fixSteps": [
-        "Upgrade PostgreSQL to version 15.0 or later",
-        "Review and update postgresql.conf access controls",
-        "Implement least privilege principle for database users"
-      ]
-    },
-    "risk": {
-      "baseScore": 7.5,
-      "adjustedScore": 6.2,
-      "businessImpact": 5,
-      "exposureScore": 45,
-      "threatScore": 30
-    },
-    "evidence": {
-      "scanSource": "Internal Assessment",
-      "firstDetected": 1709153600000,
-      "lastDetected": 1709234567890,
-      "proofOfConcept": "",
-      "screenshot": ""
-    },
-    "createdBy": "user_005",
-    "createdAt": 1709153600000,
-    "updatedBy": "system",
-    "updatedAt": 1709234567890,
-    "history": []
-  },
-  {
-    "id": "vuln_004",
-    "info": {
-      "cveId": "CVE-2024-1111",
-      "title": "Nginx Request Smuggling Vulnerability",
-      "description": "Nginx request smuggling vulnerability in certain configurations",
-      "cvss": {
-        "score": 6.5,
-        "vector": "CVSS:3.1/AV:N/AC:L/PR:PR/UI:N/S:C/C/I:H/A",
-        "severity": "medium"
-      },
-      "cwe": ["CWE-444"],
-      "affectedProducts": ["Nginx 1.18.0-1.25.0"],
-      "exploitAvailable": false,
-      "exploitInWild": false
-    },
-    "affectedAssets": [
-      {
-        "assetId": "asset_001",
-        "componentName": "nginx",
-        "componentVersion": "1.18.0",
-        "fixVersion": "1.25.0"
-      },
-      {
-        "assetId": "asset_003",
-        "componentName": "nginx",
-        "componentVersion": "1.25.0",
-        "fixVersion": "1.26.0"
-      }
-    ],
-    "remediation": {
-      "status": "fixed",
-      "priority": 35,
-      "assignedTo": "user_001",
-      "dueDate": 1709014400000,
-      "slaDeadline": 1709014400000,
-      "fixAvailable": true,
-      "fixSteps": [
-        "Upgrade Nginx to version 1.26.0 or later",
-        "Review and update nginx.conf configuration"
+        "应用SQL Server安全更新"
       ]
     },
     "risk": {
       "baseScore": 6.5,
-      "adjustedScore": 3.0,
-      "businessImpact": 4,
-      "exposureScore": 90,
-      "threatScore": 25
+      "adjustedScore": 6.5,
+      "businessImpact": 6,
+      "exposureScore": 4,
+      "totalRiskScore": 5.5
     },
-    "evidence": {
-      "scanSource": "Nessus Professional",
-      "firstDetected": 1708923200000,
-      "lastDetected": 1709014400000,
-      "proofOfConcept": "",
-      "screenshot": ""
-    },
-    "createdBy": "system",
-    "createdAt": 1708923200000,
-    "updatedBy": "user_001",
-    "updatedAt": 1709014400000,
-    "history": [
-      {
-        "timestamp": 1708923200000,
-        "action": "created",
-        "userId": "system",
-        "details": "Vulnerability detected by automated scan"
-      },
-      {
-        "timestamp": 1709014400000,
-        "action": "status_updated",
-        "userId": "user_001",
-        "details": "Marked as fixed after patch deployment"
-      }
-    ]
+    "createdAt": 1773877069698,
+    "updatedAt": 1774222669698
   }
 ]

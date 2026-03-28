@@ -90,6 +90,13 @@ export class ScIncidentsPage extends LitElement {
   @state()
   private viewMode: 'kanban' | 'list' = 'kanban';
 
+  // Toast notification state
+  @state()
+  private toastMessage: string | null = null;
+
+  @state()
+  private toastType: 'success' | 'error' | 'info' = 'info';
+
   // ============ 样式 ============
 
   static styles = css`
@@ -508,6 +515,23 @@ export class ScIncidentsPage extends LitElement {
       height: calc(100vh - var(--sc-spacing-lg, 20px) * 2);
       overflow: hidden;
     }
+    /* Toast notifications */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      z-index: 1000;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .toast.success { background-color: #22c55e; }
+    .toast.error { background-color: #ef4444; }
+    .toast.info { background-color: #3b82f6; }
   `;
 
   // ============ 生命周期 ============
@@ -560,8 +584,7 @@ export class ScIncidentsPage extends LitElement {
           sla: {
             responseDue: inc.sla.responseDeadline ? new Date(inc.sla.responseDeadline) : new Date(),
             resolutionDue: inc.sla.resolutionDeadline ? new Date(inc.sla.resolutionDeadline) : new Date(),
-            responseTime: inc.sla.responseTimeMinutes,
-            resolutionTime: inc.sla.resolutionTimeMinutes
+            // responseTime and resolutionTime are optional in the UI model; omit if API doesn't provide them
           },
           evidence: [],
           relatedIncidents: []
@@ -701,14 +724,20 @@ export class ScIncidentsPage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights('incidents', {
-        incidents: this.incidents
+      this.insights = await aiService.generateInsights({
+        pageId: 'incidents',
+        data: { incidents: this.incidents },
+        userRole: 'security-expert'
       });
 
-      this.recommendations = await aiService.generateRecommendations('incidents', {
-        insights: this.insights,
-        incidents: this.incidents
+      this.recommendations = await aiService.generateRecommendations({
+        pageId: 'incidents',
+        data: { incidents: this.incidents, insights: this.insights },
+        userRole: 'security-expert'
       });
+
+  
+      console.debug('[IncidentsPage] AI recommendations loaded, count:', this.recommendations.length);
     } catch (error) {
       console.error('Failed to load AI insights:', error);
     }
@@ -718,6 +747,69 @@ export class ScIncidentsPage extends LitElement {
 
   private handleIncidentClick(incident: Incident) {
     this.selectedIncident = this.selectedIncident?.id === incident.id ? null : incident;
+  }
+
+  // Get valid next statuses for transitions
+  private getValidNextStatuses(currentStatus: IncidentStatus): IncidentStatus[] {
+    const transitions: Record<IncidentStatus, IncidentStatus[]> = {
+      'new': ['confirmed'],
+      'confirmed': ['containment'],
+      'containment': ['eradication'],
+      'eradication': ['recovery'],
+      'recovery': ['closed'],
+      'closed': []
+    };
+    return transitions[currentStatus] || [];
+  }
+
+  // Handle status update with optimistic UI update
+  private async handleStatusUpdate(incident: Incident, targetStatus: IncidentStatus) {
+    if (!targetStatus) return;
+    const prevStatus = incident.status;
+    // Optimistic update
+    incident.status = targetStatus;
+    this.incidents = [...this.incidents];
+    this.selectedIncident = { ...incident };
+    try {
+      await dataService.updateIncidentStatus(incident.id, targetStatus);
+      this.showToast(`状态已更新为 ${this.getStatusLabel(targetStatus)}`, 'success');
+    } catch (error) {
+      // Revert on failure
+      incident.status = prevStatus;
+      this.incidents = [...this.incidents];
+      this.selectedIncident = { ...incident };
+      this.showToast('状态更新失败', 'error');
+    }
+  }
+
+  // Handle assignment with a prompt
+  private async handleAssign(incident: Incident) {
+    const assignee = prompt('请输入负责人姓名');
+    if (!assignee) return;
+    const prev = incident.assignee;
+    // Optimistic update
+    incident.assignee = assignee;
+    this.incidents = [...this.incidents];
+    this.selectedIncident = { ...incident };
+    try {
+      // Update via workflow to satisfy API contract
+      await dataService.updateIncident(incident.id, { workflow: { assignee, status: incident.status } });
+      this.showToast(`已分配给 ${assignee}`, 'success');
+    } catch (error) {
+      // Revert
+      incident.assignee = prev;
+      this.incidents = [...this.incidents];
+      this.selectedIncident = { ...incident };
+      this.showToast('分配失败', 'error');
+    }
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    this.toastMessage = message;
+    this.toastType = type;
+    setTimeout(() => {
+      this.toastMessage = null;
+    }, 3000);
   }
 
   private getStatusLabel(status: IncidentStatus): string {
@@ -861,10 +953,15 @@ export class ScIncidentsPage extends LitElement {
             <div class="detail-title">${incident.title}</div>
             <div class="incident-meta">${incident.id} · ${incident.category}</div>
           </div>
-          <div class="detail-actions">
-            <button class="btn btn-secondary">分配</button>
-            <button class="btn btn-primary">更新状态</button>
-          </div>
+           <div class="detail-actions">
+             <button class="btn btn-secondary" @click=${() => this.handleAssign(incident)}>分配</button>
+             <select class="btn btn-primary" @change=${(e: Event) => this.handleStatusUpdate(incident, (e.target as HTMLSelectElement).value as IncidentStatus)}>
+               <option value="" disabled selected>更新状态</option>
+               ${this.getValidNextStatuses(incident.status).map(s => html`
+                 <option value="${s}">${this.getStatusLabel(s)}</option>
+               `)}
+             </select>
+           </div>
         </div>
 
         <div class="section-header">📝 描述</div>
@@ -980,6 +1077,11 @@ export class ScIncidentsPage extends LitElement {
           ${this.renderStats()}
           ${this.renderKanban()}
           ${this.renderDetailPanel()}
+          ${this.toastMessage ? html`
+            <div class="toast ${this.toastType}" @click=${() => this.toastMessage = null}>
+              ${this.toastType === 'error' ? '❌' : this.toastType === 'success' ? '✅' : 'ℹ️'} ${this.toastMessage}
+            </div>
+          ` : ''}
         </div>
 
         <div class="ai-sidebar">

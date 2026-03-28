@@ -8,7 +8,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation, type TrendPrediction } from '../ai-service.js';
-import { dataService, type Vulnerability as VulnData, type VulnerabilityQueryParams } from '../data-service.js';
+import { dataService, type VulnerabilityQueryParams, type VulnerabilityStats } from '../data-service.js';
+import { gatewayClient } from '../gateway-client.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -98,6 +99,15 @@ export class ScVulnerabilitiesPage extends LitElement {
 
   @state()
   private sortBy: 'severity' | 'cvss' | 'aiPriority' | 'discoveredAt' = 'aiPriority';
+
+  @state()
+  private vulnStats?: VulnerabilityStats;
+
+  @state()
+  private toastMessage: string = '';
+
+  @state()
+  private toastType: 'success'|'error'|'info' = 'info';
 
   // ============ 样式 ============
 
@@ -514,6 +524,21 @@ export class ScVulnerabilitiesPage extends LitElement {
       height: calc(100vh - var(--sc-spacing-lg, 20px) * 2);
       overflow: hidden;
     }
+
+    /* Toasts */
+    .toast {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: white;
+      z-index: 9999;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    .toast.success { background-color: #16a34a; }
+    .toast.error { background-color: #ef4444; }
+    .toast.info { background-color: #3b82f6; }
   `;
 
   // ============ 生命周期 ============
@@ -530,10 +555,20 @@ export class ScVulnerabilitiesPage extends LitElement {
       await this.loadVulnerabilities();
       await this.loadScanTasks();
       await this.loadAIInsights();
+      await this.loadVulnerabilityStats();
     } catch (error) {
       console.error('Failed to load vulnerabilities data:', error);
     } finally {
       this.loading = false;
+    }
+  }
+
+  private async loadVulnerabilityStats() {
+    try {
+      const stats = await dataService.getVulnerabilityStats();
+      this.vulnStats = stats;
+    } catch (error) {
+      console.error('Failed to load vulnerability stats:', error);
     }
   }
 
@@ -722,19 +757,27 @@ export class ScVulnerabilitiesPage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights('vulnerabilities', {
-        vulnerabilities: this.vulnerabilities
+      this.insights = await aiService.generateInsights({
+        pageId: 'vulnerabilities',
+        data: { vulnerabilities: this.vulnerabilities },
+        userRole: 'analyst',
       });
 
-      this.recommendations = await aiService.generateRecommendations('vulnerabilities', {
-        vulnerabilities: this.vulnerabilities,
-        insights: this.insights
+      this.recommendations = await aiService.generateRecommendations({
+        pageId: 'vulnerabilities',
+        data: { vulnerabilities: this.vulnerabilities, insights: this.insights },
+        userRole: 'analyst',
       });
 
-      this.predictions = await aiService.predictTrend('vulnerabilities', {
+      const prediction = await aiService.predictTrend({
         metric: 'open-vulns',
-        timeframe: '30d'
+        historicalData: this.vulnerabilities.slice(0, 30).map((v, i) => ({
+          date: new Date(Date.now() - (30 - i) * 86400000),
+          value: v.cvssScore || 0,
+        })),
+        timeframe: '30d',
       });
+      this.predictions = prediction ? [prediction] : [];
     } catch (error) {
       console.error('Failed to load AI insights:', error);
     }
@@ -819,6 +862,62 @@ export class ScVulnerabilitiesPage extends LitElement {
     return 'low';
   }
 
+  // ======== State machine actions for vulnerabilities ========
+  private getNextStatuses(status: VulnerabilityStatus): VulnerabilityStatus[] {
+    switch (status) {
+      case 'open':
+        return ['in-progress', 'accepted'];
+      case 'in-progress':
+        return ['fixed', 'open', 'accepted'];
+      case 'fixed':
+        return ['open', 'accepted'];
+      case 'accepted':
+        return ['open'];
+      default:
+        return [];
+    }
+  }
+
+  private async updateVulnerabilityStatus(id: string, status: string) {
+    try {
+      await gatewayClient.request('vulnerabilities.updateStatus', { id, status, user: 'current-user' });
+      this.showToast('漏洞状态已更新', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) {
+      console.error(e);
+      this.showToast('更新状态失败', 'error');
+    }
+  }
+
+  private async assignVulnerability(id: string, assignedTo: string) {
+    try {
+      await gatewayClient.request('vulnerabilities.assign', { id, assignedTo, user: 'current-user' });
+      this.showToast(`分配给 ${assignedTo} 成功`, 'success');
+      await this.loadVulnerabilities();
+    } catch (e) {
+      console.error(e);
+      this.showToast('分配失败', 'error');
+    }
+  }
+
+  private showToast(message: string, type: 'success'|'error'|'info' = 'info') {
+    this.toastMessage = message;
+    this.toastType = type;
+    window.setTimeout(() => {
+      this.toastMessage = '';
+      this.requestUpdate();
+    }, 3000);
+  }
+
+  private formatTypeBreakdown(): string {
+    const map: Record<string, number> = {};
+    for (const v of this.vulnerabilities) {
+      const t = v.asset?.type ?? 'unknown';
+      map[t] = (map[t] || 0) + 1;
+    }
+    return Object.entries(map).map(([k, v]) => `${k}:${v}`).join(', ');
+  }
+
   // ============ 渲染方法 ============
 
   private renderStats() {
@@ -827,18 +926,19 @@ export class ScVulnerabilitiesPage extends LitElement {
     const openTotal = this.vulnerabilities.filter(v => v.status === 'open').length;
     const fixed = this.vulnerabilities.filter(v => v.status === 'fixed').length;
     const exploited = this.vulnerabilities.filter(v => v.exploitAvailable && v.status === 'open').length;
+    const typeBreakdown = this.formatTypeBreakdown();
 
     return html`
       <div class="stats-grid">
         <sc-smart-card
           title="严重漏洞"
-          value="${critical}"
+          value="${this.vulnStats?.bySeverity?.critical ?? critical}"
           icon="🔴"
           status="error"
         ></sc-smart-card>
         <sc-smart-card
           title="高危漏洞"
-          value="${high}"
+          value="${this.vulnStats?.bySeverity?.high ?? high}"
           icon="🟠"
           trend="down"
           trendValue="-3"
@@ -846,11 +946,12 @@ export class ScVulnerabilitiesPage extends LitElement {
         ></sc-smart-card>
         <sc-smart-card
           title="待修复"
-          value="${openTotal}"
+          value="${this.vulnStats?.total ?? openTotal}"
           icon="🐛"
           trend="up"
           trendValue="+5"
           status="warning"
+          subtitle="${typeBreakdown}"
         ></sc-smart-card>
         <sc-smart-card
           title="已修复"
@@ -965,6 +1066,8 @@ export class ScVulnerabilitiesPage extends LitElement {
               <th>AI优先级</th>
               <th>资产</th>
               <th>状态</th>
+              <th>行动</th>
+              <th>分配</th>
               <th>利用</th>
             </tr>
           </thead>
@@ -1006,12 +1109,27 @@ export class ScVulnerabilitiesPage extends LitElement {
                   <span class="status-badge ${vuln.status}">${vuln.status}</span>
                 </td>
                 <td>
+                  ${this.getNextStatuses(vuln.status).length > 0
+                    ? html`${this.getNextStatuses(vuln.status).map(ns => html`<button class="btn btn-secondary" @click=${() => this.updateVulnerabilityStatus(vuln.id, ns)}>${ns}</button>`)}
+                    ` : html`-`
+                  }
+                </td>
+                <td>
+                  <select @change=${(e: Event) => this.assignVulnerability(vuln.id, (e.target as HTMLSelectElement).value)}>
+                    <option value="">Unassigned</option>
+                    <option value="张安全">张安全</option>
+                    <option value="李运维">李运维</option>
+                    <option value="王运维">王运维</option>
+                    <option value="赵网络">赵网络</option>
+                  </select>
+                </td>
+                <td>
                   ${vuln.exploitAvailable ? html`
                     <span class="exploit-indicator">⚡ 已知利用</span>
                   ` : '-'}
                 </td>
               </tr>
-            `)}
+              `)}
           </tbody>
         </table>
 
@@ -1083,8 +1201,15 @@ export class ScVulnerabilitiesPage extends LitElement {
     }
 
     return html`
+      ${this.toastMessage ? html`<div class="toast ${this.toastType}">${this.toastMessage}</div>` : ''}
       <div class="vulns-container">
         <div class="main-content">
+          ${this.toastMessage ? html`
+            <div style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;background:${this.toastType === 'success' ? 'var(--sc-success-bg, #d4edda)' : this.toastType === 'error' ? 'var(--sc-error-bg, #f8d7da)' : 'var(--sc-info-bg, #d1ecf1)'};color:${this.toastType === 'success' ? '#155724' : this.toastType === 'error' ? '#721c24' : '#0c5460'};">
+              ${this.toastType === 'success' ? '✅' : this.toastType === 'error' ? '❌' : 'ℹ️'} ${this.toastMessage}
+            </div>
+          ` : ''}
+
           <div class="page-header">
             <div class="page-title-section">
               <h1 class="page-title">
@@ -1104,6 +1229,37 @@ export class ScVulnerabilitiesPage extends LitElement {
           ${this.renderStats()}
           ${this.renderScanTasks()}
           ${this.renderVulnTable()}
+
+          ${this.recommendations.length > 0 ? html`
+            <div class="scan-section" style="margin-top:20px;">
+              <div class="section-header">
+                <h3 class="section-title">💡 AI修复建议</h3>
+              </div>
+              ${this.recommendations.slice(0, 5).map(rec => html`
+                <div style="padding:12px;border:1px solid var(--sc-border-color, #e0e0e0);border-radius:8px;margin-bottom:8px;">
+                  <div style="font-size:14px;font-weight:600;">${rec.impact === 'high' ? '🔴' : rec.impact === 'medium' ? '🟡' : '🟢'} ${rec.title}</div>
+                  <div style="font-size:13px;color:var(--sc-text-secondary);margin-top:4px;">${rec.description}</div>
+                </div>
+              `)}
+            </div>
+          ` : ''}
+
+          ${this.predictions.length > 0 ? html`
+            <div class="scan-section" style="margin-top:20px;">
+              <div class="section-header">
+                <h3 class="section-title">📈 趋势预测</h3>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                ${this.predictions.slice(0, 4).map(pred => html`
+                  <div style="padding:12px;border:1px solid var(--sc-border-color, #e0e0e0);border-radius:8px;min-width:160px;">
+                    <div style="font-size:12px;color:var(--sc-text-secondary);">${pred.metric || '指标'}</div>
+                    <div style="font-size:20px;font-weight:700;margin-top:4px;">${pred.predictedValue ?? '-'}</div>
+                    <div style="font-size:12px;margin-top:4px;">${pred.trend === 'increasing' ? '📈' : pred.trend === 'decreasing' ? '📉' : '➡️'} 置信度: ${(pred.confidence ?? 0).toFixed(0)}%</div>
+                  </div>
+                `)}
+              </div>
+            </div>
+          ` : ''}
         </div>
 
         <div class="ai-sidebar">

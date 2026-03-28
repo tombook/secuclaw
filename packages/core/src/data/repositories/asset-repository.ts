@@ -5,7 +5,6 @@
  */
 
 import type { JsonStore } from '../../storage/json-store.js';
-import { BaseRepository, from '../repository.js';
 import type { Asset, AssetType, AssetCriticality } from '../types.js';
 
 const FILE_NAME = 'assets.json';

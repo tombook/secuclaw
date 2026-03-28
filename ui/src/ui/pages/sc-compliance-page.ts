@@ -79,14 +79,31 @@ export class ScCompliancePage extends LitElement {
   private selectedFramework: string = 'all';
 
   @state()
+  private selectedControl: ControlItem | null = null;
+
+  @state()
+  private posture: { overallScore: number; frameworksCount: number; criticalGaps: number } = {
+    overallScore: 0,
+    frameworksCount: 0,
+    criticalGaps: 0,
+  };
+
+  @state()
   private insights: SmartInsight[] = [];
 
   @state()
   private recommendations: AIRecommendation[] = [];
 
   @state()
-  private selectedControl: ControlItem | null = null;
-
+  private complianceStats: {
+    overallScore: number;
+    frameworksCount: number;
+    controlsCount: number;
+    auditCount: number;
+  } = {
+    overallScore: 0, frameworksCount: 0, controlsCount: 0,
+    auditCount: 0,
+  };
   static styles = css`
     :host { display: block; }
 
@@ -491,8 +508,9 @@ export class ScCompliancePage extends LitElement {
         console.error('Failed to load from API:', e);
       }
       
-      await this.loadFrameworks();
-      await this.loadControls();
+        await this.loadFrameworks();
+        await this.loadControls();
+        this.computePostureStats();
       await this.loadAuditTasks();
       await this.loadAIInsights();
     } finally {
@@ -508,6 +526,15 @@ export class ScCompliancePage extends LitElement {
       'International': '🏛️'
     };
     return map[jurisdiction] || '📋';
+  }
+
+  private computePostureStats() {
+    const totalFrames = this.frameworks.length;
+    const totalControls = this.frameworks.reduce((acc, f) => acc + f.totalControls, 0);
+    const compliantControls = this.frameworks.reduce((acc, f) => acc + f.compliantControls, 0);
+    const overallScore = totalControls > 0 ? Math.round((compliantControls / totalControls) * 100) : 0;
+    const criticalGaps = this.controls.filter(c => c.status !== 'compliant').length;
+    this.posture = { overallScore, frameworksCount: totalFrames, criticalGaps };
   }
 
   private async loadFrameworks() {
@@ -542,8 +569,16 @@ export class ScCompliancePage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights('compliance', { frameworks: this.frameworks, controls: this.controls });
-      this.recommendations = await aiService.generateRecommendations('compliance', { insights: this.insights });
+      this.insights = await aiService.generateInsights({
+        pageId: 'compliance',
+        data: { frameworks: this.frameworks, controls: this.controls },
+        userRole: 'analyst',
+      });
+      this.recommendations = await aiService.generateRecommendations({
+        pageId: 'compliance',
+        data: { insights: this.insights },
+        userRole: 'analyst',
+      });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
     }
@@ -566,6 +601,47 @@ export class ScCompliancePage extends LitElement {
     return html`
       <div class="compliance-container">
         <div class="main-content">
+          <div style="display:flex;gap:12px;margin-bottom:16px;">
+            <div style="flex:1;padding:12px 16px;border-radius:8px;border:1px solid var(--sc-border-color, #e0e0e0);text-align:center;">
+              <div style="font-size:24px;font-weight:700;color:var(--sc-primary);">${this.complianceStats.overallScore}%</div>
+              <div style="font-size:12px;color:var(--sc-text-secondary);">合规评分</div>
+            </div>
+            <div style="flex:1;padding:12px 16px;border-radius:8px;border:1px solid var(--sc-border-color, #e0e0e0);text-align:center;">
+              <div style="font-size:24px;font-weight:700;">${this.complianceStats.frameworksCount}</div>
+              <div style="font-size:12px;color:var(--sc-text-secondary);">合规框架</div>
+            </div>
+            <div style="flex:1;padding:12px 16px;border-radius:8px;border:1px solid var(--sc-border-color, #e0e0e0);text-align:center;">
+              <div style="font-size:24px;font-weight:700;">${this.complianceStats.controlsCount}</div>
+              <div style="font-size:12px;color:var(--sc-text-secondary);">控制项</div>
+            </div>
+            <div style="flex:1;padding:12px 16px;border-radius:8px;border:1px solid var(--sc-border-color, #e0e0e0);text-align:center;">
+              <div style="font-size:24px;font-weight:700;">${this.complianceStats.auditCount}</div>
+              <div style="font-size:12px;color:var(--sc-text-secondary);">审计任务</div>
+            </div>
+          </div>
+
+          <!-- Posture overview -->
+          <div class="stats-grid" style="margin-top: 8px; margin-bottom: 8px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+            <sc-smart-card
+              title="合规整体分数"
+              value="${this.posture?.overallScore ?? 0}"
+              icon="📈"
+              status="success"
+            ></sc-smart-card>
+            <sc-smart-card
+              title="框架数量"
+              value="${this.posture?.frameworksCount ?? 0}"
+              icon="🗂️"
+              status="neutral"
+            ></sc-smart-card>
+            <sc-smart-card
+              title="关键差距"
+              value="${this.posture?.criticalGaps ?? 0}"
+              icon="⚠️"
+              status="warning"
+            ></sc-smart-card>
+          </div>
+
           <div class="page-header">
             <div class="page-title-section">
               <h1 class="page-title">
@@ -608,6 +684,34 @@ export class ScCompliancePage extends LitElement {
             `)}
           </div>
 
+          ${this.frameworks.length > 0 ? html`
+            <div class="frameworks-grid" style="margin-top: 8px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+              ${this.frameworks.map(fw => html`
+                <div class="framework-card" style="min-height: 120px;">
+                  <div class="framework-header">
+                    <span class="framework-icon">${fw.icon}</span>
+                    <span class="framework-badge ${fw.status}">${fw.status === 'compliant' ? '合规' : fw.status === 'partial' ? '部分合规' : '不合规'}</span>
+                  </div>
+                  <div class="framework-name">${fw.name}</div>
+                  <div class="framework-version">v${fw.version}</div>
+                  <div class="framework-progress" aria-label="framework-progress">
+                    <div class="progress-header">
+                      <span class="progress-label">合规进度</span>
+                      <span class="progress-value">${Math.round((fw.compliantControls / fw.totalControls) * 100)}%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill ${fw.status}" style="width: ${Math.min(100, Math.round((fw.compliantControls / fw.totalControls) * 100))}%;"></div>
+                    </div>
+                  </div>
+                  <div class="framework-meta">
+                    <span>上次: ${fw.lastAssessment.toLocaleDateString()}</span>
+                    <span>下次: ${fw.nextAssessment.toLocaleDateString()}</span>
+                  </div>
+                </div>
+              `)}
+            </div>
+          ` : ''}
+
           <div class="controls-section">
             <div class="section-header">
               <h3 class="section-title">📋 控制项评估</h3>
@@ -626,7 +730,7 @@ export class ScCompliancePage extends LitElement {
               </thead>
               <tbody>
                 ${this.getFilteredControls().map(ctrl => html`
-                  <tr>
+                  <tr @click=${() => { this.selectedControl = ctrl; }} style="cursor:pointer;">
                     <td><span class="control-id">${ctrl.controlId}</span></td>
                     <td>
                       <div class="control-title">${ctrl.title}</div>
@@ -640,6 +744,29 @@ export class ScCompliancePage extends LitElement {
                 `)}
               </tbody>
             </table>
+
+            ${this.selectedControl ? html`
+              <div style="margin-top:16px;padding:16px;border:1px solid var(--sc-border-color, #e0e0e0);border-radius:8px;background:var(--sc-surface, #fafafa);">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <span class="control-id" style="font-weight:700;">${this.selectedControl.controlId}</span>
+                    <span style="margin-left:8px;font-size:14px;">${this.selectedControl.title}</span>
+                  </div>
+                  <button class="btn btn-secondary" @click=${() => { this.selectedControl = null; }}>关闭</button>
+                </div>
+                <p style="font-size:13px;color:var(--sc-text-secondary);margin-top:8px;">${this.selectedControl.description}</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;font-size:13px;">
+                  <div><strong>优先级:</strong> ${this.selectedControl.priority}</div>
+                  <div><strong>状态:</strong> ${this.selectedControl.status}</div>
+                  <div><strong>证据:</strong> ${this.selectedControl.evidenceStatus}</div>
+                  <div><strong>负责人:</strong> ${this.selectedControl.assignee || '-'}</div>
+                  <div><strong>截止:</strong> ${this.selectedControl.dueDate?.toLocaleDateString() || '-'}</div>
+                  <div><strong>上次审查:</strong> ${this.selectedControl.lastReview?.toLocaleDateString() || '-'}</div>
+                </div>
+                ${this.selectedControl.aiGap ? html`<div style="margin-top:12px;padding:8px;border-radius:4px;background:var(--sc-warning-bg, #fff3cd);font-size:13px;">⚠️ ${this.selectedControl.aiGap}</div>` : ''}
+                ${this.selectedControl.aiRecommendation ? html`<div style="margin-top:8px;padding:8px;border-radius:4px;background:var(--sc-info-bg, #d1ecf1);font-size:13px;">💡 ${this.selectedControl.aiRecommendation}</div>` : ''}
+              </div>
+            ` : ''}
           </div>
 
           <div class="audit-section">
@@ -648,18 +775,22 @@ export class ScCompliancePage extends LitElement {
               <button class="btn btn-secondary">+ 安排审计</button>
             </div>
             <div class="audit-list">
-              ${this.auditTasks.map(task => html`
-                <div class="audit-item">
-                  <div class="audit-info">
-                    <div class="audit-title">${task.title}</div>
-                    <div class="audit-meta">${task.auditor} · ${task.scheduledDate.toLocaleDateString()} · ${task.scope.join(', ')}</div>
+              ${this.auditTasks.map(task => {
+                const nextAudit = new Date(task.scheduledDate);
+                nextAudit.setFullYear(nextAudit.getFullYear() + 1);
+                return html`
+                  <div class="audit-item">
+                    <div class="audit-info">
+                      <div class="audit-title">${task.title}</div>
+                      <div class="audit-meta">${task.framework} · ${task.scheduledDate.toLocaleDateString()} · 下次审计: ${nextAudit.toLocaleDateString()}</div>
+                    </div>
+                    <div class="audit-status">
+                      <span class="status-dot ${task.status}"></span>
+                      <span style="font-size:12px;color:var(--sc-text-secondary);">${task.status}</span>
+                    </div>
                   </div>
-                  <div class="audit-status">
-                    <span class="status-dot ${task.status}"></span>
-                    <span style="font-size:12px;color:var(--sc-text-secondary);">${task.status === 'scheduled' ? '已安排' : task.status === 'in-progress' ? '进行中' : task.status === 'completed' ? '已完成' : '失败'}</span>
-                  </div>
-                </div>
-              `)}
+                `;
+              })}
             </div>
           </div>
 
@@ -667,6 +798,18 @@ export class ScCompliancePage extends LitElement {
             <div class="ai-section">
               <div class="ai-title">🤖 AI合规分析</div>
               <div class="ai-content">${this.insights[0]?.description || '暂无分析'}</div>
+            </div>
+          ` : ''}
+
+          ${this.recommendations.length > 0 ? html`
+            <div class="ai-section" style="margin-top:16px;">
+              <div class="ai-title">💡 AI整改建议</div>
+              ${this.recommendations.slice(0, 5).map(rec => html`
+                <div style="padding:10px 0;border-bottom:1px solid var(--sc-border-color, #e0e0e0);">
+                  <div style="font-size:14px;font-weight:600;">${rec.impact === 'high' ? '🔴' : rec.impact === 'medium' ? '🟡' : '🟢'} ${rec.title}</div>
+                  <div style="font-size:13px;color:var(--sc-text-secondary);margin-top:4px;">${rec.description}</div>
+                </div>
+              `)}
             </div>
           ` : ''}
         </div>

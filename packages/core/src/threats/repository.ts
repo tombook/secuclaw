@@ -47,7 +47,7 @@ export class ThreatsRepository {
   constructor(private store: JsonStore) {}
 
   async getAll(): Promise<ThreatActor[]> {
-    return this.store.get<ThreatActor[]>(FILE_NAME) || [];
+    return (await this.store.get<ThreatActor[]>(FILE_NAME)) || [];
   }
 
   async getById(id: string): Promise<ThreatActor | null> {
@@ -131,5 +131,14 @@ export class ThreatsRepository {
       t.capabilities.techniques.includes(techniqueId) ||
       t.campaigns.some(c => c.techniques.includes(techniqueId))
     );
+  }
+
+  async update(id: string, updates: Partial<ThreatActor>): Promise<ThreatActor | null> {
+    const threats = await this.getAll();
+    const index = threats.findIndex(t => t.id === id);
+    if (index === -1) return null;
+    threats[index] = { ...threats[index], ...updates } as ThreatActor;
+    await this.store.set(FILE_NAME, threats);
+    return threats[index];
   }
 }

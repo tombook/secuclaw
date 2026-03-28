@@ -18,12 +18,28 @@ import type {
   EvidenceQueryParams,
   OverviewMetrics,
   DomainMetrics,
-  DomainKPI,
   TaskPriority,
   TaskStatus,
 } from './types.js';
 import { ErrorCodes } from './types.js';
 import { CapabilitiesRepository } from './repository.js';
+ 
+interface EventBus {
+  emit(event: string, payload: unknown): Promise<void>;
+}
+import { randomUUID, createHash } from 'crypto';
+import { validateTaskTransition, validateRunTransition } from './state-machine.js';
+
+export interface TaskExecutor {
+  execute(toolId: string, params: Record<string, unknown>): Promise<{ status: 'success'|'failed', summary?: string, error?: string }>;
+}
+
+export class ApprovalExpiredError extends Error {
+  constructor(public readonly approval: Approval) {
+    super('Approval has expired');
+    this.name = 'ApprovalExpiredError';
+  }
+}
 
 const logger = {
   info: (...args: any[]) => console.log('[CapabilitiesService]', ...args),
@@ -32,7 +48,23 @@ const logger = {
 };
 
 export class CapabilitiesService {
-  constructor(private repo: CapabilitiesRepository) {}
+  private eventBus: EventBus | null = null;
+
+  constructor(private repo: CapabilitiesRepository, private executor?: TaskExecutor) {}
+
+  setEventBus(bus: EventBus): void {
+    this.eventBus = bus;
+  }
+
+  private async emitEvent(event: string, payload: unknown): Promise<void> {
+    if (this.eventBus) {
+      try {
+        await this.eventBus.emit(event, payload);
+      } catch (err) {
+        console.error('[CapabilitiesService] Event emission failed:', err);
+      }
+    }
+  }
 
   // ==================== Domains ====================
 
@@ -81,7 +113,7 @@ export class CapabilitiesService {
     }
 
     const task: SecurityTask = {
-      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `task_${randomUUID()}`,
       domainId: params.domainId,
       capabilityId: params.capabilityId,
       title: params.title,
@@ -97,6 +129,12 @@ export class CapabilitiesService {
 
     await this.repo.createTask(task);
     logger.info(`Created task: ${task.id} - ${task.title}`);
+    await this.emitEvent('task.created', {
+      taskId: task.id,
+      domainId: task.domainId,
+      capabilityId: task.capabilityId,
+      priority: task.priority,
+    });
     
     return task;
   }
@@ -113,12 +151,26 @@ export class CapabilitiesService {
       throw error;
     }
 
+    // Validate state transition
+    const ok = validateTaskTransition(task.status, params.status);
+    if (!ok) {
+      throw new Error(`Invalid task transition: ${task.status} -> ${params.status}`);
+    }
+
     const updated = await this.repo.updateTask(params.id, {
       status: params.status,
       updatedAt: Date.now(),
     });
 
     logger.info(`Updated task ${params.id} status to ${params.status}`);
+    
+    if (params.status === 'done' || params.status === 'closed') {
+      await this.emitEvent('task.completed', {
+        taskId: params.id,
+        domainId: task?.domainId ?? '',
+        result: params.comment ?? '',
+      });
+    }
     return updated!;
   }
 
@@ -143,7 +195,7 @@ export class CapabilitiesService {
     }
 
     const approval: Approval = {
-      id: `approval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `approval_${randomUUID()}`,
       taskId: params.taskId,
       type: 'dark-operation',
       requester: params.requester,
@@ -183,9 +235,12 @@ export class CapabilitiesService {
         status: 'expired',
         updatedAt: Date.now(),
       });
-      const error = new Error('Approval has expired');
-      (error as any).code = ErrorCodes.APPROVAL_EXPIRED;
-      throw error;
+    
+      await this.emitEvent('approval.expired', {
+        approvalId: updated!.id,
+        taskId: updated!.taskId,
+      });
+      throw new ApprovalExpiredError(updated!);
     }
 
     const updated = await this.repo.updateApproval(params.id, {
@@ -239,7 +294,7 @@ export class CapabilitiesService {
     }
 
     const run: ExecutionRun = {
-      id: `run_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `run_${randomUUID()}`,
       taskId: params.taskId,
       domainId: task.domainId,
       toolId: params.toolId,
@@ -254,20 +309,42 @@ export class CapabilitiesService {
     await this.repo.createRun(run);
     logger.info(`Created run: ${run.id} for task ${params.taskId}`);
     
-    // Simulate execution (in real implementation, this would trigger actual tool)
-    // For now, we'll mark it as running and then success
-    setTimeout(async () => {
-      await this.updateRunStatus(run.id, 'running');
-    }, 100);
-    
-    setTimeout(async () => {
-      await this.updateRunStatus(run.id, 'success');
-    }, 2000);
+    // Execute using an optional TaskExecutor if configured
+    if (this.executor) {
+      try {
+        const result = await this.executor.execute(run.toolId, run.params);
+        const finalStatus = result.status === 'success' ? 'success' : 'failed';
+        await this.updateRunStatus(run.id, finalStatus as ExecutionRun['status'], result.summary, result.error);
+      } catch (err) {
+        await this.updateRunStatus(run.id, 'failed', undefined, String(err));
+      }
+    } else {
+      // Simulate execution (in real implementation, this would trigger actual tool)
+      logger.warn('No TaskExecutor configured, using simulated execution');
+      // For now, we'll mark it as running and then success
+      setTimeout(async () => {
+        await this.updateRunStatus(run.id, 'running');
+      }, 100);
+      
+      setTimeout(async () => {
+        await this.updateRunStatus(run.id, 'success');
+      }, 2000);
+    }
 
     return run;
   }
 
   async updateRunStatus(id: string, status: ExecutionRun['status'], summary?: string, error?: string): Promise<ExecutionRun | null> {
+    const existing = await this.repo.getRun(id);
+    if (!existing) {
+      const err = new Error('Run not found');
+      (err as any).code = ErrorCodes.RUN_EXECUTION_FAILED;
+      throw err;
+    }
+    // Validate status transition
+    if (!validateRunTransition(existing.status, status)) {
+      throw new Error(`Invalid run transition: ${existing.status} -> ${status}`);
+    }
     const updates: Partial<ExecutionRun> = {
       status,
       updatedAt: Date.now(),
@@ -310,7 +387,7 @@ export class CapabilitiesService {
     createdBy?: string;
   }): Promise<EvidencePack> {
     const evidence: EvidencePack = {
-      id: `evidence_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `evidence_${randomUUID()}`,
       domainId: params.domainId,
       taskId: params.taskId,
       runId: params.runId,
@@ -382,23 +459,23 @@ export class CapabilitiesService {
    */
   async calculateDomainSLARate(domainId: DomainId): Promise<number> {
     const tasks = await this.repo.getTasksByQuery({ domainId });
-    if (tasks.length === 0) return 100;
+    // Only consider tasks that have SLA to measure
+    const applicable = tasks.filter(t => t.status === 'closed' || t.status === 'done');
+    if (applicable.length === 0) return 100;
 
     let onTimeCount = 0;
-    for (const task of tasks) {
-      if (task.status === 'closed' || task.status === 'done') {
-        if (task.slaMinutes) {
-          const elapsed = (task.updatedAt - task.createdAt) / 60000;
-          if (elapsed <= task.slaMinutes) {
-            onTimeCount++;
-          }
-        } else {
-          onTimeCount++; // No SLA = always on time
+    for (const task of applicable) {
+      if (task.slaMinutes) {
+        const elapsed = (task.updatedAt - task.createdAt) / 60000;
+        if (elapsed <= task.slaMinutes) {
+          onTimeCount++;
         }
+      } else {
+        onTimeCount++; // No SLA = always on time
       }
     }
 
-    return Math.round((onTimeCount / tasks.length) * 100);
+    return Math.round((onTimeCount / applicable.length) * 100);
   }
 
   /**
@@ -432,25 +509,24 @@ export class CapabilitiesService {
       (highPriorityTasks.length * 10) + (openTasks.length * 2)
     ));
 
-    const updated = await this.repo.updateDomain(domainId, {
-      kpi: {
-        ...domain.kpi,
-        riskScore,
-        closureRate,
-        slaRate,
-        updatedAt: Date.now(),
-      },
-    });
+    const newKPI: DomainMetrics['kpi'] = {
+      riskScore,
+      closureRate,
+      slaRate,
+      trend: domain.kpi?.trend ?? 0,
+      updatedAt: Date.now(),
+    } as any; // DomainKPI compatibility
+    await this.repo.updateDomainKPI(domainId, newKPI as any);
 
+    const refreshed = await this.repo.getDomain(domainId);
     logger.info(`Refreshed KPI for domain ${domainId}: risk=${riskScore}%, closure=${closureRate}%, sla=${slaRate}%`);
-    return updated!;
+    return refreshed!;
   }
 
   // ==================== Metrics ====================
 
   async getOverviewMetrics(domainId?: DomainId): Promise<OverviewMetrics> {
     const domains = await this.repo.getDomains();
-    const tasks = await this.repo.getTasks();
     
     let filteredDomains = domains;
     if (domainId) {
@@ -492,13 +568,7 @@ export class CapabilitiesService {
   // ==================== Helpers ====================
 
   private generateHash(input: string): string {
-    // Simple hash for demo - in production use crypto
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(16).padStart(8, '0');
+    // Use real SHA-256 for stable hashing
+    return createHash('sha256').update(input).digest('hex');
   }
 }

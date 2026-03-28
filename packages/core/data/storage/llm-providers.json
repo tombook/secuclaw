@@ -11,5 +11,29 @@
     "enabled": true,
     "createdAt": 1773017574931,
     "updatedAt": 1773018519283
+  },
+  {
+    "id": "provider_1774488663386",
+    "name": "111",
+    "type": "openai",
+    "baseUrl": "111",
+    "apiKey": "11",
+    "models": [
+      "11"
+    ],
+    "enabled": true,
+    "createdAt": 1774488663386,
+    "updatedAt": 1774488663386
+  },
+  {
+    "id": "provider_1774489274154",
+    "name": "1",
+    "type": "azure",
+    "baseUrl": "1",
+    "apiKey": "",
+    "models": [],
+    "enabled": true,
+    "createdAt": 1774489274154,
+    "updatedAt": 1774489274154
   }
 ]

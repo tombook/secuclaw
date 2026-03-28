@@ -5,6 +5,14 @@
  */
 
 import type { JsonStore } from '../storage/json-store.js';
+// Real engines (for facade delegation)
+import { AnomalyDetectionEngine } from './anomaly-detection.js';
+import { InsightEngine } from './insight-engine.js';
+import type {
+  Prediction as EnginePrediction,
+  AnomalyDetectRequest as EngineAnomalyDetectRequest,
+  InsightGenerateRequest as EngineInsightGenerateRequest,
+} from './types.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[AIService]', ...args),
@@ -63,14 +71,72 @@ export interface AIRecommendation {
 }
 
 export class AIService {
-  constructor(private store: JsonStore) {}
+  // Engine instances (optional injection)
+  private anomalyEngine?: AnomalyDetectionEngine;
+  private insightEngine?: InsightEngine;
+  private llmGateway?: { chat(messages: any[], options?: any): Promise<{ content: string }> };
+  private mode: 'mock' | 'engine';
+
+  constructor(private store: JsonStore,
+              anomalyEngine?: AnomalyDetectionEngine,
+              insightEngine?: InsightEngine) {
+    // Determine mode from environment variable (default to 'engine')
+    const modeEnv = (process.env as { AI_ENGINE_MODE?: string }).AI_ENGINE_MODE ?? 'engine';
+    this.mode = (modeEnv === 'mock' ? 'mock' : 'engine');
+
+    if (this.mode === 'engine') {
+      // Use injected engines or create real ones
+      this.anomalyEngine = anomalyEngine ?? new AnomalyDetectionEngine(store);
+      this.insightEngine = insightEngine ?? new InsightEngine(store);
+    }
+  }
+
+  // Optional gateway for hybrid LLM analysis (inject via setLLMGateway)
+  setLLMGateway(gateway: { chat(messages: any[], options?: any): Promise<{ content: string }> }): void {
+    this.llmGateway = gateway;
+  }
+
+  private async analyzeWithLLM(context: string, data: any): Promise<string> {
+    if (!this.llmGateway) return '';
+    const messages: any[] = [
+      { role: 'system', content: 'You are a cybersecurity analyst. Analyze the following data.' },
+      { role: 'user', content: `Context: ${context}\nData: ${JSON.stringify(data)}` },
+    ];
+    const resp = await this.llmGateway.chat(messages, { });
+    return resp?.content ?? '';
+  }
 
   async generateInsights(context: string, data?: any): Promise<Insight[]> {
-    // 基于数据生成智能洞察
+    // If engine mode, delegate to InsightEngine; otherwise keep mock behavior
+    if (this.mode === 'engine' && this.insightEngine) {
+      const req: EngineInsightGenerateRequest = {
+        context,
+        data,
+      } as any;
+      const engineInsights = await this.insightEngine.generateInsights(req);
+      // Map Engine Insight -> Service Insight
+      return engineInsights.map(i => {
+        // sanitize type to fit service Insight type union (exclude 'critical')
+        const sanitizedType = (i.type === 'critical' ? 'warning' : (i.type as unknown as string)) as Insight['type'];
+        return {
+          id: i.id,
+          type: sanitizedType,
+          title: i.title,
+          description: i.description,
+          priority: i.priority,
+          category: i.category,
+          source: i.source,
+          relatedEntities: i.relatedEntities?.map((re: any) => ({ type: re.type, id: re.id, name: re.name })),
+          metrics: i.metrics?.map((m: any) => ({ name: m.name, value: m.value, trend: m.trend })),
+          createdAt: i.createdAt ?? Date.now(),
+        } as Insight;
+      });
+    }
+
+    // Mock mode or fallback: keep existing behavior
     const insights: Insight[] = [];
-    
     try {
-      // 获取事件统计
+      // 基于数据生成智能洞察（保留原有实现）
       const incidentStats = await this.store.get('incidents.json');
       if (incidentStats) {
         const incidents = Array.isArray(incidentStats) ? incidentStats : [];
@@ -121,22 +187,60 @@ export class AIService {
         source: '系统监控',
         createdAt: Date.now()
       });
-
     } catch (error) {
       logger.error('Failed to generate insights:', error);
     }
-
+    // Hybrid fallback: if no insights and an LLM gateway is available, attempt to enrich with LLM
+    if (insights.length === 0 && this.llmGateway) {
+      const llmAnalysis = await this.analyzeWithLLM(context, data);
+      if (llmAnalysis) {
+        const llmInsight: Insight = {
+          id: `insight-llm-${Date.now()}`,
+          type: 'info',
+          title: 'LLM Analysis',
+          description: llmAnalysis,
+          priority: 'low',
+          category: 'security',
+          source: 'Hybrid-LLM',
+          createdAt: Date.now(),
+        };
+        return [llmInsight];
+      }
+    }
     return insights;
   }
 
   async detectAnomalies(context: string, data?: any): Promise<Anomaly[]> {
+    // Engine mode: delegate to anomaly engine and map results
+    if (this.mode === 'engine' && this.anomalyEngine) {
+      const req: EngineAnomalyDetectRequest = {
+        context,
+        data,
+      } as any;
+      const engineAnoms = await this.anomalyEngine.detectAnomalies(req);
+      // Map to service Anomaly interface (with safe casting for differing types)
+      return engineAnoms.map(a => ({
+        id: a.id,
+        type: (a.type as string) as string,
+        title: a.title,
+        description: a.description,
+        severity: ((a.severity === 'info') ? ('low' as any) : (a.severity as any)) as any,
+        metric: a.metric,
+        value: a.value,
+        baseline: (a.baseline as any)?.value ?? 0,
+        deviation: a.deviation,
+        status: (a as any).status as any,
+        detectedAt: a.detectedAt,
+        acknowledgedBy: (a as any).acknowledgedBy,
+        resolvedAt: (a as any).resolvedAt,
+      } as Anomaly));
+    }
+
+    // Mock mode: keep existing hardcoded anomalies
     const anomalies: Anomaly[] = [];
-    
     try {
-      // 基于事件数据分析异常
       const incidents = await this.store.get<any[]>('incidents.json');
       if (incidents && incidents.length > 5) {
-        // 检测到异常模式
         anomalies.push({
           id: `anomaly-${Date.now()}`,
           type: 'event_spike',
@@ -152,7 +256,6 @@ export class AIService {
         });
       }
 
-      // 模拟其他异常
       anomalies.push({
         id: `anomaly-${Date.now()}-2`,
         type: 'login_failure',
@@ -166,37 +269,59 @@ export class AIService {
         status: 'active',
         detectedAt: Date.now() - 3600000
       });
-
     } catch (error) {
       logger.error('Failed to detect anomalies:', error);
     }
-
     return anomalies;
   }
 
   async predictTrend(metric: string, timeframe: string): Promise<Prediction> {
-    // 简单的趋势预测
+    // Engine mode: delegate to anomaly engine if API exists; otherwise fall back
+    let mappedFromEngine: Prediction | null = null;
+    if (this.mode === 'engine' && this.anomalyEngine && typeof (this.anomalyEngine as any).predictTrend === 'function') {
+      const enginePred: EnginePrediction = await (this.anomalyEngine as any).predictTrend(metric, timeframe);
+      mappedFromEngine = {
+        id: (enginePred as any).id,
+        metric: enginePred.metric,
+        currentValue: (enginePred as any).currentValue,
+        predictedValue: (enginePred as any).predictedValue,
+        confidence: (enginePred as any).confidence,
+        timeframe: (enginePred as any).timeframe,
+        trend: (enginePred as any).trend,
+        // Normalize to string[] if needed
+        factors: Array.isArray((enginePred as any).factors) ? (enginePred as any).factors.map((f: any) => f?.name ?? String(f)) : [],
+      } as Prediction;
+    }
+    if (mappedFromEngine) return mappedFromEngine;
+
+    // Mock/default behavior
     const predictions = {
-      'risk-score': { current: 72, predicted: 75, confidence: 85 },
-      'incident-count': { current: 12, predicted: 8, confidence: 78 },
-      'vulnerability-count': { current: 45, predicted: 40, confidence: 82 }
+      currentValue: 50,
+      predictedValue: 52,
+      confidence: 70,
     };
-
-    const pred = predictions[metric as keyof typeof predictions] || { current: 50, predicted: 52, confidence: 70 };
-
     return {
       id: `pred-${Date.now()}`,
       metric,
-      currentValue: pred.current,
-      predictedValue: pred.predicted,
-      confidence: pred.confidence,
+      currentValue: predictions.currentValue,
+      predictedValue: predictions.predictedValue,
+      confidence: predictions.confidence,
       timeframe,
-      trend: pred.predicted > pred.current ? 'up' : pred.predicted < pred.current ? 'down' : 'stable',
+      trend: predictions.predictedValue > predictions.currentValue ? 'up' : (predictions.predictedValue < predictions.currentValue ? 'down' : 'stable'),
       factors: ['历史趋势', '季节性因素', '近期变更']
-    };
+    } as Prediction;
   }
 
   async generateRecommendations(context: string, data?: any): Promise<AIRecommendation[]> {
+    // Log context to acknowledge usage and avoid unused param
+    logger.info(`Generating recommendations for context: ${context}`);
+    // Acknowledge data usage to satisfy TS unused param rule
+    if (data) {
+      logger.info('generateRecommendations received data payload');
+    } else {
+      logger.info('generateRecommendations called with no data payload');
+    }
+    // Keep existing data-driven recommendations (no engine needed)
     const recommendations: AIRecommendation[] = [];
 
     try {
@@ -252,14 +377,40 @@ export class AIService {
       logger.error('Failed to generate recommendations:', error);
     }
 
+    if (recommendations.length === 0 && this.llmGateway) {
+      const llmAnalysis = await this.analyzeWithLLM(context, data);
+      if (llmAnalysis) {
+        const llmRec: AIRecommendation = {
+          id: `rec-llm-${Date.now()}`,
+          title: 'LLM Suggested Action',
+          description: llmAnalysis,
+          priority: 'low',
+          category: 'security',
+          impact: '低',
+          effort: '中',
+          relatedEntities: [],
+        };
+        return [llmRec];
+      }
+    }
     return recommendations;
   }
 
   async acknowledgeAnomaly(anomalyId: string, acknowledgedBy: string): Promise<void> {
+    if (this.mode === 'engine' && this.anomalyEngine) {
+      // Persist via engine's store
+      await this.anomalyEngine.acknowledge({ anomalyId, acknowledgedBy, note: undefined } as any);
+      return;
+    }
     logger.info(`Anomaly ${anomalyId} acknowledged by ${acknowledgedBy}`);
   }
 
   async resolveAnomaly(anomalyId: string): Promise<void> {
+    if (this.mode === 'engine' && this.anomalyEngine) {
+      // Use a conservative default resolution
+      await this.anomalyEngine.resolve({ anomalyId, resolvedBy: 'system', resolution: 'fixed' } as any);
+      return;
+    }
     logger.info(`Anomaly ${anomalyId} resolved`);
   }
 }

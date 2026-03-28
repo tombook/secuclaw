@@ -59,7 +59,7 @@ export class ScDashboard extends LitElement {
   private anomalies: AnomalyAlert[] = [];
 
   @state()
-  private predictions: TrendPrediction[] = [];
+  private predictions: TrendPrediction | null = null;
 
   @state()
   private recommendations: AIRecommendation[] = [];
@@ -569,26 +569,34 @@ export class ScDashboard extends LitElement {
   private async loadAIInsights() {
     try {
       // 获取AI洞察
-      this.insights = await aiService.generateInsights('dashboard', {
-        metrics: this.metrics,
-        compliance: this.complianceItems
+      this.insights = await aiService.generateInsights({
+        pageId: 'dashboard',
+        data: { metrics: this.metrics, compliance: this.complianceItems },
+        userRole: 'analyst',
       });
 
       // 获取异常检测
-      this.anomalies = await aiService.detectAnomalies('dashboard', {
-        metrics: this.metrics
+      this.anomalies = await aiService.detectAnomalies({
+        pageId: 'dashboard',
+        metrics: this.metrics.map(m => ({ name: m.title, value: m.value })),
       });
 
       // 获取趋势预测
-      this.predictions = await aiService.predictTrend('dashboard', {
+      const riskMetric = this.metrics.find(m => m.id === 'risk-score');
+      this.predictions = await aiService.predictTrend({
         metric: 'risk-score',
-        timeframe: '30d'
+        historicalData: riskMetric?.dataPoints?.map(dp => ({
+          date: new Date(dp.label),
+          value: dp.value,
+        })) || [],
+        timeframe: '30d',
       });
 
       // 获取建议
-      this.recommendations = await aiService.generateRecommendations('dashboard', {
-        insights: this.insights,
-        anomalies: this.anomalies
+      this.recommendations = await aiService.generateRecommendations({
+        pageId: 'dashboard',
+        data: { insights: this.insights, anomalies: this.anomalies },
+        userRole: 'analyst',
       });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
@@ -659,7 +667,7 @@ export class ScDashboard extends LitElement {
     
     return html`
       <div class="security-score-section">
-        <div class="score-card">
+        <div class="score-card ${scoreClass}">
           <div class="score-title">整体安全评分</div>
           <div class="score-value">${this.securityScore}</div>
           <div class="score-label">${this.i18n.t('dashboard.scoreLabel') || '安全态势'}</div>
@@ -922,7 +930,9 @@ export class ScDashboard extends LitElement {
             .pageData=${{
               metrics: this.metrics,
               compliance: this.complianceItems,
-              score: this.securityScore
+              score: this.securityScore,
+              predictions: this.predictions,
+              recommendations: this.recommendations,
             }}
             userRole="security-expert"
           ></sc-ai-assistant>

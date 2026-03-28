@@ -1,6 +1,8 @@
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { createServer, IncomingMessage, Server as HttpServer } from 'http';
 import { Router } from './router.js';
+import { verifyToken } from '../auth/jwt.js';
+import type { JWTPayload } from '../auth/jwt.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[Gateway]', ...args),
@@ -15,6 +17,9 @@ interface GatewayConfig {
   mitreLoader: any;
   scfLoader: any;
   jsonStore: any;
+  kpiService?: any;
+  rolesService?: any;
+  eventBus?: any;
 }
 
 interface Client {
@@ -22,6 +27,7 @@ interface Client {
   ws: WebSocket;
   isAlive: boolean;
   subscriptions: Set<string>;
+  data?: { user?: JWTPayload };
 }
 
 interface RequestMessage {
@@ -99,17 +105,48 @@ export class GatewayServer {
   }
 
   private setupWebSocketHandlers(): void {
-    this.wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
+    this.wss.on('connection', async (ws: WebSocket, request: IncomingMessage) => {
       const clientId = this.generateClientId();
       const client: Client = {
         id: clientId,
         ws,
         isAlive: true,
         subscriptions: new Set(),
+        data: {},
       };
 
       this.clients.set(clientId, client);
       logger.info(`Client ${clientId} connected. Total clients: ${this.clients.size}`);
+
+      // Extract token from URL or header
+      let token: string | null = null;
+      try {
+        const url = (request.url as string) || '';
+        const base = `http://${request.headers.host || 'localhost'}`;
+        const parsed = new URL(url, base);
+        token = parsed.searchParams.get('token');
+      } catch {
+        // ignore parse errors
+      }
+      if (!token) {
+        const protoHeader = request.headers['sec-websocket-protocol'];
+        if (protoHeader) token = Array.isArray(protoHeader) ? protoHeader[0] : (protoHeader as string);
+      }
+
+      if (!token) {
+        ws.close(4001, 'Unauthorized: missing token');
+        this.clients.delete(clientId);
+        return;
+      }
+
+      const payload = await verifyToken(token);
+      if (!payload) {
+        ws.close(4001, 'Unauthorized: invalid token');
+        this.clients.delete(clientId);
+        return;
+      }
+      client.data = { user: payload };
+      logger.info(`Client ${clientId} authenticated as ${payload.username}`);
 
       ws.on('message', (data: RawData) => {
         this.handleMessage(client, data);

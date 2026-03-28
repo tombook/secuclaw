@@ -22,7 +22,11 @@ const navItems: NavItem[] = [
   { path: '/tools/security-ops', icon: '🛡️', labelKey: 'nav.securityOps' },
   { path: '/skills-market', icon: '🛒', labelKey: 'nav.skillsMarket' },
   { path: '/channels', icon: '💬', labelKey: 'nav.channels' },
+  // Settings sub-pages
   { path: '/settings', icon: '⚙️', labelKey: 'nav.settings' },
+  { path: '/settings/roles', icon: '👥', labelKey: 'nav.roles' },
+  { path: '/settings/llm-config', icon: '🤖', labelKey: 'nav.llmConfig' },
+  { path: '/settings/ai-experts-config', icon: '⚡', labelKey: 'nav.aiExpertsConfig' },
 ];
 
 @customElement('sc-sidebar')

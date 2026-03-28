@@ -59,7 +59,8 @@ export class ScWarRoomPage extends LitElement {
   @state() private selectedIncident: WarRoomIncident | null = null;
   @state() private newComment = '';
 
-  staticstyles = css`
+  static get styles() {
+    return css`
     :host { display: block; }
     .warroom-container{
       display: grid;
@@ -397,6 +398,7 @@ export class ScWarRoomPage extends LitElement {
       overflow: hidden;
     }
   `;
+  }
 
   constructor() {
     super();
@@ -448,10 +450,21 @@ export class ScWarRoomPage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights('war-room', { incidents: this.activeIncidents, team: this.teamMembers });
-      this.recommendations = await aiService.generateRecommendations('war-room', { incidents: this.activeIncidents });
+      this.insights = await aiService.generateInsights({
+        pageId: 'war-room',
+        data: { incidents: this.activeIncidents, team: this.teamMembers },
+        userRole: 'security-expert'
+      });
+      this.recommendations = await aiService.generateRecommendations({
+        pageId: 'war-room',
+        data: { incidents: this.activeIncidents },
+        userRole: 'security-expert'
+      });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
+      // AI insights are non-critical, continue without them
+      this.insights = [];
+      this.recommendations = [];
     }
   }
 

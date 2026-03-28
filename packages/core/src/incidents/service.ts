@@ -8,11 +8,17 @@ import type {
   IncidentQueryParams,
   CreateIncidentRequest,
   UpdateIncidentRequest,
-  IncidentTimelineUpdate,
   IncidentStatus,
+  IncidentSeverity,
 } from './types.js';
 import { IncidentsRepository } from './repository.js';
-import type { DomainId } from '../capabilities/types.js';
+import { LinkStore, type LinkedResources } from './link-store.js';
+
+// Local EventBus interface to avoid circular dependencies during parallel init
+interface EventBus {
+  emit(event: string, payload: unknown): Promise<void>;
+}
+// DomainId type is imported from capabilities/types.js in type annotations elsewhere
 
 const logger = {
   info: (...args: any[]) => console.log('[IncidentsService]', ...args),
@@ -33,7 +39,28 @@ const STATUS_TRANSITIONS: Record<IncidentStatus, IncidentStatus[]> = {
 };
 
 export class IncidentsService {
+  private eventBus: EventBus | null = null;
+  private linkStore: LinkStore | null = null;
+
   constructor(private repo: IncidentsRepository) {}
+
+  setLinkStore(store: LinkStore): void {
+    this.linkStore = store;
+  }
+
+  setEventBus(bus: EventBus): void {
+    this.eventBus = bus;
+  }
+
+  private async emitEvent(event: string, payload: unknown): Promise<void> {
+    if (this.eventBus) {
+      try {
+        await this.eventBus.emit(event, payload);
+      } catch (err) {
+        console.error('[IncidentsService] Event emission failed:', err);
+      }
+    }
+  }
 
   // ==================== CRUD ====================
 
@@ -92,8 +119,25 @@ export class IncidentsService {
       updatedAt: now,
     };
 
+    // Record creator if provided to satisfy type usage
+    if (createdBy) {
+      incident.handlers.push({
+        user: createdBy,
+        role: 'Reporter',
+        joinedAt: now,
+        actions: ['created'],
+        notes: '',
+      } as any);
+    }
+
     await this.repo.create(incident);
     logger.info(`Created incident: ${incident.ticketId} - ${incident.info.title}`);
+    await this.emitEvent('incident.created', {
+      incidentId: incident.id,
+      severity: incident.info?.severity ?? undefined,
+      category: incident.info?.category ?? undefined,
+      assignee: incident.workflow?.assignee,
+    });
     
     return incident;
   }
@@ -184,20 +228,33 @@ export class IncidentsService {
       case 'closed':
         timelineUpdates.closedAt = now;
         
-        // Calculate SLA
-        const responseTime = incident.timeline.acknowledgedAt 
-          ? (incident.timeline.acknowledgedAt - (incident.timeline.detectedAt || now))
+        // Calculate SLA breaches and times (simplified rules)
+        incident.sla.responseBreached = incident.timeline.acknowledgedAt! > (incident.sla.responseDeadline ?? 0);
+        incident.sla.resolutionBreached = now > (incident.sla.resolutionDeadline ?? 0);
+        // Approximate actual times if available
+        const responseTime = incident.timeline.acknowledgedAt
+          ? Math.max(0, (incident.timeline.acknowledgedAt - (incident.timeline.detectedAt ?? incident.createdAt)) / 60000)
           : 0;
-        const resolutionTime = now - (incident.timeline.detectedAt || now);
-        
-        incident.sla.responseBreached = responseTime > (incident.sla.responseDeadline || 0) - (incident.timeline.detectedAt || now);
-        incident.sla.resolutionBreached = resolutionTime > ((incident.sla.resolutionDeadline || 0) - (incident.timeline.detectedAt || now));
-        incident.sla.responseTimeMinutes = Math.round(responseTime / 60000);
-        incident.sla.resolutionTimeMinutes = Math.round(resolutionTime / 60000);
+        const resolutionTime = Math.max(0, (now - (incident.timeline.detectedAt ?? now)) / 60000);
+        incident.sla.responseTimeMinutes = Math.round(responseTime);
+        incident.sla.resolutionTimeMinutes = Math.round(resolutionTime);
         break;
       case 'reopened':
         timelineUpdates.reopenedAt = now;
         break;
+    }
+
+    // Apply possible handler note before persisting updates
+    const handlerToAdd = actor && note ? {
+      user: actor,
+      role: 'Analyst',
+      joinedAt: now,
+      actions: [`Status changed to ${newStatus}`],
+      notes: note,
+    } : undefined;
+
+    if (handlerToAdd) {
+      incident.handlers.push(handlerToAdd as any);
     }
 
     const updated = await this.repo.update(id, {
@@ -211,21 +268,26 @@ export class IncidentsService {
         ...timelineUpdates,
       },
       updatedAt: now,
+      handlers: incident.handlers,
     });
 
-    // Add handler note if provided
-    if (actor && note) {
-      incident.handlers.push({
-        user: actor,
-        role: 'Analyst',
-        joinedAt: now,
-        actions: [`Status changed to ${newStatus}`],
-        notes: note,
-      });
-      await this.repo.update(id, { handlers: incident.handlers });
-    }
-
     logger.info(`Incident ${incident.ticketId} status: ${currentStatus} -> ${newStatus}`);
+    // Emit status changed event
+    await this.emitEvent('incident.statusChanged', {
+      incidentId: id,
+      fromStatus: currentStatus,
+      toStatus: newStatus,
+      actor: actor || 'system',
+    });
+
+    // If resolved/closed, emit resolved event as well
+    if (['resolved', 'closed'].includes(newStatus)) {
+      await this.emitEvent('incident.resolved', {
+        incidentId: id,
+        resolution: note || '',
+        resolvedBy: actor || 'system',
+      });
+    }
     return updated!;
   }
 
@@ -233,6 +295,47 @@ export class IncidentsService {
 
   async getStats() {
     return this.repo.getStats();
+  }
+
+  async getLinkedResources(incidentId: string): Promise<LinkedResources | null> {
+    if (!this.linkStore) return null;
+    return this.linkStore.getLinkedResources(incidentId);
+  }
+
+  async escalateIncident(
+    incidentId: string,
+    escalationLevel: 'manager' | 'director' | 'ciso',
+    reason?: string,
+  ): Promise<SecurityIncident> {
+    const incident = await this.repo.getById(incidentId);
+    if (!incident) {
+      throw new Error(`Incident not found: ${incidentId}`);
+    }
+
+    const severityMap: Record<string, IncidentSeverity> = {
+      P3: 'P2', P2: 'P1', P1: 'P0',
+    };
+    const currentSeverity = incident.info.severity;
+    const escalatedSeverity = severityMap[currentSeverity] ?? 'P1';
+
+    const updated = await this.repo.update(incidentId, {
+      info: {
+        ...incident.info,
+        severity: escalatedSeverity,
+        priority: this.severityToPriority(escalatedSeverity),
+      },
+      updatedAt: Date.now(),
+    });
+
+    await this.emitEvent('incident.statusChanged', {
+      incidentId,
+      fromStatus: incident.workflow.status,
+      toStatus: incident.workflow.status,
+      actor: `escalation:${escalationLevel}`,
+    });
+
+    logger.info(`Incident ${incident.ticketId} escalated to ${escalationLevel} (severity ${currentSeverity} -> ${escalatedSeverity})${reason ? ': ' + reason : ''}`);
+    return updated!;
   }
 
   // ==================== Helpers ====================

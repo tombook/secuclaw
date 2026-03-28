@@ -4,6 +4,11 @@
  */
 
 import { VulnerabilitiesRepository, type Vulnerability, type VulnerabilityQueryParams } from './repository.js';
+import { VulnStateMachine } from './state-machine.js';
+
+interface EventBus {
+  emit(event: string, payload: unknown): Promise<void>;
+}
 
 const logger = {
   info: (...args: any[]) => console.log('[VulnerabilitiesService]', ...args),
@@ -11,7 +16,23 @@ const logger = {
 };
 
 export class VulnerabilitiesService {
+  private eventBus: EventBus | null = null;
+
   constructor(private repo: VulnerabilitiesRepository) {}
+
+  setEventBus(bus: EventBus): void {
+    this.eventBus = bus;
+  }
+
+  private async emitEvent(event: string, payload: unknown): Promise<void> {
+    if (this.eventBus) {
+      try {
+        await this.eventBus.emit(event, payload);
+      } catch (err) {
+        logger.error('EventBus emit failed', err);
+      }
+    }
+  }
 
   async list(params: VulnerabilityQueryParams = {}): Promise<Vulnerability[]> {
     return this.repo.query(params);
@@ -36,6 +57,9 @@ export class VulnerabilitiesService {
       throw new Error(`Vulnerability not found: ${id}`);
     }
 
+    // Validate status transition using the state machine
+    VulnStateMachine.validateTransition(existing.remediation.status, status);
+
     const updates: Partial<Vulnerability> = {
       remediation: {
         ...existing.remediation,
@@ -46,27 +70,12 @@ export class VulnerabilitiesService {
 
     const updated = await this.repo.update(id, updates);
     
-    // Add history
-    await this.repo.addHistory(id, `Status changed to ${status}`, user || 'system');
-    
-    logger.info(`Vulnerability ${existing.info.cveId} status: ${status}`);
-    return updated!;
-  }
-
-  async assign(id: string, assignedTo: string, user?: string): Promise<Vulnerability> {
-    const existing = await this.repo.getById(id);
-    if (!existing) {
-      throw new Error(`Vulnerability not found: ${id}`);
-    }
-
-    const updated = await this.repo.update(id, {
-      remediation: {
-        ...existing.remediation,
-        assignedTo,
-      },
+    await this.emitEvent('vulnerability.statusChanged', {
+      vulnId: id,
+      fromStatus: existing.remediation.status,
+      toStatus: status,
     });
-
-    await this.repo.addHistory(id, `Assigned to ${assignedTo}`, user || 'system');
+    
     logger.info(`Vulnerability ${existing.info.cveId} assigned to ${assignedTo}`);
     
     return updated!;
@@ -95,5 +104,50 @@ export class VulnerabilitiesService {
 
   async getByAsset(assetId: string): Promise<Vulnerability[]> {
     return this.repo.query({ assetId });
+  }
+
+  /**
+   * Get valid next statuses for a vulnerability by id based on the state machine
+   */
+  async getValidNextStatuses(id: string): Promise<string[]> {
+    const vuln = await this.repo.getById(id);
+    if (!vuln) {
+      throw new Error(`Vulnerability not found: ${id}`);
+    }
+    return VulnStateMachine.getNextStatuses(vuln.remediation.status).map(s => s as string);
+  }
+
+  async batchUpdateStatus(
+    ids: string[],
+    status: Vulnerability['remediation']['status'],
+    _user?: string,
+  ): Promise<{ updated: number; errors: string[] }> {
+    let updated = 0;
+    const errors: string[] = [];
+
+    for (const id of ids) {
+      try {
+        const existing = await this.repo.getById(id);
+        if (!existing) {
+          errors.push(`${id}: not found`);
+          continue;
+        }
+        VulnStateMachine.validateTransition(existing.remediation.status, status);
+        await this.repo.update(id, {
+          remediation: { ...existing.remediation, status },
+        });
+        await this.emitEvent('vulnerability.statusChanged', {
+          vulnId: id,
+          fromStatus: existing.remediation.status,
+          toStatus: status,
+        });
+        updated++;
+      } catch (err) {
+        errors.push(`${id}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    logger.info(`Batch update: ${updated}/${ids.length} updated to ${status}`);
+    return { updated, errors };
   }
 }

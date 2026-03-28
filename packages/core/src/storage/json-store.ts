@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile, unlink, access } from 'fs/promises';
+// Simple write lock to ensure sequential writes
 import { join, dirname } from 'path';
 
 const logger = {
@@ -9,6 +10,7 @@ const logger = {
 
 export class JsonStore {
   private basePath: string;
+  private writeLock: Promise<void> = Promise.resolve();
 
   constructor(basePath: string) {
     this.basePath = basePath;
@@ -37,15 +39,19 @@ export class JsonStore {
     const filePath = this.resolvePath(key);
     await this.ensureDir(filePath);
     
-    // Write to temp file first, then rename (atomic write)
-    const tempPath = `${filePath}.tmp`;
-    await writeFile(tempPath, JSON.stringify(value, null, 2), 'utf-8');
-    
-    // Rename temp to actual (atomic on most systems)
-    const fs = await import('fs/promises');
-    await fs.rename(tempPath, filePath);
-    
-    logger.debug(`Saved: ${key}`);
+    // Chain writes to ensure sequential access
+    this.writeLock = this.writeLock.then(async () => {
+      // Write to temp file first, then rename (atomic write)
+      const tempPath = `${filePath}.tmp`;
+      await writeFile(tempPath, JSON.stringify(value, null, 2), 'utf-8');
+      // Rename temp to actual (atomic on most systems)
+      const fs = await import('fs/promises');
+      await fs.rename(tempPath, filePath);
+      logger.debug(`Saved: ${key}`);
+    }).catch(() => {
+      // swallow errors to avoid blocking subsequent writes
+    });
+    return this.writeLock;
   }
 
   async delete(key: string): Promise<boolean> {

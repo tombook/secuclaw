@@ -6,6 +6,12 @@ import { ScfLoader } from './knowledge/scf/loader.js';
 import { JsonStore } from './storage/json-store.js';
 import { RolesService } from './roles/service.js';
 import { RolesRepository } from './roles/repository.js';
+import { DataSeedService } from './data-seed.js';
+import { KpiService } from './kpi/service.js';
+import { KpiScheduler } from './kpi/scheduler.js';
+import { EventBus, registerDefaultRules } from './events/index.js';
+import { AuditLogRepository } from './audit/repository.js';
+import { AuditLogService } from './audit/service.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[INFO]', ...args),
@@ -38,6 +44,11 @@ class SecuClawApplication {
   private scfLoader: ScfLoader;
   private jsonStore: JsonStore;
   private rolesService: RolesService;
+  private dataSeedService: DataSeedService;
+  private kpiService: KpiService;
+  private kpiScheduler: KpiScheduler;
+  private eventBus: EventBus;
+  private auditLogService: AuditLogService;
   private shutdownHandlers: Array<() => Promise<void>> = [];
 
   constructor(config: AppConfig) {
@@ -50,6 +61,20 @@ class SecuClawApplication {
     const rolesRepo = new RolesRepository(this.jsonStore);
     this.rolesService = new RolesService(rolesRepo);
     
+    // Initialize data seed service
+    this.dataSeedService = new DataSeedService(this.jsonStore);
+    
+    // Initialize KPI service
+    this.kpiService = new KpiService(this.jsonStore);
+    
+    this.eventBus = new EventBus();
+    registerDefaultRules(this.eventBus);
+    
+    this.kpiScheduler = new KpiScheduler(this.kpiService, { autoStart: false });
+    
+    const auditRepo = new AuditLogRepository(this.jsonStore);
+    this.auditLogService = new AuditLogService(auditRepo);
+    
     // Gateway Server (WebSocket)
     this.gateway = new GatewayServer({
       port: config.gatewayPort,
@@ -57,7 +82,9 @@ class SecuClawApplication {
       mitreLoader: this.mitreLoader,
       scfLoader: this.scfLoader,
       jsonStore: this.jsonStore,
+      kpiService: this.kpiService,
       rolesService: this.rolesService,
+      eventBus: this.eventBus,
     });
     
     // API Server (REST)
@@ -91,6 +118,13 @@ class SecuClawApplication {
     const scfStats = this.scfLoader.getStats();
     logger.info(`Loaded SCF: ${scfStats.controls} controls, ${scfStats.domains} domains`);
 
+    // Seed operational data (incidents, vulnerabilities, etc.)
+    logger.info('Seeding operational data...');
+    await this.dataSeedService.seedAll();
+
+    this.kpiScheduler.start();
+    this.shutdownHandlers.push(() => Promise.resolve(this.kpiScheduler.stop()));
+
     // Start WebSocket Gateway server
     logger.info('Starting WebSocket gateway server...');
     await this.gateway.start();
@@ -106,6 +140,14 @@ class SecuClawApplication {
     logger.info(`REST API available at http://127.0.0.1:${config.apiPort}/api/v1`);
 
     logger.info('SecuClaw application initialized successfully');
+
+    await this.auditLogService.log({
+      action: 'configure',
+      resource: 'system',
+      resourceId: 'secuclaw-app',
+      actor: 'system',
+      details: { gatewayPort: config.gatewayPort, apiPort: config.apiPort },
+    });
   }
 
   async shutdown(): Promise<void> {

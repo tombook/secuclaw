@@ -40,15 +40,26 @@ class GatewayClient {
   private maxReconnectAttempts = 10;
   private reconnectDelay = 1000;
   private messageQueue: RequestMessage[] = [];
+  private authToken: string | null = null;
 
   constructor(url: string = 'ws://127.0.0.1:21981/ws') {
     this.url = url;
   }
 
+  setAuthToken(token: string | null): void {
+    this.authToken = token;
+  }
+
+  private getAuthenticatedUrl(): string {
+    if (!this.authToken) return this.url;
+    const separator = this.url.includes('?') ? '&' : '?';
+    return `${this.url}${separator}token=${encodeURIComponent(this.authToken)}`;
+  }
+
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.status = 'connecting';
-      this.ws = new WebSocket(this.url);
+      this.ws = new WebSocket(this.getAuthenticatedUrl());
 
       this.ws.onopen = () => {
         this.status = 'connected';
@@ -58,7 +69,7 @@ class GatewayClient {
         resolve();
       };
 
-      this.ws.onclose = (event) => {
+      this.ws.onclose = () => {
         this.status = 'disconnected';
         this.notifyConnectionHandlers(false);
         this.scheduleReconnect();
@@ -67,9 +78,7 @@ class GatewayClient {
       this.ws.onerror = (error) => {
         console.error('[Gateway] Error:', error);
         this.status = 'error';
-        if (this.status === 'connecting') {
-          reject(new Error('Connection failed'));
-        }
+        reject(new Error('Connection failed'));
       };
 
       this.ws.onmessage = (event) => {

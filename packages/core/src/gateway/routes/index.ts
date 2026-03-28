@@ -1,0 +1,10 @@
+export { registerAuthRoutes } from './auth-routes.js';
+export { registerSkillsRoutes } from './skills-routes.js';
+export { registerKnowledgeRoutes } from './knowledge-routes.js';
+export { registerCommanderRoutes } from './commander-routes.js';
+export { registerLlmRoutes } from './llm-routes.js';
+export { registerChannelsRoutes } from './channels-routes.js';
+export { registerCapabilitiesRoutes } from './capabilities-routes.js';
+export { registerIncidentsRoutes } from './incidents-routes.js';
+export { registerSecurityRoutes } from './security-routes.js';
+export { registerAiRoutes } from './ai-routes.js';

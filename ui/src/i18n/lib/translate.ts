@@ -1,8 +1,20 @@
 export type Locale = 'zh-CN' | 'en' | 'zh-TW';
-export type TranslationMap = Record<string, string | TranslationMap>;
 
-// Vite import.meta.glob - 直接使用，不要通过 globalThis
-const localeModules = import.meta.glob('../locales/*.ts', { eager: true });
+// Use interface for recursive type to avoid circular reference error
+export interface TranslationMap {
+  [key: string]: string | TranslationMap;
+}
+
+// Direct imports for each locale
+import { zh_CN } from '../locales/zh-CN';
+import { en } from '../locales/en';
+import { zh_TW } from '../locales/zh-TW';
+
+const locales: Record<Locale, TranslationMap> = {
+  'zh-CN': zh_CN as TranslationMap,
+  'en': en as TranslationMap,
+  'zh-TW': zh_TW as TranslationMap,
+};
 
 interface I18nConfig {
   defaultLocale: Locale;
@@ -31,17 +43,12 @@ class I18nManager {
   }
 
   private async loadLocale(locale: Locale): Promise<void> {
-    const modulePath = `../locales/${locale}.ts`;
-    const module = localeModules[modulePath];
-    if (!module) {
-      console.warn('[i18n] Locale file not found:', locale);
+    const translations = locales[locale];
+    if (!translations) {
+      console.warn('[i18n] Locale not found:', locale);
       return;
     }
-    // With eager: true, modules are already loaded
-    const localeKey = locale.replace('-', '_');
-    // Try default export first, then named export (zh_CN, en, zh_TW)
-    const translations = (module as Record<string, unknown>).default || (module as Record<string, unknown>)[localeKey] || {};
-    this.translations.set(locale, translations as TranslationMap);
+    this.translations.set(locale, translations);
   }
 
   t(key: string, params?: Record<string, string>): string {

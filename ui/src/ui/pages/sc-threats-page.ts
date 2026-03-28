@@ -78,7 +78,15 @@ export class ScThreatsPage extends LitElement {
   private insights: SmartInsight[] = [];
 
   @state()
-  private recommendations: AIRecommendation[] = [];
+  private threatStats: {
+    totalActors: number;
+    activeCampaigns: number;
+    iocCount: number;
+    avgConfidence: number;
+  } = {
+    totalActors: 0, activeCampaigns: 0, iocCount: 0,
+    avgConfidence: 0,
+  };
 
   @state()
   private selectedFilter: IOCType | 'all' = 'all';
@@ -88,6 +96,15 @@ export class ScThreatsPage extends LitElement {
 
   @state()
   private selectedIOC: IOC | null = null;
+
+  @state()
+  private selectedThreat: any = null;
+
+  @state()
+  private threatActors: any[] = [];
+
+  @state()
+  private recommendations: AIRecommendation[] = [];
 
   // ============ 样式 ============
 
@@ -477,9 +494,9 @@ export class ScThreatsPage extends LitElement {
           this.threatActors = threats.map(t => ({
             id: t.id,
             name: t.name,
-            aliases: t.aliases,
+            aliases: t.aliases || [],
             type: t.type,
-            motivation: t.motivation,
+            motivation: Array.isArray(t.motivation) ? t.motivation.join(', ') : t.motivation,
             sophistication: t.capabilities?.sophistication,
             techniqueCount: t.capabilities?.techniques?.length || 0,
             campaignCount: t.campaigns?.length || 0,
@@ -520,6 +537,12 @@ export class ScThreatsPage extends LitElement {
     const techniqueBonus = (threat.capabilities?.techniques?.length || 0) * 2;
     const campaignBonus = (threat.campaigns?.length || 0) * 5;
     return Math.min(100, baseScore + techniqueBonus + campaignBonus);
+  }
+
+  private get avgThreatConfidence(): number {
+    if (!this.iocs || this.iocs.length === 0) return 0;
+    const sum = this.iocs.reduce((acc, ioc) => acc + (ioc.confidence ?? 0), 0);
+    return Math.round(sum / this.iocs.length);
   }
 
   private async loadIOCs() {
@@ -612,6 +635,15 @@ export class ScThreatsPage extends LitElement {
     ];
   }
 
+  private formatThreatTypeBreakdown(): string {
+    const map: Record<string, number> = {};
+    for (const a of this.threatActors) {
+      const t = (a.type as string) || 'unknown';
+      map[t] = (map[t] || 0) + 1;
+    }
+    return Object.entries(map).map(([k,v]) => `${k}:${v}`).join(', ');
+  }
+
   private async loadMITREData() {
     this.mitreTechniques = [
       { id: 'T1566', name: 'Phishing', tactic: 'Initial Access', count: 45, severity: 'critical' },
@@ -627,13 +659,16 @@ export class ScThreatsPage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights('threats', {
-        iocs: this.iocs,
-        sources: this.threatSources
+      this.insights = await aiService.generateInsights({
+        pageId: 'threats',
+        data: { iocs: this.iocs, sources: this.threatSources },
+        userRole: 'analyst',
       });
 
-      this.recommendations = await aiService.generateRecommendations('threats', {
-        insights: this.insights
+      this.recommendations = await aiService.generateRecommendations({
+        pageId: 'threats',
+        data: { insights: this.insights },
+        userRole: 'analyst',
       });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
@@ -647,8 +682,31 @@ export class ScThreatsPage extends LitElement {
     this.applyFilters();
   }
 
-  private handleSearch(e: Event) {
+  private async handleSearch(e: Event) {
     this.searchQuery = (e.target as HTMLInputElement).value;
+    if (this.searchQuery.trim().length > 0) {
+      try {
+        const threats = await dataService.searchThreats(this.searchQuery);
+        this.threatActors = threats.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          aliases: t.aliases || [],
+          type: t.type,
+          motivation: t.motivation || '',
+          capabilities: { techniques: t.capabilities?.techniques || [] },
+          campaignCount: (t.campaigns?.length) || 0,
+          lastActivity: t.lastSeen,
+          risk: this.calculateThreatRisk(t),
+          iocs: t.iocs || [],
+          confidence: t.confidence || 0
+        }));
+      } catch {
+        // fallback to local filtering
+        this.applyFilters();
+      }
+    } else {
+      await this.loadThreatData();
+    }
     this.applyFilters();
   }
 
@@ -681,9 +739,30 @@ export class ScThreatsPage extends LitElement {
     const criticalCount = this.iocs.filter(i => i.severity === 'critical').length;
     const highCount = this.iocs.filter(i => i.severity === 'high').length;
     const sourcesActive = this.threatSources.filter(s => s.status === 'active').length;
+    const ts = this.threatStats;
 
     return html`
       <div class="stats-grid">
+        ${this.threatStats && this.threatStats.totalActors !== undefined ? html`
+          <sc-smart-card
+            title="威胁总数"
+            value="${this.threatStats.totalActors ?? 0}"
+            icon="🎯"
+            status="success"
+          ></sc-smart-card>
+          <sc-smart-card
+            title="类型分布"
+            value="${this.formatThreatTypeBreakdown()}"
+            icon="🗺️"
+            status="neutral"
+          ></sc-smart-card>
+          <sc-smart-card
+            title="平均置信度"
+            value="${this.avgThreatConfidence}%"
+            icon="📈"
+            status="success"
+          ></sc-smart-card>
+        ` : ''}
         <sc-smart-card
           title="活跃IOC"
           value="${activeCount}"
@@ -712,6 +791,19 @@ export class ScThreatsPage extends LitElement {
           icon="🗺️"
           subtitle="技术覆盖"
           status="success"
+        ></sc-smart-card>
+        <sc-smart-card
+          title="威胁行为体"
+          value="${ts.totalActors}"
+          icon="👤"
+          subtitle="${ts.activeCampaigns} 活跃活动"
+          status="info"
+        ></sc-smart-card>
+        <sc-smart-card
+          title="平均置信度"
+          value="${(ts.avgConfidence * 100).toFixed(0)}%"
+          icon="📊"
+          status="${ts.avgConfidence > 0.7 ? 'success' : 'warning'}"
         ></sc-smart-card>
       </div>
     `;
@@ -872,6 +964,47 @@ export class ScThreatsPage extends LitElement {
             </div>
           </div>
         `}
+        ${this.recommendations.length > 0 ? html`
+          <div class="section-header" style="margin-top:16px;">
+            <h3 class="section-title">💡 AI建议</h3>
+          </div>
+          ${this.recommendations.slice(0, 5).map(rec => html`
+            <div class="insight-item">
+              <span class="insight-icon">${rec.impact === 'high' ? '🔴' : rec.impact === 'medium' ? '🟡' : '🟢'}</span>
+              <div class="insight-content">
+                <div class="insight-title">${rec.title}</div>
+                <div class="insight-description">${rec.description}</div>
+              </div>
+            </div>
+          `)}
+        ` : ''}
+      </div>
+    `;
+  }
+
+  private renderThreatActors() {
+    if (this.threatActors.length === 0) return html``;
+    return html`
+      <div class="sources-section">
+        <div class="section-header">
+          <h3 class="section-title">👤 威胁行为体</h3>
+          <span style="font-size:12px;color:var(--sc-text-secondary);">${this.threatActors.length} 个行为体</span>
+        </div>
+        <div class="sources-grid">
+          ${this.threatActors.slice(0, 8).map((actor: any) => html`
+            <div class="source-card" @click=${() => this.selectedThreat = this.selectedThreat?.id === actor.id ? null : actor}>
+              <div class="source-info">
+                <div class="source-name">${actor.name || '未知'}</div>
+                <div class="source-meta">
+                  ${actor.motivation || '未知动机'} · ${actor.campaignCount || 0} 活动 · 风险评分: ${actor.risk ?? '-'}
+                </div>
+              </div>
+            </div>
+          ${this.selectedThreat?.id === actor.id ? html`<div class="ai-analysis" style="margin-top:8px; padding:8px; border-radius:6px; background:#f8fafc; border:1px solid #e2e8f0;">
+            <strong>详情</strong>: Aliases: ${actor.aliases?.join(', ') ?? actor.name}；动机: ${actor.motivation ?? '未知'}；能力: ${actor.capabilities?.techniques?.join(', ') ?? 'N/A'}；IOC计数: ${actor.iocs?.length ?? 0}
+          </div>` : ''}
+          `)}
+        </div>
       </div>
     `;
   }
@@ -908,6 +1041,7 @@ export class ScThreatsPage extends LitElement {
           ${this.renderStats()}
           ${this.renderThreatSources()}
           ${this.renderMITREMatrix()}
+          ${this.renderThreatActors()}
           ${this.renderIOCList()}
           ${this.renderInsights()}
         </div>
