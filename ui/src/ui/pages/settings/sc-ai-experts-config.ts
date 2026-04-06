@@ -22,6 +22,9 @@ interface RoleConfig {
   selectedModel: string;
 }
 
+// Shared localStorage key with sc-llm-service-config
+const STORAGE_KEY = 'secuclaw-llm-providers-v2';
+
 @customElement('sc-ai-experts-config')
 export class ScAiExpertsConfig extends LitElement {
   private i18n = new I18nController(this);
@@ -40,6 +43,9 @@ export class ScAiExpertsConfig extends LitElement {
   @state() private loading = true;
   @state() private saving = false;
   @state() private saveStatus: 'idle' | 'saving' | 'saved' | 'error' = 'idle';
+
+  // Event listener cleanup
+  private providerChangeHandler: (() => void) | null = null;
 
   static styles = css`
     :host { display: block; }
@@ -203,6 +209,52 @@ export class ScAiExpertsConfig extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.loadData();
+    
+    // Listen for provider changes from LLM Config page
+    this.providerChangeHandler = () => {
+      this.handleProvidersChanged();
+    };
+    window.addEventListener('llm-providers-changed', this.providerChangeHandler);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.providerChangeHandler) {
+      window.removeEventListener('llm-providers-changed', this.providerChangeHandler);
+    }
+  }
+
+  private handleProvidersChanged() {
+    // Reload providers from localStorage when LLM Config page changes them
+    const localProviders = this.loadProvidersFromLocalStorage();
+    if (localProviders.length > 0) {
+      this.providers = localProviders;
+      // Update role selections to use new providers if needed
+      this.roles = this.roles.map(role => {
+        const providerExists = this.providers.some(p => p.id === role.selectedProviderId && p.enabled);
+        if (!providerExists) {
+          const defaultProvider = this.providers.find(p => p.enabled) || this.providers[0];
+          return {
+            ...role,
+            selectedProviderId: defaultProvider?.id || '',
+            selectedModel: defaultProvider?.models?.[0] || '',
+          };
+        }
+        return role;
+      });
+    }
+  }
+
+  private loadProvidersFromLocalStorage(): LLMProvider[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored) as LLMProvider[];
+      }
+    } catch (e) {
+      console.error('[AI Experts Config] Failed to load from localStorage:', e);
+    }
+    return [];
   }
 
   private async loadData() {
@@ -210,41 +262,110 @@ export class ScAiExpertsConfig extends LitElement {
     try {
       await gatewayClient.waitForConnection(5000);
       
-      // Load providers and saved config in parallel
-      const [providers, savedConfig] = await Promise.all([
-        gatewayClient.request<LLMProvider[]>('llm.providers.list'),
-        gatewayClient.request<{ roles: Array<{ id: string; enabled: boolean; providerId: string; model: string }> }>('aiExperts.config.get'),
+      const [providersResult, savedConfigResult] = await Promise.allSettled([
+        gatewayClient.request<unknown>('llm.providers.list'),
+        gatewayClient.request<unknown>('aiExperts.config.get'),
       ]);
-      
-      this.providers = providers || [];
-      
-      if (this.providers.length > 0) {
-        const defaultProvider = this.providers.find(p => p.enabled) || this.providers[0];
-        const defaultModel = defaultProvider.models?.[0] || '';
+
+      let loadedProviders: LLMProvider[] = [];
+      if (providersResult.status === 'fulfilled') {
+        const raw = providersResult.value;
+        const list = Array.isArray(raw) ? raw : [];
+        loadedProviders = list.map((p: unknown, i: number) => this.normalizeProvider(p, i));
+      }
+
+      // If no providers from gateway, try localStorage (shared with LLM Config)
+      if (loadedProviders.length === 0) {
+        loadedProviders = this.loadProvidersFromLocalStorage();
+      }
+
+      // If still empty, use fallback
+      if (loadedProviders.length === 0) {
+        loadedProviders = this.getFallbackProviders();
+      }
+
+      this.providers = loadedProviders;
+
+      const defaultProvider = this.providers.find(p => p.enabled) || this.providers[0];
+      const defaultModel = defaultProvider?.models?.[0] || '';
+
+      if (savedConfigResult.status === 'fulfilled' && savedConfigResult.value) {
+        const data = savedConfigResult.value as Record<string, unknown>;
+        const savedRoles = Array.isArray(data.roles) ? data.roles : [];
         
-        // Merge saved config with default roles
         this.roles = this.roles.map(role => {
-          const saved = savedConfig?.roles?.find(r => r.id === role.id);
+          const saved = savedRoles.find((r: unknown) => {
+            const sr = r as Record<string, unknown>;
+            return sr.id === role.id;
+          }) as Record<string, unknown> | undefined;
           if (saved) {
             return {
               ...role,
-              enabled: saved.enabled,
-              selectedProviderId: saved.providerId || defaultProvider.id,
-              selectedModel: saved.model || defaultModel,
+              enabled: typeof saved.enabled === 'boolean' ? saved.enabled : role.enabled,
+              selectedProviderId: String(saved.providerId || defaultProvider?.id || ''),
+              selectedModel: String(saved.model || defaultModel),
             };
           }
           return {
             ...role,
-            selectedProviderId: defaultProvider.id,
+            selectedProviderId: defaultProvider?.id || '',
             selectedModel: defaultModel,
           };
         });
+      } else {
+        this.roles = this.roles.map(role => ({
+          ...role,
+          selectedProviderId: defaultProvider?.id || '',
+          selectedModel: defaultModel,
+        }));
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
-      this.providers = [];
+      console.error('[sc-ai-experts-config] Failed to load data:', error);
+      // Try localStorage on error
+      const localProviders = this.loadProvidersFromLocalStorage();
+      this.providers = localProviders.length > 0 ? localProviders : this.getFallbackProviders();
+      const defaultProvider = this.providers[0];
+      this.roles = this.roles.map(role => ({
+        ...role,
+        selectedProviderId: defaultProvider?.id || '',
+        selectedModel: defaultProvider?.models?.[0] || '',
+      }));
     }
     this.loading = false;
+  }
+
+  private normalizeProvider(input: unknown, index: number): LLMProvider {
+    const source = (input && typeof input === 'object') ? (input as Record<string, unknown>) : {};
+    return {
+      id: String(source.id || `provider_${index}`),
+      name: String(source.name || `Provider ${index + 1}`),
+      type: String(source.type || 'custom'),
+      baseUrl: String(source.baseUrl || ''),
+      apiKey: source.apiKey ? String(source.apiKey) : undefined,
+      models: Array.isArray(source.models) ? source.models.map((m: unknown) => String(m)) : [],
+      enabled: typeof source.enabled === 'boolean' ? source.enabled : true,
+    };
+  }
+
+  private getFallbackProviders(): LLMProvider[] {
+    return [
+      {
+        id: 'demo_ollama',
+        name: 'Ollama (本地)',
+        type: 'local',
+        baseUrl: 'http://localhost:11434',
+        models: ['qwen2.5:7b', 'llama3:8b'],
+        enabled: true,
+      },
+      {
+        id: 'demo_openai',
+        name: 'OpenAI',
+        type: 'openai',
+        baseUrl: 'https://api.openai.com/v1',
+        models: ['gpt-4o', 'gpt-4o-mini'],
+        enabled: false,
+      },
+    ];
   }
   private handleToggle(roleId: string) {
     this.roles = this.roles.map(r => 
@@ -314,7 +435,7 @@ export class ScAiExpertsConfig extends LitElement {
       return html`
         <h1 class="page-title">${this.i18n.t('settings.aiExpertsConfig')}</h1>
         <div class="no-providers">
-          ${this.i18n.t('chat.noProvider') || '未配置LLM服务提供商'}
+          ⚠️ ${this.i18n.t('chat.noProvider') || '未配置LLM服务提供商，使用演示数据'}
           <br /><br />
           <a href="#/settings/llm-config">${this.i18n.t('settings.llmConfig') || '前往配置'}</a>
         </div>

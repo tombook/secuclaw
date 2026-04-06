@@ -1,65 +1,54 @@
-export enum LogLevel {
-  trace = 0, debug = 1, info = 2, warn = 3, error = 4, fatal = 5,
-}
+/**
+ * Unified Structured Logger for SecuClaw
+ * Replaces scattered console.log calls with consistent, level-aware logging
+ */
 
-export interface LogEntry {
-  timestamp: string;
-  level: keyof typeof LogLevel;
-  message: string;
-  context?: Record<string, unknown>;
-}
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-export interface ILogger {
-  trace(msg: string, ctx?: Record<string, unknown>): void;
-  debug(msg: string, ctx?: Record<string, unknown>): void;
-  info(msg: string, ctx?: Record<string, unknown>): void;
-  warn(msg: string, ctx?: Record<string, unknown>): void;
-  error(msg: string, ctx?: Record<string, unknown>): void;
-  fatal(msg: string, ctx?: Record<string, unknown>): void;
-  withCtx(ctx: Record<string, unknown>): ILogger;
-}
+const LOG_LEVELS: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+};
 
-export class StructuredLogger implements ILogger {
-  private baseCtx: Record<string, unknown>;
+const DEFAULT_LEVEL: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
 
-  constructor(
-    private minLevel: LogLevel = LogLevel.info,
-    baseCtx: Record<string, unknown> = {},
-  ) {
-    this.baseCtx = baseCtx;
+export class Logger {
+  private minLevel: number;
+  private prefix: string;
+
+  constructor(prefix: string, level?: LogLevel) {
+    this.prefix = prefix;
+    this.minLevel = LOG_LEVELS[level ?? DEFAULT_LEVEL] ?? LOG_LEVELS[DEFAULT_LEVEL];
   }
 
-  structuredLog(level: LogLevel, message: string, ctx?: Record<string, unknown>): void {
-    if (level < this.minLevel) return;
-    const levelName = LogLevel[level] as keyof typeof LogLevel;
-    const entry: LogEntry = {
-      timestamp: new Date().toISOString(),
-      level: levelName,
-      message,
-      context: { ...this.baseCtx, ...ctx },
-    };
-    const json = JSON.stringify(entry);
-    if (level >= LogLevel.error) {
-      process.stderr.write(json + '\n');
-    } else {
-      process.stdout.write(json + '\n');
+  debug(...args: any[]): void {
+    if (this.minLevel <= LOG_LEVELS.debug) {
+      console.log(`[DEBUG][${this.prefix}]`, ...args);
     }
   }
 
-  trace(msg: string, ctx?: Record<string, unknown>): void { this.structuredLog(LogLevel.trace, msg, ctx); }
-  debug(msg: string, ctx?: Record<string, unknown>): void { this.structuredLog(LogLevel.debug, msg, ctx); }
-  info(msg: string, ctx?: Record<string, unknown>): void { this.structuredLog(LogLevel.info, msg, ctx); }
-  warn(msg: string, ctx?: Record<string, unknown>): void { this.structuredLog(LogLevel.warn, msg, ctx); }
-  error(msg: string, ctx?: Record<string, unknown>): void { this.structuredLog(LogLevel.error, msg, ctx); }
-  fatal(msg: string, ctx?: Record<string, unknown>): void { this.structuredLog(LogLevel.fatal, msg, ctx); }
+  info(...args: any[]): void {
+    if (this.minLevel <= LOG_LEVELS.info) {
+      console.log(`[INFO][${this.prefix}]`, ...args);
+    }
+  }
 
-  withCtx(ctx: Record<string, unknown>): ILogger {
-    return new StructuredLogger(this.minLevel, { ...this.baseCtx, ...ctx });
+  warn(...args: any[]): void {
+    if (this.minLevel <= LOG_LEVELS.warn) {
+      console.warn(`[WARN][${this.prefix}]`, ...args);
+    }
+  }
+
+  error(...args: any[]): void {
+    if (this.minLevel <= LOG_LEVELS.error) {
+      console.error(`[ERROR][${this.prefix}]`, ...args);
+    }
   }
 }
 
-export const logger = new StructuredLogger(
-  (process.env.LOG_LEVEL?.toUpperCase() === 'DEBUG' ? LogLevel.debug :
-   process.env.LOG_LEVEL?.toUpperCase() === 'TRACE' ? LogLevel.trace :
-   LogLevel.info),
-);
+/** Create a module-scoped logger */
+export function createLogger(prefix: string, level?: LogLevel): Logger {
+  return new Logger(prefix, level);
+}

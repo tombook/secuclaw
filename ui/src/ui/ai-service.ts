@@ -8,6 +8,73 @@ import { gatewayClient } from './gateway-client.js';
 
 // ============ 类型定义 ============
 
+/** AI服务响应类型 */
+interface AIInsightsResponse {
+  insights?: Array<{
+    id: string;
+    type: InsightType;
+    title: string;
+    description: string;
+    priority: InsightPriority;
+    category: string;
+    source: string;
+    relatedEntities?: Array<{ type: string; id: string; name: string }>;
+    metrics?: Array<{ name: string; value: number; trend?: string }>;
+    createdAt: string | Date;
+    expiresAt?: string | Date;
+  }>;
+}
+
+interface AIAnomaliesResponse {
+  anomalies?: Array<{
+    id: string;
+    severity: AnomalySeverity;
+    metric: string;
+    currentValue: number;
+    expectedValue: number;
+    deviation: number;
+    threshold: number;
+    detectedAt: string | Date;
+    status: AnomalyStatus;
+    category: string;
+    description: string;
+    suggestedActions?: string[];
+  }>;
+}
+
+interface AITrendResponse {
+  trend?: {
+    metric: string;
+    currentValue: number;
+    predictedValue: number;
+    confidence: number;
+    timeframe: string;
+    trend: TrendDirection;
+    factors?: string[];
+    historicalData?: Array<{ date: string | Date; value: number }>;
+  };
+}
+
+interface AIRecommendationsResponse {
+  recommendations?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    priority: InsightPriority;
+    impact: string;
+    effort: string;
+    category: string;
+    actions?: string[];
+  }>;
+}
+
+interface AIChatResponse {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string | Date;
+}
+
 /** 智能洞察类型 */
 export type InsightType = 'warning' | 'info' | 'recommendation';
 
@@ -187,17 +254,19 @@ class AIService {
     if (cached) return cached as SmartInsight[];
 
     try {
-    const response = await gatewayClient.request('ai.insights', {
+    const response = await gatewayClient.request<AIInsightsResponse>('ai.insights', {
       pageId: context.pageId,
       data: context.data,
       userRole: context.userRole,
     });
 
-    const insights: SmartInsight[] = (response.insights || []).map((i: any) => ({
-      ...i,
-      createdAt: new Date(i.createdAt),
-      expiresAt: i.expiresAt ? new Date(i.expiresAt) : undefined,
-    }));
+    const insights: SmartInsight[] = (response.insights || [])
+      .filter((i: unknown) => i && typeof i === 'object')
+      .map((i: any) => ({
+        ...i,
+        createdAt: new Date(i.createdAt),
+        expiresAt: i.expiresAt ? new Date(i.expiresAt) : undefined,
+      }));
 
     this.setCache(cacheKey, insights);
     return insights;
@@ -267,7 +336,7 @@ class AIService {
     if (cached) return cached as AnomalyAlert[];
 
     try {
-    const response = await gatewayClient.request('ai.anomalies', {
+    const response = await gatewayClient.request<AIAnomaliesResponse>('ai.anomalies', {
       pageId: context.pageId,
       metrics: context.metrics,
     });
@@ -345,14 +414,20 @@ class AIService {
     if (cached) return cached as TrendPrediction;
 
     try {
-      const response = await gatewayClient.request('ai.trend', {
+      const response = await gatewayClient.request<AITrendResponse>('ai.trend', {
         metric: context.metric,
         historicalData: context.historicalData,
         timeframe: context.timeframe || '30d',
       });
 
       const prediction: TrendPrediction = {
-        ...response.prediction,
+        metric: response.trend?.metric || context.metric,
+        currentValue: response.trend?.currentValue || 0,
+        predictedValue: response.trend?.predictedValue || 0,
+        confidence: response.trend?.confidence || 0,
+        timeframe: (response.trend?.timeframe as TrendPrediction['timeframe']) || '30d',
+        trend: response.trend?.trend || 'stable',
+        factors: response.trend?.factors || [],
         historicalData: context.historicalData,
       };
 
@@ -404,7 +479,7 @@ class AIService {
     if (cached) return cached as AIRecommendation[];
 
     try {
-      const response = await gatewayClient.request('ai.recommendations', {
+      const response = await gatewayClient.request<AIRecommendationsResponse>('ai.recommendations', {
         pageId: context.pageId,
         entityType: context.entityType,
         entityId: context.entityId,
@@ -412,11 +487,13 @@ class AIService {
         userRole: context.userRole,
       });
 
-      const recommendations: AIRecommendation[] = (response.recommendations || []).map((r: any) => ({
-        ...r,
-        createdAt: new Date(r.createdAt),
-        validUntil: r.validUntil ? new Date(r.validUntil) : undefined,
-      }));
+      const recommendations: AIRecommendation[] = (response.recommendations || [])
+        .filter((r: unknown) => r && typeof r === 'object')
+        .map((r: any) => ({
+          ...r,
+          createdAt: new Date(r.createdAt),
+          validUntil: r.validUntil ? new Date(r.validUntil) : undefined,
+        }));
 
       this.setCache(cacheKey, recommendations);
       return recommendations;
@@ -494,7 +571,7 @@ class AIService {
    */
   async chat(context: ChatContext, message: string): Promise<ChatMessage> {
     try {
-      const response = await gatewayClient.request('ai.chat', {
+      const response = await gatewayClient.request<AIChatResponse>('ai.chat', {
         context,
         message,
       });
@@ -504,8 +581,8 @@ class AIService {
         role: 'assistant',
         content: response.content,
         timestamp: new Date(),
-        actions: response.actions || [],
-        relatedEntities: response.relatedEntities || [],
+        actions: [],
+        relatedEntities: [],
       };
     } catch (error) {
       console.error('[AI Service] Chat failed:', error);

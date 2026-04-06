@@ -363,13 +363,13 @@ export class ScSecurityTools extends LitElement {
       font-weight: 500;
     }
 
-    .status-badge.critical { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
-    .status-badge.high { background: rgba(249, 115, 22, 0.15); color: #F97316; }
-    .status-badge.medium { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
-    .status-badge.low { background: rgba(16, 185, 129, 0.15); color: #10B981; }
-    .status-badge.pass { background: rgba(16, 185, 129, 0.15); color: #10B981; }
-    .status-badge.fail { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
-    .status-badge.warn { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+    .status-badge.critical { background: color-mix(in srgb, var(--sc-danger, #EF4444) 15%, transparent); color: var(--sc-danger, #EF4444); }
+    .status-badge.high { background: color-mix(in srgb, var(--sc-warning, #F97316) 15%, transparent); color: var(--sc-warning, #F97316); }
+    .status-badge.medium { background: color-mix(in srgb, var(--sc-warning, #F59E0B) 15%, transparent); color: var(--sc-warning, #F59E0B); }
+    .status-badge.low { background: color-mix(in srgb, var(--sc-success, #10B981) 15%, transparent); color: var(--sc-success, #10B981); }
+    .status-badge.pass { background: color-mix(in srgb, var(--sc-success, #10B981) 15%, transparent); color: var(--sc-success, #10B981); }
+    .status-badge.fail { background: color-mix(in srgb, var(--sc-danger, #EF4444) 15%, transparent); color: var(--sc-danger, #EF4444); }
+    .status-badge.warn { background: color-mix(in srgb, var(--sc-warning, #F59E0B) 15%, transparent); color: var(--sc-warning, #F59E0B); }
 
     .status-badge::before {
       content: '';
@@ -768,7 +768,7 @@ export class ScSecurityTools extends LitElement {
     `;
   }
 
-  private renderOverview(config: any) {
+  private renderOverview(_config: any) {
     const sampleData = this.activeTool === 'baseline' ? [
       { id: 'CIS-1.1', name: '密码策略', status: 'pass', category: '身份认证' },
       { id: 'CIS-2.1', name: '审计日志', status: 'fail', category: '日志监控' },

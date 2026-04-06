@@ -7,8 +7,10 @@
 
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation, type ChatMessage, type ChatContext } from '../ai-service.js';
+import './sc-ai-insights.js';
+import './sc-ai-recommendations.js';
+import './sc-ai-chat.js';
 
 // ============ 类型定义 ============
 
@@ -47,15 +49,10 @@ export class ScAIAssistant extends LitElement {
   private chatMessages: ChatMessage[] = [];
 
   @state()
-  private chatInput: string = '';
-
-  @state()
   private loading: boolean = false;
 
   @state()
   private chatLoading: boolean = false;
-
-  private i18n = new I18nController(this);
 
   // ============ 样式 ============
 
@@ -523,46 +520,7 @@ export class ScAIAssistant extends LitElement {
     this.mode = newMode;
   }
 
-  private handleChatInput(e: Event): void {
-    this.chatInput = (e.target as HTMLInputElement).value;
-  }
-
-  private async handleChatSubmit(): Promise<void> {
-    if (!this.chatInput.trim() || this.chatLoading) return;
-
-    const userMessage = this.chatInput.trim();
-    this.chatInput = '';
-
-    // 添加用户消息
-    const userMsg: ChatMessage = {
-      id: `msg-user-${Date.now()}`,
-      role: 'user',
-      content: userMessage,
-      timestamp: new Date(),
-    };
-    this.chatMessages = [...this.chatMessages, userMsg];
-
-    // 发送到AI
-    this.chatLoading = true;
-    try {
-      const context: ChatContext = {
-        pageId: this.pageId,
-        pageTitle: this.pageTitle,
-        userRole: this.userRole,
-        currentData: this.pageData,
-      };
-
-      const response = await aiService.chat(context, userMessage);
-      this.chatMessages = [...this.chatMessages, response];
-    } catch (error) {
-      console.error('[AI Assistant] Chat failed:', error);
-    } finally {
-      this.chatLoading = false;
-    }
-  }
-
   private handleInsightAction(insight: SmartInsight): void {
-    // 触发自定义事件
     this.dispatchEvent(new CustomEvent('insight-action', {
       detail: { insight },
       bubbles: true,
@@ -645,129 +603,69 @@ export class ScAIAssistant extends LitElement {
   }
 
   private renderInsights() {
-    if (this.loading) {
-      return html`
-        <div class="loading-indicator">
-          <div class="loading-spinner"></div>
-        </div>
-      `;
-    }
-
-    if (this.insights.length === 0) {
-      return html`
-        <div class="empty-state">
-          <div class="empty-icon">✨</div>
-          <div class="empty-text">暂无洞察</div>
-        </div>
-      `;
-    }
-
     return html`
-      ${this.insights.map(insight => this.renderInsightCard(insight))}
-    `;
-  }
-
-  private renderInsightCard(insight: SmartInsight) {
-    const icons: Record<string, string> = {
-      warning: '⚠️',
-      info: 'ℹ️',
-      recommendation: '💡',
-    };
-
-    return html`
-      <div class="insight-card" @click=${() => this.handleInsightAction(insight)}>
-        <div class="insight-header">
-          <span class="insight-icon">${icons[insight.type]}</span>
-          <span class="insight-title">${insight.title}</span>
-          <span class="insight-priority ${insight.priority}">
-            ${insight.priority === 'high' ? '高' : insight.priority === 'medium' ? '中' : '低'}
-          </span>
-        </div>
-        <div class="insight-description">${insight.description}</div>
-      </div>
+      <sc-ai-insights
+        .insights=${this.insights}
+        .loading=${this.loading}
+        @insight-action=${this.handleInsightAction}
+      ></sc-ai-insights>
     `;
   }
 
   private renderRecommendations() {
-    if (this.loading) {
-      return html`
-        <div class="loading-indicator">
-          <div class="loading-spinner"></div>
-        </div>
-      `;
-    }
-
-    if (this.recommendations.length === 0) {
-      return html`
-        <div class="empty-state">
-          <div class="empty-icon">💡</div>
-          <div class="empty-text">暂无建议</div>
-        </div>
-      `;
-    }
-
     return html`
-      ${this.recommendations.map(rec => this.renderRecommendationCard(rec))}
-    `;
-  }
-
-  private renderRecommendationCard(rec: AIRecommendation) {
-    return html`
-      <div class="recommendation-card">
-        <div class="recommendation-header">
-          <span class="recommendation-title">${rec.title}</span>
-          <span class="recommendation-priority">优先级: ${rec.priority}</span>
-        </div>
-        <div class="recommendation-description">${rec.description}</div>
-        <div class="recommendation-meta">
-          <span>影响: ${rec.impact}</span>
-          <span>工作量: ${rec.effort}</span>
-        </div>
-      </div>
+      <sc-ai-recommendations
+        .recommendations=${this.recommendations}
+        .loading=${this.loading}
+      ></sc-ai-recommendations>
     `;
   }
 
   private renderChat() {
     return html`
-      <div class="chat-container">
-        <div class="chat-messages">
-          ${this.chatMessages.length === 0 ? html`
-            <div class="empty-state">
-              <div class="empty-icon">💬</div>
-              <div class="empty-text">开始与AI助手对话</div>
-            </div>
-          ` : html`
-            ${this.chatMessages.map(msg => html`
-              <div class="chat-message ${msg.role}">
-                ${msg.content}
-              </div>
-            `)}
-            ${this.chatLoading ? html`
-              <div class="loading-indicator">
-                <div class="loading-spinner"></div>
-              </div>
-            ` : ''}
-          `}
-        </div>
-        <div class="chat-input-container">
-          <input 
-            type="text"
-            class="chat-input"
-            .value=${this.chatInput}
-            @input=${this.handleChatInput}
-            @keypress=${(e: KeyboardEvent) => e.key === 'Enter' && this.handleChatSubmit()}
-            placeholder="输入消息..."
-          />
-          <button 
-            class="chat-send-btn"
-            @click=${this.handleChatSubmit}
-            ?disabled=${!this.chatInput.trim() || this.chatLoading}
-          >
-            发送
-          </button>
-        </div>
-      </div>
+      <sc-ai-chat
+        .messages=${this.chatMessages}
+        .loading=${this.chatLoading}
+        @chat-submit=${this.handleChatSubmitFromChild}
+      ></sc-ai-chat>
     `;
+  }
+
+  private handleChatSubmitFromChild(e: CustomEvent<{ message: string }>) {
+    this.handleChatSubmit(e.detail.message);
+  }
+
+  private async handleChatSubmit(message: string): Promise<void> {
+    if (!message.trim() || this.chatLoading) return;
+
+    const userMessage = message.trim();
+
+    // 添加用户消息
+    const userMsg: ChatMessage = {
+      id: `msg-user-${Date.now()}`,
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date(),
+    };
+    this.chatMessages = [...this.chatMessages, userMsg];
+
+    // 发送到AI
+    this.chatLoading = true;
+    try {
+      const context: ChatContext = {
+        pageId: this.pageId,
+        pageTitle: this.pageTitle,
+        userRole: this.userRole,
+        currentData: this.pageData,
+      };
+
+      const response = await aiService.chat(context, userMessage);
+      this.chatMessages = [...this.chatMessages, response];
+    } catch (error) {
+      console.error('[AI Assistant] Chat failed:', error);
+    } finally {
+      this.chatLoading = false;
+    }
   }
 }
 

@@ -1,0 +1,82 @@
+[
+  {
+    "id": "threat-001",
+    "name": "APT29 (Cozy Bear)",
+    "type": "apt",
+    "motivation": "espionage",
+    "severity": "critical",
+    "confidence": 95,
+    "source": "威胁情报订阅",
+    "description": "俄罗斯关联APT组织，专注于政府机构和智库的间谍活动",
+    "iocs": [
+      {
+        "type": "ip",
+        "value": "185.234.72.15",
+        "description": "C2服务器"
+      },
+      {
+        "type": "domain",
+        "value": "cloud.俄国域名.com",
+        "description": "钓鱼域名"
+      }
+    ],
+    "ttps": [
+      "T1566",
+      "T1041"
+    ],
+    "firstSeen": 1767679636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1767679636263,
+    "updatedAt": 1775369236263
+  },
+  {
+    "id": "threat-002",
+    "name": "LockBit 3.0",
+    "type": "ransomware",
+    "motivation": "financial",
+    "severity": "critical",
+    "confidence": 92,
+    "source": "内部检测",
+    "description": "最活跃的勒索软件即服务组织之一",
+    "iocs": [
+      {
+        "type": "hash",
+        "value": "a1b2c3d4e5f6...",
+        "description": "勒索软件样本"
+      }
+    ],
+    "ttps": [
+      "T1486",
+      "T1490"
+    ],
+    "firstSeen": 1772863636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1772863636263,
+    "updatedAt": 1775369236263
+  },
+  {
+    "id": "threat-003",
+    "name": "BEC攻击活动",
+    "type": "phishing",
+    "motivation": "financial",
+    "severity": "medium",
+    "confidence": 75,
+    "source": "邮件网关",
+    "description": "商业电子邮件欺诈攻击",
+    "iocs": [
+      {
+        "type": "email",
+        "value": "ceo@公司-合作方.com",
+        "description": "伪造发件人"
+      }
+    ],
+    "ttps": [
+      "T1566",
+      "T1071"
+    ],
+    "firstSeen": 1774850836263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1774850836263,
+    "updatedAt": 1775369236263
+  }
+]

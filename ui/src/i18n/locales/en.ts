@@ -26,20 +26,51 @@ export const en = {
   },
 
   nav: {
+    // Groups
+    groupOperations: 'Operations',
+    groupCommand: 'Command',
+    groupGovernance: 'Governance',
+    groupAi: 'AI Operations',
+    groupCapabilities: 'Capabilities',
+    groupCollaboration: 'Collaboration',
+    groupAdmin: 'Admin',
+    
+    // Operations
+    overview: 'Overview',
     dashboard: 'Dashboard',
     threats: 'Threats',
     incidents: 'Incidents',
     vulnerabilities: 'Vulnerabilities',
-    compliance: 'Compliance',
+    assets: 'Assets',
+    
+    // Command
     warRoom: 'War Room',
-    aiExperts: 'AI Experts',
-    capabilities: 'Capabilities',
-    knowledgeBase: 'Knowledge Base',
-    skillsMarket: 'Skills Market',
-    channels: 'Channels',
-    settings: 'Settings',
-    // Security Operations Center
     securityOps: 'Security Ops',
+    
+    // Governance
+    compliance: 'Compliance',
+    audit: 'Audit Log',
+    approval: 'Approvals',
+    riskCenter: 'Risk Center',
+    dataCenter: 'Data Center',
+    
+    // AI
+    aiExperts: 'AI Experts',
+    
+    // Capabilities
+    capabilities: 'Capabilities',
+    skillsMarket: 'Skills Market',
+    
+    // Collaboration
+    channels: 'Channels',
+    tasks: 'Tasks',
+    
+    // Admin
+    settings: 'Settings',
+    roles: 'Roles',
+    llmConfig: 'LLM Config',
+    aiExpertsConfig: 'AI Expert Config',
+    siemConfig: 'SIEM Integration',
   },
 
   roles: {

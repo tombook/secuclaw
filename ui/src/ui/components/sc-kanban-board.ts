@@ -597,7 +597,7 @@ export class ScKanbanBoard extends LitElement {
 
   // ============ 计算属性 ============
 
-  private get kanbanConfig(): Required<KanbanConfig> {
+  private get kanbanConfig(): KanbanConfig {
     return {
       enableDragDrop: true,
       enableCardAdd: true,
@@ -608,7 +608,6 @@ export class ScKanbanBoard extends LitElement {
       showWipLimit: true,
       cardHeight: 'auto',
       compact: false,
-      groupBy: undefined,
       sortBy: 'priority',
       ...this.config,
     };

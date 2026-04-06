@@ -25,8 +25,57 @@ export interface ScanResult {
   duration: number;
 }
 
-export interface ScannerAdapter {
-  scan(targets: string[]): Promise<ScanResult>;
+export interface VulnerabilityFinding {
+  id: string;
+  cveId?: string;
+  cweId?: string;
+  title: string;
+  description: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  cvssScore?: number;
+  cvssVector?: string;
+  affectedAsset?: string;
+  affectedComponent?: string;
+  exploitAvailable?: boolean;
+  exploitInWild?: boolean;
+  fixAvailable?: boolean;
+  fixVersion?: string;
+  fixSteps?: string[];
+  discoveredAt: number;
+}
+
+export interface ToolTask {
+  id: string;
+  toolId: string;
+  taskId: string;
+  status: 'pending' | 'queued' | 'running' | 'completed' | 'failed' | 'canceled';
+  progress?: number; // 0-100
+  target?: string;
+  config?: Record<string, unknown>;
+  startedAt?: number;
+  completedAt?: number;
+  duration?: number;
+  logs?: string[];
+  findings?: VulnerabilityFinding[];
+  resultPath?: string;
+  error?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ToolAdapter {
+  id: string;
+  name: string;
+  version: string;
+  type: 'scanner' | 'pentest' | 'baseline' | 'threathunt' | 'custom';
+  configSchema?: Record<string, unknown>;
+  
+  createTask(target: string, config?: Record<string, unknown>): Promise<ToolTask>;
+  getStatus(taskId: string): Promise<ToolTask>;
+  getResult(taskId: string): Promise<unknown>;
+  getFindings(taskId: string): Promise<VulnerabilityFinding[]>;
+  cancelTask(taskId: string): Promise<boolean>;
+  isAvailable(): Promise<boolean>;
 }
 
 const COMMON_PORTS = [
@@ -41,8 +90,65 @@ const COMMON_PORTS = [
 
 const OS_OPTIONS = ['Linux 5.x', 'Windows Server 2022', 'FreeBSD 14', 'Ubuntu 22.04'];
 
+export interface ScannerAdapter extends ToolAdapter {
+  scan(targets: string[]): Promise<ScanResult>;
+}
+
 export class PortScannerAdapter implements ScannerAdapter {
+  id = 'portscan';
+  name = 'Port Scanner';
+  version = '1.0.0';
+  type = 'scanner' as const;
+  
+  private tasks: Map<string, ToolTask> = new Map();
+
   constructor(private options?: { timeout?: number }) {}
+
+  async createTask(target: string, config?: Record<string, unknown>): Promise<ToolTask> {
+    const task: ToolTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+      toolId: this.id,
+      taskId: `SCAN-${Date.now()}`,
+      status: 'pending',
+      target,
+      config,
+      logs: ['Task created'],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    this.tasks.set(task.id, task);
+    return task;
+  }
+
+  async getStatus(taskId: string): Promise<ToolTask> {
+    const task = this.tasks.get(taskId);
+    if (!task) throw new Error(`Task ${taskId} not found`);
+    return task;
+  }
+
+  async getResult(_taskId: string): Promise<unknown> {
+    const task = await this.getStatus(taskId);
+    if (task.status !== 'completed') throw new Error(`Task not completed`);
+    return this.scan([task.target!]);
+  }
+
+  async getFindings(taskId: string): Promise<VulnerabilityFinding[]> {
+    const task = await this.getStatus(taskId);
+    return task.findings || [];
+  }
+
+  async cancelTask(taskId: string): Promise<boolean> {
+    const task = this.tasks.get(taskId);
+    if (!task || task.status === 'completed' || task.status === 'failed') return false;
+    task.status = 'canceled';
+    task.logs?.push('Task canceled');
+    task.updatedAt = Date.now();
+    return true;
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return true;
+  }
 
   async scan(targets: string[]): Promise<ScanResult> {
     const scannedAt = Date.now();
@@ -73,3 +179,147 @@ export class PortScannerAdapter implements ScannerAdapter {
     return { targets: scanTargets, scannedAt, duration: Date.now() - scannedAt };
   }
 }
+
+export class BurpSuiteAdapter implements ToolAdapter {
+  id = 'burpsuite';
+  name = 'Burp Suite Professional';
+  version = '2024.x';
+  type = 'scanner' as const;
+
+  private tasks: Map<string, ToolTask> = new Map();
+
+  async createTask(target: string, config?: Record<string, unknown>): Promise<ToolTask> {
+    const task: ToolTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+      toolId: this.id,
+      taskId: `BURP-${Date.now()}`,
+      status: 'pending',
+      target,
+      config,
+      logs: ['BurpSuite task created - placeholder implementation'],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    this.tasks.set(task.id, task);
+    return task;
+  }
+
+  async getStatus(taskId: string): Promise<ToolTask> {
+    const task = this.tasks.get(taskId);
+    if (!task) throw new Error(`Task ${taskId} not found`);
+    if (task.status === 'pending') {
+      task.status = 'queued';
+      task.updatedAt = Date.now();
+    }
+    return task;
+  }
+
+  async getResult(_taskId: string): Promise<unknown> {
+    return { placeholder: 'BurpSuite results not implemented' };
+  }
+
+  async getFindings(taskId: string): Promise<VulnerabilityFinding[]> {
+    return [];
+  }
+
+  async cancelTask(taskId: string): Promise<boolean> {
+    const task = this.tasks.get(taskId);
+    if (!task) return false;
+    task.status = 'canceled';
+    return true;
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return false; // Requires actual BurpSuite installation
+  }
+}
+
+export class AWVSAdapter implements ToolAdapter {
+  id = 'awvs';
+  name = 'Acunetix Web Vulnerability Scanner';
+  version = '24.x';
+  type = 'scanner' as const;
+
+  private tasks: Map<string, ToolTask> = new Map();
+
+  async createTask(target: string, config?: Record<string, unknown>): Promise<ToolTask> {
+    const task: ToolTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+      toolId: this.id,
+      taskId: `AWVS-${Date.now()}`,
+      status: 'pending',
+      target,
+      config,
+      logs: ['AWVS task created - placeholder implementation'],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    this.tasks.set(task.id, task);
+    return task;
+  }
+
+  async getStatus(taskId: string): Promise<ToolTask> {
+    const task = this.tasks.get(taskId);
+    if (!task) throw new Error(`Task ${taskId} not found`);
+    return task;
+  }
+
+  async getResult(_taskId: string): Promise<unknown> {
+    return { placeholder: 'AWVS results not implemented' };
+  }
+
+  async getFindings(taskId: string): Promise<VulnerabilityFinding[]> {
+    return [];
+  }
+
+  async cancelTask(taskId: string): Promise<boolean> {
+    const task = this.tasks.get(taskId);
+    if (!task) return false;
+    task.status = 'canceled';
+    return true;
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return false; // Requires actual AWVS installation
+  }
+}
+
+import { NmapAdapter } from './nmap-adapter.js';
+import { SqlmapAdapter } from './sqlmap-adapter.js';
+import { NucleiAdapter } from './nuclei-adapter.js';
+
+export class ToolRegistry {
+  private adapters: Map<string, ToolAdapter> = new Map();
+
+  constructor() {
+    this.register(new PortScannerAdapter());
+    this.register(new BurpSuiteAdapter());
+    this.register(new AWVSAdapter());
+    this.register(new NmapAdapter());
+    this.register(new SqlmapAdapter());
+    this.register(new NucleiAdapter());
+  }
+
+  register(adapter: ToolAdapter): void {
+    this.adapters.set(adapter.id, adapter);
+  }
+
+  get(id: string): ToolAdapter | undefined {
+    return this.adapters.get(id);
+  }
+
+  list(): ToolAdapter[] {
+    return Array.from(this.adapters.values());
+  }
+
+  listAvailable(): Promise<ToolAdapter[]> {
+    return Promise.all(
+      this.list().map(async (adapter) => {
+        const available = await adapter.isAvailable();
+        return available ? adapter : null;
+      })
+    ).then(results => results.filter(Boolean) as ToolAdapter[]);
+  }
+}
+
+export const toolRegistry = new ToolRegistry();

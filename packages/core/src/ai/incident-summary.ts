@@ -132,7 +132,7 @@ export class IncidentSummaryEngine {
       }
 
       // 7. 生成建议
-      const recommendations = this.generateRecommendations(incidents, bySeverity, byCategory);
+      const recommendations = this.generateRecommendations(incidents, bySeverity, byCategory, byStatus);
 
       const summary: SecurityEventSummary = {
         id: `summary-${period.start}-${period.end}-${Date.now()}`,
@@ -305,7 +305,8 @@ export class IncidentSummaryEngine {
   private generateRecommendations(
     incidents: RawIncidentData[],
     bySeverity: Record<string, number>,
-    byCategory: Record<string, number>
+    byCategory: Record<string, number>,
+    byStatus: Record<string, number>
   ): string[] {
     const recommendations: string[] = [];
 

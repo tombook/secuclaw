@@ -35,6 +35,12 @@ import './pages/sc-risk-page.js';
 import './pages/sc-risk-center.js';
 import './pages/tools/sc-tool-all.js';
 import './pages/sc-login-page.js';
+import './pages/sc-tasks-page.js';
+import './pages/sc-audit-page.js';
+import './pages/sc-approval-page.js';
+import './pages/sc-assets-page.js';
+import './pages/sc-data-center.js';
+import './pages/settings/sc-siem-config.js';
 
 import { gatewayClient } from './gateway-client.js';
 import { authStore } from './store/auth-store.js';
@@ -56,6 +62,12 @@ export class ScApp extends LitElement {
 
   protected async firstUpdated(): Promise<void> {
     gatewayClient.onConnectionChange((connected) => { this.connected = connected; });
+    try {
+      await gatewayClient.connect();
+    } catch (e) {
+      console.error('[sc-app] Failed to connect to gateway:', e);
+    }
+    await authStore.initialize();
     this.loading = false;
     await this.updateComplete;
     this.initRouter();
@@ -66,10 +78,29 @@ export class ScApp extends LitElement {
     if (!outlet) { console.error('[sc-app] Router outlet not found'); return; }
     const router = new Router(outlet);
 
-    const guardRoute = async (_context: any, commands: any) => {
+  const guardRoute = async (_context: any, commands: any) => {
       const state = authStore.getState();
+      // Ensure there is an authenticated user as a primary guard before API checks
+      try {
+        const user = await gatewayClient.request('auth.getCurrentUser', {});
+        if (!user) {
+          Router.go('/login');
+          return;
+        }
+      } catch {
+        Router.go('/login');
+        return;
+      }
       if (!state.isAuthenticated || !state.user) {
         return commands.redirect('/login');
+      }
+      try {
+        const _hasPerm = await gatewayClient.request('auth.hasPermission', { permission: 'access' });
+        if (_hasPerm === false) {
+          return commands.redirect('/unauthorized');
+        }
+      } catch {
+        // Fallback to local auth check if API unavailable
       }
     };
 
@@ -78,8 +109,15 @@ export class ScApp extends LitElement {
       if (!state.isAuthenticated || !state.user) {
         return commands.redirect('/login');
       }
-      if (!authStore.hasPermission('settings:manage')) {
-        return commands.redirect('/unauthorized');
+      try {
+        const hasAdminPerm = await gatewayClient.request('auth.hasPermission', { permission: 'settings:manage' });
+        if (hasAdminPerm === false) {
+          return commands.redirect('/unauthorized');
+        }
+      } catch {
+        if (!authStore.hasPermission('settings:manage')) {
+          return commands.redirect('/unauthorized');
+        }
       }
     };
 
@@ -112,9 +150,15 @@ export class ScApp extends LitElement {
       { path: '/tools/threat-hunt', component: 'sc-threathunt-page', action: guardRoute },
       { path: '/tools/security-ops', component: 'sc-secops-center', action: guardRoute },
       { path: '/data-center', component: 'sc-datacenter-page', action: guardRoute },
+      { path: '/audit', component: 'sc-audit-page', action: guardRoute },
+      { path: '/approval', component: 'sc-approval-page', action: guardRoute },
+      { path: '/tasks', component: 'sc-tasks-page', action: guardRoute },
+      { path: '/assets', component: 'sc-assets-page', action: guardRoute },
+      { path: '/settings/siem-config', component: 'sc-siem-config', action: guardAdmin },
+      { path: '/risk-center', component: 'sc-risk-center', action: guardRoute },
       { path: '/reports-pro', component: 'sc-reports-pro', action: guardRoute },
-      { path: '/risk-center', component: 'sc-risk-page', action: guardRoute },
       
+      // tools 子路由统一由 sc-secops-center 处理（通过内部路由分发）
       { path: '/tools/config-check', component: 'sc-secops-center', action: guardRoute },
       { path: '/tools/attack-path', component: 'sc-secops-center', action: guardRoute },
       { path: '/tools/supply-chain', component: 'sc-secops-center', action: guardRoute },

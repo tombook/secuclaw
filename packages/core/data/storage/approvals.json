@@ -1,0 +1,16 @@
+[
+  {
+    "id": "approval_1774820575398_8cdp4wpdx",
+    "taskId": "3",
+    "type": "dark-operation",
+    "requester": "current-user",
+    "scope": "dark-side",
+    "ticketNo": "REQ-1774820575398",
+    "expiresAt": 1774827775398,
+    "status": "approved",
+    "createdAt": 1774820575398,
+    "updatedAt": 1774820581886,
+    "approver": "current-user",
+    "approvedAt": 1774820581886
+  }
+]

@@ -1,10 +1,11 @@
-import type { Asset } from './repository.js';
+import type { SecurityAsset, AssetCriticality, AssetEnvironment } from './types.js';
 
-const CRITICALITY_WEIGHTS: Record<string, number> = {
+const CRITICALITY_WEIGHTS: Record<AssetCriticality, number> = {
   critical: 35,
   high: 25,
   medium: 15,
   low: 5,
+  info: 0,
 };
 
 const VULN_SEVERITY_SCORES: Record<string, number> = {
@@ -14,11 +15,12 @@ const VULN_SEVERITY_SCORES: Record<string, number> = {
   low: 3,
 };
 
-const ENV_WEIGHTS: Record<string, number> = {
+const ENV_WEIGHTS: Record<AssetEnvironment, number> = {
   production: 1.5,
   staging: 1.2,
   development: 0.8,
-  test: 0.5,
+  testing: 0.5,
+  dr: 1.0,
 };
 
 export interface RiskBreakdown {
@@ -42,6 +44,46 @@ export interface PortfolioRiskSummary {
 export interface RiskTrendPoint {
   date: number;
   score: number;
+}
+
+export type RiskLevel = 'critical' | 'high' | 'medium' | 'low' | 'acceptable';
+
+/**
+ * 独立计算资产风险评分（无状态）
+ */
+export function calculateAssetRiskScore(asset: SecurityAsset): number {
+  const baseScore = CRITICALITY_WEIGHTS[asset.info.criticality] ?? 10;
+  
+  // 漏洞评分
+  const vulnScore = Math.min(40, 
+    asset.risk.criticalVulnerabilityCount * VULN_SEVERITY_SCORES.critical +
+    asset.risk.highVulnerabilityCount * VULN_SEVERITY_SCORES.high +
+    asset.risk.mediumVulnerabilityCount * VULN_SEVERITY_SCORES.medium +
+    asset.risk.lowVulnerabilityCount * VULN_SEVERITY_SCORES.low
+  );
+  
+  // 事件和威胁评分
+  const threatScore = Math.min(25, 
+    asset.risk.incidentCount * 10 + 
+    asset.risk.threatCount * 5
+  );
+  
+  // 环境系数
+  const envFactor = ENV_WEIGHTS[asset.info.environment] ?? 1.0;
+  
+  // 总分 0-100
+  return Math.min(100, Math.round((baseScore + vulnScore + threatScore) * envFactor));
+}
+
+/**
+ * 根据风险分数返回风险等级
+ */
+export function getRiskLevelFromScore(score: number): RiskLevel {
+  if (score >= 80) return 'critical';
+  if (score >= 60) return 'high';
+  if (score >= 35) return 'medium';
+  if (score >= 15) return 'low';
+  return 'acceptable';
 }
 
 export class AssetRiskScorer {

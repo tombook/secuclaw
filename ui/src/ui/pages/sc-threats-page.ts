@@ -106,6 +106,38 @@ export class ScThreatsPage extends LitElement {
   @state()
   private recommendations: AIRecommendation[] = [];
 
+  // IOC Modal state
+  @state()
+  private showIOCModal = false;
+
+  @state()
+  private editingIOC: IOC | null = null;
+
+  @state()
+  private iocForm = {
+    type: 'ip' as IOCType,
+    value: '',
+    severity: 'medium' as IOCSeverity,
+    source: '',
+    tags: ''
+  };
+
+  // Toast state
+  @state()
+  private toastMessage = '';
+
+  @state()
+  private toastType: 'success' | 'error' | 'info' = 'info';
+
+  private toastTimeout: number | null = null;
+
+  // LocalStorage key
+  private readonly STORAGE_KEY = 'secuclaw-threats-iocs';
+
+  // Data source indicator
+  @state()
+  private dataSource: 'local' | 'demo' | 'api' = 'demo';
+
   // ============ 样式 ============
 
   static styles = css`
@@ -473,6 +505,156 @@ export class ScThreatsPage extends LitElement {
       height: calc(100vh - var(--sc-spacing-lg, 20px) * 2);
       overflow: hidden;
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: var(--sc-bg-primary, #ffffff);
+      border-radius: var(--sc-radius-lg, 12px);
+      width: 480px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+      box-shadow: var(--sc-shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.15));
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--sc-border-color, #e5e7eb);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--sc-text-primary, #111827);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--sc-text-secondary, #6b7280);
+      border-radius: var(--sc-radius-md, 8px);
+    }
+
+    .modal-close:hover {
+      background: var(--sc-bg-hover, #f3f4f6);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--sc-text-primary, #111827);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--sc-border-color, #e5e7eb);
+      border-radius: var(--sc-radius-md, 8px);
+      font-size: 14px;
+      background: var(--sc-bg-primary, #ffffff);
+      color: var(--sc-text-primary, #111827);
+      box-sizing: border-box;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--sc-primary, #3b82f6);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--sc-border-color, #e5e7eb);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--sc-radius-md, 8px);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--sc-primary, #3b82f6);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: color-mix(in srgb, var(--sc-primary, #3b82f6) 85%, black);
+    }
+
+    .btn-secondary {
+      background: var(--sc-bg-secondary, #f3f4f6);
+      color: var(--sc-text-primary, #111827);
+    }
+
+    .btn-danger {
+      background: var(--sc-danger, #ef4444);
+      color: white;
+    }
+
+    /* Toast Styles */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: var(--sc-radius-md, 8px);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1001;
+      animation: slideIn 0.3s ease;
+      box-shadow: var(--sc-shadow-lg);
+    }
+
+    .toast.success { background: var(--sc-success, #10b981); color: white; }
+    .toast.error { background: var(--sc-danger, #ef4444); color: white; }
+    .toast.info { background: var(--sc-primary, #3b82f6); color: white; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   `;
 
   // ============ 生命周期 ============
@@ -546,8 +728,18 @@ export class ScThreatsPage extends LitElement {
   }
 
   private async loadIOCs() {
-    // 模拟IOC数据
-    this.iocs = [
+    // 优先从 localStorage 加载
+    const stored = this.loadFromLocalStorage();
+    
+    if (stored.length > 0) {
+      this.iocs = stored;
+      this.filteredIOCs = [...this.iocs];
+      this.dataSource = 'local';
+      return;
+    }
+    
+    // 如果没有存储数据，使用示例数据并存入 localStorage
+    const sampleIOCs: IOC[] = [
       {
         id: 'ioc-1',
         type: 'ip',
@@ -621,7 +813,134 @@ export class ScThreatsPage extends LitElement {
         confidence: 78
       }
     ];
+    
+    this.iocs = sampleIOCs;
     this.filteredIOCs = [...this.iocs];
+    this.dataSource = 'demo';
+    this.saveToLocalStorage(sampleIOCs);
+  }
+
+  private loadFromLocalStorage(): IOC[] {
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as IOC[];
+        return parsed.map(ioc => ({
+          ...ioc,
+          firstSeen: new Date(ioc.firstSeen),
+          lastSeen: new Date(ioc.lastSeen)
+        }));
+      }
+    } catch (e) {
+      console.error('[Threats] Failed to load from localStorage:', e);
+    }
+    return [];
+  }
+
+  private saveToLocalStorage(iocs: IOC[]): void {
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(iocs));
+    } catch (e) {
+      console.error('[Threats] Failed to save to localStorage:', e);
+    }
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    this.toastMessage = message;
+    this.toastType = type;
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = window.setTimeout(() => {
+      this.toastMessage = '';
+    }, 3000);
+  }
+
+  // IOC CRUD operations
+  private openAddIOCModal() {
+    this.editingIOC = null;
+    this.iocForm = {
+      type: 'ip',
+      value: '',
+      severity: 'medium',
+      source: '',
+      tags: ''
+    };
+    this.showIOCModal = true;
+  }
+
+  private openEditIOCModal(ioc: IOC) {
+    this.editingIOC = ioc;
+    this.iocForm = {
+      type: ioc.type,
+      value: ioc.value,
+      severity: ioc.severity,
+      source: ioc.source,
+      tags: ioc.tags.join(', ')
+    };
+    this.showIOCModal = true;
+  }
+
+  private closeIOCModal() {
+    this.showIOCModal = false;
+    this.editingIOC = null;
+  }
+
+  private updateIOCFormField(field: string, value: string) {
+    this.iocForm = { ...this.iocForm, [field]: value };
+  }
+
+  private async handleSaveIOC() {
+    if (!this.iocForm.value.trim()) {
+      this.showToast('请输入IOC值', 'error');
+      return;
+    }
+
+    if (this.editingIOC) {
+      // Update existing IOC
+      const index = this.iocs.findIndex(i => i.id === this.editingIOC!.id);
+      if (index >= 0) {
+        this.iocs[index] = {
+          ...this.iocs[index],
+          type: this.iocForm.type as IOCType,
+          value: this.iocForm.value,
+          severity: this.iocForm.severity as IOCSeverity,
+          source: this.iocForm.source,
+          tags: this.iocForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+          lastSeen: new Date()
+        };
+        this.saveToLocalStorage(this.iocs);
+        this.showToast('IOC更新成功', 'success');
+      }
+    } else {
+      // Add new IOC
+      const newIOC: IOC = {
+        id: `ioc-${Date.now()}`,
+        type: this.iocForm.type as IOCType,
+        value: this.iocForm.value,
+        severity: this.iocForm.severity as IOCSeverity,
+        status: 'active',
+        source: this.iocForm.source || 'Manual',
+        tags: this.iocForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+        mitreTactics: [],
+        mitreTechniques: [],
+        firstSeen: new Date(),
+        lastSeen: new Date(),
+        confidence: 70
+      };
+      this.iocs = [newIOC, ...this.iocs];
+      this.saveToLocalStorage(this.iocs);
+      this.showToast('IOC添加成功', 'success');
+    }
+
+    this.filteredIOCs = [...this.iocs];
+    this.closeIOCModal();
+  }
+
+  private async handleDeleteIOC(id: string) {
+    if (!confirm('确定要删除这个IOC吗？')) return;
+    this.iocs = this.iocs.filter(i => i.id !== id);
+    this.saveToLocalStorage(this.iocs);
+    this.filteredIOCs = [...this.iocs];
+    this.showToast('IOC已删除', 'success');
   }
 
   private async loadThreatSources() {
@@ -861,6 +1180,9 @@ export class ScThreatsPage extends LitElement {
       <div class="ioc-section">
         <div class="section-header">
           <h3 class="section-title">🎯 IOC 列表</h3>
+          <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${this.dataSource === 'local' ? '#d4edda' : this.dataSource === 'api' ? '#cce5ff' : '#fff3cd'};color:${this.dataSource === 'local' ? '#155724' : this.dataSource === 'api' ? '#004085' : '#856404'};">
+            ${this.dataSource === 'local' ? '📁 本地数据' : this.dataSource === 'api' ? '☁️ 实时数据' : '📝 演示数据'}
+          </span>
         </div>
         
         <div class="filter-bar">
@@ -902,6 +1224,7 @@ export class ScThreatsPage extends LitElement {
               <th>来源</th>
               <th>标签</th>
               <th>置信度</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -916,10 +1239,14 @@ export class ScThreatsPage extends LitElement {
                   ${ioc.tags.length > 2 ? html`<span class="tag">+${ioc.tags.length - 2}</span>` : ''}
                 </td>
                 <td>${ioc.confidence}%</td>
+                <td>
+                  <button class="btn" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" @click=${(e: Event) => { e.stopPropagation(); this.openEditIOCModal(ioc); }}>编辑</button>
+                  <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" @click=${(e: Event) => { e.stopPropagation(); this.handleDeleteIOC(ioc.id); }}>删除</button>
+                </td>
               </tr>
               ${this.selectedIOC?.id === ioc.id ? html`
                 <tr>
-                  <td colspan="6">
+                  <td colspan="7">
                     ${ioc.aiAnalysis ? html`
                       <div class="ai-analysis">
                         <strong>🤖 AI分析:</strong> ${ioc.aiAnalysis}
@@ -1034,7 +1361,7 @@ export class ScThreatsPage extends LitElement {
             </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📤 导出报告</button>
-              <button class="btn btn-primary">+ 添加IOC</button>
+              <button class="btn btn-primary" @click=${this.openAddIOCModal}>+ 添加IOC</button>
             </div>
           </div>
 
@@ -1058,6 +1385,80 @@ export class ScThreatsPage extends LitElement {
             userRole="security-expert"
           ></sc-ai-assistant>
         </div>
+      </div>
+
+      ${this.renderIOCModal()}
+      ${this.renderToast()}
+    `;
+  }
+
+  private renderIOCModal() {
+    if (!this.showIOCModal) return html``;
+
+    return html`
+      <div class="modal-overlay" @click=${(e: Event) => e.target === e.currentTarget && this.closeIOCModal()}>
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">
+              ${this.editingIOC ? '✏️ 编辑IOC' : '➕ 添加IOC'}
+            </h2>
+            <button class="modal-close" @click=${this.closeIOCModal}>×</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">类型</label>
+                <select class="form-select" .value=${this.iocForm.type} @change=${(e: Event) => this.updateIOCFormField('type', (e.target as HTMLSelectElement).value)}>
+                  <option value="ip">IP地址</option>
+                  <option value="domain">域名</option>
+                  <option value="hash">哈希</option>
+                  <option value="url">URL</option>
+                  <option value="email">邮箱</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">严重程度</label>
+                <select class="form-select" .value=${this.iocForm.severity} @change=${(e: Event) => this.updateIOCFormField('severity', (e.target as HTMLSelectElement).value)}>
+                  <option value="critical">严重</option>
+                  <option value="high">高</option>
+                  <option value="medium">中</option>
+                  <option value="low">低</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">IOC值 *</label>
+              <input type="text" class="form-input" .value=${this.iocForm.value} @input=${(e: Event) => this.updateIOCFormField('value', (e.target as HTMLInputElement).value)} placeholder="输入IOC值，如 192.168.1.1" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">来源</label>
+                <input type="text" class="form-input" .value=${this.iocForm.source} @input=${(e: Event) => this.updateIOCFormField('source', (e.target as HTMLInputElement).value)} placeholder="如 VirusTotal" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">标签</label>
+                <input type="text" class="form-input" .value=${this.iocForm.tags} @input=${(e: Event) => this.updateIOCFormField('tags', (e.target as HTMLInputElement).value)} placeholder="用逗号分隔" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click=${this.closeIOCModal}>取消</button>
+            <button class="btn btn-primary" @click=${this.handleSaveIOC}>
+              ${this.editingIOC ? '保存' : '添加'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderToast() {
+    if (!this.toastMessage) return html``;
+
+    return html`
+      <div class="toast ${this.toastType}">
+        ${this.toastType === 'success' ? '✅ ' : this.toastType === 'error' ? '❌ ' : 'ℹ️ '}
+        ${this.toastMessage}
       </div>
     `;
   }

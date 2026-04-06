@@ -44,13 +44,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const pageSizeNum = parseInt(pageSize as string, 10);
 
     const assets = await assetsService.list({
-      type: type as string,
-      category: category as string,
-      environment: environment as string,
-      criticality: criticality as string,
-      status: status as string,
-      owner: owner as string,
-      department: department as string,
+      type: type as unknown as AssetType,
+      category: category as unknown as string,
+      environment: environment as unknown as AssetEnvironment,
+      criticality: criticality as unknown as AssetCriticality,
+      status: status as unknown as AssetStatus,
+      owner: owner as unknown as string,
+      department: department as unknown as string,
       page: pageNum,
       pageSize: pageSizeNum,
     });
@@ -106,7 +106,8 @@ router.get('/enums', (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const asset = await assetsService.get(id);
+    const assetId = Array.isArray(id) ? id[0] : id;
+    const asset = await assetsService.get(assetId);
 
     if (!asset) {
       throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${id} not found`, 404);
@@ -147,19 +148,32 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     // Set defaults
     const now = Date.now();
-    const asset = {
+    // Convert query params that could be string[] to string
+    const name = Array.isArray(assetData.name) ? assetData.name[0] : assetData.name;
+    const type = Array.isArray(assetData.type) ? assetData.type[0] : assetData.type;
+    const category = Array.isArray(assetData.category) ? assetData.category[0] : (assetData.category || 'other');
+    const environment = Array.isArray(assetData.environment) ? assetData.environment[0] : (assetData.environment || 'production');
+    const criticality = Array.isArray(assetData.criticality) ? assetData.criticality[0] : (assetData.criticality || 'medium');
+    const status = Array.isArray(assetData.status) ? assetData.status[0] : (assetData.status || 'active');
+    const owner = Array.isArray(assetData.owner) ? assetData.owner[0] : assetData.owner;
+    const department = Array.isArray(assetData.department) ? assetData.department[0] : assetData.department;
+    const ip = Array.isArray(assetData.ip) ? assetData.ip[0] : assetData.ip;
+    const hostname = Array.isArray(assetData.hostname) ? assetData.hostname[0] : assetData.hostname;
+    const description = Array.isArray(assetData.description) ? assetData.description[0] : assetData.description;
+    
+    const asset: SecurityAsset = {
       id: `asset_${now}_${Math.random().toString(36).substring(2, 11)}`,
-      name: assetData.name,
-      type: assetData.type,
-      category: assetData.category || 'other',
-      environment: assetData.environment || 'production',
-      criticality: assetData.criticality || 'medium',
-      status: assetData.status || 'active',
-      owner: assetData.owner,
-      department: assetData.department,
-      ip: assetData.ip,
-      hostname: assetData.hostname,
-      description: assetData.description,
+      name,
+      type: type as AssetType,
+      category,
+      environment: environment as AssetEnvironment,
+      criticality: criticality as AssetCriticality,
+      status: status as AssetStatus,
+      owner,
+      department,
+      ip,
+      hostname,
+      description,
       tags: assetData.tags || [],
       vulnerabilities: [],
       lastScan: undefined,
@@ -182,9 +196,16 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const assetId = Array.isArray(id) ? id[0] : id;
     const updates = req.body;
 
-    const existing = await assetsService.get(id);
+    // Handle possible array values from bad request
+    const processedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      acc[key] = Array.isArray(value) ? value[0] : value;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const existing = await assetsService.get(assetId);
     if (!existing) {
       throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${id} not found`, 404);
     }
@@ -192,13 +213,27 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     // Update fields
     const updated = {
       ...existing,
-      ...updates,
+      ...processedUpdates,
       id: existing.id, // Prevent ID change
       createdAt: existing.createdAt, // Prevent creation time change
       updatedAt: Date.now(),
     };
+    
+    // Fix types for enum fields
+    if ('type' in processedUpdates && updated.type) {
+      updated.type = processedUpdates.type as AssetType;
+    }
+    if ('environment' in processedUpdates && updated.environment) {
+      updated.environment = processedUpdates.environment as AssetEnvironment;
+    }
+    if ('criticality' in processedUpdates && updated.criticality) {
+      updated.criticality = processedUpdates.criticality as AssetCriticality;
+    }
+    if ('status' in processedUpdates && updated.status) {
+      updated.status = processedUpdates.status as AssetStatus;
+    }
 
-    await assetsRepo.update(id, updated);
+    await assetsRepo.update(assetId, updated);
 
     res.json(successResponse(updated, (req as any).requestId));
   } catch (error) {
@@ -212,22 +247,43 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const assetId = Array.isArray(id) ? id[0] : id;
     const patches = req.body;
 
-    const existing = await assetsService.get(id);
+    // Handle possible array values
+    const processedPatches = Object.entries(patches).reduce((acc, [key, value]) => {
+      acc[key] = Array.isArray(value) ? value[0] : value;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const existing = await assetsService.get(assetId);
     if (!existing) {
-      throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${assetId} not found`, 404);
     }
 
     const updated = {
       ...existing,
-      ...patches,
+      ...processedPatches,
       id: existing.id,
       createdAt: existing.createdAt,
       updatedAt: Date.now(),
     };
+    
+    // Fix types for enum fields
+    if ('type' in processedPatches && updated.type) {
+      updated.type = processedPatches.type as AssetType;
+    }
+    if ('environment' in processedPatches && updated.environment) {
+      updated.environment = processedPatches.environment as AssetEnvironment;
+    }
+    if ('criticality' in processedPatches && updated.criticality) {
+      updated.criticality = processedPatches.criticality as AssetCriticality;
+    }
+    if ('status' in processedPatches && updated.status) {
+      updated.status = processedPatches.status as AssetStatus;
+    }
 
-    await assetsRepo.update(id, updated);
+    await assetsRepo.update(assetId, updated);
 
     res.json(successResponse(updated, (req as any).requestId));
   } catch (error) {
@@ -241,15 +297,16 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const assetId = Array.isArray(id) ? id[0] : id;
 
-    const existing = await assetsService.get(id);
+    const existing = await assetsService.get(assetId);
     if (!existing) {
       throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${id} not found`, 404);
     }
 
-    await assetsRepo.delete(id);
+    await assetsRepo.delete(assetId);
 
-    res.json(successResponse({ deleted: true, id }, (req as any).requestId));
+    res.json(successResponse({ deleted: true, id: assetId }, (req as any).requestId));
   } catch (error) {
     next(error);
   }

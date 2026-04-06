@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { IncidentsService } from '../../src/incidents/service.js';
 import { IncidentsRepository } from '../../src/incidents/repository.js';
 

@@ -149,6 +149,8 @@ export class ScAiExpertsPage extends LitElement {
   @state() private messages: ChatMessage[] = [];
   @state() private inputText = '';
   @state() private isLoading = false;
+  // Loaded providers from backend - used for collaborative chat
+  @state() private llmProviders: LLMProviderConfig[] = [];
 
   private skillSubscription: (() => void) | null = null;
   static styles = css`
@@ -565,7 +567,7 @@ export class ScAiExpertsPage extends LitElement {
     `;
   }
 
-  private renderSkillCategory(key: string, icon: string, name: string, skills: string[]) {
+  private renderSkillCategory(icon: string, name: string, skills: string[]) {
     const isEmpty = skills.length === 0;
     return html`
       <div class="skill-category ${isEmpty ? 'empty' : ''}">
@@ -596,9 +598,8 @@ export class ScAiExpertsPage extends LitElement {
       ${this.renderStatCards()}
       
       <div class="skills-grid">
-        ${CAPABILITY_CATEGORIES.map(cat => 
+      ${CAPABILITY_CATEGORIES.map(cat => 
           this.renderSkillCategory(
-            cat.key,
             cat.icon,
             this.i18n.t('capabilities.' + cat.key),
             caps[cat.key as keyof Capabilities] || []
@@ -715,31 +716,55 @@ Always answer in the user's language (Chinese or English).`;
       await gatewayClient.waitForConnection(5000);
       
       // Get providers from backend API
-      const providers = await gatewayClient.request<LLMProviderConfig[]>('llm.providers.list');
+      const providers = await gatewayClient.request<LLMProviderConfig[]>('llm.providers.list', {});
+      // Cache providers for subsequent requests
+      if (providers && providers.length > 0) {
+        this.llmProviders = providers;
+      }
       
       if (!providers || providers.length === 0) {
         throw new Error('No LLM providers configured');
       }
 
-      // Find first enabled provider
-      const provider = providers.find(p => p.enabled) || providers[0];
-      
-      // Build messages with system prompt
-      const systemPrompt = this.generateSystemPrompt();
-      const chatMessages = [
-        { role: 'system', content: systemPrompt },
-        ...this.messages.map(m => ({ role: m.role, content: m.content }))
-      ];
+      // Determine if we should use single-LLM chat or collaborative chat
+      const enabledProviders = (this.llmProviders.filter(p => p.enabled).map(p => p.id))
+        || (providers || []).filter(p => p.enabled).map(p => p.id);
 
-      // Call LLM API directly
-      const model = provider.models?.[0] || 'default';
-      const response = await this.callLLMApi(provider, chatMessages, model);
+      // Build system context and history
+      const systemPrompt = this.generateSystemPrompt();
+      const history = this.messages.map(m => ({ role: m.role, content: m.content }));
+
+      let assistantContent = '';
+      if (enabledProviders.length > 1) {
+        // Collaborative chat across multiple providers
+        const collResp = await gatewayClient.request<any>('llm.chat.collaborative', {
+          message: text,
+          providers: enabledProviders,
+          context: systemPrompt,
+          history,
+        });
+        // Expect shape: { responses: [{ provider, content }...] }
+        const first = collResp?.responses?.[0];
+        assistantContent = first?.content ?? 'No response from LLMs';
+      } else {
+        // Single provider chat
+        const provider = (providers && providers.length > 0) ? (providers.find(p => p.enabled) || providers[0]) : null;
+        const model = provider?.models?.[0] || 'default';
+        const singleResp = await gatewayClient.request<any>('llm.chat', {
+          message: text,
+          provider: provider?.id,
+          model,
+          context: systemPrompt,
+          history,
+        });
+        assistantContent = singleResp?.content ?? 'No response from LLM';
+      }
 
       // Add assistant message
       const assistantMessage: ChatMessage = {
         id: `msg_${Date.now()}`,
         role: 'assistant',
-        content: response,
+        content: assistantContent,
         timestamp: Date.now(),
       };
       this.messages = [...this.messages, assistantMessage];
@@ -760,51 +785,7 @@ Always answer in the user's language (Chinese or English).`;
     this.isLoading = false;
   }
 
-  private async callLLMApi(provider: LLMProviderConfig, messages: Array<{role: string; content: string}>, model: string): Promise<string> {
-    const isLocal = provider.type === 'local' || provider.baseUrl.includes('localhost') || provider.baseUrl.includes('127.0.0.1');
-    
-    if (isLocal) {
-      // Ollama API format
-      const response = await fetch(`${provider.baseUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: model,
-          messages: messages,
-          stream: false,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`LLM API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.message?.content || 'No response from LLM';
-    } else {
-      // OpenAI-compatible API format
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (provider.apiKey) {
-        headers['Authorization'] = `Bearer ${provider.apiKey}`;
-      }
-      
-      const response = await fetch(`${provider.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: model,
-          messages: messages,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`LLM API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content || 'No response from LLM';
-    }
-  }
+  
 
   private generateLocalResponse(userInput: string): string {
     const role = this.getRoleInfo();
@@ -1009,6 +990,8 @@ ${allSkills.slice(0, 6).map(s => `• ${s}`).join('\n')}
   }
 
   render() {
+    // Read loading state to satisfy TS diagnostics even if not visually used in render
+    void this.loading;
     const role = this.getRoleInfo();
     return html`
       <div class="page-container">

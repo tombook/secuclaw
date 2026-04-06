@@ -1,3 +1,8 @@
-export { CommanderService } from './service.js';
-export { CommanderRepository } from './repository.js';
-export type { Commander, CommanderRole, CommanderSettings } from './types.js';
+// Auto-generated barrel export for commander
+export * from './capability-bridge';
+export * from './playbook-engine';
+export * from './playbook-repository';
+export * from './playbook-types';
+export * from './repository';
+export * from './service';
+export * from './types';

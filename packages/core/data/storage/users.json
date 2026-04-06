@@ -1,0 +1,67 @@
+[
+  {
+    "id": "user-admin",
+    "username": "admin",
+    "email": "admin@secuclaw.local",
+    "displayName": "Administrator",
+    "department": "安全部",
+    "title": "系统管理员",
+    "roleIds": ["role_admin"],
+    "status": "active",
+    "lastLogin": null,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "user-ciso",
+    "username": "ciso",
+    "email": "ciso@secuclaw.local",
+    "displayName": "王合规",
+    "department": "安全部",
+    "title": "首席信息安全官",
+    "roleIds": ["role_ciso"],
+    "status": "active",
+    "lastLogin": null,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "user-security-expert",
+    "username": "zhangsan",
+    "email": "zhangsan@secuclaw.local",
+    "displayName": "张安全",
+    "department": "安全运营部",
+    "title": "安全专家",
+    "roleIds": ["role_security_expert"],
+    "status": "active",
+    "lastLogin": null,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "user-secops",
+    "username": "liyunwei",
+    "email": "liyunwei@secuclaw.local",
+    "displayName": "李运维",
+    "department": "安全运营部",
+    "title": "安全运维",
+    "roleIds": ["role_security_ops"],
+    "status": "active",
+    "lastLogin": null,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  },
+  {
+    "id": "user-auditor",
+    "username": "auditor",
+    "email": "auditor@secuclaw.local",
+    "displayName": "审计员",
+    "department": "审计部",
+    "title": "安全审计",
+    "roleIds": ["role_auditor"],
+    "status": "active",
+    "lastLogin": null,
+    "createdAt": 1773920046056,
+    "updatedAt": 1773920046056
+  }
+]

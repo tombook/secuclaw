@@ -9,8 +9,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "paths": {
       "@secuclaw/core": ["./packages/core/src"],
@@ -18,13 +16,11 @@
     },
     "baseUrl": "."
   },
-  "references": [
-    { "path": "./ui" },
-    { "path": "./packages/core" }
-  ],
   "exclude": [
     "node_modules",
     "dist",
-    "**/dist/**"
+    "**/dist/**",
+    "packages/core",
+    "ui"
   ]
 }

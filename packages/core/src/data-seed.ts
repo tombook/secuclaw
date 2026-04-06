@@ -18,6 +18,7 @@ export class DataSeedService {
     await this.seedCompliance();
     await this.seedAssets();
     await this.seedCapabilities();
+    await this.seedUsers();
     
     console.log('[DataSeed] Data seeding complete');
   }
@@ -717,5 +718,88 @@ export class DataSeedService {
 
     await this.store.set('capability-items.json', items);
     console.log('[DataSeed] Seeded 24 capability items');
+  }
+
+  // ==================== Users ====================
+
+  async seedUsers(): Promise<void> {
+    const existing = await this.store.get<any[]>('users.json');
+    if (existing && existing.length > 0) {
+      console.log('[DataSeed] Users already seeded, skipping');
+      return;
+    }
+
+    const now = Date.now();
+
+    const users = [
+      {
+        id: 'user-admin',
+        username: 'admin',
+        email: 'admin@secuclaw.local',
+        displayName: 'Administrator',
+        department: '安全部',
+        title: '系统管理员',
+        roleIds: ['role_admin'],
+        status: 'active',
+        passwordHash: '', // 默认密码 admin123，走 auth-routes fallback
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'user-ciso',
+        username: 'ciso',
+        email: 'ciso@secuclaw.local',
+        displayName: '王合规',
+        department: '安全部',
+        title: '首席信息安全官',
+        roleIds: ['role_ciso'],
+        status: 'active',
+        passwordHash: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'user-security-expert',
+        username: 'zhangsan',
+        email: 'zhangsan@secuclaw.local',
+        displayName: '张安全',
+        department: '安全运营部',
+        title: '安全专家',
+        roleIds: ['role_security_expert'],
+        status: 'active',
+        passwordHash: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'user-secops',
+        username: 'liyunwei',
+        email: 'liyunwei@secuclaw.local',
+        displayName: '李运维',
+        department: '安全运营部',
+        title: '安全运维',
+        roleIds: ['role_security_ops'],
+        status: 'active',
+        passwordHash: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: 'user-auditor',
+        username: 'user',
+        email: 'auditor@secuclaw.local',
+        displayName: '审计员',
+        department: '审计部',
+        title: '安全审计',
+        roleIds: ['role_auditor'],
+        status: 'active',
+        passwordHash: '',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+
+    await this.store.set('users.json', users);
+    console.log('[DataSeed] Seeded 5 users');
   }
 }

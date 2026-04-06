@@ -138,6 +138,7 @@ const ROLE_PERMISSIONS: Record<RoleId, string[]> = {
     'capabilities:view', 'capabilities:execute', 'capabilities:approve',
     'tools:baseline:execute', 'tools:vuln-scan:execute', 
     'tools:threat-hunt:execute', 'tools:pentest:execute',
+    'settings:view', 'settings:manage',
   ],
   'ciso': [
     'dashboard:view',
@@ -149,7 +150,7 @@ const ROLE_PERMISSIONS: Record<RoleId, string[]> = {
     'risk:view', 'risk:manage',
     'capabilities:view',
     'knowledge-base:view',
-    'settings:view',
+    'settings:view', 'settings:manage',
   ],
   'security-ops': [
     'dashboard:view',

@@ -3,9 +3,19 @@
  * 资产管理业务逻辑层
  */
 
-import { AssetsRepository, type Asset, type AssetQueryParams } from './repository.js';
+import { AssetsRepository } from './repository.js';
+import type {
+  SecurityAsset,
+  AssetQueryParams,
+  CreateAssetRequest,
+  UpdateAssetRequest,
+  AssetImportResult,
+  AssetStats,
+  AssetCriticality
+} from './types.js';
 import { randomUUID } from 'node:crypto';
 import type { EventBus as EventBusType } from '../events/event-bus.js';
+import { calculateAssetRiskScore } from './risk-score.js';
 
 export class AssetsService {
   private eventBus: EventBusType | null = null;
@@ -51,9 +61,9 @@ export class AssetsService {
     const created = await this.repo.create(newAsset);
     await this.emitEvent('asset.created', {
       assetId: created.id,
-      type: created.type,
-      criticality: created.criticality,
-      name: created.name,
+      type: created.info?.type ?? created.type,
+      criticality: created.info?.criticality ?? created.criticality,
+      name: created.info?.name ?? created.name,
     });
     return created;
   }
@@ -78,7 +88,7 @@ export class AssetsService {
     if (deleted && asset) {
       await this.emitEvent('asset.deleted', {
         assetId: id,
-        type: asset.type,
+        type: asset.info?.type ?? asset.type,
       });
     }
     return deleted;

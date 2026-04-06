@@ -8,7 +8,7 @@
  * - 数据集成状态
  */
 
-import { LitElement } from 'lit';
+import {  } from 'lit';
 
 // ============ 类型定义 ============
 

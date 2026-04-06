@@ -2,32 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { uiStore } from '../store/ui-store.js';
-
-interface NavItem {
-  path: string;
-  icon: string;
-  labelKey: string;
-}
-
-const navItems: NavItem[] = [
-  { path: '/', icon: '📊', labelKey: 'nav.dashboard' },
-  { path: '/threats', icon: '🔍', labelKey: 'nav.threats' },
-  { path: '/incidents', icon: '🚨', labelKey: 'nav.incidents' },
-  { path: '/vulnerabilities', icon: '🐛', labelKey: 'nav.vulnerabilities' },
-  { path: '/compliance', icon: '✅', labelKey: 'nav.compliance' },
-  { path: '/war-room', icon: '🎯', labelKey: 'nav.warRoom' },
-  { path: '/ai-experts', icon: '🤖', labelKey: 'nav.aiExperts' },
-  { path: '/capabilities', icon: '⚔️', labelKey: 'nav.capabilities' },
-  // Security Operations Center (统一入口)
-  { path: '/tools/security-ops', icon: '🛡️', labelKey: 'nav.securityOps' },
-  { path: '/skills-market', icon: '🛒', labelKey: 'nav.skillsMarket' },
-  { path: '/channels', icon: '💬', labelKey: 'nav.channels' },
-  // Settings sub-pages
-  { path: '/settings', icon: '⚙️', labelKey: 'nav.settings' },
-  { path: '/settings/roles', icon: '👥', labelKey: 'nav.roles' },
-  { path: '/settings/llm-config', icon: '🤖', labelKey: 'nav.llmConfig' },
-  { path: '/settings/ai-experts-config', icon: '⚡', labelKey: 'nav.aiExpertsConfig' },
-];
+import { MENU_GROUPS, type NavGroup } from '../config/menu-config.js';
 
 @customElement('sc-sidebar')
 export class ScSidebar extends LitElement {
@@ -36,6 +11,9 @@ export class ScSidebar extends LitElement {
 
   @state()
   private currentPath = '/';
+
+  @state()
+  private expandedGroups: Set<string> = new Set(['operations']);
 
   private i18nCtrl = new I18nController(this);
 
@@ -77,18 +55,78 @@ export class ScSidebar extends LitElement {
       display: none;
     }
 
-    .nav-list {
+    .nav-container {
       flex: 1;
-      list-style: none;
-      padding: var(--sc-spacing-md) 0;
       overflow-y: auto;
+      padding: var(--sc-spacing-sm) 0;
+    }
+
+    .nav-group {
+      margin-bottom: var(--sc-spacing-xs);
+    }
+
+    .nav-group-header {
+      display: flex;
+      align-items: center;
+      padding: var(--sc-spacing-sm) var(--sc-spacing-md);
+      cursor: pointer;
+      color: var(--sc-text-tertiary);
+      font-size: var(--sc-font-size-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: color var(--sc-transition-fast);
+    }
+
+    .nav-group-header:hover {
+      color: var(--sc-text-secondary);
+    }
+
+    .nav-group-icon {
+      font-size: 14px;
+      margin-right: var(--sc-spacing-sm);
+    }
+
+    .nav-group-name {
+      flex: 1;
+    }
+
+    .nav-group-arrow {
+      font-size: 10px;
+      transition: transform var(--sc-transition-fast);
+    }
+
+    .nav-group-arrow.expanded {
+      transform: rotate(90deg);
+    }
+
+    :host([collapsed]) .nav-group-header {
+      justify-content: center;
+      padding: var(--sc-spacing-sm);
+    }
+
+    :host([collapsed]) .nav-group-icon,
+    :host([collapsed]) .nav-group-name,
+    :host([collapsed]) .nav-group-arrow {
+      display: none;
+    }
+
+    .nav-items {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height var(--sc-transition-normal);
+    }
+
+    .nav-items.expanded {
+      max-height: 500px;
     }
 
     .nav-item {
       display: flex;
       align-items: center;
       padding: var(--sc-spacing-sm) var(--sc-spacing-md);
-      margin: var(--sc-spacing-xs) var(--sc-spacing-sm);
+      padding-left: calc(var(--sc-spacing-md) + 20px);
+      margin: 2px var(--sc-spacing-xs);
       border-radius: var(--sc-radius-md);
       cursor: pointer;
       color: var(--sc-text-secondary);
@@ -107,15 +145,21 @@ export class ScSidebar extends LitElement {
     }
 
     .nav-icon {
-      font-size: 20px;
-      min-width: 24px;
+      font-size: 18px;
+      min-width: 20px;
       text-align: center;
     }
 
     .nav-label {
-      margin-left: var(--sc-spacing-md);
+      margin-left: var(--sc-spacing-sm);
       font-size: var(--sc-font-size-sm);
       white-space: nowrap;
+    }
+
+    :host([collapsed]) .nav-item {
+      justify-content: center;
+      padding: var(--sc-spacing-sm);
+      padding-left: var(--sc-spacing-sm);
     }
 
     :host([collapsed]) .nav-label {
@@ -149,7 +193,28 @@ export class ScSidebar extends LitElement {
 
     window.addEventListener('vaadin-router-location-changed', ((e: CustomEvent) => {
       this.currentPath = e.detail.location.pathname;
+      this.updateExpandedGroups();
     }) as EventListener);
+  }
+
+  private updateExpandedGroups() {
+    // Auto-expand group containing current path
+    for (const group of MENU_GROUPS) {
+      if (group.items.some(item => item.path === this.currentPath || 
+          (item.children && item.children.some(c => c.path === this.currentPath)))) {
+        this.expandedGroups = new Set([...this.expandedGroups, group.id]);
+      }
+    }
+  }
+
+  private toggleGroup(groupId: string) {
+    const newExpanded = new Set(this.expandedGroups);
+    if (newExpanded.has(groupId)) {
+      newExpanded.delete(groupId);
+    } else {
+      newExpanded.add(groupId);
+    }
+    this.expandedGroups = newExpanded;
   }
 
   private handleNavigate(path: string): void {
@@ -166,6 +231,43 @@ export class ScSidebar extends LitElement {
     uiStore.toggleSidebar();
   }
 
+  private isActive(path: string): boolean {
+    return this.currentPath === path;
+  }
+
+  private renderNavGroup(group: NavGroup) {
+    const isExpanded = this.expandedGroups.has(group.id) && !this.collapsed;
+    // Key format: nav.group + capitalized group id (e.g., "operations" -> "nav.groupOperations")
+    const groupLabelKey = `nav.group${group.id.charAt(0).toUpperCase() + group.id.slice(1)}` as any;
+    
+    return html`
+      <div class="nav-group">
+        <div class="nav-group-header" @click=${() => this.toggleGroup(group.id)}>
+          <span class="nav-group-icon">${group.icon}</span>
+          <span class="nav-group-name">${this.i18nCtrl.t(groupLabelKey) || group.name}</span>
+          <span class="nav-group-arrow ${isExpanded ? 'expanded' : ''}">▶</span>
+        </div>
+        <div class="nav-items ${isExpanded ? 'expanded' : ''}">
+          ${group.items.map(item => this.renderNavItem(item))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderNavItem(item: any) {
+    const isActive = this.isActive(item.path);
+    
+    return html`
+      <div
+        class="nav-item ${isActive ? 'active' : ''}"
+        @click=${() => this.handleNavigate(item.path)}
+      >
+        <span class="nav-icon">${item.icon}</span>
+        <span class="nav-label">${this.i18nCtrl.t(item.labelKey)}</span>
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <div class="logo">
@@ -173,21 +275,9 @@ export class ScSidebar extends LitElement {
         ${!this.collapsed ? html`<span class="logo-text">SecuClaw</span>` : ''}
       </div>
       
-      <ul class="nav-list">
-        ${navItems.map(
-          (item) => html`
-            <li
-              class="nav-item ${this.currentPath === item.path ? 'active' : ''}"
-              @click=${() => this.handleNavigate(item.path)}
-            >
-              <span class="nav-icon">${item.icon}</span>
-              ${!this.collapsed
-                ? html`<span class="nav-label">${this.i18nCtrl.t(item.labelKey)}</span>`
-                : ''}
-            </li>
-          `
-        )}
-      </ul>
+      <div class="nav-container">
+        ${MENU_GROUPS.map(group => this.renderNavGroup(group))}
+      </div>
 
       <button class="toggle-button" @click=${this.handleToggle}>
         ${this.collapsed ? '▶' : '◀'}

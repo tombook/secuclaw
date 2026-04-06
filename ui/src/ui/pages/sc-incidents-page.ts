@@ -9,6 +9,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
 import { dataService, type SecurityIncident, type IncidentQueryParams } from '../data-service.js';
+import { gatewayClient } from '../gateway-client.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -90,12 +91,28 @@ export class ScIncidentsPage extends LitElement {
   @state()
   private viewMode: 'kanban' | 'list' = 'kanban';
 
+  @state() private linkedResources: any[] = [];
+
+  // Reserved for future use: incident enums from API
+  // @state() private incidentEnums: Record<string, string[]> = {};
+  @state() private _stats: any = null;
+
   // Toast notification state
   @state()
   private toastMessage: string | null = null;
 
   @state()
   private toastType: 'success' | 'error' | 'info' = 'info';
+
+  // Assign Modal state
+  @state()
+  private showAssignModal = false;
+
+  @state()
+  private assigningIncident: Incident | null = null;
+
+  @state()
+  private assigneeInput = '';
 
   // ============ 样式 ============
 
@@ -546,7 +563,9 @@ export class ScIncidentsPage extends LitElement {
     
     try {
       await this.loadIncidents();
+      await this.loadStats();
       await this.loadAIInsights();
+      await this.loadIncidentEnums();
     } catch (error) {
       console.error('Failed to load incidents data:', error);
     } finally {
@@ -561,7 +580,8 @@ export class ScIncidentsPage extends LitElement {
       if (this.filterStatus !== 'all') {
         params.status = this.filterStatus;
       }
-      this.realIncidents = await dataService.getIncidents(params);
+      const res = await gatewayClient.request('incidents.list', params);
+      this.realIncidents = (res as any)?.data ?? [];
       
       // Convert to UI format
       if (this.realIncidents.length > 0) {
@@ -722,6 +742,16 @@ export class ScIncidentsPage extends LitElement {
     ];
   }
 
+  private async loadStats() {
+    try {
+      const res = await gatewayClient.request('incidents.stats', {});
+      this._stats = (res as any)?.data ?? res;
+    } catch (e) {
+      console.error('[IncidentsPage] incidents.stats failed:', e);
+      this._stats = null;
+    }
+  }
+
   private async loadAIInsights() {
     try {
       this.insights = await aiService.generateInsights({
@@ -747,6 +777,11 @@ export class ScIncidentsPage extends LitElement {
 
   private handleIncidentClick(incident: Incident) {
     this.selectedIncident = this.selectedIncident?.id === incident.id ? null : incident;
+    if (this.selectedIncident) {
+      this.loadLinkedResources(incident.id);
+    } else {
+      this.linkedResources = [];
+    }
   }
 
   // Get valid next statuses for transitions
@@ -771,8 +806,12 @@ export class ScIncidentsPage extends LitElement {
     this.incidents = [...this.incidents];
     this.selectedIncident = { ...incident };
     try {
-      await dataService.updateIncidentStatus(incident.id, targetStatus);
-      this.showToast(`状态已更新为 ${this.getStatusLabel(targetStatus)}`, 'success');
+      const result = await dataService.updateIncidentStatus(incident.id, targetStatus);
+      if (result && typeof result === 'object' && 'queued' in result && (result as any).queued === true) {
+        this.showToast('离线模式：状态更新已排队', 'info');
+      } else {
+        this.showToast(`状态已更新为 ${this.getStatusLabel(targetStatus)}`, 'success');
+      }
     } catch (error) {
       // Revert on failure
       incident.status = prevStatus;
@@ -782,26 +821,130 @@ export class ScIncidentsPage extends LitElement {
     }
   }
 
-  // Handle assignment with a prompt
-  private async handleAssign(incident: Incident) {
-    const assignee = prompt('请输入负责人姓名');
-    if (!assignee) return;
+  // Handle assignment with modal
+  private openAssignModal(incident: Incident) {
+    this.assigningIncident = incident;
+    this.assigneeInput = incident.assignee || '';
+    this.showAssignModal = true;
+  }
+
+  private closeAssignModal() {
+    this.showAssignModal = false;
+    this.assigningIncident = null;
+    this.assigneeInput = '';
+  }
+
+  private async handleAssign() {
+    if (!this.assigningIncident || !this.assigneeInput.trim()) return;
+    
+    const assignee = this.assigneeInput.trim();
+    const incident = this.assigningIncident;
     const prev = incident.assignee;
-    // Optimistic update
+    
     incident.assignee = assignee;
     this.incidents = [...this.incidents];
     this.selectedIncident = { ...incident };
+    
     try {
-      // Update via workflow to satisfy API contract
-      await dataService.updateIncident(incident.id, { workflow: { assignee, status: incident.status } });
-      this.showToast(`已分配给 ${assignee}`, 'success');
+      const result = await dataService.updateIncident(incident.id, { workflow: { assignee, status: incident.status } });
+      
+      // Check if the result indicates queued (offline) status
+      if (result && typeof result === 'object' && 'queued' in result && (result as any).queued === true) {
+        this.showToast('离线模式：分配请求已排队', 'info');
+      } else {
+        this.showToast(`已分配给 ${assignee}`, 'success');
+      }
+      this.closeAssignModal();
     } catch (error) {
-      // Revert
       incident.assignee = prev;
       this.incidents = [...this.incidents];
       this.selectedIncident = { ...incident };
       this.showToast('分配失败', 'error');
     }
+  }
+
+  private async createIncident() {
+    const title = prompt('事件标题:');
+    if (!title) return;
+    const description = prompt('事件描述:') || '';
+    const severity = prompt('严重程度 (critical/high/medium/low):', 'medium') || 'medium';
+    try {
+      const result = await gatewayClient.request('incidents.create', {
+        title,
+        description,
+        severity,
+        category: 'other',
+        affectedAssets: [],
+      });
+      
+      if (result && typeof result === 'object' && 'queued' in result && (result as any).queued === true) {
+        this.showToast('离线模式：创建请求已排队', 'info');
+      } else {
+        this.showToast('事件创建成功', 'success');
+      }
+      this.loadIncidentsData();
+    } catch (e) {
+      console.error('[incidents] createIncident failed:', e);
+      this.showToast('创建事件失败', 'error');
+    }
+  }
+
+  private async handleEscalate(incident: Incident) {
+    const reason = prompt('升级原因:');
+    if (!reason) return;
+    const targetRole = prompt('目标角色 (如: ciso, security-ops):') || 'ciso';
+    try {
+      await gatewayClient.request('incidents.escalate', { ticketId: incident.id, reason, targetRole });
+      this.showToast('事件已升级', 'success');
+    } catch (e) {
+      console.error('[incidents] Escalate failed:', e);
+      this.showToast('升级失败', 'error');
+    }
+  }
+
+  private async loadLinkedResources(ticketId: string) {
+    try {
+      const res = await gatewayClient.request('incidents.linkedResources', { ticketId });
+      this.linkedResources = Array.isArray((res as any)?.data) ? (res as any).data : Array.isArray(res) ? res : [];
+    } catch (e) {
+      console.error('[incidents] Load linked resources failed:', e);
+      this.linkedResources = [];
+    }
+  }
+
+  private async deleteIncident(id: string) {
+    if (!confirm('确定删除此事件？')) return;
+    try {
+      const result = await gatewayClient.request('incidents.delete', { id });
+      if (result && typeof result === 'object' && 'queued' in result && (result as any).queued === true) {
+        this.showToast('离线模式：删除请求已排队', 'info');
+      } else {
+        this.showToast('事件已删除', 'success');
+      }
+      this.loadIncidents();
+    } catch (e) { 
+      console.error('[incidents] Delete failed:', e);
+      this.showToast('删除失败', 'error');
+    }
+  }
+
+  private async loadIncidentEnums() {
+    // Reserved for future use - load incident enums from API
+    // Currently not used as enums are defined locally
+    try {
+      await gatewayClient.request('incidents.enums', {});
+      // Will use when needed: const data = (res as any)?.data ?? res; this.incidentEnums = data;
+    } catch { /* fallback: keep empty enums */ }
+  }
+
+  private async getByTicketId(ticketId: string) {
+    try {
+      const res = await gatewayClient.request('incidents.getByTicketId', { ticketId });
+      const detail = (res as any)?.data ?? res;
+      if (detail) {
+        this.selectedIncident = { ...this.selectedIncident, ...detail };
+      }
+    } catch (e) { console.error('[incidents] GetByTicketId failed:', e); }
   }
 
   private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
@@ -810,6 +953,39 @@ export class ScIncidentsPage extends LitElement {
     setTimeout(() => {
       this.toastMessage = null;
     }, 3000);
+  }
+
+  private renderAssignModal() {
+    if (!this.showAssignModal || !this.assigningIncident) return html``;
+
+    return html`
+      <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;" @click=${(e: Event) => e.target === e.currentTarget && this.closeAssignModal()}>
+        <div style="background:#fff;border-radius:12px;padding:24px;width:360px;max-width:90vw;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="margin:0;font-size:18px;font-weight:600;">分配负责人</h3>
+            <button style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;" @click=${this.closeAssignModal}>×</button>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:14px;font-weight:500;margin-bottom:6px;">事件: ${this.assigningIncident.title}</label>
+          </div>
+          <div style="margin-bottom:20px;">
+            <label style="display:block;font-size:14px;font-weight:500;margin-bottom:6px;">负责人姓名 *</label>
+            <input 
+              type="text" 
+              style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;"
+              .value=${this.assigneeInput}
+              @input=${(e: Event) => this.assigneeInput = (e.target as HTMLInputElement).value}
+              placeholder="输入负责人姓名"
+              @keypress=${(e: KeyboardEvent) => e.key === 'Enter' && this.handleAssign()}
+            />
+          </div>
+          <div style="display:flex;gap:12px;justify-content:flex-end;">
+            <button class="btn btn-secondary" style="padding:8px 16px;border:none;border-radius:8px;cursor:pointer;background:#f3f4f6;" @click=${this.closeAssignModal}>取消</button>
+            <button class="btn btn-primary" style="padding:8px 16px;border:none;border-radius:8px;cursor:pointer;background:#3b82f6;color:#fff;" @click=${this.handleAssign} ?disabled=${!this.assigneeInput.trim()}>确认分配</button>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   private getStatusLabel(status: IncidentStatus): string {
@@ -954,7 +1130,9 @@ export class ScIncidentsPage extends LitElement {
             <div class="incident-meta">${incident.id} · ${incident.category}</div>
           </div>
            <div class="detail-actions">
-             <button class="btn btn-secondary" @click=${() => this.handleAssign(incident)}>分配</button>
+             <button class="btn btn-secondary" @click=${() => this.openAssignModal(incident)}>分配</button>
+             <button class="btn btn-secondary" @click=${() => this.handleEscalate(incident)} style="background:rgba(239,68,68,0.1);color:#ef4444;">升级</button>
+             <button class="btn btn-secondary" @click=${() => this.deleteIncident(incident.id)} style="background:rgba(239,68,68,0.1);color:#ef4444;">🗑️ 删除</button>
              <select class="btn btn-primary" @change=${(e: Event) => this.handleStatusUpdate(incident, (e.target as HTMLSelectElement).value as IncidentStatus)}>
                <option value="" disabled selected>更新状态</option>
                ${this.getValidNextStatuses(incident.status).map(s => html`
@@ -1020,6 +1198,17 @@ export class ScIncidentsPage extends LitElement {
             <span style="padding: 4px 8px; background: var(--sc-bg-secondary); border-radius: 4px; font-size: 12px;">${asset}</span>
           `)}
         </div>
+
+        ${this.linkedResources.length > 0 ? html`
+          <div class="section-header" style="margin-top: 16px;">🔗 关联资源</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            ${this.linkedResources.map((lr: any) => html`
+              <span style="padding: 4px 8px; background: rgba(59,130,246,0.1); border-radius: 4px; font-size: 12px; color: #3b82f6;">
+                ${lr.type ?? '资源'}: ${lr.name ?? lr.id ?? ''}
+              </span>
+            `)}
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -1069,14 +1258,16 @@ export class ScIncidentsPage extends LitElement {
             <div class="header-actions">
               <button class="btn-icon ${this.viewMode === 'kanban' ? 'active' : ''}" @click=${() => this.viewMode = 'kanban'}>📊</button>
               <button class="btn-icon ${this.viewMode === 'list' ? 'active' : ''}" @click=${() => this.viewMode = 'list'}>📋</button>
+              <button class="btn btn-secondary" @click=${() => { const tid = prompt('工单号 (如 INC-001):'); if (tid) this.getByTicketId(tid); }}>🔍 工单查询</button>
               <button class="btn btn-secondary">📤 导出</button>
-              <button class="btn btn-primary">+ 创建事件</button>
+              <button class="btn btn-primary" @click=${() => this.createIncident()}>+ 创建事件</button>
             </div>
           </div>
 
           ${this.renderStats()}
           ${this.renderKanban()}
           ${this.renderDetailPanel()}
+          ${this.renderAssignModal()}
           ${this.toastMessage ? html`
             <div class="toast ${this.toastType}" @click=${() => this.toastMessage = null}>
               ${this.toastType === 'error' ? '❌' : this.toastType === 'success' ? '✅' : 'ℹ️'} ${this.toastMessage}

@@ -40,9 +40,30 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
       },
       output: {
-        manualChunks: {
-          lit: ['lit', '@lit/reactive-element', 'lit-html'],
-          router: ['@vaadin/router'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('lit') || id.includes('@lit') || id.includes('lit-html')) return 'lit';
+            if (id.includes('@vaadin')) return 'router';
+            return 'vendor';
+          }
+          if (id.includes('/pages/tools/')) return 'pages-tools';
+          if (id.includes('/pages/settings/')) return 'pages-settings';
+          if (id.includes('/pages/sc-secops-center')) return 'pages-secops';
+          if (id.includes('/pages/sc-datacenter')) return 'pages-data';
+          if (id.includes('/pages/sc-channels')) return 'pages-channels';
+          if (id.includes('/pages/sc-ai-experts')) return 'pages-ai';
+          if (id.includes('/pages/sc-war-room')) return 'pages-warroom';
+          if (id.includes('/pages/sc-dashboard')) return 'pages-core';
+          if (id.includes('/pages/sc-incidents')) return 'pages-incidents';
+          if (id.includes('/pages/sc-vulnerabilities')) return 'pages-vulns';
+          if (id.includes('/pages/sc-threats')) return 'pages-threats';
+          if (id.includes('/pages/sc-compliance')) return 'pages-compliance';
+          if (id.includes('/pages/sc-reports')) return 'pages-reports';
+          if (id.includes('/pages/sc-risk')) return 'pages-risk';
+          if (id.includes('/pages/sc-knowledge')) return 'pages-knowledge';
+          if (id.includes('/pages/sc-skills')) return 'pages-knowledge';
+          if (id.includes('/pages/sc-login')) return 'pages-auth';
+          if (id.includes('/pages/capabilities/')) return 'pages-caps';
         },
       },
     },

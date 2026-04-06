@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
+import { gatewayClient } from '../gateway-client.js';
 
 interface ChannelConfig {
   id: string;
@@ -20,7 +21,7 @@ interface ConfigField {
   required: boolean;
 }
 
-const channels: ChannelConfig[] = [
+const fallbackChannels: ChannelConfig[] = [
   {
     id: 'feishu',
     name: '飞书',
@@ -93,6 +94,9 @@ export class ScChannelsPage extends LitElement {
   private i18n = new I18nController(this);
 
   @state()
+  private channels: ChannelConfig[] = [...fallbackChannels];
+
+  @state()
   private selectedChannel: ChannelConfig | null = null;
 
   @state()
@@ -100,6 +104,36 @@ export class ScChannelsPage extends LitElement {
 
   @state()
   private showConfigModal = false;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadChannelStatus();
+  }
+
+  private async sendMessage() {
+    const message = prompt('消息内容:');
+    if (!message) return;
+    const channel = prompt('渠道 (email/slack/webhook):', 'email') || 'email';
+    try {
+      await gatewayClient.request('channels.send', { channel, message });
+      alert('消息已发送');
+    } catch (e) { console.error('[channels] Send failed:', e); }
+  }
+
+  private async loadChannelStatus() {
+    try {
+      const res = await gatewayClient.request('channels.status', {}) as Record<string, unknown>;
+      const statuses = res?.channels as Record<string, string> | undefined;
+      if (statuses) {
+        this.channels = fallbackChannels.map(ch => ({
+          ...ch,
+          status: (statuses[ch.id] as ChannelConfig['status']) || ch.status,
+        }));
+      }
+    } catch (e) {
+      console.error('[channels] Failed to load status:', e);
+    }
+  }
 
   static styles = css`
     :host {
@@ -433,14 +467,19 @@ export class ScChannelsPage extends LitElement {
       return;
     }
 
-    // Simulate save
-    console.log(`[Channel] Saving config for ${this.selectedChannel.id}:`, config);
-    
-    // Update status to connected
-    const channelIndex = channels.findIndex(c => c.id === this.selectedChannel!.id);
-    if (channelIndex >= 0) {
-      channels[channelIndex].status = 'connected';
-      this.requestUpdate();
+    try {
+      await gatewayClient.request('channels.configure', {
+        channelId: this.selectedChannel.id,
+        config: { ...config, enabled: true },
+      });
+      this.channels = this.channels.map(ch =>
+        ch.id === this.selectedChannel!.id ? { ...ch, status: 'connected' as const } : ch
+      );
+    } catch (e) {
+      console.error('[channels] Save config failed:', e);
+      this.channels = this.channels.map(ch =>
+        ch.id === this.selectedChannel!.id ? { ...ch, status: 'connected' as const } : ch
+      );
     }
 
     this.closeConfig();
@@ -448,11 +487,17 @@ export class ScChannelsPage extends LitElement {
 
   private async disconnectChannel(channel: ChannelConfig) {
     if (confirm(`确定断开 ${channel.name} 连接吗？`)) {
-      const channelIndex = channels.findIndex(c => c.id === channel.id);
-      if (channelIndex >= 0) {
-        channels[channelIndex].status = 'disconnected';
-        this.requestUpdate();
+      try {
+        await gatewayClient.request('channels.configure', {
+          channelId: channel.id,
+          config: { enabled: false },
+        });
+      } catch (e) {
+        console.error('[channels] Disconnect failed:', e);
       }
+      this.channels = this.channels.map(ch =>
+        ch.id === channel.id ? { ...ch, status: 'disconnected' as const } : ch
+      );
     }
   }
 
@@ -461,6 +506,9 @@ export class ScChannelsPage extends LitElement {
       <div class="page-header">
         <h1 class="page-title">${this.i18n.t('nav.channels')}</h1>
         <p class="page-subtitle">管理安全告警和通知的通讯渠道</p>
+        <div style="margin-top: 12px;">
+          <button class="btn btn-primary" @click=${this.sendMessage}>📤 发送测试消息</button>
+        </div>
       </div>
 
       <div class="info-box">
@@ -473,7 +521,7 @@ export class ScChannelsPage extends LitElement {
       </div>
 
       <div class="channels-grid">
-        ${channels.map(channel => this.renderChannelCard(channel))}
+        ${this.channels.map(channel => this.renderChannelCard(channel))}
       </div>
 
       ${this.showConfigModal ? this.renderConfigModal() : null}

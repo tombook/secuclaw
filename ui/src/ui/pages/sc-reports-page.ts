@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
+import { gatewayClient } from '../gateway-client.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -63,7 +64,7 @@ export class ScReportsPage extends LitElement {
   @state() private reports: Report[] = [];
   @state() private templates: ReportTemplate[] = [];
   @state() private insights: SmartInsight[] = [];
-  @state() private recommendations: AIRecommendation[] = [];
+  @state() private _recommendations: AIRecommendation[] = [];
   @state() private selectedReport: Report | null = null;
   @state() private filterType: ReportType | 'all' = 'all';
 
@@ -333,17 +334,62 @@ export class ScReportsPage extends LitElement {
   }
 
   private async loadReports() {
-    this.reports = [
-      { id: 'r1', title: '2024年Q1安全态势报告', type: 'executive', status: 'completed', format: 'pdf', author: '系统', createdAt: new Date('2024-04-01'), period: { start: new Date('2024-01-01'), end: new Date('2024-03-31') }, summary: '本季度安全态势整体良好，共处理安全事件156起，修复漏洞89个', aiInsight: '建议加强供应链安全管理', sections: [] },
-      { id: 'r2', title: '勒索软件攻击分析报告', type: 'incident', status: 'completed', format: 'pdf', author: '张安全', createdAt: new Date('2024-03-10'), period: { start: new Date('2024-03-01'), end: new Date('2024-03-10') }, summary: 'LockBit 3.0勒索软件攻击分析，包含攻击链、影响范围和处置建议', sections: [] },
+    try {
+      const res = await gatewayClient.request('reports.list', {});
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data) && data.length > 0) {
+        this.reports = data.map((r: any) => ({
+          id: r.id,
+          title: r.title ?? r.metadata?.title ?? '',
+          type: (r.type ?? r.metadata?.reportType ?? 'executive') as ReportType,
+          status: (r.status ?? 'draft') as ReportStatus,
+          format: (r.format ?? 'pdf') as ReportFormat,
+          author: r.generatedBy ?? r.metadata?.author ?? '系统',
+          createdAt: new Date(r.createdAt ?? Date.now()),
+          period: r.metadata?.period ?? { start: new Date(), end: new Date() },
+          summary: r.content ?? r.metadata?.summary ?? '',
+          sections: r.sections ?? [],
+        }));
+      } else {
+        this.reports = this.getFallbackReports();
+      }
+    } catch {
+      this.reports = this.getFallbackReports();
+    }
+  }
+
+  private async loadTemplates() {
+    try {
+      const res = await gatewayClient.request('reports.listTemplates', {});
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data) && data.length > 0) {
+        this.templates = data.map((t: any) => ({
+          id: t.id,
+          name: t.name ?? t.title ?? '',
+          type: (t.type ?? 'executive') as ReportType,
+          description: t.description ?? '',
+          sections: t.sections ?? [],
+        }));
+      } else {
+        this.templates = this.getFallbackTemplates();
+      }
+    } catch {
+      this.templates = this.getFallbackTemplates();
+    }
+  }
+
+  private getFallbackReports(): Report[] {
+    return [
+      { id: 'r1', title: '2024年Q1安全态势报告', type: 'executive', status: 'completed', format: 'pdf', author: '系统', createdAt: new Date('2024-04-01'), period: { start: new Date('2024-01-01'), end: new Date('2024-03-31') }, summary: '本季度安全态势整体良好，共处理安全事件156起，修复漏洞89个', sections: [] },
+      { id: 'r2', title: '勒索软件攻击分析报告', type: 'incident', status: 'completed', format: 'pdf', author: '张安全', createdAt: new Date('2024-03-10'), period: { start: new Date('2024-03-01'), end: new Date('2024-03-10') }, summary: 'LockBit 3.0勒索软件攻击分析', sections: [] },
       { id: 'r3', title: 'ISO 27001合规审计报告', type: 'compliance', status: 'generating', format: 'pdf', author: 'AI助手', createdAt: new Date(), period: { start: new Date('2024-01-01'), end: new Date('2024-03-31') }, summary: '正在生成...', sections: [] },
       { id: 'r4', title: '月度漏洞扫描报告', type: 'vulnerability', status: 'scheduled', format: 'html', author: '系统', createdAt: new Date('2024-03-01'), scheduledFor: new Date('2024-04-01'), period: { start: new Date('2024-03-01'), end: new Date('2024-03-31') }, summary: '计划中', sections: [] },
       { id: 'r5', title: '风险评估报告', type: 'risk', status: 'draft', format: 'word', author: '王合规', createdAt: new Date('2024-03-05'), period: { start: new Date('2024-01-01'), end: new Date('2024-03-31') }, summary: '草稿状态', sections: [] },
     ];
   }
 
-  private async loadTemplates() {
-    this.templates = [
+  private getFallbackTemplates(): ReportTemplate[] {
+    return [
       { id: 't1', name: '执行摘要报告', type: 'executive', description: '面向高管的安全态势摘要', sections: ['概述', '关键指标', '趋势分析', '建议'] },
       { id: 't2', name: '技术分析报告', type: 'technical', description: '详细的技术安全分析', sections: ['漏洞详情', '威胁分析', '配置审计', '修复建议'] },
       { id: 't3', name: '合规报告', type: 'compliance', description: '合规框架评估报告', sections: ['框架概述', '控制项评估', '差距分析', '整改计划'] },
@@ -356,7 +402,7 @@ export class ScReportsPage extends LitElement {
   private async loadAIInsights() {
     try {
       this.insights = await aiService.generateInsights('reports', { reports: this.reports });
-      this.recommendations = await aiService.generateRecommendations('reports', { reports: this.reports });
+      this._recommendations = await aiService.generateRecommendations('reports', { reports: this.reports });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
     }
@@ -368,6 +414,39 @@ export class ScReportsPage extends LitElement {
 
   private handleReportClick(report: Report) {
     this.selectedReport = this.selectedReport?.id === report.id? null : report;
+  }
+
+  private async generateReport() {
+    const title = prompt('报告标题:');
+    if (!title) return;
+    const type = prompt('类型 (executive/technical/compliance/incident/risk/vulnerability):', 'executive') || 'executive';
+    const format = prompt('格式 (pdf/html/word):', 'pdf') || 'pdf';
+    try {
+      await gatewayClient.request('reports.generate', { title, type: type as ReportType, format: format as ReportFormat });
+      this.loadReports();
+    } catch (e) {
+      console.error('[reports-page] Generate failed:', e);
+    }
+  }
+
+  private async viewReport(report: Report) {
+    try {
+      const res = await gatewayClient.request('reports.get', { id: report.id });
+      const detail = (res as any)?.data ?? res;
+      alert(`报告详情:\n标题: ${detail.title ?? report.title}\n状态: ${detail.status ?? report.status}\n内容: ${(detail.content ?? detail.summary ?? '').substring(0, 500)}`);
+    } catch (e) {
+      console.error('[reports-page] View failed:', e);
+    }
+  }
+
+  private async deleteReport(report: Report) {
+    if (!confirm(`确定删除报告"${report.title}"？`)) return;
+    try {
+      await gatewayClient.request('reports.delete', { id: report.id });
+      this.reports = this.reports.filter(r => r.id !== report.id);
+    } catch (e) {
+      console.error('[reports-page] Delete failed:', e);
+    }
   }
 
   private getFilteredReports() {
@@ -405,7 +484,7 @@ export class ScReportsPage extends LitElement {
             </div>
             <div class="header-actions">
               <button class="btn btn-secondary">📅 计划任务</button>
-              <button class="btn btn-primary">+ 新建报告</button>
+              <button class="btn btn-primary" @click=${this.generateReport}>+ 新建报告</button>
             </div>
           </div>
 
@@ -466,8 +545,8 @@ export class ScReportsPage extends LitElement {
                     <td>${report.author}</td>
                     <td>${report.createdAt.toLocaleDateString()}</td>
                     <td>
-                      <button class="action-btn">👁️ 查看</button>
-                      <button class="action-btn">📥 下载</button>
+                       <button class="action-btn" @click=${() => this.viewReport(report)}>👁️ 查看</button>
+                       <button class="action-btn" @click=${() => this.deleteReport(report)}>🗑️ 删除</button>
                     </td>
                   </tr>
                 `)}

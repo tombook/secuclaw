@@ -1,0 +1,242 @@
+[
+  {
+    "id": "inc-001",
+    "ticketId": "SEC-2026-0001",
+    "info": {
+      "title": "APT29钓鱼攻击响应",
+      "description": "检测到APT29组织针对高管的钓鱼攻击",
+      "category": "Phishing",
+      "severity": "critical",
+      "priority": 1,
+      "source": "邮件网关"
+    },
+    "timeline": {
+      "detectedAt": 1775448436262,
+      "reportedAt": 1775448436262,
+      "acknowledgedAt": 1775450236262,
+      "containingAt": 1775452036262
+    },
+    "sla": {
+      "responseDeadline": 1775453836262,
+      "resolutionDeadline": 1775542036262,
+      "responseBreached": true
+    },
+    "workflow": {
+      "status": "containing",
+      "assignee": "张安全",
+      "assigneeRole": "安全专家"
+    },
+    "impact": {
+      "affectedAssets": [
+        "workstation-001",
+        "workstation-002"
+      ],
+      "affectedUsers": 2,
+      "dataTypes": [
+        "credentials",
+        "emails"
+      ],
+      "businessImpact": "高 - 可能影响高管账户"
+    },
+    "handlers": [
+      {
+        "user": "张安全",
+        "role": "安全专家",
+        "joinedAt": 1775450236262,
+        "actions": [
+          "隔离工作站",
+          "阻断钓鱼链接"
+        ]
+      }
+    ],
+    "createdAt": 1775448436262,
+    "updatedAt": 1775452036262
+  },
+  {
+    "id": "inc-002",
+    "ticketId": "SEC-2026-0002",
+    "info": {
+      "title": "勒索软件感染处理",
+      "description": "LockBit勒索软件感染，已隔离",
+      "category": "Ransomware",
+      "severity": "critical",
+      "priority": 1,
+      "source": "EDR"
+    },
+    "timeline": {
+      "detectedAt": 1775441236262,
+      "reportedAt": 1775441236262,
+      "acknowledgedAt": 1775443036262,
+      "containingAt": 1775448436262,
+      "eradicatedAt": 1775453836262
+    },
+    "sla": {
+      "responseDeadline": 1775448436262,
+      "resolutionDeadline": 1775516116262
+    },
+    "workflow": {
+      "status": "eradicating",
+      "assignee": "李运维",
+      "assigneeRole": "安全运营"
+    },
+    "impact": {
+      "affectedAssets": [
+        "server-db-001"
+      ],
+      "affectedUsers": 10,
+      "dataTypes": [
+        "数据库",
+        "文件"
+      ],
+      "businessImpact": "严重 - 数据库服务器被感染"
+    },
+    "handlers": [
+      {
+        "user": "李运维",
+        "role": "安全运营",
+        "joinedAt": 1775443036262,
+        "actions": [
+          "隔离服务器",
+          "提取样本"
+        ]
+      }
+    ],
+    "createdAt": 1775441236262,
+    "updatedAt": 1775453836262
+  },
+  {
+    "id": "inc-003",
+    "ticketId": "SEC-2026-0003",
+    "info": {
+      "title": "异常数据传输调查",
+      "description": "检测到大量数据外传",
+      "category": "Data Breach",
+      "severity": "high",
+      "priority": 2,
+      "source": "DLP"
+    },
+    "timeline": {
+      "detectedAt": 1775434036262,
+      "reportedAt": 1775434036262,
+      "acknowledgedAt": 1775435836262
+    },
+    "sla": {
+      "responseDeadline": 1775441236262,
+      "resolutionDeadline": 1775524756262
+    },
+    "workflow": {
+      "status": "investigating",
+      "assignee": "王合规",
+      "assigneeRole": "合规官"
+    },
+    "impact": {
+      "affectedAssets": [
+        "workstation-finance-01"
+      ],
+      "affectedUsers": 1,
+      "dataTypes": [
+        "财务数据"
+      ],
+      "businessImpact": "中 - 疑似数据泄露"
+    },
+    "handlers": [
+      {
+        "user": "王合规",
+        "role": "合规官",
+        "joinedAt": 1775435836262,
+        "actions": [
+          "阻断传输",
+          "调查来源"
+        ]
+      }
+    ],
+    "createdAt": 1775434036262,
+    "updatedAt": 1775444836262
+  },
+  {
+    "id": "inc-004",
+    "ticketId": "SEC-2026-0004",
+    "info": {
+      "title": "DDoS攻击缓解",
+      "description": "DDoS攻击流量已缓解",
+      "category": "DDoS",
+      "severity": "medium",
+      "priority": 3,
+      "source": "网络监控"
+    },
+    "timeline": {
+      "detectedAt": 1775419636262,
+      "reportedAt": 1775419636262,
+      "acknowledgedAt": 1775421436262,
+      "containingAt": 1775423236262,
+      "eradicatedAt": 1775437636262,
+      "recoveredAt": 1775448436262
+    },
+    "sla": {
+      "responseDeadline": 1775426836262,
+      "resolutionDeadline": 1775498836262
+    },
+    "workflow": {
+      "status": "recovering",
+      "assignee": "赵网络",
+      "assigneeRole": "网络工程师",
+      "resolution": "DDoS攻击已缓解，服务恢复正常"
+    },
+    "impact": {
+      "affectedAssets": [
+        "fw-edge-01",
+        "load-balancer-01"
+      ],
+      "affectedUsers": 50,
+      "dataTypes": [],
+      "businessImpact": "低 - 短暂服务中断"
+    },
+    "handlers": [
+      {
+        "user": "赵网络",
+        "role": "网络工程师",
+        "joinedAt": 1775421436262,
+        "actions": [
+          "启用DDoS防护",
+          "清洗流量"
+        ]
+      }
+    ],
+    "createdAt": 1775419636262,
+    "updatedAt": 1775448436262
+  },
+  {
+    "id": "inc-005",
+    "ticketId": "SEC-2026-0005",
+    "info": {
+      "title": "可疑进程分析",
+      "description": "检测到可疑进程",
+      "category": "Malware",
+      "severity": "low",
+      "priority": 4,
+      "source": "EDR"
+    },
+    "timeline": {
+      "detectedAt": 1775453836262,
+      "reportedAt": 1775453836262
+    },
+    "sla": {
+      "responseDeadline": 1775533396262,
+      "resolutionDeadline": 1775542036262
+    },
+    "workflow": {
+      "status": "new"
+    },
+    "impact": {
+      "affectedAssets": [
+        "workstation-dev-01"
+      ],
+      "affectedUsers": 1,
+      "dataTypes": [],
+      "businessImpact": "低 - 待确认"
+    },
+    "handlers": [],
+    "createdAt": 1775453836262,
+    "updatedAt": 1775453836262
+  }
+]

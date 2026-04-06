@@ -120,7 +120,8 @@ export class RolesRepository {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return this.store.get<User[]>(this.getUsersFileName()) || [];
+    const users = this.store.get<User[]>(this.getUsersFileName());
+    return users || [];
   }
 
   async getUserById(id: string): Promise<User | null> {

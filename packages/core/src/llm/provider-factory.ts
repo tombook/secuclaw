@@ -11,9 +11,10 @@ export class ProviderFactory {
       case 'openai':
         return new OpenAIProvider(config);
       case 'anthropic':
-        return new AnthropicProvider(config);
+      case 'minimax':
+      case 'zhipu':
       case 'volcengine':
-        return new OpenAIProvider(config);
+        return new AnthropicProvider(config);
       case 'custom':
         return new OpenAIProvider(config);
       default:

@@ -70,7 +70,7 @@ export class ScMetricCard extends LitElement {
 
   // ============ 私有属性 ============
 
-  private i18n = new I18nController(this);
+  private _i18n = new I18nController(this);
 
   // ============ 样式 ============
 
@@ -399,7 +399,7 @@ export class ScMetricCard extends LitElement {
           <div class="header-left">
             <span class="card-title">${this.title}</span>
             <div class="card-value-container">
-              <span class="card-value">${this.value.toLocaleString()}</span>
+              <span class="card-value">${(this.value ?? 0).toLocaleString()}</span>
               ${this.unit ? html`<span class="card-unit">${this.unit}</span>` : ''}
             </div>
           </div>
@@ -408,7 +408,7 @@ export class ScMetricCard extends LitElement {
 
         ${this.target !== undefined ? html`
           <div class="target-section">
-            <span class="target-label">目标: ${this.target.toLocaleString()} ${this.unit || ''}</span>
+            <span class="target-label">目标: ${(this.target ?? 0).toLocaleString()} ${this.unit || ''}</span>
             <div class="progress-bar">
               <div 
                 class="progress-fill ${this.status}" 

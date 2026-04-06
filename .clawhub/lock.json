@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "project-management-2": {
+      "version": "0.1.0",
+      "installedAt": 1774893674442
+    },
+    "context-driven-development": {
+      "version": "1.0.0",
+      "installedAt": 1774893722594
+    },
+    "frontend-design-pro": {
+      "version": "1.0.0",
+      "installedAt": 1774893781842
+    }
+  }
+}

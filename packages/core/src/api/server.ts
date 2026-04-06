@@ -15,6 +15,7 @@ import { vulnerabilitiesRouter } from './routes/vulnerabilities.js';
 import { incidentsRouter } from './routes/incidents.js';
 import { tasksRouter } from './routes/tasks.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
+import { rateLimiter } from '../middleware/rate-limiter.js';
 import { ApiError } from './types.js';
 
 const logger = {
@@ -60,6 +61,11 @@ export class ApiServer {
 
     // Logging
     this.app.use(morgan('combined'));
+
+    // Rate limiting
+    this.app.use(rateLimiter.middleware());
+    // Stricter rate limiting for auth endpoints
+    this.app.use('/api/v1/auth', rateLimiter.middleware({ windowMs: 15_000, maxRequests: 10, blockDurationMs: 900_000 }));
 
     // Request ID middleware
     this.app.use((req: Request, res: Response, next: NextFunction) => {

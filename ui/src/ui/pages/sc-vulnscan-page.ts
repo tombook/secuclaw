@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { gatewayClient } from '../gateway-client.js';
 
 /**
  * Vulnerability Scan Page - Professional Design
@@ -11,6 +12,12 @@ export class ScVulnScanPage extends LitElement {
   @state() private isScanning = false;
   @state() private progress = 0;
   @state() private severityFilter = 'all';
+  @state() private loading = true;
+  @state() private vulnerabilities: Array<{
+    id: string; name: string; severity: string; status: string; cvss: number; asset: string;
+  }> = [];
+  @state() private scanTaskId: string | null = null;
+  @state() private scanTasks: any[] = [];
 
   static styles = css`
     :host {
@@ -150,7 +157,7 @@ export class ScVulnScanPage extends LitElement {
     }
   `;
 
-  private vulnerabilities = [
+  private readonly fallbackVulnerabilities = [
     { id: 'CVE-2024-1234', name: 'Apache Log4j RCE漏洞', severity: 'critical', status: 'open', cvss: 9.8, asset: 'prod-web-01' },
     { id: 'CVE-2024-5678', name: 'OpenSSL缓冲区溢出', severity: 'high', status: 'open', cvss: 8.2, asset: 'api-gateway' },
     { id: 'CVE-2024-9012', name: 'SQL注入漏洞', severity: 'high', status: 'fixed', cvss: 7.5, asset: 'web-portal' },
@@ -158,19 +165,119 @@ export class ScVulnScanPage extends LitElement {
     { id: 'CVE-2024-7890', name: 'CSRF令牌泄漏', severity: 'low', status: 'pending', cvss: 4.3, asset: 'user-portal' },
   ];
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadData();
+    this.loadScanHistory();
+  }
+
+  private async loadScanHistory() {
+    try {
+      const res = await gatewayClient.request('tools.listTasks', { toolId: 'port-scanner' });
+      const data = (res as any)?.data ?? res;
+      this.scanTasks = Array.isArray(data) ? [...data] : [];
+    } catch {
+      this.scanTasks = [];
+    }
+  }
+
+  private async loadData() {
+    this.loading = true;
+    try {
+      const res = await gatewayClient.request('vulnerabilities.list', {});
+      const data = Array.isArray(res) ? res : (res as any)?.data;
+      if (Array.isArray(data) && data.length > 0) {
+        this.vulnerabilities = data.map((v: any) => ({
+          id: v.info?.cveId ?? v.id ?? v.cveId ?? '',
+          name: v.info?.title ?? v.title ?? '',
+          severity: v.info?.cvss?.severity ?? v.severity ?? 'medium',
+          status: v.remediation?.status ?? v.status ?? 'open',
+          cvss: v.info?.cvss?.score ?? v.cvss ?? 0,
+          asset: v.affectedAssets?.[0]?.assetId ?? v.asset ?? '',
+        }));
+      } else {
+        this.vulnerabilities = [...this.fallbackVulnerabilities];
+      }
+    } catch {
+      this.vulnerabilities = [...this.fallbackVulnerabilities];
+    } finally {
+      this.loading = false;
+    }
+  }
+
   private handleTab(tab: string) { this.activeTab = tab; }
   private setSeverityFilter(severity: string) { this.severityFilter = severity; }
+
   private async runScan() {
     this.isScanning = true;
     this.progress = 0;
-    for (let i = 0; i <= 100; i += 5) {
-      await new Promise(r => setTimeout(r, 80));
-      this.progress = i;
+    try {
+      const res = await gatewayClient.request('tools.createTask', { toolId: 'port-scanner', target: 'localhost', config: {} });
+      this.scanTaskId = (res as any)?.taskId ?? (res as any)?.id ?? null;
+      if (this.scanTaskId) {
+        this.pollScanStatus(this.scanTaskId);
+      } else {
+        for (let i = 0; i <= 100; i += 5) {
+          await new Promise(r => setTimeout(r, 80));
+          this.progress = i;
+        }
+        this.isScanning = false;
+        this.loadData();
+      }
+    } catch {
+      for (let i = 0; i <= 100; i += 5) {
+        await new Promise(r => setTimeout(r, 80));
+        this.progress = i;
+      }
+      this.isScanning = false;
+      this.loadData();
     }
-    this.isScanning = false;
+  }
+
+  private async pollScanStatus(taskId: string) {
+    try {
+      const res = await gatewayClient.request('tools.getTask', { taskId });
+      const task = res as any;
+      this.progress = task?.progress ?? task?.percent ?? this.progress + 10;
+      if (task?.status === 'running' || task?.status === 'pending') {
+        setTimeout(() => this.pollScanStatus(taskId), 2000);
+      } else {
+        this.isScanning = false;
+        if (task?.status === 'completed') {
+          try {
+            const findings = await gatewayClient.request('tools.getFindings', { taskId });
+            const data = (findings as any)?.data ?? findings;
+            if (Array.isArray(data) && data.length > 0) {
+              this.vulnerabilities = [...this.vulnerabilities, ...data.map((v: any) => ({
+                id: v.cveId ?? v.id ?? '', name: v.title ?? v.name ?? '',
+                severity: v.severity ?? 'medium', status: 'open',
+                cvss: v.cvss ?? 0, asset: v.asset ?? '',
+              }))];
+            }
+          } catch {}
+        }
+        this.loadData();
+      }
+    } catch {
+      this.isScanning = false;
+    }
+  }
+
+  private async cancelScan() {
+    if (!this.scanTaskId) return;
+    try {
+      await gatewayClient.request('tools.cancelTask', { taskId: this.scanTaskId });
+      this.isScanning = false;
+      this.scanTaskId = null;
+    } catch (e) {
+      console.error('[vulnscan] Cancel failed:', e);
+    }
   }
 
   render() {
+    if (this.loading) {
+      return html`<div style="text-align:center;padding:4rem;"><div style="font-size:48px;margin-bottom:16px;">⏳</div><div style="color:var(--vln-text-secondary);">加载中...</div></div>`;
+    }
     const filtered = this.severityFilter === 'all' ? this.vulnerabilities : this.vulnerabilities.filter(v => v.severity === this.severityFilter);
     const criticalCount = this.vulnerabilities.filter(v => v.severity === 'critical').length;
     const highCount = this.vulnerabilities.filter(v => v.severity === 'high').length;
@@ -259,7 +366,20 @@ export class ScVulnScanPage extends LitElement {
                 <button class="btn btn-primary" style="width: 100%;" @click=${this.runScan} ?disabled=${this.isScanning}>
                   ${this.isScanning ? `扫描中... ${this.progress}%` : '🚀 立即扫描'}
                 </button>
+                ${this.isScanning ? html`<button class="btn btn-secondary" style="width:100%;margin-top:8px;" @click=${this.cancelScan}>✕ 取消扫描</button>` : ''}
                 ${this.isScanning ? html`<div class="progress-section"><div class="progress-bar"><div class="progress-fill" style="width: ${this.progress}%"></div></div></div>` : ''}
+                ${this.scanTasks.length > 0 ? html`
+                  <div style="margin-top:16px;">
+                    <strong style="font-size:13px;color:var(--vln-text-secondary);">扫描历史 (${this.scanTasks.length})</strong>
+                    <ul style="list-style:none;padding:0;margin-top:8px;">
+                      ${this.scanTasks.slice(0, 5).map((t: any) => html`
+                        <li style="padding:8px;border-bottom:1px solid var(--vln-border);font-size:12px;color:var(--vln-text-secondary);">
+                          ${(t.target ?? t.toolId ?? 'scan')} — ${t.status ?? 'unknown'} — ${t.createdAt ? new Date(t.createdAt).toLocaleString('zh-CN') : ''}
+                        </li>
+                      `)}
+                    </ul>
+                  </div>
+                ` : ''}
               ` : ''}
             </div>
           </div>

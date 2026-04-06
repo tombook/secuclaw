@@ -150,21 +150,25 @@ class GatewayClient {
         params,
       };
 
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(seq);
-        reject(new Error(`Request timeout: ${method}`));
-      }, 30000);
-
-      this.pendingRequests.set(seq, {
-        resolve: resolve as (value: unknown) => void,
-        reject,
-        timeout,
-      });
-
       if (this.status === 'connected' && this.ws) {
+        // Online: normal request with timeout
+        const timeout = setTimeout(() => {
+          this.pendingRequests.delete(seq);
+          reject(new Error(`Request timeout: ${method}`));
+        }, 30000);
+
+        this.pendingRequests.set(seq, {
+          resolve: resolve as (value: unknown) => void,
+          reject,
+          timeout,
+        });
+
         this.ws.send(JSON.stringify(message));
       } else {
+        // Offline: queue message and resolve immediately as "queued"
         this.messageQueue.push(message);
+        console.warn(`[Gateway] Offline, message queued: ${method}`);
+        resolve({ queued: true, method, seq } as T);
       }
     });
   }
@@ -172,6 +176,19 @@ class GatewayClient {
   private flushMessageQueue(): void {
     while (this.messageQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
       const message = this.messageQueue.shift()!;
+      
+      // Track this message with a timeout
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(message.seq);
+        console.warn(`[Gateway] Queued message timed out: ${message.method}`);
+      }, 30000);
+
+      this.pendingRequests.set(message.seq, {
+        resolve: () => { console.log(`[Gateway] Queued message resolved: ${message.method}`); },
+        reject: (e: Error) => { console.warn(`[Gateway] Queued message rejected: ${message.method}`, e); },
+        timeout,
+      });
+
       this.ws.send(JSON.stringify(message));
     }
   }

@@ -1,40 +1,100 @@
 version: '3.8'
 
+x-base-env: &base-env
+  NODE_ENV: production
+  TZ: Asia/Shanghai
+  LOG_LEVEL: info
+
 services:
-  app:
+  secuclaw:
+    image: ${DOCKER_IMAGE:-secuclaw/secuclaw:latest}
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: secuclaw-app
+    container_name: secuclaw
     ports:
-      - "8080:8080"
+      - "${HTTP_PORT:-80}:8080"
     volumes:
       - app-data:/data
     environment:
-      - NODE_ENV=production
-      - PORT=8080
-      - HOST=0.0.0.0
-      - DATA_PATH=/data
-      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
-      - JWT_EXPIRES_IN=8h
-      - LOG_LEVEL=info
+      <<: *base-env
+      PORT: 8080
+      HOST: 0.0.0.0
+      DATA_PATH: /data
+      STATIC_PATH: /app/public
+      
+      # Security configuration (REQUIRED: change these in production!)
+      JWT_SECRET: ${JWT_SECRET:-generate-strong-secret-key-here-32chars-minimum}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      REFRESH_TOKEN_EXPIRES_IN: ${REFRESH_TOKEN_EXPIRES_IN:-7d}
+      ENCRYPTION_SECRET: ${ENCRYPTION_SECRET:-generate-another-strong-secret-key-here}
+      
+      # LLM Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://localhost:11434}
+      
+      # Redis configuration (uncomment if using redis profile)
+      # REDIS_URL: redis://redis:6379/0
+      
+      # Notification configuration
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-secuclaw@example.com}
+      
+      # Webhook notification
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health').then(r => process.exit(r.statusCode === 200 ? 0 : 1)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    depends_on:
+      - redis
+    profiles:
+      - app
+      - all
 
   redis:
     image: redis:7-alpine
     container_name: secuclaw-redis
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
     volumes:
       - redis-data:/data
     restart: unless-stopped
+    environment:
+      <<: *base-env
     profiles:
       - redis
+      - all
+
+  # Optional: nginx reverse proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: secuclaw-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    restart: unless-stopped
+    depends_on:
+      - secuclaw
+    profiles:
+      - nginx
+      - all
+
+  # Optional: Let's Encrypt SSL certificate auto-renew
+  certbot:
+    image: certbot/certbot
+    container_name: secuclaw-certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --email ${LETSENCRYPT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN:-secuclaw.example.com}
+    profiles:
+      - certbot
 
 volumes:
   app-data:

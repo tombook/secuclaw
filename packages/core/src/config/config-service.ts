@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 export type Environment = 'development' | 'test' | 'production';
 
 export interface ServerConfig {
@@ -34,7 +36,7 @@ const DEFAULT_CONFIGS: Record<Environment, Partial<AppConfig>> = {
   development: {
     env: 'development',
     server: { port: 3000, host: 'localhost', cors: { origin: ['http://localhost:5173', 'http://localhost:3000'] } },
-    auth: { jwtSecret: 'dev-secret-change-me', jwtExpiresIn: '24h', bcryptRounds: 10 },
+    auth: { jwtSecret: '', jwtExpiresIn: '24h', bcryptRounds: 10 },
     storage: { basePath: './data' },
     llm: {
       defaultProvider: 'openai',
@@ -63,6 +65,11 @@ const DEFAULT_CONFIGS: Record<Environment, Partial<AppConfig>> = {
     logLevel: 'info',
   },
 };
+
+/** Generate a random hex secret if none provided (for dev/test safety) */
+function generateSecret(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
 
 export class ConfigService {
   private config: AppConfig;
@@ -104,7 +111,7 @@ export class ConfigService {
       },
       auth: {
         ...defaults.auth!,
-        jwtSecret: process.env.JWT_SECRET ?? defaults.auth!.jwtSecret,
+        jwtSecret: process.env.JWT_SECRET ?? (defaults.auth!.jwtSecret || generateSecret()),
         jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? defaults.auth!.jwtExpiresIn,
           bcryptRounds: Number(process.env.BCRYPT_ROUNDS) || defaults.auth!.bcryptRounds,
       },

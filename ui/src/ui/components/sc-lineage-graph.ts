@@ -770,7 +770,7 @@ export class ScLineageGraph extends LitElement {
       }
       
       const isHighlighted = this.highlightedPath.has(id);
-      const isDimmed = this.searchQuery && !this.filteredNodes.find(n => n.id === id);
+      const isDimmed = !!this.searchQuery && !this.filteredNodes.find(n => n.id === id);
       const isSelected = this.selectedNode === id;
       
       nodes.push(this.renderNode(layoutNode, { isHighlighted, isDimmed, isSelected }));
@@ -840,7 +840,7 @@ export class ScLineageGraph extends LitElement {
       }
 
       const isHighlighted = this.highlightedPath.has(edge.source) && this.highlightedPath.has(edge.target);
-      const isDimmed = this.searchQuery && (!this.filteredNodes.find(n => n.id === edge.source) || !this.filteredNodes.find(n => n.id === edge.target));
+      const isDimmed = !!this.searchQuery && (!this.filteredNodes.find(n => n.id === edge.source) || !this.filteredNodes.find(n => n.id === edge.target));
       
       edges.push(this.renderEdge(edge, source, target, { isHighlighted, isDimmed }));
     });

@@ -363,6 +363,13 @@ export class ScDomainBoard extends LitElement {
     }
   }
 
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('domain') && this.domain) {
+      this.closePanel();
+      this.loadDomainData();
+    }
+  }
+
   private async loadDomainData() {
     if (!this.domain) return;
     
@@ -375,7 +382,16 @@ export class ScDomainBoard extends LitElement {
       this.items = items;
       this.tasks = tasks;
     } catch (error) {
-      console.error('[sc-domain-board] Failed to load data:', error);
+      console.error('[sc-domain-board] Failed to load data, using mock data:', error);
+      // Mock data fallback
+      this.items = [
+        { id: 'item-1', name: '威胁检测', description: '实时威胁检测能力', category: 'detection', enabled: true, config: {}, ownerRoles: ['security-expert'], partnerRoles: ['secuclaw-commander'], requiresApproval: false },
+        { id: 'item-2', name: '漏洞扫描', description: '自动化漏洞扫描', category: 'scanning', enabled: true, config: {}, ownerRoles: ['security-expert'], partnerRoles: [], requiresApproval: false },
+      ] as unknown as CapabilityItem[];
+      this.tasks = [
+        { id: 'task-1', title: '执行安全扫描', description: '对目标系统进行安全扫描', status: 'todo', priority: 'P1', domainId: this.domain.id as DomainId, capabilityId: 'item-1', assigneeRole: 'security-expert', createdAt: Date.now(), updatedAt: Date.now() },
+        { id: 'task-2', title: '分析威胁情报', description: '分析最新威胁情报', status: 'in_progress', priority: 'P2', domainId: this.domain.id as DomainId, capabilityId: 'item-1', assigneeRole: 'security-expert', createdAt: Date.now(), updatedAt: Date.now() },
+      ] as unknown as SecurityTask[];
     }
     this.loading = false;
   }
@@ -391,22 +407,24 @@ export class ScDomainBoard extends LitElement {
     try {
       const runs = await capabilitiesClient.listRunsByTask(task.id);
       this.selectedRuns = runs;
-      this.selectedTask = task;
-      this.activePanel = 'runs';
     } catch (error) {
       console.error('[sc-domain-board] Failed to load runs:', error);
+      this.selectedRuns = [];
     }
+    this.selectedTask = task;
+    this.activePanel = 'runs';
   }
 
   private async handleViewEvidence(task: SecurityTask) {
     try {
       const evidence = await capabilitiesClient.listEvidence({ taskId: task.id });
       this.selectedEvidence = evidence;
-      this.selectedTask = task;
-      this.activePanel = 'evidence';
     } catch (error) {
       console.error('[sc-domain-board] Failed to load evidence:', error);
+      this.selectedEvidence = [];
     }
+    this.selectedTask = task;
+    this.activePanel = 'evidence';
   }
 
   private handleKpiClick() {
@@ -663,8 +681,8 @@ export class ScDomainBoard extends LitElement {
             .task=${this.selectedTask}
             @close-panel=${this.closePanel}
             @task-status-change=${this.handleTaskStatusChange}
-            @view-logs=${(e: CustomEvent) => this.handleViewLogs(this.selectedTask!)}
-            @view-evidence=${(e: CustomEvent) => this.handleViewEvidence(this.selectedTask!)}
+            @view-logs=${() => this.handleViewLogs(this.selectedTask!)}
+            @view-evidence=${() => this.handleViewEvidence(this.selectedTask!)}
           ></sc-task-panel>
         ` : ''}
         

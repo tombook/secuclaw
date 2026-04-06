@@ -198,6 +198,18 @@ export const capabilitiesClient = {
     return gatewayClient.request<SecurityTask>('capabilities.tasks.updateStatus', params);
   },
 
+  async getTaskSla(taskId: string): Promise<any> {
+    return gatewayClient.request('capabilities.tasks.sla', { taskId });
+  },
+
+  async closeTask(id: string, comment?: string): Promise<SecurityTask> {
+    return gatewayClient.request<SecurityTask>('capabilities.tasks.close', { id, comment });
+  },
+
+  async reopenTask(id: string, comment?: string): Promise<SecurityTask> {
+    return gatewayClient.request<SecurityTask>('capabilities.tasks.reopen', { id, comment });
+  },
+
   // ==================== Approvals ====================
   
   async createApproval(params: {

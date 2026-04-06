@@ -76,7 +76,7 @@ export class ScToolVuln extends LitElement {
 // 配置核查
 @customElement('sc-tool-config')
 export class ScToolConfig extends LitElement {
-  @state() private activeTab = 'overview';
+  @state() private _activeTab = 'overview';
   static styles = sharedStyles;
 
   render() {
@@ -235,7 +235,7 @@ export class ScToolSupplyChain extends LitElement {
 // 告警处置
 @customElement('sc-tool-alerts')
 export class ScToolAlerts extends LitElement {
-  @state() private activeTab = 'overview';
+  @state() private _activeTab = 'overview';
   static styles = sharedStyles;
 
   render() {

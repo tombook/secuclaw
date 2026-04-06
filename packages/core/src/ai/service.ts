@@ -12,52 +12,15 @@ import type {
   Prediction as EnginePrediction,
   AnomalyDetectRequest as EngineAnomalyDetectRequest,
   InsightGenerateRequest as EngineInsightGenerateRequest,
+  Insight,
+  Anomaly,
+  Prediction,
 } from './types.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[AIService]', ...args),
   error: (...args: any[]) => console.error('[AIService]', ...args),
 };
-
-export interface Insight {
-  id: string;
-  type: 'warning' | 'info' | 'recommendation';
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  category: 'security' | 'compliance' | 'operations' | 'risk';
-  source: string;
-  relatedEntities?: Array<{ type: string; id: string; name: string }>;
-  metrics?: Array<{ name: string; value: number; trend?: string }>;
-  createdAt: number;
-}
-
-export interface Anomaly {
-  id: string;
-  type: string;
-  title: string;
-  description: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  metric: string;
-  value: number;
-  baseline: number;
-  deviation: number;
-  status: 'active' | 'acknowledged' | 'resolved';
-  detectedAt: number;
-  acknowledgedBy?: string;
-  resolvedAt?: number;
-}
-
-export interface Prediction {
-  id: string;
-  metric: string;
-  currentValue: number;
-  predictedValue: number;
-  confidence: number;
-  timeframe: string;
-  trend: 'up' | 'down' | 'stable';
-  factors: string[];
-}
 
 export interface AIRecommendation {
   id: string;
@@ -151,6 +114,7 @@ export class AIService {
             priority: 'high',
             category: 'security',
             source: 'AI分析引擎',
+            confidence: 85,
             createdAt: Date.now()
           });
         }
@@ -171,6 +135,7 @@ export class AIService {
             priority: 'high',
             category: 'security',
             source: '漏洞扫描分析',
+            confidence: 95,
             createdAt: Date.now()
           });
         }
@@ -185,6 +150,7 @@ export class AIService {
         priority: 'low',
         category: 'security',
         source: '系统监控',
+        confidence: 90,
         createdAt: Date.now()
       });
     } catch (error) {
@@ -202,6 +168,7 @@ export class AIService {
           priority: 'low',
           category: 'security',
           source: 'Hybrid-LLM',
+          confidence: 70,
           createdAt: Date.now(),
         };
         return [llmInsight];
@@ -241,17 +208,24 @@ export class AIService {
     try {
       const incidents = await this.store.get<any[]>('incidents.json');
       if (incidents && incidents.length > 5) {
+        const baseValue = incidents.length * 0.6;
         anomalies.push({
           id: `anomaly-${Date.now()}`,
           type: 'event_spike',
           title: '事件数量异常',
           description: '24小时内安全事件数量显著增加',
           severity: 'medium',
+          status: 'active',
           metric: 'incident_count',
           value: incidents.length,
-          baseline: incidents.length * 0.6,
-          deviation: 40,
-          status: 'active',
+          baseline: {
+            value: baseValue,
+            deviation: 40,
+            upperThreshold: baseValue * 1.5,
+            lowerThreshold: baseValue * 0.5,
+            sampleSize: incidents.length,
+            calculatedAt: Date.now()
+          },
           detectedAt: Date.now()
         });
       }
@@ -262,11 +236,17 @@ export class AIService {
         title: '登录失败率升高',
         description: '检测到异常登录尝试',
         severity: 'low',
+        status: 'active',
         metric: 'login_failure_rate',
         value: 2.5,
-        baseline: 1.0,
-        deviation: 150,
-        status: 'active',
+        baseline: {
+          value: 1.0,
+          deviation: 150,
+          upperThreshold: 2.0,
+          lowerThreshold: 0,
+          sampleSize: 100,
+          calculatedAt: Date.now() - 3600000
+        },
         detectedAt: Date.now() - 3600000
       });
     } catch (error) {
@@ -281,35 +261,60 @@ export class AIService {
     if (this.mode === 'engine' && this.anomalyEngine && typeof (this.anomalyEngine as any).predictTrend === 'function') {
       const enginePred: EnginePrediction = await (this.anomalyEngine as any).predictTrend(metric, timeframe);
       mappedFromEngine = {
-        id: (enginePred as any).id,
+        id: (enginePred as any).id || `pred-${Date.now()}`,
         metric: enginePred.metric,
+        timeframe: (enginePred as any).timeframe || (timeframe as any),
         currentValue: (enginePred as any).currentValue,
+        currentTrend: (enginePred as any).currentTrend || 'stable',
         predictedValue: (enginePred as any).predictedValue,
-        confidence: (enginePred as any).confidence,
-        timeframe: (enginePred as any).timeframe,
-        trend: (enginePred as any).trend,
-        // Normalize to string[] if needed
-        factors: Array.isArray((enginePred as any).factors) ? (enginePred as any).factors.map((f: any) => f?.name ?? String(f)) : [],
+        predictionRange: {
+          min: (enginePred as any).predictedValue * 0.9,
+          max: (enginePred as any).predictedValue * 1.1,
+        },
+        confidence: (enginePred as any).confidence || 70,
+        confidenceInterval: {
+          lower: (enginePred as any).confidence ? (enginePred as any).confidence - 10 : 60,
+          upper: (enginePred as any).confidence ? (enginePred as any).confidence + 10 : 80,
+        },
+        trend: (enginePred as any).trend || 'stable',
+        trendStrength: (enginePred as any).trendStrength || 50,
+        factors: Array.isArray((enginePred as any).factors) 
+          ? (enginePred as any).factors.map((f: any) => typeof f === 'string' 
+            ? { name: f, impact: 'neutral', weight: 50, description: '' } 
+            : f)
+          : [],
       } as Prediction;
     }
     if (mappedFromEngine) return mappedFromEngine;
 
     // Mock/default behavior
-    const predictions = {
-      currentValue: 50,
-      predictedValue: 52,
-      confidence: 70,
-    };
+    const currentValue = 50;
+    const predictedValue = 52;
+    const confidence = 70;
+    const trend = predictedValue > currentValue ? 'up' : (predictedValue < currentValue ? 'down' : 'stable');
     return {
       id: `pred-${Date.now()}`,
       metric,
-      currentValue: predictions.currentValue,
-      predictedValue: predictions.predictedValue,
-      confidence: predictions.confidence,
-      timeframe,
-      trend: predictions.predictedValue > predictions.currentValue ? 'up' : (predictions.predictedValue < predictions.currentValue ? 'down' : 'stable'),
-      factors: ['历史趋势', '季节性因素', '近期变更']
-    } as Prediction;
+      timeframe: timeframe as any,
+      currentValue,
+      currentTrend: trend,
+      predictedValue,
+      predictionRange: {
+        min: predictedValue * 0.9,
+        max: predictedValue * 1.1,
+      },
+      confidence,
+      confidenceInterval: {
+        lower: confidence - 10,
+        upper: confidence + 10,
+      },
+      trend,
+      trendStrength: 50,
+      factors: [
+        { name: '历史趋势', impact: 'neutral', weight: 60, description: '基于历史数据计算' },
+        { name: '季节性因素', impact: 'neutral', weight: 30, description: '常规季节性变化' }
+      ],
+    };
   }
 
   async generateRecommendations(context: string, data?: any): Promise<AIRecommendation[]> {

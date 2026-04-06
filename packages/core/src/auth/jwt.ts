@@ -6,7 +6,13 @@ export type JWTPayload = {
   jti?: string;
 };
 
-const JWT_SECRET: string = (process.env.JWT_SECRET as string) || 'secuclaw-dev-secret-change-in-prod';
+import crypto from 'crypto';
+import type { JsonStore } from '../storage/json-store.js';
+import { TokenBlacklist } from './token-blacklist.js';
+import { ConfigService } from '../config/config-service.js';
+
+const configService = new ConfigService();
+const JWT_SECRET: string = configService.get('auth').jwtSecret || (console.warn('[WARN] JWT_SECRET not set, using generated secret'), crypto.randomBytes(32).toString('hex'));
 const JWT_EXPIRES_IN = 7200;
 const REFRESH_EXPIRES_IN = 604800;
 
@@ -32,6 +38,7 @@ function base64UrlDecodeToObject(str: string): any {
 }
 
 import crypto from 'crypto';
+import { ConfigService } from '../config/config-service.js';
 import type { JsonStore } from '../storage/json-store.js';
 import { TokenBlacklist } from './token-blacklist.js';
 

@@ -1,0 +1,214 @@
+[
+  {
+    "id": "audit_1774686416803_2z2kpsz",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774686416803,
+    "details": {
+      "gatewayPort": 21981,
+      "apiPort": 21982
+    }
+  },
+  {
+    "id": "audit_1774687115399_59al5zp",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774687115399,
+    "details": {
+      "gatewayPort": 21981,
+      "apiPort": 21982
+    }
+  },
+  {
+    "id": "audit_1774695332715_8zyhag6",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774695332715,
+    "details": {
+      "gatewayPort": 21981,
+      "apiPort": 21982
+    }
+  },
+  {
+    "id": "audit_1774695612240_e2dz9ri",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774695612240,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1774695711298_k7q1a1e",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774695711298,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1774696140921_lpnyznj",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774696140921,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1774701289751_6uu5wgs",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774701289751,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1774751011745_mc9o3mp",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774751011745,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1774777863195_1u5x34l",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1774777863195,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775204293404_1k2rbg4",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775204293404,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775204510891_o14uiut",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775204510891,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775204736369_0wf2onb",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775204736369,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775204807019_o5s7iwi",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775204807019,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775204853742_cc7jsro",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775204853742,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775204948783_xpp8x54",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775204948783,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775205038696_ku3ly7o",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775205038696,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775211659563_5mfxkby",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775211659563,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775213316642_inymlzj",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775213316642,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1775455508254_01aa9uh",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1775455508254,
+    "details": {
+      "gatewayPort": 21981
+    }
+  }
+]

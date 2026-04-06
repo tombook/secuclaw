@@ -1,0 +1,189 @@
+[
+  {
+    "id": "vuln-001",
+    "info": {
+      "cveId": "CVE-2024-21762",
+      "title": "FortiOS SSL VPN远程代码执行漏洞",
+      "description": "FortiOS SSL VPN存在远程代码执行漏洞，CVSS评分9.8",
+      "cvss": {
+        "score": 9.8,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "severity": "critical"
+      },
+      "cwe": [
+        "CWE-1225"
+      ],
+      "affectedProducts": [
+        "FortiOS 7.4.0-7.4.2"
+      ],
+      "exploitAvailable": true,
+      "exploitInWild": true
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset-001",
+        "componentName": "FortiGate-100F",
+        "componentVersion": "7.4.1",
+        "fixVersion": "7.4.3"
+      }
+    ],
+    "remediation": {
+      "status": "open",
+      "priority": 1,
+      "fixAvailable": true,
+      "fixSteps": [
+        "升级到7.4.3"
+      ]
+    },
+    "risk": {
+      "baseScore": 9.8,
+      "adjustedScore": 9.8,
+      "businessImpact": 10,
+      "exposureScore": 8,
+      "totalRiskScore": 9.8
+    },
+    "createdAt": 1775023636262,
+    "updatedAt": 1775282836262
+  },
+  {
+    "id": "vuln-002",
+    "info": {
+      "cveId": "CVE-2024-3400",
+      "title": "Palo Alto PAN-OS命令注入漏洞",
+      "description": "Palo Alto PAN-OS存在命令注入漏洞",
+      "cvss": {
+        "score": 10,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+        "severity": "critical"
+      },
+      "cwe": [
+        "CWE-77"
+      ],
+      "affectedProducts": [
+        "PAN-OS 10.2",
+        "PAN-OS 11.0"
+      ],
+      "exploitAvailable": true,
+      "exploitInWild": false
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset-003",
+        "componentName": "PA-460",
+        "componentVersion": "10.2.8",
+        "fixVersion": "10.2.9-h1"
+      }
+    ],
+    "remediation": {
+      "status": "in_progress",
+      "priority": 1,
+      "assignedTo": "李运维",
+      "fixAvailable": true,
+      "fixSteps": [
+        "应用PAN-OS补丁"
+      ]
+    },
+    "risk": {
+      "baseScore": 10,
+      "adjustedScore": 10,
+      "businessImpact": 10,
+      "exposureScore": 9,
+      "totalRiskScore": 10
+    },
+    "createdAt": 1775110036262,
+    "updatedAt": 1775369236262
+  },
+  {
+    "id": "vuln-003",
+    "info": {
+      "cveId": "CVE-2023-22515",
+      "title": "Confluence模板注入漏洞",
+      "description": "Atlassian Confluence存在模板注入漏洞",
+      "cvss": {
+        "score": 9.1,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
+        "severity": "critical"
+      },
+      "cwe": [
+        "CWE-1336"
+      ],
+      "affectedProducts": [
+        "Confluence 7.19-8.5"
+      ],
+      "exploitAvailable": true,
+      "exploitInWild": true
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset-006",
+        "componentName": "Confluence DC",
+        "componentVersion": "8.5.0",
+        "fixVersion": "8.5.3"
+      }
+    ],
+    "remediation": {
+      "status": "resolved",
+      "priority": 2,
+      "assignedTo": "张安全",
+      "fixAvailable": true,
+      "fixSteps": [
+        "已升级到8.5.3"
+      ]
+    },
+    "risk": {
+      "baseScore": 9.1,
+      "adjustedScore": 0,
+      "businessImpact": 8,
+      "exposureScore": 6,
+      "totalRiskScore": 0
+    },
+    "createdAt": 1774591636262,
+    "updatedAt": 1775023636262
+  },
+  {
+    "id": "vuln-004",
+    "info": {
+      "cveId": "CVE-2024-0056",
+      "title": "Microsoft SQL Server权限提升漏洞",
+      "description": "Microsoft SQL Server存在权限提升漏洞",
+      "cvss": {
+        "score": 6.5,
+        "vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N",
+        "severity": "medium"
+      },
+      "cwe": [
+        "CWE-269"
+      ],
+      "affectedProducts": [
+        "SQL Server 2019"
+      ],
+      "exploitAvailable": false,
+      "exploitInWild": false
+    },
+    "affectedAssets": [
+      {
+        "assetId": "asset-007",
+        "componentName": "SQL Server 2019",
+        "componentVersion": "15.0.4355",
+        "fixVersion": "15.0.4400"
+      }
+    ],
+    "remediation": {
+      "status": "open",
+      "priority": 3,
+      "fixAvailable": true,
+      "fixSteps": [
+        "应用SQL Server安全更新"
+      ]
+    },
+    "risk": {
+      "baseScore": 6.5,
+      "adjustedScore": 6.5,
+      "businessImpact": 6,
+      "exposureScore": 4,
+      "totalRiskScore": 5.5
+    },
+    "createdAt": 1774850836262,
+    "updatedAt": 1775196436262
+  }
+]

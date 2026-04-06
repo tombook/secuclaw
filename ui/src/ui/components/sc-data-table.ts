@@ -523,7 +523,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
 
   // ============ 计算属性 ============
 
-  private get tableConfig(): Required<TableConfig> {
+  private get tableConfig(): TableConfig {
     return {
       showHeader: true,
       showIndex: false,
@@ -541,7 +541,6 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
       emptyText: this.i18n.t('table.noData') || '暂无数据',
       loading: false,
       rowKey: 'id',
-      expandable: undefined,
       ...this.config,
     };
   }
@@ -648,7 +647,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
   private renderTh(column: TableColumn<T>) {
     const classes = classMap({
       [column.align || 'left']: true,
-      sortable: column.sortable,
+      sortable: !!column.sortable,
       'fixed-left': column.fixed === 'left',
       'fixed-right': column.fixed === 'right',
     });
@@ -813,11 +812,11 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
       [column.align || 'left']: true,
       'fixed-left': column.fixed === 'left',
       'fixed-right': column.fixed === 'right',
-      ellipsis: column.ellipsis,
+      ellipsis: !!column.ellipsis,
     });
 
     return html`
-      <td class=${tdClasses} style=${this.getColumnStyle(column)} title=${column.tooltip ? String(value) : ''}>
+      <td class=${tdClasses} style=${this.getColumnStyle(column)} title=${column.tooltip ? String(value) : '' as string}>
         ${content}
       </td>
     `;
@@ -830,7 +829,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
       <div class="pagination">
         <div class="pagination-info">
           ${this.tableConfig.showTotal ? html`
-            <span>${this.i18n.t('table.total', { count: this.total }) || `共 ${this.total} 条`}</span>
+            <span>${this.i18n.t('table.total', { count: String(this.total) }) || `共 ${this.total} 条`}</span>
           ` : ''}
           ${this.tableConfig.showSizeChanger ? html`
             <div class="size-changer">

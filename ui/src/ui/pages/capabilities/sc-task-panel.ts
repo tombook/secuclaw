@@ -8,7 +8,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
-import type { SecurityTask, TaskStatus, TaskPriority, DomainId } from '../../capabilities-client.js';
+import type { SecurityTask, TaskStatus, TaskPriority } from '../../capabilities-client.js';
 
 // Valid state transitions
 const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
@@ -544,7 +544,6 @@ export class ScTaskPanel extends LitElement {
         ${states.map((status, index) => {
           const isActive = status === currentStatus;
           const isCompleted = states.indexOf(currentStatus) > index;
-          const isBlocked = currentStatus === 'blocked';
           
           return html`
             <div class="state-node ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}">

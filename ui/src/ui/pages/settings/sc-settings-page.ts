@@ -7,7 +7,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { uiStore } from '../../store/ui-store.js';
-import { gatewayClient } from '../../gateway-client.js';
+import {  } from '../../gateway-client.js';
 
 type TabId = 'general' | 'system' | 'notifications' | 'security' | 'api' | 'data' | 'about';
 

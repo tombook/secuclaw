@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { gatewayClient } from '../gateway-client.js';
 
 /**
  * Risk Center Page - Professional Design
@@ -9,6 +10,9 @@ import { customElement, state } from 'lit/decorators.js';
 export class ScRiskPage extends LitElement {
   @state() private activeTab = 'all';
   @state() private levelFilter = 'all';
+  @state() private risks: any[] = [];
+  @state() private riskMetrics: any = null;
+  @state() private loading = false;
 
   static styles = css`
     :host {
@@ -137,7 +141,7 @@ export class ScRiskPage extends LitElement {
     }
   `;
 
-  private risks = [
+  private readonly fallbackRisks = [
     { id: 'RISK-001', name: 'VPN访问控制不足', level: 'high', score: 85, owner: '安全团队', status: 'open', mitigation: '已计划' },
     { id: 'RISK-002', name: '第三方供应链风险', level: 'high', score: 78, owner: '采购部', status: 'open', mitigation: '评估中' },
     { id: 'RISK-003', name: '员工安全意识不足', level: 'medium', score: 55, owner: '人力资源', status: 'mitigating', mitigation: '培训中' },
@@ -149,7 +153,105 @@ export class ScRiskPage extends LitElement {
   private handleTab(tab: string) { this.activeTab = tab; }
   private setLevelFilter(level: string) { this.levelFilter = level; }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadData();
+  }
+
+  private async loadData() {
+    this.loading = true;
+    try {
+      const [factorsRes, metricsRes] = await Promise.allSettled([
+        gatewayClient.request('risk.listFactors', {}),
+        gatewayClient.request('risk.getMetrics', {}),
+      ]);
+      if (factorsRes.status === 'fulfilled') {
+        const data = (factorsRes.value as any)?.data ?? factorsRes.value;
+        this.risks = Array.isArray(data) && data.length > 0 ? [...data] : [...this.fallbackRisks];
+      } else {
+        this.risks = [...this.fallbackRisks];
+      }
+      if (metricsRes.status === 'fulfilled') {
+        this.riskMetrics = (metricsRes.value as any)?.data ?? metricsRes.value;
+      }
+    } catch (e) {
+      console.error('[risk-page] Load failed:', e);
+      this.risks = [...this.fallbackRisks];
+    }
+    this.loading = false;
+  }
+
+  private async addRisk() {
+    const name = prompt('风险描述:');
+    if (!name) return;
+    const level = prompt('等级 (high/medium/low):', 'medium') || 'medium';
+    const score = parseInt(prompt('评分 (0-100):', '50') || '50', 10);
+    const owner = prompt('责任人:') || '';
+    try {
+      await gatewayClient.request('risk.createFactor', { name, level, score, owner });
+      this.loadData();
+    } catch (e) {
+      console.error('[risk-page] Create failed:', e);
+    }
+  }
+
+  private async deleteRisk(id: string) {
+    if (!confirm('确定删除此风险？')) return;
+    try {
+      await gatewayClient.request('risk.deleteFactor', { id });
+      this.loadData();
+    } catch (e) {
+      console.error('[risk-page] Delete failed:', e);
+    }
+  }
+
+  private async runAssessment() {
+    const ids = prompt('输入风险ID列表(逗号分隔):');
+    if (!ids) return;
+    try {
+      const res = await gatewayClient.request('risk.createAssessment', { factorIds: ids.split(',').map(s => s.trim()) });
+      alert('评估完成: ' + JSON.stringify(res));
+    } catch (e) {
+      console.error('[risk-page] Assessment failed:', e);
+    }
+  }
+
+  private async showHistory() {
+    try {
+      const res = await gatewayClient.request('risk.history', {});
+      alert('风险历史: ' + JSON.stringify(res));
+    } catch (e) {
+      console.error('[risk-page] History failed:', e);
+    }
+  }
+
+  private async editRisk(risk: any) {
+    const name = prompt('风险描述:', risk.name);
+    if (!name) return;
+    const level = prompt('等级 (high/medium/low):', risk.level) || risk.level;
+    const score = parseInt(prompt('评分 (0-100):', String(risk.score)) || String(risk.score), 10);
+    try {
+      await gatewayClient.request('risk.updateFactor', { id: risk.id, name, level, score });
+      this.loadData();
+    } catch (e) {
+      console.error('[risk-page] Update factor failed:', e);
+    }
+  }
+
+  private async viewRiskDetail(id: string) {
+    try {
+      const res = await gatewayClient.request('risk.getFactor', { id });
+      const detail = (res as any)?.data ?? res;
+      alert(`风险详情:\n${JSON.stringify(detail, null, 2)}`);
+    } catch (e) {
+      console.error('[risk-page] GetFactor failed:', e);
+    }
+  }
+
   render() {
+    if (this.loading) {
+      return html`<div style="text-align:center;padding:4rem;"><div style="font-size:48px;margin-bottom:16px;">⏳</div><div style="color:var(--risk-text-secondary);">加载中...</div></div>`;
+    }
     const filtered = this.levelFilter === 'all' ? this.risks : this.risks.filter(r => r.level === this.levelFilter);
     const highCount = this.risks.filter(r => r.level === 'high').length;
     const mediumCount = this.risks.filter(r => r.level === 'medium').length;
@@ -165,7 +267,7 @@ export class ScRiskPage extends LitElement {
             <p class="hero-desc">系统性评估组织安全风险，支持量化和可视化展示。持续跟踪风险处置进度，降低组织风险暴露面。</p>
           </div>
           <div class="risk-score">
-            <div class="risk-score-value">72</div>
+            <div class="risk-score-value">${this.riskMetrics?.overallScore ?? 72}</div>
             <div class="risk-score-label">风险指数</div>
             <div class="risk-score-change">↓ 较上月-3</div>
           </div>
@@ -212,7 +314,7 @@ export class ScRiskPage extends LitElement {
           <div class="card">
             <div class="card-header">
               <span class="card-title">📋 风险列表</span>
-              <button class="btn btn-primary">+ 添加风险</button>
+              <button class="btn btn-primary" @click=${() => this.addRisk()}>+ 添加风险</button>
             </div>
             <div class="card-body" style="padding: 0;">
               <table class="data-table">
@@ -220,8 +322,8 @@ export class ScRiskPage extends LitElement {
                 <tbody>
                   ${filtered.map(risk => html`
                     <tr>
-                      <td><code>${risk.id}</code></td>
-                      <td><strong>${risk.name}</strong></td>
+                       <td><code>${risk.id}</code></td>
+                       <td><strong>${risk.name}</strong></td>
                       <td><span class="risk-badge risk-${risk.level}">${risk.level === 'high' ? '🔴 高' : risk.level === 'medium' ? '🟡 中' : '🟢 低'}</span></td>
                       <td>
                         ${risk.score}
@@ -229,7 +331,12 @@ export class ScRiskPage extends LitElement {
                       </td>
                       <td>${risk.owner}</td>
                       <td>${risk.status === 'open' ? '📋 待处理' : risk.status === 'mitigating' ? '🔧 处理中' : '✓ 已关闭'}</td>
-                      <td>${risk.mitigation}</td>
+                       <td>${risk.mitigation}</td>
+                        <td>
+                          <button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;margin-right:4px;" @click=${() => this.viewRiskDetail(risk.id)}>详情</button>
+                          <button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;margin-right:4px;" @click=${() => this.editRisk(risk)}>编辑</button>
+                          <button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;" @click=${() => this.deleteRisk(risk.id)}>删除</button>
+                        </td>
                     </tr>
                   `)}
                 </tbody>
@@ -242,8 +349,8 @@ export class ScRiskPage extends LitElement {
             <div class="card-body">
               <ul class="sidebar-list">
                 <li class="sidebar-item"><span class="sidebar-item-icon">+</span><div class="sidebar-item-content"><div class="sidebar-item-title">添加风险</div></div></li>
-                <li class="sidebar-item"><span class="sidebar-item-icon">📊</span><div class="sidebar-item-content"><div class="sidebar-item-title">风险报告</div></div></li>
-                <li class="sidebar-item"><span class="sidebar-item-icon">🎯</span><div class="sidebar-item-content"><div class="sidebar-item-title">风险评估</div></div></li>
+                <li class="sidebar-item" @click=${() => this.showHistory()}><span class="sidebar-item-icon">📊</span><div class="sidebar-item-content"><div class="sidebar-item-title">风险报告</div></div></li>
+                <li class="sidebar-item" @click=${() => this.runAssessment()}><span class="sidebar-item-icon">🎯</span><div class="sidebar-item-content"><div class="sidebar-item-title">风险评估</div></div></li>
                 <li class="sidebar-item"><span class="sidebar-item-icon">⚙️</span><div class="sidebar-item-content"><div class="sidebar-item-title">风险配置</div></div></li>
               </ul>
             </div>

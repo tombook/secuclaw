@@ -1,0 +1,153 @@
+[
+  {
+    "id": "asset-001",
+    "name": "WEB-PROD-01",
+    "type": "server",
+    "subtype": "nginx",
+    "status": "online",
+    "criticality": "critical",
+    "ipAddress": "10.0.1.10",
+    "owner": {
+      "name": "李运维",
+      "department": "运维部"
+    },
+    "department": "运维部",
+    "environment": "production",
+    "platform": "Linux",
+    "os": "Ubuntu",
+    "osVersion": "22.04 LTS",
+    "tags": [
+      "web",
+      "production"
+    ],
+    "vulnerabilities": [
+      {
+        "vulnId": "vuln-001",
+        "cveId": "CVE-2024-21762",
+        "severity": "critical",
+        "status": "open",
+        "discoveredAt": 1775023636263
+      }
+    ],
+    "firstSeen": 1759903636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1759903636263,
+    "updatedAt": 1775369236263
+  },
+  {
+    "id": "asset-002",
+    "name": "DB-PRIMARY",
+    "type": "database",
+    "subtype": "postgresql",
+    "status": "online",
+    "criticality": "critical",
+    "ipAddress": "10.0.2.10",
+    "owner": {
+      "name": "张安全",
+      "department": "安全部"
+    },
+    "department": "安全部",
+    "environment": "production",
+    "platform": "Linux",
+    "os": "Debian",
+    "osVersion": "11",
+    "tags": [
+      "database",
+      "postgresql"
+    ],
+    "vulnerabilities": [],
+    "firstSeen": 1758175636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1758175636263,
+    "updatedAt": 1775369236263
+  },
+  {
+    "id": "asset-003",
+    "name": "FW-EDGE-01",
+    "type": "network",
+    "subtype": "firewall",
+    "status": "online",
+    "criticality": "critical",
+    "ipAddress": "10.0.0.1",
+    "owner": {
+      "name": "赵网络",
+      "department": "基础架构部"
+    },
+    "department": "基础架构部",
+    "environment": "production",
+    "platform": "Fortinet",
+    "os": "FortiOS",
+    "osVersion": "7.4.2",
+    "tags": [
+      "firewall",
+      "security"
+    ],
+    "vulnerabilities": [
+      {
+        "vulnId": "vuln-001",
+        "cveId": "CVE-2024-21762",
+        "severity": "critical",
+        "status": "open",
+        "discoveredAt": 1775023636263
+      }
+    ],
+    "firstSeen": 1743919636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1743919636263,
+    "updatedAt": 1775369236263
+  },
+  {
+    "id": "asset-004",
+    "name": "WS-FINANCE-01",
+    "type": "workstation",
+    "subtype": "desktop",
+    "status": "online",
+    "criticality": "medium",
+    "ipAddress": "192.168.1.101",
+    "owner": {
+      "name": "陈财务",
+      "department": "财务部"
+    },
+    "department": "财务部",
+    "environment": "production",
+    "platform": "Windows",
+    "os": "Windows 11",
+    "osVersion": "22H2",
+    "tags": [
+      "workstation",
+      "finance"
+    ],
+    "vulnerabilities": [],
+    "firstSeen": 1766815636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1766815636263,
+    "updatedAt": 1775369236263
+  },
+  {
+    "id": "asset-005",
+    "name": "LAPTOP-DEV-01",
+    "type": "workstation",
+    "subtype": "laptop",
+    "status": "online",
+    "criticality": "medium",
+    "ipAddress": "192.168.1.201",
+    "owner": {
+      "name": "王开发",
+      "department": "研发部"
+    },
+    "department": "研发部",
+    "environment": "production",
+    "platform": "macOS",
+    "os": "Sonoma",
+    "osVersion": "14.4",
+    "tags": [
+      "laptop",
+      "developer"
+    ],
+    "vulnerabilities": [],
+    "firstSeen": 1767679636263,
+    "lastSeen": 1775369236263,
+    "createdAt": 1767679636263,
+    "updatedAt": 1775369236263
+  }
+]

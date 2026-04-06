@@ -11,14 +11,14 @@ import '../components/sc-ai-assistant.js';
 
 @customElement('sc-data-lineage')
 export class ScDataLineage extends LitElement {
-  private i18n = new I18nController(this);
+  private _i18n = new I18nController(this);
 
   @state() private loading = true;
   @state() private nodes: LineageNodeType[] = [];
   @state() private relations: LineageRelation[] = [];
   @state() private selectedNode: LineageNodeType | null = null;
   @state() private zoom = 1;
-  @state() private panOffset = { x: 0, y: 0 };
+  @state() private _panOffset = { x: 0, y: 0 };
 
   staticstyles= css`
     :host { display: block; }
@@ -233,7 +233,7 @@ export class ScDataLineage extends LitElement {
 
   private handleReset() {
     this.zoom = 1;
-    this.panOffset = { x: 0, y: 0 };
+    this._panOffset = { x: 0, y: 0 };
   }
 
   private handleNodeClick(node: LineageNodeType) {

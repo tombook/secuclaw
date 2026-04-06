@@ -57,7 +57,7 @@ export class ScSmartCard extends LitElement {
 
   // ============ 私有属性 ============
 
-  private i18n = new I18nController(this);
+  private _i18n = new I18nController(this);
 
   // ============ 样式 ============
 

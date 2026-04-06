@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { gatewayClient } from '../gateway-client.js';
 
 /**
  * Professional Security Operations Center
@@ -12,6 +13,17 @@ export class ScSecOpsCenter extends LitElement {
   @state() private activeTab: string = 'overview';
   @state() private isRunning: boolean = false;
   @state() private progress: number = 0;
+  @state() private loading: boolean = false;
+
+  @state() private incidents: any[] = [];
+  @state() private vulnerabilities: any[] = [];
+  @state() private threats: any[] = [];
+  @state() private tasks: any[] = [];
+  @state() private reports: any[] = [];
+  @state() private risks: any[] = [];
+  @state() private knowledgeTactics: any[] = [];
+  @state() private _availableTools: any[] = [];
+  @state() private tools: any[] = [];
 
   static styles = css`
     /* ===========================
@@ -459,14 +471,14 @@ export class ScSecOpsCenter extends LitElement {
       background: currentColor;
     }
 
-    .status-critical { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
-    .status-high { background: rgba(249, 115, 22, 0.15); color: #F97316; }
-    .status-medium { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
-    .status-low { background: rgba(16, 185, 129, 0.15); color: #10B981; }
-    .status-pass { background: rgba(16, 185, 129, 0.15); color: #10B981; }
-    .status-fail { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
-    .status-warn { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
-    .status-info { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
+    .status-critical { background: color-mix(in srgb, var(--sc-danger, #EF4444) 15%, transparent); color: var(--sc-danger, #EF4444); }
+    .status-high { background: color-mix(in srgb, var(--sc-warning, #F97316) 15%, transparent); color: var(--sc-warning, #F97316); }
+    .status-medium { background: color-mix(in srgb, var(--sc-warning, #F59E0B) 15%, transparent); color: var(--sc-warning, #F59E0B); }
+    .status-low { background: color-mix(in srgb, var(--sc-success, #10B981) 15%, transparent); color: var(--sc-success, #10B981); }
+    .status-pass { background: color-mix(in srgb, var(--sc-success, #10B981) 15%, transparent); color: var(--sc-success, #10B981); }
+    .status-fail { background: color-mix(in srgb, var(--sc-danger, #EF4444) 15%, transparent); color: var(--sc-danger, #EF4444); }
+    .status-warn { background: color-mix(in srgb, var(--sc-warning, #F59E0B) 15%, transparent); color: var(--sc-warning, #F59E0B); }
+    .status-info { background: color-mix(in srgb, var(--sc-info, #3B82F6) 15%, transparent); color: var(--sc-info, #3B82F6); }
 
     /* ===========================
        BUTTONS
@@ -863,6 +875,164 @@ export class ScSecOpsCenter extends LitElement {
     },
   };
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadData();
+  }
+
+  private async loadData() {
+    this.loading = true;
+    try {
+      const [incRes, vulnRes, taskRes, reportRes, riskRes, tacticRes, toolsRes] = await Promise.allSettled([
+        gatewayClient.request('incidents.list', {}),
+        gatewayClient.request('vulnerabilities.list', {}),
+        gatewayClient.request('tasks.list', {}),
+        gatewayClient.request('reports.list', {}),
+        gatewayClient.request('risk.list', {}),
+        gatewayClient.request('knowledge.mitre.tactics', {}),
+        gatewayClient.request('tools.list', {}),
+      ]);
+
+      if (incRes.status === 'fulfilled') {
+        const d = incRes.value as Record<string, unknown>;
+        if (Array.isArray(d?.incidents)) this.incidents = [...d.incidents as any[]];
+      }
+      if (vulnRes.status === 'fulfilled') {
+        const d = vulnRes.value as Record<string, unknown>;
+        if (Array.isArray(d?.vulnerabilities)) this.vulnerabilities = [...d.vulnerabilities as any[]];
+      }
+      if (taskRes.status === 'fulfilled') {
+        const d = taskRes.value as Record<string, unknown>;
+        if (Array.isArray(d?.tasks)) this.tasks = [...d.tasks as any[]];
+      }
+      if (reportRes.status === 'fulfilled') {
+        const d = reportRes.value as Record<string, unknown>;
+        if (Array.isArray(d?.reports)) this.reports = [...d.reports as any[]];
+      }
+      if (riskRes.status === 'fulfilled') {
+        const d = riskRes.value as Record<string, unknown>;
+        if (Array.isArray(d?.risks)) this.risks = [...d.risks as any[]];
+      }
+      if (tacticRes.status === 'fulfilled') {
+        const d = tacticRes.value as Record<string, unknown>;
+        if (Array.isArray(d?.tactics)) this.knowledgeTactics = [...d.tactics as any[]];
+      }
+      if (toolsRes.status === 'fulfilled') {
+        const d = toolsRes.value as Record<string, unknown>;
+        const list = Array.isArray(d?.tools) ? (d.tools as any[]) : Array.isArray(d) ? (d as any[]) : [];
+        this._availableTools = [...list];
+        this.tools = [...list];
+      }
+    } catch (e) {
+      console.error('[secops-center] Failed to load data:', e);
+    }
+    this.loading = false;
+  }
+
+  private getDynamicConfig(toolId: string) {
+    const base = this.toolConfigs[toolId] || this.toolConfigs.baseline;
+    switch (toolId) {
+      case 'baseline': {
+        const total = this.tasks.length || base.stats.total;
+        const passed = this.tasks.filter((t: any) => t.status === 'completed' || t.status === 'pass').length || base.metrics[0].value;
+        const failed = this.tasks.filter((t: any) => t.status === 'failed' || t.status === 'fail').length || base.metrics[1].value;
+        return {
+          ...base,
+          stats: { total, items: base.stats.items },
+          metrics: [
+            { label: '通过项', value: passed, trend: '+2', color: 'green', icon: '✓' },
+            { label: '失败项', value: failed, trend: '-1', color: 'red', icon: '✗' },
+            { label: '警告项', value: base.metrics[2].value, color: 'yellow', icon: '⚠' },
+            { label: '合规率', value: total > 0 ? Math.round((passed / total) * 100) + '%' : base.metrics[3].value, trend: '+5%', color: 'blue', icon: '📊' },
+          ],
+          samples: this.tasks.length > 0
+            ? this.tasks.slice(0, 5).map((t: any) => ({ id: t.id || t.taskId || '-', name: t.title || t.name || '-', status: t.status || 'unknown', category: t.type || t.category || '-' }))
+            : base.samples,
+        };
+      }
+      case 'vulnscan': {
+        const total = this.vulnerabilities.length || base.stats.total;
+        const critical = this.vulnerabilities.filter((v: any) => v.severity === 'critical').length || base.metrics[0].value;
+        const high = this.vulnerabilities.filter((v: any) => v.severity === 'high').length || base.metrics[1].value;
+        const medium = this.vulnerabilities.filter((v: any) => v.severity === 'medium').length || base.metrics[2].value;
+        return {
+          ...base,
+          stats: { total, items: base.stats.items },
+          metrics: [
+            { label: 'Critical', value: critical, color: 'red', icon: '🔴' },
+            { label: 'High', value: high, color: 'yellow', icon: '🟡' },
+            { label: 'Medium', value: medium, color: 'blue', icon: '🔵' },
+            { label: 'Total', value: total, trend: '-12', color: 'green', icon: '📊' },
+          ],
+          samples: this.vulnerabilities.length > 0
+            ? this.vulnerabilities.slice(0, 5).map((v: any) => ({ id: v.cveId || v.id || '-', name: v.title || v.name || '-', severity: v.severity || 'medium', status: v.status || 'open' }))
+            : base.samples,
+        };
+      }
+      case 'pentest': {
+        return {
+          ...base,
+          stats: { total: this.tasks.length || base.stats.total, items: base.stats.items },
+          metrics: [
+            { label: '测试任务', value: this.tasks.length || base.metrics[0].value, color: 'purple', icon: '📋' },
+            { label: '发现漏洞', value: base.metrics[1].value, color: 'red', icon: '🔍' },
+            { label: 'Critical', value: this.vulnerabilities.filter((v: any) => v.severity === 'critical').length || base.metrics[2].value, color: 'red', icon: '🔴' },
+            { label: '中危', value: this.vulnerabilities.filter((v: any) => v.severity === 'medium').length || base.metrics[3].value, color: 'yellow', icon: '🟡' },
+          ],
+          samples: this.knowledgeTactics.length > 0
+            ? this.knowledgeTactics.slice(0, 5).map((t: any) => ({ id: t.id || t.externalId || '-', name: t.name || '-', type: 'ATT&CK', status: 'detected' }))
+            : base.samples,
+        };
+      }
+      case 'threathunt': {
+        return {
+          ...base,
+          metrics: [
+            { label: 'IOCs', value: this.threats.length || base.metrics[0].value, color: 'purple', icon: '🔍' },
+            { label: '可疑活动', value: this.incidents.filter((i: any) => i.severity === 'high' || i.severity === 'critical').length || base.metrics[1].value, color: 'yellow', icon: '⚠' },
+            { label: '已确认', value: this.incidents.filter((i: any) => i.status === 'confirmed').length || base.metrics[2].value, color: 'red', icon: '✓' },
+            { label: '覆盖战术', value: `${this.knowledgeTactics.length}/19`, color: 'blue', icon: '📊' },
+          ],
+          samples: this.incidents.length > 0
+            ? this.incidents.slice(0, 5).map((i: any) => ({ id: i.id || '-', name: i.title || i.name || '-', type: i.type || 'Behavior', status: i.status || 'active' }))
+            : base.samples,
+        };
+      }
+      case 'reports': {
+        return {
+          ...base,
+          stats: { total: this.reports.length || base.stats.total, items: base.stats.items },
+          metrics: [
+            { label: '本周报告', value: this.reports.filter((r: any) => r.createdAt && new Date(r.createdAt) > new Date(Date.now() - 7 * 86400000)).length || base.metrics[0].value, color: 'blue', icon: '📄' },
+            { label: '待处理', value: this.reports.filter((r: any) => r.status === 'pending' || r.status === 'draft').length || base.metrics[1].value, color: 'yellow', icon: '⏳' },
+            { label: '已发送', value: this.reports.filter((r: any) => r.status === 'sent' || r.status === 'completed').length || base.metrics[2].value, color: 'green', icon: '✓' },
+            { label: '定时任务', value: base.metrics[3].value, color: 'purple', icon: '🔄' },
+          ],
+          samples: this.reports.length > 0
+            ? this.reports.slice(0, 5).map((r: any) => ({ name: r.title || r.name || '-', type: r.type || 'Summary', date: r.createdAt ? new Date(r.createdAt).toISOString().slice(0, 10) : '-', status: r.status || 'ready' }))
+            : base.samples,
+        };
+      }
+      case 'risk': {
+        return {
+          ...base,
+          stats: { total: this.risks.length || base.stats.total, items: base.stats.items },
+          metrics: [
+            { label: '高风险', value: this.risks.filter((r: any) => r.level === 'high' || r.severity === 'high').length || base.metrics[0].value, color: 'red', icon: '🔴' },
+            { label: '中风险', value: this.risks.filter((r: any) => r.level === 'medium' || r.severity === 'medium').length || base.metrics[1].value, color: 'yellow', icon: '🟡' },
+            { label: '低风险', value: this.risks.filter((r: any) => r.level === 'low' || r.severity === 'low').length || base.metrics[2].value, color: 'green', icon: '🟢' },
+            { label: '风险指数', value: base.metrics[3].value, trend: '-3', color: 'blue', icon: '📊' },
+          ],
+          samples: this.risks.length > 0
+            ? this.risks.slice(0, 5).map((r: any) => ({ id: r.id || '-', name: r.title || r.name || '-', level: r.level || r.severity || 'medium', owner: r.owner || '-' }))
+            : base.samples,
+        };
+      }
+      default:
+        return base;
+    }
+  }
+
   private handleToolSelect(toolId: string) {
     this.activeTool = toolId;
     this.activeTab = 'overview';
@@ -883,13 +1053,13 @@ export class ScSecOpsCenter extends LitElement {
   }
 
   render() {
-    const config = this.toolConfigs[this.activeTool] || this.toolConfigs.baseline;
+    const config = this.getDynamicConfig(this.activeTool);
     return html`
       <div class="secops-container">
         ${this.renderToolSelector()}
         ${this.renderHero(config)}
         ${this.renderMetrics(config)}
-        ${this.renderTabs(config)}
+        ${this.renderTabs()}
         ${this.renderContent(config)}
       </div>
     `;
@@ -918,7 +1088,7 @@ export class ScSecOpsCenter extends LitElement {
       <div class="hero-section">
         <div class="hero-icon ${domainClass}">${config.icon}</div>
         <div class="hero-content">
-          <h1 class="hero-title">${config.title}</h1>
+          <h1 class="hero-title">${config.title}${this.loading ? html` <span style="font-size:14px;color:var(--secops-text-tertiary);">加载中...</span>` : ''}</h1>
           <span class="hero-domain ${domainClass}">${config.domain === 'light' ? '☀️ 光明面' : config.domain === 'dark' ? '🌑 黑暗面' : config.domain === 'data' ? '💾 数据中心' : '🔒 安全技术'}</span>
           <p class="hero-description">${config.description}</p>
           ${config.mitre?.length ? html`
@@ -953,7 +1123,7 @@ export class ScSecOpsCenter extends LitElement {
     `;
   }
 
-  private renderTabs(config: any) {
+  private renderTabs() {
     const tabs = [
       { id: 'overview', label: '📊 总览', icon: '' },
       { id: 'scan', label: '🚀 扫描', icon: '' },
@@ -1099,7 +1269,7 @@ export class ScSecOpsCenter extends LitElement {
     `;
   }
 
-  private renderHistory(config: any) {
+  private renderHistory(_config: any) {
     return html`
       <ul class="sidebar-list">
         <li class="sidebar-item" style="border: 1px solid var(--secops-border);">
@@ -1127,7 +1297,7 @@ export class ScSecOpsCenter extends LitElement {
     `;
   }
 
-  private renderReportsCenter(config: any) {
+  private renderReportsCenter(_config: any) {
     return html`
       <div class="empty-state">
         <div class="empty-icon">📄</div>

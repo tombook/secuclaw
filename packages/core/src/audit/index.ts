@@ -1,3 +1,4 @@
-export { AuditLogService } from './service.js';
-export { AuditLogRepository } from './repository.js';
-export * from './types.js';
+// Auto-generated barrel export for audit
+export * from './repository';
+export * from './service';
+export * from './types';

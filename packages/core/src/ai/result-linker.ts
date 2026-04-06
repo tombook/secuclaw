@@ -2,6 +2,29 @@ import type { JsonStore } from '../storage/json-store.js';
 
 const LINKS_KEY = 'ai-result-links.json';
 
+export interface AiResult {
+  id: string;
+  text: string;
+  references?: string[];
+  resolvedReferences?: Array<{ id: string; url: string }>;
+}
+
+export function linkResults(
+  results: AiResult[],
+  resolver?: (ref: string) => string
+): AiResult[] {
+  const defaultResolver = (ref: string) => `https://docs.example.com/${ref}`;
+  const resolve = resolver || defaultResolver;
+
+  return results.map(result => ({
+    ...result,
+    resolvedReferences: (result.references || []).map(ref => ({
+      id: ref,
+      url: resolve(ref),
+    })),
+  }));
+}
+
 export interface TicketLink {
   linkId: string;
   aiResultId: string;

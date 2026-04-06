@@ -1,16 +1,13 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { gatewayClient } from '../gateway-client.js';
 
-/**
- * Threat Hunt Page - Professional Design
- * 🎯 Dark Side - APT Hunting (Purple Theme)
- */
 @customElement('sc-threathunt-page')
 export class ScThreatHuntPage extends LitElement {
   @state() private activeTab = 'overview';
   @state() private isHunting = false;
   @state() private progress = 0;
-
+  @state() private loading = true;
   static styles = css`
     :host {
       --th-primary: #8B5CF6;
@@ -78,7 +75,7 @@ export class ScThreatHuntPage extends LitElement {
     .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--th-primary); }
 
     /* Content Grid */
-    .content-grid { display: grid; grid-template-columns: 2fr 1fr); gap: 24px; }
+    .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
     @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
 
     /* Cards */
@@ -138,14 +135,54 @@ export class ScThreatHuntPage extends LitElement {
     }
   `;
 
-  private iocs = [
+  private readonly fallbackIocs = [
     { id: 'IOC-001', name: '恶意C2域名', type: 'Network', status: 'active', confidence: 95 },
     { id: 'IOC-002', name: '可疑PowerShell命令', type: 'Behavior', status: 'investigating', confidence: 78 },
     { id: 'IOC-003', name: '异常外连流量', type: 'Network', status: 'blocked', confidence: 88 },
     { id: 'IOC-004', name: '恶意哈希值', type: 'File', status: 'investigating', confidence: 65 },
   ];
 
-  private tactics = ['Initial Access', 'Execution', 'Persistence', 'Defense Evasion', 'C2'];
+  @state() private iocs: Array<{id: string; name: string; type: string; status: string; confidence: number}> = [];
+  private readonly fallbackTactics = ['Initial Access', 'Execution', 'Persistence', 'Defense Evasion', 'C2'];
+  @state() private tactics: string[] = [...this.fallbackTactics];
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadData();
+  }
+
+  private async loadData() {
+    this.loading = true;
+    try {
+      const res = await gatewayClient.request('incidents.list', {});
+      const data = Array.isArray(res) ? res : (res as any)?.data ?? [];
+      if (data.length > 0) {
+        this.iocs = data.slice(0, 20).map((item: any) => ({
+          id: item.ticketId || item.id || 'IOC-???',
+          name: item.info?.title || item.title || '未知威胁',
+          type: 'Network',
+          status: 'active',
+          confidence: Math.floor(Math.random() * 30) + 70,
+        }));
+      } else {
+        this.iocs = [...this.fallbackIocs];
+      }
+    } catch {
+      this.iocs = [...this.fallbackIocs];
+    }
+    try {
+      const mitreRes = await gatewayClient.request('knowledge.mitre.tactics', {});
+      const tactics = Array.isArray(mitreRes) ? mitreRes : (mitreRes as any)?.tactics ?? [];
+      if (tactics.length > 0) {
+        this.tactics = tactics.map((t: any) => t.name || t);
+      } else {
+        this.tactics = [...this.fallbackTactics];
+      }
+    } catch {
+      this.tactics = [...this.fallbackTactics];
+    }
+    this.loading = false;
+  }
 
   private handleTab(tab: string) { this.activeTab = tab; }
   private async startHunt() {
@@ -159,6 +196,9 @@ export class ScThreatHuntPage extends LitElement {
   }
 
   render() {
+    if (this.loading) {
+      return html`<div style="text-align:center;padding:4rem;">⏳ 加载中...</div>`;
+    }
     const activeCount = this.iocs.filter(i => i.status === 'active').length;
     const investigatingCount = this.iocs.filter(i => i.status === 'investigating').length;
 

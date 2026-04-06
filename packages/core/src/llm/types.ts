@@ -1,4 +1,4 @@
-export type LLMProviderType = 'openai' | 'anthropic' | 'ollama' | 'volcengine' | 'custom';
+export type LLMProviderType = 'openai' | 'anthropic' | 'ollama' | 'volcengine' | 'custom' | 'minimax' | 'zhipu';
 
 export interface LLMProviderConfig {
   id: string;

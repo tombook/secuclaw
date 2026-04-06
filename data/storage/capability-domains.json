@@ -1,0 +1,152 @@
+[
+  {
+    "id": "light",
+    "name": "光明面",
+    "nameEn": "Light",
+    "description": "检测防御：监控、检测与事件响应等防御性能力。",
+    "descriptionEn": "Defensive security operations including monitoring, detection and incident response.",
+    "icon": "💡",
+    "color": "#4CAF50",
+    "ownerRoles": [
+      "security-expert"
+    ],
+    "partnerRoles": [
+      "ops-engineer"
+    ],
+    "kpi": {
+      "riskScore": 25,
+      "closureRate": 60,
+      "slaRate": 70,
+      "trend": 0.2,
+      "updatedAt": 1775455636264
+    },
+    "capabilityCount": 4,
+    "enabled": true,
+    "order": 1
+  },
+  {
+    "id": "dark",
+    "name": "黑暗面",
+    "nameEn": "Dark",
+    "description": "攻击模拟：渗透测试、红队演练与攻击模拟的能力域。",
+    "descriptionEn": "Offensive security including penetration testing, red team and attack simulations.",
+    "icon": "🕶️",
+    "color": "#212121",
+    "ownerRoles": [
+      "red-team-lead"
+    ],
+    "partnerRoles": [
+      "blue-team"
+    ],
+    "kpi": {
+      "riskScore": 45,
+      "closureRate": 50,
+      "slaRate": 65,
+      "trend": 0.1,
+      "updatedAt": 1775455636264
+    },
+    "capabilityCount": 4,
+    "enabled": true,
+    "order": 2
+  },
+  {
+    "id": "security",
+    "name": "安全管理",
+    "nameEn": "Security",
+    "description": "安全治理：策略、风险管理、合规等 governance 领域。",
+    "descriptionEn": "Security governance including policy, risk management and compliance.",
+    "icon": "🛡️",
+    "color": "#3F51B5",
+    "ownerRoles": [
+      "security-officer"
+    ],
+    "partnerRoles": [
+      "compliance-manager"
+    ],
+    "kpi": {
+      "riskScore": 35,
+      "closureRate": 70,
+      "slaRate": 75,
+      "trend": -0.05,
+      "updatedAt": 1775455636264
+    },
+    "capabilityCount": 4,
+    "enabled": true,
+    "order": 3
+  },
+  {
+    "id": "legal",
+    "name": "法律合规",
+    "nameEn": "Legal",
+    "description": "法律与监管：隐私、审计、监管合规等领域。",
+    "descriptionEn": "Legal and regulatory: privacy, audits and regulatory compliance.",
+    "icon": "⚖️",
+    "color": "#9C27B0",
+    "ownerRoles": [
+      "privacy-officer"
+    ],
+    "partnerRoles": [
+      "regulatory-analyst"
+    ],
+    "kpi": {
+      "riskScore": 28,
+      "closureRate": 65,
+      "slaRate": 68,
+      "trend": 0,
+      "updatedAt": 1775455636264
+    },
+    "capabilityCount": 4,
+    "enabled": true,
+    "order": 4
+  },
+  {
+    "id": "technology",
+    "name": "技术基础",
+    "nameEn": "Technology",
+    "description": "技术基础：资产、漏洞、补丁等基础设施与运维相关能力。",
+    "descriptionEn": "Technical infrastructure including asset, vulnerability and patch management.",
+    "icon": "🧰",
+    "color": "#00BCD4",
+    "ownerRoles": [
+      "it-ops"
+    ],
+    "partnerRoles": [
+      "sec-ops"
+    ],
+    "kpi": {
+      "riskScore": 40,
+      "closureRate": 55,
+      "slaRate": 60,
+      "trend": 0.15,
+      "updatedAt": 1775455636264
+    },
+    "capabilityCount": 4,
+    "enabled": true,
+    "order": 5
+  },
+  {
+    "id": "business",
+    "name": "业务安全",
+    "nameEn": "Business",
+    "description": "商务层面的安全：欺诈检测、供应链与第三方风险等。",
+    "descriptionEn": "Business security including fraud detection, supply chain and third-party risk.",
+    "icon": "💼",
+    "color": "#FFC107",
+    "ownerRoles": [
+      "fraud-analyst"
+    ],
+    "partnerRoles": [
+      "vendor-security"
+    ],
+    "kpi": {
+      "riskScore": 30,
+      "closureRate": 60,
+      "slaRate": 65,
+      "trend": 0,
+      "updatedAt": 1775455636264
+    },
+    "capabilityCount": 4,
+    "enabled": true,
+    "order": 6
+  }
+]

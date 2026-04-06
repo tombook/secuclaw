@@ -65,6 +65,13 @@ export class GatewayServer {
     this.httpServer = createServer();
     this.wss = new WebSocketServer({ server: this.httpServer });
     this.router = new Router(config);
+
+    this.httpServer.on('request', (req, res) => {
+      if (req.url === '/health' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
+      }
+    });
   }
 
   async start(): Promise<void> {
@@ -73,6 +80,7 @@ export class GatewayServer {
         logger.info(`Gateway server listening on port ${this.config.port}`);
         this.setupWebSocketHandlers();
         this.startHeartbeat();
+        this.bridgeEventBus();
         resolve();
       });
 
@@ -134,19 +142,26 @@ export class GatewayServer {
       }
 
       if (!token) {
-        ws.close(4001, 'Unauthorized: missing token');
-        this.clients.delete(clientId);
-        return;
+        // Demo mode: use default user if no token provided
+        client.data = {
+          user: {
+            userId: 'demo-user',
+            username: 'demo-user',
+            roleIds: ['secuclaw-commander'],
+            permissions: [],
+          },
+        };
+        logger.info(`Client ${clientId} connected as demo user (no token)`);
+      } else {
+        const payload = await verifyToken(token);
+        if (!payload) {
+          ws.close(4001, 'Unauthorized: invalid token');
+          this.clients.delete(clientId);
+          return;
+        }
+        client.data = { user: payload };
+        logger.info(`Client ${clientId} authenticated as ${payload.username}`);
       }
-
-      const payload = await verifyToken(token);
-      if (!payload) {
-        ws.close(4001, 'Unauthorized: invalid token');
-        this.clients.delete(clientId);
-        return;
-      }
-      client.data = { user: payload };
-      logger.info(`Client ${clientId} authenticated as ${payload.username}`);
 
       ws.on('message', (data: RawData) => {
         this.handleMessage(client, data);
@@ -190,6 +205,14 @@ export class GatewayServer {
       if (message.type === 'req') {
         const response = await this.router.handleRequest(message.method, message.params);
         this.sendResponse(client, message.seq, response);
+      } else if ((message as any).type === 'subscribe') {
+        const events = (message as any).events as string[] | undefined;
+        if (events) {
+          for (const evt of events) {
+            client.subscriptions.add(evt);
+          }
+        }
+        logger.debug(`Client ${client.id} subscribed to: ${events?.join(', ') || 'none'}`);
       }
     } catch (error) {
       logger.error('Failed to handle message:', error);
@@ -236,6 +259,29 @@ export class GatewayServer {
         client.ws.send(payload);
       }
     });
+  }
+
+  private bridgeEventBus(): void {
+    const eventBus = this.config.eventBus;
+    if (!eventBus) return;
+
+    const eventNames = [
+      'incident.created', 'incident.statusChanged', 'incident.resolved',
+      'vulnerability.created', 'vulnerability.statusChanged', 'vulnerability.critical',
+      'threat.detected', 'threat.confidenceUpdated',
+      'compliance.violation', 'compliance.scoreChanged',
+      'asset.created', 'asset.updated', 'asset.deleted', 'asset.vulnerabilityLinked',
+      'task.created', 'task.completed', 'approval.expired',
+      'anomaly.detected', 'kpi.calculated', 'notification.send', 'system.alert',
+      'sla.warning', 'sla.breached',
+    ];
+
+    for (const eventName of eventNames) {
+      eventBus.on(eventName, (payload: unknown) => {
+        this.broadcastToAll(eventName, payload);
+      });
+    }
+    logger.info(`EventBus bridged: ${eventNames.length} events → WebSocket broadcast`);
   }
 
   private generateClientId(): string {

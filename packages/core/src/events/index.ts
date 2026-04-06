@@ -1,3 +1,5 @@
-export { EventBus } from './event-bus.js';
-export { registerDefaultRules } from './default-rules.js';
-export type { EventMap, EventName, EventHandler } from './types.js';
+// Auto-generated barrel export for events
+export * from './default-rules';
+export * from './event-bus';
+export * from './mitre-mapper';
+export * from './types';

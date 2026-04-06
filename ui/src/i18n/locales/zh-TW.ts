@@ -28,19 +28,47 @@ export const zh_TW = {
   },
 
   nav: {
+    // Groups
+    groupOperations: '運營',
+    groupCommand: '作戰',
+    groupGovernance: '治理',
+    groupAi: 'AI運營',
+    groupCapabilities: '能力',
+    groupCollaboration: '協作',
+    groupAdmin: '管理',
+    
+    // Operations
+    overview: '運營概覽',
     dashboard: '儀表板',
     threats: '威脅情資',
     incidents: '安全事件',
     vulnerabilities: '漏洞管理',
-    compliance: '合規審計',
-    warRoom: '作戰室',
-    capabilities: '能力中心',
-    knowledgeBase: '知識庫',
-    skillsMarket: '技能市集',
-    channels: '通訊管理',
-    settings: '系統設定',
-    // Security Operations Center
+    
+    // Command
+    warRoom: '作戰指揮',
     securityOps: '安全營運中心',
+    
+    // Governance
+    compliance: '合規管理',
+    audit: '審計日誌',
+    approval: '審批管理',
+    
+    // AI
+    aiExperts: 'AI安全專家',
+    
+    // Capabilities
+    capabilities: '能力中心',
+    skillsMarket: '技能市集',
+    
+    // Collaboration
+    channels: '通訊管理',
+    tasks: '任務管理',
+    
+    // Admin
+    settings: '系統設定',
+    roles: '角色權限',
+    llmConfig: 'LLM設定',
+    aiExpertsConfig: 'AI專家設定',
   },
 
   roles: {

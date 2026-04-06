@@ -26,7 +26,8 @@ export class AnthropicProvider implements LLMProvider {
         'x-api-key': this.config.apiKey ?? '',
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(300000)
     });
     if (!resp.ok) {
       throw new Error(`Anthropic chat request failed: ${resp.status} ${resp.statusText}`);

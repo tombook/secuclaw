@@ -1,4 +1,5 @@
-export { ChannelManager } from './channel-manager.js';
-export { EmailProvider } from './email-provider.js';
-export { WebhookProvider } from './webhook-provider.js';
-export * from './types.js';
+// Auto-generated barrel export for channels
+export * from './channel-manager';
+export * from './email-provider';
+export * from './types';
+export * from './webhook-provider';

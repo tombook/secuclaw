@@ -164,6 +164,38 @@ export interface VulnerabilityQueryParams {
   pageSize?: number;
 }
 
+// ============ Task types ============
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  type: 'vulnerability' | 'configuration' | 'assessment' | 'audit' | 'review';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: 'high' | 'medium' | 'low';
+  assignee?: string;
+  assigneeRole?: string;
+  createdAt: number;
+  updatedAt: number;
+  dueDate?: number;
+}
+
+export interface TaskStats {
+  total: number;
+  pending: number;
+  in_progress: number;
+  completed: number;
+  cancelled: number;
+  byPriority: Record<string, number>;
+}
+
+// Mock tasks data
+const mockTasks: Task[] = [
+  { id: 'task-1', title: '修复SQL注入漏洞', description: '修复用户登录处的SQL注入', type: 'vulnerability', status: 'in_progress', priority: 'high', assignee: '张三', assigneeRole: 'security-expert', createdAt: Date.now() - 86400000, updatedAt: Date.now() },
+  { id: 'task-2', title: '安全配置审计', description: '检查服务器安全配置', type: 'audit', status: 'pending', priority: 'medium', assignee: '李四', assigneeRole: 'security-ops', createdAt: Date.now() - 172800000, updatedAt: Date.now() },
+  { id: 'task-3', title: '渗透测试', description: '对API进行渗透测试', type: 'assessment', status: 'completed', priority: 'high', assignee: '王五', assigneeRole: 'security-expert', createdAt: Date.now() - 259200000, updatedAt: Date.now() },
+];
+
 // ============ Mock数据转换函数 ============
 
 function convertMockIncident(mock: any): SecurityIncident {
@@ -264,7 +296,7 @@ class DataService {
 
   async getIncidents(params: IncidentQueryParams = {}): Promise<SecurityIncident[]> {
     try {
-      return await gatewayClient.request('incidents.list', params);
+      return await gatewayClient.request('incidents.list', params as Record<string, unknown>);
     } catch (error) {
       console.warn('[DataService] incidents.list failed, using mock data:', error);
       return mockIncidents.map(convertMockIncident);
@@ -295,36 +327,8 @@ class DataService {
     attackVector?: string;
     mitreTechniques?: string[];
   }): Promise<SecurityIncident> {
-    try {
-      return await gatewayClient.request('incidents.create', data);
-    } catch (error) {
-      console.warn('[DataService] incidents.create failed, using mock data:', error);
-      // 返回一个模拟的创建结果
-      return {
-        id: `inc-${Date.now()}`,
-        ticketId: `SEC-2026-${String(mockIncidents.length + 1).padStart(4, '0')}`,
-        info: {
-          title: data.title,
-          description: data.description,
-          category: data.category,
-          severity: data.severity,
-          priority: data.severity === 'critical' ? 1 : 2,
-          source: data.source,
-        },
-        timeline: {},
-        sla: {},
-        workflow: { status: 'new' },
-        impact: {
-          affectedAssets: data.affectedAssets || [],
-          affectedUsers: data.affectedUsers || 0,
-          dataTypes: data.dataTypes || [],
-          businessImpact: data.businessImpact || 'Unknown',
-        },
-        handlers: [],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-    }
+    const result = await gatewayClient.request<SecurityIncident>('incidents.create', data);
+    return result;
   }
 
   async updateIncident(id: string, data: Partial<SecurityIncident>): Promise<SecurityIncident> {
@@ -363,7 +367,7 @@ class DataService {
 
   async getVulnerabilities(params: VulnerabilityQueryParams = {}): Promise<Vulnerability[]> {
     try {
-      return await gatewayClient.request('vulnerabilities.list', params);
+      return await gatewayClient.request('vulnerabilities.list', params as Record<string, unknown>);
     } catch (error) {
       console.warn('[DataService] vulnerabilities.list failed, using mock data:', error);
       return mockVulnerabilities.map(convertMockVulnerability);
@@ -534,6 +538,124 @@ class DataService {
         byStatus: mockAssets.reduce((acc, a) => { acc[a.status] = (acc[a.status] || 0) + 1; return acc; }, {} as Record<string, number>),
       };
     }
+  }
+
+  // ==================== Tasks ====================
+
+  private getTasksFromStorage(): Task[] {
+    try {
+      const stored = localStorage.getItem('secuclaw-tasks');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? [...parsed] as Task[] : [...mockTasks] as Task[];
+      }
+      return [...mockTasks] as Task[];
+    } catch {
+      return [...mockTasks] as Task[];
+    }
+  }
+
+  private saveTasksToStorage(tasks: Task[]): void {
+    localStorage.setItem('secuclaw-tasks', JSON.stringify(tasks));
+  }
+
+  async getTasks(): Promise<Task[]> {
+    // Always try localStorage first to ensure we get latest data
+    const storedTasks = this.getTasksFromStorage();
+    try {
+      const res = await gatewayClient.request('tasks.list');
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data) && data.length > 0) {
+        // Merge with localStorage tasks that might not be synced
+        const localIds = new Set(storedTasks.map(t => t.id));
+        const newFromServer = (data as Task[]).filter((t: Task) => !localIds.has(t.id));
+        return [...storedTasks, ...newFromServer] as Task[];
+      }
+    } catch (error) {
+      console.warn('[DataService] tasks.list failed, using localStorage:', error);
+    }
+    return storedTasks;
+  }
+
+  async getTask(id: string): Promise<Task | null> {
+    try {
+      return await gatewayClient.request('tasks.get', { id });
+    } catch (error) {
+      console.warn('[DataService] tasks.get failed, using localStorage:', error);
+      const tasks = this.getTasksFromStorage();
+      return tasks.find(t => t.id === id) || null;
+    }
+  }
+
+  async createTask(data: { title: string; description?: string; type?: string; priority?: string; }): Promise<Task> {
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      title: data.title,
+      description: data.description || '',
+      type: (data.type as Task['type']) || 'assessment',
+      status: 'pending',
+      priority: (data.priority as Task['priority']) || 'medium',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    // Always save locally first (backend may not be available)
+    const tasks = this.getTasksFromStorage();
+    tasks.unshift(newTask);
+    this.saveTasksToStorage(tasks);
+    // Try to sync with backend
+    try {
+      const backendData = { ...newTask, name: newTask.title }; // Map title to name for backend
+      const res = await gatewayClient.request('tasks.create', backendData as unknown as Record<string, unknown>);
+      console.warn('[DataService] tasks.create synced to backend:', res);
+      return res as Task;
+    } catch (error) {
+      console.warn('[DataService] tasks.create backend sync failed, saved locally:', error);
+      return newTask;
+    }
+  }
+
+  async updateTask(id: string, data: Partial<Task>): Promise<Task> {
+    // Always save locally first
+    const tasks = this.getTasksFromStorage();
+    const index = tasks.findIndex(t => t.id === id);
+    if (index === -1) throw new Error(`Task ${id} not found`);
+    tasks[index] = { ...tasks[index], ...data, updatedAt: Date.now() };
+    this.saveTasksToStorage(tasks);
+    // Try to sync with backend
+    try {
+      const backendData = { ...data, id, name: data.title }; // Map title to name for backend
+      const res = await gatewayClient.request('tasks.update', backendData as Record<string, unknown>);
+      console.warn('[DataService] tasks.update synced to backend:', res);
+      return res as Task;
+    } catch (error) {
+      console.warn('[DataService] tasks.update backend sync failed, saved locally:', error);
+      return tasks[index];
+    }
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    // Always delete locally first
+    const tasks = this.getTasksFromStorage();
+    const filtered = tasks.filter(t => t.id !== id);
+    this.saveTasksToStorage(filtered);
+    // Try to sync with backend
+    try {
+      await gatewayClient.request('tasks.delete', { id });
+    } catch (error) {
+      console.warn('[DataService] tasks.delete backend sync failed, deleted locally:', error);
+    }
+  }
+
+  async getTaskStats(): Promise<TaskStats> {
+    const tasks = await this.getTasks();
+    return {
+      total: tasks.length,
+      pending: tasks.filter(t => t.status === 'pending').length,
+      in_progress: tasks.filter(t => t.status === 'in_progress').length,
+      completed: tasks.filter(t => t.status === 'completed').length,
+      cancelled: tasks.filter(t => t.status === 'cancelled').length,
+      byPriority: tasks.reduce((acc, t) => { acc[t.priority] = (acc[t.priority] || 0) + 1; return acc; }, {} as Record<string, number>),
+    };
   }
 }
 

@@ -1,0 +1,28 @@
+[
+  {
+    "id": "provider_1775205228307_l8e6js",
+    "name": "1",
+    "type": "openai",
+    "baseUrl": "1",
+    "apiKey": "2",
+    "models": [
+      "2"
+    ],
+    "enabled": true,
+    "createdAt": 1775205228307,
+    "updatedAt": 1775205228307
+  },
+  {
+    "id": "provider_1775205231196_9vlzv3",
+    "name": "1",
+    "type": "openai",
+    "baseUrl": "1",
+    "apiKey": "2",
+    "models": [
+      "2"
+    ],
+    "enabled": true,
+    "createdAt": 1775205231196,
+    "updatedAt": 1775205231196
+  }
+]

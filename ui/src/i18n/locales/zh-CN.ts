@@ -58,22 +58,51 @@ export const zh_CN = {
   },
 
   nav: {
+    // Groups
+    groupOperations: '运营',
+    groupCommand: '作战',
+    groupGovernance: '治理',
+    groupAi: 'AI运营',
+    groupCapabilities: '能力',
+    groupCollaboration: '协作',
+    groupAdmin: '管理',
+    
+    // Operations
+    overview: '运营概览',
     dashboard: '仪表盘',
     threats: '威胁情报',
     incidents: '安全事件',
     vulnerabilities: '漏洞管理',
-    compliance: '合规审计',
-    warRoom: '作战室',
+    assets: '资产管理',
+    
+    // Command
+    warRoom: '作战指挥',
+    securityOps: '安全运营中心',
+    
+    // Governance
+    compliance: '合规管理',
+    audit: '审计日志',
+    approval: '审批管理',
+    riskCenter: '风控中心',
+    dataCenter: '数据资源中心',
+    
+    // AI
     aiExperts: 'AI安全专家',
+    
+    // Capabilities
     capabilities: '能力中心',
     skillsMarket: '技能市场',
+    
+    // Collaboration
     channels: '通讯管理',
-    channelsDesc: '管理安全告警和通知的通讯渠道',
+    tasks: '任务管理',
+    
+    // Admin
     settings: '系统设置',
     roles: '角色权限',
     llmConfig: 'LLM配置',
     aiExpertsConfig: 'AI专家配置',
-    securityOps: '安全运营中心',
+    siemConfig: 'SIEM集成',
   },
 
   capabilities: {

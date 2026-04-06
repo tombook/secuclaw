@@ -556,6 +556,7 @@ export class ScVulnerabilitiesPage extends LitElement {
       await this.loadScanTasks();
       await this.loadAIInsights();
       await this.loadVulnerabilityStats();
+      await this.loadVulnEnums();
     } catch (error) {
       console.error('Failed to load vulnerabilities data:', error);
     } finally {
@@ -573,7 +574,6 @@ export class ScVulnerabilitiesPage extends LitElement {
   }
 
   private async loadVulnerabilities() {
-    // Try to load from API
     try {
       const params: VulnerabilityQueryParams = {};
       if (this.severityFilter !== 'all') {
@@ -585,7 +585,7 @@ export class ScVulnerabilitiesPage extends LitElement {
       if (this.searchQuery) {
         params.cveId = this.searchQuery;
       }
-      
+
       const realVulns = await dataService.getVulnerabilities(params);
       
       if (realVulns.length > 0) {
@@ -615,10 +615,6 @@ export class ScVulnerabilitiesPage extends LitElement {
           aiPriority: v.risk.totalRiskScore,
           aiRecommendation: v.remediation.fixSteps[0] || '',
           remediationSteps: v.remediation.fixSteps,
-          affectedVersions: v.info.affectedProducts,
-          mitreTechniques: [],
-          relatedEvents: [],
-          aiCorrelation: ''
         }));
         this.filteredVulns = this.vulnerabilities;
         return;
@@ -898,6 +894,114 @@ export class ScVulnerabilitiesPage extends LitElement {
       console.error(e);
       this.showToast('分配失败', 'error');
     }
+  }
+
+  private async createVulnerability() {
+    const cve = prompt('CVE编号:');
+    if (!cve) return;
+    const title = prompt('漏洞标题:') || cve;
+    const severity = prompt('严重程度 (critical/high/medium/low):', 'medium') || 'medium';
+    try {
+      await gatewayClient.request('vulnerabilities.create', { cve, title, severity, cvssScore: 0, description: '' });
+      this.showToast('漏洞已创建', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) { console.error('[vuln] Create failed:', e); this.showToast('创建失败', 'error'); }
+  }
+
+  private async deleteVulnerability(vulnId: string) {
+    if (!confirm('确定删除此漏洞？')) return;
+    try {
+      await gatewayClient.request('vulnerabilities.delete', { id: vulnId });
+      this.showToast('漏洞已删除', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) { console.error('[vuln] Delete failed:', e); this.showToast('删除失败', 'error'); }
+  }
+
+  private async batchImportVulns() {
+    const json = prompt('请输入漏洞JSON数组:');
+    if (!json) return;
+    try {
+      const vulns = JSON.parse(json);
+      await gatewayClient.request('vulnerabilities.batchImport', { vulnerabilities: vulns });
+      this.showToast('批量导入成功', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) { console.error('[vuln] BatchImport failed:', e); this.showToast('批量导入失败', 'error'); }
+  }
+
+  private async linkAssetToVuln(vulnId: string) {
+    const assetId = prompt('关联资产ID:');
+    if (!assetId) return;
+    try {
+      await gatewayClient.request('vulnerabilities.linkAsset', { vulnId, assetId });
+      this.showToast('资产已关联', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) { console.error('[vuln] LinkAsset failed:', e); this.showToast('关联失败', 'error'); }
+  }
+
+  private async unlinkAssetFromVuln(vulnId: string, assetId: string) {
+    try {
+      await gatewayClient.request('vulnerabilities.unlinkAsset', { vulnId, assetId });
+      this.showToast('资产已取消关联', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) { console.error('[vuln] UnlinkAsset failed:', e); this.showToast('取消关联失败', 'error'); }
+  }
+
+  private async batchUpdateStatus() {
+    const ids = prompt('请输入漏洞ID列表 (逗号分隔):');
+    if (!ids) return;
+    const status = prompt('目标状态 (open/in-progress/fixed/accepted/false-positive):');
+    if (!status) return;
+    try {
+      await gatewayClient.request('vulnerabilities.batchUpdateStatus', {
+        ids: ids.split(',').map(s => s.trim()),
+        status,
+        user: 'current-user',
+      });
+      this.showToast('批量更新状态成功', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) {
+      console.error('[vuln] BatchUpdateStatus failed:', e);
+      this.showToast('批量更新失败', 'error');
+    }
+  }
+
+  private async updateVuln(vulnId: string) {
+    const title = prompt('新标题:');
+    if (!title) return;
+    const severity = prompt('严重程度:', 'medium') || 'medium';
+    try {
+      await gatewayClient.request('vulnerabilities.update', { id: vulnId, title, severity });
+      this.showToast('漏洞已更新', 'success');
+      await this.loadVulnerabilities();
+    } catch (e) { console.error('[vuln] Update failed:', e); this.showToast('更新失败', 'error'); }
+  }
+
+  private async loadActiveVulns() {
+    try {
+      const res = await gatewayClient.request('vulnerabilities.active', {});
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data) && data.length > 0) {
+        this.vulnerabilities = data.map((v: any) => ({ ...v, id: v.id, cve: v.cveId ?? v.cve, title: v.title ?? v.name, severity: v.severity ?? 'medium', cvssScore: v.cvssScore ?? v.cvss ?? 0, status: v.status ?? 'open', asset: { id: v.assetId ?? '', name: v.assetName ?? '', type: v.assetType ?? 'server' } }));
+      }
+    } catch (e) { console.error('[vuln] LoadActive failed:', e); }
+  }
+
+  private async loadVulnEnums() {
+    try {
+      const res = await gatewayClient.request('vulnerabilities.enums', {});
+      return (res as any)?.data ?? res;
+    } catch { return null; }
+  }
+
+  private async findVulnsByAssetId(assetId: string) {
+    try {
+      const res = await gatewayClient.request('vulnerabilities.findByAssetId', { assetId });
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data)) {
+        this.vulnerabilities = [...data as any[]];
+        this.applyFilters();
+      }
+    } catch (e) { console.error('[vuln] FindByAssetId failed:', e); }
   }
 
   private showToast(message: string, type: 'success'|'error'|'info' = 'info') {
@@ -1186,6 +1290,13 @@ export class ScVulnerabilitiesPage extends LitElement {
             ` : ''}
           </div>
         ` : ''}
+
+        <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" @click=${() => this.updateVuln(vuln.id)}>✏️ 编辑</button>
+          <button class="btn btn-secondary" @click=${() => this.linkAssetToVuln(vuln.id)}>🔗 关联资产</button>
+          <button class="btn btn-secondary" @click=${() => this.unlinkAssetFromVuln(vuln.id, vuln.asset.id)}>✂️ 取消关联</button>
+          <button class="btn btn-secondary" @click=${() => this.deleteVulnerability(vuln.id)} style="background:rgba(239,68,68,0.1);color:#ef4444;">🗑️ 删除</button>
+        </div>
       </div>
     `;
   }
@@ -1220,9 +1331,14 @@ export class ScVulnerabilitiesPage extends LitElement {
                 <span>发现和跟踪系统漏洞，按优先级修复，降低被攻击风险</span>
               </div>
             </div>
-            <div class="header-actions">
-              <button class="btn btn-secondary">📤 导出报告</button>
-              <button class="btn btn-primary">+ 开始扫描</button>
+        <div class="header-actions">
+          <button class="btn btn-secondary" @click=${this.batchImportVulns}>📥 批量导入</button>
+          <button class="btn btn-secondary" @click=${this.createVulnerability}>➯ 新建漏洞</button>
+          <button class="btn btn-secondary" @click=${() => this.loadActiveVulns()}>🔴 活跃漏洞</button>
+          <button class="btn btn-secondary" @click=${() => { const aid = prompt('资产ID:'); if (aid) this.findVulnsByAssetId(aid); }}>🔍 按资产搜索</button>
+          <button class="btn btn-secondary" @click=${this.batchUpdateStatus}>🔄 批量更新</button>
+          <button class="btn btn-secondary">📤 导出报告</button>
+          <button class="btn btn-primary" @click=${this.createVulnerability}>+ 开始扫描</button>
             </div>
           </div>
 

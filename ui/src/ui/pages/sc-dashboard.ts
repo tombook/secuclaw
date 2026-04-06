@@ -8,12 +8,50 @@ import { LitElement, html, css, svg } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AnomalyAlert, type TrendPrediction, type AIRecommendation } from '../ai-service.js';
-import { dataService, type IncidentStats, type VulnerabilityStats } from '../data-service.js';
+import type { IncidentStats, VulnerabilityStats } from '../data-service.js';
+import { gatewayClient } from '../gateway-client.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 import '../components/sc-metric-card.js';
+import './sc-dashboard-header.js';
+import './sc-dashboard-insights.js';
+import './sc-dashboard-metrics.js';
 
 // ============ 类型定义 ============
+
+// API 响应类型
+interface IncidentStatsResponse {
+  open?: number;
+  byStatus?: {
+    open?: number;
+    openIncidents?: number;
+  };
+}
+
+interface VulnerabilityStatsResponse {
+  bySeverity?: {
+    critical?: number;
+    high?: number;
+    medium?: number;
+    low?: number;
+  };
+}
+
+interface RiskMetricsResponse {
+  overallRiskScore?: number;
+  riskLevel?: 'low' | 'medium' | 'high' | 'critical';
+}
+
+interface KPICalculateResponse {
+  data?: {
+    overallScore?: number;
+    riskScore?: number;
+  };
+  overallScore?: number;
+  riskScore?: number;
+  kpi?: Record<string, number>;
+  scores?: Record<string, number>;
+}
 
 interface SecurityMetric {
   id: string;
@@ -499,15 +537,47 @@ export class ScDashboard extends LitElement {
   }
 
   private async loadMetrics() {
-    // 模拟安全指标数据
+    // 通过后端 websocket 提供的聚合指标，优先使用真实数据，失败回退到 mock
+    let openIncidents = 12;
+    let critVulns = 5;
+    let riskScore = 72;
+    try {
+      const [incStats, vulnStats, riskRes] = await Promise.all([
+        gatewayClient.request<IncidentStatsResponse>('incidents.stats', {}),
+        gatewayClient.request<VulnerabilityStatsResponse>('vulnerabilities.stats', {}),
+        gatewayClient.request<RiskMetricsResponse>('risk.getMetrics', {}),
+      ]);
+
+      // incidents.stats
+      if (incStats && typeof incStats === 'object') {
+        // 兼容后端返回结构，优先通过 byStatus.open / open 字段
+        openIncidents = incStats.open ?? incStats.byStatus?.open ?? incStats.byStatus?.openIncidents ?? openIncidents;
+      }
+
+      // vulnerabilities.stats
+      if (vulnStats && typeof vulnStats === 'object') {
+        const crit = vulnStats.bySeverity?.critical ?? 0;
+        const high = vulnStats.bySeverity?.high ?? 0;
+        critVulns = crit + high;
+      }
+
+      // risk.getMetrics
+      if (riskRes && typeof riskRes === 'object') {
+        riskScore = riskRes.overallRiskScore ?? riskScore;
+      }
+    } catch {
+      // keep defaults on failure
+    }
+
+    // 安全指标数据
     this.metrics = [
       {
         id: 'risk-score',
         title: '风险评分',
-        value: 72,
+        value: riskScore,
         unit: '分',
         target: 85,
-        status: 'warning',
+        status: riskScore >= 80 ? 'healthy' : riskScore >= 60 ? 'warning' : 'critical',
         trend: 'up',
         trendValue: '+5%',
         icon: '📊',
@@ -517,23 +587,23 @@ export class ScDashboard extends LitElement {
       {
         id: 'open-incidents',
         title: '待处理事件',
-        value: 12,
+        value: openIncidents,
         unit: '个',
         target: 5,
-        status: 'critical',
+        status: openIncidents > 10 ? 'critical' : openIncidents > 5 ? 'warning' : 'healthy',
         trend: 'down',
         trendValue: '-3',
         icon: '🚨',
         dataPoints: this.generateMockDataPoints(7, 10, 25),
-        aiInsight: '3个高优先级事件需要立即处理'
+        aiInsight: `${openIncidents}个待处理事件需要关注`
       },
       {
         id: 'critical-vulns',
         title: '高危漏洞',
-        value: 5,
+        value: critVulns,
         unit: '个',
         target: 0,
-        status: 'warning',
+        status: critVulns > 5 ? 'critical' : critVulns > 2 ? 'warning' : 'healthy',
         trend: 'stable',
         trendValue: '0',
         icon: '🐛',
@@ -556,13 +626,41 @@ export class ScDashboard extends LitElement {
   }
 
   private async loadCompliance() {
+    try {
+      const scfRes = await gatewayClient.request<{ totalDomains?: number; totalControls?: number; compliantCount?: number }>('knowledge.scf.stats', {});
+      if (scfRes && typeof scfRes === 'object') {
+        const totalDomains = scfRes.totalDomains ?? 0;
+        const totalControls = scfRes.totalControls ?? 0;
+        const compliantCount = scfRes.compliantCount ?? 0;
+        if (totalDomains > 0 || totalControls > 0) {
+          const domainsScore = totalDomains > 0 ? Math.round((compliantCount / totalDomains) * 100) : 0;
+          const controlsScore = totalControls > 0 ? Math.round((compliantCount / totalControls) * 100) : 0;
+          this.complianceItems = [
+            {
+              name: 'Domains',
+              score: domainsScore,
+              status: domainsScore >= 80 ? 'compliant' as const : domainsScore >= 60 ? 'partial' as const : 'non-compliant' as const,
+            },
+            {
+              name: 'Controls',
+              score: controlsScore,
+              status: controlsScore >= 80 ? 'compliant' as const : controlsScore >= 60 ? 'partial' as const : 'non-compliant' as const,
+            },
+          ];
+          return;
+        }
+      }
+    } catch {
+      // fall back to mock data below
+    }
+    // Fallback mock data
     this.complianceItems = [
-      { name: 'GDPR', score: 85, status: 'partial' },
-      { name: 'SOC 2', score: 75, status: 'partial' },
-      { name: 'ISO 27001', score: 92, status: 'compliant' },
-      { name: 'PIPL', score: 68, status: 'non-compliant' },
-      { name: 'NIST CSF', score: 88, status: 'compliant' },
-      { name: '等保2.0', score: 78, status: 'partial' }
+      { name: 'GDPR', score: 85, status: 'partial' as const },
+      { name: 'SOC 2', score: 75, status: 'partial' as const },
+      { name: 'ISO 27001', score: 92, status: 'compliant' as const },
+      { name: 'PIPL', score: 68, status: 'non-compliant' as const },
+      { name: 'NIST CSF', score: 88, status: 'compliant' as const },
+      { name: '等保2.0', score: 78, status: 'partial' as const }
     ];
   }
 
@@ -605,13 +703,16 @@ export class ScDashboard extends LitElement {
 
   private async loadIncidentStats() {
     try {
-      this.incidentStats = await dataService.getIncidentStats();
+      const res = await gatewayClient.request<IncidentStatsResponse>('incidents.stats', {});
+      this.incidentStats = res as IncidentStats;
       // Update metrics with real data
       if (this.incidentStats) {
         const metric = this.metrics.find(m => m.id === 'open-incidents');
         if (metric) {
-          metric.value = this.incidentStats.open;
-          metric.status = this.incidentStats.open > 10 ? 'critical' : this.incidentStats.open > 5 ? 'warning' : 'healthy';
+          const incRes = this.incidentStats as unknown as IncidentStatsResponse;
+          const openCount = incRes.open ?? incRes.byStatus?.open ?? 0;
+          metric.value = incRes.open ?? incRes.byStatus?.open ?? metric.value;
+          metric.status = openCount > 10 ? 'critical' : openCount > 5 ? 'warning' : 'healthy';
         }
       }
     } catch (error) {
@@ -621,11 +722,12 @@ export class ScDashboard extends LitElement {
 
   private async loadVulnStats() {
     try {
-      this.vulnStats = await dataService.getVulnerabilityStats();
-      // Update metrics with real data
+      const res = await gatewayClient.request<VulnerabilityStatsResponse>('vulnerabilities.stats', {});
+      this.vulnStats = res as VulnerabilityStats;
       if (this.vulnStats) {
-        const critical = this.vulnStats.bySeverity?.critical || 0;
-        const high = this.vulnStats.bySeverity?.high || 0;
+        const vulnRes = this.vulnStats as unknown as VulnerabilityStatsResponse;
+        const critical = vulnRes.bySeverity?.critical || 0;
+        const high = vulnRes.bySeverity?.high || 0;
         const metric = this.metrics.find(m => m.id === 'critical-vulns');
         if (metric) {
           metric.value = critical + high;
@@ -635,6 +737,40 @@ export class ScDashboard extends LitElement {
     } catch (error) {
       console.error('Failed to load vulnerability stats:', error);
     }
+  }
+
+  private async loadKPI() {
+    try {
+      const res = await gatewayClient.request<KPICalculateResponse>('kpi.calculate', {});
+      const data = res?.data ?? res;
+      if (data && typeof data === 'object') {
+        const scoreMetric = this.metrics.find(m => m.id === 'risk-score');
+        if (scoreMetric && (data.overallScore ?? data.riskScore)) {
+          scoreMetric.value = data.overallScore ?? data.riskScore ?? scoreMetric.value;
+          scoreMetric.status = scoreMetric.value >= 80 ? 'healthy' : scoreMetric.value >= 60 ? 'warning' : 'critical';
+        }
+        this.securityScore = this.calculateSecurityScore();
+        this.showToast('KPI已重新计算', 'success');
+      }
+    } catch (e) {
+      console.error('[dashboard] loadKPI failed:', e);
+      this.showToast('KPI计算失败', 'error');
+    }
+  }
+
+  @state()
+  private toastMessage: string = '';
+
+  @state()
+  private toastType: 'success' | 'error' | 'info' = 'info';
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    this.toastMessage = message;
+    this.toastType = type;
+    window.setTimeout(() => {
+      this.toastMessage = '';
+      this.requestUpdate();
+    }, 3000);
   }
 
   private generateMockDataPoints(count: number, min: number, max: number): { label: string; value: number }[] {
@@ -652,11 +788,13 @@ export class ScDashboard extends LitElement {
 
   private calculateSecurityScore(): number {
     // 基于各项指标计算综合安全评分
-    const complianceAvg = this.complianceItems.reduce((sum, item) => sum + item.score, 0) / this.complianceItems.length;
-    const riskScore = this.metrics.find(m => m.id === 'risk-score')?.value || 0;
+    const complianceAvg = this.complianceItems.length > 0
+      ? this.complianceItems.reduce((sum, item) => sum + item.score, 0) / this.complianceItems.length
+      : 75;
+    const riskScore = this.metrics.find(m => m.id === 'risk-score')?.value || 72;
     const incidentPenalty = Math.min((this.metrics.find(m => m.id === 'open-incidents')?.value || 0) * 2, 20);
     const vulnPenalty = Math.min((this.metrics.find(m => m.id === 'critical-vulns')?.value || 0) * 3, 15);
-    
+
     return Math.round((complianceAvg * 0.3 + riskScore * 0.4 + 100 - incidentPenalty - vulnPenalty) * 0.3);
   }
 
@@ -889,32 +1027,14 @@ export class ScDashboard extends LitElement {
     return html`
       <div class="dashboard-container">
         <div class="main-content">
-          <div class="page-header">
-            <div class="page-title-section">
-              <h1 class="page-title">
-                <span>🛡️</span>
-                ${this.i18n.t('nav.dashboard') || '安全仪表盘'}
-              </h1>
-              <!-- 一句话说明 - SMART原则 -->
-              <div class="page-description">
-                <span class="page-description-icon">💡</span>
-                <span>一眼看清企业整体安全健康状态，快速发现需要关注的问题</span>
-              </div>
-            </div>
-            <div class="header-actions">
-              <select class="btn btn-secondary" style="padding: 8px 12px;">
-                <option>今日</option>
-                <option>本周</option>
-                <option>本月</option>
-              </select>
-              <button class="btn btn-secondary" @click=${() => this.loadDashboardData()}>
-                🔄 刷新
-              </button>
-              <button class="btn btn-primary">
-                📊 生成报告
-              </button>
-            </div>
-          </div>
+          ${this.toastMessage ? html`<div style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;background:${this.toastType === 'success' ? '#d4edda' : '#f8d7da'};color:${this.toastType === 'success' ? '#155724' : '#721c24'};">
+            ${this.toastType === 'success' ? '✅' : '❌'} ${this.toastMessage}
+          </div>` : ''}
+          
+          <sc-dashboard-header
+            @refresh=${() => this.loadDashboardData()}
+            @kpi-calc=${() => this.loadKPI()}
+          ></sc-dashboard-header>
 
           ${this.renderSecurityScore()}
           ${this.renderInsights()}

@@ -4,9 +4,8 @@
 
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-
-// API Base URL
-const API_BASE = 'http://127.0.0.1:21982/api/v1';
+import { gatewayClient } from '../../gateway-client.js';
+import { I18nController } from '../../../i18n/lib/lit-controller.js';
 
 interface Role {
   id: string;
@@ -187,8 +186,9 @@ export class ScRolesPage extends LitElement {
   @state() private users: User[] = [];
   @state() private selectedRole: Role | null = null;
   @state() private editingPermissions: string[] = [];
-  @state() private loading = false;
+  @state() private _loading = false;
   @state() private activeTab: 'roles' | 'users' = 'roles';
+  @state() private _userLoading = false;
 
   // Lifecycle
   connectedCallback() {
@@ -196,15 +196,37 @@ export class ScRolesPage extends LitElement {
     this.loadRoles();
   }
 
+  private async loadUsers() {
+    this._userLoading = true;
+    try {
+      const res = await gatewayClient.request('roles.listUsers', {});
+      const data = (res as any)?.data ?? res;
+      this.users = Array.isArray(data) ? data.map((u: any) => ({
+        id: u.id, username: u.username, name: u.name ?? u.username,
+        email: u.email, roleIds: u.roleIds ?? [],
+        permissions: u.permissions ?? [], department: u.department,
+      })) : [];
+    } catch (e) {
+      console.error('[roles-page] Load users failed:', e);
+      this.users = [];
+    }
+    this._userLoading = false;
+  }
+
+  private handleTabChange(tab: 'roles' | 'users') {
+    this.activeTab = tab;
+    if (tab === 'users' && this.users.length === 0) {
+      this.loadUsers();
+    }
+  }
+
   // Load roles from backend
   private async loadRoles() {
-    this.loading = true;
+    this._loading = true;
     try {
-      const response = await fetch(`${API_BASE}/roles`);
-      const data = await response.json();
-      if (data.success && data.data) {
-        // Transform backend role format to UI format
-        this.roles = data.data.map((r: any) => ({
+      const result = await gatewayClient.request('roles.list', {});
+      if (result && (result as any).data) {
+        this.roles = (result as any).data.map((r: any) => ({
           id: r.id,
           name: r.name,
           nameCn: r.name,
@@ -218,15 +240,13 @@ export class ScRolesPage extends LitElement {
       }
     } catch (error) {
       console.error('[RolesPage] Failed to load roles:', error);
-      // Fallback to default roles on error
       this.roles = DEFAULT_ROLES;
     } finally {
-      this.loading = false;
+      this._loading = false;
     }
   }
 
-  // Save permissions to backend
-  private async savePermissions() {
+  private async _savePermissions() {
     if (!this.selectedRole) return;
     
     try {
@@ -235,28 +255,19 @@ export class ScRolesPage extends LitElement {
         permissions: this.editingPermissions,
       });
       
-      // Call backend API to update role permissions
-      const response = await fetch(`${API_BASE}/roles/${this.selectedRole.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          permissions: this.editingPermissions,
-        }),
+      const result = await gatewayClient.request('roles.update', {
+        id: this.selectedRole.id,
+        permissions: this.editingPermissions,
       });
       
-      const result = await response.json();
-      if (result.success) {
-        // Update local state
+      if (result) {
         this.selectedRole = {
           ...this.selectedRole,
           permissions: this.editingPermissions,
           updatedAt: Date.now(),
         };
-        // Reload roles to get fresh data
         await this.loadRoles();
         alert(this.i18n.t('roles.saved', '权限配置已保存'));
-      } else {
-        throw new Error(result.error?.message || 'Save failed');
       }
     } catch (error) {
       console.error('[RolesPage] Failed to save permissions:', error);
@@ -501,13 +512,17 @@ export class ScRolesPage extends LitElement {
     return html`
       <div class="page-header">
         <h1 class="page-title">${this.i18n.t('roles.pageTitle', '角色权限管理')}</h1>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" @click=${this.createRole}>+ 新建角色</button>
+          <button class="btn btn-secondary" @click=${this.initializeRoles}>🔄 初始化默认角色</button>
+        </div>
       </div>
 
       <div class="tabs">
-        <div class="tab ${this.activeTab === 'roles' ? 'active' : ''}" @click=${() => this.activeTab = 'roles'}>
+        <div class="tab ${this.activeTab === 'roles' ? 'active' : ''}" @click=${() => this.handleTabChange('roles')}>
           ${this.i18n.t('roles.roles', '角色列表')}
         </div>
-        <div class="tab ${this.activeTab === 'users' ? 'active' : ''}" @click=${() => this.activeTab = 'users'}>
+        <div class="tab ${this.activeTab === 'users' ? 'active' : ''}" @click=${() => this.handleTabChange('users')}>
           ${this.i18n.t('roles.users', '用户列表')}
         </div>
       </div>
@@ -527,6 +542,7 @@ export class ScRolesPage extends LitElement {
                 ${role.type === 'system' ? html`<span class="role-badge">${this.i18n.t('roles.system', '系统')}</span>` : ''}
               </div>
               <div class="role-desc">${role.description}</div>
+              ${role.type === 'custom' ? html`<button class="btn btn-secondary" style="margin-top:8px;font-size:11px;padding:2px 8px;" @click=${(e: Event) => { e.stopPropagation(); this.deleteRole(role.id); }}>🗑️ 删除</button>` : ''}
             </div>
           `)}
         </div>
@@ -537,6 +553,10 @@ export class ScRolesPage extends LitElement {
               <p>${this.i18n.t('roles.selectRole', '请选择一个角色查看权限')}</p>
             </div>
           `}
+          <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" @click=${() => { const id = prompt('角色ID:'); if (id) this.getRole(id).then(r => { if (r) alert(JSON.stringify(r, null, 2)); }); }}>🔍 按ID查询</button>
+            <button class="btn btn-secondary" @click=${() => { const code = prompt('角色编码:'); if (code) this.getRoleByCode(code).then(r => { if (r) alert(JSON.stringify(r, null, 2)); }); }}>🔎 按编码查询</button>
+          </div>
         </div>
       </div>
     `;
@@ -613,14 +633,26 @@ export class ScRolesPage extends LitElement {
                     return role ? html`<span class="role-badge">${role.nameCn}</span>` : null;
                   })}
                 </td>
-                <td style="padding: 12px;">
-                  <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.editUser(user)}>
-                    编辑
-                  </button>
-                  <button class="btn btn-secondary" @click=${() => this.deleteUser(user.id)}>
-                    删除
-                  </button>
-                </td>
+                 <td style="padding: 12px;">
+                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.editUser(user)}>
+                      编辑
+                    </button>
+                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.assignRole(user.id)}>
+                      分配角色
+                    </button>
+                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.removeRoleFromUser(user.id)}>
+                      移除角色
+                    </button>
+                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.getUserPermissions(user.id)}>
+                      查看权限
+                    </button>
+                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.getUser(user.id)}>
+                      详情
+                    </button>
+                    <button class="btn btn-secondary" @click=${() => this.deleteUser(user.id)}>
+                      删除
+                    </button>
+                 </td>
               </tr>
             `)}
           </tbody>
@@ -635,18 +667,127 @@ export class ScRolesPage extends LitElement {
     `;
   }
 
-  private showAddUserDialog() {
-    alert('添加用户功能即将上线');
+  private async showAddUserDialog() {
+    const username = prompt('用户名:');
+    if (!username) return;
+    const name = prompt('姓名:') || username;
+    const email = prompt('邮箱:') || '';
+    const department = prompt('部门:') || '';
+    try {
+      await gatewayClient.request('roles.createUser', { username, name, email, department });
+      this.loadUsers();
+    } catch (e) {
+      console.error('[roles-page] Create user failed:', e);
+    }
   }
 
-  private editUser(user: User) {
-    alert(`编辑用户: ${user.username}`);
+  private async editUser(user: User) {
+    const name = prompt('姓名:', user.name) || user.name;
+    const email = prompt('邮箱:', user.email ?? '') || user.email;
+    const department = prompt('部门:', user.department ?? '') || user.department;
+    try {
+      await gatewayClient.request('roles.updateUser', { id: user.id, name, email, department });
+      this.loadUsers();
+    } catch (e) {
+      console.error('[roles-page] Update user failed:', e);
+    }
   }
 
   private async deleteUser(userId: string) {
-    if (confirm('确定要删除此用户吗？')) {
-      this.users = this.users.filter(u => u.id !== userId);
+    if (!confirm('确定要删除此用户吗？')) return;
+    try {
+      await gatewayClient.request('roles.deleteUser', { id: userId });
+      this.loadUsers();
+    } catch (e) {
+      console.error('[roles-page] Delete user failed:', e);
     }
+  }
+
+  private async assignRole(userId: string) {
+    const roleId = prompt('角色ID:');
+    if (!roleId) return;
+    try {
+      await gatewayClient.request('roles.assignRole', { userId, roleId });
+      this.loadUsers();
+    } catch (e) {
+      console.error('[roles-page] Assign role failed:', e);
+    }
+  }
+
+  private async removeRoleFromUser(userId: string) {
+    const roleId = prompt('要移除的角色ID:');
+    if (!roleId) return;
+    try {
+      await gatewayClient.request('roles.removeRole', { userId, roleId });
+      this.loadUsers();
+    } catch (e) {
+      console.error('[roles-page] Remove role failed:', e);
+    }
+  }
+
+  private async getUserPermissions(userId: string) {
+    try {
+      const res = await gatewayClient.request('roles.getUserPermissions', { userId });
+      const perms = (res as any)?.data ?? res;
+      alert(`用户权限:\n${JSON.stringify(perms, null, 2)}`);
+    } catch (e) {
+      console.error('[roles-page] Get permissions failed:', e);
+    }
+  }
+
+  private async createRole() {
+    const name = prompt('角色名称:');
+    if (!name) return;
+    const code = prompt('角色编码:', '') || '';
+    const description = prompt('角色描述:', '') || '';
+    try {
+      await gatewayClient.request('roles.create', { name, code, description, permissions: {} });
+      this.loadRoles();
+    } catch (e) {
+      console.error('[roles-page] Create role failed:', e);
+    }
+  }
+
+  private async deleteRole(roleId: string) {
+    if (!confirm('确定删除此角色？')) return;
+    try {
+      await gatewayClient.request('roles.delete', { id: roleId });
+      this.loadRoles();
+    } catch (e) {
+      console.error('[roles-page] Delete role failed:', e);
+    }
+  }
+
+  private async initializeRoles() {
+    if (!confirm('确定初始化默认角色？')) return;
+    try {
+      await gatewayClient.request('roles.initialize', {});
+      this.loadRoles();
+    } catch (e) {
+      console.error('[roles-page] Initialize failed:', e);
+    }
+  }
+
+  private async getRole(id: string) {
+    try {
+      const res = await gatewayClient.request('roles.get', { id });
+      return (res as any)?.data ?? res;
+    } catch (e) { console.error('[roles-page] Get role failed:', e); return null; }
+  }
+
+  private async getRoleByCode(code: string) {
+    try {
+      const res = await gatewayClient.request('roles.getByCode', { code });
+      return (res as any)?.data ?? res;
+    } catch (e) { console.error('[roles-page] GetByCode failed:', e); return null; }
+  }
+
+  private async getUser(userId: string) {
+    try {
+      const res = await gatewayClient.request('roles.getUser', { userId });
+      const detail = (res as any)?.data ?? res;
+      alert(`用户详情:\n${JSON.stringify(detail, null, 2)}`);
+    } catch (e) { console.error('[roles-page] GetUser failed:', e); }
   }
 
   private selectRole(role: Role) {

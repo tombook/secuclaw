@@ -8,12 +8,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
-import type { EvidencePack, DomainId } from '../../capabilities-client.js';
+import type { EvidencePack } from '../../capabilities-client.js';
 import { capabilitiesClient } from '../../capabilities-client.js';
-
-interface EvidenceWithVerification extends EvidencePack {
-  verified?: boolean;
-}
 
 @customElement('sc-evidence-panel')
 export class ScEvidencePanel extends LitElement {

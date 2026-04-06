@@ -14,7 +14,7 @@ import '../components/sc-smart-card.js';
 
 @customElement('sc-data-overview')
 export class ScDataOverview extends LitElement {
-  private i18n = new I18nController(this);
+  private _i18n = new I18nController(this);
 
   @state() private loading = true;
   @state() private databases: DatabaseInfo[] = [];

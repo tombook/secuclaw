@@ -299,7 +299,7 @@ export class AnomalyDetectionEngine {
     return anomalies;
   }
 
-  private detectEventAnomalies(events: any[], context: string): Anomaly[]> {
+  private detectEventAnomalies(events: any[], context: string): Anomaly[] {
     const anomalies: Anomaly[] = [];
 
     if (events.length === 0) return anomalies;

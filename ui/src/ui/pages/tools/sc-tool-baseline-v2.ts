@@ -10,7 +10,7 @@ export class ScToolBaselineV2 extends LitElement {
   @state() private activeTab = 'overview';
   @state() private scanResults: any[] = [];
   @state() private isScanning = false;
-  @state() private selectedFramework = 'all';
+  @state() private _selectedFramework = 'all';
   @state() private scanProgress = 0;
 
   static styles = css`

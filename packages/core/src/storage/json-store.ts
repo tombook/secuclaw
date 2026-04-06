@@ -37,21 +37,26 @@ export class JsonStore {
 
   async set<T>(key: string, value: T): Promise<void> {
     const filePath = this.resolvePath(key);
-    await this.ensureDir(filePath);
     
-    // Chain writes to ensure sequential access
+    let capturedError: Error | null = null;
+    
     this.writeLock = this.writeLock.then(async () => {
-      // Write to temp file first, then rename (atomic write)
+      await this.ensureDir(filePath);
       const tempPath = `${filePath}.tmp`;
       await writeFile(tempPath, JSON.stringify(value, null, 2), 'utf-8');
-      // Rename temp to actual (atomic on most systems)
       const fs = await import('fs/promises');
       await fs.rename(tempPath, filePath);
       logger.debug(`Saved: ${key}`);
-    }).catch(() => {
-      // swallow errors to avoid blocking subsequent writes
+    }).catch((error) => {
+      capturedError = error instanceof Error ? error : new Error(String(error));
+      logger.error(`Failed to save: ${key}`, error);
     });
-    return this.writeLock;
+    
+    await this.writeLock;
+    
+    if (capturedError) {
+      throw capturedError;
+    }
   }
 
   async delete(key: string): Promise<boolean> {

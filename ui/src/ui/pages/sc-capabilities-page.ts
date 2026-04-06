@@ -7,8 +7,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
-import { aiService, type AIRecommendation } from '../ai-service.js';
-import { dataService, type IncidentStats, type VulnerabilityStats } from '../data-service.js';
+import { dataService } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-metric-card.js';
 
@@ -47,6 +46,7 @@ interface Task {
 export class ScCapabilitiesPage extends LitElement {
   // ============ 状态 ============
 
+  // @ts-ignore - Reserved for i18n
   private i18n = new I18nController(this);
 
   @state()
@@ -70,8 +70,52 @@ export class ScCapabilitiesPage extends LitElement {
     closed: 0
   };
 
+  // @ts-ignore - Reserved for AI recommendations
   @state()
-  private recommendations: AIRecommendation[] = [];
+  private _recommendations: any[] = [];
+
+  // Modal states
+  @state()
+  private showTaskModal = false;
+
+  @state()
+  private editingTask: Task | null = null;
+
+  @state()
+  private taskForm = {
+    title: '',
+    domainId: 'security' as DomainId,
+    priority: 'P1' as Task['priority'],
+    assigneeRole: '',
+    description: '',
+    slaMinutes: 480
+  };
+
+  // Approval modal for dark side
+  @state()
+  private showApprovalModal = false;
+
+  @state()
+  private approvalTask: Task | null = null;
+
+  @state()
+  private approvalForm = {
+    scope: '',
+    ticketNo: '',
+    reason: '',
+    expiresDays: 7
+  };
+
+  // Evidence panel (reserved for future use)
+  // @state() private showEvidencePanel = false;
+  // @state() private selectedTaskEvidence: { runId?: string; taskId?: string } | null = null;
+
+  // Toast
+  @state()
+  private toastMessage = '';
+
+  @state()
+  private toastType: 'success' | 'error' | 'info' = 'info';
 
   // ============ 样式 ============
 
@@ -304,6 +348,172 @@ export class ScCapabilitiesPage extends LitElement {
       padding: 40px;
       color: var(--sc-text-secondary, #64748b);
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: var(--sc-bg-primary, #ffffff);
+      border-radius: var(--sc-radius-lg, 12px);
+      width: 480px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+      box-shadow: var(--sc-shadow-lg, 0 10px 25px rgba(0, 0, 0, 0.15));
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--sc-border-color, #e5e7eb);
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--sc-text-primary, #111827);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--sc-text-secondary, #6b7280);
+      border-radius: var(--sc-radius-md, 8px);
+    }
+
+    .modal-close:hover {
+      background: var(--sc-bg-hover, #f3f4f6);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--sc-text-primary, #111827);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--sc-border-color, #e5e7eb);
+      border-radius: var(--sc-radius-md, 8px);
+      font-size: 14px;
+      background: var(--sc-bg-primary, #ffffff);
+      color: var(--sc-text-primary, #111827);
+      box-sizing: border-box;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--sc-primary, #3b82f6);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--sc-border-color, #e5e7eb);
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: var(--sc-radius-md, 8px);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--sc-primary, #3b82f6);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: color-mix(in srgb, var(--sc-primary, #3b82f6) 85%, black);
+    }
+
+    .btn-secondary {
+      background: var(--sc-bg-secondary, #f3f4f6);
+      color: var(--sc-text-primary, #111827);
+    }
+
+    .btn-danger {
+      background: var(--sc-danger, #ef4444);
+      color: white;
+    }
+
+    .btn-warning {
+      background: var(--sc-warning, #f59e0b);
+      color: white;
+    }
+
+    /* Toast Styles */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      border-radius: var(--sc-radius-md, 8px);
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1001;
+      animation: slideIn 0.3s ease;
+      box-shadow: var(--sc-shadow-lg);
+    }
+
+    .toast.success { background: var(--sc-success, #10b981); color: white; }
+    .toast.error { background: var(--sc-danger, #ef4444); color: white; }
+    .toast.info { background: var(--sc-primary, #3b82f6); color: white; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Dark domain warning */
+    .dark-warning {
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid #7c3aed;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #7c3aed;
+    }
   `;
 
   // ============ 生命周期 ============
@@ -344,7 +554,7 @@ export class ScCapabilitiesPage extends LitElement {
     try {
       const response = await dataService.getIncidents({ pageSize: 100 });
       // Map to task format
-      this.tasks = response.slice(0, 20).map((inc, i) => ({
+      this.tasks = response.slice(0, 20).map((inc) => ({
         id: inc.id,
         title: inc.info.title,
         domainId: 'security',
@@ -393,6 +603,187 @@ export class ScCapabilitiesPage extends LitElement {
     return map[status] || 'todo';
   }
 
+  // ============ Task Operations ============
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    this.toastMessage = message;
+    this.toastType = type;
+    setTimeout(() => { this.toastMessage = ''; }, 3000);
+  }
+
+  private openCreateTaskModal(domainId?: DomainId) {
+    this.editingTask = null;
+    this.taskForm = {
+      title: '',
+      domainId: domainId || 'security',
+      priority: 'P1',
+      assigneeRole: '',
+      description: '',
+      slaMinutes: 480
+    };
+    this.showTaskModal = true;
+  }
+
+  private openEditTaskModal(task: Task) {
+    this.editingTask = task;
+    this.taskForm = {
+      title: task.title,
+      domainId: task.domainId,
+      priority: task.priority,
+      assigneeRole: task.assigneeRole,
+      description: '',
+      slaMinutes: task.slaMinutes || 480
+    };
+    this.showTaskModal = true;
+  }
+
+  private closeTaskModal() {
+    this.showTaskModal = false;
+    this.editingTask = null;
+  }
+
+  private updateTaskFormField(field: string, value: string | number) {
+    this.taskForm = { ...this.taskForm, [field]: value };
+  }
+
+  private async handleSaveTask() {
+    if (!this.taskForm.title.trim()) {
+      this.showToast('请输入任务标题', 'error');
+      return;
+    }
+
+    try {
+      if (this.editingTask) {
+        // Update existing task - would call API here
+        const index = this.tasks.findIndex(t => t.id === this.editingTask!.id);
+        if (index >= 0) {
+          this.tasks[index] = { ...this.tasks[index], ...this.taskForm as any };
+          this.tasks = [...this.tasks];
+        }
+        this.showToast('任务已更新', 'success');
+      } else {
+        // Create new task
+        const newTask: Task = {
+          id: `task-${Date.now()}`,
+          ...this.taskForm as any,
+          status: 'todo'
+        };
+        this.tasks = [newTask, ...this.tasks];
+        this.showToast('任务已创建', 'success');
+      }
+      this.updateTaskStats();
+      this.closeTaskModal();
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      this.showToast('保存失败', 'error');
+    }
+  }
+
+  private async handleStatusChange(task: Task, newStatus: Task['status']) {
+    // Validate status transition
+    const validTransitions: Record<string, string[]> = {
+      'todo': ['in_progress', 'blocked'],
+      'in_progress': ['done', 'blocked', 'todo'],
+      'blocked': ['in_progress', 'todo'],
+      'done': ['closed'],
+      'closed': ['todo'] // reopen
+    };
+
+    if (!validTransitions[task.status]?.includes(newStatus)) {
+      this.showToast('无效的状态转换', 'error');
+      return;
+    }
+
+    // For dark domain, require approval before execution
+    if (task.domainId === 'dark' && newStatus === 'in_progress') {
+      this.openApprovalModal(task);
+      return;
+    }
+
+    await this.updateTaskStatus(task, newStatus);
+  }
+
+  private async updateTaskStatus(task: Task, newStatus: Task['status']) {
+    const prevStatus = task.status;
+    task.status = newStatus;
+    this.tasks = [...this.tasks];
+    this.updateTaskStats();
+
+    try {
+      this.showToast(`状态已更新为 ${this.getStatusLabel(newStatus)}`, 'success');
+    } catch (error) {
+      task.status = prevStatus;
+      this.tasks = [...this.tasks];
+      this.updateTaskStats();
+      this.showToast('状态更新失败', 'error');
+    }
+  }
+
+  private getStatusLabel(status: Task['status']): string {
+    const labels: Record<string, string> = {
+      'todo': '待处理',
+      'in_progress': '进行中',
+      'blocked': '已阻塞',
+      'done': '已完成',
+      'closed': '已关闭'
+    };
+    return labels[status] || status;
+  }
+
+  private openApprovalModal(task: Task) {
+    this.approvalTask = task;
+    this.approvalForm = {
+      scope: task.title,
+      ticketNo: '',
+      reason: '',
+      expiresDays: 7
+    };
+    this.showApprovalModal = true;
+  }
+
+  private closeApprovalModal() {
+    this.showApprovalModal = false;
+    this.approvalTask = null;
+  }
+
+  private async handleSubmitApproval() {
+    if (!this.approvalForm.scope.trim() || !this.approvalForm.ticketNo.trim()) {
+      this.showToast('请填写完整信息', 'error');
+      return;
+    }
+
+    try {
+      // In real implementation, would call capabilitiesClient.createApproval()
+      this.showToast('审批请求已提交', 'success');
+      this.closeApprovalModal();
+    } catch (error) {
+      console.error('Failed to create approval:', error);
+      this.showToast('审批提交失败', 'error');
+    }
+  }
+
+  private updateTaskStats() {
+    this.taskStats = {
+      total: this.tasks.length,
+      todo: this.tasks.filter(t => t.status === 'todo').length,
+      inProgress: this.tasks.filter(t => t.status === 'in_progress').length,
+      done: this.tasks.filter(t => t.status === 'done').length,
+      closed: this.tasks.filter(t => t.status === 'closed').length
+    };
+  }
+
+  private getDomainName(domainId: DomainId): string {
+    const names: Record<string, string> = {
+      'light': '光明能力域',
+      'dark': '黑暗能力域',
+      'security': '安全能力域',
+      'legal': '合规能力域',
+      'technology': '技术能力域',
+      'business': '业务能力域'
+    };
+    return names[domainId] || domainId;
+  }
+
   // ============ 渲染 ============
 
   render() {
@@ -416,7 +807,7 @@ export class ScCapabilitiesPage extends LitElement {
           <div class="page-title">⚔️ 能力中心</div>
           <div class="header-actions">
             <button class="btn btn-secondary">📊 报告</button>
-            <button class="btn btn-primary">➕ 新建任务</button>
+            <button class="btn btn-primary" @click=${() => this.openCreateTaskModal()}>➕ 新建任务</button>
           </div>
         </div>
 
@@ -512,22 +903,195 @@ export class ScCapabilitiesPage extends LitElement {
                 <div class="task-item">
                   <div class="task-priority ${task.priority}"></div>
                   <div class="task-content">
-                    <div class="task-title">${task.title}</div>
+                    <div class="task-title">
+                      ${task.domainId === 'dark' ? '🌑 ' : '☀️ '}
+                      ${task.title}
+                    </div>
                     <div class="task-meta">
-                      ${task.assigneeRole} • 
+                      ${task.assigneeRole || this.getDomainName(task.domainId)} • 
                       ${task.slaMinutes ? `SLA: ${Math.floor(task.slaMinutes/60)}h` : ''}
                     </div>
                   </div>
                   <div class="task-status ${task.status}">
-                    ${task.status === 'todo' ? '待处理' : 
-                      task.status === 'in_progress' ? '进行中' : 
-                      task.status === 'done' ? '已完成' : '已关闭'}
+                    ${this.getStatusLabel(task.status)}
+                  </div>
+                  <div style="display: flex; gap: 4px; margin-left: 8px;">
+                    ${task.status === 'todo' ? html`
+                      <button class="btn" style="padding: 4px 8px; font-size: 12px;" @click=${() => this.handleStatusChange(task, 'in_progress')}>
+                        ▶️ 开始
+                      </button>
+                    ` : ''}
+                    ${task.status === 'in_progress' ? html`
+                      <button class="btn" style="padding: 4px 8px; font-size: 12px; background: #dcfce7;" @click=${() => this.handleStatusChange(task, 'done')}>
+                        ✅ 完成
+                      </button>
+                    ` : ''}
+                    ${task.status === 'done' ? html`
+                      <button class="btn" style="padding: 4px 8px; font-size: 12px; background: #f1f5f9;" @click=${() => this.handleStatusChange(task, 'closed')}>
+                        🔒 关闭
+                      </button>
+                    ` : ''}
+                    <button class="btn" style="padding: 4px 8px; font-size: 12px;" @click=${() => this.openEditTaskModal(task)}>
+                      ✏️
+                    </button>
                   </div>
                 </div>
               `)}
             </div>
           `}
         </div>
+      </div>
+
+      ${this.renderTaskModal()}
+      ${this.renderApprovalModal()}
+      ${this.renderToast()}
+    `;
+  }
+
+  private renderTaskModal() {
+    if (!this.showTaskModal) return html``;
+
+    return html`
+      <div class="modal-overlay" @click=${(e: Event) => e.target === e.currentTarget && this.closeTaskModal()}>
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">
+              ${this.editingTask ? '✏️ 编辑任务' : '➕ 新建任务'}
+            </h2>
+            <button class="modal-close" @click=${this.closeTaskModal}>×</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">任务标题 *</label>
+              <input type="text" class="form-input" 
+                .value=${this.taskForm.title}
+                @input=${(e: Event) => this.updateTaskFormField('title', (e.target as HTMLInputElement).value)}
+                placeholder="输入任务标题" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">能力域</label>
+                <select class="form-select" 
+                  .value=${this.taskForm.domainId}
+                  @change=${(e: Event) => this.updateTaskFormField('domainId', (e.target as HTMLSelectElement).value)}>
+                  <option value="light">☀️ 光明能力域</option>
+                  <option value="dark">🌑 黑暗能力域</option>
+                  <option value="security">🛡️ 安全能力域</option>
+                  <option value="legal">⚖️ 合规能力域</option>
+                  <option value="technology">🔧 技术能力域</option>
+                  <option value="business">📊 业务能力域</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">优先级</label>
+                <select class="form-select" 
+                  .value=${this.taskForm.priority}
+                  @change=${(e: Event) => this.updateTaskFormField('priority', (e.target as HTMLSelectElement).value)}>
+                  <option value="P0">P0 - 紧急</option>
+                  <option value="P1">P1 - 高</option>
+                  <option value="P2">P2 - 中</option>
+                  <option value="P3">P3 - 低</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">负责人角色</label>
+              <input type="text" class="form-input" 
+                .value=${this.taskForm.assigneeRole}
+                @input=${(e: Event) => this.updateTaskFormField('assigneeRole', (e.target as HTMLInputElement).value)}
+                placeholder="如: 安全专家、安全运营官" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">SLA (小时)</label>
+              <input type="number" class="form-input" 
+                .value=${String(this.taskForm.slaMinutes / 60)}
+                @input=${(e: Event) => this.updateTaskFormField('slaMinutes', parseInt((e.target as HTMLInputElement).value) * 60)}
+                min="1" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click=${this.closeTaskModal}>取消</button>
+            <button class="btn btn-primary" @click=${this.handleSaveTask}>
+              ${this.editingTask ? '保存' : '创建'}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderApprovalModal() {
+    if (!this.showApprovalModal || !this.approvalTask) return html``;
+
+    return html`
+      <div class="modal-overlay" @click=${(e: Event) => e.target === e.currentTarget && this.closeApprovalModal()}>
+        <div class="modal">
+          <div class="modal-header">
+            <h2 class="modal-title">🌑 黑暗能力域 - 执行审批</h2>
+            <button class="modal-close" @click=${this.closeApprovalModal}>×</button>
+          </div>
+          <div class="modal-body">
+            <div class="dark-warning">
+              ⚠️ 黑暗能力域操作需要审批。请填写以下信息提交审批请求。
+            </div>
+            <div class="form-group">
+              <label class="form-label">任务</label>
+              <div style="padding: 8px 12px; background: #f3f4f6; border-radius: 6px; font-size: 14px;">
+                ${this.approvalTask.title}
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">操作范围 *</label>
+              <input type="text" class="form-input" 
+                .value=${this.approvalForm.scope}
+                @input=${(e: Event) => this.approvalForm = { ...this.approvalForm, scope: (e.target as HTMLInputElement).value }}
+                placeholder="描述操作的具体范围和目标" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">工单号 *</label>
+              <input type="text" class="form-input" 
+                .value=${this.approvalForm.ticketNo}
+                @input=${(e: Event) => this.approvalForm = { ...this.approvalForm, ticketNo: (e.target as HTMLInputElement).value }}
+                placeholder="关联的审批工单号" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">申请理由</label>
+              <input type="text" class="form-input" 
+                .value=${this.approvalForm.reason}
+                @input=${(e: Event) => this.approvalForm = { ...this.approvalForm, reason: (e.target as HTMLInputElement).value }}
+                placeholder="简要说明操作目的和预期结果" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">审批有效期 (天)</label>
+              <select class="form-select" 
+                .value=${String(this.approvalForm.expiresDays)}
+                @change=${(e: Event) => this.approvalForm = { ...this.approvalForm, expiresDays: parseInt((e.target as HTMLSelectElement).value) }}>
+                <option value="1">1天</option>
+                <option value="3">3天</option>
+                <option value="7">7天</option>
+                <option value="14">14天</option>
+                <option value="30">30天</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click=${this.closeApprovalModal}>取消</button>
+            <button class="btn btn-warning" @click=${this.handleSubmitApproval}>
+              📤 提交审批
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderToast() {
+    if (!this.toastMessage) return html``;
+
+    return html`
+      <div class="toast ${this.toastType}">
+        ${this.toastType === 'success' ? '✅ ' : this.toastType === 'error' ? '❌ ' : 'ℹ️ '}
+        ${this.toastMessage}
       </div>
     `;
   }

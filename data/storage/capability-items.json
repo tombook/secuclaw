@@ -1,0 +1,676 @@
+[
+  {
+    "id": "light-01",
+    "domainId": "light",
+    "name": "威胁监控与检测",
+    "nameEn": "Threat Monitoring & Detection",
+    "description": "监控与检测威胁活动",
+    "descriptionEn": "Monitor and detect threat activity",
+    "ownerRoles": [
+      "security-analyst"
+    ],
+    "partnerRoles": [
+      "security-engineer"
+    ],
+    "tools": [
+      "SIEM",
+      "EDR"
+    ],
+    "mitreCoverage": [
+      "T1056"
+    ],
+    "scfCoverage": [
+      "SCF-01"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 1,
+    "createdAt": 1773727636264,
+    "updatedAt": 1774591636264
+  },
+  {
+    "id": "light-02",
+    "domainId": "light",
+    "name": "安全事件响应",
+    "nameEn": "Incident Response",
+    "description": "检测后响应与处置安全事件",
+    "descriptionEn": "Detect and respond to security incidents",
+    "ownerRoles": [
+      "security-analyst"
+    ],
+    "partnerRoles": [
+      "forensics"
+    ],
+    "tools": [
+      "SOAR"
+    ],
+    "mitreCoverage": [
+      "TA0001"
+    ],
+    "scfCoverage": [
+      "SCF-02"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1774073236264,
+    "updatedAt": 1775023636264
+  },
+  {
+    "id": "light-03",
+    "domainId": "light",
+    "name": "安全日志分析",
+    "nameEn": "Log Analysis",
+    "description": "分析安全日志以发现异常活动",
+    "descriptionEn": "Analyze security logs for anomalies",
+    "ownerRoles": [
+      "security-analyst"
+    ],
+    "partnerRoles": [
+      "it-ops"
+    ],
+    "tools": [
+      "ELK"
+    ],
+    "mitreCoverage": [
+      "TA0004"
+    ],
+    "scfCoverage": [
+      "SCF-03"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 3,
+    "createdAt": 1774418836264,
+    "updatedAt": 1775196436264
+  },
+  {
+    "id": "light-04",
+    "domainId": "light",
+    "name": "异常行为检测",
+    "nameEn": "Anomaly Detection",
+    "description": "检测用户与系统的异常行为模式",
+    "descriptionEn": "Detect anomalous user/system behaviors",
+    "ownerRoles": [
+      "security-analyst"
+    ],
+    "partnerRoles": [
+      "data-scientist"
+    ],
+    "tools": [
+      "ML-SIEM"
+    ],
+    "mitreCoverage": [
+      "TA0005"
+    ],
+    "scfCoverage": [
+      "SCF-04"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1774764436264,
+    "updatedAt": 1775282836264
+  },
+  {
+    "id": "dark-01",
+    "domainId": "dark",
+    "name": "渗透测试",
+    "nameEn": "Penetration Testing",
+    "description": "模拟攻击以发现薄弱点",
+    "descriptionEn": "Simulate attacks to identify weaknesses",
+    "ownerRoles": [
+      "red-team-lead"
+    ],
+    "partnerRoles": [
+      "blue-team"
+    ],
+    "tools": [
+      "Metasploit",
+      "Burp"
+    ],
+    "mitreCoverage": [
+      "T1059"
+    ],
+    "scfCoverage": [
+      "SCF-11"
+    ],
+    "enabled": true,
+    "requiresApproval": true,
+    "priority": 1,
+    "createdAt": 1772863636264,
+    "updatedAt": 1774246036264
+  },
+  {
+    "id": "dark-02",
+    "domainId": "dark",
+    "name": "红队演练",
+    "nameEn": "Red Team Exercise",
+    "description": "完整模拟攻防演练",
+    "descriptionEn": "Comprehensive red team exercise",
+    "ownerRoles": [
+      "red-team-lead"
+    ],
+    "partnerRoles": [
+      "blue-team"
+    ],
+    "tools": [
+      "Cobalt Strike"
+    ],
+    "mitreCoverage": [
+      "T1086"
+    ],
+    "scfCoverage": [
+      "SCF-12"
+    ],
+    "enabled": true,
+    "requiresApproval": true,
+    "priority": 2,
+    "createdAt": 1773295636264,
+    "updatedAt": 1775023636264
+  },
+  {
+    "id": "dark-03",
+    "domainId": "dark",
+    "name": "社会工程测试",
+    "nameEn": "Social Engineering",
+    "description": "模拟社工攻击以测试组织防线",
+    "descriptionEn": "Simulate social engineering attacks to test defenses",
+    "ownerRoles": [
+      "social-eng-ops"
+    ],
+    "partnerRoles": [
+      "security-awareness"
+    ],
+    "tools": [
+      "phishing-kit"
+    ],
+    "mitreCoverage": [
+      "T1566"
+    ],
+    "scfCoverage": [
+      "SCF-13"
+    ],
+    "enabled": true,
+    "requiresApproval": true,
+    "priority": 3,
+    "createdAt": 1773727636264,
+    "updatedAt": 1775110036264
+  },
+  {
+    "id": "dark-04",
+    "domainId": "dark",
+    "name": "漏洞利用验证",
+    "nameEn": "Exploit Validation",
+    "description": "验证已发现漏洞是否可被利用",
+    "descriptionEn": "Validate exploitability of identified vulnerabilities",
+    "ownerRoles": [
+      "red-team-ops"
+    ],
+    "partnerRoles": [
+      "blue-team"
+    ],
+    "tools": [
+      "Immunity"
+    ],
+    "mitreCoverage": [
+      "T1203"
+    ],
+    "scfCoverage": [
+      "SCF-14"
+    ],
+    "enabled": true,
+    "requiresApproval": true,
+    "priority": 4,
+    "createdAt": 1773900436264,
+    "updatedAt": 1775196436264
+  },
+  {
+    "id": "sec-01",
+    "domainId": "security",
+    "name": "安全策略制定",
+    "nameEn": "Security Policy Creation",
+    "description": "制定组织的安全策略",
+    "descriptionEn": "Create security policies for the organization",
+    "ownerRoles": [
+      "policy-manager"
+    ],
+    "partnerRoles": [
+      "security-officer"
+    ],
+    "tools": [
+      "PolicyGen"
+    ],
+    "mitreCoverage": [
+      "TA0001"
+    ],
+    "scfCoverage": [
+      "SCF-21"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 1,
+    "createdAt": 1773036436264,
+    "updatedAt": 1774850836264
+  },
+  {
+    "id": "sec-02",
+    "domainId": "security",
+    "name": "风险评估",
+    "nameEn": "Risk Assessment",
+    "description": "识别与评估信息系统风险",
+    "descriptionEn": "Identify and assess information system risks",
+    "ownerRoles": [
+      "risk-manager"
+    ],
+    "partnerRoles": [
+      "it-ao"
+    ],
+    "tools": [
+      "RiskTool"
+    ],
+    "mitreCoverage": [
+      "TA0009"
+    ],
+    "scfCoverage": [
+      "SCF-22"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1773554836264,
+    "updatedAt": 1774937236264
+  },
+  {
+    "id": "sec-03",
+    "domainId": "security",
+    "name": "安全培训",
+    "nameEn": "Security Training",
+    "description": "对员工进行安全意识培训",
+    "descriptionEn": "Security awareness training for employees",
+    "ownerRoles": [
+      "security-education"
+    ],
+    "partnerRoles": [
+      "hr"
+    ],
+    "tools": [
+      "LMS"
+    ],
+    "mitreCoverage": [
+      "TA0043"
+    ],
+    "scfCoverage": [
+      "SCF-23"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 3,
+    "createdAt": 1774159636264,
+    "updatedAt": 1775282836264
+  },
+  {
+    "id": "sec-04",
+    "domainId": "security",
+    "name": "资产与访问管理",
+    "nameEn": "Asset & Access Management",
+    "description": "管理资产清单与访问权限",
+    "descriptionEn": "Manage asset inventory and access permissions",
+    "ownerRoles": [
+      "it-admin"
+    ],
+    "partnerRoles": [
+      "sec-admin"
+    ],
+    "tools": [
+      "IAM"
+    ],
+    "mitreCoverage": [
+      "TA0007"
+    ],
+    "scfCoverage": [
+      "SCF-24"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1774418836264,
+    "updatedAt": 1775369236264
+  },
+  {
+    "id": "leg-01",
+    "domainId": "legal",
+    "name": "隐私影响评估",
+    "nameEn": "PIA",
+    "description": "评估数据处理对隐私的影响",
+    "descriptionEn": "Assess privacy impact of data processing",
+    "ownerRoles": [
+      "privacy-officer"
+    ],
+    "partnerRoles": [
+      "compliance-team"
+    ],
+    "tools": [
+      "PIA-tool"
+    ],
+    "mitreCoverage": [
+      "TA0003"
+    ],
+    "scfCoverage": [
+      "SCF-31"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 1,
+    "createdAt": 1773295636264,
+    "updatedAt": 1775023636264
+  },
+  {
+    "id": "leg-02",
+    "domainId": "legal",
+    "name": "合规审计",
+    "nameEn": "Compliance Audit",
+    "description": "对合规要求的审计与证明",
+    "descriptionEn": "Audit and prove compliance requirements",
+    "ownerRoles": [
+      "compliance-auditor"
+    ],
+    "partnerRoles": [
+      "external-auditors"
+    ],
+    "tools": [
+      "AuditSuite"
+    ],
+    "mitreCoverage": [
+      "TA0002"
+    ],
+    "scfCoverage": [
+      "SCF-32"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1773900436264,
+    "updatedAt": 1775110036264
+  },
+  {
+    "id": "leg-03",
+    "domainId": "legal",
+    "name": "监管报告",
+    "nameEn": "Regulatory Reporting",
+    "description": "定期向监管机构提交报告",
+    "descriptionEn": "Regular reporting to regulators",
+    "ownerRoles": [
+      "regulatory-comms"
+    ],
+    "partnerRoles": [
+      "regulators"
+    ],
+    "tools": [
+      "ReportGen"
+    ],
+    "mitreCoverage": [
+      "TA0006"
+    ],
+    "scfCoverage": [
+      "SCF-33"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 3,
+    "createdAt": 1774246036264,
+    "updatedAt": 1775196436264
+  },
+  {
+    "id": "leg-04",
+    "domainId": "legal",
+    "name": "隐私合规培训",
+    "nameEn": "Privacy Compliance Training",
+    "description": "培训员工隐私合规要点",
+    "descriptionEn": "Train employees on privacy compliance",
+    "ownerRoles": [
+      "privacy-edu"
+    ],
+    "partnerRoles": [
+      "legal"
+    ],
+    "tools": [
+      "TrainingPlatform"
+    ],
+    "mitreCoverage": [
+      "TA0010"
+    ],
+    "scfCoverage": [
+      "SCF-34"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1774591636264,
+    "updatedAt": 1775282836264
+  },
+  {
+    "id": "tech-01",
+    "domainId": "technology",
+    "name": "漏洞扫描",
+    "nameEn": "Vulnerability Scanning",
+    "description": "定期扫描漏洞并跟踪修复",
+    "descriptionEn": "Regular vulnerability scanning and remediation tracking",
+    "ownerRoles": [
+      "sec-arch"
+    ],
+    "partnerRoles": [
+      "dev-ops"
+    ],
+    "tools": [
+      "Nessus"
+    ],
+    "mitreCoverage": [
+      "TA0003"
+    ],
+    "scfCoverage": [
+      "SCF-41"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 1,
+    "createdAt": 1773209236264,
+    "updatedAt": 1774937236264
+  },
+  {
+    "id": "tech-02",
+    "domainId": "technology",
+    "name": "补丁管理",
+    "nameEn": "Patch Management",
+    "description": "管理系统与应用的补丁",
+    "descriptionEn": "Manage patches for systems and applications",
+    "ownerRoles": [
+      "it-admin"
+    ],
+    "partnerRoles": [
+      "security-team"
+    ],
+    "tools": [
+      "WSUS"
+    ],
+    "mitreCoverage": [
+      "TA0008"
+    ],
+    "scfCoverage": [
+      "SCF-42"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1773554836264,
+    "updatedAt": 1775110036264
+  },
+  {
+    "id": "tech-03",
+    "domainId": "technology",
+    "name": "资产管理",
+    "nameEn": "Asset Management",
+    "description": "清点并追踪IT资产",
+    "descriptionEn": "Inventory and track IT assets",
+    "ownerRoles": [
+      "asset-manager"
+    ],
+    "partnerRoles": [
+      "it-team"
+    ],
+    "tools": [
+      "CMDB"
+    ],
+    "mitreCoverage": [
+      "TA0006"
+    ],
+    "scfCoverage": [
+      "SCF-43"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1773900436264,
+    "updatedAt": 1775282836264
+  },
+  {
+    "id": "tech-04",
+    "domainId": "technology",
+    "name": "配置审计",
+    "nameEn": "Configuration Audit",
+    "description": "审计系统配置与合规性",
+    "descriptionEn": "Audit system configurations and compliance",
+    "ownerRoles": [
+      "config-auditor"
+    ],
+    "partnerRoles": [
+      "dev-ops"
+    ],
+    "tools": [
+      "ConfigMgmt"
+    ],
+    "mitreCoverage": [
+      "TA0005"
+    ],
+    "scfCoverage": [
+      "SCF-44"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 3,
+    "createdAt": 1774246036264,
+    "updatedAt": 1775196436264
+  },
+  {
+    "id": "biz-01",
+    "domainId": "business",
+    "name": "供应链安全",
+    "nameEn": "Supply Chain Security",
+    "description": "确保供应商与合作方的安全性",
+    "descriptionEn": "Ensure security of suppliers and partners",
+    "ownerRoles": [
+      "supply-chain-security"
+    ],
+    "partnerRoles": [
+      "procurement"
+    ],
+    "tools": [
+      "VendorRisk"
+    ],
+    "mitreCoverage": [
+      "TA0009"
+    ],
+    "scfCoverage": [
+      "SCF-51"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 1,
+    "createdAt": 1773382036264,
+    "updatedAt": 1774937236264
+  },
+  {
+    "id": "biz-02",
+    "domainId": "business",
+    "name": "第三方风险管理",
+    "nameEn": "Third-Party Risk",
+    "description": "评估第三方风险与合规性",
+    "descriptionEn": "Assess third-party risk and compliance",
+    "ownerRoles": [
+      "vendor-security"
+    ],
+    "partnerRoles": [
+      "compliance-team"
+    ],
+    "tools": [
+      "VendorScan"
+    ],
+    "mitreCoverage": [
+      "TA0002"
+    ],
+    "scfCoverage": [
+      "SCF-52"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1773727636264,
+    "updatedAt": 1775110036264
+  },
+  {
+    "id": "biz-03",
+    "domainId": "business",
+    "name": "业务连续性",
+    "nameEn": "Business Continuity",
+    "description": "保障关键业务在灾难时段的连续性",
+    "descriptionEn": "Ensure business continuity during disasters",
+    "ownerRoles": [
+      "bc-manager"
+    ],
+    "partnerRoles": [
+      "it-ops"
+    ],
+    "tools": [
+      "BCP"
+    ],
+    "mitreCoverage": [
+      "TA0000"
+    ],
+    "scfCoverage": [
+      "SCF-53"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 3,
+    "createdAt": 1774159636264,
+    "updatedAt": 1775282836264
+  },
+  {
+    "id": "biz-04",
+    "domainId": "business",
+    "name": "欺诈检测",
+    "nameEn": "Fraud Detection",
+    "description": "识别并预防业务欺诈",
+    "descriptionEn": "Identify and prevent business fraud",
+    "ownerRoles": [
+      "fraud-analyst"
+    ],
+    "partnerRoles": [
+      "finance"
+    ],
+    "tools": [
+      "FraudEngine"
+    ],
+    "mitreCoverage": [
+      "TA0004"
+    ],
+    "scfCoverage": [
+      "SCF-54"
+    ],
+    "enabled": true,
+    "requiresApproval": false,
+    "priority": 2,
+    "createdAt": 1774418836264,
+    "updatedAt": 1775369236264
+  }
+]

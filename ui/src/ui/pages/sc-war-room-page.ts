@@ -8,6 +8,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
+import { gatewayClient } from '../gateway-client.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 
@@ -54,10 +55,24 @@ export class ScWarRoomPage extends LitElement {
   @state() private activeIncidents: WarRoomIncident[] = [];
   @state() private teamMembers: TeamMember[] = [];
   @state() private activities: Activity[] = [];
-  @state() private insights: SmartInsight[] = [];
+  @state() private _insights: SmartInsight[] = [];
   @state() private recommendations: AIRecommendation[] = [];
   @state() private selectedIncident: WarRoomIncident | null = null;
-  @state() private newComment = '';
+  @state() private _newComment = '';
+  @state() private playbooks: any[] = [];
+  @state() private playbookExecutions: any[] = [];
+  @state() private executingPlaybookId: string | null = null;
+  @state() private playbookResult: any = null;
+  @state() private toastMessage: string = '';
+  @state() private toastType: 'success' | 'error' | 'info' = 'info';
+
+  private readonly fallbackPlaybooks = [
+    { id: 'pb-incident-response', name: '安全事件自动响应', description: '自动隔离受影响资产并通知安全团队', status: 'enabled', triggerType: 'alarm' },
+    { id: 'pb-ransomware', name: '勒索软件应急处置', description: '检测→隔离→取证→恢复→报告', status: 'enabled', triggerType: 'alarm' },
+    { id: 'pb-ddos-mitigation', name: 'DDoS攻击缓解', description: '检测异常流量→自动启动流量清洗→CDN切换→恢复', status: 'enabled', triggerType: 'alarm' },
+    { id: 'pb-vuln-auto-patch', name: '高危漏洞自动修补', description: '检测高危漏洞→测试补丁→部署补丁→验证', status: 'disabled', triggerType: 'cron' },
+    { id: 'pb-compliance-scan', name: '合规自动检查', description: '定期扫描配置→对比合规框架→生成差距报告', status: 'enabled', triggerType: 'cron' },
+  ];
 
   static get styles() {
     return css`
@@ -397,25 +412,128 @@ export class ScWarRoomPage extends LitElement {
       height: calc(100vh - var(--sc-spacing-lg, 20px) * 2);
       overflow: hidden;
     }
+    .playbook-section{
+      background-color: var(--sc-bg-card, #ffffff);
+      border: 1px solid var(--sc-border-color, #e2e8f0);
+      border-radius: var(--sc-radius-lg, 12px);
+      padding: var(--sc-spacing-lg, 20px);
+    }
+    .playbook-grid{
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--sc-spacing-md, 16px);
+    }
+    @media (max-width: 768px) {
+      .playbook-grid { grid-template-columns: 1fr; }
+    }
+    .playbook-card{
+      background-color: var(--sc-bg-secondary, #f8fafc);
+      border: 1px solid var(--sc-border-color, #e2e8f0);
+      border-radius: var(--sc-radius-md, 8px);
+      padding: var(--sc-spacing-md, 16px);
+      transition: border-color 0.2s ease;
+    }
+    .playbook-card:hover{
+      border-color: var(--sc-primary, #3b82f6);
+    }
+    .playbook-card-header{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--sc-spacing-sm, 8px);
+    }
+    .playbook-card-name{
+      font-size: var(--sc-font-size-sm, 14px);
+      font-weight: 600;
+      color: var(--sc-text-primary, #1e293b);
+    }
+    .playbook-status{
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: var(--sc-font-size-xs, 12px);
+      font-weight: 500;
+    }
+    .playbook-status.enabled{ background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .playbook-status.disabled{ background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+    .playbook-card-desc{
+      font-size: var(--sc-font-size-xs, 12px);
+      color: var(--sc-text-secondary, #64748b);
+      margin-bottom: var(--sc-spacing-sm, 8px);
+      line-height: 1.5;
+    }
+    .playbook-card-footer{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .playbook-trigger{
+      font-size: var(--sc-font-size-xs, 12px);
+      color: var(--sc-text-tertiary, #94a3b8);
+    }
+    .btn-execute{
+      padding: 4px 12px;
+      border-radius: var(--sc-radius-sm, 4px);
+      font-size: var(--sc-font-size-xs, 12px);
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background-color: var(--sc-primary, #3b82f6);
+      color: white;
+      transition: all 0.2s ease;
+    }
+    .btn-execute:hover:not(:disabled){
+      background-color: var(--sc-primary-dark, #2563eb);
+    }
+    .btn-execute:disabled{
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .playbook-result{
+      margin-top: var(--sc-spacing-md, 16px);
+      padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
+      border-radius: var(--sc-radius-md, 8px);
+      font-size: var(--sc-font-size-sm, 14px);
+    }
+    .playbook-result.success{ background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
+    .playbook-result.error{ background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
   `;
   }
 
   constructor() {
     super();
-    this.loadWarRoomData();
   }
 
-  private async loadWarRoomData() {
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadData();
+  }
+
+  private async loadData() {
     this.loading = true;
     try {
+  
+      try {
+        const pbRes = await gatewayClient.request('playbook.list', {});
+        const pbData = (pbRes as any)?.data ?? pbRes;
+        if (Array.isArray(pbData) && pbData.length > 0) {
+          this.playbooks = pbData;
+        } else {
+          this.playbooks = [...this.fallbackPlaybooks];
+        }
+      } catch {
+        this.playbooks = [...this.fallbackPlaybooks];
+      }
       await this.loadIncidents();
       await this.loadTeamMembers();
       await this.loadActivities();
+  
       await this.loadAIInsights();
     } finally {
       this.loading = false;
     }
   }
+
+  
 
   private async loadIncidents() {
     this.activeIncidents = [
@@ -450,7 +568,7 @@ export class ScWarRoomPage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights({
+      this._insights = await aiService.generateInsights({
         pageId: 'war-room',
         data: { incidents: this.activeIncidents, team: this.teamMembers },
         userRole: 'security-expert'
@@ -463,9 +581,182 @@ export class ScWarRoomPage extends LitElement {
     } catch (error) {
       console.error('Failed to load AI insights:', error);
       // AI insights are non-critical, continue without them
-      this.insights = [];
+      this._insights = [];
       this.recommendations = [];
     }
+  }
+
+  private async loadPlaybooks() {
+    try {
+      const res = await gatewayClient.request('playbook.list', {});
+      const data = (res as any)?.data ?? res;
+      if (Array.isArray(data) && data.length > 0) {
+        this.playbooks = [...data];
+      } else {
+        this.playbooks = this.fallbackPlaybooks.map(p => ({ ...p }));
+      }
+    } catch {
+      this.playbooks = this.fallbackPlaybooks.map(p => ({ ...p }));
+    }
+  }
+
+  private async executePlaybook(playbookId: string) {
+    try {
+      const res = await gatewayClient.request('playbook.start', { playbookId });
+      const execId = (res as any)?.execId ?? (res as any)?.id;
+      // Prepend to executions for quick audit
+      this.playbookExecutions = [
+        { playbookId, execId, startedAt: new Date(), status: 'started', detail: res },
+        ...(this.playbookExecutions || [])
+      ];
+      console.log('[WarRoom] Playbook execution started:', res);
+    } catch (e) {
+      this.playbookExecutions = [{ playbookId, startedAt: new Date(), status: 'failed', error: e instanceof Error ? e.message : '执行失败' }, ...(this.playbookExecutions || [])];
+      console.warn('[WarRoom] Playbook execution failed:', e);
+    }
+  }
+
+  private async pollPlaybookStatus(playbookId: string, execId: string) {
+    try {
+      const res = await gatewayClient.request('playbook.getStatus', { playbookId, execId });
+      const status = (res as any)?.status;
+      if (status === 'running') {
+        setTimeout(() => this.pollPlaybookStatus(playbookId, execId), 3000);
+      } else {
+        this.playbookResult = { success: status !== 'failed', data: res };
+        this.executingPlaybookId = null;
+        try {
+          const exec = await gatewayClient.request('playbook.getExecution', { execId });
+          this.playbookResult = { success: status !== 'failed', data: Object.assign({}, res, { execution: exec }) };
+        } catch {}
+      }
+    } catch (e) {
+      this.playbookResult = { success: false, error: '状态查询失败' };
+      this.executingPlaybookId = null;
+    }
+  }
+
+  private async cancelPlaybook(playbookId: string) {
+    try {
+      await gatewayClient.request('playbook.cancel', { playbookId });
+      this.playbookResult = { success: true, data: { status: 'cancelled' } };
+      this.executingPlaybookId = null;
+    } catch (e) {
+      console.error('[war-room] Cancel failed:', e);
+    }
+  }
+
+  private async createNewPlaybook() {
+    const name = prompt('剧本名称:');
+    if (!name) return;
+    const description = prompt('剧本描述:') || '';
+    try {
+      await gatewayClient.request('playbook.create', { playbook: { name, description, version: '1.0' } });
+      this.showToast('剧本创建成功', 'success');
+      this.loadPlaybooks();
+    } catch { this.showToast('创建失败', 'error'); }
+  }
+
+  private async deletePlaybook(id: string) {
+    if (!confirm('确定删除此剧本？')) return;
+    try {
+      await gatewayClient.request('playbook.delete', { id });
+      this.showToast('剧本已删除', 'success');
+      this.loadPlaybooks();
+    } catch { this.showToast('删除失败', 'error'); }
+  }
+
+  private async updatePlaybookInfo(pb: Record<string, unknown>) {
+    const name = prompt('新名称:', pb.name as string);
+    if (!name) return;
+    const description = prompt('新描述:', pb.description as string);
+    try {
+      await gatewayClient.request('playbook.update', { id: pb.id as string, updates: { name, description } });
+      this.showToast('剧本已更新', 'success');
+      this.loadPlaybooks();
+    } catch { this.showToast('更新失败', 'error'); }
+  }
+
+  private async loadPlaybookExecutions() {
+    try {
+      const res = await gatewayClient.request('playbook.listExecutions', {});
+      const data = (res as Record<string, unknown>)?.data ?? res;
+      if (Array.isArray(data) && data.length > 0) {
+        this.showToast(`共 ${data.length} 条执行记录`, 'success');
+      } else {
+        this.showToast('暂无执行记录', 'info');
+      }
+    } catch { this.showToast('查询失败', 'error'); }
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
+    this.toastMessage = message;
+    this.toastType = type;
+    setTimeout(() => { this.toastMessage = ''; this.toastType = 'info'; }, 3000);
+  }
+
+  private async getPlaybookDetail(playbookId: string) {
+    try {
+      const res = await gatewayClient.request('playbook.get', { playbookId });
+      const detail = (res as any)?.data ?? res;
+      alert(`Playbook详情:\n${JSON.stringify(detail, null, 2)}`);
+    } catch (e) { console.error('[war-room] Get playbook failed:', e); }
+  }
+
+  private async createCommanderAction() {
+    const action = prompt('指挥官操作 (isolate/block/alert):', 'alert');
+    if (!action) return;
+    const target = prompt('目标:') || '';
+    try {
+      await gatewayClient.request('commander.create', { action, target, priority: 'high' });
+    } catch (e) { console.error('[war-room] Commander create failed:', e); }
+  }
+
+  private async getCommanderStatus() {
+    try {
+      const res = await gatewayClient.request('commander.get', {});
+      const status = (res as any)?.data ?? res;
+      if (status) alert(`指挥官状态:\n${JSON.stringify(status, null, 2)}`);
+    } catch (e) { console.error('[war-room] Commander get failed:', e); }
+  }
+
+  private renderPlaybookPanel() {
+    return html`
+      <div class="playbook-section">
+        <div class="section-header">
+          <h3 class="section-title">🤖 Playbook自动化</h3>
+          <span style="font-size:12px;color:var(--sc-text-secondary);">${this.playbooks.length} 个剧本</span>
+        </div>
+        ${this.playbookResult ? html`
+          <div class="playbook-result ${this.playbookResult.success ? 'success' : 'error'}" style="padding:12px;border-radius:8px;margin-bottom:16px;font-size:13px;">
+            ${this.playbookResult.success
+              ? html`✅ 执行成功 — 任务ID: ${(this.playbookResult.data as any)?.execId ?? 'N/A'}`
+              : html`❌ ${(this.playbookResult.error as string) ?? '执行失败'}`}
+          </div>
+        ` : ''}
+        <div class="playbook-grid">
+          ${this.playbooks.map(pb => html`
+            <div class="playbook-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <strong style="font-size:14px;color:var(--sc-text-primary);">${pb.name}</strong>
+                <span class="playbook-trigger" style="padding:2px 8px;border-radius:10px;font-size:11px;${pb.status === 'enabled' ? 'background:rgba(34,197,94,0.15);color:#22c55e;' : 'background:rgba(148,163,184,0.15);color:#94a3b8;'}">${pb.status === 'enabled' ? '启用' : '停用'}</span>
+              </div>
+              <div class="playbook-card-desc">${pb.description}</div>
+              <div class="playbook-card-footer" style="margin-top:12px;">
+                <span class="playbook-trigger">触发: ${pb.triggerType === 'alarm' ? '告警' : pb.triggerType === 'cron' ? '定时' : pb.triggerType}</span>
+                <button class="btn-execute" ?disabled=${this.executingPlaybookId !== null} @click=${() => this.executePlaybook(pb.id)}>
+                  ${this.executingPlaybookId === pb.id ? '⏳ 执行中...' : '▶ 执行'}
+                </button>
+                ${this.executingPlaybookId === pb.id ? html`<button class="btn-execute" style="background:var(--sc-danger,#ef4444);margin-left:4px;" @click=${() => this.cancelPlaybook(pb.id)}>✕ 取消</button>` : ''}
+                <button class="btn-execute" style="background:var(--sc-bg-secondary);margin-left:4px;" @click=${() => this.getPlaybookDetail(pb.id)}>📋</button>
+                <button class="btn-execute" style="background:var(--sc-bg-secondary);margin-left:4px;" @click=${() => this.updatePlaybookInfo(pb as unknown as Record<string, unknown>)}>✏️</button>
+                <button class="btn-execute" style="background:rgba(239,68,68,0.1);color:#ef4444;margin-left:4px;" @click=${() => this.deletePlaybook(pb.id)}>🗑️</button>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
   }
 
   private handleIncidentClick(incident: WarRoomIncident) {
@@ -484,6 +775,7 @@ export class ScWarRoomPage extends LitElement {
 
     return html`
       <div class="warroom-container">
+        ${this.toastMessage ? html`<div style="position:fixed;top:16px;right:16px;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;${this.toastType === 'success' ? 'background:#d4edda;color:#155724;' : this.toastType === 'error' ? 'background:#f8d7da;color:#721c24;' : 'background:#d1ecf1;color:#0c5460;'}">${this.toastType === 'success' ? '✅' : this.toastType === 'error' ? '❌' : 'ℹ️'} ${this.toastMessage}</div>` : ''}
         <div class="main-content">
           <div class="page-header">
             <div class="page-title-section">
@@ -576,25 +868,27 @@ export class ScWarRoomPage extends LitElement {
                 <h3 class="section-title">⚡ 快速操作</h3>
               </div>
               <div class="action-buttons">
-                <div class="action-btn">
+                <div class="action-btn" @click=${() => this.createNewPlaybook()}>
+                  <span class="action-btn-icon">➕</span>
+                  <span class="action-btn-label">新建剧本</span>
+                </div>
+                <div class="action-btn" @click=${() => this.loadPlaybookExecutions()}>
+                  <span class="action-btn-icon">📜</span>
+                  <span class="action-btn-label">执行历史</span>
+                </div>
+                <div class="action-btn" @click=${() => this.createCommanderAction()}>
                   <span class="action-btn-icon">🚨</span>
-                  <span class="action-btn-label">创建事件</span>
+                  <span class="action-btn-label">指挥官操作</span>
                 </div>
-                <div class="action-btn">
+                <div class="action-btn" @click=${() => this.getCommanderStatus()}>
                   <span class="action-btn-icon">📢</span>
-                  <span class="action-btn-label">广播通知</span>
-                </div>
-                <div class="action-btn">
-                  <span class="action-btn-icon">👥</span>
-                  <span class="action-btn-label">分配任务</span>
-                </div>
-                <div class="action-btn">
-                  <span class="action-btn-icon">📊</span>
-                  <span class="action-btn-label">状态报告</span>
+                  <span class="action-btn-label">指挥官状态</span>
                 </div>
               </div>
             </div>
           </div>
+
+          ${this.renderPlaybookPanel()}
 
           ${this.recommendations.length > 0? html`
             <div class="ai-suggestions">

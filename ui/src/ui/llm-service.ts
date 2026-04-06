@@ -41,6 +41,45 @@ export interface LLMChatResponse {
   };
 }
 
+export interface LLMParallelChatRequest {
+  providerIds?: string[];
+  model?: string;
+  messages: LLMChatMessage[];
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface LLMParallelChatSuccessResult {
+  success: true;
+  providerId: string;
+  providerName: string;
+  providerType: string;
+  message: { role: 'assistant'; content: string };
+  model: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export interface LLMParallelChatErrorResult {
+  success: false;
+  providerId: string;
+  providerName: string;
+  providerType: string;
+  error: string;
+}
+
+export type LLMParallelChatResult = LLMParallelChatSuccessResult | LLMParallelChatErrorResult;
+
+export interface LLMParallelChatResponse {
+  results: LLMParallelChatResult[];
+  total: number;
+  successCount: number;
+  errorCount: number;
+}
+
 // ============ LLM Service ============
 
 class LLMService {
@@ -66,6 +105,10 @@ class LLMService {
 
   async chat(request: LLMChatRequest): Promise<LLMChatResponse> {
     return gatewayClient.request('llm.chat', request as unknown as Record<string, unknown>);
+  }
+
+  async chatParallel(request: LLMParallelChatRequest): Promise<LLMParallelChatResponse> {
+    return gatewayClient.request('llm.chat.parallel', request as unknown as Record<string, unknown>);
   }
 }
 

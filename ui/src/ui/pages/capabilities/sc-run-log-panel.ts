@@ -6,10 +6,9 @@
  */
 
 import { LitElement, html, css } from 'lit';
-import { customElement, state, property } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
-import type { ExecutionRun, RunStatus, DomainId } from '../../capabilities-client.js';
-import { capabilitiesClient } from '../../capabilities-client.js';
+import type { ExecutionRun, RunStatus } from '../../capabilities-client.js';
 
 // Status colors
 const STATUS_COLORS: Record<RunStatus, string> = {
@@ -38,12 +37,6 @@ export class ScRunLogPanel extends LitElement {
 
   @property({ type: Array })
   allRuns: ExecutionRun[] = [];
-
-  @state()
-  private selectedRunId: string | null = null;
-
-  @state()
-  private loading = false;
 
   static styles = css`
     :host {
@@ -350,7 +343,6 @@ export class ScRunLogPanel extends LitElement {
   }
 
   private handleRunSelect(run: ExecutionRun) {
-    this.selectedRunId = run.id;
     this.run = run;
   }
 

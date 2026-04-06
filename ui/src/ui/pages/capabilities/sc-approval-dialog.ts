@@ -276,24 +276,6 @@ export class ScApprovalDialog extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    if (this.task) {
-      this.loadExistingApproval();
-    }
-  }
-
-  private async loadExistingApproval() {
-    if (!this.task?.id) return;
-    
- try {
-      const approval = await capabilitiesClient.listEvidence({ taskId: this.task.id, limit: 1 });
-      if (approval && approval.status === 'approved') {
-        this.existingApproval = approval;
-      } else {
-        this.existingApproval = null;
-      }
-    } catch (error) {
-      console.error('[ScApprovalDialog] Failed to load approval:', error);
-    }
   }
 
   private validateForm(): boolean {
@@ -393,6 +375,7 @@ export class ScApprovalDialog extends LitElement {
   }
 
   private async handleReject() {
+    if (!this.existingApproval) return;
     if (!this.rejectReason.trim()) {
       this.error = this.i18n.t('capabilities.approvalDialog.rejectReasonPlaceholder');
       return;
@@ -509,7 +492,7 @@ export class ScApprovalDialog extends LitElement {
           ${this.mode === 'create' ? html`
             <div class="form-section">
               <div class="form-group">
-                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.scope')}label>
+                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.scope')}</label>
                 <textarea 
                   class="form-textarea"
                   placeholder=${this.i18n.t('capabilities.approvalDialog.scopePlaceholder')}
@@ -519,7 +502,7 @@ export class ScApprovalDialog extends LitElement {
               </div>
 
               <div class="form-group">
-                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.ticketNo')}label>
+                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.ticketNo')}</label>
                 <input 
                   type="text"
                   class="form-input"
@@ -530,7 +513,7 @@ export class ScApprovalDialog extends LitElement {
               </div>
 
               <div class="form-group">
-                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.expiresAt')}label>
+                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.expiresAt')}</label>
                 <input 
                   type="datetime-local"
                   class="form-input"
@@ -540,7 +523,7 @@ export class ScApprovalDialog extends LitElement {
               </div>
 
               <div class="form-group">
-                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.reason')}label>
+                <label class="form-label">${this.i18n.t('capabilities.approvalDialog.reason')}</label>
                 <textarea 
                   class="form-textarea"
                   placeholder=${this.i18n.t('capabilities.approvalDialog.reasonPlaceholder')}
@@ -584,8 +567,8 @@ export class ScApprovalDialog extends LitElement {
           <!-- Actions -->
           <div class="dialog-actions">
             <button class="btn btn-secondary" @click=${this.handleClose}>
-close>
-button>
+              ${this.i18n.t('common.close')}
+            </button>
             
             ${this.mode === 'create' ? html`
               <button class="btn btn-primary" @click=${this.handleSubmit} ?disabled=${this.submitting}>

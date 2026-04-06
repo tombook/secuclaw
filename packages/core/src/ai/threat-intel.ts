@@ -89,9 +89,7 @@ const MITRE_TACTIC_MAP: Record<string, string> = {
   'T1059': 'Execution',
   'T1204': 'Execution',
   'T1203': 'Execution',
-  'T1047': 'Execution',
   'T1021': 'Lateral Movement',
-  'T1080': 'Lateral Movement',
   'T1570': 'Lateral Movement',
   'T1056': 'Collection',
   'T1560': 'Collection',
@@ -186,7 +184,7 @@ export class ThreatIntelEngine {
 
     try {
       // 1. 映射MITRE ATT&CK技术
-      const ttps = this.mapToMitreTechniques(threatData.ttps, threatData.type);
+      const ttps = this.mapToMitreTechniques(threatData.ttps || [], threatData.type);
 
       // 2. 确定严重性
       const severity = this.determineSeverity(threatData);
@@ -213,7 +211,10 @@ export class ThreatIntelEngine {
         ttps,
         summary,
         description,
-        indicators: threatData.indicators,
+        indicators: threatData.indicators?.map(ind => ({
+          ...(ind as any),
+          confidence: (ind as any).confidence || 80,
+        })) as ThreatIntelligence['indicators'],
         severity,
         relevance,
         confidence,
