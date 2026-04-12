@@ -1,6 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext, type RoleId } from '../store/role-context.js';
+import '../components/design-system/sc-button.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 /**
  * Professional Security Operations Center
@@ -14,6 +17,9 @@ export class ScSecOpsCenter extends LitElement {
   @state() private isRunning: boolean = false;
   @state() private progress: number = 0;
   @state() private loading: boolean = false;
+  @state() private currentRole: RoleId = 'security-ops';
+
+  private roleUnsubscribe?: () => void;
 
   @state() private incidents: any[] = [];
   @state() private vulnerabilities: any[] = [];
@@ -716,7 +722,7 @@ export class ScSecOpsCenter extends LitElement {
   `;
 
   // Tool definitions
-  private tools = [
+  private toolDefs = [
     { id: 'baseline', name: '基线检查', icon: '🛡️', domain: 'light', label: '光明面' },
     { id: 'vulnscan', name: '漏洞扫描', icon: '🔍', domain: 'security', label: '安全技术' },
     { id: 'pentest', name: '渗透测试', icon: '⚔️', domain: 'dark', label: '黑暗面' },
@@ -877,7 +883,16 @@ export class ScSecOpsCenter extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this.currentRole = roleContext.getState().currentRole as RoleId || 'security-ops';
+    this.roleUnsubscribe = roleContext.subscribe((state) => {
+      this.currentRole = state.currentRole as RoleId || 'security-ops';
+    });
     this.loadData();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.roleUnsubscribe?.();
   }
 
   private async loadData() {
@@ -919,7 +934,7 @@ export class ScSecOpsCenter extends LitElement {
       }
       if (toolsRes.status === 'fulfilled') {
         const d = toolsRes.value as Record<string, unknown>;
-        const list = Array.isArray(d?.tools) ? (d.tools as any[]) : Array.isArray(d) ? (d as any[]) : [];
+        const list = Array.isArray(d?.tools) ? (d.tools as unknown as any[]) : Array.isArray(d) ? (d as unknown as any[]) : [];
         this._availableTools = [...list];
         this.tools = [...list];
       }
@@ -1055,6 +1070,7 @@ export class ScSecOpsCenter extends LitElement {
   render() {
     const config = this.getDynamicConfig(this.activeTool);
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="secops-container">
         ${this.renderToolSelector()}
         ${this.renderHero(config)}
@@ -1156,7 +1172,7 @@ export class ScSecOpsCenter extends LitElement {
               ${this.activeTab === 'history' ? '📋 扫描历史' : ''}
               ${this.activeTab === 'reports' ? '📄 报告中心' : ''}
             </span>
-            ${this.activeTab === 'overview' ? html`<button class="btn btn-secondary">导出</button>` : ''}
+            ${this.activeTab === 'overview' ? html`<sc-button variant="secondary" size="sm">导出</sc-button>` : ''}
           </div>
           <div class="card-body">
             ${this.activeTab === 'overview' ? this.renderOverview(config) : ''}
@@ -1305,9 +1321,9 @@ export class ScSecOpsCenter extends LitElement {
         <div class="empty-desc">一键生成符合合规要求的分析报告</div>
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
-        <button class="btn btn-secondary">📊 执行摘要</button>
-        <button class="btn btn-secondary">📋 详细报告</button>
-        <button class="btn btn-secondary">📧 邮件报告</button>
+        <sc-button variant="secondary" size="sm">📊 执行摘要</sc-button>
+        <sc-button variant="secondary" size="sm">📋 详细报告</sc-button>
+        <sc-button variant="secondary" size="sm">📧 邮件报告</sc-button>
       </div>
     `;
   }

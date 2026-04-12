@@ -1,9 +1,12 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { Router } from '@vaadin/router';
 import { i18n } from '../../i18n/index.js';
 import type { Locale } from '../../i18n/index.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { uiStore } from '../store/ui-store.js';
+import { authStore } from '../store/auth-store.js';
+import '../components/sc-role-switcher.js';
 
 @customElement('sc-header')
 export class ScHeader extends LitElement {
@@ -127,6 +130,11 @@ export class ScHeader extends LitElement {
     uiStore.setTheme(newTheme);
   }
 
+  private handleLogout(): void {
+    authStore.logout();
+    Router.go('/login');
+  }
+
   render() {
     return html`
       <div class="left-section">
@@ -137,6 +145,7 @@ export class ScHeader extends LitElement {
         <span style="color: var(--sc-text-tertiary); font-size: var(--sc-font-size-sm);">
           ws://127.0.0.1:21981
         </span>
+        <sc-role-switcher></sc-role-switcher>
       </div>
 
       <div class="right-section">
@@ -149,6 +158,10 @@ export class ScHeader extends LitElement {
           <option value="en">English</option>
           <option value="zh-TW">繁體中文</option>
         </select>
+
+        <button class="icon-button" @click=${this.handleLogout} title="Logout">
+          🚪
+        </button>
       </div>
     `;
   }

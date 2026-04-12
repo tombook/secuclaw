@@ -1,5 +1,5 @@
+import 'reflect-metadata';
 import { GatewayServer } from './gateway/server.js';
-import { ApiServer } from './api/server.js';
 import { SkillLoader } from './skills/loader.js';
 import { MitreLoader } from './knowledge/mitre/loader.js';
 import { ScfLoader } from './knowledge/scf/loader.js';
@@ -9,13 +9,41 @@ import { RolesRepository } from './roles/repository.js';
 import { DataSeedService } from './data-seed.js';
 import { KpiService } from './kpi/service.js';
 import { KpiScheduler } from './kpi/scheduler.js';
-import { EventBus, registerDefaultRules } from './events/index.js';
+import { EventBus, EventSystem, defaultRuleClasses } from './events/index.js';
+import { initRaciEventBridge } from './events/raci-bridge.js';
 import { AuditLogRepository } from './audit/repository.js';
 import { AuditLogService } from './audit/service.js';
 import { initToolTaskService } from './capabilities/tool-task-service.js';
 import { initApprovalService } from './capabilities/approval-service.js';
 import { initRiskAssessmentService } from './capabilities/risk-assessment-service.js';
 import { initReportGenerator } from './capabilities/report-generator.js';
+import { CapabilitiesService } from './capabilities/service.js';
+import { CapabilitiesRepository } from './capabilities/repository.js';
+import { ChannelManager } from './channels/channel-manager.js';
+import { ConfigService } from './config/index.js';
+import { registerAuthRoutes } from './gateway/routes/auth-routes.js';
+import { registerAuditRoutes } from './gateway/routes/audit-routes.js';
+import { registerSkillsRoutes } from './gateway/routes/skills-routes.js';
+import { registerChannelsRoutes } from './gateway/routes/channels-routes.js';
+import { registerCapabilitiesRoutes } from './gateway/routes/capabilities-routes.js';
+import { registerKnowledgeRoutes } from './gateway/routes/knowledge-routes.js';
+import { registerCommanderRoutes } from './gateway/routes/commander-routes.js';
+import { registerIncidentsCrudRoutes, registerVulnerabilitiesCrudRoutes, registerTasksCrudRoutes, registerRolesCrudRoutes } from './gateway/routes/index.js';
+import { registerToolRoutes } from './gateway/routes/tools-routes.js';
+import { registerRiskRoutes } from './gateway/routes/risk-routes.js';
+import { registerReportRoutes } from './gateway/routes/report-routes.js';
+import { registerApprovalRoutes } from './gateway/routes/approval-routes.js';
+import { registerPlaybookRoutes } from './gateway/routes/playbook-routes.js';
+import { registerAiRoutes } from './gateway/routes/ai-routes.js';
+import { registerSiemRoutes } from './gateway/routes/siem-routes.js';
+import { registerSecurityRoutes } from './gateway/routes/security-routes.js';
+import { registerLlmRoutes } from './gateway/routes/llm-routes.js';
+import { registerAssetsRoutes } from './gateway/routes/assets-routes.js';
+import { registerWarroomRoutes } from './gateway/routes/warroom-routes.js';
+import { registerRaciTaskRoutes } from './gateway/routes/raci-task-routes.js';
+import { registerAiCollaborationRoutes } from './gateway/routes/ai-collaboration-routes.js';
+import { AssetsService } from './assets/service.js';
+import { AssetsRepository } from './assets/repository.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[INFO]', ...args),
@@ -24,25 +52,9 @@ const logger = {
   debug: (...args: any[]) => console.log('[DEBUG]', ...args),
 };
 
-interface AppConfig {
-  gatewayPort: number;
-  apiPort: number;
-  databasePath: string;
-  skillsPath: string;
-  dataPath: string;
-}
-
-const config: AppConfig = {
-  gatewayPort: parseInt(process.env.GATEWAY_PORT || '21981', 10),
-  apiPort: parseInt(process.env.API_PORT || '21982', 10),
-  databasePath: process.env.DATABASE_PATH || './data/secuclaw.db',
-  skillsPath: process.env.SKILLS_PATH || './skills',
-  dataPath: process.env.DATA_PATH || './data',
-};
-
 class SecuClawApplication {
+  private configService: ConfigService;
   private gateway: GatewayServer;
-  private apiServer: ApiServer | null = null;
   private skillLoader: SkillLoader;
   private mitreLoader: MitreLoader;
   private scfLoader: ScfLoader;
@@ -52,28 +64,42 @@ class SecuClawApplication {
   private kpiService: KpiService;
   private kpiScheduler: KpiScheduler;
   private eventBus: EventBus;
+  private eventSystem: EventSystem;
   private auditLogService: AuditLogService;
+  private assetsService: AssetsService;
   private shutdownHandlers: Array<() => Promise<void>> = [];
 
-  constructor(config: AppConfig) {
-    this.jsonStore = new JsonStore('./data/storage');
-    this.skillLoader = new SkillLoader(config.skillsPath);
-    this.mitreLoader = new MitreLoader(`${config.dataPath}/mitre/attack-stix-data`);
-    this.scfLoader = new ScfLoader(`${config.dataPath}/scf`);
-    
+  constructor() {
+    this.configService = new ConfigService();
+    const cfg = this.configService.getAll();
+    const storagePath = `${cfg.storage.basePath}/storage`;
+
+    this.jsonStore = new JsonStore(storagePath);
+    this.skillLoader = new SkillLoader(cfg.storage.skillsPath);
+    this.mitreLoader = new MitreLoader(`${cfg.storage.basePath}/mitre/attack-stix-data`);
+    this.scfLoader = new ScfLoader(`${cfg.storage.basePath}/scf`);
+
     const rolesRepo = new RolesRepository(this.jsonStore);
     this.rolesService = new RolesService(rolesRepo);
+
+    const assetsRepo = new AssetsRepository(this.jsonStore);
+    this.assetsService = new AssetsService(assetsRepo);
+
     this.dataSeedService = new DataSeedService(this.jsonStore);
     this.kpiService = new KpiService(this.jsonStore);
     this.eventBus = new EventBus();
-    registerDefaultRules(this.eventBus);
+    this.eventSystem = new EventSystem(this.eventBus);
+    for (const RuleClass of defaultRuleClasses) {
+      this.eventSystem.registerRule(new RuleClass());
+    }
+    initRaciEventBridge(this.eventBus, this.jsonStore);
     this.kpiScheduler = new KpiScheduler(this.kpiService, { autoStart: false });
-    
+
     const auditRepo = new AuditLogRepository(this.jsonStore);
     this.auditLogService = new AuditLogService(auditRepo);
-    
+
     this.gateway = new GatewayServer({
-      port: config.gatewayPort,
+      port: cfg.gateway.port,
       skillLoader: this.skillLoader,
       mitreLoader: this.mitreLoader,
       scfLoader: this.scfLoader,
@@ -82,14 +108,6 @@ class SecuClawApplication {
       rolesService: this.rolesService,
       eventBus: this.eventBus,
     });
-
-    // Initialize REST API server
-    try {
-      this.apiServer = new ApiServer({ port: config.apiPort });
-      logger.info(`REST API server configured on port ${config.apiPort}`);
-    } catch (error) {
-      logger.warn('REST API server initialization failed, continuing without it:', error);
-    }
   }
 
   async initialize(): Promise<void> {
@@ -123,26 +141,70 @@ class SecuClawApplication {
     initReportGenerator(this.jsonStore);
     logger.info('Phase 1 services initialized');
 
+    logger.info('Initializing CapabilitiesService & ChannelManager...');
+    const capsRepo = new CapabilitiesRepository(this.jsonStore);
+    const capsService = new CapabilitiesService(capsRepo);
+    capsService.setEventBus(this.eventBus);
+    this.gateway.getRouter().setCapabilitiesService(capsService);
+
+    const channelMgr = new ChannelManager(this.jsonStore);
+    this.gateway.getRouter().setChannelManager(channelMgr);
+
+    this.gateway.getRouter().setDeps({
+      jsonStore: this.jsonStore,
+      skillLoader: this.skillLoader,
+      mitreLoader: this.mitreLoader,
+      scfLoader: this.scfLoader,
+      assetsService: this.assetsService,
+    });
+
+    logger.info('Registering gateway routes...');
+    registerAuthRoutes(this.gateway.getRouter());
+    registerAuditRoutes(this.gateway.getRouter());
+    registerSkillsRoutes(this.gateway.getRouter());
+    registerChannelsRoutes(this.gateway.getRouter());
+    registerCapabilitiesRoutes(this.gateway.getRouter());
+
+    const deps = this.gateway.getRouter().getDeps();
+    const handlersMap = new Map();
+
+    registerKnowledgeRoutes(handlersMap, deps);
+    registerCommanderRoutes(handlersMap, deps);
+    registerIncidentsCrudRoutes(handlersMap, deps);
+    registerVulnerabilitiesCrudRoutes(handlersMap, deps);
+    registerTasksCrudRoutes(handlersMap, deps);
+    registerRolesCrudRoutes(handlersMap, deps);
+    registerToolRoutes(handlersMap, deps);
+    registerRiskRoutes(handlersMap, deps);
+    registerReportRoutes(handlersMap, deps);
+    registerApprovalRoutes(handlersMap, deps);
+    registerPlaybookRoutes(handlersMap, deps);
+    registerAiRoutes(handlersMap, deps);
+    registerSiemRoutes(handlersMap, { store: deps.jsonStore });
+    registerSecurityRoutes(handlersMap, deps);
+    registerLlmRoutes(handlersMap, deps);
+    registerAssetsRoutes(handlersMap, { ...deps, assetsService: this.assetsService });
+    registerWarroomRoutes(handlersMap, deps);
+    registerRaciTaskRoutes(handlersMap, deps);
+  registerAiCollaborationRoutes(handlersMap, deps);
+
+    this.gateway.getRouter().setHandlersFromMap(handlersMap);
+    logger.info(`Registered ${this.gateway.getRouter().getMethodCount()} gateway methods`);
+
+    this.gateway.getRouter().initLateRoutes();
+    logger.info('CapabilitiesService & ChannelManager initialized');
+
     this.kpiScheduler.start();
     this.shutdownHandlers.push(() => Promise.resolve(this.kpiScheduler.stop()));
 
-    logger.info('Starting WebSocket gateway server...');
+    logger.info('Starting unified gateway server...');
     await this.gateway.start();
     this.shutdownHandlers.push(() => this.gateway.stop());
-    logger.info(`Gateway server running on port ${config.gatewayPort}`);
 
-    // Start REST API server
-    if (this.apiServer) {
-      logger.info('Starting REST API server...');
-      await this.apiServer.start();
-      this.shutdownHandlers.push(() => this.apiServer?.stop());
-      logger.info(`REST API server running on port ${config.apiPort}`);
-    }
-    logger.info('Ready to accept WebSocket connections at ws://127.0.0.1:21981/ws');
-    logger.info('Health Check available at http://127.0.0.1:21981/health');
-    if (this.apiServer) {
-      logger.info(`REST API available at http://127.0.0.1:${config.apiPort}/api/v1`);
-    }
+    const gatewayPort = this.configService.get('gateway').port;
+    logger.info(`Ready to accept WebSocket connections at ws://127.0.0.1:${gatewayPort}/ws`);
+    logger.info(`Health Check available at http://127.0.0.1:${gatewayPort}/health`);
+    logger.info(`REST API available at http://127.0.0.1:${gatewayPort}/api/v1`);
 
     logger.info('SecuClaw application initialized successfully');
 
@@ -151,7 +213,7 @@ class SecuClawApplication {
       resource: 'system',
       resourceId: 'secuclaw-app',
       actor: 'system',
-      details: { gatewayPort: config.gatewayPort },
+      details: { gatewayPort },
     });
   }
 
@@ -191,15 +253,18 @@ class SecuClawApplication {
 }
 
 async function main() {
-  const app = new SecuClawApplication(config);
+  const configService = new ConfigService();
+  const app = new SecuClawApplication();
   app.setupSignalHandlers();
 
   try {
     await app.initialize();
+    const gatewayPort = configService.get('gateway').port;
     logger.info('='.repeat(50));
     logger.info('SecuClaw Core Services Started');
-    logger.info(`WebSocket Gateway: ws://127.0.0.1:${config.gatewayPort}/ws`);
-    logger.info(`Health Check:     http://127.0.0.1:${config.gatewayPort}/health`);
+    logger.info(`Unified Gateway:  ws://127.0.0.1:${gatewayPort}/ws`);
+    logger.info(`Health Check:     http://127.0.0.1:${gatewayPort}/health`);
+    logger.info(`REST API:         http://127.0.0.1:${gatewayPort}/api/v1`);
     logger.info('='.repeat(50));
   } catch (error) {
     logger.error('Failed to initialize application:', error);

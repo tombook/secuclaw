@@ -111,7 +111,7 @@ export class TasksRepository {
   // ==================== Task Methods ====================
 
   async getAll(): Promise<Task[]> {
-    return this.store.get<Task[]>(FILE_NAME) || [];
+    return (await this.store.get<Task[]>(FILE_NAME)) ?? [];
   }
 
   async getById(id: string): Promise<Task | null> {
@@ -249,7 +249,7 @@ export class TasksRepository {
   // ==================== Execution Methods ====================
 
   async getAllExecutions(): Promise<TaskExecution[]> {
-    return this.store.get<TaskExecution[]>(EXECUTIONS_FILE) || [];
+    return (await this.store.get<TaskExecution[]>(EXECUTIONS_FILE)) ?? [];
   }
 
   async getExecutionsByTaskId(taskId: string): Promise<TaskExecution[]> {

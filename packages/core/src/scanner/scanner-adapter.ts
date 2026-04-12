@@ -127,7 +127,7 @@ export class PortScannerAdapter implements ScannerAdapter {
   }
 
   async getResult(_taskId: string): Promise<unknown> {
-    const task = await this.getStatus(taskId);
+    const task = await this.getStatus(_taskId);
     if (task.status !== 'completed') throw new Error(`Task not completed`);
     return this.scan([task.target!]);
   }

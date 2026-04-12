@@ -202,7 +202,7 @@ export class NucleiAdapter implements ToolAdapter {
         }
 
         const info = entry.info || {};
-        const matcher = entry.matcher || {};
+        const _matcher = entry.matcher || {};
 
         // Map nuclei severity to our severity
         const severityMap: Record<string, VulnerabilityFinding['severity']> = {
@@ -223,11 +223,11 @@ export class NucleiAdapter implements ToolAdapter {
         }
 
         const cveIds = (info.cve_id || []).map((c: string) => c.trim()).filter(Boolean);
-        const cweIds = (info.cwe_id || []).map((c: string) => c.trim()).filter(Boolean);
+        const _cweIds = (info.cwe_id || []).map((c: string) => c.trim()).filter(Boolean);
 
         for (const cveId of cveIds) {
           findings.push({
-            id: `nuclei-${entry.template-id || 'unknown'}-${cveId}`,
+            id: `nuclei-${entry.template_id || 'unknown'}-${cveId}`,
             cveId,
             title: info.name || entry.matcher_name || 'Nuclei Finding',
             description: info.description || `Nuclei template ${entry.template_id} matched at ${entry.host}`,
@@ -239,17 +239,6 @@ export class NucleiAdapter implements ToolAdapter {
             fixAvailable: info.classification?.cve_id?.length ? true : false,
             discoveredAt: entry.timestamp ? new Date(entry.timestamp).getTime() : Date.now(),
             fixSteps: info.remediation ? [info.remediation] : [],
-            references: info.reference || [],
-            extra: {
-              template: entry.template_id,
-              matcher: entry.matcher_name,
-              matched: entry.matched_at,
-              ip: entry.ip,
-              port: entry.port,
-              url: entry.url,
-              host: entry.host,
-              protocol: entry.proto,
-            },
           });
         }
 
@@ -266,12 +255,6 @@ export class NucleiAdapter implements ToolAdapter {
             exploitAvailable: false,
             discoveredAt: entry.timestamp ? new Date(entry.timestamp).getTime() : Date.now(),
             fixSteps: info.remediation ? [info.remediation] : [],
-            references: info.reference || [],
-            extra: {
-              template: entry.template_id,
-              matcher: entry.matcher_name,
-              matched: entry.matched_at,
-            },
           });
         }
       }

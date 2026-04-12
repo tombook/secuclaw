@@ -1,12 +1,14 @@
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { Commander } from './types.js';
 import { CommanderRepository } from './repository.js';
 
-// Simple logger pattern as requested
 const logger = {
   info: (...args: any[]) => console.log('[CommanderService]', ...args),
   error: (...args: any[]) => console.error('[CommanderService]', ...args),
 };
 
+@Service()
 export class CommanderService {
   constructor(private repo: CommanderRepository) {}
   

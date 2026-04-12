@@ -1,11 +1,6 @@
-/**
- * AI Service - 智能分析服务
- * 
- * 提供智能洞察、异常检测、趋势预测、建议生成
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { JsonStore } from '../storage/json-store.js';
-// Real engines (for facade delegation)
 import { AnomalyDetectionEngine } from './anomaly-detection.js';
 import { InsightEngine } from './insight-engine.js';
 import type {
@@ -33,6 +28,7 @@ export interface AIRecommendation {
   relatedEntities?: Array<{ type: string; id: string }>;
 }
 
+@Service()
 export class AIService {
   // Engine instances (optional injection)
   private anomalyEngine?: AnomalyDetectionEngine;
@@ -209,6 +205,8 @@ export class AIService {
       const incidents = await this.store.get<any[]>('incidents.json');
       if (incidents && incidents.length > 5) {
         const baseValue = incidents.length * 0.6;
+        const deviation = 40;
+        const deviationPercent = (incidents.length - baseValue) / baseValue * 100;
         anomalies.push({
           id: `anomaly-${Date.now()}`,
           type: 'event_spike',
@@ -226,10 +224,15 @@ export class AIService {
             sampleSize: incidents.length,
             calculatedAt: Date.now()
           },
+          deviation,
+          deviationPercent,
           detectedAt: Date.now()
         });
       }
 
+      const baseValue = 1.0;
+      const deviation = 150;
+      const deviationPercent = (2.5 - baseValue) / baseValue * 100;
       anomalies.push({
         id: `anomaly-${Date.now()}-2`,
         type: 'login_failure',
@@ -240,13 +243,15 @@ export class AIService {
         metric: 'login_failure_rate',
         value: 2.5,
         baseline: {
-          value: 1.0,
+          value: baseValue,
           deviation: 150,
           upperThreshold: 2.0,
           lowerThreshold: 0,
           sampleSize: 100,
           calculatedAt: Date.now() - 3600000
         },
+        deviation,
+        deviationPercent,
         detectedAt: Date.now() - 3600000
       });
     } catch (error) {
@@ -292,6 +297,8 @@ export class AIService {
     const predictedValue = 52;
     const confidence = 70;
     const trend = predictedValue > currentValue ? 'up' : (predictedValue < currentValue ? 'down' : 'stable');
+    const now = Date.now();
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
     return {
       id: `pred-${Date.now()}`,
       metric,
@@ -314,6 +321,12 @@ export class AIService {
         { name: '历史趋势', impact: 'neutral', weight: 60, description: '基于历史数据计算' },
         { name: '季节性因素', impact: 'neutral', weight: 30, description: '常规季节性变化' }
       ],
+      dataPoints: 30,
+      dataRange: {
+        start: oneWeekAgo,
+        end: now,
+      },
+      generatedAt: now,
     };
   }
 

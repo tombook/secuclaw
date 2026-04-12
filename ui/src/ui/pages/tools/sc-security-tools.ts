@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import '../../components/design-system/sc-button.js';
+import '../../components/sc-smart-recommendation-bar.js';
 
 /**
  * Professional Security Tools Library
@@ -629,6 +631,7 @@ export class ScSecurityTools extends LitElement {
     const config = this.toolConfig[this.activeTool] || this.toolConfig.baseline;
     
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         ${this.renderToolSelector()}
         ${this.renderHero(config)}
@@ -712,7 +715,7 @@ export class ScSecurityTools extends LitElement {
         ${tabs.map(tab => html`
           <button class="tab ${this.activeTab === tab ? 'active' : ''}" @click=${() => this.handleTabClick(tab)}>
             ${labels[tab]}
-          </button>
+          </sc-button>
         `)}
       </div>
     `;
@@ -729,7 +732,7 @@ export class ScSecurityTools extends LitElement {
               ${this.activeTab === 'history' ? '扫描历史' : ''}
               ${this.activeTab === 'reports' ? '生成报告' : ''}
             </span>
-            ${this.activeTab === 'overview' ? html`<button class="btn btn-secondary">导出</button>` : ''}
+            ${this.activeTab === 'overview' ? html`<sc-button variant="secondary">导出</sc-button>` : ''}
           </div>
           <div class="card-body">
             ${this.activeTab === 'overview' ? this.renderOverview(config) : ''}
@@ -744,9 +747,9 @@ export class ScSecurityTools extends LitElement {
             <span class="card-title">快速操作</span>
           </div>
           <div class="card-body">
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: var(--sc-spacing-md);" @click=${this.runScan} ?disabled=${this.isRunning}>
+            <sc-button variant="primary" style="width: 100%; margin-bottom: var(--sc-spacing-md);" @click=${this.runScan} ?disabled=${this.isRunning}>
               ${this.isRunning ? `运行中... ${this.progress}%` : '🚀 立即执行'}
-            </button>
+            </sc-button>
 
             ${this.isRunning ? html`
               <div class="progress-section">
@@ -803,7 +806,7 @@ export class ScSecurityTools extends LitElement {
                   ${item.status === 'pass' ? '✓ 通过' : item.status === 'fail' ? '✗ 失败' : item.status === 'warn' ? '⚠ 警告' : item.status === 'detected' ? '● 发现' : '○ 开放'}
                 </span>
               </td>
-              <td>${item.category || item.type || '-'}</td>
+              <td>${(item as any).category || (item as any).type || '-'}</td>
             </tr>
           `)}
         </tbody>
@@ -841,9 +844,9 @@ export class ScSecurityTools extends LitElement {
         </select>
       </div>
 
-      <button class="btn btn-primary" style="width: 100%;" @click=${this.runScan} ?disabled=${this.isRunning}>
+      <sc-button variant="primary" style="width: 100%;" @click=${this.runScan} ?disabled=${this.isRunning}>
         ${this.isRunning ? `扫描中... ${this.progress}%` : '🚀 开始扫描'}
-      </button>
+      </sc-button>
     `;
   }
 
@@ -883,9 +886,9 @@ export class ScSecurityTools extends LitElement {
         <div class="empty-desc">一键生成符合合规要求的分析报告</div>
       </div>
       <div style="display: flex; gap: var(--sc-spacing-sm); flex-wrap: wrap; margin-top: var(--sc-spacing-md);">
-        <button class="btn btn-secondary">📊 执行摘要</button>
-        <button class="btn btn-secondary">📋 详细报告</button>
-        <button class="btn btn-secondary">📧 邮件报告</button>
+        <sc-button variant="secondary">📊 执行摘要</sc-button>
+        <sc-button variant="secondary">📋 详细报告</sc-button>
+        <sc-button variant="secondary">📧 邮件报告</sc-button>
       </div>
     `;
   }

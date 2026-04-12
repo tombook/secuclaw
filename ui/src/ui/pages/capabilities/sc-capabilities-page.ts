@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 import { capabilitiesClient, type CapabilityDomain, type DomainId, type OverviewMetrics } from '../../capabilities-client.js';
+import '../../components/design-system/sc-button.js';
 import './sc-domain-board.js';
 
 const DOMAIN_TABS: { id: DomainId; icon: string }[] = [
@@ -238,8 +239,8 @@ export class ScCapabilitiesPage extends LitElement {
             <p class="page-description">查看和管理6大安全能力域，执行和跟踪安全任务</p>
           </div>
           <div class="header-actions">
-            <button class="btn btn-primary">+ 执行任务</button>
-            <button class="btn btn-secondary">📋 审批</button>
+            <sc-button variant="primary">+ 执行任务</sc-button>
+            <sc-button variant="secondary">📋 审批</sc-button>
           </div>
         </div>
         

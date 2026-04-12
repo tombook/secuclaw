@@ -1,0 +1,16 @@
+[
+  {
+    "sessionId": "session_1775884257901_q4lvcm",
+    "title": "[incident-response] Handle incident INC-001",
+    "scenario": "incident-response",
+    "assignedRole": "security-expert",
+    "status": "assigned",
+    "priority": "high",
+    "eventId": "INC-001",
+    "eventType": "incident",
+    "escalationLevel": 0,
+    "id": "task_1775884257909_gvhnf",
+    "createdAt": 1775884257909,
+    "updatedAt": 1775884257909
+  }
+]

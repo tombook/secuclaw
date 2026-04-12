@@ -9,8 +9,14 @@ import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
 import { dataService } from '../data-service.js';
+import { roleContext } from '../store/role-context.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
+import '../components/sc-role-perspective.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 // ============ 类型定义 ============
 
@@ -1133,7 +1139,7 @@ export class ScThreatsPage extends LitElement {
       <div class="sources-section">
         <div class="section-header">
           <h3 class="section-title">📡 威胁情报源</h3>
-          <button class="btn btn-secondary">+ 添加源</button>
+          <sc-button size="sm" variant="secondary">+ 添加源</sc-button>
         </div>
         <div class="sources-grid">
           ${this.threatSources.map(source => html`
@@ -1161,7 +1167,7 @@ export class ScThreatsPage extends LitElement {
       <div class="mitre-section">
         <div class="section-header">
           <h3 class="section-title">🗺️ MITRE ATT&CK 覆盖</h3>
-          <button class="btn btn-secondary">查看完整矩阵</button>
+          <sc-button size="sm" variant="secondary">查看完整矩阵</sc-button>
         </div>
         <div class="mitre-grid">
           ${this.mitreTechniques.map(tech => html`
@@ -1240,8 +1246,8 @@ export class ScThreatsPage extends LitElement {
                 </td>
                 <td>${ioc.confidence}%</td>
                 <td>
-                  <button class="btn" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" @click=${(e: Event) => { e.stopPropagation(); this.openEditIOCModal(ioc); }}>编辑</button>
-                  <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" @click=${(e: Event) => { e.stopPropagation(); this.handleDeleteIOC(ioc.id); }}>删除</button>
+                  <sc-button size="sm" variant="secondary" @click=${(e: Event) => { e.stopPropagation(); this.openEditIOCModal(ioc); }}>编辑</sc-button>
+                  <sc-button size="sm" variant="danger" @click=${(e: Event) => { e.stopPropagation(); this.handleDeleteIOC(ioc.id); }}>删除</sc-button>
                 </td>
               </tr>
               ${this.selectedIOC?.id === ioc.id ? html`
@@ -1336,6 +1342,23 @@ export class ScThreatsPage extends LitElement {
     `;
   }
 
+  private renderRolePerspective() {
+    const currentRole = roleContext.getState().currentRole || 'security-expert';
+    return html`
+      <div style="margin-top: var(--sc-spacing-lg, 20px);">
+        <sc-role-perspective
+          dataType="threats"
+          .data=${{
+            iocs: this.iocs,
+            threatSources: this.threatSources,
+            mitreTechniques: this.mitreTechniques
+          }}
+          .currentRole=${currentRole}
+        ></sc-role-perspective>
+      </div>
+    `;
+  }
+
   render() {
     if (this.loading) {
       return html`
@@ -1347,6 +1370,7 @@ export class ScThreatsPage extends LitElement {
     }
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="threats-container">
         <div class="main-content">
           <div class="page-header">
@@ -1360,8 +1384,8 @@ export class ScThreatsPage extends LitElement {
               </div>
             </div>
             <div class="header-actions">
-              <button class="btn btn-secondary">📤 导出报告</button>
-              <button class="btn btn-primary" @click=${this.openAddIOCModal}>+ 添加IOC</button>
+              <sc-button size="sm" variant="secondary">📤 导出报告</sc-button>
+              <sc-button size="sm" variant="primary" @click=${this.openAddIOCModal}>+ 添加IOC</sc-button>
             </div>
           </div>
 
@@ -1371,6 +1395,7 @@ export class ScThreatsPage extends LitElement {
           ${this.renderThreatActors()}
           ${this.renderIOCList()}
           ${this.renderInsights()}
+          ${this.renderRolePerspective()}
         </div>
 
         <div class="ai-sidebar">
@@ -1442,8 +1467,8 @@ export class ScThreatsPage extends LitElement {
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click=${this.closeIOCModal}>取消</button>
-            <button class="btn btn-primary" @click=${this.handleSaveIOC}>
+<sc-button size="sm" variant="secondary" @click=${this.closeIOCModal}>取消</sc-button>
+<sc-button size="sm" variant="primary" @click=${this.handleSaveIOC}>保存</sc-button>
               ${this.editingIOC ? '保存' : '添加'}
             </button>
           </div>

@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../gateway-client.js';
+import '../components/design-system/sc-button.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 /**
  * Data Center Page - Professional Design
@@ -187,6 +189,7 @@ export class ScDataCenterPage extends LitElement {
     const errorCount = this.databases.filter(d => d.health === 'error').length;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         <div class="hero">
           <div class="hero-icon">🗄️</div>
@@ -234,7 +237,7 @@ export class ScDataCenterPage extends LitElement {
           <div class="card">
             <div class="card-header">
               <span class="card-title">${this.activeTab === 'overview' ? '📋 数据库列表' : this.activeTab === 'databases' ? '🗄️ 数据库详情' : '✅ 数据质量'}</span>
-              <button class="btn btn-secondary">+ 添加数据库</button>
+              <sc-button variant="secondary">+ 添加数据库</sc-button>
             </div>
             <div class="card-body" style="padding: 0;">
               <table class="data-table">

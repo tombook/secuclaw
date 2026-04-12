@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { createServer, IncomingMessage, Server as HttpServer } from 'http';
 import { Router } from './router.js';
@@ -28,6 +30,8 @@ interface Client {
   isAlive: boolean;
   subscriptions: Set<string>;
   data?: { user?: JWTPayload };
+  pendingMessages: (ResponseMessage | EventMessage)[];
+  flushTimer: ReturnType<typeof setTimeout> | null;
 }
 
 interface RequestMessage {
@@ -52,6 +56,7 @@ interface EventMessage {
 
 type GatewayMessage = RequestMessage | ResponseMessage | EventMessage;
 
+@Service()
 export class GatewayServer {
   private config: GatewayConfig;
   private httpServer: HttpServer;
@@ -64,7 +69,7 @@ export class GatewayServer {
     this.config = config;
     this.httpServer = createServer();
     this.wss = new WebSocketServer({ server: this.httpServer });
-    this.router = new Router(config);
+    this.router = new Router();
 
     this.httpServer.on('request', (req, res) => {
       if (req.url === '/health' && req.method === 'GET') {
@@ -89,6 +94,11 @@ export class GatewayServer {
         reject(error);
       });
     });
+  }
+
+  /** Expose router for service injection */
+  getRouter(): Router {
+    return this.router;
   }
 
   async stop(): Promise<void> {
@@ -121,6 +131,8 @@ export class GatewayServer {
         isAlive: true,
         subscriptions: new Set(),
         data: {},
+        pendingMessages: [],
+        flushTimer: null,
       };
 
       this.clients.set(clientId, client);
@@ -172,6 +184,8 @@ export class GatewayServer {
       });
 
       ws.on('close', () => {
+        this.flushClient(client);
+        if (client.flushTimer) clearTimeout(client.flushTimer);
         this.clients.delete(clientId);
         logger.info(`Client ${clientId} disconnected. Total clients: ${this.clients.size}`);
       });
@@ -203,7 +217,7 @@ export class GatewayServer {
       const message: GatewayMessage = JSON.parse(data.toString());
 
       if (message.type === 'req') {
-        const response = await this.router.handleRequest(message.method, message.params);
+        const response = await this.router.handleRequest(message.method, message.params, client.data);
         this.sendResponse(client, message.seq, response);
       } else if ((message as any).type === 'subscribe') {
         const events = (message as any).events as string[] | undefined;
@@ -227,7 +241,29 @@ export class GatewayServer {
     };
 
     if (client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(JSON.stringify(message));
+      client.pendingMessages.push(message);
+      this.scheduleFlush(client);
+    }
+  }
+
+  private scheduleFlush(client: Client): void {
+    if (!client.flushTimer) {
+      client.flushTimer = setTimeout(() => {
+        this.flushClient(client);
+      }, 16);
+    }
+  }
+
+  private flushClient(client: Client): void {
+    if (client.flushTimer) {
+      clearTimeout(client.flushTimer);
+      client.flushTimer = null;
+    }
+    if (client.pendingMessages.length === 0) return;
+    const payload = JSON.stringify({ type: 'batch', messages: client.pendingMessages });
+    client.pendingMessages = [];
+    if (client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(payload);
     }
   }
 
@@ -238,10 +274,10 @@ export class GatewayServer {
       data,
     };
 
-    const payload = JSON.stringify(message);
     this.clients.forEach((client) => {
       if (client.ws.readyState === WebSocket.OPEN && client.subscriptions.has(event)) {
-        client.ws.send(payload);
+        client.pendingMessages.push(message);
+        this.scheduleFlush(client);
       }
     });
   }
@@ -253,10 +289,10 @@ export class GatewayServer {
       data,
     };
 
-    const payload = JSON.stringify(message);
     this.clients.forEach((client) => {
       if (client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(payload);
+        client.pendingMessages.push(message);
+        this.scheduleFlush(client);
       }
     });
   }

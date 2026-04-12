@@ -1,12 +1,40 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
+import { roleContext, type RoleId } from '../store/role-context.js';
+import { ROLE_THEMES, applyRoleTheme } from '../config/role-themes.js';
 import './sc-sidebar.js';
 import './sc-header.js';
+
+const DEFAULT_ROLE: RoleId = 'security-expert';
 
 @customElement('sc-layout')
 export class ScLayout extends LitElement {
   @property({ type: Boolean })
   connected = false;
+
+  @state()
+  private currentRole: RoleId = DEFAULT_ROLE;
+
+  private roleUnsub: (() => void) | null = null;
+
+  connectedCallback() {
+    super.connectedCallback();
+    const state = roleContext.getState();
+    this.currentRole = state.currentRole ?? DEFAULT_ROLE;
+    this.roleUnsub = roleContext.subscribe((state) => {
+      this.currentRole = state.currentRole ?? DEFAULT_ROLE;
+      applyRoleTheme(this.currentRole);
+    });
+    applyRoleTheme(this.currentRole);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.roleUnsub) {
+      this.roleUnsub();
+      this.roleUnsub = null;
+    }
+  }
 
   static styles = css`
     :host {

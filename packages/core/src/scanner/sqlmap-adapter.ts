@@ -217,7 +217,7 @@ export class SqlmapAdapter implements ToolAdapter {
 
     try {
       // SQLMap session data structure
-      const targetInfo = data.target || {};
+      const _targetInfo = data.target || {};
       const databases = data.databases || [];
       const injection = data.injection || {};
 
@@ -242,7 +242,6 @@ export class SqlmapAdapter implements ToolAdapter {
             'Apply principle of least privilege for database accounts',
             'Use WAF (Web Application Firewall) as additional layer',
           ],
-          extra: { injection, target: targetInfo },
         });
       }
 

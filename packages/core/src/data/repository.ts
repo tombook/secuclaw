@@ -19,7 +19,7 @@ export interface FilterQueryParams extends QueryParams {
  * Generic repository base class providing CRUD operations
  */
 export abstract class BaseRepository<T extends { id: string }> {
-  protected fileName: string;
+  protected fileName: string = '';
   
   constructor(protected store: JsonStore) {}
   

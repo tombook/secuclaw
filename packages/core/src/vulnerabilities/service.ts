@@ -1,10 +1,8 @@
-/**
- * Vulnerabilities Service
- * 漏洞管理业务逻辑层
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { VulnerabilitiesRepository, type Vulnerability, type VulnerabilityQueryParams } from './repository.js';
 import { VulnStateMachine } from './state-machine.js';
+import { hasPermissionWithInheritance, PERMISSIONS } from '../roles/permissions.js';
 
 interface EventBus {
   emit(event: string, payload: unknown): Promise<void>;
@@ -15,6 +13,7 @@ const logger = {
   error: (...args: any[]) => console.error('[VulnerabilitiesService]', ...args),
 };
 
+@Service()
 export class VulnerabilitiesService {
   private eventBus: EventBus | null = null;
 
@@ -34,8 +33,14 @@ export class VulnerabilitiesService {
     }
   }
 
-  async list(params: VulnerabilityQueryParams = {}): Promise<Vulnerability[]> {
-    return this.repo.query(params);
+  async list(params: VulnerabilityQueryParams = {}, roleId?: string): Promise<Vulnerability[]> {
+    const vulnerabilities = await this.repo.query(params);
+
+    if (!roleId || hasPermissionWithInheritance(roleId, PERMISSIONS.VULNS_READ)) {
+      return vulnerabilities;
+    }
+
+    return [];
   }
 
   async get(id: string): Promise<Vulnerability | null> {

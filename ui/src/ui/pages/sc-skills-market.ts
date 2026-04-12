@@ -1,5 +1,11 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 interface Skill {
   id: string;
@@ -37,6 +43,63 @@ export class ScSkillsMarket extends LitElement {
   @state() private toastMessage = '';
   @state() private toastType: 'success' | 'error' | 'info' = 'info';
   private toastTimeout: number | null = null;
+  @state() private serverSkills: any[] = [];
+  @state() private loadingFromServer = false;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.loadInstalledSkills();
+    this.loadServerSkills();
+  }
+
+  private loadInstalledSkills(): void {
+    try {
+      const stored = localStorage.getItem('secuclaw-installed-skills');
+      if (stored) {
+        const installedIds = JSON.parse(stored) as string[];
+        this.coreSkills = this.coreSkills.map(s => ({
+          ...s,
+          installed: installedIds.includes(s.id) || s.installed
+        }));
+        this.securityTools = this.securityTools.map(s => ({
+          ...s,
+          installed: installedIds.includes(s.id)
+        }));
+      }
+    } catch (e) {
+      console.warn('[skills-market] Failed to load installed skills:', e);
+    }
+  }
+
+  private saveInstalledSkills(): void {
+    const installedIds = [
+      ...this.coreSkills.filter(s => s.installed).map(s => s.id),
+      ...this.securityTools.filter(s => s.installed).map(s => s.id)
+    ];
+    localStorage.setItem('secuclaw-installed-skills', JSON.stringify(installedIds));
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
+    this.toastMessage = message;
+    this.toastType = type;
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = window.setTimeout(() => { this.toastMessage = ''; }, 3000);
+  }
+
+
+  private async loadServerSkills(): Promise<void> {
+    this.loadingFromServer = true;
+    try {
+      const res = await gatewayClient.request('skills.list', {});
+      const data = res as Record<string, any> | null;
+      if (data && typeof data === 'object') {
+        this.serverSkills = Object.values(data).filter((s: any) => s && typeof s === 'object' && s.id);
+      }
+    } catch (e) {
+      console.warn('[SkillsMarket] Failed to load server skills:', e);
+    }
+    this.loadingFromServer = false;
+  }
 
   // Sources map from SKILL.md files
   private sourcesMap: Record<string, any> = {
@@ -389,49 +452,27 @@ export class ScSkillsMarket extends LitElement {
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   `;
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.loadInstalledSkills();
-  }
-
-  private loadInstalledSkills() {
-    try {
-      const stored = localStorage.getItem('secuclaw-installed-skills');
-      if (stored) {
-        const installedIds = JSON.parse(stored) as string[];
-        // Merge with core skills
-        this.coreSkills = this.coreSkills.map(s => ({
-          ...s,
-          installed: installedIds.includes(s.id) || s.installed
-        }));
-        // Merge with security tools
-        this.securityTools = this.securityTools.map(s => ({
-          ...s,
-          installed: installedIds.includes(s.id)
-        }));
-      }
-    } catch (e) {
-      console.warn('[skills-market] Failed to load installed skills:', e);
-    }
-  }
-
-  private saveInstalledSkills() {
-    const installedIds = [
-      ...this.coreSkills.filter(s => s.installed).map(s => s.id),
-      ...this.securityTools.filter(s => s.installed).map(s => s.id)
-    ];
-    localStorage.setItem('secuclaw-installed-skills', JSON.stringify(installedIds));
-  }
-
-  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
-    this.toastMessage = message;
-    this.toastType = type;
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = window.setTimeout(() => { this.toastMessage = ''; }, 3000);
-  }
-
   private getAllSkills(): Skill[] {
-    return [...this.coreSkills, ...this.securityTools];
+    const local = [...this.coreSkills, ...this.securityTools];
+    if (this.serverSkills.length === 0) return local;
+    // Merge server skills as additional entries
+    const localIds = new Set(local.map(s => s.id));
+    const serverMapped: Skill[] = this.serverSkills
+      .filter(s => !localIds.has(s.id))
+      .map(s => ({
+        id: s.id,
+        name: s.name || s.id,
+        icon: s.icon || '🔧',
+        category: 'server',
+        description: s.description || '',
+        version: s.version || '1.0',
+        author: s.author || 'SecuClaw',
+        type: 'opensource' as const,
+        installed: true,
+        rating: s.rating || 4,
+        downloads: s.downloads || 0,
+      }));
+    return [...local, ...serverMapped];
   }
 
   private getFilteredSkills(): Skill[] {
@@ -619,6 +660,7 @@ export class ScSkillsMarket extends LitElement {
     const categoryCount = new Set(allSkills.map(s => s.category)).size;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="container">
         <div class="hero">
           <div class="hero-icon">🛒</div>

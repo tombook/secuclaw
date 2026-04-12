@@ -1,8 +1,5 @@
-/**
- * Incidents Service
- * 安全事件业务逻辑层
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type {
   SecurityIncident,
   IncidentQueryParams,
@@ -13,12 +10,11 @@ import type {
 } from './types.js';
 import { IncidentsRepository } from './repository.js';
 import { LinkStore, type LinkedResources } from './link-store.js';
+import { hasPermissionWithInheritance, PERMISSIONS } from '../roles/permissions.js';
 
-// Local EventBus interface to avoid circular dependencies during parallel init
 interface EventBus {
   emit(event: string, payload: unknown): Promise<void>;
 }
-// DomainId type is imported from capabilities/types.js in type annotations elsewhere
 
 const logger = {
   info: (...args: any[]) => console.log('[IncidentsService]', ...args),
@@ -38,6 +34,7 @@ const STATUS_TRANSITIONS: Record<IncidentStatus, IncidentStatus[]> = {
   reopened: ['investigating', 'containing'],
 };
 
+@Service()
 export class IncidentsService {
   private eventBus: EventBus | null = null;
   private linkStore: LinkStore | null = null;
@@ -64,8 +61,14 @@ export class IncidentsService {
 
   // ==================== CRUD ====================
 
-  async list(params: IncidentQueryParams = {}): Promise<SecurityIncident[]> {
-    return this.repo.query(params);
+  async list(params: IncidentQueryParams = {}, roleId?: string): Promise<SecurityIncident[]> {
+    const incidents = await this.repo.query(params);
+
+    if (!roleId || hasPermissionWithInheritance(roleId, PERMISSIONS.INCIDENTS_READ)) {
+      return incidents;
+    }
+
+    return [];
   }
 
   async get(id: string): Promise<SecurityIncident | null> {

@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../gateway-client.js';
+import '../components/design-system/sc-button.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 /**
  * Risk Center Page - Professional Design
@@ -258,6 +260,7 @@ export class ScRiskPage extends LitElement {
     const lowCount = this.risks.filter(r => r.level === 'low').length;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         <div class="hero">
           <div class="hero-icon">⚠️</div>
@@ -314,7 +317,7 @@ export class ScRiskPage extends LitElement {
           <div class="card">
             <div class="card-header">
               <span class="card-title">📋 风险列表</span>
-              <button class="btn btn-primary" @click=${() => this.addRisk()}>+ 添加风险</button>
+              <sc-button variant="primary" @click=${() => this.addRisk()}>+ 添加风险</sc-button>
             </div>
             <div class="card-body" style="padding: 0;">
               <table class="data-table">
@@ -333,9 +336,9 @@ export class ScRiskPage extends LitElement {
                       <td>${risk.status === 'open' ? '📋 待处理' : risk.status === 'mitigating' ? '🔧 处理中' : '✓ 已关闭'}</td>
                        <td>${risk.mitigation}</td>
                         <td>
-                          <button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;margin-right:4px;" @click=${() => this.viewRiskDetail(risk.id)}>详情</button>
-                          <button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;margin-right:4px;" @click=${() => this.editRisk(risk)}>编辑</button>
-                          <button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;" @click=${() => this.deleteRisk(risk.id)}>删除</button>
+                          <sc-button variant="secondary" size="sm" style="margin-right:4px;" @click=${() => this.viewRiskDetail(risk.id)}>详情</sc-button>
+                          <sc-button variant="secondary" size="sm" style="margin-right:4px;" @click=${() => this.editRisk(risk)}>编辑</sc-button>
+                          <sc-button variant="secondary" size="sm" @click=${() => this.deleteRisk(risk.id)}>删除</sc-button>
                         </td>
                     </tr>
                   `)}

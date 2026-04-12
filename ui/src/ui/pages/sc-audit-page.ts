@@ -1,6 +1,11 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 @customElement('sc-audit-page')
 export class ScAuditPage extends LitElement {
@@ -112,6 +117,7 @@ export class ScAuditPage extends LitElement {
 
   render() {
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="container">
         <div class="hero">
           <div class="hero-icon">📋</div>
@@ -153,11 +159,11 @@ export class ScAuditPage extends LitElement {
             <option value="execute" ?selected=${this.filterAction === 'execute'}>执行</option>
           </select>
           <input class="filter-input" type="text" placeholder="资源类型 (incident/vulnerability/asset...)" .value=${this.filterResource} @keydown=${(e: KeyboardEvent) => e.key === 'Enter' && (this.page = 1, this.loadData())} />
-          <button class="btn btn-primary" @click=${() => { this.page = 1; this.loadData(); }}>🔍 查询</button>
-          <button class="btn btn-secondary" @click=${() => { this.filterAction = ''; this.filterResource = ''; this.page = 1; this.loadData(); }}>重置</button>
-          <button class="btn btn-secondary" @click=${() => { const rt = prompt('资源类型 (incident/asset/role):'); const ri = prompt('资源ID:'); if (rt && ri) this.getByResource(rt, ri); }}>📦 资源查询</button>
-          <button class="btn btn-secondary" @click=${() => { const rt = prompt('资源类型:'); const ri = prompt('资源ID:'); if (rt && ri) this.getResourceHistory(rt, ri).then(h => { if (h) alert(JSON.stringify(h, null, 2)); }); }}>📜 资源历史</button>
-          <button class="btn btn-secondary" @click=${() => { const a = prompt('操作:'); const r = prompt('资源:'); const d = prompt('详情:'); if (a && r) this.logAudit(a, r, d || ''); }}>📝 记录审计</button>
+          <sc-button size="sm" variant="primary" @click=${() => { this.page = 1; this.loadData(); }}>🔍 查询</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${() => { this.filterAction = ''; this.filterResource = ''; this.page = 1; this.loadData(); }}>重置</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${() => { const rt = prompt('资源类型 (incident/asset/role):'); const ri = prompt('资源ID:'); if (rt && ri) this.getByResource(rt, ri); }}>📦 资源查询</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${() => { const rt = prompt('资源类型:'); const ri = prompt('资源ID:'); if (rt && ri) this.getResourceHistory(rt, ri).then(h => { if (h) alert(JSON.stringify(h, null, 2)); }); }}>📜 资源历史</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${() => { const a = prompt('操作:'); const r = prompt('资源:'); const d = prompt('详情:'); if (a && r) this.logAudit(a, r, d || ''); }}>📝 记录审计</sc-button>
         </div>
 
         <div class="table-container">

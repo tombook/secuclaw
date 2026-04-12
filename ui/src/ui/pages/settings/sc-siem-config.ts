@@ -7,6 +7,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../../gateway-client.js';
+import '../../components/design-system/sc-button.js';
+import '../../components/sc-smart-recommendation-bar.js';
 
 interface SiemPlatform {
   id: string;
@@ -308,6 +310,7 @@ export class ScSiemConfig extends LitElement {
 
   render() {
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div>
         <div class="page-header">
           <h1 class="page-title">🔗 SIEM 集成配置</h1>
@@ -417,9 +420,9 @@ export class ScSiemConfig extends LitElement {
         `)}
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</button>
-        <button class="btn btn-success" @click=${this.syncNow}>🔄 立即同步</button>
-        <button class="btn btn-primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</button>
+        <sc-button variant="secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</sc-button>
+        <sc-button variant="success" @click=${this.syncNow}>🔄 立即同步</sc-button>
+        <sc-button variant="primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</sc-button>
       </div>
     `;
   }
@@ -469,9 +472,9 @@ export class ScSiemConfig extends LitElement {
         `)}
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</button>
-        <button class="btn btn-success" @click=${this.syncNow}>🔄 立即同步</button>
-        <button class="btn btn-primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</button>
+        <sc-button variant="secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</sc-button>
+        <sc-button variant="success" @click=${this.syncNow}>🔄 立即同步</sc-button>
+        <sc-button variant="primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</sc-button>
       </div>
     `;
   }
@@ -518,9 +521,9 @@ export class ScSiemConfig extends LitElement {
             @input=${(e: any) => this.sentinelConfig = { ...this.sentinelConfig, syncInterval: parseInt(e.target.value) }} /></div>
       </div>
       <div class="btn-group">
-        <button class="btn btn-secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</button>
-        <button class="btn btn-success" @click=${this.syncNow}>🔄 立即同步</button>
-        <button class="btn btn-primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</button>
+        <sc-button variant="secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</sc-button>
+        <sc-button variant="success" @click=${this.syncNow}>🔄 立即同步</sc-button>
+        <sc-button variant="primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</sc-button>
       </div>
     `;
   }
@@ -566,9 +569,9 @@ export class ScSiemConfig extends LitElement {
       </div>
       <div class="info-box">📋 Syslog 格式说明：<br/>- severity: 0=Emergency, 1=Alert, 2=Critical, 3=Error, 4=Warning, 5=Notice, 6=Info, 7=Debug<br/>- 启用严重级别映射后，会根据事件级别自动设置 Syslog severity</div>
       <div class="btn-group">
-        <button class="btn btn-secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</button>
-        <button class="btn btn-success" @click=${this.syncNow}>🔄 发送测试消息</button>
-        <button class="btn btn-primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</button>
+        <sc-button variant="secondary" @click=${this.testConnection} ?disabled=${this.testing}>${this.testing ? '测试中...' : '🧪 测试连接'}</sc-button>
+        <sc-button variant="success" @click=${this.syncNow}>🔄 发送测试消息</sc-button>
+        <sc-button variant="primary" @click=${this.saveConfig} ?disabled=${this.saving}>${this.saving ? '保存中...' : '💾 保存配置'}</sc-button>
       </div>
     `;
   }
@@ -587,14 +590,14 @@ export class ScSiemConfig extends LitElement {
         <thead><tr><th>平台</th><th>状态</th><th>最后同步</th><th>同步事件数</th><th>错误数</th><th>操作</th></tr></thead>
         <tbody>
           <tr><td>🔍 Splunk</td><td><span class="badge badge-success">已连接</span></td><td>5分钟前</td><td>1,180</td><td>0</td>
-            <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('splunk')}>配置</button>
-                <button class="btn btn-success" style="padding:4px 10px;font-size:12px;" @click=${() => { this.activeTab = 'splunk'; this.syncNow(); }}>同步</button></td></tr>
+            <td><sc-button variant="secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('splunk')}>配置</sc-button>
+                <sc-button variant="success" style="padding:4px 10px;font-size:12px;" @click=${() => { this.activeTab = 'splunk'; this.syncNow(); }}>同步</sc-button></td></tr>
           <tr><td>🛡️ IBM QRadar</td><td><span class="badge badge-error">连接错误</span></td><td>1小时前</td><td>67</td><td>3</td>
-            <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('qradar')}>配置</button></td></tr>
+            <td><sc-button variant="secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('qradar')}>配置</sc-button></td></tr>
           <tr><td>☁️ Microsoft Sentinel</td><td><span class="badge badge-warning">未配置</span></td><td>-</td><td>0</td><td>0</td>
-            <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('sentinel')}>配置</button></td></tr>
+            <td><sc-button variant="secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('sentinel')}>配置</sc-button></td></tr>
           <tr><td>📝 Syslog</td><td><span class="badge badge-info">就绪</span></td><td>-</td><td>0</td><td>0</td>
-            <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('syslog')}>配置</button></td></tr>
+            <td><sc-button variant="secondary" style="padding:4px 10px;font-size:12px;" @click=${() => this.setTab('syslog')}>配置</sc-button></td></tr>
         </tbody>
       </table>
     `;

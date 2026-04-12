@@ -1,0 +1,29 @@
+{
+  "routes": [
+    {
+      "raciType": "R",
+      "provider": "bigmodel",
+      "model": "GLM-5-Turbo",
+      "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "apiKey": "02795750a3db4446b3d675ac755e6c0a.lc9oQDOH86EZ1kwD",
+      "temperature": 0.3,
+      "maxTokens": 2048
+    },
+    {
+      "raciType": "C",
+      "provider": "openai",
+      "model": "doubao-seed-2.0-pro",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "apiKey": "075cca97-a0ca-4225-87bf-78ac1b1e9664",
+      "temperature": 0.4,
+      "maxTokens": 1536
+    }
+  ],
+  "commanderProvider": "bigmodel",
+  "commanderModel": "GLM-5-Turbo",
+  "commanderBaseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+  "commanderApiKey": "02795750a3db4446b3d675ac755e6c0a.lc9oQDOH86EZ1kwD",
+  "maxConcurrency": 3,
+  "singleCallTimeoutMs": 15000,
+  "totalTimeoutMs": 60000
+}

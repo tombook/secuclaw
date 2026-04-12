@@ -15,6 +15,9 @@ export class ScAIChat extends LitElement {
   @property({ type: Boolean })
   loading: boolean = false;
 
+  @property({ type: Boolean })
+  streaming: boolean = false;
+
   @state()
   private inputValue: string = '';
 
@@ -81,6 +84,31 @@ export class ScAIChat extends LitElement {
     }
     
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .streaming-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px;
+      background: var(--sc-bg-secondary, #f3f4f6);
+      border-radius: var(--sc-radius-md, 8px);
+      align-items: center;
+    }
+
+    .streaming-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--sc-primary, #3b82f6);
+      border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    .streaming-dot:nth-child(2) { animation-delay: 0.2s; }
+    .streaming-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.4; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1.2); }
+    }
     
     .chat-input-container {
       display: flex;
@@ -169,7 +197,14 @@ export class ScAIChat extends LitElement {
                 ${msg.content}
               </div>
             `)}
-            ${this.loading ? html`
+            ${this.streaming ? html`
+              <div class="streaming-indicator">
+                <div class="streaming-dot"></div>
+                <div class="streaming-dot"></div>
+                <div class="streaming-dot"></div>
+              </div>
+            ` : ''}
+            ${this.loading && !this.streaming ? html`
               <div class="loading-indicator">
                 <div class="loading-spinner"></div>
               </div>

@@ -141,12 +141,13 @@ export class NmapAdapter implements ToolAdapter {
         const hostname = hostnamesMatch ? hostnamesMatch.getAttribute?.('name') || '' : '';
         const ip = addrMatch?.getAttribute?.('addr') || target;
 
-        const osMatch = hostXml.match(/<osmatch[^>]*name="([^"]*)"[^>]*accuracy="([^"]*)"/);
+        const _osMatch = hostXml.match(/<osmatch[^>]*name="([^"]*)"[^>]*accuracy="([^"]*)"/);
 
         // Parse ports
         const portMatches = hostXml.match(/<port[^>]*protocol="tcp"[^>]*>[\s\S]*?<\/port>/g) || [];
         for (const portXml of portMatches) {
           const portId = getAttr(portXml, 'portid');
+          const portIdNum = portId ? parseInt(portId, 10) : 0;
           const stateMatch = portXml.match(/<state[^>]*state="([^"]*)"/);
           const state = stateMatch?.[1] || '';
 
@@ -157,33 +158,22 @@ export class NmapAdapter implements ToolAdapter {
           const product = serviceMatch?.[2] || '';
           const version = serviceMatch?.[3] || '';
 
-          const portInfo = `${ip}:${portId}/${service}`;
+          const _portInfo = `${ip}:${portId}/${service}`;
           const banner = [product, version].filter(Boolean).join(' ');
 
           // Determine severity based on port/service
-          const severity = this.assessPortSeverity(parseInt(portId), service);
+          const severity = this.assessPortSeverity(portIdNum, service);
 
           findings.push({
-            id: `nmap-${ip}-${portId}`,
-            title: `Open Port: ${portId}/${service}`,
-            description: `Port ${portId} is open running ${service}${banner ? ` (${banner})` : ''}. Host: ${hostname || ip}`,
+            id: `nmap-${ip}-${portId || 'unknown'}`,
+            title: `Open Port: ${portId || 'unknown'}/${service}`,
+            description: `Port ${portId || 'unknown'} is open running ${service}${banner ? ` (${banner})` : ''}. Host: ${hostname || ip}`,
             severity,
             cvssScore: severity === 'critical' ? 9.8 : severity === 'high' ? 7.5 : severity === 'medium' ? 5.0 : 2.0,
             affectedAsset: ip,
-            affectedComponent: `${service}:${portId}`,
+            affectedComponent: `${service}:${portId || 'unknown'}`,
             discoveredAt: Date.now(),
-            fixSteps: this.getPortFixRecommendations(parseInt(portId), service),
-            extra: {
-              port: parseInt(portId),
-              protocol: 'tcp',
-              state,
-              service,
-              product,
-              version,
-              hostname,
-              os: osMatch?.[1],
-              banner,
-            },
+            fixSteps: portId ? this.getPortFixRecommendations(portIdNum, service) : [],
           });
         }
       }

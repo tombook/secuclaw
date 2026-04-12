@@ -10,8 +10,14 @@ import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation, type TrendPrediction } from '../ai-service.js';
 import { dataService, type VulnerabilityQueryParams, type VulnerabilityStats } from '../data-service.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
+import '../components/sc-role-perspective.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 // ============ 类型定义 ============
 
@@ -1080,7 +1086,7 @@ export class ScVulnerabilitiesPage extends LitElement {
       <div class="scan-section">
         <div class="section-header">
           <h3 class="section-title">🔬 扫描任务</h3>
-          <button class="btn btn-secondary">+ 新建扫描</button>
+          <sc-button variant="secondary" size="sm">+ 新建扫描</sc-button>
         </div>
         <div class="scan-grid">
           ${this.scanTasks.map(task => html`
@@ -1214,7 +1220,7 @@ export class ScVulnerabilitiesPage extends LitElement {
                 </td>
                 <td>
                   ${this.getNextStatuses(vuln.status).length > 0
-                    ? html`${this.getNextStatuses(vuln.status).map(ns => html`<button class="btn btn-secondary" @click=${() => this.updateVulnerabilityStatus(vuln.id, ns)}>${ns}</button>`)}
+                    ? html`${this.getNextStatuses(vuln.status).map(ns => html`<sc-button variant="secondary" size="sm" @click=${() => this.updateVulnerabilityStatus(vuln.id, ns)}>${ns}</sc-button>`)}
                     ` : html`-`
                   }
                 </td>
@@ -1292,11 +1298,27 @@ export class ScVulnerabilitiesPage extends LitElement {
         ` : ''}
 
         <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-secondary" @click=${() => this.updateVuln(vuln.id)}>✏️ 编辑</button>
-          <button class="btn btn-secondary" @click=${() => this.linkAssetToVuln(vuln.id)}>🔗 关联资产</button>
-          <button class="btn btn-secondary" @click=${() => this.unlinkAssetFromVuln(vuln.id, vuln.asset.id)}>✂️ 取消关联</button>
-          <button class="btn btn-secondary" @click=${() => this.deleteVulnerability(vuln.id)} style="background:rgba(239,68,68,0.1);color:#ef4444;">🗑️ 删除</button>
+          <sc-button variant="secondary" size="sm" @click=${() => this.updateVuln(vuln.id)}>✏️ 编辑</sc-button>
+          <sc-button variant="secondary" size="sm" @click=${() => this.linkAssetToVuln(vuln.id)}>🔗 关联资产</sc-button>
+          <sc-button variant="secondary" size="sm" @click=${() => this.unlinkAssetFromVuln(vuln.id, vuln.asset.id)}>✂️ 取消关联</sc-button>
+          <sc-button variant="danger" size="sm" @click=${() => this.deleteVulnerability(vuln.id)}>🗑️ 删除</sc-button>
         </div>
+      </div>
+    `;
+  }
+
+  private renderRolePerspective() {
+    const currentRole = roleContext.getState().currentRole || 'security-expert';
+    return html`
+      <div style="margin-top: var(--sc-spacing-lg, 20px);">
+        <sc-role-perspective
+          dataType="vulnerabilities"
+          .data=${{
+            vulnerabilities: this.vulnerabilities,
+            scanTasks: this.scanTasks
+          }}
+          .currentRole=${currentRole}
+        ></sc-role-perspective>
       </div>
     `;
   }
@@ -1313,6 +1335,7 @@ export class ScVulnerabilitiesPage extends LitElement {
 
     return html`
       ${this.toastMessage ? html`<div class="toast ${this.toastType}">${this.toastMessage}</div>` : ''}
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="vulns-container">
         <div class="main-content">
           ${this.toastMessage ? html`
@@ -1332,19 +1355,20 @@ export class ScVulnerabilitiesPage extends LitElement {
               </div>
             </div>
         <div class="header-actions">
-          <button class="btn btn-secondary" @click=${this.batchImportVulns}>📥 批量导入</button>
-          <button class="btn btn-secondary" @click=${this.createVulnerability}>➯ 新建漏洞</button>
-          <button class="btn btn-secondary" @click=${() => this.loadActiveVulns()}>🔴 活跃漏洞</button>
-          <button class="btn btn-secondary" @click=${() => { const aid = prompt('资产ID:'); if (aid) this.findVulnsByAssetId(aid); }}>🔍 按资产搜索</button>
-          <button class="btn btn-secondary" @click=${this.batchUpdateStatus}>🔄 批量更新</button>
-          <button class="btn btn-secondary">📤 导出报告</button>
-          <button class="btn btn-primary" @click=${this.createVulnerability}>+ 开始扫描</button>
+          <sc-button size="sm" variant="secondary" @click=${this.batchImportVulns}>📥 批量导入</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${this.createVulnerability}>➯ 新建漏洞</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${() => this.loadActiveVulns()}>🔴 活跃漏洞</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${() => { const aid = prompt('资产ID:'); if (aid) this.findVulnsByAssetId(aid); }}>🔍 按资产搜索</sc-button>
+          <sc-button size="sm" variant="secondary" @click=${this.batchUpdateStatus}>🔄 批量更新</sc-button>
+          <sc-button size="sm" variant="secondary">📤 导出报告</sc-button>
+          <sc-button size="sm" variant="primary" @click=${this.createVulnerability}>+ 开始扫描</sc-button>
             </div>
           </div>
 
           ${this.renderStats()}
           ${this.renderScanTasks()}
           ${this.renderVulnTable()}
+          ${this.renderRolePerspective()}
 
           ${this.recommendations.length > 0 ? html`
             <div class="scan-section" style="margin-top:20px;">

@@ -4,6 +4,7 @@
 
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import '../components/design-system/sc-button.js';
 
 @customElement('sc-dashboard-header')
 export class ScDashboardHeader extends LitElement {
@@ -119,20 +120,20 @@ export class ScDashboardHeader extends LitElement {
           </div>
         </div>
         <div class="header-actions">
-          <select class="btn btn-secondary" style="padding: 8px 12px;" @change=${this.handleTimeChange}>
+          <select variant="secondary" style="padding: 8px 12px;" @change=${this.handleTimeChange}>
             <option>今日</option>
             <option>本周</option>
             <option>本月</option>
           </select>
-          <button class="btn btn-secondary" @click=${this.handleRefresh}>
+          <sc-button variant="secondary" size="sm" @click=${this.handleRefresh}>
             🔄 刷新
-          </button>
-          <button class="btn btn-secondary" @click=${this.handleKPICalc}>
+          </sc-button>
+          <sc-button variant="secondary" size="sm" @click=${this.handleKPICalc}>
             📊 KPI计算
-          </button>
-          <button class="btn btn-primary">
+          </sc-button>
+          <sc-button variant="primary">
             📊 生成报告
-          </button>
+          </sc-button>
         </div>
       </div>
     `;

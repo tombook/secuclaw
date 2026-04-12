@@ -1,0 +1,81 @@
+:root {
+  /* Color Palette - Maps to existing --sc-* variables */
+  --color-primary: var(--sc-primary);
+  --color-primary-hover: var(--sc-primary-hover);
+  --color-primary-light: var(--sc-primary-light);
+  --color-secondary: var(--sc-secondary);
+  --color-secondary-hover: var(--sc-secondary-hover);
+  --color-success: var(--sc-success);
+  --color-success-bg: var(--sc-success-bg);
+  --color-warning: var(--sc-warning);
+  --color-warning-bg: var(--sc-warning-bg);
+  --color-error: var(--sc-error);
+  --color-error-bg: var(--sc-error-bg);
+  --color-info: var(--sc-info);
+  --color-info-bg: var(--sc-info-bg);
+
+  /* Background Colors */
+  --color-bg: var(--sc-bg-primary);
+  --color-bg-secondary: var(--sc-bg-secondary);
+  --color-bg-tertiary: var(--sc-bg-tertiary);
+  --color-bg-card: var(--sc-bg-card);
+  --color-bg-hover: var(--sc-bg-hover);
+
+  /* Text Colors */
+  --color-text: var(--sc-text-primary);
+  --color-text-secondary: var(--sc-text-secondary);
+  --color-text-tertiary: var(--sc-text-tertiary);
+  --color-text-inverse: var(--sc-text-inverse);
+
+  /* Border Colors */
+  --color-border: var(--sc-border-color);
+  --color-border-focus: var(--sc-border-focus);
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing (8px grid) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+
+  /* Z-index scale */
+  --z-dropdown: 1000;
+  --z-modal: 1050;
+  --z-tooltip: 1100;
+  --z-toast: 1200;
+}

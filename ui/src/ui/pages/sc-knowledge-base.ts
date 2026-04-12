@@ -2,6 +2,11 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 @customElement('sc-knowledge-base')
 export class ScKnowledgeBase extends LitElement {
@@ -139,6 +144,7 @@ export class ScKnowledgeBase extends LitElement {
 
   render() {
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="container">
         <div class="hero">
           <div class="hero-icon">📚</div>

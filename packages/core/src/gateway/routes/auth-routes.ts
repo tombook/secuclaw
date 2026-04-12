@@ -1,20 +1,20 @@
-import type { RouterDeps } from '../../gateway/router.js';
+import type { Router, RouterDeps } from '../router.js';
 import { RolesRepository } from '../../roles/repository.js';
 import { signToken } from '../../auth/jwt.js';
 import type { JWTPayload } from '../../auth/jwt.js';
 import { verifyPassword } from '../../auth/password.js';
 
-export function registerAuthRoutes(
-  handlers: Map<string, (params: Record<string, unknown>) => Promise<unknown>>,
-  deps: RouterDeps
-): void {
-  handlers.set('auth.login', (params) => handleAuthLogin(params, deps));
-  handlers.set('auth.logout', (params) => handleAuthLogout(params, deps));
-  handlers.set('auth.getCurrentUser', (params) => handleAuthGetCurrentUser(params, deps));
-  handlers.set('auth.hasPermission', (params) => handleAuthHasPermission(params, deps));
+export function registerAuthRoutes(router: Router): void {
+  const deps = router.getDeps();
+
+  router.registerHandler('auth.login', async (params) => handleAuthLogin(params, deps));
+  router.registerHandler('auth.logout', async (params) => handleAuthLogout(params, deps));
+  router.registerHandler('auth.getCurrentUser', async (params) => handleAuthGetCurrentUser(params, deps));
+  router.registerHandler('auth.getUser', async (params) => handleAuthGetCurrentUser(params, deps));
+  router.registerHandler('auth.hasPermission', async (params) => handleAuthHasPermission(params, deps));
 }
 
-async function handleAuthLogin(params: Record<string, unknown>, deps: RouterDeps) {
+async function handleAuthLogin(params: Record<string, unknown>, deps: RouterDeps): Promise<unknown> {
   const { username, password } = params;
   if (!username || !password) throw new Error('Username and password are required');
 
@@ -71,20 +71,33 @@ async function handleAuthLogin(params: Record<string, unknown>, deps: RouterDeps
   throw new Error('Invalid credentials');
 }
 
-async function handleAuthLogout(_params: Record<string, unknown>, deps: RouterDeps) {
+async function handleAuthLogout(_params: Record<string, unknown>, deps: RouterDeps): Promise<unknown> {
   void deps;
   return { success: true };
 }
 
-async function handleAuthGetCurrentUser(_params: Record<string, unknown>, deps: RouterDeps) {
+async function handleAuthGetCurrentUser(
+  _params: Record<string, unknown>,
+  deps: RouterDeps,
+  clientContext?: Record<string, unknown>
+): Promise<unknown> {
   void deps;
+
+  // Check if client has a real authenticated user (not demo mode)
+  const user = clientContext?.user as { userId?: string; username?: string; roleIds?: string[]; permissions?: string[] } | undefined;
+
+  // If no client context, no user, or demo user → return null (unauthenticated)
+  if (!user || !user.userId || user.userId === 'demo-user') {
+    return null;
+  }
+
   return {
-    id: 'user-admin',
-    username: 'admin',
-    name: 'Administrator',
-    email: 'admin@secuclaw.local',
-    roleIds: ['role-admin'],
-    permissions: ['admin.access'],
+    id: user.userId,
+    username: user.username,
+    name: user.username,
+    email: `${user.username}@secuclaw.local`,
+    roleIds: user.roleIds ?? [],
+    permissions: user.permissions ?? [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };

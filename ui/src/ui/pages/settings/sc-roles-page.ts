@@ -5,6 +5,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../../gateway-client.js';
+import '../../components/design-system/sc-button.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 
 interface Role {
@@ -510,11 +511,12 @@ export class ScRolesPage extends LitElement {
 
   render() {
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-header">
         <h1 class="page-title">${this.i18n.t('roles.pageTitle', '角色权限管理')}</h1>
         <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" @click=${this.createRole}>+ 新建角色</button>
-          <button class="btn btn-secondary" @click=${this.initializeRoles}>🔄 初始化默认角色</button>
+          <sc-button variant="secondary" size="sm" @click=${this.createRole}>+ 新建角色</sc-button>
+          <sc-button variant="secondary" size="sm" @click=${this.initializeRoles}>🔄 初始化默认角色</sc-button>
         </div>
       </div>
 
@@ -542,7 +544,7 @@ export class ScRolesPage extends LitElement {
                 ${role.type === 'system' ? html`<span class="role-badge">${this.i18n.t('roles.system', '系统')}</span>` : ''}
               </div>
               <div class="role-desc">${role.description}</div>
-              ${role.type === 'custom' ? html`<button class="btn btn-secondary" style="margin-top:8px;font-size:11px;padding:2px 8px;" @click=${(e: Event) => { e.stopPropagation(); this.deleteRole(role.id); }}>🗑️ 删除</button>` : ''}
+              ${role.type === 'custom' ? html`<sc-button variant="secondary" size="sm" style="margin-top:8px;" @click=${(e: Event) => { e.stopPropagation(); this.deleteRole(role.id); }}>🗑️ 删除</sc-button>` : ''}
             </div>
           `)}
         </div>
@@ -554,8 +556,8 @@ export class ScRolesPage extends LitElement {
             </div>
           `}
           <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-secondary" @click=${() => { const id = prompt('角色ID:'); if (id) this.getRole(id).then(r => { if (r) alert(JSON.stringify(r, null, 2)); }); }}>🔍 按ID查询</button>
-            <button class="btn btn-secondary" @click=${() => { const code = prompt('角色编码:'); if (code) this.getRoleByCode(code).then(r => { if (r) alert(JSON.stringify(r, null, 2)); }); }}>🔎 按编码查询</button>
+            <sc-button variant="secondary" size="sm" @click=${() => { const id = prompt('角色ID:'); if (id) this.getRole(id).then(r => { if (r) alert(JSON.stringify(r, null, 2)); }); }}>🔍 按ID查询</sc-button>
+            <sc-button variant="secondary" size="sm" @click=${() => { const code = prompt('角色编码:'); if (code) this.getRoleByCode(code).then(r => { if (r) alert(JSON.stringify(r, null, 2)); }); }}>🔎 按编码查询</sc-button>
           </div>
         </div>
       </div>
@@ -568,7 +570,7 @@ export class ScRolesPage extends LitElement {
         <div class="permissions-title">
           ${this.selectedRole?.nameCn} - ${this.i18n.t('roles.permissions', '权限配置')}
         </div>
-        <button class="btn btn-secondary" @click=${this.resetPermissions}>
+        <sc-button variant="secondary" size="sm" @click=${this.resetPermissions}>
           ${this.i18n.t('roles.reset', '重置')}
         </button>
       </div>
@@ -606,7 +608,7 @@ export class ScRolesPage extends LitElement {
       <div class="permissions-panel">
         <div class="permissions-header">
           <div class="permissions-title">用户管理</div>
-          <button class="btn btn-primary" @click=${this.showAddUserDialog}>
+          <sc-button variant="primary" @click=${this.showAddUserDialog}>
             + 添加用户
           </button>
         </div>
@@ -634,22 +636,22 @@ export class ScRolesPage extends LitElement {
                   })}
                 </td>
                  <td style="padding: 12px;">
-                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.editUser(user)}>
+                    <sc-button variant="secondary" size="sm" style="margin-right: 8px;" @click=${() => this.editUser(user)}>
                       编辑
-                    </button>
-                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.assignRole(user.id)}>
+                    </sc-button>
+                    <sc-button variant="secondary" size="sm" style="margin-right: 8px;" @click=${() => this.assignRole(user.id)}>
                       分配角色
-                    </button>
-                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.removeRoleFromUser(user.id)}>
+                    </sc-button>
+                    <sc-button variant="secondary" size="sm" style="margin-right: 8px;" @click=${() => this.removeRoleFromUser(user.id)}>
                       移除角色
-                    </button>
-                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.getUserPermissions(user.id)}>
+                    </sc-button>
+                    <sc-button variant="secondary" size="sm" style="margin-right: 8px;" @click=${() => this.getUserPermissions(user.id)}>
                       查看权限
-                    </button>
-                    <button class="btn btn-secondary" style="margin-right: 8px;" @click=${() => this.getUser(user.id)}>
+                    </sc-button>
+                    <sc-button variant="secondary" size="sm" style="margin-right: 8px;" @click=${() => this.getUser(user.id)}>
                       详情
-                    </button>
-                    <button class="btn btn-secondary" @click=${() => this.deleteUser(user.id)}>
+                    </sc-button>
+                    <sc-button variant="secondary" size="sm" @click=${() => this.deleteUser(user.id)}>
                       删除
                     </button>
                  </td>

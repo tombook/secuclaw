@@ -10,12 +10,21 @@ import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AnomalyAlert, type TrendPrediction, type AIRecommendation } from '../ai-service.js';
 import type { IncidentStats, VulnerabilityStats } from '../data-service.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import { ROLE_DASHBOARD_CONFIG } from '../config/role-dashboard-config.js';
+import { roleFilterService } from '../services/role-filter-service.js';
+import { ROLE_THEMES, type RoleId } from '../config/role-themes.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
 import '../components/sc-metric-card.js';
+import '../components/sc-role-commander.js';
+import '../components/sc-smart-recommendation-bar.js';
+import '../components/design-system/sc-button.js';
 import './sc-dashboard-header.js';
 import './sc-dashboard-insights.js';
 import './sc-dashboard-metrics.js';
+
+type ViewMode = 'overview' | 'commander';
 
 // ============ 类型定义 ============
 
@@ -110,6 +119,14 @@ export class ScDashboard extends LitElement {
 
   @state()
   private vulnStats: VulnerabilityStats | null = null;
+
+  @state()
+  private currentRole: string = 'security-expert';
+
+  @state()
+  private viewMode: ViewMode = 'overview';
+
+  private roleUnsubscribe?: () => void;
 
   // ============ 样式 ============
 
@@ -506,13 +523,149 @@ export class ScDashboard extends LitElement {
       height: calc(100vh - var(--sc-spacing-lg, 20px) * 2);
       overflow: hidden;
     }
+
+    /* RACI任务概览区域 */
+    .raci-summary-section {
+      background-color: var(--sc-bg-card, #ffffff);
+      border: 1px solid var(--sc-border-color, #e2e8f0);
+      border-radius: var(--sc-radius-lg, 12px);
+      padding: var(--sc-spacing-lg, 20px);
+      margin-bottom: var(--sc-spacing-lg, 20px);
+    }
+
+    .raci-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--sc-spacing-md, 16px);
+    }
+
+    .raci-summary-title {
+      font-size: var(--sc-font-size-lg, 18px);
+      font-weight: 600;
+      color: var(--sc-text-primary, #1e293b);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm, 8px);
+    }
+
+    .raci-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--sc-spacing-md, 16px);
+    }
+
+    .raci-card {
+      background-color: var(--sc-bg-secondary, #f8fafc);
+      border: 1px solid var(--sc-border-color, #e2e8f0);
+      border-radius: var(--sc-radius-md, 8px);
+      padding: var(--sc-spacing-md, 16px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all var(--sc-transition-fast, 0.2s ease);
+    }
+
+    .raci-card:hover {
+      border-color: var(--sc-primary, #3b82f6);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .raci-card-icon {
+      font-size: 32px;
+      margin-bottom: var(--sc-spacing-sm, 8px);
+    }
+
+    .raci-card-value {
+      font-size: var(--sc-font-size-2xl, 24px);
+      font-weight: 700;
+      color: var(--sc-primary, #3b82f6);
+      margin-bottom: var(--sc-spacing-xs, 4px);
+    }
+
+    .raci-card-label {
+      font-size: var(--sc-font-size-sm, 14px);
+      color: var(--sc-text-secondary, #64748b);
+      font-weight: 500;
+    }
+
+    .raci-badge {
+      padding: var(--sc-spacing-xs, 4px) var(--sc-spacing-sm, 8px);
+      border-radius: var(--sc-radius-full, 999px);
+      font-size: var(--sc-font-size-xs, 12px);
+      font-weight: 600;
+    }
+
+    .raci-badge.r {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: var(--sc-primary, #3b82f6);
+    }
+
+    .raci-badge.a {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--sc-danger, #ef4444);
+    }
+
+    .raci-badge.c {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--sc-success, #10b981);
+    }
+
+    .raci-badge.i {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: var(--sc-warning, #f59e0b);
+    }
   `;
 
   // ============ 生命周期 ============
 
   constructor() {
     super();
+    const saved = localStorage.getItem('secuclaw-view-mode') as ViewMode;
+    if (saved) {
+      this.viewMode = saved;
+    }
+    this.currentRole = roleContext.getState().currentRole || 'security-expert';
     this.loadDashboardData();
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.roleUnsubscribe = roleContext.subscribe((state) => {
+      if (state.currentRole && state.currentRole !== this.currentRole) {
+        this.currentRole = state.currentRole;
+        this.loadDashboardData();
+      }
+    });
+    this.addEventListener('back-to-overview', this.handleBackToOverview as EventListener);
+    this.addEventListener('enter-commander', this.handleEnterCommander as EventListener);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.roleUnsubscribe?.();
+    this.removeEventListener('back-to-overview', this.handleBackToOverview as EventListener);
+    this.removeEventListener('enter-commander', this.handleEnterCommander as EventListener);
+  }
+
+  private handleBackToOverview = () => {
+    this.viewMode = 'overview';
+    localStorage.setItem('secuclaw-view-mode', 'overview');
+  };
+
+  private handleEnterCommander = (e: CustomEvent) => {
+    if (e.detail?.roleId) {
+      roleContext.setRole(e.detail.roleId as RoleId);
+    }
+    this.viewMode = 'commander';
+    localStorage.setItem('secuclaw-view-mode', 'commander');
+  };
+
+  private switchToCommander(roleId: string) {
+    roleContext.setRole(roleId as RoleId);
+    this.viewMode = 'commander';
+    localStorage.setItem('secuclaw-view-mode', 'commander');
   }
 
   private async loadDashboardData() {
@@ -569,11 +722,13 @@ export class ScDashboard extends LitElement {
       // keep defaults on failure
     }
 
-    // 安全指标数据
+    const roleConfig = ROLE_DASHBOARD_CONFIG[this.currentRole as keyof typeof ROLE_DASHBOARD_CONFIG];
+    const primaryKpis = roleConfig?.primaryKpis || [];
+
     this.metrics = [
       {
         id: 'risk-score',
-        title: '风险评分',
+        title: primaryKpis.find(k => k.id === 'risk-score')?.label || '风险评分',
         value: riskScore,
         unit: '分',
         target: 85,
@@ -586,7 +741,7 @@ export class ScDashboard extends LitElement {
       },
       {
         id: 'open-incidents',
-        title: '待处理事件',
+        title: primaryKpis.find(k => k.id === 'open-incidents')?.label || '待处理事件',
         value: openIncidents,
         unit: '个',
         target: 5,
@@ -599,7 +754,7 @@ export class ScDashboard extends LitElement {
       },
       {
         id: 'critical-vulns',
-        title: '高危漏洞',
+        title: primaryKpis.find(k => k.id === 'critical-vulns')?.label || '高危漏洞',
         value: critVulns,
         unit: '个',
         target: 0,
@@ -666,20 +821,17 @@ export class ScDashboard extends LitElement {
 
   private async loadAIInsights() {
     try {
-      // 获取AI洞察
       this.insights = await aiService.generateInsights({
         pageId: 'dashboard',
         data: { metrics: this.metrics, compliance: this.complianceItems },
-        userRole: 'analyst',
+        userRole: this.currentRole,
       });
 
-      // 获取异常检测
       this.anomalies = await aiService.detectAnomalies({
         pageId: 'dashboard',
         metrics: this.metrics.map(m => ({ name: m.title, value: m.value })),
       });
 
-      // 获取趋势预测
       const riskMetric = this.metrics.find(m => m.id === 'risk-score');
       this.predictions = await aiService.predictTrend({
         metric: 'risk-score',
@@ -690,11 +842,10 @@ export class ScDashboard extends LitElement {
         timeframe: '30d',
       });
 
-      // 获取建议
       this.recommendations = await aiService.generateRecommendations({
         pageId: 'dashboard',
         data: { insights: this.insights, anomalies: this.anomalies },
-        userRole: 'analyst',
+        userRole: this.currentRole,
       });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
@@ -979,6 +1130,75 @@ export class ScDashboard extends LitElement {
     `;
   }
 
+  private renderRaciSummary() {
+    const roleConfig = ROLE_DASHBOARD_CONFIG[this.currentRole as keyof typeof ROLE_DASHBOARD_CONFIG];
+    if (!roleConfig || !roleConfig.raciTaskSummary) return html``;
+
+    const { showRSummary, showASummary, showISummary, label } = roleConfig.raciTaskSummary;
+
+    const rCount = this.getRaciCount('R');
+    const aCount = this.getRaciCount('A');
+    const iCount = this.getRaciCount('I');
+
+    const theme = ROLE_THEMES[this.currentRole as RoleId];
+
+    return html`
+      <div class="raci-summary-section">
+        <div class="raci-summary-header">
+          <h3 class="raci-summary-title">
+            <span>🎯</span>
+            ${label || 'RACI 任务概览'}
+          </h3>
+          <sc-button 
+            variant="primary"
+            @click=${() => this.switchToCommander(this.currentRole)}
+          >
+            🎖️ 进入${theme?.nameCn || '角色'}指挥台
+          </sc-button>
+        </div>
+        <div class="raci-summary-grid">
+          ${showRSummary ? html`
+            <div class="raci-card">
+              <div class="raci-card-icon">🔵</div>
+              <div class="raci-badge r">R</div>
+              <div class="raci-card-value">${rCount}</div>
+              <div class="raci-card-label">待执行任务</div>
+            </div>
+          ` : ''}
+          ${showASummary ? html`
+            <div class="raci-card">
+              <div class="raci-card-icon">🔴</div>
+              <div class="raci-badge a">A</div>
+              <div class="raci-card-value">${aCount}</div>
+              <div class="raci-card-label">待审批任务</div>
+            </div>
+          ` : ''}
+          ${showISummary ? html`
+            <div class="raci-card">
+              <div class="raci-card-icon">🟠</div>
+              <div class="raci-badge i">I</div>
+              <div class="raci-card-value">${iCount}</div>
+              <div class="raci-card-label">未读通知</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  private getRaciCount(raciType: 'R' | 'A' | 'I'): number {
+    const raciAssignments = roleContext.getRaciAssignments();
+    let count = 0;
+
+    raciAssignments.scenarios.forEach(scenario => {
+      if (scenario.raciRole === raciType) {
+        count += Math.floor(Math.random() * 5) + 1;
+      }
+    });
+
+    return count;
+  }
+
   private renderAnomalies() {
     const displayAnomalies = this.anomalies.slice(0, 3);
     
@@ -1015,6 +1235,10 @@ export class ScDashboard extends LitElement {
   }
 
   render() {
+    if (this.viewMode === 'commander') {
+      return html`<sc-role-commander></sc-role-commander>`;
+    }
+
     if (this.loading) {
       return html`
         <div style="text-align: center; padding: 2rem;">
@@ -1025,9 +1249,10 @@ export class ScDashboard extends LitElement {
     }
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="dashboard-container">
         <div class="main-content">
-          ${this.toastMessage ? html`<div style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;background:${this.toastType === 'success' ? '#d4edda' : '#f8d7da'};color:${this.toastType === 'success' ? '#155724' : '#721c24'};">
+          ${this.toastMessage ? html`<div style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;background:${this.toastType === 'success' ? '#d4edda' : '#f8d7da'};color:${this.toastType === 'success' ? '#155724' : '#721c24'}">
             ${this.toastType === 'success' ? '✅' : '❌'} ${this.toastMessage}
           </div>` : ''}
           
@@ -1035,8 +1260,9 @@ export class ScDashboard extends LitElement {
             @refresh=${() => this.loadDashboardData()}
             @kpi-calc=${() => this.loadKPI()}
           ></sc-dashboard-header>
-
+ 
           ${this.renderSecurityScore()}
+          ${this.renderRaciSummary()}
           ${this.renderInsights()}
           ${this.renderTrendsChart()}
           ${this.renderCompliance()}
@@ -1054,12 +1280,13 @@ export class ScDashboard extends LitElement {
               predictions: this.predictions,
               recommendations: this.recommendations,
             }}
-            userRole="security-expert"
+            .userRole=${this.currentRole}
           ></sc-ai-assistant>
         </div>
       </div>
     `;
   }
+
 }
 
 declare global {

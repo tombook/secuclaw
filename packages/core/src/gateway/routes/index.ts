@@ -16,3 +16,5 @@ export { registerApprovalRoutes } from './approval-routes.js';
 export { registerPlaybookRoutes } from './playbook-routes.js';
 export { registerAiRoutes } from './ai-routes.js';
 export { registerSiemRoutes } from './siem-routes.js';
+export { registerWarroomRoutes } from './warroom-routes.js';
+export { registerRaciTaskRoutes } from './raci-task-routes.js';

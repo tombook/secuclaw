@@ -10,8 +10,13 @@ import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
 import { dataService, type SecurityIncident, type IncidentQueryParams } from '../data-service.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext, type RoleId } from '../store/role-context.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 // ============ 类型定义 ============
 
@@ -363,6 +368,24 @@ export class ScIncidentsPage extends LitElement {
       font-weight: 600;
     }
 
+    .war-room-btn {
+      padding: 4px 8px;
+      background-color: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--sc-warning, #f59e0b);
+      border-radius: var(--sc-radius-sm, 4px);
+      color: var(--sc-warning, #f59e0b);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: var(--sc-spacing-xs, 4px);
+    }
+
+    .war-room-btn:hover {
+      background-color: var(--sc-warning, #f59e0b);
+      color: white;
+    }
+
     /* 事件详情面板 */
     .detail-panel {
       background-color: var(--sc-bg-card, #ffffff);
@@ -580,7 +603,7 @@ export class ScIncidentsPage extends LitElement {
       if (this.filterStatus !== 'all') {
         params.status = this.filterStatus;
       }
-      const res = await gatewayClient.request('incidents.list', params);
+      const res = await gatewayClient.request('incidents.list', params as Record<string, unknown>);
       this.realIncidents = (res as any)?.data ?? [];
       
       // Convert to UI format
@@ -980,8 +1003,8 @@ export class ScIncidentsPage extends LitElement {
             />
           </div>
           <div style="display:flex;gap:12px;justify-content:flex-end;">
-            <button class="btn btn-secondary" style="padding:8px 16px;border:none;border-radius:8px;cursor:pointer;background:#f3f4f6;" @click=${this.closeAssignModal}>取消</button>
-            <button class="btn btn-primary" style="padding:8px 16px;border:none;border-radius:8px;cursor:pointer;background:#3b82f6;color:#fff;" @click=${this.handleAssign} ?disabled=${!this.assigneeInput.trim()}>确认分配</button>
+            <sc-button variant="secondary" @click=${this.closeAssignModal}>取消</sc-button>
+            <sc-button variant="primary" @click=${this.handleAssign} ?disabled=${!this.assigneeInput.trim()}>确认分配</sc-button>
           </div>
         </div>
       </div>
@@ -1107,6 +1130,12 @@ export class ScIncidentsPage extends LitElement {
                         <span class="incident-meta">${incident.assignee}</span>
                       </div>
                     ` : ''}
+                    <button class="war-room-btn" @click=${(e: Event) => {
+                      e.stopPropagation();
+                      (window as any).__router?.render(`/war-room/${incident.id}`);
+                    }}>
+                      🎯 War Room
+                    </sc-button>
                   </div>
                 `)}
               </div>
@@ -1130,16 +1159,19 @@ export class ScIncidentsPage extends LitElement {
             <div class="incident-meta">${incident.id} · ${incident.category}</div>
           </div>
            <div class="detail-actions">
-             <button class="btn btn-secondary" @click=${() => this.openAssignModal(incident)}>分配</button>
-             <button class="btn btn-secondary" @click=${() => this.handleEscalate(incident)} style="background:rgba(239,68,68,0.1);color:#ef4444;">升级</button>
-             <button class="btn btn-secondary" @click=${() => this.deleteIncident(incident.id)} style="background:rgba(239,68,68,0.1);color:#ef4444;">🗑️ 删除</button>
-             <select class="btn btn-primary" @change=${(e: Event) => this.handleStatusUpdate(incident, (e.target as HTMLSelectElement).value as IncidentStatus)}>
-               <option value="" disabled selected>更新状态</option>
-               ${this.getValidNextStatuses(incident.status).map(s => html`
-                 <option value="${s}">${this.getStatusLabel(s)}</option>
-               `)}
-             </select>
-           </div>
+              <sc-button variant="secondary" size="sm" @click=${() => this.openAssignModal(incident)}>分配</sc-button>
+              <sc-button variant="secondary" @click=${() => {
+                (window as any).__router?.render(`/war-room/${incident.id}`);
+              }}>🎯 启动 War Room</sc-button>
+              <sc-button variant="danger" size="sm" @click=${() => this.handleEscalate(incident)}>升级</sc-button>
+              <sc-button variant="danger" size="sm" @click=${() => this.deleteIncident(incident.id)}>🗑️ 删除</sc-button>
+              <select variant="primary" @change=${(e: Event) => this.handleStatusUpdate(incident, (e.target as HTMLSelectElement).value as IncidentStatus)}>
+                <option value="" disabled selected>更新状态</option>
+                ${this.getValidNextStatuses(incident.status).map(s => html`
+                  <option value="${s}">${this.getStatusLabel(s)}</option>
+                `)}
+              </select>
+            </div>
         </div>
 
         <div class="section-header">📝 描述</div>
@@ -1242,6 +1274,7 @@ export class ScIncidentsPage extends LitElement {
     }
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="incidents-container">
         <div class="main-content">
           <div class="page-header">
@@ -1256,11 +1289,11 @@ export class ScIncidentsPage extends LitElement {
               </div>
             </div>
             <div class="header-actions">
-              <button class="btn-icon ${this.viewMode === 'kanban' ? 'active' : ''}" @click=${() => this.viewMode = 'kanban'}>📊</button>
-              <button class="btn-icon ${this.viewMode === 'list' ? 'active' : ''}" @click=${() => this.viewMode = 'list'}>📋</button>
-              <button class="btn btn-secondary" @click=${() => { const tid = prompt('工单号 (如 INC-001):'); if (tid) this.getByTicketId(tid); }}>🔍 工单查询</button>
-              <button class="btn btn-secondary">📤 导出</button>
-              <button class="btn btn-primary" @click=${() => this.createIncident()}>+ 创建事件</button>
+              <sc-button size="sm" ?disabled=${this.viewMode === 'kanban'} @click=${() => this.viewMode = 'kanban'}>📊</sc-button>
+              <sc-button size="sm" ?disabled=${this.viewMode === 'list'} @click=${() => this.viewMode = 'list'}>📋</sc-button>
+              <sc-button size="sm" @click=${() => { const tid = prompt('工单号 (如 INC-001):'); if (tid) this.getByTicketId(tid); }}>🔍 工单查询</sc-button>
+              <sc-button size="sm" variant="secondary">📤 导出</sc-button>
+              <sc-button size="sm" variant="primary" @click=${() => this.createIncident()}>+ 创建事件</sc-button>
             </div>
           </div>
 

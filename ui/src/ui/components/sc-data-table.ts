@@ -617,7 +617,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
     if (!this.tableConfig.showHeader) return html``;
 
     return html`
-      <thead class=${classMap({ sticky: this.tableConfig.stickyHeader })}>
+      <thead class=${classMap({ sticky: !!(this.tableConfig.stickyHeader) })}>
         <tr>
           ${this.tableConfig.showCheckbox ? html`
             <th class="checkbox-cell">
@@ -762,7 +762,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
 
     const trClasses = classMap({
       selected: isSelected,
-      striped: isStriped,
+      striped: !!isStriped,
     });
 
     return html`
@@ -834,7 +834,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
           ${this.tableConfig.showSizeChanger ? html`
             <div class="size-changer">
               <select @change=${this.handlePageSizeChange}>
-                ${this.tableConfig.pageSizeOptions.map((size) => html`
+                ${(this.tableConfig.pageSizeOptions ?? []).map((size: number) => html`
                   <option value=${size} ?selected=${size === this.pageSize}>
                     ${size} ${this.i18n.t('table.perPage') || '条/页'}
                   </option>
@@ -907,7 +907,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
   // ============ 辅助方法 ============
 
   private getRowKey(row: T): string {
-    return String((row as Record<string, unknown>)[this.tableConfig.rowKey] || '');
+    return String((row as Record<string, unknown>)[this.tableConfig.rowKey ?? 'id'] || '');
   }
 
   private getCellValue(row: T, key: string | keyof T): unknown {
@@ -915,6 +915,7 @@ export class ScDataTable<T = Record<string, unknown>> extends LitElement {
     const parts = keyStr.split('.');
     let value: unknown = row;
     for (const part of parts) {
+      if (value == null) break;
       value = (value as Record<string, unknown>)?.[part];
     }
     return value;

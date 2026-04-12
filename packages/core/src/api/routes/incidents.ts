@@ -430,13 +430,14 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const incidentId = Array.isArray(id) ? id[0] : id;
     const patches = req.body;
 
     const incidents = await getIncidentsStore();
-    const index = incidents.findIndex(i => i.id === id);
+    const index = incidents.findIndex(i => i.id === incidentId);
 
     if (index === -1) {
-      throw new ApiError(ErrorCodes.INCIDENT_NOT_FOUND, `Incident with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.INCIDENT_NOT_FOUND, `Incident with id ${incidentId} not found`, 404);
     }
 
     const current = incidents[index];
@@ -462,7 +463,7 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       // Add timeline event
       const updatedByVal = patches.updatedBy;
       const updatedByStr = Array.isArray(updatedByVal) ? updatedByVal[0] : (updatedByVal as string | undefined);
-      timeline.push(addTimelineEvent(id, 'STATUS_CHANGED', `Status changed from ${current.status} to ${newStatus}`, updatedByStr));
+      timeline.push(addTimelineEvent(incidentId, 'STATUS_CHANGED', `Status changed from ${current.status} to ${newStatus}`, updatedByStr));
       await saveTimelineStore(timeline);
     }
 
@@ -491,6 +492,7 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
 router.post('/:id/timeline', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const incidentId = Array.isArray(id) ? id[0] : id;
     const { action, description } = req.body;
     const userId = typeof req.body.userId === 'string' ? req.body.userId : undefined;
 
@@ -499,16 +501,16 @@ router.post('/:id/timeline', async (req: Request, res: Response, next: NextFunct
     }
 
     const incidents = await getIncidentsStore();
-    const incident = incidents.find(i => i.id === id);
+    const incident = incidents.find(i => i.id === incidentId);
 
     if (!incident) {
-      throw new ApiError(ErrorCodes.INCIDENT_NOT_FOUND, `Incident with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.INCIDENT_NOT_FOUND, `Incident with id ${incidentId} not found`, 404);
     }
 
     const timeline = await getTimelineStore();
     const userIdVal = req.body.userId;
     const userIdStr = Array.isArray(userIdVal) ? userIdVal[0] : (userIdVal as string | undefined);
-    const event = addTimelineEvent(id, action, description, userIdStr);
+    const event = addTimelineEvent(incidentId, action, description, userIdStr);
     timeline.push(event);
     await saveTimelineStore(timeline);
 

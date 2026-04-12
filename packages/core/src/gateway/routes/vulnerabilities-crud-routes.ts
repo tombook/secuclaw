@@ -131,4 +131,102 @@ export function registerVulnerabilitiesCrudRoutes(
     severities: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'],
     statuses: ['OPEN', 'IN_PROGRESS', 'FIXED', 'WONT_FIX', 'RISK_ACCEPTED'],
   }));
+
+  // --- Merged from vulnerabilities-routes.ts (unique methods) ---
+
+  handlers.set('vulnerabilities.getByVulnId', async (params) => {
+    const { vulnId } = params;
+    if (!vulnId) throw new Error('Missing required parameter: vulnId');
+    const vulns = await getStore('vulnerabilities.json');
+    return vulns.find((v: any) => v.vulnId === vulnId || v.cveId === vulnId) || null;
+  });
+
+  handlers.set('vulnerabilities.findByAssetId', async (params) => {
+    const { assetId } = params;
+    if (!assetId) throw new Error('Missing required parameter: assetId');
+    const assets = await getStore('vulnerability-assets.json');
+    const links = assets.filter((a: any) => a.assetId === assetId);
+    const vulnIds = links.map((l: any) => l.vulnerabilityId);
+    const vulns = await getStore('vulnerabilities.json');
+    return vulns.filter((v: any) => vulnIds.includes(v.id));
+  });
+
+  handlers.set('vulnerabilities.updateStatus', async (params) => {
+    const { id, status, actor, note } = params;
+    if (!id || !status) throw new Error('Missing required parameters: id, status');
+    return handlers.get('vulnerabilities.update')!({ id, status, updatedBy: actor || 'system', ...(note ? { note } : {}) });
+  });
+
+  handlers.set('vulnerabilities.assign', async (params) => {
+    const { id, assignedTo, user } = params;
+    if (!id || !assignedTo) throw new Error('Missing required parameters: id, assignedTo');
+    const vulns = await getStore('vulnerabilities.json');
+    const index = vulns.findIndex((v: any) => v.id === id);
+    if (index === -1) throw new Error(`Vulnerability with id ${id} not found`);
+    vulns[index] = { ...vulns[index], assignedTo, updatedBy: user || 'system', updatedAt: Date.now() };
+    await saveStore('vulnerabilities.json', vulns);
+    return { success: true, assignedTo };
+  });
+
+  handlers.set('vulnerabilities.batchUpdateStatus', async (params) => {
+    const { ids, status, user } = params;
+    if (!Array.isArray(ids) || ids.length === 0) throw new Error('ids must be a non-empty array');
+    if (!status) throw new Error('status is required');
+    const vulns = await getStore('vulnerabilities.json');
+    let updated = 0;
+    for (const id of ids) {
+      const index = vulns.findIndex((v: any) => v.id === id);
+      if (index !== -1) {
+        vulns[index] = { ...vulns[index], status, updatedBy: user || 'system', updatedAt: Date.now() };
+        updated++;
+      }
+    }
+    await saveStore('vulnerabilities.json', vulns);
+    return { updated, ids: ids.length };
+  });
+
+  handlers.set('vulnerabilities.active', async () => {
+    const vulns = await getStore('vulnerabilities.json');
+    return vulns.filter((v: any) => ['OPEN', 'IN_PROGRESS'].includes(v.status));
+  });
+
+  handlers.set('vulnerabilities.batchImport', async (params) => {
+    const { items } = params;
+    if (!Array.isArray(items)) throw new Error('items must be an array');
+    const vulns = await getStore('vulnerabilities.json');
+    let imported = 0;
+    for (const item of items) {
+      const now = Date.now();
+      vulns.push({
+        id: `vuln_${now}_${Math.random().toString(36).substring(2, 11)}`,
+        status: 'OPEN',
+        createdAt: now,
+        updatedAt: now,
+        ...item,
+      });
+      imported++;
+    }
+    await saveStore('vulnerabilities.json', vulns);
+    return { imported };
+  });
+
+  handlers.set('vulnerabilities.linkAsset', async (params) => {
+    const { vulnerabilityId, assetId } = params;
+    if (!vulnerabilityId || !assetId) throw new Error('Missing required parameters');
+    const assets = await getStore('vulnerability-assets.json');
+    const exists = assets.find((a: any) => a.vulnerabilityId === vulnerabilityId && a.assetId === assetId);
+    if (exists) return { alreadyLinked: true };
+    assets.push({ vulnerabilityId, assetId, linkedAt: Date.now() });
+    await saveStore('vulnerability-assets.json', assets);
+    return { linked: true };
+  });
+
+  handlers.set('vulnerabilities.unlinkAsset', async (params) => {
+    const { vulnerabilityId, assetId } = params;
+    if (!vulnerabilityId || !assetId) throw new Error('Missing required parameters');
+    let assets = await getStore('vulnerability-assets.json');
+    assets = assets.filter((a: any) => !(a.vulnerabilityId === vulnerabilityId && a.assetId === assetId));
+    await saveStore('vulnerability-assets.json', assets);
+    return { unlinked: true };
+  });
 }

@@ -3,8 +3,8 @@
  * 
  * 提供所有数据模块的初始化
  */
-import type { JsonStore } from '../storage/json-store.js';
-import type { SecurityIncident } from '../incidents/types.js';
+import type { JsonStore } from './storage/json-store.js';
+import type { SecurityIncident } from './incidents/types.js';
 
 export class DataSeedService {
   constructor(private store: JsonStore) {}
@@ -43,8 +43,8 @@ export class DataSeedService {
         info: {
           title: 'APT29钓鱼攻击响应',
           description: '检测到APT29组织针对高管的钓鱼攻击',
-          category: 'Phishing',
-          severity: 'critical',
+          category: 'phishing' as any,
+          severity: 'P0' as any,
           priority: 1,
           source: '邮件网关',
         },
@@ -60,7 +60,7 @@ export class DataSeedService {
           responseBreached: true,
         },
         workflow: {
-          status: 'containing',
+          status: 'containing' as any,
           assignee: '张安全',
           assigneeRole: '安全专家',
         },
@@ -82,8 +82,8 @@ export class DataSeedService {
         info: {
           title: '勒索软件感染处理',
           description: 'LockBit勒索软件感染，已隔离',
-          category: 'Ransomware',
-          severity: 'critical',
+          category: 'ransomware' as any,
+          severity: 'P0' as any,
           priority: 1,
           source: 'EDR',
         },
@@ -99,7 +99,7 @@ export class DataSeedService {
           resolutionDeadline: now + day * 0.7,
         },
         workflow: {
-          status: 'eradicating',
+          status: 'eradicating' as any,
           assignee: '李运维',
           assigneeRole: '安全运营',
         },
@@ -121,8 +121,8 @@ export class DataSeedService {
         info: {
           title: '异常数据传输调查',
           description: '检测到大量数据外传',
-          category: 'Data Breach',
-          severity: 'high',
+          category: 'data_breach' as any,
+          severity: 'P1' as any,
           priority: 2,
           source: 'DLP',
         },
@@ -136,7 +136,7 @@ export class DataSeedService {
           resolutionDeadline: now + day * 0.8,
         },
         workflow: {
-          status: 'investigating',
+          status: 'analyzing' as any,
           assignee: '王合规',
           assigneeRole: '合规官',
         },
@@ -158,8 +158,8 @@ export class DataSeedService {
         info: {
           title: 'DDoS攻击缓解',
           description: 'DDoS攻击流量已缓解',
-          category: 'DDoS',
-          severity: 'medium',
+          category: 'ddos' as any,
+          severity: 'P2' as any,
           priority: 3,
           source: '网络监控',
         },
@@ -176,7 +176,7 @@ export class DataSeedService {
           resolutionDeadline: now + day * 0.5,
         },
         workflow: {
-          status: 'recovering',
+          status: 'recovering' as any,
           assignee: '赵网络',
           assigneeRole: '网络工程师',
           resolution: 'DDoS攻击已缓解，服务恢复正常',
@@ -199,8 +199,8 @@ export class DataSeedService {
         info: {
           title: '可疑进程分析',
           description: '检测到可疑进程',
-          category: 'Malware',
-          severity: 'low',
+          category: 'malware' as any,
+          severity: 'P3' as any,
           priority: 4,
           source: 'EDR',
         },
@@ -213,7 +213,7 @@ export class DataSeedService {
           resolutionDeadline: now + day * 1,
         },
         workflow: {
-          status: 'new',
+          status: 'new' as any,
         },
         impact: {
           affectedAssets: ['workstation-dev-01'],
@@ -348,7 +348,7 @@ export class DataSeedService {
         name: 'APT29 (Cozy Bear)',
         type: 'apt',
         motivation: 'espionage',
-        severity: 'critical',
+        severity: 'P0' as any,
         confidence: 95,
         source: '威胁情报订阅',
         description: '俄罗斯关联APT组织，专注于政府机构和智库的间谍活动',
@@ -367,7 +367,7 @@ export class DataSeedService {
         name: 'LockBit 3.0',
         type: 'ransomware',
         motivation: 'financial',
-        severity: 'critical',
+        severity: 'P0' as any,
         confidence: 92,
         source: '内部检测',
         description: '最活跃的勒索软件即服务组织之一',
@@ -385,7 +385,7 @@ export class DataSeedService {
         name: 'BEC攻击活动',
         type: 'phishing',
         motivation: 'financial',
-        severity: 'medium',
+        severity: 'P2' as any,
         confidence: 75,
         source: '邮件网关',
         description: '商业电子邮件欺诈攻击',
@@ -441,9 +441,9 @@ export class DataSeedService {
     const day = 86400000;
 
     const assets = [
-      { id: 'asset-001', name: 'WEB-PROD-01', type: 'server', subtype: 'nginx', status: 'online', criticality: 'critical', ipAddress: '10.0.1.10', owner: { name: '李运维', department: '运维部' }, department: '运维部', environment: 'production', platform: 'Linux', os: 'Ubuntu', osVersion: '22.04 LTS', tags: ['web', 'production'], vulnerabilities: [{ vulnId: 'vuln-001', cveId: 'CVE-2024-21762', severity: 'critical', status: 'open', discoveredAt: now - day * 5 }], firstSeen: now - day * 180, lastSeen: now - day, createdAt: now - day * 180, updatedAt: now - day },
+      { id: 'asset-001', name: 'WEB-PROD-01', type: 'server', subtype: 'nginx', status: 'online', criticality: 'critical', ipAddress: '10.0.1.10', owner: { name: '李运维', department: '运维部' }, department: '运维部', environment: 'production', platform: 'Linux', os: 'Ubuntu', osVersion: '22.04 LTS', tags: ['web', 'production'], vulnerabilities: [{ vulnId: 'vuln-001', cveId: 'CVE-2024-21762', severity: 'P0' as any, status: 'open', discoveredAt: now - day * 5 }], firstSeen: now - day * 180, lastSeen: now - day, createdAt: now - day * 180, updatedAt: now - day },
       { id: 'asset-002', name: 'DB-PRIMARY', type: 'database', subtype: 'postgresql', status: 'online', criticality: 'critical', ipAddress: '10.0.2.10', owner: { name: '张安全', department: '安全部' }, department: '安全部', environment: 'production', platform: 'Linux', os: 'Debian', osVersion: '11', tags: ['database', 'postgresql'], vulnerabilities: [], firstSeen: now - day * 200, lastSeen: now - day, createdAt: now - day * 200, updatedAt: now - day },
-      { id: 'asset-003', name: 'FW-EDGE-01', type: 'network', subtype: 'firewall', status: 'online', criticality: 'critical', ipAddress: '10.0.0.1', owner: { name: '赵网络', department: '基础架构部' }, department: '基础架构部', environment: 'production', platform: 'Fortinet', os: 'FortiOS', osVersion: '7.4.2', tags: ['firewall', 'security'], vulnerabilities: [{ vulnId: 'vuln-001', cveId: 'CVE-2024-21762', severity: 'critical', status: 'open', discoveredAt: now - day * 5 }], firstSeen: now - day * 365, lastSeen: now - day, createdAt: now - day * 365, updatedAt: now - day },
+      { id: 'asset-003', name: 'FW-EDGE-01', type: 'network', subtype: 'firewall', status: 'online', criticality: 'critical', ipAddress: '10.0.0.1', owner: { name: '赵网络', department: '基础架构部' }, department: '基础架构部', environment: 'production', platform: 'Fortinet', os: 'FortiOS', osVersion: '7.4.2', tags: ['firewall', 'security'], vulnerabilities: [{ vulnId: 'vuln-001', cveId: 'CVE-2024-21762', severity: 'P0' as any, status: 'open', discoveredAt: now - day * 5 }], firstSeen: now - day * 365, lastSeen: now - day, createdAt: now - day * 365, updatedAt: now - day },
       { id: 'asset-004', name: 'WS-FINANCE-01', type: 'workstation', subtype: 'desktop', status: 'online', criticality: 'medium', ipAddress: '192.168.1.101', owner: { name: '陈财务', department: '财务部' }, department: '财务部', environment: 'production', platform: 'Windows', os: 'Windows 11', osVersion: '22H2', tags: ['workstation', 'finance'], vulnerabilities: [], firstSeen: now - day * 100, lastSeen: now - day, createdAt: now - day * 100, updatedAt: now - day },
       { id: 'asset-005', name: 'LAPTOP-DEV-01', type: 'workstation', subtype: 'laptop', status: 'online', criticality: 'medium', ipAddress: '192.168.1.201', owner: { name: '王开发', department: '研发部' }, department: '研发部', environment: 'production', platform: 'macOS', os: 'Sonoma', osVersion: '14.4', tags: ['laptop', 'developer'], vulnerabilities: [], firstSeen: now - day * 90, lastSeen: now - day, createdAt: now - day * 90, updatedAt: now - day },
     ];

@@ -7,6 +7,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import { createServer } from 'http';
 
 import { assetsRouter } from './routes/assets.js';
@@ -16,7 +17,6 @@ import { incidentsRouter } from './routes/incidents.js';
 import { tasksRouter } from './routes/tasks.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 import { rateLimiter } from '../middleware/rate-limiter.js';
-import { ApiError } from './types.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[API]', ...args),
@@ -44,6 +44,9 @@ export class ApiServer {
   private setupMiddleware(): void {
     // Security middleware
     this.app.use(helmet());
+    
+    // Response compression (gzip/deflate) - threshold 1kb
+    this.app.use(compression({ threshold: 1024 }));
     
     // CORS configuration
     this.app.use(cors({
@@ -76,7 +79,7 @@ export class ApiServer {
     });
 
     // Health check
-    this.app.get('/health', (req: Request, res: Response) => {
+    this.app.get('/health', (_req: Request, res: Response) => {
       res.json({ status: 'ok', timestamp: Date.now() });
     });
   }
@@ -90,7 +93,7 @@ export class ApiServer {
     this.app.use('/api/v1/tasks', tasksRouter);
     
     // API info
-    this.app.get('/api', (req: Request, res: Response) => {
+    this.app.get('/api', (_req: Request, res: Response) => {
       res.json({
         version: 'v1',
         endpoints: {

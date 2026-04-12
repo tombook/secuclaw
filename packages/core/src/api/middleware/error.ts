@@ -11,7 +11,7 @@ const logger = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction): void {
+export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
   const requestId = (req as any).requestId;
   
   if (err instanceof ApiError) {
@@ -26,7 +26,7 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function notFoundHandler(req: Request, res: Response, next: NextFunction): void {
+export function notFoundHandler(req: Request, res: Response, _next: NextFunction): void {
   const requestId = (req as any).requestId;
   res.status(404).json(errorResponse('NOT_FOUND', `Route ${req.method} ${req.path} not found`, undefined, requestId));
 }

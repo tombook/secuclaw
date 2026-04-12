@@ -1,0 +1,6 @@
+{
+  "roles": [],
+  "defaultProvider": "openai",
+  "defaultModel": "gpt-4",
+  "defaultBaseUrl": "https://api.openai.com/v1"
+}

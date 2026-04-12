@@ -1,0 +1,94 @@
+schema: spec-driven
+
+context: |
+  # SecuClaw - AI Security Engineering Product
+  
+  ## Product Vision
+  SecuClaw 是一个 AI 安全工程产品，凝聚了 20 年以上顶级安全专家的职业经验。
+  不是简单的"选择一个顶级大模型替代安全专家"，而是将多种安全角色转换、
+  多个安全领域、多种安全技能、多种行业、多种业务安全场景的综合经验，
+  转化为可自我学习与迭代的 AI 安全工程系统。
+  
+  SecuClaw 经过持续自我学习与迭代，目标是成为全球顶级 AI 安全专家。
+  
+  ## Tech Stack
+  - **Monorepo**: pnpm workspace
+  - **Backend**: Node.js + TypeScript + Prisma ORM + tSOA (packages/core)
+  - **Frontend**: Lit (Web Components) + TypeScript + Vite (ui/)
+  - **Communication**: WebSocket Gateway (前后端通信)
+  - **State Management**: Lit reactive properties + custom stores (role-context, skill-store)
+  - **Styling**: CSS Custom Properties design system (--sc-* variables)
+  - **i18n**: 自定义 I18nController (lit-controller)
+  - **Testing**: Vitest
+  
+  ## 8 Security Roles (核心产品价值)
+  每个角色 ≠ 简单的 AI Agent，而是具有以下维度的专业安全身份：
+  
+  1. **security-expert** (🛡️) - 安全专家: 漏洞管理、威胁检测、渗透测试
+  2. **privacy-officer** (🔐) - 隐私官: 隐私合规(GDPR/PIPL/CCPA)、数据保护
+  3. **security-architect** (🏗️) - 安全架构师: 零信任架构、防御纵深、安全架构设计
+  4. **business-security-officer** (📊) - 业务安全官: 业务连续性、灾难恢复、ROI分析
+  5. **secuclaw-commander** (🎯) - 安全指挥官: 全域安全指挥、跨角色协调、危机管理
+  6. **ciso** (👔) - CISO: 安全战略、治理、预算管理、董事会汇报
+  7. **security-ops** (⚙️) - 安全运营: SOC运营、SIEM/SOAR、事件响应
+  8. **supply-chain-security** (🔗) - 供应链安全: 供应商评估、SBOM管理、第三方风险
+  
+  ## Role Dimensions (角色能力维度)
+  每个角色具有 6 个技能维度：
+  - Light Side (防御技能): 主动防御、监控、保护能力
+  - Dark Side (攻击技能): 渗透测试、红队、攻击模拟能力
+  - Security (安全技术): 风险评估、威胁建模、安全审计
+  - Legal (法律合规): 法规遵从、政策制定、合规管理
+  - Technology (技术能力): 工具使用、架构实现、平台运营
+  - Business (业务能力): 预算管理、ROI、跨部门协调
+  
+  以及覆盖范围：
+  - MITRE ATT&CK 战术覆盖
+  - SCF (Security Control Framework) 控制覆盖
+  
+  ## Role Hierarchy (角色继承体系)
+  secuclaw-commander > security-expert, security-ops, ciso
+  ciso > security-expert, security-architect
+  security-ops > security-expert
+  
+  ## Design Principles
+  1. 角色中心化 - 产品以安全角色身份为核心，不是以功能分类为核心
+  2. 角色视角 - 同一安全数据，不同角色看到不同分析维度
+  3. 角色协作 - 多角色可协同处置安全事件
+  4. 沉浸式体验 - 用户切换角色时有"成为那个专家"的体验
+  5. 专业可视化 - 技能雷达图、MITRE/SCF覆盖范围可视化
+  
+  ## Current UI Architecture
+  - Lit Web Components (sc-* prefix)
+  - Layout: sc-layout.ts > sc-header.ts + sc-sidebar.ts + content
+  - Navigation: menu-config.ts (传统) / role-centric-menu-config.ts (新)
+  - Role Context: store/role-context.ts (全局角色状态)
+  - Gateway: gateway-client.ts (WebSocket通信)
+  
+  ## Key File Locations
+  - UI Pages: ui/src/ui/pages/
+  - UI Components: ui/src/ui/components/
+  - UI Config: ui/src/ui/config/
+  - UI Layout: ui/src/ui/layout/
+  - UI Store: ui/src/ui/store/
+  - Backend Roles: packages/core/src/roles/
+  - Backend Skills: packages/core/src/skills/
+  - Backend AI: packages/core/src/ai/
+
+rules:
+  proposal:
+    - Proposals MUST consider the 8 security roles as the core product paradigm
+    - Proposals MUST NOT treat roles as simple chat agents - they are professional security identities
+    - Always include a "Non-goals" section
+    - Keep proposals focused and actionable
+    - Write in Chinese for product descriptions, English for technical terms
+  design:
+    - Design docs MUST reference specific file paths and component names
+    - Design decisions MUST consider role hierarchy and permission inheritance
+    - Include migration plan for existing functionality
+    - Consider both single-role and multi-role collaboration scenarios
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Each task MUST specify which security roles are affected
+    - Tasks MUST reference existing components (sc-* Lit elements)
+    - Include verification steps for each task

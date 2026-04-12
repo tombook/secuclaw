@@ -16,7 +16,6 @@ import type {
   AnomalySeverity,
   AnomalyStatus,
   AnomalyBaseline,
-  InsightEntity,
 } from './types.js';
 
 const logger = {
@@ -161,7 +160,7 @@ export class AnomalyDetectionEngine {
    * 确认异常
    */
   async acknowledge(request: AnomalyAcknowledgeRequest): Promise<Anomaly> {
-    const { anomalyId, acknowledgedBy, note } = request;
+    const { anomalyId, acknowledgedBy, note: _note } = request;
     
     const anomalies = await this.store.get<Anomaly[]>('anomalies.json') || [];
     const index = anomalies.findIndex(a => a.id === anomalyId);
@@ -249,7 +248,7 @@ export class AnomalyDetectionEngine {
   private async detectMetricAnomalies(
     metrics: Record<string, number>,
     threshold: { deviation: number; minSamples: number },
-    context: string
+    _context: string
   ): Promise<Anomaly[]> {
     const anomalies: Anomaly[] = [];
 
@@ -299,7 +298,7 @@ export class AnomalyDetectionEngine {
     return anomalies;
   }
 
-  private detectEventAnomalies(events: any[], context: string): Anomaly[] {
+  private detectEventAnomalies(events: any[], _context: string): Anomaly[] {
     const anomalies: Anomaly[] = [];
 
     if (events.length === 0) return anomalies;
@@ -391,7 +390,7 @@ export class AnomalyDetectionEngine {
     return anomalies;
   }
 
-  private detectLogAnomalies(logs: any[], context: string): Anomaly[] {
+  private detectLogAnomalies(logs: any[], _context: string): Anomaly[] {
     const anomalies: Anomaly[] = [];
 
     if (logs.length === 0) return anomalies;
@@ -530,7 +529,7 @@ export class AnomalyDetectionEngine {
     return nameMap[metric] || metric;
   }
 
-  private getPossibleCauses(metric: string, deviationPercent: number): string[] {
+  private getPossibleCauses(metric: string, _deviationPercent: number): string[] {
     if (metric.includes('login')) {
       return ['暴力破解攻击', '凭证填充', '用户密码问题'];
     }
@@ -543,7 +542,7 @@ export class AnomalyDetectionEngine {
     return ['系统异常', '配置变更', '外部攻击'];
   }
 
-  private getRecommendedActions(metric: string, severity: AnomalySeverity): string[] {
+  private getRecommendedActions(_metric: string, severity: AnomalySeverity): string[] {
     const baseActions = ['持续监控相关指标', '记录异常事件'];
     
     if (severity === 'critical' || severity === 'high') {

@@ -3,9 +3,14 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
 import '../components/sc-data-table.js';
 import '../components/sc-metric-card.js';
 import '../components/sc-filter-bar.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 @customElement('sc-assets-page')
 export class ScAssetsPage extends LitElement {
@@ -583,6 +588,7 @@ export class ScAssetsPage extends LitElement {
     }
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         <div class="page-header">
           <h1 class="page-title">${this.i18n.t('assets.title')}</h1>
@@ -648,7 +654,7 @@ export class ScAssetsPage extends LitElement {
         <div class="table-container">
           <div class="action-bar">
             <div>
-              <button class="btn btn-primary" @click=${this.handleAddAsset}>
+              <sc-button variant="primary" @click=${this.handleAddAsset}>
                 ➕ ${this.i18n.t('assets.addAsset')}
               </button>
               <button class="btn" style="margin-left: 8px; background: var(--sc-bg-secondary);" @click=${this.handleBatchImport}>
@@ -770,8 +776,8 @@ export class ScAssetsPage extends LitElement {
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click=${this.closeModal}>取消</button>
-            <button class="btn btn-primary" @click=${this.handleSubmitAsset}>
+            <sc-button variant="secondary" size="sm" @click=${this.closeModal}>取消</sc-button>
+            <sc-button variant="primary" @click=${this.handleSubmitAsset}>
               ${this.modalMode === 'create' ? '创建' : '保存'}
             </button>
           </div>

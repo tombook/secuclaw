@@ -93,25 +93,14 @@ export class AssetRiskScorer {
 
   async calculateRiskScore(assetId: string): Promise<RiskBreakdown | null> {
     const raw = await this.jsonStore.get('assets.json');
-    const assets: Asset[] = Array.isArray(raw) ? raw : [];
-    const asset = assets.find((a: Asset) => a.id === assetId);
+    const assets: SecurityAsset[] = Array.isArray(raw) ? raw : [];
+    const asset = assets.find((a: SecurityAsset) => a.id === assetId);
     if (!asset) return null;
 
-    const baseScore = CRITICALITY_WEIGHTS[asset.criticality] ?? 10;
-
-    const vulnCount = (asset.vulnerabilities ?? []).length;
-    const vulnScore = Math.min(40, vulnCount * 6);
-
-    const rawVulns = await this.jsonStore.get('vulnerabilities.json');
-    const vulns: any[] = Array.isArray(rawVulns) ? rawVulns : [];
-    const linkedVulns = vulns.filter((v: any) => (asset.vulnerabilities ?? []).includes(v.id));
-    const threatScore = Math.min(25, linkedVulns.reduce(
-      (acc: number, v: any) => acc + (VULN_SEVERITY_SCORES[v.remediation?.status === 'open' ? 'high' : 'low'] ?? 3),
-      0,
-    ));
-
-    const envFactor = ENV_WEIGHTS[asset.environment] ?? 1.0;
-
+    const baseScore = CRITICALITY_WEIGHTS[asset.info.criticality] ?? 10;
+    const vulnScore = Math.min(40, asset.risk.vulnerabilityCount * 6);
+    const threatScore = Math.min(25, asset.risk.incidentCount * 10 + asset.risk.threatCount * 5);
+    const envFactor = ENV_WEIGHTS[asset.info.environment] ?? 1.0;
     const totalScore = Math.min(100, Math.round((baseScore + vulnScore + threatScore) * envFactor));
 
     let riskLevel: RiskBreakdown['riskLevel'] = 'low';
@@ -124,7 +113,7 @@ export class AssetRiskScorer {
 
   async calculatePortfolioRisk(): Promise<PortfolioRiskSummary> {
     const raw = await this.jsonStore.get('assets.json');
-    const assets: Asset[] = Array.isArray(raw) ? raw : [];
+    const assets: SecurityAsset[] = Array.isArray(raw) ? raw : [];
 
     const scores: number[] = [];
     let highRiskCount = 0;
@@ -137,7 +126,7 @@ export class AssetRiskScorer {
       scores.push(breakdown.totalScore);
       distribution[breakdown.riskLevel]++;
       if (breakdown.riskLevel === 'critical' || breakdown.riskLevel === 'high') highRiskCount++;
-      if (asset.criticality === 'critical') criticalAssets++;
+      if (asset.info.criticality === 'critical') criticalAssets++;
     }
 
     const avgRiskScore = scores.length > 0

@@ -100,7 +100,8 @@ describe('IncidentsService', () => {
 
     it('should reject invalid transition', async () => {
       mockRepo.getById.mockResolvedValue(mockIncident);
-      await expect(service.updateStatus('incident_test_1', 'closed')).rejects.toThrow('Invalid status transition');
+      // detected -> investigating is invalid (must go through reported/acknowledged first)
+      await expect(service.updateStatus('incident_test_1', 'investigating')).rejects.toThrow('Invalid status transition');
     });
 
     it('should throw for missing incident', async () => {

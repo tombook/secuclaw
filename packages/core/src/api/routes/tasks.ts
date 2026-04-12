@@ -557,7 +557,7 @@ router.post('/:id/execute', async (req: Request, res: Response, next: NextFuncti
     const now = Date.now();
     const execution: TaskExecution = {
       id: `exec_${now}_${Math.random().toString(36).substring(2, 11)}`,
-      taskId: id,
+      taskId: Array.isArray(id) ? id[0] : id,
       attempt,
       status: simulate ? 'SUCCESS' : 'STARTED',
       startedAt: now,

@@ -7,6 +7,7 @@
 
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import '../../components/design-system/sc-button.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 import type { ExecutionRun, RunStatus } from '../../capabilities-client.js';
 
@@ -516,7 +517,7 @@ export class ScRunLogPanel extends LitElement {
         </div>
 
         <div class="panel-actions">
-          <button class="btn btn-secondary" @click=${this.handleClose}>
+          <sc-button variant="secondary" size="sm" @click=${this.handleClose}>关闭</sc-button>
             ${this.i18n.t('capabilities.closePanel')}
           </button>
         </div>

@@ -20,8 +20,8 @@ export class AssetsRepository {
   constructor(private store: JsonStore) {}
 
   async getAll(): Promise<SecurityAsset[]> {
-    const data = this.store.get<SecurityAsset[]>(FILE_NAME);
-    return Array.isArray(data) ? data : [] as SecurityAsset[];
+    const data = await this.store.get<SecurityAsset[]>(FILE_NAME);
+    return data ?? [];
   }
 
   async getById(id: string): Promise<SecurityAsset | null> {
@@ -80,10 +80,12 @@ export class AssetsRepository {
     }
 
     assets.sort((a, b) => {
-      if (b.risk.riskScore !== a.risk.riskScore) {
-        return b.risk.riskScore - a.risk.riskScore;
+      const scoreA = a.risk?.riskScore ?? 0;
+      const scoreB = b.risk?.riskScore ?? 0;
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
       }
-      return b.lifecycle.lastSeenAt - a.lifecycle.lastSeenAt;
+      return (b.lifecycle?.lastSeenAt ?? 0) - (a.lifecycle?.lastSeenAt ?? 0);
     });
 
     if (params.page !== undefined && params.pageSize) {

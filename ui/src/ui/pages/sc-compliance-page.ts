@@ -9,8 +9,13 @@ import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 // ============ 类型定义 ============
 
@@ -955,6 +960,7 @@ export class ScCompliancePage extends LitElement {
     }
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="compliance-container">
         <div class="main-content">
           <div style="display:flex;gap:12px;margin-bottom:16px;">
@@ -1009,8 +1015,8 @@ export class ScCompliancePage extends LitElement {
               </div>
             </div>
             <div class="header-actions">
-              <button class="btn btn-secondary">📊 合规报告</button>
-              <button class="btn btn-primary" @click=${this.openAddControlModal}>+ 新建评估</button>
+              <sc-button size="sm" variant="secondary">📊 合规报告</sc-button>
+              <sc-button size="sm" variant="primary" @click=${this.openAddControlModal}>+ 新建评估</sc-button>
             </div>
           </div>
 
@@ -1098,8 +1104,8 @@ export class ScCompliancePage extends LitElement {
                     <td><span class="evidence-badge ${ctrl.evidenceStatus}">${ctrl.evidenceStatus === 'verified' ? '已验证' : ctrl.evidenceStatus === 'pending' ? '待审核' : '缺失'}</span></td>
                     <td>${ctrl.assignee || '-'}</td>
                     <td>
-                      <button class="btn" style="padding: 4px 8px; font-size: 12px; margin-right: 4px;" @click=${(e: Event) => { e.stopPropagation(); this.openEditControlModal(ctrl); }}>编辑</button>
-                      <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" @click=${(e: Event) => { e.stopPropagation(); this.handleDeleteControl(ctrl.id); }}>删除</button>
+                      <sc-button size="sm" variant="secondary" @click=${(e: Event) => { e.stopPropagation(); this.openEditControlModal(ctrl); }}>编辑</sc-button>
+                      <sc-button size="sm" variant="danger" @click=${(e: Event) => { e.stopPropagation(); this.handleDeleteControl(ctrl.id); }}>删除</sc-button>
                     </td>
                   </tr>
                 `)}
@@ -1113,7 +1119,7 @@ export class ScCompliancePage extends LitElement {
                     <span class="control-id" style="font-weight:700;">${this.selectedControl.controlId}</span>
                     <span style="margin-left:8px;font-size:14px;">${this.selectedControl.title}</span>
                   </div>
-                  <button class="btn btn-secondary" @click=${() => { this.selectedControl = null; }}>关闭</button>
+                  <sc-button size="sm" variant="secondary" @click=${() => { this.selectedControl = null; }}>关闭</sc-button>
                 </div>
                 <p style="font-size:13px;color:var(--sc-text-secondary);margin-top:8px;">${this.selectedControl.description}</p>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;font-size:13px;">
@@ -1133,7 +1139,7 @@ export class ScCompliancePage extends LitElement {
           <div class="audit-section">
             <div class="section-header">
               <h3 class="section-title">🔍 审计任务</h3>
-              <button class="btn btn-secondary">+ 安排审计</button>
+              <sc-button size="sm" variant="secondary">+ 安排审计</sc-button>
             </div>
             <div class="audit-list">
               ${this.auditTasks.map(task => {
@@ -1247,10 +1253,10 @@ export class ScCompliancePage extends LitElement {
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click=${this.closeControlModal}>取消</button>
-            <button class="btn btn-primary" @click=${this.handleSaveControl}>
+            <sc-button size="sm" variant="secondary" @click=${this.closeControlModal}>取消</sc-button>
+            <sc-button size="sm" variant="primary" @click=${this.handleSaveControl}>
               ${this.editingControl ? '保存' : '创建'}
-            </button>
+            </sc-button>
           </div>
         </div>
       </div>

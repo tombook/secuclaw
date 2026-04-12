@@ -203,4 +203,50 @@ export function registerIncidentsCrudRoutes(
     statuses: ['NEW', 'CONFIRMED', 'ANALYZING', 'CONTAINING', 'ERADICATING', 'RECOVERING', 'CLOSED', 'REOPENED', 'FALSE_POSITIVE'],
     statusTransitions: StatusTransitions,
   }));
+
+  // --- Merged from incidents-routes.ts (unique methods) ---
+
+  handlers.set('incidents.getByTicketId', async (params) => {
+    const { ticketId } = params;
+    if (!ticketId) throw new Error('Missing required parameter: ticketId');
+    const incidents = await getStore('incidents.json');
+    return incidents.find((i: any) => i.ticketId === ticketId) || null;
+  });
+
+  handlers.set('incidents.updateStatus', async (params) => {
+    const { id, status, actor, note } = params;
+    if (!id || !status) throw new Error('Missing required parameters: id, status');
+    return handlers.get('incidents.update')!({ id, status, updatedBy: actor || 'system', ...(note ? { note } : {}) });
+  });
+
+  handlers.set('incidents.escalate', async (params) => {
+    const { id, level, reason } = params;
+    if (!id || !level) throw new Error('Missing required parameters: id, level');
+    const incidents = await getStore('incidents.json');
+    const incident = incidents.find((i: any) => i.id === id);
+    if (!incident) throw new Error(`Incident with id ${id} not found`);
+    const escalatedSeverity = level === 'ciso' ? 'P0' : level === 'director' ? 'P1' : 'P2';
+    const timeline = await getStore('incident-timeline.json');
+    timeline.push({
+      id: `timeline_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+      incidentId: id as string,
+      timestamp: Date.now(),
+      action: 'ESCALATED',
+      description: `Escalated to ${level}. Reason: ${reason || 'N/A'}`,
+      userId: 'system',
+    });
+    await saveStore('incident-timeline.json', timeline);
+    return handlers.get('incidents.update')!({ id, severity: escalatedSeverity, escalationLevel: level, escalationReason: reason, updatedBy: 'system' });
+  });
+
+  handlers.set('incidents.linkedResources', async (params) => {
+    const { incidentId } = params;
+    if (!incidentId) throw new Error('Missing required parameter: incidentId');
+    const incident = await handlers.get('incidents.get')!({ id: incidentId });
+    return {
+      assets: (incident as any)?.affectedAssets || [],
+      timeline: (incident as any)?.timeline || [],
+      handlers_list: (incident as any)?.handlers || [],
+    };
+  });
 }

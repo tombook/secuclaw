@@ -10,11 +10,6 @@ import type {
   Insight,
   InsightFilter,
   InsightGenerateRequest,
-  InsightType,
-  InsightPriority,
-  InsightCategory,
-  InsightEntity,
-  InsightMetric,
 } from './types.js';
 
 const logger = {
@@ -177,7 +172,7 @@ export class InsightEngine {
 
   // ==================== Private Analysis Methods ====================
 
-  private async analyzeIncidents(context: string): Promise<Insight[]> {
+  private async analyzeIncidents(_context: string): Promise<Insight[]> {
     const insights: Insight[] = [];
     const incidents = await this.store.get<any[]>('incidents.json') || [];
 
@@ -263,7 +258,7 @@ export class InsightEngine {
     return insights;
   }
 
-  private async analyzeVulnerabilities(context: string): Promise<Insight[]> {
+  private async analyzeVulnerabilities(_context: string): Promise<Insight[]> {
     const insights: Insight[] = [];
     const vulns = await this.store.get<any[]>('vulnerabilities.json') || [];
 
@@ -335,7 +330,7 @@ export class InsightEngine {
     return insights;
   }
 
-  private async analyzeThreats(context: string): Promise<Insight[]> {
+  private async analyzeThreats(_context: string): Promise<Insight[]> {
     const insights: Insight[] = [];
     const threats = await this.store.get<any[]>('threats.json') || [];
 
@@ -373,7 +368,7 @@ export class InsightEngine {
     return insights;
   }
 
-  private async analyzeCompliance(context: string): Promise<Insight[]> {
+  private async analyzeCompliance(_context: string): Promise<Insight[]> {
     const insights: Insight[] = [];
     const compliance = await this.store.get<any[]>('compliance.json') || [];
 
@@ -411,16 +406,11 @@ export class InsightEngine {
     return insights;
   }
 
-  private async analyzeAssets(context: string): Promise<Insight[]> {
+  private async analyzeAssets(_context: string): Promise<Insight[]> {
     const insights: Insight[] = [];
     const assets = await this.store.get<any[]>('assets.json') || [];
 
     if (assets.length === 0) return insights;
-
-    // 分析关键资产
-    const criticalAssets = assets.filter((a: any) => 
-      a.criticality === 'critical' || a.info?.criticality === 'high'
-    );
 
     // 分析未保护资产
     const unprotectedAssets = assets.filter((a: any) => 
@@ -454,7 +444,7 @@ export class InsightEngine {
     return insights;
   }
 
-  private analyzeMetrics(metrics: Record<string, number>, context: string): Insight[] {
+  private analyzeMetrics(metrics: Record<string, number>, _context: string): Insight[] {
     const insights: Insight[] = [];
 
     // 风险评分分析

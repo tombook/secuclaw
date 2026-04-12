@@ -6,10 +6,7 @@
 import type { JsonStore } from '../storage/json-store.js';
 import type { 
   SecurityIncident, 
-  IncidentQueryParams,
-  IncidentStatus,
-  IncidentSeverity,
-  IncidentCategory
+  IncidentQueryParams
 } from './types.js';
 
 const FILE_NAME = 'incidents.json';
@@ -18,7 +15,7 @@ export class IncidentsRepository {
   constructor(private store: JsonStore) {}
 
   async getAll(): Promise<SecurityIncident[]> {
-    return this.store.get<SecurityIncident[]>(FILE_NAME) || [];
+    return (await this.store.get<SecurityIncident[]>(FILE_NAME)) ?? [];
   }
 
   async getById(id: string): Promise<SecurityIncident | null> {

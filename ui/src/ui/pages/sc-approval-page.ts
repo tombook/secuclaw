@@ -1,6 +1,11 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 @customElement('sc-approval-page')
 export class ScApprovalPage extends LitElement {
@@ -164,6 +169,7 @@ export class ScApprovalPage extends LitElement {
     const pending = this.approvals.filter((a: any) => a.status === 'pending').length;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="container">
         <div class="hero">
           <div class="hero-icon">🔐</div>
@@ -182,8 +188,8 @@ export class ScApprovalPage extends LitElement {
              <option value="rejected" ?selected=${this.filterStatus === 'rejected'}>已拒绝</option>
              <option value="expired" ?selected=${this.filterStatus === 'expired'}>已过期</option>
            </select>
-           <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin-left:8px;" @click=${this.createApproval}>+ 新建审批</button>
-           <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" @click=${() => { const tid = prompt('按任务ID查询:'); if (tid) this.getApprovalByTaskId(tid); }}>🔍 按任务查询</button>
+           <sc-button variant="primary" size="sm" style="margin-left:8px;" @click=${this.createApproval}>+ 新建审批</sc-button>
+           <sc-button variant="secondary" size="sm" @click=${() => { const tid = prompt('按任务ID查询:'); if (tid) this.getApprovalByTaskId(tid); }}>🔍 按任务查询</sc-button>
            <span style="font-size:14px;color:var(--sc-text-tertiary, #94a3b8);margin-left:8px;">共 ${this.approvals.length} 条审批</span>
          </div>
 
@@ -212,8 +218,8 @@ export class ScApprovalPage extends LitElement {
                   </div>
                   ${a.status === 'pending' ? html`
                     <div class="card-actions" @click=${(e: Event) => e.stopPropagation()}>
-                      <button class="btn btn-success" @click=${() => this.handleApprove(id)}>✓ 批准</button>
-                      <button class="btn btn-danger" @click=${() => this.handleReject(id)}>✗ 拒绝</button>
+                      <sc-button variant="success" size="sm" @click=${() => this.handleApprove(id)}>✓ 批准</sc-button>
+                      <sc-button variant="danger" size="sm" @click=${() => this.handleReject(id)}>✗ 拒绝</sc-button>
                     </div>
                   ` : ''}
                 </div>
@@ -251,13 +257,13 @@ export class ScApprovalPage extends LitElement {
           </div>
           ${a.status === 'pending' ? html`
             <div class="detail-actions">
-              <button class="btn btn-secondary" @click=${() => { this.selectedApproval = null; }}>关闭</button>
-              <button class="btn btn-danger" @click=${() => { this.handleReject(id); }}>✗ 拒绝</button>
-              <button class="btn btn-success" @click=${() => { this.handleApprove(id); }}>✓ 批准执行</button>
+              <sc-button variant="secondary" size="sm" @click=${() => { this.selectedApproval = null; }}>关闭</sc-button>
+              <sc-button variant="danger" size="sm" @click=${() => { this.handleReject(id); }}>✗ 拒绝</sc-button>
+              <sc-button variant="success" size="sm" @click=${() => { this.handleApprove(id); }}>✓ 批准执行</sc-button>
             </div>
           ` : html`
             <div class="detail-actions">
-              <button class="btn btn-secondary" @click=${() => { this.selectedApproval = null; }}>关闭</button>
+              <sc-button variant="secondary" size="sm" @click=${() => { this.selectedApproval = null; }}>关闭</sc-button>
             </div>
           `}
         </div>

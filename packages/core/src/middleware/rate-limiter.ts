@@ -2,7 +2,7 @@
  * Rate Limiting Middleware for SecuClaw
  * Prevents brute force attacks and API abuse
  */
-import type { IncomingMessage } from 'ws';
+import type { IncomingMessage } from 'http';
 
 interface RateLimitEntry {
   count: number;

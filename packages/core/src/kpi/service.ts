@@ -1,8 +1,5 @@
-/**
- * KPI Service - KPI指标服务
- * 
- * 提供统一的安全态势KPI计算
- */
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { JsonStore } from '../storage/json-store.js';
 
 export interface KpiMetrics {
@@ -70,13 +67,22 @@ export interface KpiMetrics {
   timestamp: number;
 }
 
+@Service()
 export class KpiService {
+  private metricsCache: { data: KpiMetrics; timestamp: number } | null = null;
+  private static readonly CACHE_TTL_MS = 30000;
+
   constructor(private store: JsonStore) {}
 
   /**
    * 计算所有KPI指标
    */
   async calculateAllMetrics(): Promise<KpiMetrics> {
+    const now = Date.now();
+    if (this.metricsCache && (now - this.metricsCache.timestamp) < KpiService.CACHE_TTL_MS) {
+      return this.metricsCache.data;
+    }
+
     const [
       incidents,
       vulnerabilities,
@@ -90,8 +96,6 @@ export class KpiService {
       this.store.get<any[]>('compliance.json'),
       this.store.get<any[]>('assets.json'),
     ]);
-
-    const now = Date.now();
 
     // Calculate incident metrics
     const incidentMetrics = this.calculateIncidentMetrics(incidents || []);
@@ -122,7 +126,7 @@ export class KpiService {
       slaMetrics.resolutionCompliance
     );
 
-    return {
+    const result = {
       overallScore: securityScore,
       riskScore,
       securityScore,
@@ -139,6 +143,9 @@ export class KpiService {
       },
       timestamp: now,
     };
+
+    this.metricsCache = { data: result, timestamp: now };
+    return result;
   }
 
   private calculateIncidentMetrics(incidents: any[]) {

@@ -7,7 +7,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { AssetsService } from '../../assets/service.js';
 import { AssetsRepository } from '../../assets/repository.js';
 import { JsonStore } from '../../storage/json-store.js';
-import { ApiError, ErrorCodes, successResponse, errorResponse, PaginatedResponse } from '../types.js';
+import { ApiError, ErrorCodes, successResponse, PaginatedResponse } from '../types.js';
+import type { SecurityAsset, AssetType, AssetEnvironment, AssetCriticality, AssetStatus } from '../../assets/types.js';
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const assets = await assetsService.list({
       type: type as unknown as AssetType,
-      category: category as unknown as string,
+      businessLine: category as unknown as string,
       environment: environment as unknown as AssetEnvironment,
       criticality: criticality as unknown as AssetCriticality,
       status: status as unknown as AssetStatus,
@@ -141,7 +142,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     // Check for duplicate name
     const existingAssets = await assetsService.list({});
-    const duplicate = existingAssets.find(a => a.name === assetData.name);
+    const duplicate = existingAssets.find(a => a.info?.name === assetData.name);
     if (duplicate) {
       throw new ApiError(ErrorCodes.ASSET_ALREADY_EXISTS, `Asset with name "${assetData.name}" already exists`, 409);
     }
@@ -163,20 +164,44 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     
     const asset: SecurityAsset = {
       id: `asset_${now}_${Math.random().toString(36).substring(2, 11)}`,
-      name,
-      type: type as AssetType,
-      category,
-      environment: environment as AssetEnvironment,
-      criticality: criticality as AssetCriticality,
-      status: status as AssetStatus,
-      owner,
-      department,
-      ip,
-      hostname,
-      description,
-      tags: assetData.tags || [],
-      vulnerabilities: [],
-      lastScan: undefined,
+      info: {
+        name,
+        description,
+        type: type as AssetType,
+        criticality: criticality as AssetCriticality,
+        environment: environment as AssetEnvironment,
+        status: status as AssetStatus,
+        owner,
+        department,
+        businessLine: category,
+        tags: assetData.tags || [],
+      },
+      config: {
+        ipAddresses: ip ? [ip] : [],
+        hostnames: hostname ? [hostname] : [],
+      },
+      risk: {
+        riskScore: 50,
+        riskLevel: 'medium',
+        vulnerabilityCount: 0,
+        criticalVulnerabilityCount: 0,
+        highVulnerabilityCount: 0,
+        mediumVulnerabilityCount: 0,
+        lowVulnerabilityCount: 0,
+        incidentCount: 0,
+        threatCount: 0,
+      },
+      relations: {
+        relatedAssets: [],
+        relatedVulnerabilities: [],
+        relatedIncidents: [],
+        relatedThreats: [],
+        relatedComplianceItems: [],
+      },
+      lifecycle: {
+        discoveredAt: now,
+        lastSeenAt: now,
+      },
       createdAt: now,
       updatedAt: now,
     };
@@ -210,28 +235,31 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
       throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${id} not found`, 404);
     }
 
-    // Update fields
-    const updated = {
+    // Update fields - merge into nested structure
+    const updated: SecurityAsset = {
       ...existing,
-      ...processedUpdates,
+      info: {
+        ...existing.info,
+        ...(processedUpdates.name != null ? { name: String(processedUpdates.name) } : {}),
+        ...(processedUpdates.description != null ? { description: String(processedUpdates.description) } : {}),
+        ...(processedUpdates.type != null ? { type: processedUpdates.type as AssetType } : {}),
+        ...(processedUpdates.environment != null ? { environment: processedUpdates.environment as AssetEnvironment } : {}),
+        ...(processedUpdates.criticality != null ? { criticality: processedUpdates.criticality as AssetCriticality } : {}),
+        ...(processedUpdates.status != null ? { status: processedUpdates.status as AssetStatus } : {}),
+        ...(processedUpdates.owner != null ? { owner: String(processedUpdates.owner) } : {}),
+        ...(processedUpdates.department != null ? { department: String(processedUpdates.department) } : {}),
+        ...(processedUpdates.businessLine != null ? { businessLine: String(processedUpdates.businessLine) } : {}),
+        ...(processedUpdates.tags != null ? { tags: Array.isArray(processedUpdates.tags) ? processedUpdates.tags : [processedUpdates.tags] } : {}),
+      },
+      config: {
+        ...existing.config,
+        ...(processedUpdates.ip != null ? { ipAddresses: [String(processedUpdates.ip)] } : {}),
+        ...(processedUpdates.hostname != null ? { hostnames: [String(processedUpdates.hostname)] } : {}),
+      },
       id: existing.id, // Prevent ID change
       createdAt: existing.createdAt, // Prevent creation time change
       updatedAt: Date.now(),
     };
-    
-    // Fix types for enum fields
-    if ('type' in processedUpdates && updated.type) {
-      updated.type = processedUpdates.type as AssetType;
-    }
-    if ('environment' in processedUpdates && updated.environment) {
-      updated.environment = processedUpdates.environment as AssetEnvironment;
-    }
-    if ('criticality' in processedUpdates && updated.criticality) {
-      updated.criticality = processedUpdates.criticality as AssetCriticality;
-    }
-    if ('status' in processedUpdates && updated.status) {
-      updated.status = processedUpdates.status as AssetStatus;
-    }
 
     await assetsRepo.update(assetId, updated);
 
@@ -261,27 +289,21 @@ router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => 
       throw new ApiError(ErrorCodes.ASSET_NOT_FOUND, `Asset with id ${assetId} not found`, 404);
     }
 
-    const updated = {
+    const updated: SecurityAsset = {
       ...existing,
-      ...processedPatches,
+      info: {
+        ...existing.info,
+        ...(processedPatches.name != null ? { name: String(processedPatches.name) } : {}),
+        ...(processedPatches.description != null ? { description: String(processedPatches.description) } : {}),
+        ...(processedPatches.type != null ? { type: processedPatches.type as AssetType } : {}),
+        ...(processedPatches.environment != null ? { environment: processedPatches.environment as AssetEnvironment } : {}),
+        ...(processedPatches.criticality != null ? { criticality: processedPatches.criticality as AssetCriticality } : {}),
+        ...(processedPatches.status != null ? { status: processedPatches.status as AssetStatus } : {}),
+      },
       id: existing.id,
       createdAt: existing.createdAt,
       updatedAt: Date.now(),
     };
-    
-    // Fix types for enum fields
-    if ('type' in processedPatches && updated.type) {
-      updated.type = processedPatches.type as AssetType;
-    }
-    if ('environment' in processedPatches && updated.environment) {
-      updated.environment = processedPatches.environment as AssetEnvironment;
-    }
-    if ('criticality' in processedPatches && updated.criticality) {
-      updated.criticality = processedPatches.criticality as AssetCriticality;
-    }
-    if ('status' in processedPatches && updated.status) {
-      updated.status = processedPatches.status as AssetStatus;
-    }
 
     await assetsRepo.update(assetId, updated);
 

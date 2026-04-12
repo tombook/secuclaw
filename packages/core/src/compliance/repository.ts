@@ -43,7 +43,7 @@ export class ComplianceRepository {
   constructor(private store: JsonStore) {}
 
   async getAll(): Promise<Regulation[]> {
-    return this.store.get<Regulation[]>(FILE_NAME) || [];
+    return (await this.store.get<Regulation[]>(FILE_NAME)) ?? [];
   }
 
   async getById(id: string): Promise<Regulation | null> {

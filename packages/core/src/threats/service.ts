@@ -1,12 +1,9 @@
-/**
- * Threats Service
- * 威胁情报业务逻辑层
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { ThreatsRepository, type ThreatActor, type ThreatQueryParams } from './repository.js';
-
 import type { EventBus as EventBusType } from '../events/event-bus.js';
 
+@Service()
 export class ThreatsService {
   private eventBus: EventBusType | null = null;
 

@@ -1,9 +1,5 @@
-/**
- * Capabilities Service
- * 
- * 业务逻辑层，包含黑暗面审批校验等业务规则
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type {
   DomainId,
   CapabilityDomain,
@@ -47,6 +43,7 @@ const logger = {
   warn: (...args: any[]) => console.warn('[CapabilitiesService]', ...args),
 };
 
+@Service()
 export class CapabilitiesService {
   private eventBus: EventBus | null = null;
 

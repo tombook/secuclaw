@@ -51,15 +51,15 @@ class I18nManager {
     this.translations.set(locale, translations);
   }
 
-  t(key: string, params?: Record<string, string>): string {
+  t(key: string, defaultValueOrParams?: string | Record<string, string>): string {
     const translation = this.translations.get(this.locale);
-    if (!translation) return key;
+    if (!translation) return typeof defaultValueOrParams === 'string' ? defaultValueOrParams : key;
 
     const value = this.getNestedValue(translation, key);
-    if (value === undefined) return key;
+    if (value === undefined) return typeof defaultValueOrParams === 'string' ? defaultValueOrParams : key;
 
-    if (params) {
-      return Object.entries(params).reduce(
+    if (typeof defaultValueOrParams === 'object' && defaultValueOrParams) {
+      return Object.entries(defaultValueOrParams).reduce(
         (str, [k, v]) => str.replace(new RegExp(`\\{${k}\\}`, 'g'), v),
         value
       );

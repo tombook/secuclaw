@@ -55,10 +55,10 @@ export class IncidentRepository {
       incidents = incidents.filter(i => i.attack.threatActor === params.threatActor);
     }
     if (params.fromDate !== undefined) {
-      incidents = incidents.filter(i => i.timeline.detectedAt >= params.fromDate);
+      incidents = incidents.filter(i => i.timeline.detectedAt >= params.fromDate!);
     }
     if (params.toDate !== undefined) {
-      incidents = incidents.filter(i => i.timeline.detectedAt <= params.toDate);
+      incidents = incidents.filter(i => i.timeline.detectedAt <= params.toDate!);
     }
     
     // Sort by severity and detected time
@@ -97,13 +97,14 @@ export class IncidentRepository {
   }
   
   async updateStatus(id: string, status: IncidentStatus): Promise<Incident | null> {
+    const current = await this.get(id);
     return this.update(id, {
       workflow: { 
-        ...(await this.get(id))?.workflow, 
         status,
-        previousStatus: (await this.get(id))?.workflow.status || 'new',
+        assignee: current?.workflow.assignee ?? '',
+        previousStatus: current?.workflow.status || 'new',
       },
-    });
+    } as Partial<Incident>);
   }
   
   async delete(id: string): Promise<boolean> {

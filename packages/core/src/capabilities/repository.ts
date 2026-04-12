@@ -1,9 +1,5 @@
-/**
- * Capabilities Repository
- * 
- * 数据存储层，使用 JsonStore 持久化
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { JsonStore } from '../storage/json-store.js';
 import type {
   DomainId,
@@ -29,6 +25,7 @@ const FILES = {
   EVIDENCE: 'evidence-packs.json',
 };
 
+@Service()
 export class CapabilitiesRepository {
   constructor(private store: JsonStore) {}
 

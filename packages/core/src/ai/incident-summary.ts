@@ -303,7 +303,7 @@ export class IncidentSummaryEngine {
   }
 
   private generateRecommendations(
-    incidents: RawIncidentData[],
+    _incidents: RawIncidentData[],
     bySeverity: Record<string, number>,
     byCategory: Record<string, number>,
     byStatus: Record<string, number>
@@ -422,7 +422,7 @@ export class IncidentSummaryEngine {
   /**
    * 生成每月摘要
    */
-  async generateMonthlySummary(year?: number, month?: Date): Promise<SecurityEventSummary> {
+  async generateMonthlySummary(_year?: number, month?: Date): Promise<SecurityEventSummary> {
     const targetDate = month || new Date();
     const start = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
     const end = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0, 23, 59, 59, 999);

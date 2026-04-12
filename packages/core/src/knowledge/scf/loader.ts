@@ -41,52 +41,16 @@ export class ScfLoader {
   }
 
   async load(): Promise<void> {
-    // Load domains
-    try {
-      const domainsData = await readFile(join(this.dataPath, 'scf-domains-principles.json'), 'utf-8');
-      const domains = JSON.parse(domainsData);
-      
-      for (const domain of domains) {
-        const scfDomain: ScfDomain = {
-          id: domain['SCF Identifier'] || domain.id,
-          scfIdentifier: domain['SCF Identifier'] || '',
-          name: domain['SCF Domain'] || domain.name || '',
-          description: domain['Description'] || domain.description || '',
-        };
-        this.domains.set(scfDomain.id, scfDomain);
-      }
-    } catch (error) {
-      logger.warn('Failed to load SCF domains:', error);
+    const [domainsResult, controlsResult] = await Promise.allSettled([
+      this.loadDomains(),
+      this.loadControls(),
+    ]);
+
+    if (domainsResult.status === 'rejected') {
+      logger.warn('Failed to load SCF domains:', domainsResult.reason);
     }
-
-    // Load controls
-    try {
-      const controlsData = await readFile(join(this.dataPath, 'scf-20254.json'), 'utf-8');
-      const controls = JSON.parse(controlsData);
-
-      for (const control of controls) {
-        const scfControl: ScfControl = {
-          id: control['SCF #'] || control.id,
-          scfNumber: control['SCF #'] || '',
-          name: control['Control'] || control.name || '',
-          description: control['Control Description'] || control.description || '',
-          domain: control['SCF Domain'] || control.domain || '',
-          category: control['SCF Control'] || control.category || '',
-          objectives: control['Control Objectives'] ? [control['Control Objectives']] : undefined,
-        };
-
-        this.controls.set(scfControl.id, scfControl);
-
-        // Index by domain
-        if (scfControl.domain) {
-          if (!this.controlsByDomain.has(scfControl.domain)) {
-            this.controlsByDomain.set(scfControl.domain, []);
-          }
-          this.controlsByDomain.get(scfControl.domain)!.push(scfControl.id);
-        }
-      }
-    } catch (error) {
-      logger.warn('Failed to load SCF controls:', error);
+    if (controlsResult.status === 'rejected') {
+      logger.warn('Failed to load SCF controls:', controlsResult.reason);
     }
 
     logger.info(`Loaded ${this.domains.size} domains, ${this.controls.size} controls`);
@@ -94,6 +58,47 @@ export class ScfLoader {
 
   getDomains(): ScfDomain[] {
     return Array.from(this.domains.values());
+  }
+
+  private async loadDomains(): Promise<void> {
+    const domainsData = await readFile(join(this.dataPath, 'scf-domains-principles.json'), 'utf-8');
+    const domains = JSON.parse(domainsData);
+    
+    for (const domain of domains) {
+      const scfDomain: ScfDomain = {
+        id: domain['SCF Identifier'] || domain.id,
+        scfIdentifier: domain['SCF Identifier'] || '',
+        name: domain['SCF Domain'] || domain.name || '',
+        description: domain['Description'] || domain.description || '',
+      };
+      this.domains.set(scfDomain.id, scfDomain);
+    }
+  }
+
+  private async loadControls(): Promise<void> {
+    const controlsData = await readFile(join(this.dataPath, 'scf-20254.json'), 'utf-8');
+    const controls = JSON.parse(controlsData);
+
+    for (const control of controls) {
+      const scfControl: ScfControl = {
+        id: control['SCF #'] || control.id,
+        scfNumber: control['SCF #'] || '',
+        name: control['Control'] || control.name || '',
+        description: control['Control Description'] || control.description || '',
+        domain: control['SCF Domain'] || control.domain || '',
+        category: control['SCF Control'] || control.category || '',
+        objectives: control['Control Objectives'] ? [control['Control Objectives']] : undefined,
+      };
+
+      this.controls.set(scfControl.id, scfControl);
+
+      if (scfControl.domain) {
+        if (!this.controlsByDomain.has(scfControl.domain)) {
+          this.controlsByDomain.set(scfControl.domain, []);
+        }
+        this.controlsByDomain.get(scfControl.domain)!.push(scfControl.id);
+      }
+    }
   }
 
   getDomain(id: string): ScfDomain | undefined {

@@ -25,6 +25,9 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+const TOKEN_KEY = 'secuclaw_auth_token';
+const USER_KEY = 'secuclaw_auth_user';
+
 // Permission definitions
 export const PERMISSIONS = {
   // Dashboard
@@ -183,46 +186,82 @@ class AuthStore extends BaseStore<AuthState> {
   }
 
   async initialize(): Promise<void> {
-    // Try to get user from backend
-    try {
-      const user = await gatewayClient.request<User | null>('auth.getUser');
-      if (user) {
+    const savedToken = localStorage.getItem(TOKEN_KEY);
+    const savedUser = localStorage.getItem(USER_KEY);
+
+    if (savedToken && savedUser) {
+      try {
+        const user = JSON.parse(savedUser) as User;
+        gatewayClient.setAuthToken(savedToken);
         this.setState({ user, isAuthenticated: true });
+        return;
+      } catch {
+        this.clearPersistedAuth();
       }
-    } catch {
-      // Not authenticated, use default
-      this.setDefaultUser();
+    }
+
+    this.setState({ user: null, isAuthenticated: false });
+  }
+
+  async login(username: string, password: string): Promise<User> {
+    this.setState({ loading: true });
+
+    try {
+      const result = await gatewayClient.request<{ token: string; user: { id: string; username: string; displayName: string; roleIds: string[] } }>('auth.login', { username, password });
+
+      if (!result?.token || !result?.user) {
+        throw new Error('Invalid login response');
+      }
+
+      const mappedRole = this.mapRoleIds(result.user.roleIds);
+      const user: User = {
+        id: result.user.id,
+        name: result.user.displayName || result.user.username,
+        email: `${result.user.username}@secuclaw.local`,
+        role: mappedRole,
+        permissions: ROLE_PERMISSIONS[mappedRole],
+      };
+
+      gatewayClient.setAuthToken(result.token);
+      localStorage.setItem(TOKEN_KEY, result.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+      this.setState({ user, loading: false, isAuthenticated: true });
+      return user;
+    } catch (error) {
+      this.setState({ loading: false, isAuthenticated: false });
+      throw error;
     }
   }
 
-  private setDefaultUser(): void {
-    // Default user for demo purposes
-    const defaultUser: User = {
-      id: 'demo-user',
-      name: 'Demo User',
-      email: 'demo@secuclaw.local',
-      role: 'secuclaw-commander',
-      permissions: ROLE_PERMISSIONS['secuclaw-commander'],
-    };
-    this.setState({ user: defaultUser, isAuthenticated: true });
-  }
-
-  async login(role: RoleId): Promise<void> {
-    this.setState({ loading: true });
-    
-    const user: User = {
-      id: crypto.randomUUID(),
-      name: 'User',
-      email: 'user@secuclaw.local',
-      role,
-      permissions: ROLE_PERMISSIONS[role],
-    };
-    
-    this.setState({ user, loading: false, isAuthenticated: true });
-  }
-
   logout(): void {
+    this.clearPersistedAuth();
+    gatewayClient.setAuthToken(null);
     this.setState({ user: null, isAuthenticated: false });
+  }
+
+  private clearPersistedAuth(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+
+  private mapRoleIds(roleIds: string[]): RoleId {
+    const roleMap: Record<string, RoleId> = {
+      'role-admin': 'secuclaw-commander',
+      'role-auditor': 'security-ops',
+      'secuclaw-commander': 'secuclaw-commander',
+      'security-expert': 'security-expert',
+      'privacy-officer': 'privacy-officer',
+      'security-architect': 'security-architect',
+      'business-security-officer': 'business-security-officer',
+      'ciso': 'ciso',
+      'security-ops': 'security-ops',
+      'supply-chain-security': 'supply-chain-security',
+    };
+    for (const rid of roleIds) {
+      if (roleMap[rid]) return roleMap[rid];
+    }
+    return 'security-ops';
   }
 
   hasPermission(permission: string): boolean {
@@ -248,4 +287,3 @@ class AuthStore extends BaseStore<AuthState> {
 }
 
 export const authStore = new AuthStore();
-export type { User };

@@ -1,78 +1,61 @@
 import type { RouterDeps } from '../router.js';
 
+/**
+ * Security Routes - threats & compliance endpoints
+ * 
+ * Note: vulnerabilities and assets are handled by their dedicated CRUD routes:
+ * - vulnerabilities: vulnerabilities-crud-routes.ts (or vulnerabilities-routes.ts)
+ * - assets: assets-routes.ts
+ * This file only registers endpoints NOT covered by those modules.
+ */
 export function registerSecurityRoutes(
   handlers: Map<string, (params: Record<string, unknown>) => Promise<unknown>>,
   deps: RouterDeps
 ): void {
-  // 临时模拟实现，避免依赖问题
-  handlers.set('vulnerabilities.list', async (p) => {
-    return [];
+  async function getData<T>(key: string): Promise<T[]> {
+    const data = await deps.jsonStore.get<T>(key);
+    return Array.isArray(data) ? data : [];
+  }
+
+  // Threats - only registered here
+  handlers.set('threats.list', async () => {
+    return getData('threats');
   });
-  
-  handlers.set('vulnerabilities.get', async (p) => {
-    const { id } = p;
-    return { id, status: 'open', severity: 'low', cveId: 'CVE-2023-1234' };
-  });
-  
-  handlers.set('vulnerabilities.updateStatus', async (p) => {
-    const { id, status } = p;
-    return { id, status };
-  });
-  
-  handlers.set('vulnerabilities.assign', async (p) => {
-    const { id, assignedTo } = p;
-    return { id, assignedTo };
-  });
-  
-  handlers.set('vulnerabilities.stats', async () => {
-    return { total: 0, open: 0, inProgress: 0, resolved: 0 };
-  });
-  
-  handlers.set('vulnerabilities.nextStatuses', async (p) => {
-    return ['inProgress', 'resolved'];
-  });
-  
-  handlers.set('threats.list', async (p) => {
-    return [];
-  });
-  
+
   handlers.set('threats.get', async (p) => {
     const { id } = p;
-    return { id, type: 'malware', motivation: 'financial' };
+    const list = await getData('threats');
+    return list.find((t: any) => t.id === id) || null;
   });
-  
+
   handlers.set('threats.stats', async () => {
-    return { total: 0 };
+    const list = await getData('threats');
+    return { total: list.length };
   });
-  
+
   handlers.set('threats.search', async (p) => {
     const { keyword } = p;
-    return [];
+    const list = await getData('threats');
+    if (!keyword) return list;
+    const kw = String(keyword).toLowerCase();
+    return list.filter((t: any) =>
+      JSON.stringify(t).toLowerCase().includes(kw)
+    );
   });
-  
-  handlers.set('compliance.list', async (p) => {
-    return [];
+
+  // Compliance - only registered here
+  handlers.set('compliance.list', async () => {
+    return getData('compliance');
   });
-  
+
   handlers.set('compliance.get', async (p) => {
     const { id } = p;
-    return { id, framework: 'ISO27001', controlId: 'A.12.3.1' };
+    const list = await getData('compliance');
+    return list.find((c: any) => c.id === id) || null;
   });
-  
+
   handlers.set('compliance.stats', async () => {
-    return { compliant: 0, nonCompliant: 0 };
-  });
-  
-  handlers.set('assets.list', async (p) => {
-    return [];
-  });
-  
-  handlers.set('assets.get', async (p) => {
-    const { id } = p;
-    return { id, name: 'Test Server', type: 'server' };
-  });
-  
-  handlers.set('assets.stats', async () => {
-    return { total: 0, servers: 0, workstations: 0 };
+    const list = await getData('compliance');
+    return { total: list.length, compliant: list.filter((c: any) => c.status === 'compliant').length, nonCompliant: list.filter((c: any) => c.status !== 'compliant').length };
   });
 }

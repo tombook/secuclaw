@@ -1,6 +1,9 @@
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { AuditLogRepository } from './repository.js';
 import type { AuditLogEntry, AuditAction, AuditResource, AuditLogQuery, AuditLogStats } from './types.js';
 
+@Service()
 export class AuditLogService {
   constructor(private repo: AuditLogRepository) {}
 

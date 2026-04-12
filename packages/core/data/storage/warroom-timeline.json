@@ -1,0 +1,35 @@
+[
+  {
+    "sessionId": "session_1775884257855_le29ka",
+    "type": "session_created",
+    "actor": "user",
+    "data": {
+      "title": "E2E Test War Room"
+    },
+    "id": "evt_1775884257863_eg62",
+    "timestamp": 1775884257863
+  },
+  {
+    "sessionId": "session_1775884257901_q4lvcm",
+    "type": "session_created",
+    "actor": "system",
+    "data": {
+      "eventType": "incident",
+      "eventId": "INC-001"
+    },
+    "id": "evt_1775884257903_4ypais",
+    "timestamp": 1775884257903
+  },
+  {
+    "sessionId": "session_1775884257901_q4lvcm",
+    "type": "task_created",
+    "actor": "system",
+    "actorRole": "security-expert",
+    "data": {
+      "taskId": "task_1775884257909_gvhnf",
+      "assignedRole": "security-expert"
+    },
+    "id": "evt_1775884257910_ytxuk",
+    "timestamp": 1775884257910
+  }
+]

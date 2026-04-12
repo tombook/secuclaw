@@ -1,917 +1,1167 @@
-/**
- * SecuClaw War Room Page - 作战室页面
- * 
- * 实时安全运营指挥中心、事件协同、资源调度、决策支持
- * AI能力: 实时决策支持、协同建议
- */
 import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, state, query } from 'lit/decorators.js';
+import { Router } from '@vaadin/router';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
-import { aiService, type SmartInsight, type AIRecommendation } from '../ai-service.js';
 import { gatewayClient } from '../gateway-client.js';
-import '../components/sc-ai-assistant.js';
-import '../components/sc-smart-card.js';
+import { roleContext, type RoleId, type RoleProfile } from '../store/role-context.js';
+import { raciStore, type RaciTask, type TimelineEvent, type ChatMessage, type WarRoomSession, type TaskStatus } from '../store/raci-store.js';
+import { RACI_SCENARIOS, type ScenarioType, type RaciRole } from '../config/raci-matrix.js';
+import { ROLE_THEMES } from '../config/role-themes.js';
+import '../components/sc-raci-matrix-view.js';
+import '../components/sc-role-perspective.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
-// ============ 类型定义 ============
-
-type IncidentPriority = 'p1' | 'p2' | 'p3' | 'p4';
-type TeamMemberStatus = 'available' | 'busy'|'offline';
-
-interface WarRoomIncident {
+interface WorkflowSuggestion {
   id: string;
-  title: string;
-  priority: IncidentPriority;
-  status: string;
-  assignees: string[];
-  updatedAt: Date;
+  workflowName: string;
+  matchedKeyword: string;
   description: string;
 }
-
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  status: TeamMemberStatus;
-  currentTask?: string;
-  avatar: string;
-}
-
-interface Activity {
-  id: string;
-  type: 'comment' | 'action' | 'escalation' | 'resolution';
-  user: string;
-  message: string;
-  timestamp: Date;
-  incidentId?: string;
-}
-
-// ============ 页面组件 ============
 
 @customElement('sc-war-room-page')
 export class ScWarRoomPage extends LitElement {
   private i18n = new I18nController(this);
+  private storeUnsub: (() => void) | null = null;
 
   @state() private loading = true;
-  @state() private activeIncidents: WarRoomIncident[] = [];
-  @state() private teamMembers: TeamMember[] = [];
-  @state() private activities: Activity[] = [];
-  @state() private _insights: SmartInsight[] = [];
-  @state() private recommendations: AIRecommendation[] = [];
-  @state() private selectedIncident: WarRoomIncident | null = null;
-  @state() private _newComment = '';
-  @state() private playbooks: any[] = [];
-  @state() private playbookExecutions: any[] = [];
-  @state() private executingPlaybookId: string | null = null;
-  @state() private playbookResult: any = null;
-  @state() private toastMessage: string = '';
-  @state() private toastType: 'success' | 'error' | 'info' = 'info';
+  @state() private eventId = '';
+  @state() private scenarioType: ScenarioType = 'incident-response';
+  @state() private currentRole: RoleId | null = null;
+  @state() private roleProfile: RoleProfile | null = null;
+  @state() private raciAssignment: RaciRole | null = null;
+  @state() private tasks: RaciTask[] = [];
+  @state() private timeline: TimelineEvent[] = [];
+  @state() private chatMessages: ChatMessage[] = [];
+  @state() private newMessage = '';
+  @state() private workflowSuggestions: WorkflowSuggestion[] = [];
+  @state() private activeTimelineFilter: RoleId | 'all' = 'all';
+  @state() private activeSession: WarRoomSession | null = null;
+  @state() private collaborationStatus: { phase: string; completedRoles: string[] } | null = null;
+  @state() private aiTriggering = false;
 
-  private readonly fallbackPlaybooks = [
-    { id: 'pb-incident-response', name: '安全事件自动响应', description: '自动隔离受影响资产并通知安全团队', status: 'enabled', triggerType: 'alarm' },
-    { id: 'pb-ransomware', name: '勒索软件应急处置', description: '检测→隔离→取证→恢复→报告', status: 'enabled', triggerType: 'alarm' },
-    { id: 'pb-ddos-mitigation', name: 'DDoS攻击缓解', description: '检测异常流量→自动启动流量清洗→CDN切换→恢复', status: 'enabled', triggerType: 'alarm' },
-    { id: 'pb-vuln-auto-patch', name: '高危漏洞自动修补', description: '检测高危漏洞→测试补丁→部署补丁→验证', status: 'disabled', triggerType: 'cron' },
-    { id: 'pb-compliance-scan', name: '合规自动检查', description: '定期扫描配置→对比合规框架→生成差距报告', status: 'enabled', triggerType: 'cron' },
+  @query('#chat-input') private chatInput!: HTMLTextAreaElement;
+  @query('#mobile-task-tabs') private mobileTaskTabs!: HTMLElement;
+
+  private readonly WORKFLOW_KEYWORDS = [
+    { keyword: '隔离', workflowId: 'ir-ops-2', workflowName: '执行遏制措施' },
+    { keyword: '分析', workflowId: 'ir-expert-1', workflowName: '分析攻击手法' },
+    { keyword: '补丁', workflowId: 'vm-ops-2', workflowName: '执行补丁部署' },
+    { keyword: '取证', workflowId: 'ir-ops-3', workflowName: '收集取证数据' },
+    { keyword: '扫描', workflowId: 'vm-expert-1', workflowName: '发现和识别漏洞' },
+    { keyword: '评估', workflowId: 'ir-cmd-1', workflowName: '评估事件严重性' },
   ];
 
   static get styles() {
     return css`
-    :host { display: block; }
-    .warroom-container{
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: var(--sc-spacing-lg, 20px);
-      height: 100%;
-    }
-    @media (max-width: 1200px) {
-      .warroom-container { grid-template-columns: 1fr; }
-    }
-    .main-content{
-      display: flex;
-      flex-direction: column;
-      gap: var(--sc-spacing-lg, 20px);
-      overflow-y: auto;
-    }
-    .page-header{
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-    .page-title-section {
-      flex: 1;
-    }
-    .page-title{
-      font-size: var(--sc-font-size-2xl, 24px);
-      font-weight: 600;
-      color: var(--sc-text-primary, #1e293b);
-      display: flex;
-      align-items: center;
-      gap: var(--sc-spacing-sm, 8px);
-    }
-    .page-description {
-      font-size: var(--sc-font-size-sm, 14px);
-      color: var(--sc-text-secondary, #64748b);
-      margin-top: var(--sc-spacing-xs, 4px);
-    }
-    .header-actions{
-      display: flex;
-      gap: var(--sc-spacing-sm, 8px);
-    }
-    .btn{
-      padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
-      border-radius: var(--sc-radius-md, 8px);
-      font-size: var(--sc-font-size-sm, 14px);
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s ease;
-    }
-    .btn-primary{
-      background-color: var(--sc-danger, #ef4444);
-      color: white;
-    }
-    .btn-secondary{
-      background-color: var(--sc-bg-secondary, #f8fafc);
-      color: var(--sc-text-primary, #1e293b);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-    }
-    /* 统计卡片 */
-    .stats-grid{
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--sc-spacing-md, 16px);
-    }
-    @media (max-width: 900px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    /* 主内容区域 */
-    .content-grid{
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: var(--sc-spacing-lg, 20px);
-    }
-    @media (max-width: 1024px) {
-      .content-grid { grid-template-columns: 1fr; }
-    }
-    /* 活跃事件 */
-    .incidents-section{
-      background-color: var(--sc-bg-card, #ffffff);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-lg, 12px);
-      padding: var(--sc-spacing-lg, 20px);
-    }
-    .section-header{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--sc-spacing-md, 16px);
-    }
-    .section-title{
-      font-size: var(--sc-font-size-lg, 18px);
-      font-weight: 600;
-      color: var(--sc-text-primary, #1e293b);
-      display: flex;
-      align-items: center;
-      gap: var(--sc-spacing-sm, 8px);
-    }
-    .incident-list{
-      display: flex;
-      flex-direction: column;
-      gap: var(--sc-spacing-sm, 8px);
-    }
-    .incident-item{
-      display: flex;
-      align-items: center;
-      gap: var(--sc-spacing-md, 16px);
-      padding: var(--sc-spacing-md, 16px);
-      background-color: var(--sc-bg-secondary, #f8fafc);
-      border-radius: var(--sc-radius-md, 8px);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border-left: 4px solid transparent;
-    }
-    .incident-item:hover{
-      background-color: var(--sc-bg-tertiary, #f1f5f9);
-    }
-    .incident-item.selected{
-      background-color: rgba(239, 68, 68, 0.05);
-    }
-    .incident-item.p1{ border-left-color: var(--sc-danger, #ef4444); }
-    .incident-item.p2{ border-left-color: var(--sc-warning, #f59e0b); }
-    .incident-item.p3{ border-left-color: var(--sc-primary, #3b82f6); }
-    .incident-item.p4{ border-left-color: var(--sc-success, #22c55e); }
-    .priority-badge{
-      padding: 4px 8px;
-      border-radius: var(--sc-radius-sm, 4px);
-      font-size: var(--sc-font-size-xs, 12px);
-      font-weight: 700;
-      color: white;
-    }
-    .priority-badge.p1{ background-color: var(--sc-danger, #ef4444); }
-    .priority-badge.p2{ background-color: var(--sc-warning, #f59e0b); }
-    .priority-badge.p3{ background-color: var(--sc-primary, #3b82f6); }
-    .priority-badge.p4{ background-color: var(--sc-success, #22c55e); }
-    .incident-info{
-      flex: 1;
-    }
-    .incident-title{
-      font-size: var(--sc-font-size-sm, 14px);
-      font-weight: 500;
-      color: var(--sc-text-primary, #1e293b);
-    }
-    .incident-meta{
-      font-size: var(--sc-font-size-xs, 12px);
-      color: var(--sc-text-secondary, #64748b);
-      margin-top: 2px;
-    }
-    .incident-assignees{
-      display: flex;
-      gap: 4px;
-    }
-    .assignee-avatar{
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background-color: var(--sc-primary, #3b82f6);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 600;
-    }
-    /* 团队成员 */
-    .team-section{
-      background-color: var(--sc-bg-card, #ffffff);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-lg, 12px);
-      padding: var(--sc-spacing-lg, 20px);
-    }
-    .team-list{
-      display: flex;
-      flex-direction: column;
-      gap: var(--sc-spacing-sm, 8px);
-    }
-    .team-item{
-      display: flex;
-      align-items: center;
-      gap: var(--sc-spacing-sm, 8px);
-      padding: var(--sc-spacing-sm, 8px);
-      border-radius: var(--sc-radius-md, 8px);
-    }
-    .team-item:hover{
-      background-color: var(--sc-bg-secondary, #f8fafc);
-    }
-    .team-avatar{
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-    .team-info{
-      flex: 1;
-    }
-    .team-name{
-      font-size: var(--sc-font-size-sm, 14px);
-      font-weight: 500;
-      color: var(--sc-text-primary, #1e293b);
-    }
-    .team-role{
-      font-size: var(--sc-font-size-xs, 12px);
-      color: var(--sc-text-secondary, #64748b);
-    }
-    .status-indicator{
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    .status-indicator.available{ background-color: var(--sc-success, #22c55e); }
-    .status-indicator.busy{ background-color: var(--sc-warning, #f59e0b); }
-    .status-indicator.offline{ background-color: var(--sc-text-tertiary, #94a3b8); }
-    /* 活动日志 */
-    .activity-section{
-      background-color: var(--sc-bg-card, #ffffff);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-lg, 12px);
-      padding: var(--sc-spacing-lg, 20px);
-    }
-    .activity-list{
-      display: flex;
-      flex-direction: column;
-      gap: var(--sc-spacing-sm, 8px);
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .activity-item{
-      display: flex;
-      gap: var(--sc-spacing-sm, 8px);
-      padding: var(--sc-spacing-sm, 8px);
-      border-radius: var(--sc-radius-sm, 4px);
-      font-size: var(--sc-font-size-sm, 14px);
-    }
-    .activity-item:hover{
-      background-color: var(--sc-bg-secondary, #f8fafc);
-    }
-    .activity-icon{
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-    .activity-icon.comment{ background-color: rgba(59, 130, 246, 0.1); }
-    .activity-icon.action{ background-color: rgba(34, 197, 94, 0.1); }
-    .activity-icon.escalation{ background-color: rgba(239, 68, 68, 0.1); }
-    .activity-icon.resolution{ background-color: rgba(34, 197, 94, 0.1); }
-    .activity-content{
-      flex: 1;
-    }
-    .activity-message{
-      color: var(--sc-text-primary, #1e293b);
-    }
-    .activity-meta{
-      font-size: var(--sc-font-size-xs, 12px);
-      color: var(--sc-text-tertiary, #94a3b8);
-      margin-top: 2px;
-    }
-    /* 快速操作 */
-    .quick-actions{
-      background-color: var(--sc-bg-card, #ffffff);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-lg, 12px);
-      padding: var(--sc-spacing-lg, 20px);
-    }
-    .action-buttons{
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--sc-spacing-sm, 8px);
-    }
-    .action-btn{
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--sc-spacing-xs, 4px);
-      padding: var(--sc-spacing-md, 16px);
-      background-color: var(--sc-bg-secondary, #f8fafc);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-md, 8px);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .action-btn:hover{
-      border-color: var(--sc-primary, #3b82f6);
-      background-color: rgba(59, 130, 246, 0.05);
-    }
-    .action-btn-icon{
-      font-size: 24px;
-    }
-    .action-btn-label{
-      font-size: var(--sc-font-size-xs, 12px);
-      color: var(--sc-text-secondary, #64748b);
-    }
-    /* AI建议 */
-    .ai-suggestions{
-      background-color: rgba(59, 130, 246, 0.05);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: var(--sc-radius-lg, 12px);
-      padding: var(--sc-spacing-lg, 20px);
-    }
-    .ai-title{
-      font-size: var(--sc-font-size-sm, 14px);
-      font-weight: 600;
-      color: var(--sc-primary, #3b82f6);
-      margin-bottom: var(--sc-spacing-sm, 8px);
-      display: flex;
-      align-items: center;
-      gap: var(--sc-spacing-xs, 4px);
-    }
-    .suggestion-list{
-      display: flex;
-      flex-direction: column;
-      gap: var(--sc-spacing-xs, 4px);
-    }
-    .suggestion-item{
-      display: flex;
-      align-items: flex-start;
-      gap: var(--sc-spacing-sm, 8px);
-      padding: var(--sc-spacing-sm, 8px);
-      background-color: rgba(255, 255, 255, 0.5);
-      border-radius: var(--sc-radius-sm, 4px);
-      font-size: var(--sc-font-size-sm, 14px);
-      color: var(--sc-text-secondary, #64748b);
-    }
-    .ai-sidebar{
-      position: sticky;
-      top: 0;
-      height: calc(100vh - var(--sc-spacing-lg, 20px) * 2);
-      overflow: hidden;
-    }
-    .playbook-section{
-      background-color: var(--sc-bg-card, #ffffff);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-lg, 12px);
-      padding: var(--sc-spacing-lg, 20px);
-    }
-    .playbook-grid{
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: var(--sc-spacing-md, 16px);
-    }
-    @media (max-width: 768px) {
-      .playbook-grid { grid-template-columns: 1fr; }
-    }
-    .playbook-card{
-      background-color: var(--sc-bg-secondary, #f8fafc);
-      border: 1px solid var(--sc-border-color, #e2e8f0);
-      border-radius: var(--sc-radius-md, 8px);
-      padding: var(--sc-spacing-md, 16px);
-      transition: border-color 0.2s ease;
-    }
-    .playbook-card:hover{
-      border-color: var(--sc-primary, #3b82f6);
-    }
-    .playbook-card-header{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--sc-spacing-sm, 8px);
-    }
-    .playbook-card-name{
-      font-size: var(--sc-font-size-sm, 14px);
-      font-weight: 600;
-      color: var(--sc-text-primary, #1e293b);
-    }
-    .playbook-status{
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: var(--sc-font-size-xs, 12px);
-      font-weight: 500;
-    }
-    .playbook-status.enabled{ background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-    .playbook-status.disabled{ background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
-    .playbook-card-desc{
-      font-size: var(--sc-font-size-xs, 12px);
-      color: var(--sc-text-secondary, #64748b);
-      margin-bottom: var(--sc-spacing-sm, 8px);
-      line-height: 1.5;
-    }
-    .playbook-card-footer{
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .playbook-trigger{
-      font-size: var(--sc-font-size-xs, 12px);
-      color: var(--sc-text-tertiary, #94a3b8);
-    }
-    .btn-execute{
-      padding: 4px 12px;
-      border-radius: var(--sc-radius-sm, 4px);
-      font-size: var(--sc-font-size-xs, 12px);
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      background-color: var(--sc-primary, #3b82f6);
-      color: white;
-      transition: all 0.2s ease;
-    }
-    .btn-execute:hover:not(:disabled){
-      background-color: var(--sc-primary-dark, #2563eb);
-    }
-    .btn-execute:disabled{
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .playbook-result{
-      margin-top: var(--sc-spacing-md, 16px);
-      padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
-      border-radius: var(--sc-radius-md, 8px);
-      font-size: var(--sc-font-size-sm, 14px);
-    }
-    .playbook-result.success{ background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); }
-    .playbook-result.error{ background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-  `;
-  }
+      :host {
+        display: block;
+        height: 100%;
+      }
 
-  constructor() {
-    super();
+      .war-room-container {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        grid-template-columns: 1fr 360px;
+        gap: var(--sc-spacing-lg, 20px);
+        height: 100%;
+        padding: var(--sc-spacing-md, 16px);
+        background-color: var(--sc-bg-primary, #0f172a);
+      }
+
+      @media (max-width: 1200px) {
+        .war-room-container {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr auto auto;
+        }
+      }
+
+      .raci-overview {
+        grid-column: 1 / -1;
+      }
+
+      .role-panels {
+        grid-column: 1 / 2;
+        overflow: auto;
+      }
+
+      @media (max-width: 1200px) {
+        .role-panels {
+          grid-column: 1 / -1;
+        }
+      }
+
+      .sidebar {
+        grid-column: 2 / 3;
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-md, 16px);
+        overflow: auto;
+      }
+
+      @media (max-width: 1200px) {
+        .sidebar {
+          grid-column: 1 / -1;
+        }
+      }
+
+      .chat-section {
+        grid-column: 1 / 2;
+      }
+
+      @media (max-width: 1200px) {
+        .chat-section {
+          grid-column: 1 / -1;
+        }
+      }
+
+      .workflow-suggestions {
+        grid-column: 2 / 3;
+      }
+
+      @media (max-width: 1200px) {
+        .workflow-suggestions {
+          grid-column: 1 / -1;
+        }
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--sc-spacing-md, 16px);
+      }
+
+      .page-title {
+        font-size: var(--sc-font-size-xl, 20px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+      }
+
+      .event-badge {
+        padding: 4px 12px;
+        background-color: var(--sc-primary, #3b82f6);
+        color: white;
+        border-radius: var(--sc-radius-full, 999px);
+        font-size: var(--sc-font-size-xs, 12px);
+        font-weight: 500;
+      }
+
+      .task-panels-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--sc-spacing-md, 16px);
+      }
+
+      @media (max-width: 768px) {
+        .task-panels-container {
+          display: none;
+        }
+      }
+
+      .mobile-task-tabs {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .mobile-task-tabs {
+          display: flex;
+          gap: var(--sc-spacing-sm, 8px);
+          margin-bottom: var(--sc-spacing-md, 16px);
+          overflow-x: auto;
+          padding-bottom: var(--sc-spacing-sm, 8px);
+        }
+      }
+
+      .mobile-task-tab {
+        padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
+        background-color: var(--sc-bg-secondary, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-md, 8px);
+        color: var(--sc-text-primary, #f8fafc);
+        font-size: var(--sc-font-size-sm, 14px);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+      }
+
+      .mobile-task-tab.active {
+        background-color: var(--sc-primary, #3b82f6);
+        border-color: var(--sc-primary, #3b82f6);
+        color: white;
+      }
+
+      .task-panel {
+        background-color: var(--sc-bg-card, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-lg, 12px);
+        padding: var(--sc-spacing-md, 16px);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-sm, 8px);
+      }
+
+      .task-panel-header {
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+        padding-bottom: var(--sc-spacing-sm, 8px);
+        border-bottom: 1px solid var(--sc-border-color, #334155);
+      }
+
+      .task-panel-title {
+        font-size: var(--sc-font-size-md, 16px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+      }
+
+      .raci-badge {
+        padding: 2px 8px;
+        border-radius: var(--sc-radius-sm, 4px);
+        font-size: var(--sc-font-size-xs, 12px);
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .raci-badge.R { background-color: rgba(34, 197, 94, 0.2); color: #22c55e; }
+      .raci-badge.A { background-color: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+      .raci-badge.C { background-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+      .raci-badge.I { background-color: rgba(100, 116, 139, 0.2); color: #64748b; }
+
+      .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-xs, 4px);
+      }
+
+      .task-item {
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+        padding: var(--sc-spacing-sm, 8px);
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border-radius: var(--sc-radius-sm, 4px);
+        transition: all 0.2s ease;
+      }
+
+      .task-item:hover {
+        background-color: var(--sc-bg-hover, #334155);
+      }
+
+      .task-status {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--sc-border-color, #334155);
+        background-color: transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .task-status.created { border-color: #64748b; }
+      .task-status.assigned { border-color: #3b82f6; }
+      .task-status.in_progress { border-color: #f59e0b; background-color: rgba(245, 158, 11, 0.2); }
+      .task-status.pending_handoff { border-color: #a855f7; background-color: rgba(168, 85, 247, 0.2); }
+      .task-status.completed { border-color: #22c55e; background-color: #22c55e; }
+      .task-status.escalated { border-color: #ef4444; background-color: rgba(239, 68, 68, 0.2); }
+
+      .task-text {
+        flex: 1;
+        font-size: var(--sc-font-size-sm, 14px);
+        color: var(--sc-text-primary, #f8fafc);
+      }
+
+      .commander-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--sc-spacing-md, 16px);
+      }
+
+      .role-summary-card {
+        background-color: var(--sc-bg-card, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-md, 8px);
+        padding: var(--sc-spacing-md, 16px);
+      }
+
+      .role-summary-header {
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+        margin-bottom: var(--sc-spacing-sm, 8px);
+      }
+
+      .role-summary-emoji {
+        font-size: 1.5rem;
+      }
+
+      .role-summary-name {
+        font-size: var(--sc-font-size-sm, 14px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+      }
+
+      .role-summary-stats {
+        display: flex;
+        gap: var(--sc-spacing-sm, 8px);
+        font-size: var(--sc-font-size-xs, 12px);
+        color: var(--sc-text-secondary, #cbd5e1);
+      }
+
+      .timeline-section {
+        background-color: var(--sc-bg-card, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-lg, 12px);
+        padding: var(--sc-spacing-md, 16px);
+      }
+
+      .timeline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--sc-spacing-md, 16px);
+        padding-bottom: var(--sc-spacing-sm, 8px);
+        border-bottom: 1px solid var(--sc-border-color, #334155);
+      }
+
+      .timeline-title {
+        font-size: var(--sc-font-size-md, 16px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+      }
+
+      .timeline-filter {
+        display: flex;
+        gap: var(--sc-spacing-xs, 4px);
+      }
+
+      .timeline-filter-btn {
+        padding: 4px 8px;
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-sm, 4px);
+        color: var(--sc-text-secondary, #cbd5e1);
+        font-size: var(--sc-font-size-xs, 12px);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .timeline-filter-btn:hover {
+        border-color: var(--sc-primary, #3b82f6);
+      }
+
+      .timeline-filter-btn.active {
+        background-color: var(--sc-primary, #3b82f6);
+        border-color: var(--sc-primary, #3b82f6);
+        color: white;
+      }
+
+      .timeline-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-sm, 8px);
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .timeline-item {
+        display: flex;
+        gap: var(--sc-spacing-sm, 8px);
+        padding: var(--sc-spacing-sm, 8px);
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border-radius: var(--sc-radius-sm, 4px);
+        font-size: var(--sc-font-size-sm, 14px);
+      }
+
+      .timeline-emoji {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      .timeline-content {
+        flex: 1;
+      }
+
+      .timeline-action {
+        color: var(--sc-text-primary, #f8fafc);
+      }
+
+      .timeline-meta {
+        font-size: var(--sc-font-size-xs, 12px);
+        color: var(--sc-text-tertiary, #64748b);
+        margin-top: 2px;
+      }
+
+      .chat-section {
+        background-color: var(--sc-bg-card, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-lg, 12px);
+        padding: var(--sc-spacing-md, 16px);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-sm, 8px);
+        min-height: 300px;
+      }
+
+      .chat-header {
+        font-size: var(--sc-font-size-md, 16px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+        padding-bottom: var(--sc-spacing-sm, 8px);
+        border-bottom: 1px solid var(--sc-border-color, #334155);
+      }
+
+      .chat-messages {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-sm, 8px);
+        overflow-y: auto;
+        min-height: 200px;
+      }
+
+      .chat-message {
+        display: flex;
+        gap: var(--sc-spacing-sm, 8px);
+        padding: var(--sc-spacing-sm, 8px);
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border-radius: var(--sc-radius-sm, 4px);
+      }
+
+      .chat-message-emoji {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+
+      .chat-message-content {
+        flex: 1;
+      }
+
+      .chat-message-sender {
+        font-size: var(--sc-font-size-sm, 14px);
+        font-weight: 600;
+        color: var(--sc-primary, #3b82f6);
+        margin-bottom: 2px;
+      }
+
+      .chat-message-text {
+        font-size: var(--sc-font-size-sm, 14px);
+        color: var(--sc-text-primary, #f8fafc);
+      }
+
+      .chat-message-time {
+        font-size: var(--sc-font-size-xs, 12px);
+        color: var(--sc-text-tertiary, #64748b);
+        margin-top: 2px;
+      }
+
+      .chat-input-area {
+        display: flex;
+        gap: var(--sc-spacing-sm, 8px);
+      }
+
+      .chat-input {
+        flex: 1;
+        padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-md, 8px);
+        color: var(--sc-text-primary, #f8fafc);
+        font-size: var(--sc-font-size-sm, 14px);
+        resize: none;
+        font-family: inherit;
+      }
+
+      .chat-input:focus {
+        outline: none;
+        border-color: var(--sc-primary, #3b82f6);
+      }
+
+      .chat-send-btn {
+        padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
+        background-color: var(--sc-primary, #3b82f6);
+        border: none;
+        border-radius: var(--sc-radius-md, 8px);
+        color: white;
+        font-size: var(--sc-font-size-sm, 14px);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .chat-send-btn:hover {
+        background-color: var(--sc-primary-dark, #2563eb);
+      }
+
+      .workflow-suggestions {
+        background-color: var(--sc-bg-card, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-lg, 12px);
+        padding: var(--sc-spacing-md, 16px);
+      }
+
+      .workflow-title {
+        font-size: var(--sc-font-size-md, 16px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-sm, 8px);
+        margin-bottom: var(--sc-spacing-md, 16px);
+      }
+
+      .workflow-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sc-spacing-sm, 8px);
+      }
+
+      .workflow-card {
+        padding: var(--sc-spacing-md, 16px);
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-md, 8px);
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .workflow-card:hover {
+        border-color: var(--sc-primary, #3b82f6);
+        background-color: rgba(59, 130, 246, 0.1);
+      }
+
+      .workflow-card-title {
+        font-size: var(--sc-font-size-sm, 14px);
+        font-weight: 600;
+        color: var(--sc-text-primary, #f8fafc);
+        margin-bottom: var(--sc-spacing-xs, 4px);
+      }
+
+      .workflow-card-desc {
+        font-size: var(--sc-font-size-sm, 14px);
+        color: var(--sc-text-secondary, #cbd5e1);
+      }
+
+      .workflow-card-keyword {
+        display: inline-block;
+        padding: 2px 6px;
+        background-color: rgba(245, 158, 11, 0.2);
+        border-radius: var(--sc-radius-sm, 4px);
+        color: #f59e0b;
+        font-size: var(--sc-font-size-xs, 12px);
+        margin-top: var(--sc-spacing-xs, 4px);
+      }
+
+      .mobile-task-panel {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .mobile-task-panel.active {
+          display: block;
+        }
+      }
+
+      .collaboration-bar {
+        grid-column: 1 / -1;
+        background-color: var(--sc-bg-card, #1e293b);
+        border: 1px solid var(--sc-border-color, #334155);
+        border-radius: var(--sc-radius-lg, 12px);
+        padding: var(--sc-spacing-sm, 8px) var(--sc-spacing-md, 16px);
+        display: flex;
+        align-items: center;
+        gap: var(--sc-spacing-md, 16px);
+      }
+
+      .collab-phases {
+        display: flex;
+        gap: 4px;
+        flex: 1;
+      }
+
+      .collab-phase {
+        flex: 1;
+        padding: 6px 12px;
+        background-color: var(--sc-bg-secondary, #0f172a);
+        border-radius: var(--sc-radius-sm, 4px);
+        font-size: var(--sc-font-size-xs, 12px);
+        color: var(--sc-text-secondary, #cbd5e1);
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      .collab-phase.active {
+        background-color: var(--sc-primary, #3b82f6);
+        color: white;
+      }
+
+      .collab-phase.done {
+        background-color: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+      }
+
+      .ai-trigger-btn {
+        padding: 6px 16px;
+        background-color: #8b5cf6;
+        border: none;
+        border-radius: var(--sc-radius-md, 8px);
+        color: white;
+        font-size: var(--sc-font-size-sm, 14px);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .ai-trigger-btn:hover { background-color: #7c3aed; }
+      .ai-trigger-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .ai-badge {
+        display: inline-block;
+        padding: 1px 6px;
+        background-color: rgba(139, 92, 246, 0.2);
+        border-radius: var(--sc-radius-sm, 4px);
+        color: #a78bfa;
+        font-size: var(--sc-font-size-xs, 10px);
+        font-weight: 600;
+        margin-left: 4px;
+      }
+    `;
   }
 
   connectedCallback() {
     super.connectedCallback();
+
+    const router = (window as any).__router as Router;
+    if (router) {
+      const location = router.location;
+      if (location && location.params && location.params.eventId) {
+        this.eventId = String(location.params.eventId);
+      }
+    }
+
+    this.storeUnsub = raciStore.subscribe((state) => {
+      this.tasks = state.tasks;
+      this.timeline = state.timeline;
+      this.chatMessages = state.chatMessages;
+      this.activeSession = state.activeSession;
+      if (state.activeScenario) {
+        this.scenarioType = state.activeScenario;
+      }
+    });
+
     this.loadData();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.storeUnsub) {
+      this.storeUnsub();
+      this.storeUnsub = null;
+    }
   }
 
   private async loadData() {
     this.loading = true;
+
     try {
-  
-      try {
-        const pbRes = await gatewayClient.request('playbook.list', {});
-        const pbData = (pbRes as any)?.data ?? pbRes;
-        if (Array.isArray(pbData) && pbData.length > 0) {
-          this.playbooks = pbData;
-        } else {
-          this.playbooks = [...this.fallbackPlaybooks];
-        }
-      } catch {
-        this.playbooks = [...this.fallbackPlaybooks];
+      this.currentRole = roleContext.getState().currentRole;
+      this.roleProfile = roleContext.getState().roleProfile;
+      this.raciAssignment = roleContext.getState().currentRaciAssignment;
+
+      if (!this.currentRole) {
+        this.loading = false;
+        return;
       }
-      await this.loadIncidents();
-      await this.loadTeamMembers();
-      await this.loadActivities();
-  
-      await this.loadAIInsights();
+
+      await this.loadEventData();
+
+      await this.ensureSession();
+
+      if (this.currentRole && this.activeSession) {
+        await raciStore.joinSession(this.activeSession.id, this.currentRole);
+        this.pollCollaborationStatus();
+      }
+    } catch (error) {
+      console.error('[WarRoom] Failed to load data:', error);
     } finally {
       this.loading = false;
     }
   }
 
-  
-
-  private async loadIncidents() {
-    this.activeIncidents = [
-      { id: 'inc-1', title: 'APT29钓鱼攻击响应', priority: 'p1', status: 'containment', assignees: ['张安全', '李运维'], updatedAt: new Date(), description: '检测到针对高管的钓鱼攻击，正在遏制' },
-      { id: 'inc-2', title: '勒索软件感染处理', priority: 'p1', status: 'eradication', assignees: ['李运维'], updatedAt: new Date(Date.now() - 1800000), description: 'LockBit勒索软件感染，正在根除' },
-      { id: 'inc-3', title: '异常数据传输调查', priority: 'p2', status: 'confirmed', assignees: ['王合规', '张安全'], updatedAt: new Date(Date.now() - 3600000), description: '检测到大量数据外传，正在调查' },
-      { id: 'inc-4', title: 'DDoS攻击缓解', priority: 'p2', status: 'recovery', assignees: ['赵网络'], updatedAt: new Date(Date.now() - 7200000), description: 'DDoS攻击已缓解，正在恢复服务' },
-      { id: 'inc-5', title: '可疑进程分析', priority: 'p3', status: 'new', assignees: [], updatedAt: new Date(Date.now() - 300000), description: '检测到可疑进程，等待分析' }
-    ];
-  }
-
-  private async loadTeamMembers() {
-    this.teamMembers = [
-      { id: 'tm-1', name: '张安全', role: '安全专家', status: 'busy', currentTask: 'APT29钓鱼攻击响应', avatar: '👨‍💼' },
-      { id: 'tm-2', name: '李运维', role: '安全运营', status: 'busy', currentTask: '勒索软件感染处理', avatar: '👨‍💻' },
-      { id: 'tm-3', name: '王合规', role: '合规官', status: 'busy', currentTask: '异常数据传输调查', avatar: '👩‍💼' },
-      { id: 'tm-4', name: '赵网络', role: '网络工程师', status: 'available', avatar: '👨‍🔧' },
-      { id: 'tm-5', name: '陈分析', role: '威胁分析师', status: 'available', avatar: '👩‍🔬' },
-      { id: 'tm-6', name: '刘架构', role: '安全架构师', status: 'offline', avatar: '👨‍🏫' }
-    ];
-  }
-
-  private async loadActivities() {
-    this.activities = [
-      { id: 'act-1', type: 'action', user: '张安全', message: '隔离了受影响的工作站', timestamp: new Date(), incidentId: 'inc-1' },
-      { id: 'act-2', type: 'comment', user: '李运维', message: '勒索软件样本已提交分析', timestamp: new Date(Date.now() - 600000), incidentId: 'inc-2' },
-      { id: 'act-3', type: 'escalation', user: '系统', message: '事件inc-1升级为P1', timestamp: new Date(Date.now() - 1200000), incidentId: 'inc-1' },
-      { id: 'act-4', type: 'resolution', user: '赵网络', message: 'DDoS攻击流量已缓解', timestamp: new Date(Date.now() - 1800000), incidentId: 'inc-4' },
-      { id: 'act-5', type: 'action', user: '王合规', message: '阻断了可疑数据传输', timestamp: new Date(Date.now() - 2400000), incidentId: 'inc-3' },
-    ];
-  }
-
-  private async loadAIInsights() {
+  private async loadEventData() {
     try {
-      this._insights = await aiService.generateInsights({
-        pageId: 'war-room',
-        data: { incidents: this.activeIncidents, team: this.teamMembers },
-        userRole: 'security-expert'
-      });
-      this.recommendations = await aiService.generateRecommendations({
-        pageId: 'war-room',
-        data: { incidents: this.activeIncidents },
-        userRole: 'security-expert'
-      });
+      if (this.eventId) {
+        const event = await gatewayClient.request<any>('incidents.getByTicketId', { ticketId: this.eventId });
+        if (event) {
+          const eventData = (event as any).data || event;
+          if (eventData.info?.category) {
+            this.scenarioType = this.mapCategoryToScenario(eventData.info.category);
+          }
+        }
+      }
     } catch (error) {
-      console.error('Failed to load AI insights:', error);
-      // AI insights are non-critical, continue without them
-      this._insights = [];
-      this.recommendations = [];
+      console.error('[WarRoom] Failed to load event data:', error);
     }
   }
 
-  private async loadPlaybooks() {
+  private mapCategoryToScenario(category: string): ScenarioType {
+    const mapping: Record<string, ScenarioType> = {
+      'malware': 'incident-response',
+      'phishing': 'incident-response',
+      'intrusion': 'incident-response',
+      'data-breach': 'incident-response',
+      'ddos': 'threat-response',
+      'vulnerability': 'vulnerability-management',
+      'compliance': 'compliance-audit',
+      'supply-chain': 'supply-chain-incident',
+    };
+    return mapping[category] || 'incident-response';
+  }
+
+  private async ensureSession() {
     try {
-      const res = await gatewayClient.request('playbook.list', {});
-      const data = (res as any)?.data ?? res;
-      if (Array.isArray(data) && data.length > 0) {
-        this.playbooks = [...data];
+      await raciStore.loadSessions();
+      const storeState = raciStore.getState();
+
+      const existing = storeState.sessions.find(s =>
+        s.status === 'active' &&
+        s.eventId === this.eventId &&
+        s.scenario === this.scenarioType
+      );
+
+      if (existing) {
+        raciStore.setActiveSessionById(existing.id);
       } else {
-        this.playbooks = this.fallbackPlaybooks.map(p => ({ ...p }));
+        const scenario = RACI_SCENARIOS.find(s => s.id === this.scenarioType);
+        await raciStore.createSession({
+          title: this.eventId
+            ? `War Room - ${this.eventId}`
+            : `War Room - ${scenario?.name || this.scenarioType}`,
+          scenario: this.scenarioType,
+          eventId: this.eventId || undefined,
+          createdBy: this.currentRole || 'user',
+        });
+      }
+    } catch (error) {
+      console.error('[WarRoom] ensureSession failed:', error);
+    }
+  }
+
+  private async handleTaskStatusToggle(taskId: string) {
+    const task = this.tasks.find(t => t.id === taskId);
+    if (!task || !this.currentRole) return;
+
+    const nextStatusMap: Partial<Record<TaskStatus, TaskStatus>> = {
+      'created': 'assigned',
+      'assigned': 'in_progress',
+      'in_progress': 'completed',
+      'pending_handoff': 'in_progress',
+      'escalated': 'in_progress',
+    };
+
+    const nextStatus = nextStatusMap[task.status] || 'completed';
+
+    try {
+      await raciStore.updateTaskStatus(taskId, nextStatus, this.currentRole);
+    } catch (error) {
+      console.error('[WarRoom] Failed to update task status:', error);
+    }
+  }
+
+  private async handleSendMessage() {
+    const message = this.newMessage.trim();
+    if (!message || !this.currentRole || !this.activeSession) return;
+
+    try {
+      await raciStore.sendMessage(
+        this.activeSession.id,
+        message,
+        this.roleProfile?.displayName || this.currentRole,
+        this.currentRole,
+      );
+      this.newMessage = '';
+      this.checkWorkflowKeywords(message);
+    } catch (error) {
+      console.error('[WarRoom] Failed to send message:', error);
+    }
+  }
+
+  private checkWorkflowKeywords(message: string) {
+    this.workflowSuggestions = [];
+
+    for (const workflow of this.WORKFLOW_KEYWORDS) {
+      if (message.toLowerCase().includes(workflow.keyword.toLowerCase())) {
+        this.workflowSuggestions.push({
+          id: workflow.workflowId,
+          workflowName: workflow.workflowName,
+          matchedKeyword: workflow.keyword,
+          description: `检测到关键词"${workflow.keyword}"，建议执行相关工作流`,
+        });
+      }
+    }
+  }
+
+  private handleWorkflowClick(workflowId: string) {
+    console.log('[WarRoom] Workflow clicked:', workflowId);
+    alert(`启动工作流: ${workflowId}`);
+  }
+
+  private async handleAITrigger() {
+    if (!this.activeSession || this.aiTriggering) return;
+    this.aiTriggering = true;
+    try {
+      await gatewayClient.request('ai.collaboration.trigger', {
+        sessionId: this.activeSession.id,
+        eventType: this.activeSession.eventType || 'incident',
+        eventId: this.activeSession.eventId || this.activeSession.id,
+        scenario: this.activeSession.scenario,
+      });
+      this.pollCollaborationStatus();
+    } catch (err) {
+      console.error('[WarRoom] AI trigger failed:', err);
+    } finally {
+      this.aiTriggering = false;
+    }
+  }
+
+  private async pollCollaborationStatus() {
+    if (!this.activeSession) return;
+    try {
+      const status = await gatewayClient.request<{ phase: string; completedRoles: string[] } | null>(
+        'ai.collaboration.status',
+        { sessionId: this.activeSession.id },
+      );
+      this.collaborationStatus = status;
+      if (status && status.phase !== 'complete' && status.phase !== 'failed' && status.phase !== 'idle') {
+        setTimeout(() => this.pollCollaborationStatus(), 2000);
       }
     } catch {
-      this.playbooks = this.fallbackPlaybooks.map(p => ({ ...p }));
+      this.collaborationStatus = null;
     }
   }
 
-  private async executePlaybook(playbookId: string) {
-    try {
-      const res = await gatewayClient.request('playbook.start', { playbookId });
-      const execId = (res as any)?.execId ?? (res as any)?.id;
-      // Prepend to executions for quick audit
-      this.playbookExecutions = [
-        { playbookId, execId, startedAt: new Date(), status: 'started', detail: res },
-        ...(this.playbookExecutions || [])
-      ];
-      console.log('[WarRoom] Playbook execution started:', res);
-    } catch (e) {
-      this.playbookExecutions = [{ playbookId, startedAt: new Date(), status: 'failed', error: e instanceof Error ? e.message : '执行失败' }, ...(this.playbookExecutions || [])];
-      console.warn('[WarRoom] Playbook execution failed:', e);
+  private getFilteredTimeline(): TimelineEvent[] {
+    if (this.activeTimelineFilter === 'all') {
+      return this.timeline;
+    }
+    return this.timeline.filter(event => event.actorRole === this.activeTimelineFilter);
+  }
+
+  private getRoleTasksForPanel(roleId: RoleId): RaciTask[] {
+    return this.tasks.filter(task => task.assignedRole === roleId);
+  }
+
+  private isCommander(): boolean {
+    return this.currentRole === 'secuclaw-commander';
+  }
+
+  private getActiveMobileTab(): RoleId | null {
+    return (this.mobileTaskTabs as any)?.activeTab || null;
+  }
+
+  private handleMobileTabSelect(roleId: RoleId) {
+    if (this.mobileTaskTabs) {
+      (this.mobileTaskTabs as any).activeTab = roleId;
     }
   }
 
-  private async pollPlaybookStatus(playbookId: string, execId: string) {
-    try {
-      const res = await gatewayClient.request('playbook.getStatus', { playbookId, execId });
-      const status = (res as any)?.status;
-      if (status === 'running') {
-        setTimeout(() => this.pollPlaybookStatus(playbookId, execId), 3000);
-      } else {
-        this.playbookResult = { success: status !== 'failed', data: res };
-        this.executingPlaybookId = null;
-        try {
-          const exec = await gatewayClient.request('playbook.getExecution', { execId });
-          this.playbookResult = { success: status !== 'failed', data: Object.assign({}, res, { execution: exec }) };
-        } catch {}
-      }
-    } catch (e) {
-      this.playbookResult = { success: false, error: '状态查询失败' };
-      this.executingPlaybookId = null;
-    }
-  }
+  private renderMobileTaskTabs() {
+    const scenario = RACI_SCENARIOS.find(s => s.id === this.scenarioType);
+    if (!scenario) return '';
 
-  private async cancelPlaybook(playbookId: string) {
-    try {
-      await gatewayClient.request('playbook.cancel', { playbookId });
-      this.playbookResult = { success: true, data: { status: 'cancelled' } };
-      this.executingPlaybookId = null;
-    } catch (e) {
-      console.error('[war-room] Cancel failed:', e);
-    }
-  }
+    const raAssignments = scenario.assignments.filter(a => a.raci === 'R' || a.raci === 'A');
 
-  private async createNewPlaybook() {
-    const name = prompt('剧本名称:');
-    if (!name) return;
-    const description = prompt('剧本描述:') || '';
-    try {
-      await gatewayClient.request('playbook.create', { playbook: { name, description, version: '1.0' } });
-      this.showToast('剧本创建成功', 'success');
-      this.loadPlaybooks();
-    } catch { this.showToast('创建失败', 'error'); }
-  }
-
-  private async deletePlaybook(id: string) {
-    if (!confirm('确定删除此剧本？')) return;
-    try {
-      await gatewayClient.request('playbook.delete', { id });
-      this.showToast('剧本已删除', 'success');
-      this.loadPlaybooks();
-    } catch { this.showToast('删除失败', 'error'); }
-  }
-
-  private async updatePlaybookInfo(pb: Record<string, unknown>) {
-    const name = prompt('新名称:', pb.name as string);
-    if (!name) return;
-    const description = prompt('新描述:', pb.description as string);
-    try {
-      await gatewayClient.request('playbook.update', { id: pb.id as string, updates: { name, description } });
-      this.showToast('剧本已更新', 'success');
-      this.loadPlaybooks();
-    } catch { this.showToast('更新失败', 'error'); }
-  }
-
-  private async loadPlaybookExecutions() {
-    try {
-      const res = await gatewayClient.request('playbook.listExecutions', {});
-      const data = (res as Record<string, unknown>)?.data ?? res;
-      if (Array.isArray(data) && data.length > 0) {
-        this.showToast(`共 ${data.length} 条执行记录`, 'success');
-      } else {
-        this.showToast('暂无执行记录', 'info');
-      }
-    } catch { this.showToast('查询失败', 'error'); }
-  }
-
-  private showToast(message: string, type: 'success' | 'error' | 'info' = 'info') {
-    this.toastMessage = message;
-    this.toastType = type;
-    setTimeout(() => { this.toastMessage = ''; this.toastType = 'info'; }, 3000);
-  }
-
-  private async getPlaybookDetail(playbookId: string) {
-    try {
-      const res = await gatewayClient.request('playbook.get', { playbookId });
-      const detail = (res as any)?.data ?? res;
-      alert(`Playbook详情:\n${JSON.stringify(detail, null, 2)}`);
-    } catch (e) { console.error('[war-room] Get playbook failed:', e); }
-  }
-
-  private async createCommanderAction() {
-    const action = prompt('指挥官操作 (isolate/block/alert):', 'alert');
-    if (!action) return;
-    const target = prompt('目标:') || '';
-    try {
-      await gatewayClient.request('commander.create', { action, target, priority: 'high' });
-    } catch (e) { console.error('[war-room] Commander create failed:', e); }
-  }
-
-  private async getCommanderStatus() {
-    try {
-      const res = await gatewayClient.request('commander.get', {});
-      const status = (res as any)?.data ?? res;
-      if (status) alert(`指挥官状态:\n${JSON.stringify(status, null, 2)}`);
-    } catch (e) { console.error('[war-room] Commander get failed:', e); }
-  }
-
-  private renderPlaybookPanel() {
     return html`
-      <div class="playbook-section">
-        <div class="section-header">
-          <h3 class="section-title">🤖 Playbook自动化</h3>
-          <span style="font-size:12px;color:var(--sc-text-secondary);">${this.playbooks.length} 个剧本</span>
-        </div>
-        ${this.playbookResult ? html`
-          <div class="playbook-result ${this.playbookResult.success ? 'success' : 'error'}" style="padding:12px;border-radius:8px;margin-bottom:16px;font-size:13px;">
-            ${this.playbookResult.success
-              ? html`✅ 执行成功 — 任务ID: ${(this.playbookResult.data as any)?.execId ?? 'N/A'}`
-              : html`❌ ${(this.playbookResult.error as string) ?? '执行失败'}`}
+      <div class="mobile-task-tabs" id="mobile-task-tabs">
+        ${raAssignments.map(assignment => html`
+          <div
+            class="mobile-task-tab ${this.getActiveMobileTab() === assignment.role ? 'active' : ''}"
+            @click=${() => this.handleMobileTabSelect(assignment.role)}
+          >
+            ${ROLE_THEMES[assignment.role]?.icon || '🛡️'} ${assignment.role}
           </div>
-        ` : ''}
-        <div class="playbook-grid">
-          ${this.playbooks.map(pb => html`
-            <div class="playbook-card">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <strong style="font-size:14px;color:var(--sc-text-primary);">${pb.name}</strong>
-                <span class="playbook-trigger" style="padding:2px 8px;border-radius:10px;font-size:11px;${pb.status === 'enabled' ? 'background:rgba(34,197,94,0.15);color:#22c55e;' : 'background:rgba(148,163,184,0.15);color:#94a3b8;'}">${pb.status === 'enabled' ? '启用' : '停用'}</span>
-              </div>
-              <div class="playbook-card-desc">${pb.description}</div>
-              <div class="playbook-card-footer" style="margin-top:12px;">
-                <span class="playbook-trigger">触发: ${pb.triggerType === 'alarm' ? '告警' : pb.triggerType === 'cron' ? '定时' : pb.triggerType}</span>
-                <button class="btn-execute" ?disabled=${this.executingPlaybookId !== null} @click=${() => this.executePlaybook(pb.id)}>
-                  ${this.executingPlaybookId === pb.id ? '⏳ 执行中...' : '▶ 执行'}
-                </button>
-                ${this.executingPlaybookId === pb.id ? html`<button class="btn-execute" style="background:var(--sc-danger,#ef4444);margin-left:4px;" @click=${() => this.cancelPlaybook(pb.id)}>✕ 取消</button>` : ''}
-                <button class="btn-execute" style="background:var(--sc-bg-secondary);margin-left:4px;" @click=${() => this.getPlaybookDetail(pb.id)}>📋</button>
-                <button class="btn-execute" style="background:var(--sc-bg-secondary);margin-left:4px;" @click=${() => this.updatePlaybookInfo(pb as unknown as Record<string, unknown>)}>✏️</button>
-                <button class="btn-execute" style="background:rgba(239,68,68,0.1);color:#ef4444;margin-left:4px;" @click=${() => this.deletePlaybook(pb.id)}>🗑️</button>
-              </div>
-            </div>
-          `)}
+        `)}
+      </div>
+    `;
+  }
+
+  private renderMobileTaskPanel() {
+    const activeTab = this.getActiveMobileTab();
+    if (!activeTab) return '';
+
+    const roleTasks = this.getRoleTasksForPanel(activeTab);
+    const role = roleContext.getRoleProfile(activeTab);
+
+    if (!role) return '';
+
+    const assignment = RACI_SCENARIOS
+      .find(s => s.id === this.scenarioType)
+      ?.assignments.find(a => a.role === activeTab);
+
+    return html`
+      <div class="task-panel mobile-task-panel active">
+        <div class="task-panel-header">
+          <span>${role.emoji}</span>
+          <span class="task-panel-title">${role.displayName}</span>
+          ${assignment ? html`<span class="raci-badge ${assignment.raci}">${assignment.raci}</span>` : ''}
+        </div>
+        <div class="task-list">
+          ${roleTasks.map(task => this.renderTaskItem(task))}
         </div>
       </div>
     `;
   }
 
-  private handleIncidentClick(incident: WarRoomIncident) {
-    this.selectedIncident = this.selectedIncident?.id === incident.id ? null : incident;
+  private renderTaskItem(task: RaciTask) {
+    return html`
+      <div class="task-item">
+        <div
+          class="task-status ${task.status}"
+          @click=${() => this.handleTaskStatusToggle(task.id)}
+          title="点击切换状态"
+        ></div>
+        <span class="task-text">${task.title}</span>
+      </div>
+    `;
+  }
+
+  private renderTaskPanel(roleId: RoleId) {
+    const role = roleContext.getRoleProfile(roleId);
+    if (!role) return '';
+
+    const roleTasks = this.getRoleTasksForPanel(roleId);
+    const scenario = RACI_SCENARIOS.find(s => s.id === this.scenarioType);
+    const assignment = scenario?.assignments.find(a => a.role === roleId);
+
+    if (!assignment || (assignment.raci !== 'R' && assignment.raci !== 'A')) {
+      return '';
+    }
+
+    return html`
+      <div class="task-panel">
+        <div class="task-panel-header">
+          <span>${role.emoji}</span>
+          <span class="task-panel-title">${role.displayName}</span>
+          <span class="raci-badge ${assignment.raci}">${assignment.raci}</span>
+        </div>
+        <div class="task-list">
+          ${roleTasks.map(task => this.renderTaskItem(task))}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderCommanderView() {
+    const scenario = RACI_SCENARIOS.find(s => s.id === this.scenarioType);
+    if (!scenario) return '';
+
+    return html`
+      <div class="commander-view">
+        ${scenario.assignments.map(assignment => {
+          const role = roleContext.getRoleProfile(assignment.role);
+          if (!role) return '';
+
+          const roleTasks = this.getRoleTasksForPanel(assignment.role);
+          const completedCount = roleTasks.filter(t => t.status === 'completed').length;
+          const totalCount = roleTasks.length;
+
+          return html`
+            <div class="role-summary-card">
+              <div class="role-summary-header">
+                <span class="role-summary-emoji">${role.emoji}</span>
+                <span class="role-summary-name">${role.displayName}</span>
+              </div>
+              <div class="role-summary-stats">
+                <span>RACI: <span class="raci-badge ${assignment.raci}">${assignment.raci}</span></span>
+                <span>任务: ${completedCount}/${totalCount}</span>
+              </div>
+            </div>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  private renderTimeline() {
+    const filteredTimeline = this.getFilteredTimeline();
+
+    return html`
+      <div class="timeline-section">
+        <div class="timeline-header">
+          <div class="timeline-title">📅 事件时间线</div>
+          <div class="timeline-filter">
+            <button
+              class="timeline-filter-btn ${this.activeTimelineFilter === 'all' ? 'active' : ''}"
+              @click=${() => this.activeTimelineFilter = 'all'}
+            >全部</button>
+            ${this.currentRole ? html`
+              <button
+                class="timeline-filter-btn ${this.activeTimelineFilter === this.currentRole ? 'active' : ''}"
+                @click=${() => this.activeTimelineFilter = this.currentRole!}
+              >当前角色</button>
+            ` : ''}
+          </div>
+        </div>
+        <div class="timeline-list">
+          ${filteredTimeline.map(event => {
+            const role = event.actorRole ? roleContext.getRoleProfile(event.actorRole) : null;
+            return html`
+              <div class="timeline-item">
+                <span class="timeline-emoji">${role?.emoji || '📋'}</span>
+                <div class="timeline-content">
+                  <div class="timeline-action">${event.type.replace(/_/g, ' ')} ${event.data ? JSON.stringify(event.data) : ''}</div>
+                  <div class="timeline-meta">
+                    ${event.actor} · ${new Date(event.timestamp).toLocaleString('zh-CN')}
+                  </div>
+                </div>
+              </div>
+            `;
+          })}
+          ${filteredTimeline.length === 0 ? html`
+            <div style="text-align: center; color: var(--sc-text-tertiary, #64748b); padding: 2rem;">
+              暂无时间线记录
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  private renderChat() {
+    return html`
+      <div class="chat-section">
+        <div class="chat-header">💬 协作聊天</div>
+        <div class="chat-messages">
+          ${this.chatMessages.map(message => {
+            const role = roleContext.getRoleProfile(message.senderRole);
+            return html`
+              <div class="chat-message">
+                <span class="chat-message-emoji">${role?.emoji || '👤'}</span>
+                <div class="chat-message-content">
+                  <div class="chat-message-sender">${message.sender}</div>
+                  <div class="chat-message-text">${message.content}</div>
+                  <div class="chat-message-time">${new Date(message.timestamp).toLocaleString('zh-CN')}</div>
+                </div>
+              </div>
+            `;
+          })}
+        </div>
+        <div class="chat-input-area">
+          <textarea
+            id="chat-input"
+            class="chat-input"
+            .value=${this.newMessage}
+            @input=${(e: Event) => this.newMessage = (e.target as HTMLTextAreaElement).value}
+            @keypress=${(e: KeyboardEvent) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), this.handleSendMessage())}
+            placeholder="输入消息..."
+            rows="2"
+          ></textarea>
+          <button class="chat-send-btn" @click=${this.handleSendMessage}>发送</button>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderWorkflowSuggestions() {
+    return html`
+      <div class="workflow-suggestions">
+        <div class="workflow-title">💡 工作流建议</div>
+        ${this.workflowSuggestions.length > 0 ? html`
+          <div class="workflow-list">
+            ${this.workflowSuggestions.map(suggestion => html`
+              <div class="workflow-card" @click=${() => this.handleWorkflowClick(suggestion.id)}>
+                <div class="workflow-card-title">${suggestion.workflowName}</div>
+                <div class="workflow-card-desc">${suggestion.description}</div>
+                <span class="workflow-card-keyword">关键词: ${suggestion.matchedKeyword}</span>
+              </div>
+            `)}
+          </div>
+        ` : html`
+          <div style="text-align: center; color: var(--sc-text-tertiary, #64748b); padding: 1rem;">
+            在聊天中输入相关关键词（如"隔离"、"分析"、"补丁"）以获取工作流建议
+          </div>
+        `}
+      </div>
+    `;
   }
 
   render() {
     if (this.loading) {
-      return html`<div style="text-align:center;padding:2rem;"><div style="font-size:48px;margin-bottom:16px;">⏳</div><div style="color:var(--sc-text-secondary);">${this.i18n.t('common.loading')}</div></div>`;
+      return html`<div style="text-align: center; padding: 2rem;">⏳ 加载中...</div>`;
     }
 
-    const p1Count = this.activeIncidents.filter(i => i.priority === 'p1').length;
-    const p2Count = this.activeIncidents.filter(i => i.priority === 'p2').length;
-    const availableTeam = this.teamMembers.filter(t => t.status === 'available').length;
-    const busyTeam = this.teamMembers.filter(t => t.status === 'busy').length;
-
     return html`
-      <div class="warroom-container">
-        ${this.toastMessage ? html`<div style="position:fixed;top:16px;right:16px;padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;${this.toastType === 'success' ? 'background:#d4edda;color:#155724;' : this.toastType === 'error' ? 'background:#f8d7da;color:#721c24;' : 'background:#d1ecf1;color:#0c5460;'}">${this.toastType === 'success' ? '✅' : this.toastType === 'error' ? '❌' : 'ℹ️'} ${this.toastMessage}</div>` : ''}
-        <div class="main-content">
-          <div class="page-header">
-            <div class="page-title-section">
-              <h1 class="page-title">
-                <span>🎯</span>
-                ${this.i18n.t('nav.warRoom') || '作战室'}
-              </h1>
-              <div class="page-description">
-                <span>实时协同指挥，应对正在发生的安全事件</span>
-              </div>
-            </div>
-            <div class="header-actions">
-              <button class="btn btn-secondary">📋 运行日志</button>
-              <button class="btn btn-primary">🚨 紧急事件</button>
-            </div>
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
+      <div class="war-room-container">
+        <div class="page-header">
+          <div class="page-title">
+            <span>🎯</span>
+            War Room
+            ${this.eventId ? html`<span class="event-badge">#${this.eventId}</span>` : ''}
           </div>
-
-          <div class="stats-grid">
-            <sc-smart-card title="P1事件" value="${p1Count}" icon="🔴" status="error"></sc-smart-card>
-            <sc-smart-card title="P2事件" value="${p2Count}" icon="🟠" status="warning"></sc-smart-card>
-            <sc-smart-card title="可用人员" value="${availableTeam}" icon="👥" status="success"></sc-smart-card>
-            <sc-smart-card title="忙碌人员" value="${busyTeam}" icon="⏰" status="warning"></sc-smart-card>
-          </div>
-
-          <div class="content-grid">
-            <div class="incidents-section">
-              <div class="section-header">
-                <h3 class="section-title">🔥 活跃事件</h3>
-                <span style="font-size:12px;color:var(--sc-text-secondary);">${this.activeIncidents.length} 个事件</span>
-              </div>
-              <div class="incident-list">
-                ${this.activeIncidents.map(incident => html`
-                  <div class="incident-item ${incident.priority} ${this.selectedIncident?.id === incident.id ? 'selected' : ''}" @click=${() => this.handleIncidentClick(incident)}>
-                    <span class="priority-badge ${incident.priority}">${incident.priority.toUpperCase()}</span>
-                    <div class="incident-info">
-                      <div class="incident-title">${incident.title}</div>
-                      <div class="incident-meta">
-                        ${incident.status} · ${incident.updatedAt.toLocaleTimeString()}
-                      </div>
-                    </div>
-                    <div class="incident-assignees">
-                      ${incident.assignees.map(a => html`<div class="assignee-avatar" title="${a}">${a[0]}</div>`)}
-                    </div>
-                  </div>
-                `)}
-              </div>
-            </div>
-
-            <div class="team-section">
-              <div class="section-header">
-                <h3 class="section-title">👥 团队状态</h3>
-              </div>
-              <div class="team-list">
-                ${this.teamMembers.map(member => html`
-                  <div class="team-item">
-                    <div class="team-avatar">${member.avatar}</div>
-                    <div class="team-info">
-                      <div class="team-name">${member.name}</div>
-                      <div class="team-role">${member.role}${member.currentTask? ` · ${member.currentTask}` : ''}</div>
-                    </div>
-                    <div class="status-indicator ${member.status}" title="${member.status}"></div>
-                  </div>
-                `)}
-              </div>
-            </div>
-          </div>
-
-          <div class="content-grid">
-            <div class="activity-section">
-              <div class="section-header">
-                <h3 class="section-title">📝 活动日志</h3>
-              </div>
-              <div class="activity-list">
-                ${this.activities.map(activity => html`
-                  <div class="activity-item">
-                    <div class="activity-icon ${activity.type}">
-                      ${activity.type === 'comment'? '💬': activity.type === 'action'? '⚡': activity.type === 'escalation'? '⬆️': '✅'}
-                    </div>
-                    <div class="activity-content">
-                      <div class="activity-message"><strong>${activity.user}:</strong> ${activity.message}</div>
-                      <div class="activity-meta">${activity.timestamp.toLocaleString()}</div>
-                    </div>
-                  </div>
-                `)}
-              </div>
-            </div>
-
-            <div class="quick-actions">
-              <div class="section-header">
-                <h3 class="section-title">⚡ 快速操作</h3>
-              </div>
-              <div class="action-buttons">
-                <div class="action-btn" @click=${() => this.createNewPlaybook()}>
-                  <span class="action-btn-icon">➕</span>
-                  <span class="action-btn-label">新建剧本</span>
-                </div>
-                <div class="action-btn" @click=${() => this.loadPlaybookExecutions()}>
-                  <span class="action-btn-icon">📜</span>
-                  <span class="action-btn-label">执行历史</span>
-                </div>
-                <div class="action-btn" @click=${() => this.createCommanderAction()}>
-                  <span class="action-btn-icon">🚨</span>
-                  <span class="action-btn-label">指挥官操作</span>
-                </div>
-                <div class="action-btn" @click=${() => this.getCommanderStatus()}>
-                  <span class="action-btn-icon">📢</span>
-                  <span class="action-btn-label">指挥官状态</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          ${this.renderPlaybookPanel()}
-
-          ${this.recommendations.length > 0? html`
-            <div class="ai-suggestions">
-              <div class="ai-title">🤖 AI决策建议</div>
-              <div class="suggestion-list">
-                ${this.recommendations.slice(0, 3).map(rec => html`
-                  <div class="suggestion-item">
-                    <span>💡</span>
-                    <span>${rec.title}: ${rec.description}</span>
-                  </div>
-                `)}
-              </div>
-            </div>
-          `: ''}
         </div>
 
-        <div class="ai-sidebar">
-          <sc-ai-assistant
-            pageId="war-room"
-            pageTitle="作战室"
-            .pageData=${{ incidents: this.activeIncidents, team: this.teamMembers, activities: this.activities }}
-            userRole="security-expert"
-          ></sc-ai-assistant>
+        <div class="raci-overview">
+          <sc-raci-matrix-view
+            .scenarioType=${this.scenarioType}
+            .currentRole=${this.currentRole}
+            .compact=${true}
+          ></sc-raci-matrix-view>
+        </div>
+
+        ${this.renderMobileTaskTabs()}
+        ${this.renderMobileTaskPanel()}
+
+        <div class="collaboration-bar">
+          <button
+            class="ai-trigger-btn"
+            @click=${this.handleAITrigger}
+            ?disabled=${this.aiTriggering || !this.activeSession}
+          >
+            ${this.aiTriggering ? '⏳ 分析中...' : '🤖 触发AI分析'}
+          </button>
+          <div class="collab-phases">
+            ${['analyzing', 'consulting', 'deciding', 'synthesizing', 'notifying'].map((phase, i) => {
+              const labels = ['R 分析', 'C 咨询', 'A 决策', '汇总', 'I 通知'];
+              const currentPhase = this.collaborationStatus?.phase || 'idle';
+              const isDone = this.collaborationStatus && ['analyzing', 'consulting', 'deciding', 'synthesizing', 'notifying', 'complete'].indexOf(currentPhase) > i;
+              const isActive = currentPhase === phase;
+              return html`<div class="collab-phase ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}">${labels[i]}</div>`;
+            })}
+          </div>
+        </div>
+
+        <div class="role-panels">
+          ${this.isCommander() ? this.renderCommanderView() : html`
+            <div class="task-panels-container">
+              ${this.currentRole ? this.renderTaskPanel(this.currentRole) : ''}
+            </div>
+          `}
+        </div>
+
+        <div class="sidebar">
+          ${this.renderTimeline()}
+        </div>
+
+        <div class="chat-section">
+          ${this.renderChat()}
+        </div>
+
+        <div class="workflow-suggestions">
+          ${this.renderWorkflowSuggestions()}
         </div>
       </div>
     `;

@@ -1,11 +1,10 @@
-/**
- * Compliance Service
- * 合规审计业务逻辑层
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { ComplianceRepository, type Regulation, type ComplianceQueryParams } from './repository.js';
 import type { EventBus as EventBusType } from '../events/event-bus.js';
+import { hasPermissionWithInheritance, PERMISSIONS } from '../roles/permissions.js';
 
+@Service()
 export class ComplianceService {
   private eventBus: EventBusType | null = null;
 
@@ -25,8 +24,14 @@ export class ComplianceService {
     }
   }
 
-  async list(params: ComplianceQueryParams = {}): Promise<Regulation[]> {
-    return this.repo.query(params);
+  async list(params: ComplianceQueryParams = {}, roleId?: string): Promise<Regulation[]> {
+    const regulations = await this.repo.query(params);
+
+    if (!roleId || hasPermissionWithInheritance(roleId, PERMISSIONS.COMPLIANCE_READ)) {
+      return regulations;
+    }
+
+    return [];
   }
 
   async get(id: string): Promise<Regulation | null> {

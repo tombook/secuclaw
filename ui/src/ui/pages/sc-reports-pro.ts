@@ -1,6 +1,10 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { gatewayClient } from '../gateway-client.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 function mapTypeToIcon(type: string): string {
   const t = (type ?? '').toLowerCase();
@@ -906,6 +910,7 @@ export class ScReportsPro extends LitElement {
     const sentCount = this.reports.filter(r => r.status === 'sent').length;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="reports-container">
         ${this.renderHero()}
         ${this.renderMetrics(readyCount, pendingCount, sentCount)}
@@ -926,8 +931,8 @@ export class ScReportsPro extends LitElement {
             生成多维度安全分析报告，支持自定义模板和自动定时推送。涵盖漏洞分析、合规审计、红队评估等各类专业报告。
           </p>
           <div class="hero-actions">
-            <button class="btn btn-primary" @click=${() => this.generateReport()}>🚀 生成新报告</button>
-            <button class="btn btn-secondary">⚙️ 报告模板</button>
+            <sc-button size="sm" variant="primary" @click=${() => this.generateReport()}>🚀 生成新报告</sc-button>
+            <sc-button size="sm" variant="secondary">⚙️ 报告模板</sc-button>
           </div>
         </div>
         <div class="hero-stats">
@@ -1034,7 +1039,7 @@ export class ScReportsPro extends LitElement {
         <div class="card">
           <div class="card-header">
             <span class="card-title">📄 报告列表</span>
-            <button class="btn btn-secondary btn-sm" @click=${() => this.exportAllReports()}>导出全部</button>
+            <sc-button size="sm" variant="secondary" @click=${() => this.exportAllReports()}>导出全部</sc-button>
           </div>
           <div class="card-body" style="padding: 0;">
             ${reports.length > 0 ? html`
@@ -1055,8 +1060,8 @@ export class ScReportsPro extends LitElement {
                       </div>
                     </div>
                     <div class="report-actions">
-                      <button class="btn btn-primary btn-sm" @click=${() => this.selectedReport = report}>查看</button>
-                      <button class="btn btn-secondary btn-sm" @click=${() => this.exportReport(report)}>导出</button>
+                      <sc-button size="sm" variant="primary" @click=${() => this.selectedReport = report}>查看</sc-button>
+                      <sc-button size="sm" variant="secondary" @click=${() => this.exportReport(report)}>导出</sc-button>
                     </div>
                   </div>
                 `)}

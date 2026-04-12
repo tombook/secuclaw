@@ -7,7 +7,9 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { uiStore } from '../../store/ui-store.js';
-import {  } from '../../gateway-client.js';
+import { gatewayClient } from '../../gateway-client.js';
+import '../../components/design-system/sc-button.js';
+import '../../components/sc-smart-recommendation-bar.js';
 
 type TabId = 'general' | 'system' | 'notifications' | 'security' | 'api' | 'data' | 'about';
 
@@ -18,6 +20,8 @@ interface SystemConfig {
   dateFormat: string;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   maxSessionTimeout: number;
+  dataRetentionDays?: number;
+  autoBackup?: boolean;
 }
 
 interface NotificationConfig {
@@ -421,16 +425,30 @@ export class ScSettingsPage extends LitElement {
   private async handleSave(): Promise<void> {
     this.saving = true;
     this.saveSuccess = false;
-    
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    this.saving = false;
-    this.saveSuccess = true;
-    
-    setTimeout(() => {
+    try {
+      const config = {
+        systemName: this.systemConfig.systemName,
+        timezone: this.systemConfig.timezone,
+        language: this.locale,
+        theme: this.theme,
+        dataRetentionDays: (this.systemConfig as any).dataRetentionDays ?? 30,
+        autoBackup: (this.systemConfig as any).autoBackup ?? false,
+        notificationsEnabled: this.notificationConfig.emailEnabled,
+        apiKey: this.apiConfig.apiKey,
+      };
+      await gatewayClient.request('commander.update', {
+        id: 'system-settings',
+        ...config,
+      });
+      uiStore.setTheme(this.theme);
+      uiStore.setLocale(this.locale);
+      this.saveSuccess = true;
+      setTimeout(() => { this.saveSuccess = false; }, 3000);
+    } catch (e) {
+      console.error('[Settings] Save failed:', e);
       this.saveSuccess = false;
-    }, 3000);
+    }
+    this.saving = false;
   }
 
   private async handleGenerateApiKey(): Promise<void> {
@@ -439,11 +457,31 @@ export class ScSettingsPage extends LitElement {
   }
 
   private async handleBackup(): Promise<void> {
-    alert('数据备份功能即将上线');
+    try {
+      const incidents = await gatewayClient.request('incidents.list', {});
+      const vulns = await gatewayClient.request('vulnerabilities.list', {});
+      const assets = await gatewayClient.request('assets.list', {});
+      const blob = new Blob([JSON.stringify({ incidents, vulnerabilities: vulns, assets, exportedAt: Date.now() }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `secuclaw-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert('备份失败，请检查服务连接'); }
   }
 
   private async handleRestore(): Promise<void> {
-    alert('数据恢复功能即将上线');
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data.vulnerabilities) await gatewayClient.request('vulnerabilities.batchImport', { items: data.vulnerabilities });
+        alert('数据恢复成功');
+      } catch { alert('恢复失败，文件格式错误'); }
+    };
+    input.click();
   }
 
   private renderGeneralSettings() {
@@ -727,7 +765,7 @@ export class ScSettingsPage extends LitElement {
           <div class="setting-control">
             <div class="api-key-display">
               <div class="api-key-value">${this.apiConfig.apiKey || '未设置'}</div>
-              <button class="btn btn-secondary" @click=${this.handleGenerateApiKey}>重新生成</button>
+              <sc-button variant="secondary" size="sm" @click=${this.handleGenerateApiKey}>重新生成</sc-button>
             </div>
           </div>
         </div>
@@ -809,7 +847,7 @@ export class ScSettingsPage extends LitElement {
             <div class="setting-desc">将所有配置和业务数据导出为JSON文件</div>
           </div>
           <div class="setting-control">
-            <button class="btn btn-secondary" @click=${this.handleBackup}>
+            <sc-button variant="secondary" size="sm" @click=${this.handleBackup}>
               导出备份
             </button>
           </div>
@@ -821,7 +859,7 @@ export class ScSettingsPage extends LitElement {
             <div class="setting-desc">从备份文件恢复系统配置和数据</div>
           </div>
           <div class="setting-control">
-            <button class="btn btn-secondary" @click=${this.handleRestore}>
+            <sc-button variant="secondary" size="sm" @click=${this.handleRestore}>
               恢复数据
             </button>
           </div>
@@ -833,7 +871,7 @@ export class ScSettingsPage extends LitElement {
             <div class="setting-desc">删除所有业务数据，此操作不可恢复</div>
           </div>
           <div class="setting-control">
-            <button class="btn btn-danger">
+            <sc-button variant="danger" size="sm">
               清除数据
             </button>
           </div>
@@ -937,6 +975,7 @@ export class ScSettingsPage extends LitElement {
 
   render() {
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-header">
         <h1 class="page-title">系统设置</h1>
         <p class="page-subtitle">配置系统参数和用户偏好设置</p>
@@ -984,10 +1023,10 @@ export class ScSettingsPage extends LitElement {
           ${this.renderTabContent()}
 
           <div class="btn-group">
-            <button class="btn btn-primary" ?disabled=${this.saving} @click=${this.handleSave}>
+            <sc-button variant="primary" ?disabled=${this.saving} @click=${this.handleSave}>
               ${this.saving ? '保存中...' : '保存设置'}
             </button>
-            <button class="btn btn-secondary">
+            <sc-button variant="secondary" size="sm">
               恢复默认
             </button>
           </div>

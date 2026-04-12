@@ -12,6 +12,7 @@ import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 import type { SecurityTask, Approval } from '../../capabilities-client.js';
 import { capabilitiesClient } from '../../capabilities-client.js';
+import '../../components/design-system/sc-button.js';
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'expired';
 
@@ -448,7 +449,7 @@ export class ScApprovalDialog extends LitElement {
           <!-- Header -->
           <div class="dialog-header">
             <h2 class="dialog-title">${this.i18n.t('capabilities.approvalDialog.title')}</h2>
-            <button class="close-btn" @click=${this.handleClose}>✕</button>
+            <sc-button variant="secondary" size="sm" class="close-btn" @click=${this.handleClose}>✕</sc-button>
           </div>
 
           <!-- Warning Banner (for dark domain) -->
@@ -566,21 +567,21 @@ export class ScApprovalDialog extends LitElement {
 
           <!-- Actions -->
           <div class="dialog-actions">
-            <button class="btn btn-secondary" @click=${this.handleClose}>
+            <sc-button variant="secondary" @click=${this.handleClose}>
               ${this.i18n.t('common.close')}
-            </button>
+            </sc-button>
             
             ${this.mode === 'create' ? html`
-              <button class="btn btn-primary" @click=${this.handleSubmit} ?disabled=${this.submitting}>
+              <sc-button variant="primary" @click=${this.handleSubmit} ?disabled=${this.submitting}>
                 ${this.i18n.t('capabilities.approvalDialog.createApproval')}
-              </button>
+              </sc-button>
             ` : this.mode === 'approve' && this.existingApproval?.status === 'pending' ? html`
-              <button class="btn btn-danger" @click=${this.handleReject} ?disabled=${this.submitting || !this.rejectReason.trim()}>
+              <sc-button variant="danger" @click=${this.handleReject} ?disabled=${this.submitting || !this.rejectReason.trim()}>
                 ${this.i18n.t('capabilities.approvalDialog.reject')}
-              </button>
-              <button class="btn btn-primary" @click=${this.handleApprove} ?disabled=${this.submitting}>
+              </sc-button>
+              <sc-button variant="primary" @click=${this.handleApprove} ?disabled=${this.submitting}>
                 ${this.i18n.t('capabilities.approvalDialog.approve')}
-              </button>
+              </sc-button>
             ` : ''}
           </div>
         </div>

@@ -27,8 +27,8 @@ export class I18nController implements ReactiveController {
     }
   }
 
-  t(key: string, params?: Record<string, string>): string {
-    return i18n.t(key, params);
+  t(key: string, defaultValueOrParams?: string | Record<string, string>): string {
+    return i18n.t(key, defaultValueOrParams);
   }
 
   getLocale(): Locale {

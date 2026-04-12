@@ -10,6 +10,7 @@ import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 import type { EvidencePack } from '../../capabilities-client.js';
 import { capabilitiesClient } from '../../capabilities-client.js';
+import '../../components/design-system/sc-button.js';
 
 @customElement('sc-evidence-panel')
 export class ScEvidencePanel extends LitElement {
@@ -407,7 +408,7 @@ export class ScEvidencePanel extends LitElement {
         <div class="panel-container">
           <div class="panel-header">
             <h2 class="panel-title">${this.i18n.t('capabilities.evidencePanel.title')}</h2>
-            <button class="close-btn" @click=${this.handleClose}>✕</button>
+            <sc-button variant="secondary" size="sm" class="close-btn" @click=${this.handleClose}>✕</sc-button>
           </div>
           <div class="panel-content">
             <div class="empty-state">
@@ -416,9 +417,9 @@ export class ScEvidencePanel extends LitElement {
             </div>
           </div>
           <div class="panel-footer">
-            <button class="btn btn-secondary" @click=${this.handleClose}>
+            <sc-button variant="secondary" @click=${this.handleClose}>
               ${this.i18n.t('capabilities.closePanel')}
-            </button>
+            </sc-button>
           </div>
         </div>
       `;
@@ -428,7 +429,7 @@ export class ScEvidencePanel extends LitElement {
       <div class="panel-container">
         <div class="panel-header">
           <h2 class="panel-title">${this.i18n.t('capabilities.evidencePanel.title')} (${this.evidence.length})</h2>
-          <button class="close-btn" @click=${this.handleClose}>✕</button>
+          <sc-button variant="secondary" size="sm" class="close-btn" @click=${this.handleClose}>✕</sc-button>
         </div>
 
         <div class="panel-content">
@@ -493,18 +494,18 @@ export class ScEvidencePanel extends LitElement {
 
                   <div class="evidence-actions">
                     <button 
-                      class="btn btn-secondary"
+                      variant="secondary"
                       @click=${(e: Event) => { e.stopPropagation(); this.handleVerify(ev); }}
                     >
                       🔍 ${isVerified ? '已验证' : '验证'}
-                    </button>
+                    </sc-button>
                     <button 
-                      class="btn btn-primary"
+                      variant="primary"
                       @click=${(e: Event) => { e.stopPropagation(); this.handleExport(ev); }}
                       ?disabled=${!isVerified}
                     >
                       📥 ${this.i18n.t('capabilities.evidencePanel.export')}
-                    </button>
+                    </sc-button>
                   </div>
                 ` : ''}
               </div>
@@ -513,9 +514,9 @@ export class ScEvidencePanel extends LitElement {
         </div>
 
         <div class="panel-footer">
-          <button class="btn btn-secondary" @click=${this.handleClose}>
+          <sc-button variant="secondary" @click=${this.handleClose}>
             ${this.i18n.t('capabilities.closePanel')}
-          </button>
+          </sc-button>
         </div>
       </div>
     `;

@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, unlink, access } from 'fs/promises';
+import { mkdir, readFile, writeFile, unlink, access, rename, readdir } from 'fs/promises';
 // Simple write lock to ensure sequential writes
 import { join, dirname } from 'path';
 
@@ -44,8 +44,7 @@ export class JsonStore {
       await this.ensureDir(filePath);
       const tempPath = `${filePath}.tmp`;
       await writeFile(tempPath, JSON.stringify(value, null, 2), 'utf-8');
-      const fs = await import('fs/promises');
-      await fs.rename(tempPath, filePath);
+      await rename(tempPath, filePath);
       logger.debug(`Saved: ${key}`);
     }).catch((error) => {
       capturedError = error instanceof Error ? error : new Error(String(error));
@@ -83,8 +82,7 @@ export class JsonStore {
   async list(prefix: string): Promise<string[]> {
     try {
       const dir = this.resolvePath(prefix);
-      const fs = await import('fs/promises');
-      const files = await fs.readdir(dir);
+      const files = await readdir(dir);
       return files.filter((f) => f.endsWith('.json'));
     } catch {
       return [];

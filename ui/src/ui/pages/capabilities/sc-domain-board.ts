@@ -8,6 +8,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
+import '../../components/design-system/sc-button.js';
 import { 
   capabilitiesClient, 
   type CapabilityItem, 
@@ -587,9 +588,9 @@ export class ScDomainBoard extends LitElement {
                   <span class="role-tag">${this.i18n.t(`roles.${role}`)}</span>
                 `)}
               </div>
-              <button class="btn btn-primary" @click=${() => this.handleExecuteCapability(item)}>
+              <sc-button variant="primary" @click=${() => this.handleExecuteCapability(item)}>
                 ${this.i18n.t('capabilities.execute')}
-              </button>
+              </sc-button>
             </div>
           `)}
         </div>
@@ -614,19 +615,19 @@ export class ScDomainBoard extends LitElement {
                 </div>
                 <div class="task-actions">
                   <button 
-                    class="btn btn-secondary btn-sm" 
+                    variant="secondary" size="sm" 
                     @click=${(e: Event) => { e.stopPropagation(); this.handleViewLogs(task); }}
                     title="${this.i18n.t('capabilities.taskPanel.viewLogs')}"
                   >
                     📋
-                  </button>
+                  </sc-button>
                   <button 
-                    class="btn btn-secondary btn-sm" 
+                    variant="secondary" size="sm" 
                     @click=${(e: Event) => { e.stopPropagation(); this.handleViewEvidence(task); }}
                     title="${this.i18n.t('capabilities.taskPanel.viewEvidence')}"
                   >
                     📁
-                  </button>
+                  </sc-button>
                   <select 
                     class="task-status status-${task.status}"
                     @click=${(e: Event) => e.stopPropagation()}

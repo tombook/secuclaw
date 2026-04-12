@@ -11,6 +11,7 @@ interface SkillDefinition {
       role: string;
       combination: 'single' | 'binary' | 'ternary' | 'quaternary';
       version: string;
+      description?: string;
       capabilities: Capabilities;
       mitre_coverage: string[];
       scf_coverage: string[];

@@ -10,6 +10,7 @@ import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { dataService } from '../data-service.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-metric-card.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 // ============ 类型定义 ============
 
@@ -801,13 +802,14 @@ export class ScCapabilitiesPage extends LitElement {
       : this.tasks.filter(t => t.domainId === this.selectedDomain);
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         <!-- Header -->
         <div class="page-header">
           <div class="page-title">⚔️ 能力中心</div>
           <div class="header-actions">
-            <button class="btn btn-secondary">📊 报告</button>
-            <button class="btn btn-primary" @click=${() => this.openCreateTaskModal()}>➕ 新建任务</button>
+            <sc-button variant="secondary">📊 报告</sc-button>
+            <sc-button variant="primary" @click=${() => this.openCreateTaskModal()}>➕ 新建任务</sc-button>
           </div>
         </div>
 
@@ -882,12 +884,12 @@ export class ScCapabilitiesPage extends LitElement {
               <button 
                 class="filter-btn ${this.selectedDomain === 'all' ? 'active' : ''}"
                 @click=${() => this.selectedDomain = 'all'}
-              >全部</button>
+              >全部</sc-button>
               ${this.domains.map(d => html`
                 <button 
                   class="filter-btn ${this.selectedDomain === d.id ? 'active' : ''}"
                   @click=${() => this.selectedDomain = d.id}
-                >${d.name}</button>
+                >${d.name}</sc-button>
               `)}
             </div>
           </div>
@@ -919,21 +921,21 @@ export class ScCapabilitiesPage extends LitElement {
                     ${task.status === 'todo' ? html`
                       <button class="btn" style="padding: 4px 8px; font-size: 12px;" @click=${() => this.handleStatusChange(task, 'in_progress')}>
                         ▶️ 开始
-                      </button>
+                      </sc-button>
                     ` : ''}
                     ${task.status === 'in_progress' ? html`
                       <button class="btn" style="padding: 4px 8px; font-size: 12px; background: #dcfce7;" @click=${() => this.handleStatusChange(task, 'done')}>
                         ✅ 完成
-                      </button>
+                      </sc-button>
                     ` : ''}
                     ${task.status === 'done' ? html`
                       <button class="btn" style="padding: 4px 8px; font-size: 12px; background: #f1f5f9;" @click=${() => this.handleStatusChange(task, 'closed')}>
                         🔒 关闭
-                      </button>
+                      </sc-button>
                     ` : ''}
                     <button class="btn" style="padding: 4px 8px; font-size: 12px;" @click=${() => this.openEditTaskModal(task)}>
                       ✏️
-                    </button>
+                    </sc-button>
                   </div>
                 </div>
               `)}
@@ -958,7 +960,7 @@ export class ScCapabilitiesPage extends LitElement {
             <h2 class="modal-title">
               ${this.editingTask ? '✏️ 编辑任务' : '➕ 新建任务'}
             </h2>
-            <button class="modal-close" @click=${this.closeTaskModal}>×</button>
+            <button class="modal-close" @click=${this.closeTaskModal}>×</sc-button>
           </div>
           <div class="modal-body">
             <div class="form-group">
@@ -1010,10 +1012,10 @@ export class ScCapabilitiesPage extends LitElement {
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click=${this.closeTaskModal}>取消</button>
-            <button class="btn btn-primary" @click=${this.handleSaveTask}>
+            <sc-button variant="secondary" @click=${this.closeTaskModal}>取消</sc-button>
+            <sc-button variant="primary" @click=${this.handleSaveTask}>
               ${this.editingTask ? '保存' : '创建'}
-            </button>
+            </sc-button>
           </div>
         </div>
       </div>
@@ -1028,7 +1030,7 @@ export class ScCapabilitiesPage extends LitElement {
         <div class="modal">
           <div class="modal-header">
             <h2 class="modal-title">🌑 黑暗能力域 - 执行审批</h2>
-            <button class="modal-close" @click=${this.closeApprovalModal}>×</button>
+            <button class="modal-close" @click=${this.closeApprovalModal}>×</sc-button>
           </div>
           <div class="modal-body">
             <div class="dark-warning">
@@ -1075,10 +1077,10 @@ export class ScCapabilitiesPage extends LitElement {
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click=${this.closeApprovalModal}>取消</button>
-            <button class="btn btn-warning" @click=${this.handleSubmitApproval}>
+            <sc-button variant="secondary" @click=${this.closeApprovalModal}>取消</sc-button>
+            <sc-button variant="warning" @click=${this.handleSubmitApproval}>
               📤 提交审批
-            </button>
+            </sc-button>
           </div>
         </div>
       </div>

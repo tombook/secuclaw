@@ -1,8 +1,11 @@
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { JsonStore } from '../storage/json-store.js';
 import type { AuditLogEntry, AuditLogQuery, AuditResource, AuditLogStats } from './types.js';
 
 const FILE_NAME = 'audit-logs.json';
 
+@Service()
 export class AuditLogRepository {
   constructor(private store: JsonStore) {}
 

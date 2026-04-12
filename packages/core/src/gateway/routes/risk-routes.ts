@@ -33,6 +33,18 @@ export function registerRiskRoutes(
     return { data: factors };
   });
 
+  // Alias for UI compatibility
+  handlers.set('risk.list', async (params) => {
+    const factors = await riskService.listRiskFactors({
+      category: params.category as any | undefined,
+      status: params.status as any | undefined,
+      riskLevel: params.riskLevel as any | undefined,
+      limit: params.limit ? Number(params.limit) : undefined,
+      offset: params.offset ? Number(params.offset) : undefined,
+    });
+    return { data: factors };
+  });
+
   handlers.set('risk.getFactor', async (params) => {
     const { factorId } = params;
     if (!factorId) throw new Error('factorId required');
@@ -97,7 +109,7 @@ export function registerRiskRoutes(
       const predictedScore = Math.max(0, Math.round(currentScore - i * 0.5 + (Math.random() - 0.5) * 2));
       const confidence = Math.max(50, 85 - i * 3);
       const diff = predictedScore - currentScore;
-      const trend = diff > 2 ? 'up' : diff < -2 ? 'down' : 'stable';
+      const trend: 'up' | 'down' | 'stable' = diff > 2 ? 'up' : diff < -2 ? 'down' : 'stable';
       predictions.push({ date: date.toISOString().split('T')[0], predictedScore, confidence, trend });
     }
     const finalScore = predictions[predictions.length - 1]?.predictedScore ?? currentScore;

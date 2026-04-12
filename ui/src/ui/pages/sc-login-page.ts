@@ -5,7 +5,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
-import { authService } from '../auth-service.js';
+import { authStore } from '../store/auth-store.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 
 @customElement('sc-login-page')
@@ -200,9 +200,7 @@ export class ScLoginPage extends LitElement {
     this.error = '';
 
     try {
-      await authService.login(this.username, this.password);
-      
-      // Redirect to dashboard
+      await authStore.login(this.username, this.password);
       Router.go('/');
     } catch (error: any) {
       this.error = error.message || this.i18n.t('login.failed', '登录失败');

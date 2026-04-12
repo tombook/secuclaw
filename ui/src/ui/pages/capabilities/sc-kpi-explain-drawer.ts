@@ -10,6 +10,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
+import '../../components/design-system/sc-button.js';
 import type { DomainKPI, DomainId } from '../../capabilities-client.js';
 
 interface KPIExplanation {
@@ -357,7 +358,7 @@ export class ScKpiExplainDrawer extends LitElement {
       <div class="drawer-panel ${this.isOpen ? 'open' : ''}">
         <div class="drawer-header">
           <h2 class="drawer-title">📊 KPI 归因解释</h2>
-          <button class="close-btn" @click=${this.handleClose}>✕</button>
+          <sc-button variant="secondary" size="sm" class="close-btn" @click=${this.handleClose}>✕</sc-button>
         </div>
 
         <div class="drawer-content">
@@ -424,9 +425,9 @@ export class ScKpiExplainDrawer extends LitElement {
         </div>
 
         <div class="drawer-footer">
-          <button class="btn btn-secondary" @click=${this.handleClose}>
+          <sc-button variant="secondary" @click=${this.handleClose}>
             ${this.i18n.t('common.close')}
-          </button>
+          </sc-button>
         </div>
       </div>
     `;

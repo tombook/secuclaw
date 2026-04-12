@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 import { gatewayClient } from '../../gateway-client.js';
+import '../../components/sc-smart-recommendation-bar.js';
 
 interface LLMProvider {
   id: string;
@@ -350,20 +351,31 @@ export class ScAiExpertsConfig extends LitElement {
   private getFallbackProviders(): LLMProvider[] {
     return [
       {
-        id: 'demo_ollama',
-        name: 'Ollama (本地)',
-        type: 'local',
-        baseUrl: 'http://localhost:11434',
-        models: ['qwen2.5:7b', 'llama3:8b'],
+        id: 'provider_volcengine',
+        name: '火山引擎',
+        type: 'openai',
+        baseUrl: 'https://ark.cn-beijing.volces.com/api/coding/v3',
+        apiKey: '075cca97-a0ca-4225-87bf-78ac1b1e9664',
+        models: ['doubao-seed-2.0-code', 'doubao-seed-2.0-pro', 'doubao-seed-2.0-lite', 'deepseek-v3.2', 'kimi-k2.5'],
         enabled: true,
       },
       {
-        id: 'demo_openai',
-        name: 'OpenAI',
-        type: 'openai',
-        baseUrl: 'https://api.openai.com/v1',
-        models: ['gpt-4o', 'gpt-4o-mini'],
-        enabled: false,
+        id: 'provider_minimax',
+        name: 'MiniMax',
+        type: 'minimax',
+        baseUrl: 'https://api.minimaxi.com/v1',
+        apiKey: 'sk-cp-Xbbc9YyGkfjGakX_uHOA0eoubcvC6ntqq0sR5NIqxOUuC-wGuuyMU3QJIiW-vh5F0KPISkPiuwBPCwtYU7pnxrDpFzd1JTer8oNI1y1RJ4ufqxEgCai67Kc',
+        models: ['MiniMax-M2.7', 'MiniMax-M2.5'],
+        enabled: true,
+      },
+      {
+        id: 'provider_zhipu',
+        name: '智谱 GLM',
+        type: 'zhipu',
+        baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
+        apiKey: '02795750a3db4446b3d675ac755e6c0a.lc9oQDOH86EZ1kwD',
+        models: ['glm-5.1', 'GLM-5-Turbo'],
+        enabled: true,
       },
     ];
   }
@@ -443,6 +455,7 @@ export class ScAiExpertsConfig extends LitElement {
     }
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <h1 class="page-title">${this.i18n.t('settings.aiExpertsConfig')}</h1>
       ${this.roles.map(r => {
         const provider = this.providers.find(p => p.id === r.selectedProviderId);

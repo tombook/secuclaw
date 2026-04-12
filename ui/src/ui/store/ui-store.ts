@@ -1,9 +1,12 @@
 import { BaseStore } from './base-store.js';
 
+export type MenuMode = 'traditional' | 'role-centric';
+
 interface UIState {
   theme: 'light' | 'dark' | 'system';
   locale: 'zh-CN' | 'en' | 'zh-TW';
   sidebarCollapsed: boolean;
+  menuMode: MenuMode;
   loading: boolean;
   notifications: Notification[];
 }
@@ -21,6 +24,7 @@ class UIStore extends BaseStore<UIState> {
       theme: (localStorage.getItem('secuclaw-theme') as UIState['theme']) || 'dark',
       locale: (localStorage.getItem('secuclaw-locale') as UIState['locale']) || 'zh-CN',
       sidebarCollapsed: localStorage.getItem('secuclaw-sidebar-collapsed') === 'true',
+      menuMode: (localStorage.getItem('secuclaw-menu-mode') as MenuMode) || 'role-centric',
       loading: false,
       notifications: [],
     });
@@ -58,6 +62,16 @@ class UIStore extends BaseStore<UIState> {
     const collapsed = !this.state.sidebarCollapsed;
     this.setState({ sidebarCollapsed: collapsed });
     localStorage.setItem('secuclaw-sidebar-collapsed', String(collapsed));
+  }
+
+  setMenuMode(mode: MenuMode): void {
+    this.setState({ menuMode: mode });
+    localStorage.setItem('secuclaw-menu-mode', mode);
+  }
+
+  toggleMenuMode(): void {
+    const next = this.state.menuMode === 'traditional' ? 'role-centric' : 'traditional';
+    this.setMenuMode(next);
   }
 
   showNotification(notification: Omit<Notification, 'id'>): void {

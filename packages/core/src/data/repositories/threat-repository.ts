@@ -5,7 +5,6 @@
  */
 
 import type { JsonStore } from '../../storage/json-store.js';
-import { BaseRepository } from '../repository.js';
 import type { IOC, ThreatActor, ThreatSeverity, IOCType, IOCStatus } from '../types.js';
 
 const THREATS_FILE = 'threats.json';
@@ -76,7 +75,7 @@ export class ThreatRepository {
       iocs = iocs.filter(i => i.threatActor === params.threatActor);
     }
     if (params.minConfidence !== undefined) {
-      iocs = iocs.filter(i => i.classification.confidence >= params.minConfidence);
+      iocs = iocs.filter(i => i.classification.confidence >= params.minConfidence!);
     }
     if (params.blocked !== undefined) {
       iocs = iocs.filter(i => i.response.blocked === params.blocked);
@@ -114,14 +113,15 @@ export class ThreatRepository {
   }
   
   async updateIOC(id: string, updates: Partial<IOC>): Promise<IOC | null> {
-    const data = await this.store.get<(ThreatActor | IOC)[]>(this.fileName) || [];
+    const data: (ThreatActor | IOC)[] = (await this.store.get<(ThreatActor | IOC)[]>(this.fileName)) ?? [];
     const index = data.findIndex(item => 'value' in item && item.id === id);
     
     if (index < 0) return null;
     
-    data[index] = { ...data[index], ...updates };
+    const updated = { ...data[index], ...updates } as IOC;
+    data[index] = updated;
     await this.store.set(this.fileName, data);
-    return data[index] as IOC;
+    return updated;
   }
   
   // ==================== Summary ====================

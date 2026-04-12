@@ -1,23 +1,87 @@
 import type { RouterDeps } from '../router.js';
 import { JsonStore } from '../../storage/json-store.js';
+import { KpiService } from '../../kpi/service.js';
+import { LLMService } from '../../ai/llm-service.js';
+import { LLMConfig, LLMError, LLMErrorCode } from '../../ai/llm-types.js';
+import { RolePersonaManager } from '../../ai/role-persona.js';
+import { ChatContextAggregator } from '../../ai/chat-context.js';
 
 const store = new JsonStore('./data/storage');
+const kpiService = new KpiService(store);
 const AI_EXPERTS_KEY = 'ai-experts/config.json';
+const LLM_PROVIDERS_KEY = 'llm/providers.json';
 
 interface ExpertRoleConfig {
   id: string;
   enabled: boolean;
   providerId: string;
   model: string;
+  apiKey?: string;
+  baseUrl?: string;
+  temperature?: number;
 }
 
 interface ExpertsConfig {
   roles: ExpertRoleConfig[];
+  defaultProvider?: string;
+  defaultModel?: string;
+  defaultApiKey?: string;
+  defaultBaseUrl?: string;
+}
+
+interface ChatRequest {
+  pageId?: string;
+  pageTitle?: string;
+  roleId?: string;
+  message: string;
+  forceRefresh?: boolean;
+}
+
+interface LLMProvider {
+  id: string;
+  name: string;
+  type: string;
+  baseUrl: string;
+  apiKey?: string;
+  models: string[];
+  enabled: boolean;
+}
+
+let llmService: LLMService | null = null;
+let rolePersonaManager: RolePersonaManager;
+let chatContextAggregator: ChatContextAggregator;
+let currentLLMConfig: LLMConfig | null = null;
+
+async function loadLLMProviders(): Promise<LLMProvider[]> {
+  const data = await store.get<LLMProvider[]>(LLM_PROVIDERS_KEY);
+  return Array.isArray(data) ? data : [];
+}
+
+function initializeServices(deps: RouterDeps) {
+  if (!rolePersonaManager) {
+    rolePersonaManager = new RolePersonaManager();
+  }
+  if (!chatContextAggregator && deps.jsonStore) {
+    chatContextAggregator = new ChatContextAggregator(deps.jsonStore);
+  }
+}
+
+function createLLMService(config: LLMConfig): LLMService {
+  currentLLMConfig = config;
+  llmService = new LLMService(config);
+  return llmService;
 }
 
 async function loadExpertsConfig(): Promise<ExpertsConfig> {
   const data = await store.get<ExpertsConfig>(AI_EXPERTS_KEY);
-  return data || { roles: [] };
+  const defaultConfig: ExpertsConfig = {
+    roles: [],
+    defaultProvider: 'openai',
+    defaultModel: 'gpt-4',
+    defaultBaseUrl: 'https://api.openai.com/v1',
+  };
+  if (!data) return defaultConfig;
+  return { ...defaultConfig, ...data };
 }
 
 async function saveExpertsConfig(config: ExpertsConfig): Promise<void> {
@@ -26,17 +90,147 @@ async function saveExpertsConfig(config: ExpertsConfig): Promise<void> {
 
 export function registerAiRoutes(
   handlers: Map<string, (params: Record<string, unknown>) => Promise<unknown>>,
-  _deps: RouterDeps
+  deps: RouterDeps
 ): void {
+  initializeServices(deps);
+
   handlers.set('aiExperts.config.get', async () => {
-    return loadExpertsConfig();
+    const config = await loadExpertsConfig();
+    const safeConfig = {
+      ...config,
+      defaultApiKey: config.defaultApiKey ? '***' : undefined,
+    };
+    return {
+      ...safeConfig,
+      currentConfig: currentLLMConfig ? {
+        provider: currentLLMConfig.provider,
+        model: currentLLMConfig.model,
+        baseUrl: currentLLMConfig.baseUrl,
+      } : null,
+    };
   });
 
   handlers.set('aiExperts.config.save', async (params) => {
-    const roles = (params.roles || []) as ExpertRoleConfig[];
-    const config: ExpertsConfig = { roles };
-    await saveExpertsConfig(config);
-    return { success: true, roles: config.roles };
+    const config = params.config as Partial<ExpertsConfig>;
+    const currentConfig = await loadExpertsConfig();
+    const updatedConfig: ExpertsConfig = {
+      ...currentConfig,
+      ...config,
+    };
+    await saveExpertsConfig(updatedConfig);
+
+    if (config.defaultProvider && config.defaultModel) {
+      const llmConfig: LLMConfig = {
+        provider: config.defaultProvider as any,
+        model: config.defaultModel,
+        apiKey: config.defaultApiKey,
+        baseUrl: config.defaultBaseUrl,
+        temperature: config.defaultProvider === 'openai' ? 0.3 : 0.5,
+        timeout: 10000,
+      };
+      createLLMService(llmConfig);
+    }
+
+    return { success: true };
+  });
+
+  handlers.set('ai.chat', async (p) => {
+    const req = p as unknown as ChatRequest;
+    const { message, pageId = 'dashboard', pageTitle = 'Dashboard', roleId = 'security-expert', forceRefresh } = req;
+
+    if (!message) {
+      throw new Error('message is required');
+    }
+
+    // Try to find an enabled LLM provider from llm.providers.list
+    const providers = await loadLLMProviders();
+    const enabledProvider = providers.find((prov: LLMProvider) => prov.enabled && prov.apiKey && prov.baseUrl.includes('.'));
+
+    if (enabledProvider) {
+      createLLMService({
+        provider: enabledProvider.type as any,
+        model: enabledProvider.models[0] || 'glm-4',
+        apiKey: enabledProvider.apiKey,
+        baseUrl: enabledProvider.baseUrl,
+        temperature: 0.3,
+        timeout: 15000,
+      });
+    } else if (!llmService || !currentLLMConfig) {
+      const config = await loadExpertsConfig();
+      if (config.defaultProvider && config.defaultModel) {
+        createLLMService({
+          provider: config.defaultProvider as any,
+          model: config.defaultModel,
+          apiKey: config.defaultApiKey,
+          baseUrl: config.defaultBaseUrl,
+          temperature: 0.3,
+          timeout: 10000,
+        });
+      } else {
+        return {
+          id: `msg_${Date.now()}`,
+          role: 'assistant',
+          content: 'AI服务未配置。请在设置中添加LLM provider并配置API密钥。',
+          timestamp: new Date().toISOString(),
+        };
+      }
+    }
+
+    try {
+      const systemPrompt = rolePersonaManager.buildSystemPrompt(roleId);
+
+      let contextText = '';
+      if (chatContextAggregator) {
+        const contextData = await chatContextAggregator.getContext(pageId, pageTitle, forceRefresh);
+        contextText = chatContextAggregator.formatContextForPrompt(contextData);
+      }
+
+      const messages: import('../../ai/llm-types.js').LLMMessage[] = [
+        systemPrompt,
+        {
+          role: 'user' as const,
+          content: `当前安全数据:\n${contextText}\n\n用户问题: ${message}`,
+        },
+      ];
+
+      const response = await llmService!.chat(messages);
+
+      return {
+        id: `msg_${Date.now()}`,
+        role: 'assistant',
+        content: response.content,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof LLMError) {
+        if (error.code === LLMErrorCode.TIMEOUT) {
+          return {
+            id: `msg_${Date.now()}`,
+            role: 'assistant',
+            content: 'AI请求超时。请稍后重试，或检查网络连接。',
+            timestamp: new Date().toISOString(),
+            error: 'TIMEOUT',
+          };
+        }
+        if (error.code === LLMErrorCode.INVALID_CONFIG) {
+          return {
+            id: `msg_${Date.now()}`,
+            role: 'assistant',
+            content: `AI配置无效: ${error.message}。请检查设置中的API密钥和模型配置。`,
+            timestamp: new Date().toISOString(),
+            error: 'CONFIG_ERROR',
+          };
+        }
+      }
+      console.error('[ai-routes] ai.chat error:', error);
+      return {
+        id: `msg_${Date.now()}`,
+        role: 'assistant',
+        content: '抱歉，AI服务暂时不可用。请稍后重试。',
+        timestamp: new Date().toISOString(),
+        error: 'SERVICE_ERROR',
+      };
+    }
   });
 
   handlers.set('ai.insights', async (p) => {
@@ -70,11 +264,11 @@ export function registerAiRoutes(
     const insights = contextSpecific[pageId] || contextSpecific['dashboard'];
     return { insights };
   });
-  
+
   handlers.set('ai.anomalies', async (_p) => {
     return { anomalies: [] };
   });
-  
+
   handlers.set('ai.trend', async (p) => {
     const metric = (p.metric as string) || 'risk-score';
     const timeframe = (p.timeframe as string) || '30d';
@@ -95,7 +289,7 @@ export function registerAiRoutes(
       },
     };
   });
-  
+
   handlers.set('ai.recommendations', async (p) => {
     const pageId = (p.pageId as string) || 'dashboard';
     const contextSpecific: Record<string, Array<{
@@ -116,38 +310,50 @@ export function registerAiRoutes(
     const recommendations = contextSpecific[pageId] || contextSpecific['dashboard'];
     return { recommendations };
   });
-  
+
   handlers.set('ai.anomaly.acknowledge', async (p) => {
     const { anomalyId: _anomalyId } = p;
     return { success: true, anomalyId: _anomalyId };
   });
-  
+
   handlers.set('ai.anomaly.resolve', async (p) => {
     const { anomalyId } = p;
     return { success: true, anomalyId };
   });
-  
-  handlers.set('ai.chat', async (p) => {
-    const { context, message } = p;
-    return {
-      id: `msg_${Date.now()}`,
-      role: 'assistant',
-      content: `[Mock AI Response] Received message: "${message}" in context: "${context}"`,
-      timestamp: new Date().toISOString()
-    };
-  });
-  
+
   handlers.set('ai.action.execute', async (p) => {
     const { actionId: _actionId } = p;
     return { success: false, message: 'Action execution not implemented' };
   });
-  
+
   handlers.set('kpi.calculate', async () => {
-    return {
-      securityScore: 85,
-      riskScore: 15,
-      complianceScore: 90,
-      lastCalculated: new Date().toISOString()
-    };
+    try {
+      const metrics = await kpiService.calculateAllMetrics();
+      return {
+        overallScore: metrics.overallScore,
+        securityScore: metrics.securityScore,
+        riskScore: metrics.riskScore,
+        complianceScore: metrics.compliance.overall,
+        lastCalculated: new Date(metrics.timestamp).toISOString(),
+        details: {
+          incidents: metrics.incidents,
+          vulnerabilities: metrics.vulnerabilities,
+          threats: metrics.threats,
+          compliance: metrics.compliance,
+          assets: metrics.assets,
+          sla: metrics.sla,
+          trends: metrics.trends,
+        },
+      };
+    } catch (error) {
+      console.error('[ai-routes] kpi.calculate failed:', error);
+      return {
+        securityScore: 0,
+        riskScore: 100,
+        complianceScore: 0,
+        lastCalculated: new Date().toISOString(),
+        error: 'KPI calculation failed',
+      };
+    }
   });
 }

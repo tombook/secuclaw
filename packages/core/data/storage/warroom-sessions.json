@@ -1,0 +1,29 @@
+[
+  {
+    "id": "session_1775884257855_le29ka",
+    "title": "E2E Test War Room",
+    "eventId": "INC-001",
+    "status": "active",
+    "participants": [],
+    "createdBy": "user",
+    "createdAt": 1775884257855,
+    "updatedAt": 1775884257855
+  },
+  {
+    "title": "War Room: incident INC-001",
+    "scenario": "incident-response",
+    "eventId": "INC-001",
+    "eventType": "incident",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-expert",
+        "joinedAt": 1775884257901
+      }
+    ],
+    "createdBy": "system",
+    "id": "session_1775884257901_q4lvcm",
+    "createdAt": 1775884257901,
+    "updatedAt": 1775884257901
+  }
+]

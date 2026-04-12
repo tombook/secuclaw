@@ -98,6 +98,10 @@ class IncidentStore extends BaseStore<IncidentState> {
     });
   }
 
+  async initialize(): Promise<void> {
+    await this.loadIncidents();
+  }
+
   async loadIncidents(page: number = 1, pageSize: number = 20): Promise<void> {
     this.setState({ loading: true, error: null });
     try {

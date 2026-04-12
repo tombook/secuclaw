@@ -10,7 +10,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { RolesService } from '../../roles/service.js';
 import { RolesRepository } from '../../roles/repository.js';
 import { JsonStore } from '../../storage/json-store.js';
-import { ApiError, ErrorCodes, successResponse, PaginatedResponse } from '../types.js';
+import { ApiError, ErrorCodes, successResponse } from '../types.js';
 
 const router = Router();
 
@@ -60,10 +60,11 @@ router.get('/system', async (req: Request, res: Response, next: NextFunction) =>
 router.get('/code/:code', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { code } = req.params;
-    const role = await rolesService.getRoleByCode(code);
+    const codeStr = Array.isArray(code) ? code[0] : code;
+    const role = await rolesService.getRoleByCode(codeStr);
 
     if (!role) {
-      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with code ${code} not found`, 404);
+      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with code ${codeStr} not found`, 404);
     }
 
     res.json(successResponse(role, (req as any).requestId));
@@ -101,14 +102,15 @@ router.get('/users', async (req: Request, res: Response, next: NextFunction) => 
 router.get('/users/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const user = await rolesService.getUser(id);
+    const userId = Array.isArray(id) ? id[0] : id;
+    const user = await rolesService.getUser(userId);
 
     if (!user) {
-      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${userId} not found`, 404);
     }
 
     // Get user permissions
-    const permissions = await rolesService.getUserPermissions(id);
+    const permissions = await rolesService.getUserPermissions(userId);
     
     res.json(successResponse({ ...user, permissions }, (req as any).requestId));
   } catch (error) {
@@ -167,14 +169,15 @@ router.post('/users', async (req: Request, res: Response, next: NextFunction) =>
 router.put('/users/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const userId = Array.isArray(id) ? id[0] : id;
     const updates = req.body;
 
-    const existing = await rolesService.getUser(id);
+    const existing = await rolesService.getUser(userId);
     if (!existing) {
-      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${userId} not found`, 404);
     }
 
-    const updated = await rolesService.updateUser(id, updates);
+    const updated = await rolesService.updateUser(userId, updates);
     res.json(successResponse(updated, (req as any).requestId));
   } catch (error) {
     next(error);
@@ -187,13 +190,14 @@ router.put('/users/:id', async (req: Request, res: Response, next: NextFunction)
 router.delete('/users/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const userId = Array.isArray(id) ? id[0] : id;
 
-    const existing = await rolesService.getUser(id);
+    const existing = await rolesService.getUser(userId);
     if (!existing) {
-      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${userId} not found`, 404);
     }
 
-    const deleted = await rolesService.deleteUser(id);
+    const deleted = await rolesService.deleteUser(userId);
     res.json(successResponse({ deleted }, (req as any).requestId));
   } catch (error) {
     next(error);
@@ -206,15 +210,16 @@ router.delete('/users/:id', async (req: Request, res: Response, next: NextFuncti
 router.post('/users/:id/roles', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const userId = Array.isArray(id) ? id[0] : id;
     const { roleId } = req.body;
 
     if (!roleId) {
       throw new ApiError(ErrorCodes.VALIDATION_ERROR, 'roleId is required', 400);
     }
 
-    const user = await rolesService.getUser(id);
+    const user = await rolesService.getUser(userId);
     if (!user) {
-      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${userId} not found`, 404);
     }
 
     const role = await rolesService.getRole(roleId);
@@ -222,7 +227,7 @@ router.post('/users/:id/roles', async (req: Request, res: Response, next: NextFu
       throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${roleId} not found`, 404);
     }
 
-    const updated = await rolesService.assignRoleToUser(id, roleId);
+    const updated = await rolesService.assignRoleToUser(userId, roleId);
     res.json(successResponse(updated, (req as any).requestId));
   } catch (error) {
     next(error);
@@ -235,13 +240,15 @@ router.post('/users/:id/roles', async (req: Request, res: Response, next: NextFu
 router.delete('/users/:userId/roles/:roleId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId, roleId } = req.params;
+    const userIdStr = Array.isArray(userId) ? userId[0] : userId;
+    const roleIdStr = Array.isArray(roleId) ? roleId[0] : roleId;
 
-    const user = await rolesService.getUser(userId);
+    const user = await rolesService.getUser(userIdStr);
     if (!user) {
-      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${userId} not found`, 404);
+      throw new ApiError(ErrorCodes.NOT_FOUND, `User with id ${userIdStr} not found`, 404);
     }
 
-    const updated = await rolesService.removeRoleFromUser(userId, roleId);
+    const updated = await rolesService.removeRoleFromUser(userIdStr, roleIdStr);
     res.json(successResponse(updated, (req as any).requestId));
   } catch (error) {
     next(error);
@@ -253,7 +260,10 @@ router.delete('/users/:userId/roles/:roleId', async (req: Request, res: Response
  */
 router.get('/users/:id/permissions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    if (!id) {
+      throw new ApiError(ErrorCodes.VALIDATION_ERROR, 'User ID is required', 400);
+    }
 
     const user = await rolesService.getUser(id);
     if (!user) {
@@ -275,10 +285,11 @@ router.get('/users/:id/permissions', async (req: Request, res: Response, next: N
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const role = await rolesService.getRole(id);
+    const roleId = Array.isArray(id) ? id[0] : id;
+    const role = await rolesService.getRole(roleId);
 
     if (!role) {
-      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${roleId} not found`, 404);
     }
 
     res.json(successResponse(role, (req as any).requestId));
@@ -324,18 +335,19 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const roleId = Array.isArray(id) ? id[0] : id;
     const updates = req.body;
 
-    const existing = await rolesService.getRole(id);
+    const existing = await rolesService.getRole(roleId);
     if (!existing) {
-      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${roleId} not found`, 404);
     }
 
     if (existing.isSystem) {
       throw new ApiError(ErrorCodes.FORBIDDEN, 'Cannot modify system roles', 403);
     }
 
-    const updated = await rolesService.updateRole(id, updates);
+    const updated = await rolesService.updateRole(roleId, updates);
     res.json(successResponse(updated, (req as any).requestId));
   } catch (error) {
     next(error);
@@ -348,17 +360,18 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const roleId = Array.isArray(id) ? id[0] : id;
 
-    const existing = await rolesService.getRole(id);
+    const existing = await rolesService.getRole(roleId);
     if (!existing) {
-      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${id} not found`, 404);
+      throw new ApiError(ErrorCodes.ROLE_NOT_FOUND, `Role with id ${roleId} not found`, 404);
     }
 
     if (existing.isSystem) {
       throw new ApiError(ErrorCodes.FORBIDDEN, 'Cannot delete system roles', 403);
     }
 
-    const deleted = await rolesService.deleteRole(id);
+    const deleted = await rolesService.deleteRole(roleId);
     res.json(successResponse({ deleted }, (req as any).requestId));
   } catch (error) {
     next(error);

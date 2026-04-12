@@ -1,10 +1,8 @@
-/**
- * Roles Service
- * 角色管理业务逻辑层
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { RolesRepository, type Role, type RoleQueryParams, type User, type UserQueryParams } from './repository.js';
 
+@Service()
 export class RolesService {
   constructor(private repo: RolesRepository) {}
 

@@ -56,16 +56,16 @@ export class MitreLoader {
 
   async loadAll(): Promise<void> {
     const files = ['enterprise-attack.json', 'mobile-attack.json', 'ics-attack.json'];
-
-    for (const file of files) {
+    const loadPromises = files.map(async (file) => {
       try {
         const filePath = join(this.dataPath, file);
         await this.loadFile(filePath, file.replace('-attack.json', ''));
       } catch (error) {
         logger.warn(`Failed to load ${file}:`, error);
       }
-    }
+    });
 
+    await Promise.all(loadPromises);
     this.buildSearchIndex();
     logger.info(`Loaded ${this.tactics.size} tactics, ${this.techniques.size} techniques`);
   }

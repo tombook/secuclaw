@@ -1,8 +1,5 @@
-/**
- * Roles Repository
- * 角色管理数据访问层
- */
-
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { JsonStore } from '../storage/json-store.js';
 
 const FILE_NAME = 'roles.json';
@@ -10,11 +7,11 @@ const FILE_NAME = 'roles.json';
 export interface Role {
   id: string;
   name: string;
-  code: string;           // 角色代码，如 'security-expert', 'ciso'
+  code: string;
   description?: string;
-  permissions: string[];   // 权限列表
-  level: number;          // 角色级别
-  isSystem: boolean;       // 是否为系统角色
+  permissions: string[];
+  level: number;
+  isSystem: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -26,7 +23,7 @@ export interface User {
   displayName?: string;
   department?: string;
   title?: string;
-  roleIds: string[];      // 关联的角色
+  roleIds: string[];
   status: 'active' | 'inactive' | 'disabled';
   lastLogin?: number;
   createdAt: number;
@@ -49,13 +46,14 @@ export interface UserQueryParams {
   pageSize?: number;
 }
 
+@Service()
 export class RolesRepository {
   constructor(private store: JsonStore) {}
 
   // ==================== Role Methods ====================
   
   async getAllRoles(): Promise<Role[]> {
-    return this.store.get<Role[]>(FILE_NAME) || [];
+    return (await this.store.get<Role[]>(FILE_NAME)) ?? [];
   }
 
   async getRoleById(id: string): Promise<Role | null> {
@@ -120,7 +118,7 @@ export class RolesRepository {
   }
 
   async getAllUsers(): Promise<User[]> {
-    const users = this.store.get<User[]>(this.getUsersFileName());
+    const users = (await this.store.get<User[]>(this.getUsersFileName())) ?? [];
     return users || [];
   }
 

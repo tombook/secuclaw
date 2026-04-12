@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import '../../components/design-system/sc-button.js';
+import '../../components/sc-smart-recommendation-bar.js';
 
 /**
  * Professional Baseline Tool Page
@@ -593,6 +595,7 @@ export class ScToolBaselineV2 extends LitElement {
       : 85;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         ${this.renderHero()}
         
@@ -700,7 +703,7 @@ export class ScToolBaselineV2 extends LitElement {
             @click=${() => this.handleTabClick(tab.id)}
           >
             <span>${tab.icon}</span> ${tab.label}
-          </button>
+          </sc-button>
         `)}
       </div>
     `;
@@ -712,7 +715,7 @@ export class ScToolBaselineV2 extends LitElement {
         <div class="card">
           <div class="card-header">
             <span class="card-title">最近扫描记录</span>
-            <button class="btn btn-secondary">查看全部</button>
+            <sc-button variant="secondary">查看全部</sc-button>
           </div>
           <table class="results-table">
             <thead>
@@ -753,9 +756,9 @@ export class ScToolBaselineV2 extends LitElement {
             <span class="card-title">快速操作</span>
           </div>
           <div class="card-body">
-            <button class="btn btn-primary" style="width: 100%; margin-bottom: var(--sc-spacing-md);" @click=${this.runScan} ?disabled=${this.isScanning}>
+            <sc-button variant="primary" style="width: 100%; margin-bottom: var(--sc-spacing-md);" @click=${this.runScan} ?disabled=${this.isScanning}>
               ${this.isScanning ? '扫描中...' : '🚀 立即扫描'}
-            </button>
+            </sc-button>
             
             ${this.isScanning ? html`
               <div class="scan-progress">
@@ -816,9 +819,9 @@ export class ScToolBaselineV2 extends LitElement {
               </select>
             </div>
 
-            <button class="btn btn-primary" style="width: 100%;" @click=${this.runScan} ?disabled=${this.isScanning}>
+            <sc-button variant="primary" style="width: 100%;" @click=${this.runScan} ?disabled=${this.isScanning}>
               ${this.isScanning ? `扫描中... ${this.scanProgress}%` : '🚀 开始扫描'}
-            </button>
+            </sc-button>
 
             ${this.isScanning ? html`
               <div class="scan-progress">
@@ -879,7 +882,7 @@ export class ScToolBaselineV2 extends LitElement {
         <div class="card">
           <div class="card-header">
             <span class="card-title">选择框架</span>
-            <button class="btn btn-secondary">保存配置</button>
+            <sc-button variant="secondary">保存配置</sc-button>
           </div>
           <div class="card-body">
             <div class="framework-grid">
@@ -918,8 +921,8 @@ export class ScToolBaselineV2 extends LitElement {
         <div class="card-header">
           <span class="card-title">扫描结果 (${this.scanResults.length} 项)</span>
           <div style="display: flex; gap: var(--sc-spacing-sm);">
-            <button class="btn btn-secondary">导出 CSV</button>
-            <button class="btn btn-secondary">导出 PDF</button>
+            <sc-button variant="secondary">导出 CSV</sc-button>
+            <sc-button variant="secondary">导出 PDF</sc-button>
           </div>
         </div>
         ${this.scanResults.length > 0 ? html`
@@ -943,9 +946,9 @@ export class ScToolBaselineV2 extends LitElement {
                   <td>${r.category}</td>
                   <td>${r.framework}</td>
                   <td>
-                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;">
+                    <sc-button variant="secondary" style="padding: 4px 8px; font-size: 12px;">
                       ${r.status === 'fail' ? '修复' : '详情'}
-                    </button>
+                    </sc-button>
                   </td>
                 </tr>
               `)}

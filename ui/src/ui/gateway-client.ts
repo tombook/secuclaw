@@ -22,7 +22,12 @@ interface EventMessage {
   data?: unknown;
 }
 
-type GatewayMessage = RequestMessage | ResponseMessage | EventMessage;
+interface BatchMessage {
+  type: 'batch';
+  messages: GatewayMessage[];
+}
+
+type GatewayMessage = RequestMessage | ResponseMessage | EventMessage | BatchMessage;
 
 class GatewayClient {
   private ws: WebSocket | null = null;
@@ -42,7 +47,7 @@ class GatewayClient {
   private messageQueue: RequestMessage[] = [];
   private authToken: string | null = null;
 
-  constructor(url: string = 'ws://127.0.0.1:21981/ws') {
+  constructor(url: string = '/ws') {
     this.url = url;
   }
 
@@ -116,27 +121,37 @@ class GatewayClient {
 
   private handleMessage(data: string): void {
     try {
-      const message: GatewayMessage = JSON.parse(data);
+      const parsed = JSON.parse(data);
 
-      if (message.type === 'res') {
-        const pending = this.pendingRequests.get(message.seq);
-        if (pending) {
-          clearTimeout(pending.timeout);
-          this.pendingRequests.delete(message.seq);
-          if (message.error) {
-            pending.reject(new Error(message.error.message));
-          } else {
-            pending.resolve(message.result);
-          }
+      if (parsed.type === 'batch' && Array.isArray(parsed.messages)) {
+        for (const msg of parsed.messages) {
+          this.handleSingleMessage(msg);
         }
-      } else if (message.type === 'event') {
-        const handlers = this.eventHandlers.get(message.event);
-        if (handlers) {
-          handlers.forEach((handler) => handler(message.data));
-        }
+      } else {
+        this.handleSingleMessage(parsed);
       }
     } catch (error) {
       console.error('[Gateway] Failed to parse message:', error);
+    }
+  }
+
+  private handleSingleMessage(message: GatewayMessage): void {
+    if (message.type === 'res') {
+      const pending = this.pendingRequests.get(message.seq);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        this.pendingRequests.delete(message.seq);
+        if (message.error) {
+          pending.reject(new Error(message.error.message));
+        } else {
+          pending.resolve(message.result);
+        }
+      }
+    } else if (message.type === 'event') {
+      const handlers = this.eventHandlers.get(message.event);
+      if (handlers) {
+        handlers.forEach((handler) => handler(message.data));
+      }
     }
   }
 
@@ -165,10 +180,19 @@ class GatewayClient {
 
         this.ws.send(JSON.stringify(message));
       } else {
-        // Offline: queue message and resolve immediately as "queued"
+        // Offline: queue message, reject after timeout
         this.messageQueue.push(message);
         console.warn(`[Gateway] Offline, message queued: ${method}`);
-        resolve({ queued: true, method, seq } as T);
+        const timeout = setTimeout(() => {
+          this.messageQueue = this.messageQueue.filter(m => m.seq !== seq);
+          reject(new Error(`Request timeout (offline): ${method}`));
+        }, 30000);
+
+        this.pendingRequests.set(seq, {
+          resolve: resolve as (value: unknown) => void,
+          reject,
+          timeout,
+        });
       }
     });
   }
@@ -176,19 +200,6 @@ class GatewayClient {
   private flushMessageQueue(): void {
     while (this.messageQueue.length > 0 && this.ws?.readyState === WebSocket.OPEN) {
       const message = this.messageQueue.shift()!;
-      
-      // Track this message with a timeout
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(message.seq);
-        console.warn(`[Gateway] Queued message timed out: ${message.method}`);
-      }, 30000);
-
-      this.pendingRequests.set(message.seq, {
-        resolve: () => { console.log(`[Gateway] Queued message resolved: ${message.method}`); },
-        reject: (e: Error) => { console.warn(`[Gateway] Queued message rejected: ${message.method}`, e); },
-        timeout,
-      });
-
       this.ws.send(JSON.stringify(message));
     }
   }
@@ -248,6 +259,22 @@ class GatewayClient {
         }
       });
     });
+  }
+
+  async executeSkill(params: { skillId: string; roleId: string; params: Record<string, any> }): Promise<{ executionId: string }> {
+    return this.request<{ executionId: string }>('skill.execute', params);
+  }
+
+  cancelSkillExecution(executionId: string): Promise<void> {
+    return this.request<void>('skill.cancel', { executionId });
+  }
+
+  on(event: string, handler: MessageHandler): () => void {
+    return this.subscribe(event, handler);
+  }
+
+  off(event: string): void {
+    this.eventHandlers.delete(event);
   }
 }
 

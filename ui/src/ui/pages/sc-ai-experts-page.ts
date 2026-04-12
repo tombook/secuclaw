@@ -3,6 +3,9 @@ import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { skillStore, type SkillDefinition, type Capabilities } from '../store/skill-store.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import '../components/sc-smart-recommendation-bar.js';
+import { RACI_SCENARIOS, type ScenarioType, type RaciRole } from '../config/raci-matrix.js';
 
 // LLM Provider interface
 interface LLMProviderConfig {
@@ -141,10 +144,13 @@ const ROLES = [
 export class ScAiExpertsPage extends LitElement {
   private i18n = new I18nController(this);
   @state() private selectedRoleId = 'security-expert';
-  @state() private activeTab: 'skills' | 'chat' = 'skills';
+  @state() private activeTab: 'skills' | 'chat' | 'raci' = 'skills';
    @state() private skillData: SkillDefinition | null = null;
   @state() private loading = false;
-  
+
+  @state() private compareMode = false;
+  @state() private compareRoleId: string = '';
+
   // Chat state
   @state() private messages: ChatMessage[] = [];
   @state() private inputText = '';
@@ -457,6 +463,174 @@ export class ScAiExpertsPage extends LitElement {
     .empty-chat-icon { font-size: 48px; margin-bottom: var(--sc-spacing-md); }
     .empty-chat-title { font-size: var(--sc-font-size-lg); font-weight: 600; margin-bottom: var(--sc-spacing-sm); }
     .empty-chat-desc { font-size: var(--sc-font-size-sm); }
+
+    /* Radar Chart Section */
+    .radar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: var(--sc-spacing-lg);
+      padding: var(--sc-spacing-lg);
+      background-color: var(--sc-bg-secondary);
+      border: 1px solid var(--sc-border-color);
+      border-radius: var(--sc-radius-lg);
+    }
+
+    .radar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: var(--sc-spacing-md);
+    }
+
+    .radar-title {
+      font-size: var(--sc-font-size-lg);
+      font-weight: 600;
+      color: var(--sc-text-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm);
+    }
+
+    .radar-controls {
+      display: flex;
+      gap: var(--sc-spacing-sm);
+      align-items: center;
+    }
+
+    .compare-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-xs);
+      padding: var(--sc-spacing-xs) var(--sc-spacing-sm);
+      background-color: var(--sc-bg-tertiary);
+      border: 1px solid var(--sc-border-color);
+      border-radius: var(--sc-radius-md);
+      cursor: pointer;
+      font-size: var(--sc-font-size-xs);
+      color: var(--sc-text-secondary);
+      transition: all var(--sc-transition-fast);
+    }
+
+    .compare-toggle:hover {
+      border-color: var(--sc-primary);
+      color: var(--sc-primary);
+    }
+
+    .compare-toggle.active {
+      background-color: var(--sc-primary);
+      color: white;
+      border-color: var(--sc-primary);
+    }
+
+    .compare-select {
+      padding: var(--sc-spacing-xs) var(--sc-spacing-sm);
+      background-color: var(--sc-input-bg);
+      border: 1px solid var(--sc-border-color);
+      border-radius: var(--sc-radius-md);
+      font-size: var(--sc-font-size-sm);
+      color: var(--sc-text-primary);
+      cursor: pointer;
+    }
+
+    .compare-select:focus {
+      outline: none;
+      border-color: var(--sc-primary);
+    }
+
+    /* RACI Tab Content */
+    .raci-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sc-spacing-lg);
+    }
+
+    .raci-scenarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--sc-spacing-md);
+    }
+
+    .raci-scenario-card {
+      background-color: var(--sc-bg-secondary);
+      border: 1px solid var(--sc-border-color);
+      border-radius: var(--sc-radius-md);
+      padding: var(--sc-spacing-md);
+      transition: all var(--sc-transition-fast);
+    }
+
+    .raci-scenario-card:hover {
+      border-color: var(--sc-primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .raci-scenario-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--sc-spacing-md);
+      padding-bottom: var(--sc-spacing-sm);
+      border-bottom: 1px solid var(--sc-border-color);
+    }
+
+    .raci-scenario-name {
+      font-size: var(--sc-font-size-base);
+      font-weight: 600;
+      color: var(--sc-text-primary);
+    }
+
+    .raci-badge {
+      padding: var(--sc-spacing-xs) var(--sc-spacing-sm);
+      border-radius: var(--sc-radius-full);
+      font-size: var(--sc-font-size-xs);
+      font-weight: 600;
+    }
+
+    .raci-badge.r {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: var(--sc-primary, #3b82f6);
+    }
+
+    .raci-badge.a {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--sc-danger, #ef4444);
+    }
+
+    .raci-badge.c {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--sc-success, #10b981);
+    }
+
+    .raci-badge.i {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: var(--sc-warning, #f59e0b);
+    }
+
+    .raci-tasks-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .raci-task-item {
+      padding: var(--sc-spacing-xs) 0;
+      font-size: var(--sc-font-size-sm);
+      color: var(--sc-text-secondary);
+      border-bottom: 1px solid var(--sc-border-color);
+      display: flex;
+      align-items: center;
+      gap: var(--sc-spacing-sm);
+    }
+
+    .raci-task-item:last-child {
+      border-bottom: none;
+    }
+
+    .raci-task-item::before {
+      content: '•';
+      color: var(--sc-primary);
+    }
   `;
 
   connectedCallback() {
@@ -493,8 +667,20 @@ export class ScAiExpertsPage extends LitElement {
     this.loadSkillData();
   }
 
-  private handleTabChange(tab: 'skills' | 'chat'): void {
+  private handleTabChange(tab: 'skills' | 'chat' | 'raci'): void {
     this.activeTab = tab;
+  }
+
+  private toggleCompareMode(): void {
+    this.compareMode = !this.compareMode;
+    if (!this.compareMode) {
+      this.compareRoleId = '';
+    }
+  }
+
+  private handleCompareRoleChange(e: Event): void {
+    const select = e.target as HTMLSelectElement;
+    this.compareRoleId = select.value;
   }
 
   private getCapabilities(): Capabilities {
@@ -504,6 +690,18 @@ export class ScAiExpertsPage extends LitElement {
     }
     // Fall back to default data
     return DEFAULT_SKILLS[this.selectedRoleId] || {
+      light: [], dark: [], security: [], legal: [], technology: [], business: []
+    };
+  }
+
+  private getCapabilitiesForRole(roleId: string): Capabilities {
+    // First try to get from skill store
+    const skill = skillStore.getSkill(roleId);
+    if (skill?.metadata?.openclaw?.capabilities) {
+      return skill.metadata.openclaw.capabilities;
+    }
+    // Fall back to default data
+    return DEFAULT_SKILLS[roleId] || {
       light: [], dark: [], security: [], legal: [], technology: [], business: []
     };
   }
@@ -593,8 +791,39 @@ export class ScAiExpertsPage extends LitElement {
 
   private renderSkillsContent() {
     const caps = this.getCapabilities();
-    
+    const compareCaps = this.compareMode && this.compareRoleId
+      ? this.getCapabilitiesForRole(this.compareRoleId)
+      : undefined;
+
     return html`
+      <div class="radar-section">
+        <div class="radar-header">
+          <div class="radar-title">
+            <span>📊</span>
+            <span>能力雷达图</span>
+          </div>
+          <div class="radar-controls">
+            <div class="compare-toggle ${this.compareMode ? 'active' : ''}" @click=${() => this.toggleCompareMode()}>
+              <span>🔄</span>
+              <span>对比模式</span>
+            </div>
+            ${this.compareMode ? html`
+              <select class="compare-select" @change=${(e: Event) => this.handleCompareRoleChange(e)}>
+                <option value="">选择对比角色</option>
+                ${ROLES.filter(r => r.id !== this.selectedRoleId).map(r => html`
+                  <option value="${r.id}" ?selected=${this.compareRoleId === r.id}>${r.emoji} ${this.i18n.t('roles.' + r.id)}</option>
+                `)}
+              </select>
+            ` : ''}
+          </div>
+        </div>
+        <sc-expertise-radar
+          .capabilities=${caps}
+          .compareCapabilities=${compareCaps}
+          .size=${350}
+        ></sc-expertise-radar>
+      </div>
+
       ${this.renderStatCards()}
       
       <div class="skills-grid">
@@ -986,14 +1215,43 @@ ${allSkills.slice(0, 6).map(s => `• ${s}`).join('\n')}
           </button>
         </div>
       </div>
+     `;
+   }
+
+  private renderRaciContent(): unknown {
+    const raciAssignments = roleContext.getRaciAssignments();
+
+    return html`
+      <div class="raci-content">
+        ${RACI_SCENARIOS.map(scenario => {
+          const assignment = scenario.assignments.find(a => a.role === this.selectedRoleId);
+          if (!assignment) return html``;
+
+          return html`
+            <div class="raci-scenario-card">
+              <div class="raci-scenario-header">
+                <div class="raci-scenario-name">${scenario.name}</div>
+                <span class="raci-badge ${assignment.raci.toLowerCase()}">${assignment.raci}</span>
+              </div>
+              <div style="font-size: var(--sc-font-size-xs); color: var(--sc-text-tertiary); margin-bottom: var(--sc-spacing-sm);">${scenario.description}</div>
+              <ul class="raci-tasks-list">
+                ${assignment.tasks.map(task => html`
+                  <li class="raci-task-item">${task}</li>
+                `)}
+              </ul>
+            </div>
+          `;
+        })}
+      </div>
     `;
   }
 
-  render() {
+   render() {
     // Read loading state to satisfy TS diagnostics even if not visually used in render
     void this.loading;
     const role = this.getRoleInfo();
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-container">
         <div class="roles-panel">
           <h2 class="roles-title">${this.i18n.t('nav.aiExperts')}</h2>
@@ -1015,9 +1273,12 @@ ${allSkills.slice(0, 6).map(s => `• ${s}`).join('\n')}
           <div class="tabs">
             <div class="tab ${this.activeTab === 'skills' ? 'active' : ''}" @click=${() => this.handleTabChange('skills')}>Skills</div>
             <div class="tab ${this.activeTab === 'chat' ? 'active' : ''}" @click=${() => this.handleTabChange('chat')}>Chat</div>
+            <div class="tab ${this.activeTab === 'raci' ? 'active' : ''}" @click=${() => this.handleTabChange('raci')}>RACI 职责</div>
           </div>
           <div class="content-area">
-            ${this.activeTab === 'skills' ? this.renderSkillsContent() : this.renderChatContent()}
+            ${this.activeTab === 'skills' ? this.renderSkillsContent() : ''}
+            ${this.activeTab === 'chat' ? this.renderChatContent() : ''}
+            ${this.activeTab === 'raci' ? this.renderRaciContent() : ''}
           </div>
           </div>
         </div>

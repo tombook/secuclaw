@@ -37,11 +37,6 @@ function base64UrlDecodeToObject(str: string): any {
   return JSON.parse(json);
 }
 
-import crypto from 'crypto';
-import { ConfigService } from '../config/config-service.js';
-import type { JsonStore } from '../storage/json-store.js';
-import { TokenBlacklist } from './token-blacklist.js';
-
 let blacklist: TokenBlacklist | null = null;
 
 export function setTokenBlacklistStore(store: JsonStore): void {

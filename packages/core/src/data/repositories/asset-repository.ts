@@ -5,6 +5,7 @@
  */
 
 import type { JsonStore } from '../../storage/json-store.js';
+import { BaseRepository } from '../repository.js';
 import type { Asset, AssetType, AssetCriticality } from '../types.js';
 
 const FILE_NAME = 'assets.json';
@@ -25,7 +26,7 @@ export interface AssetQueryParams {
 
 export class AssetRepository extends BaseRepository<Asset> {
   constructor(store: JsonStore) {
-    super();
+    super(store);
     this.fileName = FILE_NAME;
   }
   
@@ -35,43 +36,19 @@ export class AssetRepository extends BaseRepository<Asset> {
   async getByQuery(params: AssetQueryParams): Promise<Asset[]> {
     let assets = await this.list();
     
-    if (params.type) {
-      assets = assets.filter(a => a.type === params.type);
-    }
-    if (params.category) {
-      assets = assets.filter(a => a.category === params.category);
-    }
-    if (params.environment) {
-      assets = assets.filter(a => a.environment === params.environment);
-    }
-    if (params.criticality) {
-      assets = assets.filter(a => a.business.criticality === params.criticality);
-    }
-    if (params.status) {
-      assets = assets.filter(a => a.status === params.status);
-    }
-    if (params.owner) {
-      assets = assets.filter(a => a.business.owner === params.owner);
-    }
-    if (params.department) {
-      assets = assets.filter(a => a.business.department === params.department);
-    }
-    if (params.ip) {
-      assets = assets.filter(a => 
-        a.network.ip === params.ip || 
-        a.network.ip.includes(params.ip)
-      );
-    }
-    if (params.hostname) {
-      assets = assets.filter(a => 
-        a.network.hostname === params.hostname ||
-        a.network.hostname.includes(params.hostname.toLowerCase())
-      );
-    }
+    if (params.type) assets = assets.filter((a: Asset) => a.type === params.type);
+    if (params.category) assets = assets.filter((a: Asset) => a.category === params.category);
+    if (params.environment) assets = assets.filter((a: Asset) => a.environment === params.environment);
+    if (params.criticality) assets = assets.filter((a: Asset) => a.business.criticality === params.criticality);
+    if (params.status) assets = assets.filter((a: Asset) => a.status === params.status);
+    if (params.owner) assets = assets.filter((a: Asset) => a.business.owner === params.owner);
+    if (params.department) assets = assets.filter((a: Asset) => a.business.department === params.department);
+    if (params.ip) assets = assets.filter((a: Asset) => a.network.ip === params.ip || a.network.ip.includes(String(params.ip ?? '')));
+    if (params.hostname) assets = assets.filter((a: Asset) => a.network.hostname === params.hostname || a.network.hostname.includes(params.hostname!.toLowerCase()));
     
     // Sort by criticality and business impact
     const criticalityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-    assets.sort((a, b) => {
+    assets.sort((a: Asset, b: Asset) => {
       const aCritical = criticalityOrder[a.business.criticality];
       const bCritical = criticalityOrder[b.business.criticality];
       return bCritical - aCritical;
@@ -118,15 +95,15 @@ export class AssetRepository extends BaseRepository<Asset> {
    */
   async getSummary(): Promise<{
     total: number;
-    byType: Record<AssetType, number>;
-    byCriticality: Record<AssetCriticality, number>;
+    byType: Record<string, number>;
+    byCriticality: Record<string, number>;
     byEnvironment: Record<string, number>;
     byStatus: Record<string, number>;
   }> {
     const assets = await this.list();
     
-    const byType: Record<AssetType, number> = {};
-    const byCriticality: Record<AssetCriticality, number> = {};
+    const byType: Record<string, number> = {};
+    const byCriticality: Record<string, number> = {};
     const byEnvironment: Record<string, number> = {};
     const byStatus: Record<string, number> = {};
     

@@ -1,18 +1,15 @@
-/**
- * Tasks Service
- * 任务管理业务逻辑层
- */
-
-import { 
-  TasksRepository, 
-  type Task, 
+import 'reflect-metadata';
+import { Service } from 'typedi';
+import {
+  TasksRepository,
+  type Task,
   type TaskExecution,
   type TaskQueryParams,
   type TaskStatus,
   type TaskType,
   type TaskUrgency,
   type ApprovalStatus,
-  STATUS_TRANSITIONS 
+  STATUS_TRANSITIONS
 } from './repository.js';
 
 const logger = {
@@ -56,6 +53,7 @@ export interface UpdateTaskRequest {
   updatedBy: string;
 }
 
+@Service()
 export class TasksService {
   constructor(private repo: TasksRepository) {}
 

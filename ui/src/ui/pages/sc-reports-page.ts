@@ -11,6 +11,10 @@ import { aiService, type SmartInsight, type AIRecommendation } from '../ai-servi
 import { gatewayClient } from '../gateway-client.js';
 import '../components/sc-ai-assistant.js';
 import '../components/sc-smart-card.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 // ============ 类型定义 ============
 
@@ -401,8 +405,16 @@ export class ScReportsPage extends LitElement {
 
   private async loadAIInsights() {
     try {
-      this.insights = await aiService.generateInsights('reports', { reports: this.reports });
-      this._recommendations = await aiService.generateRecommendations('reports', { reports: this.reports });
+      this.insights = await aiService.generateInsights({
+        pageId: 'reports',
+        data: { reports: this.reports },
+        userRole: 'analyst',
+      });
+      this._recommendations = await aiService.generateRecommendations({
+        pageId: 'reports',
+        data: { reports: this.reports },
+        userRole: 'analyst',
+      });
     } catch (error) {
       console.error('Failed to load AI insights:', error);
     }
@@ -470,6 +482,7 @@ export class ScReportsPage extends LitElement {
     const draftCount = this.reports.filter(r => r.status === 'draft').length;
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="reports-container">
         <div class="main-content">
           <div class="page-header">
@@ -483,8 +496,8 @@ export class ScReportsPage extends LitElement {
               </div>
             </div>
             <div class="header-actions">
-              <button class="btn btn-secondary">📅 计划任务</button>
-              <button class="btn btn-primary" @click=${this.generateReport}>+ 新建报告</button>
+              <sc-button size="sm" variant="secondary">📅 计划任务</sc-button>
+              <sc-button size="sm" variant="primary" @click=${this.generateReport}>+ 新建报告</sc-button>
             </div>
           </div>
 

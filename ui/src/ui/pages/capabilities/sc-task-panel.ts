@@ -8,6 +8,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state, property } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
+import '../../components/design-system/sc-button.js';
 import type { SecurityTask, TaskStatus, TaskPriority } from '../../capabilities-client.js';
 
 // Valid state transitions
@@ -583,7 +584,7 @@ export class ScTaskPanel extends LitElement {
       <div class="panel-container">
         <div class="panel-header">
           <h2 class="panel-title">${this.i18n.t('capabilities.taskPanel.title')}</h2>
-          <button class="close-btn" @click=${this.handleClose}>✕</button>
+          <sc-button variant="secondary" size="sm" class="close-btn" @click=${this.handleClose}>✕</sc-button>
         </div>
 
         <div class="panel-content">
@@ -632,7 +633,7 @@ export class ScTaskPanel extends LitElement {
                     @click=${() => this.handleStatusSelect(status)}
                   >
                     ${this.getStateIcon(status)} ${this.i18n.t(`capabilities.status.${status}`)}
-                  </button>
+                  </sc-button>
                 `)}
               </div>
 
@@ -668,26 +669,26 @@ export class ScTaskPanel extends LitElement {
           <div class="quick-actions">
             <button class="quick-btn" @click=${this.handleViewLogs}>
               📋 ${this.i18n.t('capabilities.taskPanel.viewLogs')}
-            </button>
+            </sc-button>
             <button class="quick-btn" @click=${this.handleViewEvidence}>
               📁 ${this.i18n.t('capabilities.taskPanel.viewEvidence')}
-            </button>
+            </sc-button>
           </div>
         </div>
 
         <!-- Actions -->
         ${this.selectedNewStatus ? html`
           <div class="panel-actions">
-            <button class="btn btn-secondary" @click=${() => this.selectedNewStatus = null}>
+            <sc-button variant="secondary" @click=${() => this.selectedNewStatus = null}>
               ${this.i18n.t('common.cancel')}
-            </button>
+            </sc-button>
             <button 
-              class="btn btn-primary"
+              variant="primary"
               @click=${this.handleTransition}
               ?disabled=${(this.showReviewInput && !this.reviewComment.trim()) || (this.showBlockInput && !this.blockReason.trim())}
             >
               ${this.i18n.t('common.confirm')}
-            </button>
+            </sc-button>
           </div>
         ` : ''}
       </div>

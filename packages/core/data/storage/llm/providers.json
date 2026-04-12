@@ -8,7 +8,7 @@
     "models": [
       "2"
     ],
-    "enabled": true,
+    "enabled": false,
     "createdAt": 1775205228307,
     "updatedAt": 1775205228307
   },
@@ -21,8 +21,34 @@
     "models": [
       "2"
     ],
-    "enabled": true,
+    "enabled": false,
     "createdAt": 1775205231196,
     "updatedAt": 1775205231196
+  },
+  {
+    "id": "provider_1775813628823_9ywz4m",
+    "name": "智谱AI (BigModel)",
+    "type": "zhipu",
+    "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+    "apiKey": "02795750a3db4446b3d675ac755e6c0a.lc9oQDOH86EZ1kwD",
+    "models": [
+      "glm-5.1"
+    ],
+    "enabled": true,
+    "createdAt": 1775813628823,
+    "updatedAt": 1775905723015
+  },
+  {
+    "id": "provider_minimax_1775818000",
+    "name": "MiniMax AI",
+    "type": "minimax",
+    "baseUrl": "https://api.minimaxi.com/v1",
+    "apiKey": "sk-cp-Xbbc9YyGkfjGakX_uHOA0eoubcvC6ntqq0sR5NIqxOUuC-wGuuyMU3QJIiW-vh5F0KPISkPiuwBPCwtYU7pnxrDpFzd1JTer8oNI1y1RJ4ufqxEgCai67Kc",
+    "models": [
+      "MiniMax-M2.7"
+    ],
+    "enabled": true,
+    "createdAt": 1775818000,
+    "updatedAt": 1775905746988
   }
 ]

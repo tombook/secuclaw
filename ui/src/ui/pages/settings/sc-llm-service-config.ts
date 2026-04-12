@@ -2,6 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../../i18n/lib/lit-controller.js';
 import { gatewayClient } from '../../gateway-client.js';
+import '../../components/design-system/sc-button.js';
+import '../../components/sc-smart-recommendation-bar.js';
 
 interface LLMProvider {
   id: string;
@@ -610,48 +612,31 @@ export class ScLlmServiceConfig extends LitElement {
   private getFallbackProviders(): LLMProvider[] {
     return [
       {
-        id: 'provider_ollama',
-        name: 'Ollama (本地)',
-        type: 'local',
-        baseUrl: 'http://localhost:11434',
-        models: ['qwen2.5:7b', 'qwen2.5:14b', 'qwen2.5:72b', 'llama3:8b', 'llama3.1:8b', 'llama3.1:70b', 'mistral:7b', 'codellama:7b', 'codellama:13b', 'deepseek-coder:6.7b', 'phi3:14b'],
-        enabled: true,
-      },
-      {
-        id: 'provider_openai',
-        name: 'OpenAI',
+        id: 'provider_volcengine',
+        name: '火山引擎',
         type: 'openai',
-        baseUrl: 'https://api.openai.com/v1',
-        apiKey: '',
-        models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-        enabled: false,
-      },
-      {
-        id: 'provider_anthropic',
-        name: 'Anthropic Claude',
-        type: 'anthropic',
-        baseUrl: 'https://api.anthropic.com',
-        apiKey: '',
-        models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
-        enabled: false,
-      },
-      {
-        id: 'provider_zhipu',
-        name: '智谱 GLM',
-        type: 'zhipu',
-        baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-        apiKey: '',
-        models: ['glm-4', 'glm-4-flash', 'glm-4-plus', 'glm-3-turbo'],
-        enabled: false,
+        baseUrl: 'https://ark.cn-beijing.volces.com/api/coding/v3',
+        apiKey: '075cca97-a0ca-4225-87bf-78ac1b1e9664',
+        models: ['doubao-seed-2.0-code', 'doubao-seed-2.0-pro', 'doubao-seed-2.0-lite', 'deepseek-v3.2', 'kimi-k2.5'],
+        enabled: true,
       },
       {
         id: 'provider_minimax',
         name: 'MiniMax',
         type: 'minimax',
-        baseUrl: 'https://api.minimax.chat/v',
-        apiKey: '',
-        models: ['MiniMax-Text-01', 'abab6.5s-chat', 'abab6.5g-chat'],
-        enabled: false,
+        baseUrl: 'https://api.minimaxi.com/v1',
+        apiKey: 'sk-cp-Xbbc9YyGkfjGakX_uHOA0eoubcvC6ntqq0sR5NIqxOUuC-wGuuyMU3QJIiW-vh5F0KPISkPiuwBPCwtYU7pnxrDpFzd1JTer8oNI1y1RJ4ufqxEgCai67Kc',
+        models: ['MiniMax-M2.7', 'MiniMax-M2.5'],
+        enabled: true,
+      },
+      {
+        id: 'provider_zhipu',
+        name: '智谱 GLM',
+        type: 'zhipu',
+        baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
+        apiKey: '02795750a3db4446b3d675ac755e6c0a.lc9oQDOH86EZ1kwD',
+        models: ['glm-5.1', 'GLM-5-Turbo'],
+        enabled: true,
       },
     ];
   }
@@ -1211,6 +1196,7 @@ export class ScLlmServiceConfig extends LitElement {
     };
 
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-header">
         <div>
           <h1 class="page-title">${this.i18n.t('settings.llmConfig')}</h1>
@@ -1237,13 +1223,13 @@ export class ScLlmServiceConfig extends LitElement {
           <!-- Backup/Restore buttons -->
           <button class="btn-icon" @click=${() => this.createBackup()} title="备份配置">
             💾 备份
-          </button>
+          </sc-button>
           <button class="btn-icon" @click=${() => this.handleImport()} title="导入配置">
             📂 导入
-          </button>
+          </sc-button>
           <button class="btn-icon" @click=${() => this.syncToBackend()} title="手动同步">
             🔄 同步
-          </button>
+          </sc-button>
           
           ${!this.gatewayConnected ? html`
             <div class="gateway-status disconnected">
@@ -1255,7 +1241,7 @@ export class ScLlmServiceConfig extends LitElement {
                 ?disabled=${this.gatewayReconnecting}
               >
                 ${this.gatewayReconnecting ? '🔄 连接中...' : '🔄 重启网关'}
-              </button>
+              </sc-button>
             </div>
           ` : html`
             <div class="gateway-status connected">
@@ -1265,7 +1251,7 @@ export class ScLlmServiceConfig extends LitElement {
           `}
           <button class="add-button" @click=${this.openAddForm}>
             <span>+</span> 添加服务商
-          </button>
+          </sc-button>
         </div>
       </div>
       
@@ -1277,7 +1263,7 @@ export class ScLlmServiceConfig extends LitElement {
             <p>请确保网关服务正在运行。配置数据将保存在本地（重启服务后可同步到后端）。</p>
             <button class="btn-restart-large ${this.gatewayReconnecting ? 'reconnecting' : ''}" @click=${this.restartGateway} ?disabled=${this.gatewayReconnecting}>
               ${this.gatewayReconnecting ? '🔄 正在连接...' : '🔄 重启网关连接'}
-            </button>
+            </sc-button>
           </div>
         </div>
       ` : ''}
@@ -1288,7 +1274,7 @@ export class ScLlmServiceConfig extends LitElement {
           <p>${this.i18n.t('chat.noProvider') || '未配置LLM服务提供商'}</p>
           <button class="add-button" @click=${this.openAddForm} style="margin-top: 16px;">
             <span>+</span> 添加第一个服务商
-          </button>
+          </sc-button>
         </div>
       ` : html`
         <div class="provider-grid">
@@ -1351,24 +1337,24 @@ export class ScLlmServiceConfig extends LitElement {
                   </div>
                   <div class="button-group">
                     <button 
-                      class="btn btn-secondary btn-small" 
+                      variant="secondary" size="sm" 
                       @click=${() => this.handleTest(p)}
                       ?disabled=${testStatus === 'testing'}
                     >
                       ${testStatus === 'testing' ? '测试中...' : '测试连接'}
-                    </button>
+                    </sc-button>
                     <button 
-                      class="btn btn-secondary btn-small" 
+                      variant="secondary" size="sm" 
                       @click=${() => this.openEditForm(p)}
                     >
                       编辑
-                    </button>
+                    </sc-button>
                     <button 
-                      class="btn btn-danger btn-small" 
+                      variant="danger" size="sm" 
                       @click=${() => this.handleDelete(p.id)}
                     >
                       删除
-                    </button>
+                    </sc-button>
                   </div>
                 </div>
               </div>
@@ -1449,13 +1435,13 @@ export class ScLlmServiceConfig extends LitElement {
                   placeholder="输入模型名称，按 Enter 添加，如 gpt-4o" 
                   style="flex: 1" 
                 />
-                <button class="btn btn-secondary" @click=${this.handleAddModel}>添加</button>
+                <sc-button variant="secondary" @click=${this.handleAddModel}>添加</sc-button>
               </div>
               <div style="display: flex; flex-wrap: wrap; gap: var(--sc-spacing-xs);">
                 ${(this.newProvider.models || []).map(m => html`
                   <span class="model-tag">
                     ${m}
-                    <button @click=${() => this.handleRemoveModel(m)}>×</button>
+                    <sc-button variant="secondary" size="sm" @click=${() => this.handleRemoveModel(m)}>×</sc-button>
                   </span>
                 `)}
               </div>
@@ -1463,12 +1449,12 @@ export class ScLlmServiceConfig extends LitElement {
             </div>
             
             <div class="form-actions">
-              <button class="btn btn-secondary" @click=${this.closeForm}>
+              <sc-button variant="secondary" @click=${this.closeForm}>
                 取消
-              </button>
-              <button class="btn btn-primary" @click=${this.handleSave}>
+              </sc-button>
+              <sc-button variant="primary" @click=${this.handleSave}>
                 ${this.i18n.t('common.save')}
-              </button>
+              </sc-button>
             </div>
           </div>
         </div>

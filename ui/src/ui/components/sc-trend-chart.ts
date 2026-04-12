@@ -5,7 +5,8 @@
  * 用于展示安全指标趋势变化
  */
 
-import { LitElement, html, css, svg, SVGTemplateResult } from 'lit';
+import { LitElement, html, css, svg } from 'lit';
+import type { SVGTemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 

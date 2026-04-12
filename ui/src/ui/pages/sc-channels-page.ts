@@ -2,6 +2,11 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { I18nController } from '../../i18n/lib/lit-controller.js';
 import { gatewayClient } from '../gateway-client.js';
+import { roleContext } from '../store/role-context.js';
+import '../components/design-system/sc-button.js';
+import '../components/design-system/sc-card.js';
+import '../components/design-system/sc-badge.js';
+import '../components/sc-smart-recommendation-bar.js';
 
 interface ChannelConfig {
   id: string;
@@ -503,11 +508,12 @@ export class ScChannelsPage extends LitElement {
 
   render() {
     return html`
+      <sc-smart-recommendation-bar></sc-smart-recommendation-bar>
       <div class="page-header">
         <h1 class="page-title">${this.i18n.t('nav.channels')}</h1>
         <p class="page-subtitle">管理安全告警和通知的通讯渠道</p>
         <div style="margin-top: 12px;">
-          <button class="btn btn-primary" @click=${this.sendMessage}>📤 发送测试消息</button>
+          <sc-button size="sm" variant="primary" @click=${this.sendMessage}>📤 发送测试消息</sc-button>
         </div>
       </div>
 
@@ -552,17 +558,17 @@ export class ScChannelsPage extends LitElement {
         <div class="channel-actions">
           ${channel.status === 'connected'
             ? html`
-                <button class="btn btn-secondary btn-sm" @click=${() => this.openConfig(channel)}>
+                <sc-button size="sm" variant="secondary" @click=${() => this.openConfig(channel)}>
                   查看配置
-                </button>
-                <button class="btn btn-danger btn-sm" @click=${() => this.disconnectChannel(channel)}>
+                </sc-button>
+                <sc-button size="sm" variant="danger" @click=${() => this.disconnectChannel(channel)}>
                   断开连接
-                </button>
+                </sc-button>
               `
             : html`
-                <button class="btn btn-primary btn-sm" @click=${() => this.openConfig(channel)}>
+                <sc-button size="sm" variant="primary" @click=${() => this.openConfig(channel)}>
                   连接
-                </button>
+                </sc-button>
               `}
         </div>
       </div>
@@ -601,10 +607,10 @@ export class ScChannelsPage extends LitElement {
             `)}
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" @click=${this.closeConfig}>取消</button>
-            <button class="btn btn-primary" @click=${this.saveConfig}>
+            <sc-button size="sm" variant="secondary" @click=${this.closeConfig}>取消</sc-button>
+            <sc-button size="sm" variant="primary" @click=${this.saveConfig}>
               ${this.selectedChannel.status === 'connected' ? '保存更新' : '连接'}
-            </button>
+            </sc-button>
           </div>
         </div>
       </div>

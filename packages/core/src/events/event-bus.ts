@@ -1,5 +1,8 @@
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import type { EventMap, EventName, EventHandler } from './types.js';
 
+@Service()
 export class EventBus {
   private handlers = new Map<string, Set<EventHandler<any>>>();
 

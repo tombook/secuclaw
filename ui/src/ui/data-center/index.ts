@@ -7,6 +7,6 @@
  * - 数据质量监控
  */
 
-// 状态管理
-export { dataStore } from './store/data-store.js';
-export type { DatabaseInfo, DatabaseHealth, DatabaseType, LineageGraph, LineageNode, LineageRelation, QualityIssue, DataSource } from './store/data-store.js';
+// Re-export from the central store
+export { dataStore } from '../store/data-store.js';
+export type { DatabaseInfo, DatabaseHealth, DatabaseType, LineageGraph, LineageNode, LineageRelation, QualityIssue, DataSource } from '../store/data-store.js';

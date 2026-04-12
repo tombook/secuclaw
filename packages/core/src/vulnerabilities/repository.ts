@@ -4,9 +4,11 @@
  */
 
 import type { JsonStore } from '../storage/json-store.js';
+import type { VulnerabilityQueryParams } from './types.js';
 
-const FILE_NAME = 'vulnerabilities.json';
+export type { VulnerabilityQueryParams };
 
+// Local Vulnerability type for JSON storage
 export interface Vulnerability {
   id: string;
   info: {
@@ -54,23 +56,13 @@ export interface Vulnerability {
   updatedAt: number;
 }
 
-export interface VulnerabilityQueryParams {
-  status?: string;
-  severity?: string;
-  cveId?: string;
-  assetId?: string;
-  assignedTo?: string;
-  fromDate?: number;
-  toDate?: number;
-  page?: number;
-  pageSize?: number;
-}
+const FILE_NAME = 'vulnerabilities.json';
 
 export class VulnerabilitiesRepository {
   constructor(private store: JsonStore) {}
 
   async getAll(): Promise<Vulnerability[]> {
-    return this.store.get<Vulnerability[]>(FILE_NAME) || [];
+    return (await this.store.get<Vulnerability[]>(FILE_NAME)) ?? [];
   }
 
   async getById(id: string): Promise<Vulnerability | null> {
@@ -92,14 +84,14 @@ export class VulnerabilitiesRepository {
     if (params.severity) {
       vulns = vulns.filter(v => v.info.cvss.severity === params.severity);
     }
-    if (params.cveId) {
-      vulns = vulns.filter(v => v.info.cveId.toLowerCase().includes(params.cveId!.toLowerCase()));
+    if (params.vulnId) {
+      vulns = vulns.filter(v => v.info.cveId.toLowerCase().includes((params.vulnId ?? '').toLowerCase()));
     }
     if (params.assetId) {
-      vulns = vulns.filter(v => v.affectedAssets.some(a => a.assetId === params.assetId));
+      vulns = vulns.filter(v => v.affectedAssets.some((a: any) => a.assetId === params.assetId));
     }
-    if (params.assignedTo) {
-      vulns = vulns.filter(v => v.remediation.assignedTo === params.assignedTo);
+    if (params.assignee) {
+      vulns = vulns.filter(v => v.remediation.assignedTo === params.assignee);
     }
 
     // Sort by priority (descending)
