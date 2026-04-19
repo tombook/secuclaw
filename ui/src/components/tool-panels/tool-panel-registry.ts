@@ -45,6 +45,11 @@ export const TOOL_PANELS: Record<string, ToolPanelDef> = {
   'third-party-risk': { toolId: 'third-party-risk', label: '第三方风险评估', icon: '🔗', mode: 'modal' },
   'vendor-eval': { toolId: 'vendor-eval', label: '供应商评估', icon: '🏢', mode: 'modal' },
   'zero-trust': { toolId: 'zero-trust', label: '零信任评估', icon: '🛡️', mode: 'modal' },
+  'security-governance': { toolId: 'security-governance', label: '安全治理', icon: '🛡️', mode: 'modal' },
+  'investment-decision': { toolId: 'investment-decision', label: '投资决策', icon: '📈', mode: 'modal' },
+  'sec-awareness': { toolId: 'sec-awareness', label: '安全意识培训', icon: '🎓', mode: 'modal' },
+  'cookie-mgmt': { toolId: 'cookie-mgmt', label: 'Cookie 管理', icon: '🍪', mode: 'slide' },
+  'consent-mgmt': { toolId: 'consent-mgmt', label: '同意管理', icon: '✅', mode: 'slide' },
 };
 
 // ─── Mock result generators ────────────────────────────────────
@@ -887,6 +892,71 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
         </div>
       `;
     }
+    // ─── Phase 1C 新增工具面板 ───
+    case 'security-governance': {
+      return html`
+        <div class="form-group"><label class="form-label">治理框架</label><select class="form-select"><option selected>ISO 27001</option><option>NIST CSF</option><option>等保2.0</option></select></div>
+        <div class="form-group"><label class="form-label">评估范围</label><select class="form-select"><option selected>全组织</option><option>安全部门</option></select></div>
+        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '🛡️ 执行评估'}</button>
+        <div class="result-section"><div class="result-title">治理成熟度评估</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">安全治理</span><span class="chip chip-pass">3.5/5</span></div><div class="ri-desc">Policy/GDR/Risk 三层架构</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">合规管理</span><span class="chip chip-medium">3.2/5</span></div><div class="ri-desc">GDPR/ISO27001 对齐度 92%</div></div>
+        </div>
+      `;
+    }
+
+    // ─── 指挥官：投资决策 [Phase 1C] ───
+    case 'investment-decision': {
+      return html`
+        <div class="form-group"><label class="form-label">投资类型</label><select class="form-select"><option selected>安全工具</option><option>人员培训</option><option>基础设施</option></select></div>
+        <div class="form-group"><label class="form-label">预算范围</label><select class="form-select"><option>50万以下</option><option selected>50-200万</option><option>200万以上</option></select></div>
+        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>${executing ? '计算中...' : '📈 ROI 分析'}</button>
+        <div class="result-section"><div class="result-title">ROI 分析结果</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">零信任架构</span><span class="chip chip-pass">ROI 285%</span></div><div class="ri-desc">投资 ¥320万，预期3年回报 ¥912万</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">SOC 升级</span><span class="chip chip-pass">ROI 210%</span></div><div class="ri-desc">投资 ¥180万，预期3年回报 ¥378万</div></div>
+        </div>
+      `;
+    }
+
+    // ─── BSO：安全意识培训 [Phase 1C] ───
+    case 'sec-awareness': {
+      return html`
+        <div class="form-group"><label class="form-label">培训类型</label><select class="form-select"><option selected>钓鱼模拟</option><option>安全意识课</option><option>合规培训</option></select></div>
+        <div class="form-group"><label class="form-label">目标群体</label><select class="form-select"><option selected>全员</option><option>开发团队</option><option>管理层</option></select></div>
+        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '发起中...' : '🎓 发起培训'}</button>
+        <div class="result-section"><div class="result-title">培训效果统计</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">完成率</span><span class="chip chip-pass">87%</span></div><div class="ri-desc">本月已完成 1,305/1,500 人</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">钓鱼识别率</span><span class="chip chip-pass">92%</span></div><div class="ri-desc">较上季度提升 15%</div></div>
+        </div>
+      `;
+    }
+
+    // ─── 隐私官：Cookie 管理 [Phase 1C] ───
+    case 'cookie-mgmt': {
+      return html`
+        <div class="form-group"><label class="form-label">Cookie 类型</label><select class="form-select"><option>必要 Cookie</option><option selected>分析 Cookie</option><option>营销 Cookie</option></select></div>
+        <div class="form-group"><label class="form-label">合规标准</label><select class="form-select"><option selected>GDPR</option><option>CCPA</option><option>PIPL</option></select></div>
+        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '扫描中...' : '🍪 Cookie 审计'}</button>
+        <div class="result-section"><div class="result-title">Cookie 合规状态</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">合规 Cookie</span><span class="chip chip-pass">23</span></div><div class="ri-desc">已清理 8 个不合规 Cookie</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">同意率</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">用户 Cookie 同意率达标</div></div>
+        </div>
+      `;
+    }
+
+    // ─── 隐私官：同意管理 [Phase 1C] ───
+    case 'consent-mgmt': {
+      return html`
+        <div class="form-group"><label class="form-label">同意类型</label><select class="form-select"><option selected>明确同意</option><option>默示同意</option><option>选择退出</option></select></div>
+        <div class="form-group"><label class="form-label">数据用途</label><select class="form-select"><option selected>营销通信</option><option>数据分析</option><option>第三方共享</option></select></div>
+        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '✅ 同意率分析'}</button>
+        <div class="result-section"><div class="result-title">同意管理状态</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">明确同意率</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">营销用途同意 1,410/1,500</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">撤回率</span><span class="chip chip-pass">3.2%</span></div><div class="ri-desc">月度撤回请求 48 件</div></div>
+        </div>
+      `;
+    }
+
     default:
       return html`<div style="color:#64748b;text-align:center;padding:20px">工具面板开发中...</div>`;
   }

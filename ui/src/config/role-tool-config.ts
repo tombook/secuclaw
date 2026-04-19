@@ -1,11 +1,16 @@
 /**
- * SecuClaw 角色工具配置 v3.2
+ * SecuClaw 角色工具配置 v3.3
  * 基于 SKILL.md 安全能力重新设计分配
  * Phase 1A: secuclaw-commander 增加 bcp-mgmt 工具
  * Phase 1B: 
  *   - security-architect 增加网络分段/DMZ/安全区域工具支持防御纵深
  *   - business-security-officer 增加灾难恢复工具
  *   - supply-chain-security 确认 T.contractReview (DPA) 已配置
+ * Phase 1C:
+ *   - secuclaw-commander 增加安全治理、投资决策工具
+ *   - business-security-officer 增加安全意识培训工具
+ *   - privacy-officer 增加 Cookie 管理、同意管理工具
+ *   - security-ops 增加 BCP 管理工具
  *
  * 设计原则:
  *   1. 每个 light 能力有对应工具支撑
@@ -78,7 +83,7 @@ const T = {
   cloudSecurity:     { id: 'cloud-security',   label: '云安全评估',    icon: 'Cloud',        priority: 5 },
   // [Phase 1B] 防御纵深相关工具
   networkSeg:        { id: 'network-seg',      label: '网络分段',      icon: 'Network',      priority: 3 },  // 网络分段设计
-  dmzConfig:         { id: 'dmz-config',       label: 'DMZ 配置',      icon: 'Shield',        priority: 4 },  // DMZ 区域设计
+  dmzConfig:         { id: 'dmz-config',       label: 'DMZ 配置',       icon: 'Shield',        priority: 4 },  // DMZ 区域设计
   appSec:            { id: 'app-sec',          label: '应用安全',      icon: 'Code2',        priority: 4 },  // 应用层防护
 
   // ─── 业务连续性 ──────────────────────────
@@ -93,6 +98,13 @@ const T = {
   contractReview:    { id: 'contract-review',  label: '合同审查/DPA', icon: 'FileCheck2',   priority: 4 },  // [Phase 1B] 标注 DPA
   vendorAudit:       { id: 'vendor-audit',    label: '供应商审计',    icon: 'ClipboardCheck',priority: 3 }, // [Phase 1B] 新增
   thirdPartyRisk:    { id: 'third-party-risk', label: '第三方风险',    icon: 'UsersRound',   priority: 3 },
+
+  // ─── Phase 1C 新增工具 ──────────────────
+  securityGovernance: { id: 'security-governance', label: '安全治理',    icon: 'ShieldCheck', priority: 1 },
+  investmentDecision: { id: 'investment-decision', label: '投资决策',    icon: 'TrendingUp',  priority: 2 },
+  secAwareness:      { id: 'sec-awareness',    label: '安全意识培训',  icon: 'GraduationCap',priority: 3 },
+  cookieMgmt:        { id: 'cookie-mgmt',      label: 'Cookie 管理',   icon: 'Cookie',       priority: 3 },
+  consentMgmt:       { id: 'consent-mgmt',     label: '同意管理',      icon: 'CheckCircle',  priority: 3 },
 
   // ─── 第三方安全工具 ──────────────────────
   nessusScan:        { id: 'nessus-scan',           label: 'Nessus 扫描',      icon: 'Shield',       priority: 10 },
@@ -135,6 +147,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
   // Light: 战略规划→global-situation, 危机管理→incident-mgmt,
   //        跨部门协调→ai-dispatch, 董事会汇报→board-report, 风险管理→risk-score
   // Phase 1A: 增加 bcp-mgmt 支持业务连续性管理全域协调
+  // Phase 1C: 增加 securityGovernance, investmentDecision 支持治理与决策
   // ═══════════════════════════════════════════════════════════
   'secuclaw-commander': {
     roleId: 'secuclaw-commander',
@@ -154,6 +167,9 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.vendorEval,       // 供应链管理
       T.splunkQuery,      // Splunk 全域日志
       T.elasticSecurity,  // Elastic Security
+      // [Phase 1C] 治理与决策
+      T.securityGovernance, // 安全治理框架与合规体系
+      T.investmentDecision, // 安全投资决策与ROI分析
     ],
   },
 
@@ -161,6 +177,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
   // 隐私官（SEC+LEG 二元）— 数据隐私、法律合规
   // Light: PIA评估→gdpr-audit, 数据分类→data-map, 合规审计→compliance-chk,
   //        用户权利→(表单内), 跨境传输→gdpr-audit, 同意管理→(表单内)
+  // Phase 1C: 增加 cookieMgmt, consentMgmt 支持 Cookie & 同意管理
   // ═══════════════════════════════════════════════════════════
   'privacy-officer': {
     roleId: 'privacy-officer',
@@ -176,6 +193,9 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.riskRegister,     // 隐私风险登记
       T.reportGen,        // 合规报表
       T.thirdPartyRisk,   // 第三方数据泄露风险
+      // [Phase 1C] Cookie & 同意管理
+      T.cookieMgmt,       // Cookie 管理与审计
+      T.consentMgmt,      // 同意管理与用户权利
     ],
   },
 
@@ -184,6 +204,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
   // Light: BCP管理→bcp-mgmt, 风险量化→risk-score, 供应链安全→vendor-eval,
   //        投资ROI→cost-calc, 业务影响分析→(BCP内置), KPI→kpi-track
   // [Phase 1B] 增加灾难恢复工具支持 DR 规划
+  // [Phase 1C] 增加 secAwareness 支持安全意识培训
   // ═══════════════════════════════════════════════════════════
   'business-security-officer': {
     roleId: 'business-security-officer',
@@ -201,6 +222,8 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.budgetDash,       // 预算追踪
       T.thirdPartyRisk,   // 供应链风险
       T.disasterRecovery, // [Phase 1B] 灾难恢复规划 RTO/RPO/灾备站点
+      // [Phase 1C] 安全意识培训
+      T.secAwareness,    // 安全意识培训与钓鱼演练
     ],
   },
 
@@ -209,6 +232,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
   // Light: 威胁监控→alert-queue, 事件响应→incident-mgmt, SOC→splunk/elastic,
   //        漏洞管理→vuln-scan, 日志分析→log-analysis, 威胁狩猎→threat-intel,
   //        安全自动化→soar-exec
+  // [Phase 1C] 增加 bcpMgmt 支持业务连续性运营视角
   // ═══════════════════════════════════════════════════════════
   'security-ops': {
     roleId: 'security-ops',
@@ -229,6 +253,8 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.virusTotalScan,   // VirusTotal
       T.elasticSecurity,  // Elastic Security
       T.nessusScan,       // Nessus 漏洞扫描
+      // [Phase 1C] 业务连续性运营
+      T.bcpMgmt,         // BCP 运营指标监控
     ],
   },
 

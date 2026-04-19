@@ -1499,7 +1499,11 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '46', numColor: '#fbbf24', unit: '/100', sparkData: [50,48,52,47,44,46,43,46], delta: '↑+2', deltaColor: '#f59e0b', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
           this._renderMetricCard(this._mc({ toolId: 'bcp-mgmt', title: '🛡️ BCP 管理', num: '92%', numColor: '#22c55e', unit: '覆盖率', sparkData: [85,87,88,89,90,91,92,92], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
-        ${this._renderDarkZone('secuclaw-commander')}
+        ${this._renderMetricsZone('治理与决策 [Phase 1C]', [
+          this._renderMetricCard(this._mc({ toolId: 'security-governance', title: '🛡️ 安全治理', num: '92%', numColor: '#22c55e', unit: '治理覆盖率', sparkData: [85,87,88,90,91,91,92,92], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P2 中', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'investment-decision', title: '📈 投资决策', num: '340%', numColor: '#22c55e', unit: '安全ROI', sparkData: [280,300,310,320,330,340,340,340], delta: '↑+60%', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
+${this._renderDarkZone('secuclaw-commander')}
         ${this._renderDecisionZone('secuclaw-commander')}
         ${this._renderFrameworkZone('secuclaw-commander')}
         ${this._renderToolGuideZone('secuclaw-commander')}
@@ -1519,7 +1523,10 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'log-analysis', title: '📜 日志分析', num: '65%', numColor: '#8b5cf6', unit: '覆盖率', sparkData: [55,58,60,62,63,64,65,65], delta: '↑+10%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' })),
           this._renderMetricCard(this._mc({ toolId: 'threat-intel', title: '📡 威胁情报', num: '12', numColor: '#06b6d4', unit: '新增情报', sparkData: [5,8,6,10,9,12,11,12], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '本周', badge: 'P2 中', badgeColor: '#f59e0b' })),
         ])}
-        ${this._renderDarkZone('security-ops')}
+        ${this._renderMetricsZone('业务连续性 [Phase 1C]', [
+          this._renderMetricCard(this._mc({ toolId: 'bcp-mgmt', title: '🛡️ BCP 管理', num: '95%', numColor: '#22c55e', unit: 'BCP覆盖', sparkData: [88,90,91,93,94,95,95,95], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#22c55e' })),
+        ])}
+${this._renderDarkZone('security-ops')}
         ${this._renderFrameworkZone('security-ops')}
         ${this._renderToolGuideZone('security-ops')}
         ${this._renderTimelineZone('security-ops')}
@@ -1559,7 +1566,11 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'policy-mgmt', title: '📄 策略管理', num: '2', numColor: '#ef4444', unit: '待更新', sparkData: [0,1,1,2,1,2,2,2], delta: '↑+1', deltaColor: '#ef4444', deltaLabel: '本月', badge: 'P1 重', badgeColor: '#ef4444' })),
           this._renderMetricCard(this._mc({ toolId: 'vendor-eval', title: '🏢 供应商评估', num: '1', numColor: '#f59e0b', unit: '高风险', sparkData: [0,1,1,1,2,1,1,1], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
         ])}
-        ${this._renderDarkZone('privacy-officer')}
+        ${this._renderMetricsZone('Cookie & 同意 [Phase 1C]', [
+          this._renderMetricCard(this._mc({ toolId: 'cookie-mgmt', title: '🍪 Cookie 管理', num: '94%', numColor: '#22c55e', unit: '合规率', sparkData: [88,89,90,91,92,93,94,94], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近月', badge: 'P3 轻', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'consent-mgmt', title: '✅ 同意管理', num: '96%', numColor: '#22c55e', unit: '用户同意率', sparkData: [90,91,92,93,94,95,96,96], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近月', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
+${this._renderDarkZone('privacy-officer')}
         ${this._renderLegalZone('privacy-officer')}
         ${this._renderFrameworkZone('privacy-officer')}
         ${this._renderToolGuideZone('privacy-officer')}
@@ -1627,7 +1638,10 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'vendor-eval', title: '🏢 供应商评估', num: '1', numColor: '#f59e0b', unit: '高风险', sparkData: [2,2,1,1,2,1,1,1], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
           this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '87%', numColor: '#3b82f6', unit: 'BCP达成', sparkData: [78,80,82,84,85,86,87,87], delta: '↑+9%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
-        ${this._renderDarkZone('business-security-officer')}
+        ${this._renderMetricsZone('安全培训 [Phase 1C]', [
+          this._renderMetricCard(this._mc({ toolId: 'sec-awareness', title: '🎓 安全意识培训', num: '82%', numColor: '#22c55e', unit: '培训完成率', sparkData: [70,73,75,78,79,80,81,82], delta: '↑+12%', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
+${this._renderDarkZone('business-security-officer')}
         ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
           this._renderMetricCard(this._mc({ toolId: 'disaster-recovery', title: '🔄 灾难恢复', num: '4h', numColor: '#22c55e', unit: 'RTO目标', sparkData: [8,7,6,5,5,4,4,4], delta: '↓-4h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' })),
         ])}
