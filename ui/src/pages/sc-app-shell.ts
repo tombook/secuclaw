@@ -8,6 +8,7 @@ import { LitElement, html, css, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import type { RoleId } from '../config/role-tool-config';
 import { ROLE_TOOL_CONFIGS, ALL_ROLE_IDS } from '../config/role-tool-config';
+import { getShortcutLabel } from '../services/keyboard-shortcuts';
 import { ROLE_THEMES, applyTheme } from '../config/role-theme-config';
 import '../components/sc-settings-panel';
 import '../components/tool-panels/sc-tool-panel';
@@ -667,11 +668,28 @@ export class ScAppShell extends LitElement {
   private _timer: ReturnType<typeof setInterval> | null = null;
 
   private _boundHandleToolPanel = (e: Event) => this._handleOpenToolPanel(e as CustomEvent);
+  private _escHandler: ((e: KeyboardEvent) => void) | null = null;
 
   connectedCallback() {
     super.connectedCallback();
     this._timer = setInterval(() => { this._time = this._fmtTime(new Date()); }, 1000);
     this.addEventListener('open-tool-panel', this._boundHandleToolPanel);
+    this.addEventListener('navigate', ((e: CustomEvent) => {
+      const { view, roleId } = e.detail;
+      if (view === 'overview') this._goToOverview();
+      else if (view === 'role' && roleId) this._switchToRole(roleId);
+    }) as EventListener);
+    
+    // Escape 键关闭工具面板
+    this._escHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && this._toolPanelOpen) {
+        this._toolPanelOpen = false;
+        if (window.location.hash.startsWith('#/tool/')) {
+          window.location.hash = `#/${this._currentRoleId || ''}`;
+        }
+      }
+    };
+    window.addEventListener('keydown', this._escHandler);
     
     // Hash 路由监听，支持 /#/tool/{toolId} 直接打开工具
     window.addEventListener('hashchange', () => this._handleHashChange());
@@ -707,6 +725,7 @@ export class ScAppShell extends LitElement {
   disconnectedCallback() {
     if (this._timer) clearInterval(this._timer);
     this.removeEventListener('open-tool-panel', this._boundHandleToolPanel);
+    if (this._escHandler) window.removeEventListener('keydown', this._escHandler);
     super.disconnectedCallback();
   }
 
@@ -769,6 +788,7 @@ export class ScAppShell extends LitElement {
           >
             <span class="color-dot" style="background: ${theme.primary}"></span>
             <span class="nav-label">${config.label}</span>
+            <span class="nav-shortcut">${getShortcutLabel(roleId)}</span>
             ${html`<span class="status-dot ${status}"></span>`}
           </div>
         `);

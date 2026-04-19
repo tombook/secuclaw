@@ -22,9 +22,9 @@ export class ScRoleCommander extends LitElement {
   @state() private _panelOpen = false
   @state() private _toast: string | null = null
 
-  private _showToast(msg: string) {
+  private _showToast(msg: string, duration = 2000) {
     this._toast = msg
-    setTimeout(() => { this._toast = null; this.requestUpdate(); }, 2000)
+    setTimeout(() => { this._toast = null; this.requestUpdate(); }, duration)
   }
   @state() private _aiPanelOpen = false
   @state() private _aiPanelLoading = false
@@ -457,6 +457,7 @@ export class ScRoleCommander extends LitElement {
   private _storeUnsub: (() => void) | null = null
   private _timelineUnsub: (() => void) | null = null
   private _mockUnsub: (() => void) | null = null
+  private _prevMetrics: Record<string, { num: string }> = {}
   private _closeMoreBound: ((e: Event) => void) | null = null
 
   connectedCallback() {
@@ -464,7 +465,32 @@ export class ScRoleCommander extends LitElement {
     // 监听 pluginStore 变化（启用/禁用时刷新）
     this._storeUnsub = pluginStore.subscribe(() => this.requestUpdate())
     this._timelineUnsub = timelineStore.subscribe(() => this.requestUpdate())
-    this._mockUnsub = mockDataStore.subscribe(() => this.requestUpdate())
+    this._mockUnsub = mockDataStore.subscribe(() => {
+      const state = mockDataStore.getState();
+      // Threshold alerts: detect significant metric changes
+      const thresholds: Record<string, { max: number; label: string }> = {
+        'risk-score': { max: 60, label: '风险评分过高' },
+        'alert-queue': { max: 30, label: '告警队列积压' },
+        'vuln-scan': { max: 80, label: '漏洞数量过多' },
+        'incident-mgmt': { max: 8, label: '待处理事件过多' },
+        'patch-mgmt': { max: 15, label: '补丁积压' },
+      };
+      for (const [toolId, cfg] of Object.entries(thresholds)) {
+        const prev = this._prevMetrics[toolId];
+        const curr = state.metrics[toolId];
+        if (prev && curr) {
+          const prevVal = parseInt(prev.num);
+          const currVal = parseInt(curr.num);
+          if (prevVal <= cfg.max && currVal > cfg.max) {
+            this._showToast(`⚠️ ${cfg.label}: ${curr.num}`, 4000);
+          }
+        }
+      }
+      // Snapshot current metrics for next comparison
+      this._prevMetrics = { ...state.metrics };
+      this.requestUpdate();
+    })
+    this._prevMetrics = { ...mockDataStore.getState().metrics };
     startMockDataRefresh(30000)
     this.addEventListener('tool-click', (e: Event) => {
       const detail = (e as CustomEvent).detail as { toolId: string }
