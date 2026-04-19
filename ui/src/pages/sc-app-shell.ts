@@ -667,7 +667,8 @@ export class ScAppShell extends LitElement {
   }
   
   private _handleHashChange() {
-    const hash = window.location.hash.slice(1);
+    const raw = window.location.hash.slice(1); // removes #
+    const hash = raw.startsWith('/') ? raw.slice(1) : raw;
     if (hash.startsWith('tool/')) {
       const toolId = hash.split('/')[1];
       if (toolId) {
@@ -685,6 +686,9 @@ export class ScAppShell extends LitElement {
         // 打开工具面板
         this._handleOpenToolPanel(new CustomEvent('open-tool-panel', { detail: { toolId } }));
       }
+    } else if (hash && ALL_ROLE_IDS.includes(hash as RoleId)) {
+      // 支持 #/{roleId} 直接跳转到角色指挥台
+      this._switchToRole(hash as RoleId);
     }
   }
 
