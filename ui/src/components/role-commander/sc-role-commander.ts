@@ -185,6 +185,14 @@ export class ScRoleCommander extends LitElement {
       font-size: 24px;
       font-weight: 800;
       line-height: 1;
+      transition: color 0.3s;
+    }
+    .rd-big-num.flash {
+      animation: numFlash 0.6s ease-out;
+    }
+    @keyframes numFlash {
+      0% { text-shadow: 0 0 8px currentColor; transform: scale(1.05); }
+      100% { text-shadow: none; transform: scale(1); }
     }
     .rd-unit {
       font-size: 10px;
@@ -1383,9 +1391,12 @@ export class ScRoleCommander extends LitElement {
   }
 
   private _renderMetricsZone(label: string, cards: ReturnType<typeof ScRoleCommander.prototype._renderMetricCard>[]) {
+    const last = mockDataStore.getState().lastUpdate;
+    const ago = last ? Math.round((Date.now() - last) / 1000) : -1;
+    const pulse = ago >= 0 && ago < 5;
     return html`
       <div class="zone zone-tools">
-        <div class="zone-label">📐 ${label}</div>
+        <div class="zone-label">📐 ${label} <span style="margin-left:auto;font-size:8px;font-weight:400;color:${pulse ? '#22c55e' : '#475569'}">${pulse ? '🟢 实时' : ago >= 0 ? `${ago}s ago` : ''}</span></div>
         <div class="rd-row rd-5col">
           ${cards.map(c => c)}
         </div>
@@ -1529,6 +1540,9 @@ export class ScRoleCommander extends LitElement {
         ])}
 
         ${this._renderDarkZone('security-architect')}
+
+        ${this._renderFrameworkZone('security-architect')}
+        ${this._renderToolGuideZone('security-architect')}
 
         <!-- Zone 2: 事件时间轴 -->
         <div class="zone zone-timeline">
