@@ -409,6 +409,30 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <label class="form-label">计划类型</label>
             <select class="form-select"><option>BCP 业务连续性计划</option><option>DRP 灾难恢复计划</option></select>
           </div>
+        </div>
+        /* [Phase 1B] 防御纵深设计选项 */
+        <div class="form-group">
+          <label class="form-label">防御纵深设计 [Phase 1B]</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#06b6d4;margin-bottom:4px">🌐 网络分段</div>
+              <select class="form-select"><option selected>已完成 VLAN 分段</option><option>微分段进行中</option><option>待规划</option></select>
+            </div>
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#22c55e;margin-bottom:4px">🛡️ DMZ 区域</div>
+              <select class="form-select"><option selected>标准 DMZ 已部署</option><option>云 DMZ 待规划</option><option>无 DMZ</option></select>
+            </div>
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#f59e0b;margin-bottom:4px">🏢 安全区域</div>
+              <select class="form-select"><option selected>办公区/生产区隔离</option><option>零信任区域规划中</option><option>未分区</option></select>
+            </div>
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#a78bfa;margin-bottom:4px">💻 应用层防护</div>
+              <select class="form-select"><option selected>WAF + RASP 已部署</option><option>仅 WAF</option><option>待部署</option></select>
+            </div>
+          </div>
+        </div>
+          </div>
           <div class="form-group">
             <label class="form-label">演练方式</label>
             <select class="form-select"><option>桌面推演</option><option>模拟演练</option><option>全量实战</option></select>
@@ -533,6 +557,29 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">合同类型</label><select class="form-select"><option>数据处理协议 DPA</option><option>保密协议 NDA</option><option>服务级别协议 SLA</option><option selected>全面审查</option></select></div>
         <button class="exec-btn" style="background:#84cc16" ?disabled=${executing} @click=${onExecute}>${executing ? html`审查中...` : html`📋 开始审查`}</button>
+        </div>
+        /* [Phase 1B] DPA 数据处理协议管理 */
+        <div class="form-group">
+          <label class="form-label">DPA 数据处理协议 [Phase 1B]</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#a78bfa;margin-bottom:4px">📋 DPA 状态</div>
+              <select class="form-select"><option selected>12 份有效 DPA</option><option>3 份待签署</option><option>2 份过期</option><option>全部过期</option></select>
+            </div>
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#ef4444;margin-bottom:4px">⚠️ 数据泄露通知</div>
+              <select class="form-select"><option selected>72h 内通知</option><option>48h 内通知</option><option>无要求</option></select>
+            </div>
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#22c55e;margin-bottom:4px">🌍 跨境传输</div>
+              <select class="form-select"><option selected>标准合同条款 SCC</option><option>约束性公司规则 BCR</option><option>充分性认定</option><option>禁止跨境</option></select>
+            </div>
+            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
+              <div style="font-size:10px;color:#f59e0b;margin-bottom:4px">🔒 数据处理限制</div>
+              <select class="form-select"><option selected>仅指定目的</option><option>允许二次使用</option><option>无限制</option></select>
+            </div>
+          </div>
+        </div>
         <div class="result-section">
           <div class="result-title">合同安全条款审查</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">数据泄露通知条款</span><span class="chip chip-critical">15 份合同缺少 72h 通知要求</span></div></div>

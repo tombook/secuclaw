@@ -1,7 +1,11 @@
 /**
- * SecuClaw 角色工具配置 v3.1
+ * SecuClaw 角色工具配置 v3.2
  * 基于 SKILL.md 安全能力重新设计分配
  * Phase 1A: secuclaw-commander 增加 bcp-mgmt 工具
+ * Phase 1B: 
+ *   - security-architect 增加网络分段/DMZ/安全区域工具支持防御纵深
+ *   - business-security-officer 增加灾难恢复工具
+ *   - supply-chain-security 确认 T.contractReview (DPA) 已配置
  *
  * 设计原则:
  *   1. 每个 light 能力有对应工具支撑
@@ -51,7 +55,7 @@ const T = {
   riskScore:         { id: 'risk-score',       label: '风险评分板',    icon: 'BarChart3',    priority: 1 },
   riskRegister:      { id: 'risk-register',    label: '风险登记册',    icon: 'ListChecks',   priority: 6 },
   kpiTrack:          { id: 'kpi-track',        label: 'KPI 追踪',      icon: 'Target',       priority: 2 },
-  budgetDash:        { id: 'budget-dash',      label: '预算仪表盘',    icon: 'PiggyBank',    priority: 3 },
+  budgetDash:        { id: 'budget-dash',       label: '预算仪表盘',    icon: 'PiggyBank',    priority: 3 },
   boardReport:       { id: 'board-report',     label: '董事会报告',    icon: 'FileText',     priority: 4 },
   policyMgmt:        { id: 'policy-mgmt',      label: '策略管理',      icon: 'FileCode',     priority: 7 },
   reportGen:         { id: 'report-gen',       label: '报表生成',      icon: 'FileBarChart', priority: 4 },
@@ -72,15 +76,22 @@ const T = {
   // ─── 架构 & 云安全 ──────────────────────
   iamConfig:         { id: 'iam-config',       label: 'IAM 配置',      icon: 'KeyRound',     priority: 3 },
   cloudSecurity:     { id: 'cloud-security',   label: '云安全评估',    icon: 'Cloud',        priority: 5 },
+  // [Phase 1B] 防御纵深相关工具
+  networkSeg:        { id: 'network-seg',      label: '网络分段',      icon: 'Network',      priority: 3 },  // 网络分段设计
+  dmzConfig:         { id: 'dmz-config',       label: 'DMZ 配置',      icon: 'Shield',        priority: 4 },  // DMZ 区域设计
+  appSec:            { id: 'app-sec',          label: '应用安全',      icon: 'Code2',        priority: 4 },  // 应用层防护
 
   // ─── 业务连续性 ──────────────────────────
   bcpMgmt:           { id: 'bcp-mgmt',         label: 'BCP 管理',      icon: 'ShieldCheck',  priority: 1 },
+  // [Phase 1B] 灾难恢复工具
+  disasterRecovery:  { id: 'disaster-recovery',label: '灾难恢复',      icon: 'RotateCcw',    priority: 2 },  // DR 站点/RTO/RPO
   costCalc:          { id: 'cost-calc',        label: '成本计算',      icon: 'Calculator',   priority: 3 },
 
   // ─── 供应链安全 ──────────────────────────
   sbomScan:          { id: 'sbom-scan',        label: 'SBOM 扫描',     icon: 'PackageSearch',priority: 1 },
   vendorEval:        { id: 'vendor-eval',      label: '供应商评估',    icon: 'Building',     priority: 2 },
-  contractReview:    { id: 'contract-review',  label: '合同审查',      icon: 'FileCheck2',   priority: 4 },
+  contractReview:    { id: 'contract-review',  label: '合同审查/DPA', icon: 'FileCheck2',   priority: 4 },  // [Phase 1B] 标注 DPA
+  vendorAudit:       { id: 'vendor-audit',    label: '供应商审计',    icon: 'ClipboardCheck',priority: 3 }, // [Phase 1B] 新增
   thirdPartyRisk:    { id: 'third-party-risk', label: '第三方风险',    icon: 'UsersRound',   priority: 3 },
 
   // ─── 第三方安全工具 ──────────────────────
@@ -172,6 +183,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
   // 业务安全官（SEC+BIZ 二元）— 业务连续、风险量化
   // Light: BCP管理→bcp-mgmt, 风险量化→risk-score, 供应链安全→vendor-eval,
   //        投资ROI→cost-calc, 业务影响分析→(BCP内置), KPI→kpi-track
+  // [Phase 1B] 增加灾难恢复工具支持 DR 规划
   // ═══════════════════════════════════════════════════════════
   'business-security-officer': {
     roleId: 'business-security-officer',
@@ -188,6 +200,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.reportGen,        // 运营报表
       T.budgetDash,       // 预算追踪
       T.thirdPartyRisk,   // 供应链风险
+      T.disasterRecovery, // [Phase 1B] 灾难恢复规划 RTO/RPO/灾备站点
     ],
   },
 
@@ -251,6 +264,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
   // Light: 架构设计→threat-model, 零信任→zero-trust, 身份架构→iam-config,
   //        云安全→cloud-security, 防御纵深→threat-model(纵深模式)
   // Dark:  架构弱点→threat-model(攻击路径模式)
+  // [Phase 1B] 增加网络分段/DMZ/安全区域/应用安全工具支持防御纵深设计
   // ═══════════════════════════════════════════════════════════
   'security-architect': {
     roleId: 'security-architect',
@@ -267,14 +281,19 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.riskScore,        // 架构风险评分
       T.policyMgmt,       // 安全基线/标准
       T.incidentMgmt,     // 架构级事件分析
+      // [Phase 1B] 防御纵深工具
+      T.networkSeg,       // 网络分段设计
+      T.dmzConfig,        // DMZ 区域规划
+      T.appSec,           // 应用层安全设计
     ],
   },
 
   // ═══════════════════════════════════════════════════════════
   // 供应链安全（SEC+LEG+BIZ 三元）— 供应商评估、第三方风险、合规
   // Light: 供应商评估→vendor-eval, 第三方风险→third-party-risk,
-  //        供应链合规→compliance-chk, 合同审查→contract-review,
+  //        供应链合规→compliance-chk, 合同审查→contract-review(DPA),
   //        供应链可视化→sbom-scan
+  // [Phase 1B] 确认 contractReview (DPA) 已配置，增加供应商审计工具
   // ═══════════════════════════════════════════════════════════
   'supply-chain-security': {
     roleId: 'supply-chain-security',
@@ -283,7 +302,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.sbomScan,         // 供应链可视化/SBOM
       T.vendorEval,       // 供应商安全评估
       T.thirdPartyRisk,   // 第三方风险管理
-      T.contractReview,   // 合同安全条款
+      T.contractReview,   // 合同审查/DPA 数据处理协议 [Phase 1B] 标注 DPA
       T.complianceChk,    // 供应链合规
     ],
     secondaryTools: [
@@ -292,6 +311,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.incidentMgmt,     // 供应商安全事件
       T.vulnScan,         // 组件漏洞
       T.nessusScan,       // Nessus 供应链扫描
+      T.vendorAudit,      // [Phase 1B] 供应商审计检查表
     ],
   },
 };
@@ -316,9 +336,9 @@ export const ALL_ROLE_IDS: RoleId[] = [
   'ciso',
   'secuclaw-commander',
   'privacy-officer',
-  'business-security-officer',
   'security-ops',
   'security-expert',
   'security-architect',
+  'business-security-officer',
   'supply-chain-security',
 ];

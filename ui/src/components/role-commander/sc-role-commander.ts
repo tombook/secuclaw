@@ -1322,9 +1322,8 @@ export class ScRoleCommander extends LitElement {
                 priority: this._timelineFormPriority,
                 originalTime: new Date(this._timelineFormTime).toISOString(),
                 modifiedTime: null,
-                source: 'manual',
-                status: 'open',
                 toolId: null,
+                status: 'open',
                 toolName: null,
                 roleId,
               });
@@ -1583,6 +1582,11 @@ export class ScRoleCommander extends LitElement {
         ])}
 
         ${this._renderDarkZone('security-architect')}
+        ${this._renderMetricsZone('防御纵深指标 [Phase 1B]', [
+          this._renderMetricCard(this._mc({ toolId: 'network-seg', title: '🌐 网络分段', num: '4', numColor: '#06b6d4', unit: '安全区域', sparkData: [2,2,3,3,4,4,4,4], delta: '↑+2', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P2 中', badgeColor: '#06b6d4' })),
+          this._renderMetricCard(this._mc({ toolId: 'dmz-config', title: '🛡️ DMZ 配置', num: '85%', numColor: '#22c55e', unit: 'DMZ覆盖率', sparkData: [70,75,78,80,82,84,85,85], delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'app-sec', title: '💻 应用安全', num: '68', numColor: '#f59e0b', unit: '/100 AppSec', sparkData: [55,58,60,62,64,66,68,68], delta: '↑+13', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
+        ])}
 
         ${this._renderFrameworkZone('security-architect')}
         ${this._renderToolGuideZone('security-architect')}
@@ -1624,6 +1628,9 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '87%', numColor: '#3b82f6', unit: 'BCP达成', sparkData: [78,80,82,84,85,86,87,87], delta: '↑+9%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
         ${this._renderDarkZone('business-security-officer')}
+        ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
+          this._renderMetricCard(this._mc({ toolId: 'disaster-recovery', title: '🔄 灾难恢复', num: '4h', numColor: '#22c55e', unit: 'RTO目标', sparkData: [8,7,6,5,5,4,4,4], delta: '↓-4h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' })),
+        ])}
         ${this._renderFrameworkZone('business-security-officer')}
         ${this._renderToolGuideZone('business-security-officer')}
         ${this._renderTimelineZone('business-security-officer')}
@@ -1643,6 +1650,10 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '88%', numColor: '#f59e0b', unit: '供应链合规', sparkData: [80,82,84,85,86,87,88,88], delta: '↑+8%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' })),
         ])}
         ${this._renderDarkZone('supply-chain-security')}
+        ${this._renderMetricsZone('供应商审计 & DPA [Phase 1B]', [
+          this._renderMetricCard(this._mc({ toolId: 'vendor-audit', title: '📋 供应商审计', num: '5', numColor: '#f59e0b', unit: '待审计', sparkData: [8,7,6,6,5,5,5,5], delta: '↓-3', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
+          this._renderMetricCard(this._mc({ toolId: 'dpa-mgmt', title: '📜 DPA 管理', num: '12', numColor: '#22c55e', unit: '有效DPA', sparkData: [8,9,10,11,11,12,12,12], delta: '↑+4', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
         ${this._renderLegalZone('supply-chain-security')}
         ${this._renderFrameworkZone('supply-chain-security')}
         ${this._renderToolGuideZone('supply-chain-security')}
@@ -1672,7 +1683,7 @@ export class ScRoleCommander extends LitElement {
     const storePlugins = pluginStore.getState().getToolsByRole(this.roleId)
     for (const m of storePlugins) {
       if (!staticIds.has(m.meta.id)) {
-        allTools.push({ id: m.meta.id, label: m.meta.name, icon: m.meta.icon })
+        allTools.push({ id: m.meta.id, label: m.meta.name, icon: m.meta.icon, priority: 0 })
         staticIds.add(m.meta.id)
       }
     }
@@ -1781,7 +1792,7 @@ export class ScRoleCommander extends LitElement {
               <p style="margin-bottom: 16px;">${this._aiPanelResult?.summary}</p>
               <div style="font-weight: 600; margin-bottom: 12px;">💡 优化建议</div>
               <ul style="margin: 0; padding-left: 20px;">
-                ${this._aiPanelResult?.suggestions.map(s => html`<li style="margin-bottom: 8px;">${s}</li>`)}
+                ${this._aiPanelResult?.suggestions.map((s: string) => html`<li style="margin-bottom: 8px;">${s}</li>`)}
               </ul>
             </div>
           `}

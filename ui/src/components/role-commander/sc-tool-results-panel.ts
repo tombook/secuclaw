@@ -486,7 +486,7 @@ export class ScToolResultsPanel extends LitElement {
         priority: r.priority ?? 'P2',
         status: r.status === 'pending' ? 'pending' : 'pending',
         roleTag: ROLE_THEMES[this.roleId]?.label ?? '',
-        roleColor: ROLE_THEMES[this.roleId]?.primary ?? '#3b82f6',
+        roleColor: ROLE_THEMES[this.roleId]?.['--role-primary'] ?? '#3b82f6',
         dueTime: r.time,
       }));
   }

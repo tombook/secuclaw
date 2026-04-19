@@ -177,8 +177,8 @@ export class ScRoleToolbar extends LitElement {
 
     return html`
       <div class="role-badge">
-        <span class="dot" style="background: ${theme.primary}"></span>
-        <span class="name" style="color: ${theme.secondary}">${config.label}</span>
+        <span class="dot" style="background: ${theme['--role-primary']}"></span>
+        <span class="name" style="color: ${theme['--role-secondary']}">${config.label}</span>
       </div>
 
       ${config.coreTools.map((tool: ToolDef) => html`
@@ -189,7 +189,7 @@ export class ScRoleToolbar extends LitElement {
             this.onToolClick?.(tool.id);
             this.dispatchEvent(new CustomEvent('tool-click', { detail: { toolId: tool.id }, bubbles: true, composed: true }));
           }}
-          title="${tool.description}"
+          title="${(tool as any).description || tool.label}"
         >
           <span>${tool.icon}</span>
           <span>${tool.label}</span>
