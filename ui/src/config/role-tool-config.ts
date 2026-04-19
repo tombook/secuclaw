@@ -105,6 +105,13 @@ const T = {
   secAwareness:      { id: 'sec-awareness',    label: '安全意识培训',  icon: 'GraduationCap',priority: 3 },
   cookieMgmt:        { id: 'cookie-mgmt',      label: 'Cookie 管理',   icon: 'Cookie',       priority: 3 },
   consentMgmt:       { id: 'consent-mgmt',     label: '同意管理',      icon: 'CheckCircle',  priority: 3 },
+  drillMgmt:         { id: 'drill-mgmt',       label: '应急演练',      icon: 'Flame',        priority: 2 },
+  devsecops:         { id: 'devsecops',         label: 'DevSecOps',     icon: 'GitMerge',     priority: 2 },
+  perfMgmt:          { id: 'perf-mgmt',         label: '绩效管理',      icon: 'BarChart3',    priority: 3 },
+  vendorMonitor:     { id: 'vendor-monitor',   label: '供应商监控',    icon: 'Eye',          priority: 1 },
+  slaMgmt:           { id: 'sla-mgmt',         label: 'SLA 管理',      icon: 'Clock',        priority: 2 },
+  supplyIntel:       { id: 'supply-intel',     label: '供应链情报',    icon: 'Globe',        priority: 2 },
+  materialTrack:     { id: 'material-track',   label: '物料追踪',      icon: 'Package',      priority: 3 },
 
   // ─── 第三方安全工具 ──────────────────────
   nessusScan:        { id: 'nessus-scan',           label: 'Nessus 扫描',      icon: 'Shield',       priority: 10 },
@@ -170,6 +177,9 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       // [Phase 1C] 治理与决策
       T.securityGovernance, // 安全治理框架与合规体系
       T.investmentDecision, // 安全投资决策与ROI分析
+      T.drillMgmt,          // [Phase 1D] 应急演练管理
+      T.devsecops,          // [Phase 1D] DevSecOps流水线
+      T.perfMgmt,           // [Phase 1D] 安全绩效管理
     ],
   },
 
@@ -338,6 +348,10 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.vulnScan,         // 组件漏洞
       T.nessusScan,       // Nessus 供应链扫描
       T.vendorAudit,      // [Phase 1B] 供应商审计检查表
+      T.vendorMonitor,    // [Phase 1D] 持续监控
+      T.slaMgmt,          // [Phase 1D] SLA 管理
+      T.supplyIntel,      // [Phase 1D] 供应链威胁情报
+      T.materialTrack,    // [Phase 1D] 物料来源追踪
     ],
   },
 };

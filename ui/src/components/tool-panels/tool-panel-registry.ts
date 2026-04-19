@@ -50,6 +50,13 @@ export const TOOL_PANELS: Record<string, ToolPanelDef> = {
   'sec-awareness': { toolId: 'sec-awareness', label: '安全意识培训', icon: '🎓', mode: 'modal' },
   'cookie-mgmt': { toolId: 'cookie-mgmt', label: 'Cookie 管理', icon: '🍪', mode: 'slide' },
   'consent-mgmt': { toolId: 'consent-mgmt', label: '同意管理', icon: '✅', mode: 'slide' },
+  'drill-mgmt': { toolId: 'drill-mgmt', label: '应急演练', icon: '🔥', mode: 'modal' },
+  'devsecops': { toolId: 'devsecops', label: 'DevSecOps', icon: '🔄', mode: 'modal' },
+  'perf-mgmt': { toolId: 'perf-mgmt', label: '绩效管理', icon: '📊', mode: 'modal' },
+  'vendor-monitor': { toolId: 'vendor-monitor', label: '供应商监控', icon: '👁️', mode: 'modal' },
+  'sla-mgmt': { toolId: 'sla-mgmt', label: 'SLA 管理', icon: '⏱️', mode: 'modal' },
+  'supply-intel': { toolId: 'supply-intel', label: '供应链情报', icon: '🌐', mode: 'modal' },
+  'material-track': { toolId: 'material-track', label: '物料追踪', icon: '📦', mode: 'modal' },
 };
 
 // ─── Mock result generators ────────────────────────────────────
@@ -953,6 +960,92 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
         <div class="result-section"><div class="result-title">同意管理状态</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">明确同意率</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">营销用途同意 1,410/1,500</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">撤回率</span><span class="chip chip-pass">3.2%</span></div><div class="ri-desc">月度撤回请求 48 件</div></div>
+        </div>
+      `;
+    }
+
+    // ─── Phase 1D: Commander 运营工具 ───
+    case 'drill-mgmt': {
+      return html`
+        <div class="form-group"><label class="form-label">演练类型</label><select class="form-select"><option selected>红蓝对抗</option><option>桌面推演</option><option>实战演练</option><option>合规演练</option></select></div>
+        <div class="form-group"><label class="form-label">演练范围</label><select class="form-select"><option selected>全组织</option><option>IT部门</option><option>核心业务</option></select></div>
+        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '规划中...' : '🔥 发起演练'}</button>
+        <div class="result-section"><div class="result-title">演练记录</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">Q1 红蓝对抗</span><span class="chip chip-pass">完成</span></div><div class="ri-desc">发现 12 个弱点，已修复 10 个</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">Q2 桌面推演</span><span class="chip chip-medium">进行中</span></div><div class="ri-desc">勒索场景，3个部门参与</div></div>
+        </div>
+      `;
+    }
+
+    case 'devsecops': {
+      return html`
+        <div class="form-group"><label class="form-label">流水线阶段</label><select class="form-select"><option selected>SAST</option><option>DAST</option><option>SCA</option><option>容器扫描</option></select></div>
+        <div class="form-group"><label class="form-label">项目</label><select class="form-select"><option selected>全部项目</option><option>核心业务</option><option>基础设施</option></select></div>
+        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '扫描中...' : '🔄 安全扫描'}</button>
+        <div class="result-section"><div class="result-title">DevSecOps 概览</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">流水线覆盖</span><span class="chip chip-pass">87%</span></div><div class="ri-desc">42/48 仓库已集成安全扫描</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">SAST 漏洞</span><span class="chip chip-pass">23</span></div><div class="ri-desc">高危 5 / 中危 12 / 低危 6</div></div>
+        </div>
+      `;
+    }
+
+    case 'perf-mgmt': {
+      return html`
+        <div class="form-group"><label class="form-label">评估周期</label><select class="form-select"><option selected>Q2 2026</option><option>Q1 2026</option><option>年度</option></select></div>
+        <div class="form-group"><label class="form-label">团队</label><select class="form-select"><option selected>安全团队</option><option>红队</option><option>蓝队</option><option>GRC</option></select></div>
+        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '📊 绩效评估'}</button>
+        <div class="result-section"><div class="result-title">安全绩效报告</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">团队评级</span><span class="chip chip-pass">B+</span></div><div class="ri-desc">综合评分 85/100，较上季 +5</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">MTTR</span><span class="chip chip-pass">2.3h</span></div><div class="ri-desc">平均响应时间，目标 4h 以内</div></div>
+        </div>
+      `;
+    }
+
+    // ─── Phase 1D: Supply Chain 工具 ───
+    case 'vendor-monitor': {
+      return html`
+        <div class="form-group"><label class="form-label">监控维度</label><select class="form-select"><option selected>安全态势</option><option>合规状态</option><option>SLA 达成</option><option>漏洞趋势</option></select></div>
+        <div class="form-group"><label class="form-label">供应商</label><select class="form-select"><option selected>全部 (38)</option><option>高风险 (5)</option><option>新增 (3)</option></select></div>
+        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? '监控中...' : '👁️ 刷新监控'}</button>
+        <div class="result-section"><div class="result-title">供应商监控概览</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">健康供应商</span><span class="chip chip-pass">33/38</span></div><div class="ri-desc">87% 供应商安全评级达标</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">预警</span><span class="chip chip-medium">5</span></div><div class="ri-desc">2 个合规降级 + 3 个漏洞激增</div></div>
+        </div>
+      `;
+    }
+
+    case 'sla-mgmt': {
+      return html`
+        <div class="form-group"><label class="form-label">SLA 类型</label><select class="form-select"><option selected>安全响应 SLA</option><option>漏洞修复 SLA</option><option>事件通知 SLA</option></select></div>
+        <div class="form-group"><label class="form-label">统计周期</label><select class="form-select"><option selected>近30天</option><option>近90天</option><option>本年度</option></select></div>
+        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '统计中...' : '⏱️ SLA 分析'}</button>
+        <div class="result-section"><div class="result-title">SLA 达成报告</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">总体 SLA</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">36/38 供应商达到 SLA 标准</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">违约事件</span><span class="chip chip-medium">2</span></div><div class="ri-desc">Vendor-A 响应超时 48h</div></div>
+        </div>
+      `;
+    }
+
+    case 'supply-intel': {
+      return html`
+        <div class="form-group"><label class="form-label">情报源</label><select class="form-select"><option selected>全部源</option><option>NVD</option><option>CISA KEV</option><option>厂商公告</option></select></div>
+        <div class="form-group"><label class="form-label">相关组件</label><input class="form-input" value="log4j, openssl, spring" /></div>
+        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '搜索中...' : '🌐 情报查询'}</button>
+        <div class="result-section"><div class="result-title">供应链威胁情报</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">活跃威胁</span><span class="chip chip-fail">7</span></div><div class="ri-desc">3 个 Critical + 4 个 High 影响在用组件</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">最新告警</span><span class="chip chip-medium">CVE-2026-1234</span></div><div class="ri-desc">OpenSSL 3.x 远程代码执行</div></div>
+        </div>
+      `;
+    }
+
+    case 'material-track': {
+      return html`
+        <div class="form-group"><label class="form-label">追踪维度</label><select class="form-select"><option selected>组件来源</option><option>许可证</option><option>版本状态</option></select></div>
+        <div class="form-group"><label class="form-label">产品线</label><select class="form-select"><option selected>全部</option><option>核心产品</option><option>内部工具</option></select></div>
+        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '追踪中...' : '📦 物料追踪'}</button>
+        <div class="result-section"><div class="result-title">物料追踪报告</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">已追踪组件</span><span class="chip chip-pass">156</span></div><div class="ri-desc">覆盖率 92%，6 个未识别来源</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">许可证风险</span><span class="chip chip-medium">3</span></div><div class="ri-desc">GPL 组件需法务审核</div></div>
         </div>
       `;
     }

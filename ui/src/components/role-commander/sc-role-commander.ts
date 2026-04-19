@@ -1503,6 +1503,11 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'security-governance', title: '🛡️ 安全治理', num: '92%', numColor: '#22c55e', unit: '治理覆盖率', sparkData: [85,87,88,90,91,91,92,92], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P2 中', badgeColor: '#22c55e' })),
           this._renderMetricCard(this._mc({ toolId: 'investment-decision', title: '📈 投资决策', num: '340%', numColor: '#22c55e', unit: '安全ROI', sparkData: [280,300,310,320,330,340,340,340], delta: '↑+60%', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
+        ${this._renderMetricsZone('运营与演练 [Phase 1D]', [
+          this._renderMetricCard(this._mc({ toolId: 'drill-mgmt', title: '🔥 应急演练', num: '3', numColor: '#f59e0b', unit: '本季演练', sparkData: [1,1,2,2,2,3,3,3], delta: '↑+1', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P2 中', badgeColor: '#f59e0b' })),
+          this._renderMetricCard(this._mc({ toolId: 'devsecops', title: '🔄 DevSecOps', num: '87%', numColor: '#22c55e', unit: '流水线覆盖率', sparkData: [72,75,78,80,83,85,86,87], delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'perf-mgmt', title: '📊 绩效管理', num: 'B+', numColor: '#06b6d4', unit: '安全团队评级', sparkData: [70,72,74,76,78,80,82,85], delta: '↑+15', deltaColor: '#22c55e', deltaLabel: '年度', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
 ${this._renderDarkZone('secuclaw-commander')}
         ${this._renderDecisionZone('secuclaw-commander')}
         ${this._renderFrameworkZone('secuclaw-commander')}
@@ -1641,10 +1646,10 @@ ${this._renderDarkZone('privacy-officer')}
         ${this._renderMetricsZone('安全培训 [Phase 1C]', [
           this._renderMetricCard(this._mc({ toolId: 'sec-awareness', title: '🎓 安全意识培训', num: '82%', numColor: '#22c55e', unit: '培训完成率', sparkData: [70,73,75,78,79,80,81,82], delta: '↑+12%', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
-${this._renderDarkZone('business-security-officer')}
-        ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
+${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
           this._renderMetricCard(this._mc({ toolId: 'disaster-recovery', title: '🔄 灾难恢复', num: '4h', numColor: '#22c55e', unit: 'RTO目标', sparkData: [8,7,6,5,5,4,4,4], delta: '↓-4h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' })),
         ])}
+        ${this._renderDarkZone('business-security-officer')}
         ${this._renderFrameworkZone('business-security-officer')}
         ${this._renderToolGuideZone('business-security-officer')}
         ${this._renderTimelineZone('business-security-officer')}
@@ -1663,11 +1668,17 @@ ${this._renderDarkZone('business-security-officer')}
           this._renderMetricCard(this._mc({ toolId: 'contract-review', title: '📑 合同审查', num: '3', numColor: '#f59e0b', unit: '待审查', sparkData: [1,2,2,3,2,3,3,3], delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '本月', badge: 'P2 中', badgeColor: '#f59e0b' })),
           this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '88%', numColor: '#f59e0b', unit: '供应链合规', sparkData: [80,82,84,85,86,87,88,88], delta: '↑+8%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' })),
         ])}
-        ${this._renderDarkZone('supply-chain-security')}
         ${this._renderMetricsZone('供应商审计 & DPA [Phase 1B]', [
           this._renderMetricCard(this._mc({ toolId: 'vendor-audit', title: '📋 供应商审计', num: '5', numColor: '#f59e0b', unit: '待审计', sparkData: [8,7,6,6,5,5,5,5], delta: '↓-3', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
           this._renderMetricCard(this._mc({ toolId: 'dpa-mgmt', title: '📜 DPA 管理', num: '12', numColor: '#22c55e', unit: '有效DPA', sparkData: [8,9,10,11,11,12,12,12], delta: '↑+4', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
+        ${this._renderMetricsZone('监控与情报 [Phase 1D]', [
+          this._renderMetricCard(this._mc({ toolId: 'vendor-monitor', title: '👁️ 供应商监控', num: '38', numColor: '#22c55e', unit: '在线供应商', sparkData: [30,32,34,35,36,37,38,38], delta: '↑+8', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'sla-mgmt', title: '⏱️ SLA 达成', num: '94%', numColor: '#22c55e', unit: 'SLA 合规', sparkData: [88,90,91,92,93,93,94,94], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'supply-intel', title: '🌐 供应链情报', num: '7', numColor: '#f59e0b', unit: '活跃威胁', sparkData: [3,4,5,5,6,6,7,7], delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本周', badge: 'P2 中', badgeColor: '#f59e0b' })),
+          this._renderMetricCard(this._mc({ toolId: 'material-track', title: '📦 物料追踪', num: '156', numColor: '#06b6d4', unit: '组件已追踪', sparkData: [100,110,120,130,140,148,155,156], delta: '↑+56', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
+        ${this._renderDarkZone('supply-chain-security')}
         ${this._renderLegalZone('supply-chain-security')}
         ${this._renderFrameworkZone('supply-chain-security')}
         ${this._renderToolGuideZone('supply-chain-security')}
