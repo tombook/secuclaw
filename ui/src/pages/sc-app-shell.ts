@@ -551,6 +551,18 @@ export class ScAppShell extends LitElement {
       overflow: hidden;
       clip: rect(0,0,0,0);
     }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .app-layout { grid-template-columns: 1fr !important; }
+      .sidebar { display: none !important; }
+      .header-bar { padding: 8px 12px !important; }
+      .header-title { font-size: 14px !important; }
+      .raci-section { display: none !important; }
+    }
+    @media (max-width: 1024px) and (min-width: 769px) {
+      .sidebar { width: 180px !important; min-width: 180px !important; }
+    }
   `;
 
   @state() private _view: 'overview' | 'role' | 'market' = 'overview';

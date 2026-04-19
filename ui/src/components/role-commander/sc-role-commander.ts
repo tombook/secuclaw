@@ -435,6 +435,23 @@ export class ScRoleCommander extends LitElement {
       border-radius: 3px;
       transition: width 0.3s;
     }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 1200px) {
+      .rd-5col { grid-template-columns: repeat(3, 1fr) !important; }
+    }
+    @media (max-width: 768px) {
+      .rd-5col { grid-template-columns: repeat(2, 1fr) !important; }
+      .main-content { padding: 8px !important; }
+      .sidebar { width: 48px !important; min-width: 48px !important; }
+      .sidebar .section-label, .sidebar .raci-section, .sidebar .role-nav-label { display: none !important; }
+      .zone { margin: 0 6px 6px !important; padding: 8px !important; }
+      .rd-big-num { font-size: 20px !important; }
+    }
+    @media (max-width: 480px) {
+      .rd-5col { grid-template-columns: 1fr !important; }
+      .sidebar { display: none !important; }
+    }
   `
 
   private _storeUnsub: (() => void) | null = null
