@@ -290,6 +290,31 @@ export class CapabilitiesRepository {
     return evidence;
   }
 
+  async updateEvidence(id: string, updates: Partial<EvidencePack>): Promise<EvidencePack | null> {
+    const allEvidence = await this.getEvidence();
+    const index = allEvidence.findIndex(e => e.id === id);
+    if (index < 0) return null;
+    allEvidence[index] = { ...allEvidence[index], ...updates };
+    await this.store.set(FILES.EVIDENCE, allEvidence);
+    return allEvidence[index];
+  }
+
+  async deleteEvidence(id: string): Promise<boolean> {
+    const allEvidence = await this.getEvidence();
+    const filtered = allEvidence.filter(e => e.id !== id);
+    if (filtered.length === allEvidence.length) return false;
+    await this.store.set(FILES.EVIDENCE, filtered);
+    return true;
+  }
+
+  async deleteApproval(id: string): Promise<boolean> {
+    const approvals = await this.getApprovals();
+    const filtered = approvals.filter(a => a.id !== id);
+    if (filtered.length === approvals.length) return false;
+    await this.store.set(FILES.APPROVALS, filtered);
+    return true;
+  }
+
   // ==================== Metrics ====================
 
   async getTaskCountsByDomain(domainId: DomainId): Promise<{ todo: number; inProgress: number; done: number; total: number }> {

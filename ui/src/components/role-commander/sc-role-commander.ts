@@ -1498,7 +1498,7 @@ export class ScRoleCommander extends LitElement {
           this._renderMetricCard(this._mc({ toolId: 'ai-dispatch', title: '🤖 AI 调度', num: '3', numColor: '#22c55e', unit: '运行中', sparkData: [1,2,2,3,2,3,3,3], delta: '↑+1', deltaColor: '#22c55e', deltaLabel: '较上周', badge: 'P3 轻', badgeColor: '#22c55e' })),
           this._renderMetricCard(this._mc({ toolId: 'incident-mgmt', title: '🚑 事件管理', num: '4', numColor: '#ef4444', unit: '活跃事件', sparkData: [6,5,7,4,5,3,4,4], delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '近7天', badge: 'P1 重', badgeColor: '#ef4444' })),
           this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '46', numColor: '#fbbf24', unit: '/100', sparkData: [50,48,52,47,44,46,43,46], delta: '↑+2', deltaColor: '#f59e0b', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
-          this._renderMetricCard(this._mc({ toolId: 'board-report', title: '📋 董事会报告', num: '1', numColor: '#f59e0b', unit: '待审批', sparkData: [2,1,3,1,2,1,1,1], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
+          this._renderMetricCard(this._mc({ toolId: 'bcp-mgmt', title: '🛡️ BCP 管理', num: '92%', numColor: '#22c55e', unit: '覆盖率', sparkData: [85,87,88,89,90,91,92,92], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
         ])}
         ${this._renderDarkZone('secuclaw-commander')}
         ${this._renderDecisionZone('secuclaw-commander')}

@@ -190,6 +190,13 @@ export class ApprovalService {
     return true;
   }
 
+  async deleteApproval(approvalId: string): Promise<void> {
+    const deleted = this.approvals.delete(approvalId);
+    if (!deleted) throw new Error(`Approval not found: ${approvalId}`);
+    await this.saveApprovals();
+    logger.info(`Deleted approval: ${approvalId}`);
+  }
+
   private async expireApproval(approvalId: string): Promise<Approval> {
     const approval = await this.getApproval(approvalId);
     approval.status = 'expired';

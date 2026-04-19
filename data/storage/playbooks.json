@@ -1,0 +1,24 @@
+[
+  {
+    "id": "pb_1776247228200_bsw49q",
+    "name": "P1",
+    "description": "",
+    "version": "1.0",
+    "trigger": {
+      "id": "trg-new",
+      "type": "manual",
+      "config": {}
+    },
+    "rootStep": {
+      "id": "s_root",
+      "name": "root",
+      "type": "serial",
+      "config": {
+        "subSteps": []
+      }
+    },
+    "status": "enabled",
+    "createdAt": 1776247228200,
+    "updatedAt": 1776247228200
+  }
+]

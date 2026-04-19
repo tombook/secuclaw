@@ -1,0 +1,19 @@
+{
+  "id": "default",
+  "name": "Default Commander",
+  "type": "personal",
+  "createdAt": 1776247259927,
+  "updatedAt": 1776247260039,
+  "roles": [],
+  "primaryRole": "security-expert",
+  "llmBindings": {},
+  "skillStates": {},
+  "settings": {
+    "language": "zh-CN",
+    "theme": "dark",
+    "notifications": {
+      "enabled": true,
+      "channels": []
+    }
+  }
+}

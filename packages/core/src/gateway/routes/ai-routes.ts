@@ -356,4 +356,20 @@ export function registerAiRoutes(
       };
     }
   });
+
+  handlers.set('kpi.summary', async () => {
+    try {
+      return await kpiService.getSummary();
+    } catch (error) {
+      console.error('[ai-routes] kpi.summary failed:', error);
+      return {
+        overallScore: 0,
+        riskScore: 100,
+        securityScore: 0,
+        complianceScore: 0,
+        lastCalculated: new Date().toISOString(),
+        error: 'KPI summary failed',
+      };
+    }
+  });
 }

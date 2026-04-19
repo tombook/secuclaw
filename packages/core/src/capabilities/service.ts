@@ -73,6 +73,34 @@ export class CapabilitiesService {
     return this.repo.getDomain(id);
   }
 
+  async createDomain(domain: Omit<CapabilityDomain, 'id'> & { id?: DomainId }): Promise<CapabilityDomain> {
+    const domains = await this.repo.getDomains();
+    const newId = (domain.id || `domain-${Date.now()}`) as DomainId;
+    if (domains.find(d => d.id === newId)) throw new Error(`Domain already exists: ${newId}`);
+    const newDomain = { ...domain, id: newId } as CapabilityDomain;
+    domains.push(newDomain);
+    await this.repo.saveDomains(domains);
+    return newDomain;
+  }
+
+  async updateDomain(id: DomainId, updates: Partial<CapabilityDomain>): Promise<CapabilityDomain> {
+    const domains = await this.repo.getDomains();
+    const idx = domains.findIndex(d => d.id === id);
+    if (idx === -1) throw new Error(`Domain not found: ${id}`);
+    domains[idx] = { ...domains[idx], ...updates, id };
+    await this.repo.saveDomains(domains);
+    return domains[idx];
+  }
+
+  async deleteDomain(id: DomainId): Promise<void> {
+    const items = await this.repo.getItemsByQuery({ domainId: id });
+    if (items.length > 0) throw new Error(`Cannot delete domain ${id}: has ${items.length} items`);
+    const domains = await this.repo.getDomains();
+    const filtered = domains.filter(d => d.id !== id);
+    if (filtered.length === domains.length) throw new Error(`Domain not found: ${id}`);
+    await this.repo.saveDomains(filtered);
+  }
+
   // ==================== Items ====================
 
   async listItems(params: CapabilityQueryParams = {}): Promise<CapabilityItem[]> {
@@ -81,6 +109,32 @@ export class CapabilitiesService {
 
   async getItem(id: string): Promise<CapabilityItem | null> {
     return this.repo.getItem(id);
+  }
+
+  async createItem(item: Omit<CapabilityItem, 'id'> & { id?: string }): Promise<CapabilityItem> {
+    const items = await this.repo.getItems();
+    const newItem = { ...item, id: item.id || `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` } as CapabilityItem;
+    items.push(newItem);
+    await this.repo.saveItems(items);
+    return newItem;
+  }
+
+  async updateItem(id: string, updates: Partial<CapabilityItem>): Promise<CapabilityItem> {
+    const items = await this.repo.getItems();
+    const idx = items.findIndex(i => i.id === id);
+    if (idx === -1) throw new Error(`Item not found: ${id}`);
+    items[idx] = { ...items[idx], ...updates, id };
+    await this.repo.saveItems(items);
+    return items[idx];
+  }
+
+  async deleteItem(id: string): Promise<void> {
+    const tasks = await this.repo.getTasksByQuery({ capabilityId: id });
+    if (tasks.length > 0) throw new Error(`Cannot delete item ${id}: has ${tasks.length} tasks`);
+    const items = await this.repo.getItems();
+    const filtered = items.filter(i => i.id !== id);
+    if (filtered.length === items.length) throw new Error(`Item not found: ${id}`);
+    await this.repo.saveItems(filtered);
   }
 
   // ==================== Tasks ====================
@@ -405,6 +459,25 @@ export class CapabilitiesService {
 
   async listEvidence(params: EvidenceQueryParams): Promise<EvidencePack[]> {
     return this.repo.getEvidenceByQuery(params);
+  }
+
+  async updateEvidence(id: string, updates: Partial<Pick<EvidencePack, 'title' | 'description' | 'tags' | 'files'>>): Promise<EvidencePack> {
+    const existing = await this.repo.getEvidenceItem(id);
+    if (!existing) throw new Error(`Evidence not found: ${id}`);
+    const updated = await this.repo.updateEvidence(id, {
+      ...updates,
+      ...(updates.files ? { hash: this.generateHash(updates.files.join(',')) } : {}),
+    });
+    if (!updated) throw new Error(`Evidence update failed: ${id}`);
+    logger.info(`Updated evidence: ${id}`);
+    return updated;
+  }
+
+  async deleteEvidence(id: string): Promise<void> {
+    const existing = await this.repo.getEvidenceItem(id);
+    if (!existing) throw new Error(`Evidence not found: ${id}`);
+    await this.repo.deleteEvidence(id);
+    logger.info(`Deleted evidence: ${id}`);
   }
 
   // ==================== Task Status Machine ====================

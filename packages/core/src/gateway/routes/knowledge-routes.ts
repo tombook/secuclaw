@@ -5,10 +5,8 @@ export function registerKnowledgeRoutes(
   deps: RouterDeps
 ): void {
   
-  handlers.set('skills.list', (params) => handleSkillsList(params, deps));
-  handlers.set('skills.get', (params) => handleSkillsGet(params, deps));
+  // skills.* handlers live in skills-routes.ts — do not duplicate here
 
-  
   handlers.set('knowledge.mitre.stats', (params) => handleMitreStats(params, deps));
   handlers.set('knowledge.mitre.tactics', (params) => handleMitreTactics(params, deps));
   handlers.set('knowledge.mitre.techniques', (params) => handleMitreTechniques(params, deps));
@@ -19,19 +17,6 @@ export function registerKnowledgeRoutes(
   handlers.set('knowledge.scf.domains', (params) => handleScfDomains(params, deps));
   handlers.set('knowledge.scf.controls', (params) => handleScfControls(params, deps));
   handlers.set('knowledge.scf.search', (params) => handleScfSearch(params, deps));
-}
-
-// Simple pass-through handlers relying on loaders present in deps
-async function handleSkillsList(_params: Record<string, unknown>, deps: RouterDeps) {
-  if (!deps.skillLoader) throw new Error('Skill loader not available');
-  return deps.skillLoader.getAll();
-}
-
-async function handleSkillsGet(params: Record<string, unknown>, deps: RouterDeps) {
-  if (!deps.skillLoader) throw new Error('Skill loader not available');
-  const { roleId } = params;
-  if (!roleId || typeof roleId !== 'string') throw new Error('roleId is required');
-  return deps.skillLoader.get(roleId);
 }
 
 async function handleMitreStats(_params: Record<string, unknown>, deps: RouterDeps) {

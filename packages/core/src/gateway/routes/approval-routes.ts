@@ -68,4 +68,15 @@ export function registerApprovalRoutes(
     const canExecute = await approvalService.canExecuteDarkTask(taskId as string);
     return { canExecute };
   });
+
+  handlers.set('approval.delete', async (params) => {
+    const { approvalId } = params;
+    if (!approvalId) throw new Error('approvalId required');
+    const approval = await approvalService.getApproval(approvalId as string);
+    if (approval.status !== 'approved' && approval.status !== 'rejected') {
+      throw new Error(`Cannot delete approval in '${approval.status}' status. Only approved/rejected approvals can be deleted.`);
+    }
+    await approvalService.deleteApproval(approvalId as string);
+    return { success: true, approvalId };
+  });
 }

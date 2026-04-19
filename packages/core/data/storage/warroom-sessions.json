@@ -25,5 +25,95 @@
     "id": "session_1775884257901_q4lvcm",
     "createdAt": 1775884257901,
     "updatedAt": 1775884257901
+  },
+  {
+    "id": "session_1776329862973_e9ir4l",
+    "title": "War Room - 安全事件响应",
+    "scenario": "incident-response",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-architect",
+        "joinedAt": 1776329864061
+      }
+    ],
+    "createdBy": "security-architect",
+    "createdAt": 1776329862973,
+    "updatedAt": 1776329864061
+  },
+  {
+    "id": "session_1776331229235_n3wt6o",
+    "title": "War Room - 安全事件响应",
+    "scenario": "incident-response",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-expert",
+        "joinedAt": 1776331229893
+      }
+    ],
+    "createdBy": "security-expert",
+    "createdAt": 1776331229235,
+    "updatedAt": 1776331229893
+  },
+  {
+    "id": "session_1776331822011_stodjq",
+    "title": "War Room - 安全事件响应",
+    "scenario": "incident-response",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-expert",
+        "joinedAt": 1776331823816
+      }
+    ],
+    "createdBy": "security-expert",
+    "createdAt": 1776331822011,
+    "updatedAt": 1776331823816
+  },
+  {
+    "id": "session_1776372199314_3r0psh",
+    "title": "War Room - 安全事件响应",
+    "scenario": "incident-response",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-expert",
+        "joinedAt": 1776372199913
+      }
+    ],
+    "createdBy": "security-expert",
+    "createdAt": 1776372199314,
+    "updatedAt": 1776372199913
+  },
+  {
+    "id": "session_1776382792087_0fofmm",
+    "title": "War Room - 安全事件响应",
+    "scenario": "incident-response",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-expert",
+        "joinedAt": 1776382793115
+      }
+    ],
+    "createdBy": "security-expert",
+    "createdAt": 1776382792087,
+    "updatedAt": 1776382793115
+  },
+  {
+    "id": "session_1776419342451_gr5ryc",
+    "title": "War Room - 安全事件响应",
+    "scenario": "incident-response",
+    "status": "active",
+    "participants": [
+      {
+        "roleId": "security-expert",
+        "joinedAt": 1776419343223
+      }
+    ],
+    "createdBy": "security-expert",
+    "createdAt": 1776419342451,
+    "updatedAt": 1776419343223
   }
 ]

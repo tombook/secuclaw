@@ -1,0 +1,26 @@
+{
+  "id": "demo",
+  "name": "Default Commander",
+  "type": "personal",
+  "createdAt": 1776247228204,
+  "updatedAt": 1776247228219,
+  "roles": [],
+  "primaryRole": "security-expert",
+  "llmBindings": {},
+  "skillStates": {
+    "security-ops": {
+      "installed": true,
+      "activated": false,
+      "installedAt": 1776247228217,
+      "version": "1.0.0"
+    }
+  },
+  "settings": {
+    "language": "zh-CN",
+    "theme": "dark",
+    "notifications": {
+      "enabled": true,
+      "channels": []
+    }
+  }
+}

@@ -42,6 +42,15 @@ import { registerAssetsRoutes } from './gateway/routes/assets-routes.js';
 import { registerWarroomRoutes } from './gateway/routes/warroom-routes.js';
 import { registerRaciTaskRoutes } from './gateway/routes/raci-task-routes.js';
 import { registerAiCollaborationRoutes } from './gateway/routes/ai-collaboration-routes.js';
+import { registerDataCenterRoutes } from './gateway/routes/data-center-routes.js';
+import { registerVendorRoutes } from './gateway/routes/vendor-routes.js';
+import { registerPrivacyRoutes } from './gateway/routes/privacy-routes.js';
+import { registerAlertRoutes, registerSoarRoutes } from './gateway/routes/alert-soar-routes.js';
+import { registerBcmRoutes } from './gateway/routes/bcm-routes.js';
+import { registerThreatIntelRoutes } from './gateway/routes/threat-intel-routes.js';
+import { registerMaturityRoutes } from './gateway/routes/maturity-routes.js';
+import { registerBudgetRoutes } from './gateway/routes/budget-routes.js';
+import { registerAttackPathRoutes } from './gateway/routes/attack-path-routes.js';
 import { AssetsService } from './assets/service.js';
 import { AssetsRepository } from './assets/repository.js';
 
@@ -187,6 +196,16 @@ class SecuClawApplication {
     registerWarroomRoutes(handlersMap, deps);
     registerRaciTaskRoutes(handlersMap, deps);
   registerAiCollaborationRoutes(handlersMap, deps);
+  registerDataCenterRoutes(handlersMap, deps);
+  registerVendorRoutes(handlersMap, deps);
+  registerPrivacyRoutes(handlersMap, deps);
+  registerAlertRoutes(handlersMap, deps);
+  registerSoarRoutes(handlersMap, deps);
+  registerBcmRoutes(handlersMap, deps);
+  registerThreatIntelRoutes(handlersMap, deps);
+  registerMaturityRoutes(handlersMap, deps);
+  registerBudgetRoutes(handlersMap, deps);
+  registerAttackPathRoutes(handlersMap, deps);
 
     this.gateway.getRouter().setHandlersFromMap(handlersMap);
     logger.info(`Registered ${this.gateway.getRouter().getMethodCount()} gateway methods`);

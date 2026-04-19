@@ -23,4 +23,34 @@ export function registerChannelsRoutes(router: Router): void {
       recipients: params.recipients as string[] | undefined,
     });
   });
+  router.registerHandler('channels.enable', async (params: Record<string, unknown>) => {
+    const channelId = params.channelId as string;
+    if (!channelId) throw new Error('Missing required field: channelId');
+    const mgr = router['getChannelManager']();
+    const existing = await mgr.getStatus();
+    const configs: Record<string, any> = (existing as any)?.configs || {};
+    const current = configs[channelId] || {};
+    await mgr.saveConfig(channelId, {
+      id: channelId,
+      name: current.name || channelId.charAt(0).toUpperCase() + channelId.slice(1).replace(/-/g, ' '),
+      enabled: true,
+      config: current.config || {},
+    });
+    return { success: true, channelId, enabled: true };
+  });
+  router.registerHandler('channels.disable', async (params: Record<string, unknown>) => {
+    const channelId = params.channelId as string;
+    if (!channelId) throw new Error('Missing required field: channelId');
+    const mgr = router['getChannelManager']();
+    const existing = await mgr.getStatus();
+    const configs: Record<string, any> = (existing as any)?.configs || {};
+    const current = configs[channelId] || {};
+    await mgr.saveConfig(channelId, {
+      id: channelId,
+      name: current.name || channelId.charAt(0).toUpperCase() + channelId.slice(1).replace(/-/g, ' '),
+      enabled: false,
+      config: current.config || {},
+    });
+    return { success: true, channelId, enabled: false };
+  });
 }

@@ -576,11 +576,12 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       `;
     }
 
-    // ─── 隐私官：GDPR 审计 ───
+    // ─── 隐私官：GDPR 审计 + 数据主体权利请求 ───
+    // [Phase 1A] 增强：增加「数据主体权利请求」子功能
     case 'gdpr-audit': {
       return html`
         <div class="form-group"><label class="form-label">审计范围</label><select class="form-select"><option>Art.5-6 合法性</option><option>Art.13-14 透明性</option><option>Art.25 隐私设计</option><option selected>全面审计</option></select></div>
-        <button class="exec-btn" style="background:#a78bfa" ?disabled=${executing} @click=${onExecute}>${executing ? html`审计中...` : html`📜 执行审计`}</button>
+        <button class="exec-btn" style="background:#a78bfa" ?disabled=${executing} =${onExecute}>${executing ? html`审计中...` : html`📜 执行审计`}</button>
         <div class="result-section">
           <div class="result-title">GDPR 审计结果</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">数据处理合法性</span><span class="chip chip-pass">6/6 已记录</span></div></div>
@@ -588,6 +589,56 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="result-item"><div class="ri-header"><span class="ri-title">DPIA 完成度</span><span class="chip chip-high">76% — 3 项未完成</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">跨境传输合规</span><span class="chip chip-fail">2 条缺少 SCCs</span></div></div>
           <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">合规率 87%，2 项需优先整改</div></div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px; background: #1e293b; border-radius: 6px; border: 1px solid #334155;">
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #a78bfa;">📋 数据主体权利请求（DSR）</div>
+          
+          <div class="form-group">
+            <label class="form-label">权利类型</label>
+            <select class="form-select">
+              <option value="access">Art.15 访问权 — 查看个人数据</option>
+              <option value="rectification">Art.16 更正权 — 修正错误数据</option>
+              <option value="erasure">Art.17 删除权 — 要求删除数据</option>
+              <option value="portability">Art.20 携带权 — 数据可携带性</option>
+              <option value="restriction">Art.18 限制权 — 限制处理</option>
+              <option value="objection">Art.21 反对权 — 反对自动化决策</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">请求ID</label>
+              <input class="form-input" placeholder="DSR-2026-XXXX" value="DSR-2026-0423" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">请求人</label>
+              <input class="form-input" placeholder="姓名/邮箱" value="user.com" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">处理状态</label>
+            <select class="form-select">
+              <option>🟡 收到请求</option>
+              <option>🔵 处理中</option>
+              <option selected>🟢 已响应</option>
+              <option>🔴 SLA 逾期</option>
+              <option>⚫ 已拒绝</option>
+            </select>
+          </div>
+
+          <div class="result-section" style="margin-top: 12px;">
+            <div class="result-title">响应 SLA 追踪</div>
+            <div class="result-item"><div class="ri-header"><span class="ri-title">Art.15 访问权</span><span class="chip chip-pass">23/30天 ✓</span></div><div class="ri-desc">SLA: 30天内响应 | 剩余 7 天</div></div>
+            <div class="result-item"><div class="ri-header"><span class="ri-title">Art.16 更正权</span><span class="chip chip-pass">15/30天 ✓</span></div><div class="ri-desc">SLA: 30天内响应 | 剩余 15 天</div></div>
+            <div class="result-item"><div class="ri-header"><span class="ri-title">Art.17 删除权</span><span class="chip chip-fail">32/30天 ⚠️</span></div><div class="ri-desc">SLA 逾期 2 天！需立即处理</div></div>
+            <div class="result-item"><div class="ri-header"><span class="ri-title">Art.20 携带权</span><span class="chip chip-high">8/30天</span></div><div class="ri-desc">SLA: 30天内响应 | 剩余 22 天</div></div>
+          </div>
+
+          <div style="margin-top: 10px; padding: 8px; background: #0f172a; border-radius: 4px; text-align: center;">
+            <span style="font-size: 10px; color: #64748b;">总体响应率: <strong style="color: #22c55e;">91%</strong> | 待处理: <strong style="color: #f59e0b;">12</strong> | SLA 预警: <strong style="color: #ef4444;">2</strong></span>
+          </div>
         </div>
       `;
     }

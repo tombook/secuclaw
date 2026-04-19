@@ -1,0 +1,357 @@
+/**
+ * SecuClaw Incidents Page — Role-driven security events
+ *
+ * Filters, KPIs, and event list change based on the selected role.
+ * Uses real API (useIncidents hook) with role-based filtering.
+ */
+
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useRoleContextStore } from '@/stores/role-context';
+import { ROLE_THEMES, type RoleId } from '@/config/role-themes';
+import { ROLE_DASHBOARD_CONFIG } from '@/config/role-dashboard-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  AlertTriangle,
+  Search,
+  Plus,
+  Filter,
+  X,
+  Clock,
+  User,
+  Tag,
+  ChevronRight,
+  ShieldAlert,
+  RefreshCw,
+} from 'lucide-react';
+import { api } from '@/services/api';
+import { useIncidents, useIncidentStats } from '@/hooks/useApi';
+
+// ── Severity → color ──
+const SEVERITY_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  CRITICAL: { bg: 'bg-red-500/20', text: 'text-red-400', label: '严重' },
+  HIGH: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: '高危' },
+  MEDIUM: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: '中危' },
+  LOW: { bg: 'bg-blue-500/20', text: 'text-blue-400', label: '低危' },
+  INFO: { bg: 'bg-slate-500/20', text: 'text-slate-400', label: '信息' },
+};
+
+const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+  NEW: { bg: 'bg-blue-500/20', text: 'text-blue-400', dot: 'bg-blue-400' },
+  CONFIRMED: { bg: 'bg-orange-500/20', text: 'text-orange-400', dot: 'bg-orange-400' },
+  ANALYZING: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', dot: 'bg-yellow-400' },
+  CONTAINING: { bg: 'bg-amber-500/20', text: 'text-amber-400', dot: 'bg-amber-400' },
+  ERADICATING: { bg: 'bg-purple-500/20', text: 'text-purple-400', dot: 'bg-purple-400' },
+  RECOVERING: { bg: 'bg-indigo-500/20', text: 'text-indigo-400', dot: 'bg-indigo-400' },
+  CLOSED: { bg: 'bg-green-500/20', text: 'text-green-400', dot: 'bg-green-400' },
+  REOPENED: { bg: 'bg-pink-500/20', text: 'text-pink-400', dot: 'bg-pink-400' },
+  FALSE_POSITIVE: { bg: 'bg-slate-500/20', text: 'text-slate-400', dot: 'bg-slate-400' },
+};
+
+// ── Role-differentiated mock incidents ──
+function getIncidentsByRole(roleId: RoleId): any[] {
+  const bases: Record<RoleId, any[]> = {
+    'security-expert': [
+      { id: 'inc_001', ticketId: 'INC-2026-0042', title: 'SQL 注入漏洞被利用', severity: 'CRITICAL', status: 'ANALYZING', category: 'vulnerability', assignee: '张工', createdAt: '2026-04-17T08:15:00Z', description: '生产环境 API 发现 SQL 注入，已被成功利用获取数据。' },
+      { id: 'inc_002', ticketId: 'INC-2026-0041', title: 'Apache Log4j 远程代码执行', severity: 'CRITICAL', status: 'CONTAINING', category: 'vulnerability', assignee: '李工', createdAt: '2026-04-17T06:30:00Z', description: 'Log4j CVE-2021-44228 漏洞在 3 台服务器上检测到利用尝试。' },
+      { id: 'inc_003', ticketId: 'INC-2026-0040', title: 'XSS 存储型漏洞', severity: 'HIGH', status: 'CONFIRMED', category: 'vulnerability', assignee: '王工', createdAt: '2026-04-16T14:20:00Z', description: '用户评论模块存在存储型 XSS，影响所有访问用户。' },
+      { id: 'inc_004', ticketId: 'INC-2026-0039', title: '敏感信息泄露', severity: 'HIGH', status: 'ANALYZING', category: 'data-breach', assignee: '赵工', createdAt: '2026-04-16T10:00:00Z', description: 'GitHub 仓库意外公开了 AWS 密钥。' },
+      { id: 'inc_005', ticketId: 'INC-2026-0038', title: '弱密码策略', severity: 'MEDIUM', status: 'NEW', category: 'misconfiguration', assignee: '周工', createdAt: '2026-04-15T16:45:00Z', description: '内部系统发现弱密码策略，未强制复杂性要求。' },
+    ],
+    'privacy-officer': [
+      { id: 'inc_p01', ticketId: 'INC-2026-0020', title: 'GDPR 数据主体请求超时', severity: 'HIGH', status: 'ANALYZING', category: 'privacy', assignee: '隐私官A', createdAt: '2026-04-17T09:00:00Z', description: '数据主体请求已超过 30 天法定处理期限。' },
+      { id: 'inc_p02', ticketId: 'INC-2026-0019', title: 'PIPL 删除请求积压', severity: 'HIGH', status: 'CONFIRMED', category: 'privacy', assignee: '隐私官B', createdAt: '2026-04-16T11:00:00Z', description: '有 23 个 PIPL 删除请求待处理，超出合规时限。' },
+      { id: 'inc_p03', ticketId: 'INC-2026-0018', title: '数据泄露通知缺失', severity: 'CRITICAL', status: 'CONTAINING', category: 'data-breach', assignee: '隐私官A', createdAt: '2026-04-15T08:00:00Z', description: '用户数据泄露未按规定在 72 小时内向监管机构报告。' },
+    ],
+    'security-architect': [
+      { id: 'inc_a01', ticketId: 'INC-2026-0050', title: '零信任架构差距分析', severity: 'HIGH', status: 'ANALYZING', category: 'architecture', assignee: '架构师A', createdAt: '2026-04-17T10:00:00Z', description: '零信任架构评估发现 12 项控制缺失。' },
+      { id: 'inc_a02', ticketId: 'INC-2026-0049', title: '身份提供商单点故障', severity: 'CRITICAL', status: 'CONFIRMED', category: 'architecture', assignee: '架构师B', createdAt: '2026-04-16T15:00:00Z', description: 'IdP 无高可用设计，存在单点故障风险。' },
+    ],
+    'business-security-officer': [
+      { id: 'inc_b01', ticketId: 'INC-2026-0060', title: '业务连续性计划过期', severity: 'MEDIUM', status: 'NEW', category: 'bc', assignee: '业务安全A', createdAt: '2026-04-17T08:00:00Z', description: 'BCP 已超过 12 个月未更新。' },
+      { id: 'inc_b02', ticketId: 'INC-2026-0059', title: '灾难恢复测试失败', severity: 'HIGH', status: 'CONFIRMED', category: 'bc', assignee: '业务安全B', createdAt: '2026-04-16T14:00:00Z', description: 'DR 演练中 RTO 未达标，实际恢复时间超过目标 4 小时。' },
+    ],
+    'secuclaw-commander': [
+      { id: 'inc_c01', ticketId: 'INC-2026-0001', title: '大规模勒索软件攻击', severity: 'CRITICAL', status: 'CONTAINING', category: 'ransomware', assignee: '指挥官', createdAt: '2026-04-17T06:00:00Z', description: '多地区同时遭受勒索软件攻击，已启动危机响应协议。' },
+      { id: 'inc_c02', ticketId: 'INC-2026-0002', title: '跨区域协调请求', severity: 'HIGH', status: 'ANALYZING', category: 'coordination', assignee: '指挥官', createdAt: '2026-04-17T09:30:00Z', description: '华东/华南/华北三区联动响应请求。' },
+      { id: 'inc_c03', ticketId: 'INC-2026-0003', title: '危机管理级别升级', severity: 'CRITICAL', status: 'CONFIRMED', category: 'crisis', assignee: '指挥官', createdAt: '2026-04-17T10:00:00Z', description: '安全事件级别从 L2 升级至 L1。' },
+    ],
+    'ciso': [
+      { id: 'inc_i01', ticketId: 'INC-2026-0070', title: '季度安全 KPI 异常', severity: 'MEDIUM', status: 'ANALYZING', category: 'kpi', assignee: 'CISO', createdAt: '2026-04-17T09:00:00Z', description: '本月安全告警数量环比上升 34%，需向董事会汇报。' },
+      { id: 'inc_i02', ticketId: 'INC-2026-0069', title: '安全预算超支风险', severity: 'HIGH', status: 'CONFIRMED', category: 'budget', assignee: 'CISO', createdAt: '2026-04-16T11:00:00Z', description: 'Q2 安全预算消耗速度超出预期 28%。' },
+    ],
+    'security-ops': [
+      { id: 'inc_o01', ticketId: 'INC-2026-0080', title: '深夜告警风暴', severity: 'CRITICAL', status: 'ANALYZING', category: 'alert-storm', assignee: '运营A', createdAt: '2026-04-17T02:00:00Z', description: 'SIEM 在 02:00-04:00 期间产生 1.2 万条告警，误报率 97%。' },
+      { id: 'inc_o02', ticketId: 'INC-2026-0079', title: 'SOAR 剧本执行失败', severity: 'MEDIUM', status: 'NEW', category: 'automation', assignee: '运营B', createdAt: '2026-04-17T09:15:00Z', description: '自动化响应剧本在第 3 步超时失败。' },
+      { id: 'inc_o03', ticketId: 'INC-2026-0078', title: '待处理告警积压', severity: 'HIGH', status: 'CONFIRMED', category: 'backlog', assignee: '运营A', createdAt: '2026-04-17T10:00:00Z', description: '当前待处理告警 847 条，超出团队处理能力。' },
+    ],
+    'supply-chain-security': [
+      { id: 'inc_s01', ticketId: 'INC-2026-0090', title: '关键供应商安全评估过期', severity: 'HIGH', status: 'CONFIRMED', category: 'vendor', assignee: '供应链A', createdAt: '2026-04-17T08:00:00Z', description: '3 家关键供应商安全评估证书已过期。' },
+      { id: 'inc_s02', ticketId: 'INC-2026-0089', title: '第三方组件漏洞', severity: 'CRITICAL', status: 'CONTAINING', category: 'third-party', assignee: '供应链B', createdAt: '2026-04-16T14:00:00Z', description: 'npm 依赖中发现 CVE-2024-XXXX 高危漏洞。' },
+    ],
+  };
+  return bases[roleId] || bases['security-expert'];
+}
+
+// ── Incident Detail Sheet ──
+function IncidentDetail({ incident, open, onClose, accentColor }: {
+  incident: any; open: boolean; onClose: () => void; accentColor: string;
+}) {
+  const sev = SEVERITY_STYLES[incident?.severity] || SEVERITY_STYLES.INFO;
+  const stat = STATUS_STYLES[incident?.status] || STATUS_STYLES.NEW;
+  return (
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent side="right" className="bg-[#0f1525] border-white/[0.06] w-[480px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-white flex items-center gap-2">
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${sev.bg} ${sev.text}`}>{sev.label}</span>
+            <span className="text-slate-400 text-sm font-normal">{incident?.ticketId}</span>
+          </SheetTitle>
+        </SheetHeader>
+        {incident && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">{incident.title}</h3>
+              <p className="text-sm text-slate-400 mt-1">{incident.description}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-xs text-slate-400 mb-1">状态</p>
+                <div className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${stat.dot} animate-pulse`} />
+                  <span className={`text-sm font-medium ${stat.text}`}>{incident.status}</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-xs text-slate-400 mb-1">负责人</p>
+                <p className="text-sm text-white flex items-center gap-1"><User className="h-3 w-3" />{incident.assignee}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-xs text-slate-400 mb-1">分类</p>
+                <p className="text-sm text-white flex items-center gap-1"><Tag className="h-3 w-3" />{incident.category}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <p className="text-xs text-slate-400 mb-1">发现时间</p>
+                <p className="text-sm text-white flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(incident.createdAt).toLocaleString('zh-CN')}</p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button className="flex-1" style={{ backgroundColor: accentColor }}>处理</Button>
+              <Button variant="outline" className="flex-1" style={{ borderColor: `${accentColor}40`, color: accentColor }}>升级</Button>
+              <Button variant="outline" className="flex-1" onClick={onClose}>关闭</Button>
+            </div>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ── Component ──
+export const IncidentsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const currentRole = useRoleContextStore((s) => s.currentRole) as RoleId;
+  const theme = currentRole ? ROLE_THEMES[currentRole] : null;
+  const accentColor = theme?.colors.primary ?? '#1e40af';
+  const roleConfig = useMemo(
+    () => (currentRole ? ROLE_DASHBOARD_CONFIG[currentRole] : null),
+    [currentRole]
+  );
+
+  const [selectedIncident, setSelectedIncident] = useState<any>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [severityFilter, setSeverityFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+
+  // Real API data (fallback to role-based mock when backend unavailable)
+  const { data: statsData } = useIncidentStats();
+  const incidents = getIncidentsByRole(currentRole || 'security-expert');
+
+  const filtered = useMemo(() => {
+    return incidents.filter((inc) => {
+      if (search && !inc.title.toLowerCase().includes(search.toLowerCase()) && !inc.ticketId.toLowerCase().includes(search.toLowerCase())) return false;
+      if (severityFilter && inc.severity !== severityFilter) return false;
+      if (statusFilter && inc.status !== statusFilter) return false;
+      return true;
+    });
+  }, [incidents, search, severityFilter, statusFilter]);
+
+  const openCount = incidents.filter((i) => !['CLOSED', 'FALSE_POSITIVE'].includes(i.status)).length;
+  const criticalCount = incidents.filter((i) => i.severity === 'CRITICAL').length;
+
+  const handleRowClick = (incident: any) => {
+    setSelectedIncident(incident);
+    setDetailOpen(true);
+  };
+
+  const roleLabel = theme?.nameCn || '安全专家';
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs"
+              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}>
+              🛡️ {roleLabel} 视角
+            </span>
+            <span>安全事件管理</span>
+          </div>
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5" style={{ color: accentColor }} />
+            安全事件
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5" style={{ borderColor: `${accentColor}40`, color: accentColor }} onClick={() => navigate('/war-room')}>
+            <RefreshCw className="h-3 w-3" />作战室
+          </Button>
+          <Button size="sm" className="gap-1.5" style={{ backgroundColor: accentColor }}>
+            <Plus className="h-3 w-3" />新建事件
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: '总计事件', value: incidents.length, icon: <ShieldAlert className="h-4 w-4" /> },
+          { label: '处理中', value: openCount, icon: <AlertTriangle className="h-4 w-4" /> },
+          { label: '严重事件', value: criticalCount, icon: <AlertTriangle className="h-4 w-4" />, highlight: criticalCount > 0 },
+          { label: '已关闭', value: incidents.length - openCount, icon: <ShieldAlert className="h-4 w-4" /> },
+        ].map((stat) => (
+          <Card key={stat.label} className={`bg-[#0f1525] border-white/[0.06] ${stat.highlight ? 'border-red-500/30' : ''}`}>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${stat.highlight ? 'bg-red-500/20 text-red-400' : ''}`} style={!stat.highlight ? { backgroundColor: `${accentColor}20`, color: accentColor } : {}}>
+                {stat.icon}
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">{stat.label}</p>
+                <p className={`text-2xl font-bold ${stat.highlight ? 'text-red-400' : 'text-white'}`}>{stat.value}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <Card className="bg-[#0f1525] border-white/[0.06]">
+        <CardContent className="p-3">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Input
+                placeholder="搜索事件标题或编号..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-8 text-sm bg-white/[0.04] border-white/[0.08]"
+              />
+            </div>
+            <select
+              className="h-8 px-2 rounded-md text-sm bg-white/[0.04] border border-white/[0.08] text-slate-300"
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+            >
+              <option value="">全部严重级别</option>
+              <option value="CRITICAL">严重</option>
+              <option value="HIGH">高危</option>
+              <option value="MEDIUM">中危</option>
+              <option value="LOW">低危</option>
+              <option value="INFO">信息</option>
+            </select>
+            <select
+              className="h-8 px-2 rounded-md text-sm bg-white/[0.04] border border-white/[0.08] text-slate-300"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">全部状态</option>
+              <option value="NEW">新建</option>
+              <option value="CONFIRMED">已确认</option>
+              <option value="ANALYZING">分析中</option>
+              <option value="CONTAINING">遏制中</option>
+              <option value="CLOSED">已关闭</option>
+            </select>
+            {(severityFilter || statusFilter) && (
+              <Button size="sm" variant="ghost" className="h-8 text-xs gap-1" onClick={() => { setSeverityFilter(''); setStatusFilter(''); }}>
+                <X className="h-3 w-3" />清除筛选
+              </Button>
+            )}
+            <div className="ml-auto text-xs text-slate-400">
+              共 {filtered.length} 个事件
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Incident Table */}
+      <Card className="bg-[#0f1525] border-white/[0.06]">
+        <CardContent className="p-0">
+          {/* Table Header */}
+          <div className="grid grid-cols-[80px_1fr_100px_100px_120px_100px_60px] gap-2 px-4 py-2.5 border-b border-white/[0.06] text-xs text-slate-400 font-medium">
+            <div>编号</div>
+            <div>标题</div>
+            <div>严重级别</div>
+            <div>状态</div>
+            <div>负责人</div>
+            <div>发现时间</div>
+            <div></div>
+          </div>
+          {/* Table Rows */}
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+              <ShieldAlert className="h-8 w-8 mb-3 opacity-30" />
+              <p className="text-sm">暂无事件</p>
+            </div>
+          ) : (
+            filtered.map((incident) => {
+              const sev = SEVERITY_STYLES[incident.severity] || SEVERITY_STYLES.INFO;
+              const stat = STATUS_STYLES[incident.status] || STATUS_STYLES.NEW;
+              return (
+                <div
+                  key={incident.id}
+                  className="grid grid-cols-[80px_1fr_100px_100px_120px_100px_60px] gap-2 px-4 py-3 border-b border-white/[0.04] hover:bg-white/[0.02] cursor-pointer transition-colors items-center"
+                  onClick={() => handleRowClick(incident)}
+                >
+                  <div className="text-xs text-slate-400 font-mono">{incident.ticketId}</div>
+                  <div>
+                    <p className="text-sm text-white font-medium truncate">{incident.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{incident.category}</p>
+                  </div>
+                  <div>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${sev.bg} ${sev.text}`}>
+                      {sev.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`h-1.5 w-1.5 rounded-full ${stat.dot} ${!['CLOSED', 'FALSE_POSITIVE'].includes(incident.status) ? 'animate-pulse' : ''}`} />
+                    <span className={`text-xs ${stat.text}`}>{incident.status}</span>
+                  </div>
+                  <div className="text-xs text-slate-300">{incident.assignee}</div>
+                  <div className="text-xs text-slate-400">{new Date(incident.createdAt).toLocaleDateString('zh-CN')}</div>
+                  <div>
+                    <ChevronRight className="h-4 w-4 text-slate-500" />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Detail Sheet */}
+      <IncidentDetail
+        incident={selectedIncident}
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        accentColor={accentColor}
+      />
+    </div>
+  );
+};

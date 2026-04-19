@@ -185,5 +185,28 @@
     },
     "createdAt": 1773877069698,
     "updatedAt": 1774222669698
+  },
+  {
+    "id": "vuln_1776246767553_335coasoj",
+    "cveId": "CVE-TEST-001",
+    "title": "Test Vuln",
+    "description": "",
+    "severity": "high",
+    "cweIds": [],
+    "affectedProducts": [],
+    "status": "OPEN",
+    "exploitAvailable": false,
+    "exploitInWild": false,
+    "fixAvailable": false,
+    "aiPriority": 0,
+    "businessImpact": 0,
+    "exposureScore": 0,
+    "threatScore": 0,
+    "firstDetected": 1776246767553,
+    "lastDetected": 1776246767553,
+    "createdBy": "system",
+    "createdAt": 1776246767553,
+    "updatedBy": "system",
+    "updatedAt": 1776246767553
   }
 ]

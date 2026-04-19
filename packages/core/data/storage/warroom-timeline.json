@@ -31,5 +31,119 @@
     },
     "id": "evt_1775884257910_ytxuk",
     "timestamp": 1775884257910
+  },
+  {
+    "sessionId": "session_1776329862973_e9ir4l",
+    "type": "session_created",
+    "actor": "security-architect",
+    "data": {
+      "title": "War Room - 安全事件响应",
+      "scenario": "incident-response"
+    },
+    "id": "evt_1776329862976_3h0488",
+    "timestamp": 1776329862976
+  },
+  {
+    "sessionId": "session_1776329862973_e9ir4l",
+    "type": "participant_joined",
+    "actor": "security-architect",
+    "actorRole": "security-architect",
+    "id": "evt_1776329864063_hjqhv",
+    "timestamp": 1776329864063
+  },
+  {
+    "sessionId": "session_1776331229235_n3wt6o",
+    "type": "session_created",
+    "actor": "security-expert",
+    "data": {
+      "title": "War Room - 安全事件响应",
+      "scenario": "incident-response"
+    },
+    "id": "evt_1776331229241_tur617",
+    "timestamp": 1776331229241
+  },
+  {
+    "sessionId": "session_1776331229235_n3wt6o",
+    "type": "participant_joined",
+    "actor": "security-expert",
+    "actorRole": "security-expert",
+    "id": "evt_1776331229894_1xk7i",
+    "timestamp": 1776331229894
+  },
+  {
+    "sessionId": "session_1776331822011_stodjq",
+    "type": "session_created",
+    "actor": "security-expert",
+    "data": {
+      "title": "War Room - 安全事件响应",
+      "scenario": "incident-response"
+    },
+    "id": "evt_1776331822016_l3odgn",
+    "timestamp": 1776331822016
+  },
+  {
+    "sessionId": "session_1776331822011_stodjq",
+    "type": "participant_joined",
+    "actor": "security-expert",
+    "actorRole": "security-expert",
+    "id": "evt_1776331823818_rm2m9h",
+    "timestamp": 1776331823818
+  },
+  {
+    "sessionId": "session_1776372199314_3r0psh",
+    "type": "session_created",
+    "actor": "security-expert",
+    "data": {
+      "title": "War Room - 安全事件响应",
+      "scenario": "incident-response"
+    },
+    "id": "evt_1776372199317_bzjlqh",
+    "timestamp": 1776372199317
+  },
+  {
+    "sessionId": "session_1776372199314_3r0psh",
+    "type": "participant_joined",
+    "actor": "security-expert",
+    "actorRole": "security-expert",
+    "id": "evt_1776372199915_lhfth9",
+    "timestamp": 1776372199915
+  },
+  {
+    "sessionId": "session_1776382792087_0fofmm",
+    "type": "session_created",
+    "actor": "security-expert",
+    "data": {
+      "title": "War Room - 安全事件响应",
+      "scenario": "incident-response"
+    },
+    "id": "evt_1776382792139_qs481s",
+    "timestamp": 1776382792140
+  },
+  {
+    "sessionId": "session_1776382792087_0fofmm",
+    "type": "participant_joined",
+    "actor": "security-expert",
+    "actorRole": "security-expert",
+    "id": "evt_1776382793231_vpc4pg",
+    "timestamp": 1776382793231
+  },
+  {
+    "sessionId": "session_1776419342451_gr5ryc",
+    "type": "session_created",
+    "actor": "security-expert",
+    "data": {
+      "title": "War Room - 安全事件响应",
+      "scenario": "incident-response"
+    },
+    "id": "evt_1776419342473_zaxuyk",
+    "timestamp": 1776419342473
+  },
+  {
+    "sessionId": "session_1776419342451_gr5ryc",
+    "type": "participant_joined",
+    "actor": "security-expert",
+    "actorRole": "security-expert",
+    "id": "evt_1776419343242_b05z7u",
+    "timestamp": 1776419343242
   }
 ]

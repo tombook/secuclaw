@@ -148,5 +148,9 @@
     "capabilityCount": 4,
     "enabled": true,
     "order": 6
+  },
+  {
+    "id": "domain-1776247228205",
+    "name": "D1"
   }
 ]

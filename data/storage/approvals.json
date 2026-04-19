@@ -1,0 +1,26 @@
+[
+  {
+    "id": "approval_1776247282886_1sfboe1f3",
+    "taskId": "test-task-1",
+    "type": "dark-operation",
+    "requester": "demo-user",
+    "scope": "dark-side",
+    "ticketNo": "REQ-1776247282886",
+    "expiresAt": 1776254482886,
+    "status": "pending",
+    "createdAt": 1776247282886,
+    "updatedAt": 1776247282886
+  },
+  {
+    "id": "approval_1776247326325_4yadq0p4v",
+    "taskId": "test-task-1",
+    "type": "dark-operation",
+    "requester": "demo-user",
+    "scope": "dark-side",
+    "ticketNo": "REQ-1776247326325",
+    "expiresAt": 1776254526325,
+    "status": "pending",
+    "createdAt": 1776247326325,
+    "updatedAt": 1776247326325
+  }
+]

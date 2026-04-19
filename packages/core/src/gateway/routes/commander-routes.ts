@@ -12,6 +12,7 @@ export function registerCommanderRoutes(
   handlers.set('commander.activateRole', (params) => handleCommanderActivateRole(params, deps));
   handlers.set('commander.deactivateRole', (params) => handleCommanderDeactivateRole(params, deps));
   handlers.set('commander.bindLLM', (params) => handleCommanderBindLLM(params, deps));
+  handlers.set('commander.delete', (params) => handleCommanderDelete(params, deps));
 }
 
 function getCommanderService(deps: RouterDeps): CommanderService {
@@ -45,4 +46,11 @@ async function handleCommanderDeactivateRole(params: Record<string, unknown>, de
 async function handleCommanderBindLLM(params: Record<string, unknown>, deps: RouterDeps) {
   const { commanderId, roleId, binding } = params;
   return getCommanderService(deps).bindLLM(commanderId as string, roleId as string, binding);
+}
+
+async function handleCommanderDelete(params: Record<string, unknown>, deps: RouterDeps) {
+  const { id } = params;
+  if (!id) throw new Error('id required');
+  await getCommanderService(deps).deleteCommander(id as string);
+  return { success: true, id };
 }

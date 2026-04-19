@@ -74,6 +74,23 @@ export class KpiService {
 
   constructor(private store: JsonStore) {}
 
+  async getSummary(): Promise<{
+    overallScore: number;
+    riskScore: number;
+    securityScore: number;
+    complianceScore: number;
+    lastCalculated: string;
+  }> {
+    const metrics = await this.calculateAllMetrics();
+    return {
+      overallScore: metrics.overallScore,
+      riskScore: metrics.riskScore,
+      securityScore: metrics.securityScore,
+      complianceScore: metrics.compliance.overall,
+      lastCalculated: new Date(metrics.timestamp).toISOString(),
+    };
+  }
+
   /**
    * 计算所有KPI指标
    */

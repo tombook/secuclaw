@@ -1,0 +1,21 @@
+/* ─── secuclaw-commander 主题 ─── */
+/* 战情指挥 · 战术纹理 · 红色系 */
+
+[data-role="secuclaw-commander"] {
+  --role-bg-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='8' fill='none' stroke='%23dc2626' stroke-width='0.3' opacity='0.05'/%3E%3Ccircle cx='30' cy='30' r='16' fill='none' stroke='%23ef4444' stroke-width='0.2' opacity='0.03'/%3E%3Ccircle cx='30' cy='30' r='24' fill='none' stroke='%23ef4444' stroke-width='0.15' opacity='0.02'/%3E%3Cline x1='30' y1='0' x2='30' y2='60' stroke='%23dc2626' stroke-width='0.15' opacity='0.03'/%3E%3Cline x1='0' y1='30' x2='60' y2='30' stroke='%23dc2626' stroke-width='0.15' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* 动画：标记落位 */
+@keyframes tactical-deploy {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+[data-role="secuclaw-commander"] .tactical-marker {
+  animation: tactical-deploy 1.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-role="secuclaw-commander"] .tactical-marker { animation: none; }
+}

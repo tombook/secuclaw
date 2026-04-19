@@ -114,4 +114,19 @@ export class CommanderService {
     logger.info(`Bound LLM for commander ${commanderId}, role ${roleId}`);
     return commander;
   }
+
+  async deleteCommander(id: string): Promise<void> {
+    const commander = await this.repo.getById(id);
+    if (!commander) throw new Error('Commander not found');
+    const activeRoles = commander.roles.filter(r => r.enabled);
+    if (activeRoles.length > 0) {
+      throw new Error(`Cannot delete commander: ${activeRoles.length} active role(s) still bound. Deactivate all roles first.`);
+    }
+    const llmBindingKeys = Object.keys(commander.llmBindings || {});
+    if (llmBindingKeys.length > 0) {
+      throw new Error(`Cannot delete commander: ${llmBindingKeys.length} LLM binding(s) still present. Remove all LLM bindings first.`);
+    }
+    await this.repo.delete(id);
+    logger.info(`Deleted commander: ${id}`);
+  }
 }

@@ -1,0 +1,24 @@
+[
+  {
+    "id": "audit_1776247186689_rj20zv5",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1776247186690,
+    "details": {
+      "gatewayPort": 21981
+    }
+  },
+  {
+    "id": "audit_1776249275809_3ighqrb",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1776249275809,
+    "details": {
+      "gatewayPort": 21981
+    }
+  }
+]

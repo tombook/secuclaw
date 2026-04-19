@@ -77,5 +77,59 @@ export function registerCapabilitiesRoutes(router: Router): void {
   router.registerHandler('capabilities.evidence.list', async (p: Record<string, unknown>) => svc().listEvidence({
     domainId: p.domainId as any, taskId: p.taskId as string, runId: p.runId as string, limit: p.limit as number,
   }));
+  router.registerHandler('capabilities.evidence.update', async (p: Record<string, unknown>) => {
+    const { id, title, description, tags, files } = p;
+    if (!id) throw new Error('Missing required parameter: id');
+    return svc().updateEvidence(id as string, {
+      title: title as string | undefined,
+      description: description as string | undefined,
+      tags: tags as string[] | undefined,
+      files: files as string[] | undefined,
+    });
+  });
+  router.registerHandler('capabilities.evidence.delete', async (p: Record<string, unknown>) => {
+    const { id } = p;
+    if (!id) throw new Error('Missing required parameter: id');
+    await svc().deleteEvidence(id as string);
+    return { success: true, id };
+  });
   router.registerHandler('capabilities.overview.metrics', async () => svc().getOverviewMetrics());
+
+  router.registerHandler('capabilities.domains.create', async (p: Record<string, unknown>) => {
+    const { id, name, description, ...rest } = p;
+    if (!name) throw new Error('Missing required field: name');
+    return svc().createDomain({ id: id as any, name: name as string, description: description as string, ...rest } as any);
+  });
+
+  router.registerHandler('capabilities.domains.update', async (p: Record<string, unknown>) => {
+    const { id, ...updates } = p;
+    if (!id) throw new Error('Missing required field: id');
+    return svc().updateDomain(id as any, updates as any);
+  });
+
+  router.registerHandler('capabilities.domains.delete', async (p: Record<string, unknown>) => {
+    const { id } = p;
+    if (!id) throw new Error('Missing required field: id');
+    await svc().deleteDomain(id as any);
+    return { success: true, id };
+  });
+
+  router.registerHandler('capabilities.items.create', async (p: Record<string, unknown>) => {
+    const { domainId, name, description, ...rest } = p;
+    if (!domainId || !name) throw new Error('Missing required fields: domainId, name');
+    return svc().createItem({ domainId: domainId as any, name: name as string, description: description as string, ...rest } as any);
+  });
+
+  router.registerHandler('capabilities.items.update', async (p: Record<string, unknown>) => {
+    const { id, ...updates } = p;
+    if (!id) throw new Error('Missing required field: id');
+    return svc().updateItem(id as string, updates as any);
+  });
+
+  router.registerHandler('capabilities.items.delete', async (p: Record<string, unknown>) => {
+    const { id } = p;
+    if (!id) throw new Error('Missing required field: id');
+    await svc().deleteItem(id as string);
+    return { success: true, id };
+  });
 }

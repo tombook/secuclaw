@@ -14,11 +14,14 @@ context: |
   ## Tech Stack
   - **Monorepo**: pnpm workspace
   - **Backend**: Node.js + TypeScript + Prisma ORM + tSOA (packages/core)
-  - **Frontend**: Lit (Web Components) + TypeScript + Vite (ui/)
+  - **Frontend**: React 19 + shadcn/ui + Tailwind CSS v4 + Vite (ui/)
   - **Communication**: WebSocket Gateway (前后端通信)
-  - **State Management**: Lit reactive properties + custom stores (role-context, skill-store)
-  - **Styling**: CSS Custom Properties design system (--sc-* variables)
-  - **i18n**: 自定义 I18nController (lit-controller)
+  - **State Management**: Zustand (stores/)
+  - **Styling**: Tailwind CSS v4 + CSS Custom Properties (--sc-* variables)
+  - **UI Components**: shadcn/ui (Radix UI primitives)
+  - **Charts**: Recharts
+  - **Routing**: React Router v7
+  - **i18n**: react-i18next
   - **Testing**: Vitest
   
   ## 8 Security Roles (核心产品价值)

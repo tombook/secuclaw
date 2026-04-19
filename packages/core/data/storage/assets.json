@@ -14,19 +14,39 @@
       "ip": "10.0.1.100",
       "mac": "00:1a:2b:3c:4d:5e:6f",
       "hostname": "prod-web-01.example.com",
-      "ports": [22, 443, 8080],
+      "ports": [
+        22,
+        443,
+        8080
+      ],
       "fqdn": "prod-web-01.example.com"
     },
     "technology": {
       "os": "Ubuntu",
       "osVersion": "22.04 LTS",
       "software": [
-        {"name": "Nginx", "version": "1.18.0", "vendor": "NGINX"},
-        {"name": "Node.js", "version": "18.17.0", "vendor": "Node.js"}
+        {
+          "name": "Nginx",
+          "version": "1.18.0",
+          "vendor": "NGINX"
+        },
+        {
+          "name": "Node.js",
+          "version": "18.17.0",
+          "vendor": "Node.js"
+        }
       ],
       "services": [
-        {"name": "nginx", "port": 443, "protocol": "https"},
-        {"name": "node-app", "port": 3000, "protocol": "http"}
+        {
+          "name": "nginx",
+          "port": 443,
+          "protocol": "https"
+        },
+        {
+          "name": "node-app",
+          "port": 3000,
+          "protocol": "http"
+        }
       ]
     },
     "business": {
@@ -40,13 +60,23 @@
       "attackSurface": 75,
       "exposureLevel": "internet-facing",
       "lastScanDate": 1709234567890,
-      "vulnerabilities": ["vuln_001", "vuln_002"],
-      "compliance": ["ctrl_001", "ctrl_002"]
+      "vulnerabilities": [
+        "vuln_001",
+        "vuln_002"
+      ],
+      "compliance": [
+        "ctrl_001",
+        "ctrl_002"
+      ]
     },
     "status": "active",
     "lastSeen": 1709234567890,
     "firstSeen": 1697234567890,
-    "tags": ["production", "web", "critical"],
+    "tags": [
+      "production",
+      "web",
+      "critical"
+    ],
     "customFields": {},
     "createdAt": 1697234567890,
     "updatedAt": 1709234567890
@@ -66,19 +96,38 @@
       "ip": "10.0.1.200",
       "mac": "00:1a:2b:3c:4d:5e:6f",
       "hostname": "prod-db-01.example.com",
-      "ports": [5432, 6379],
+      "ports": [
+        5432,
+        6379
+      ],
       "fqdn": "prod-db-01.example.com"
     },
     "technology": {
       "os": "CentOS",
       "osVersion": "7.9",
       "software": [
-        {"name": "PostgreSQL", "version": "14.2", "vendor": "PostgreSQL"},
-        {"name": "Redis", "version": "6.2", "vendor": "Redis"}
+        {
+          "name": "PostgreSQL",
+          "version": "14.2",
+          "vendor": "PostgreSQL"
+        },
+        {
+          "name": "Redis",
+          "version": "6.2",
+          "vendor": "Redis"
+        }
       ],
       "services": [
-        {"name": "postgresql", "port": 5432, "protocol": "tcp"},
-        {"name": "redis", "port": 6379, "protocol": "tcp"}
+        {
+          "name": "postgresql",
+          "port": 5432,
+          "protocol": "tcp"
+        },
+        {
+          "name": "redis",
+          "port": 6379,
+          "protocol": "tcp"
+        }
       ]
     },
     "business": {
@@ -92,13 +141,22 @@
       "attackSurface": 45,
       "exposureLevel": "internal",
       "lastScanDate": 1709234567890,
-      "vulnerabilities": ["vuln_003"],
-      "compliance": ["ctrl_003", "ctrl_004"]
+      "vulnerabilities": [
+        "vuln_003"
+      ],
+      "compliance": [
+        "ctrl_003",
+        "ctrl_004"
+      ]
     },
     "status": "active",
     "lastSeen": 1709234567890,
     "firstSeen": 1697234567890,
-    "tags": ["production", "database", "critical"],
+    "tags": [
+      "production",
+      "database",
+      "critical"
+    ],
     "customFields": {},
     "createdAt": 1697234567890,
     "updatedAt": 1709234567890
@@ -118,18 +176,32 @@
       "ip": "52.83.45.67",
       "mac": "",
       "hostname": "",
-      "ports": [443],
+      "ports": [
+        443
+      ],
       "fqdn": "api.example.com"
     },
     "technology": {
       "os": "Linux",
       "osVersion": "5.15",
       "software": [
-        {"name": "Java", "version": "17.0", "vendor": "Oracle"},
-        {"name": "Spring Boot", "version": "3.2.0", "vendor": "Spring"}
+        {
+          "name": "Java",
+          "version": "17.0",
+          "vendor": "Oracle"
+        },
+        {
+          "name": "Spring Boot",
+          "version": "3.2.0",
+          "vendor": "Spring"
+        }
       ],
       "services": [
-        {"name": "https", "port": 443, "protocol": "https"}
+        {
+          "name": "https",
+          "port": 443,
+          "protocol": "https"
+        }
       ]
     },
     "business": {
@@ -143,13 +215,21 @@
       "attackSurface": 85,
       "exposureLevel": "internet-facing",
       "lastScanDate": 1709234567890,
-      "vulnerabilities": ["vuln_004"],
-      "compliance": ["ctrl_005"]
+      "vulnerabilities": [
+        "vuln_004"
+      ],
+      "compliance": [
+        "ctrl_005"
+      ]
     },
     "status": "active",
     "lastSeen": 1709234567890,
     "firstSeen": 1697234567890,
-    "tags": ["production", "api", "cloud"],
+    "tags": [
+      "production",
+      "api",
+      "cloud"
+    ],
     "customFields": {},
     "createdAt": 1697234567890,
     "updatedAt": 1709234567890
@@ -169,17 +249,28 @@
       "ip": "10.0.2.100",
       "mac": "00:1a:2b:3c:4d:5e:7f",
       "hostname": "dev-vm-01.example.com",
-      "ports": [22, 80],
+      "ports": [
+        22,
+        80
+      ],
       "fqdn": "dev-vm-01.example.com"
     },
     "technology": {
       "os": "Ubuntu",
       "osVersion": "22.04 LTS",
       "software": [
-        {"name": "Docker", "version": "24.0", "vendor": "Docker"}
+        {
+          "name": "Docker",
+          "version": "24.0",
+          "vendor": "Docker"
+        }
       ],
       "services": [
-        {"name": "ssh", "port": 22, "protocol": "tcp"}
+        {
+          "name": "ssh",
+          "port": 22,
+          "protocol": "tcp"
+        }
       ]
     },
     "business": {
@@ -199,7 +290,10 @@
     "status": "active",
     "lastSeen": 1709234567890,
     "firstSeen": 1697234567890,
-    "tags": ["development", "vm"],
+    "tags": [
+      "development",
+      "vm"
+    ],
     "customFields": {},
     "createdAt": 1697234567890,
     "updatedAt": 1709234567890
@@ -219,18 +313,34 @@
       "ip": "10.0.1.50",
       "mac": "00:1a:2b:3c:4d:5e:8f",
       "hostname": "backup-nas.example.com",
-      "ports": [22, 445, 2049],
+      "ports": [
+        22,
+        445,
+        2049
+      ],
       "fqdn": "backup-nas.example.com"
     },
     "technology": {
       "os": "TrueNAS",
       "osVersion": "13.0",
       "software": [
-        {"name": "TrueNAS", "version": "13.0", "vendor": "iXsystems"}
+        {
+          "name": "TrueNAS",
+          "version": "13.0",
+          "vendor": "iXsystems"
+        }
       ],
       "services": [
-        {"name": "smb", "port": 445, "protocol": "tcp"},
-        {"name": "nfs", "port": 2049, "protocol": "tcp"}
+        {
+          "name": "smb",
+          "port": 445,
+          "protocol": "tcp"
+        },
+        {
+          "name": "nfs",
+          "port": 2049,
+          "protocol": "tcp"
+        }
       ]
     },
     "business": {
@@ -245,14 +355,57 @@
       "exposureLevel": "internal",
       "lastScanDate": 1709234567890,
       "vulnerabilities": [],
-      "compliance": ["ctrl_006"]
+      "compliance": [
+        "ctrl_006"
+      ]
     },
     "status": "maintenance",
     "lastSeen": 1709234567890,
     "firstSeen": 1697234567890,
-    "tags": ["production", "storage", "backup"],
+    "tags": [
+      "production",
+      "storage",
+      "backup"
+    ],
     "customFields": {},
     "createdAt": 1697234567890,
     "updatedAt": 1709234567890
+  },
+  {
+    "id": "asset_b19278be-441b-4244-9a91-f4e3644c1bad",
+    "info": {
+      "name": "TEST-ASSET-001",
+      "type": "server",
+      "criticality": "high",
+      "status": "unknown",
+      "tags": []
+    },
+    "config": {
+      "ipAddresses": []
+    },
+    "risk": {
+      "riskScore": 0,
+      "riskLevel": "low",
+      "vulnerabilityCount": 0,
+      "criticalVulnerabilityCount": 0,
+      "highVulnerabilityCount": 0,
+      "mediumVulnerabilityCount": 0,
+      "lowVulnerabilityCount": 0,
+      "incidentCount": 0,
+      "threatCount": 0
+    },
+    "relations": {
+      "relatedAssets": [],
+      "relatedVulnerabilities": [],
+      "relatedIncidents": [],
+      "relatedThreats": [],
+      "relatedComplianceItems": []
+    },
+    "lifecycle": {
+      "discoveredAt": 1776246757552,
+      "lastSeenAt": 1776246757552
+    },
+    "createdAt": 1776246757552,
+    "updatedAt": 1776246757552
   }
 ]

@@ -1,0 +1,21 @@
+/* ─── supply-chain-security 主题 ─── */
+/* 供应链管理 · 网络纹理 · 黄绿色系 */
+
+[data-role="supply-chain-security"] {
+  --role-bg-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='15' cy='15' r='2' fill='%2365a30d' opacity='0.05'/%3E%3Ccircle cx='45' cy='15' r='2' fill='%2365a30d' opacity='0.05'/%3E%3Ccircle cx='15' cy='45' r='2' fill='%2365a30d' opacity='0.05'/%3E%3Ccircle cx='45' cy='45' r='2' fill='%2365a30d' opacity='0.05'/%3E%3Cline x1='15' y1='15' x2='45' y2='15' stroke='%2384cc16' stroke-width='0.3' opacity='0.04'/%3E%3Cline x1='15' y1='15' x2='15' y2='45' stroke='%2384cc16' stroke-width='0.3' opacity='0.04'/%3E%3Cline x1='45' y1='15' x2='45' y2='45' stroke='%2384cc16' stroke-width='0.3' opacity='0.04'/%3E%3Cline x1='15' y1='45' x2='45' y2='45' stroke='%2384cc16' stroke-width='0.3' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* 动画：节点流动 */
+@keyframes flow-nodes {
+  0% { stroke-dashoffset: 60; }
+  100% { stroke-dashoffset: 0; }
+}
+
+[data-role="supply-chain-security"] .flow-line {
+  stroke-dasharray: 4 8;
+  animation: flow-nodes 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-role="supply-chain-security"] .flow-line { animation: none; }
+}

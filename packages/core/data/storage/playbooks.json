@@ -1,0 +1,46 @@
+[
+  {
+    "id": "pb_1776246807567_wwhhb4",
+    "name": "TEST-PLAYBOOK",
+    "description": "Test",
+    "version": "1.0",
+    "trigger": {
+      "id": "trg-new",
+      "type": "manual",
+      "config": {}
+    },
+    "rootStep": {
+      "id": "s_root",
+      "name": "root",
+      "type": "serial",
+      "config": {
+        "subSteps": []
+      }
+    },
+    "status": "enabled",
+    "createdAt": 1776246807567,
+    "updatedAt": 1776246807567
+  },
+  {
+    "id": "pb_1776246949269_ohah2f",
+    "name": "New Playbook",
+    "description": "",
+    "version": "1.0",
+    "trigger": {
+      "id": "trg-new",
+      "type": "manual",
+      "config": {}
+    },
+    "rootStep": {
+      "id": "s_root",
+      "name": "root",
+      "type": "serial",
+      "config": {
+        "subSteps": []
+      }
+    },
+    "status": "enabled",
+    "createdAt": 1776246949269,
+    "updatedAt": 1776246949269
+  }
+]
