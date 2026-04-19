@@ -57,6 +57,10 @@ export const TOOL_PANELS: Record<string, ToolPanelDef> = {
   'sla-mgmt': { toolId: 'sla-mgmt', label: 'SLA 管理', icon: '⏱️', mode: 'modal' },
   'supply-intel': { toolId: 'supply-intel', label: '供应链情报', icon: '🌐', mode: 'modal' },
   'material-track': { toolId: 'material-track', label: '物料追踪', icon: '📦', mode: 'modal' },
+  'data-arch': { toolId: 'data-arch', label: '数据安全架构', icon: '🗄️', mode: 'modal' },
+  'dr-arch': { toolId: 'dr-arch', label: '容灾架构', icon: '🏗️', mode: 'modal' },
+  'arch-governance': { toolId: 'arch-governance', label: '架构治理', icon: '📋', mode: 'modal' },
+  'bia-analysis': { toolId: 'bia-analysis', label: '业务影响分析', icon: '📉', mode: 'modal' },
 };
 
 // ─── Mock result generators ────────────────────────────────────
@@ -1046,6 +1050,55 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
         <div class="result-section"><div class="result-title">物料追踪报告</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">已追踪组件</span><span class="chip chip-pass">156</span></div><div class="ri-desc">覆盖率 92%，6 个未识别来源</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">许可证风险</span><span class="chip chip-medium">3</span></div><div class="ri-desc">GPL 组件需法务审核</div></div>
+        </div>
+      `;
+    }
+
+    // ─── Phase 1E: Architect 数据/容灾/治理 + BSO BIA ───
+    case 'bia-analysis': {
+      return html`
+        <div class="form-group"><label class="form-label">分析范围</label><select class="form-select"><option selected>核心业务流程</option><option>全部流程</option><option>IT 服务</option></select></div>
+        <div class="form-group"><label class="form-label">场景</label><select class="form-select"><option selected>综合中断</option><option>网络攻击</option><option>自然灾害</option><option>供应链中断</option></select></div>
+        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '📉 执行 BIA'}</button>
+        <div class="result-section"><div class="result-title">业务影响分析</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">核心流程覆盖</span><span class="chip chip-pass">88%</span></div><div class="ri-desc">22/25 核心业务流程已完成 BIA</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">最大影响</span><span class="chip chip-fail">¥2.3M/h</span></div><div class="ri-desc">支付系统中断每小时损失预估</div></div>
+        </div>
+      `;
+    }
+
+    case 'data-arch': {
+      return html`
+        <div class="form-group"><label class="form-label">数据分类</label><select class="form-select"><option selected>全量数据</option><option>敏感数据</option><option>个人数据</option><option>财务数据</option></select></div>
+        <div class="form-group"><label class="form-label">加密策略</label><select class="form-select"><option selected>AES-256</option><option>国密SM4</option><option>RSA-4096</option></select></div>
+        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '🗄️ 架构评估'}</button>
+        <div class="result-section"><div class="result-title">数据安全架构</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">数据分类覆盖</span><span class="chip chip-pass">92%</span></div><div class="ri-desc">14,580/15,850 数据资产已分类标记</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">加密覆盖率</span><span class="chip chip-pass">98%</span></div><div class="ri-desc">静态数据 100% + 传输中 96%</div></div>
+        </div>
+      `;
+    }
+
+    case 'dr-arch': {
+      return html`
+        <div class="form-group"><label class="form-label">容灾等级</label><select class="form-select"><option selected>Tier 4 (Active-Active)</option><option>Tier 3 (Hot Standby)</option><option>Tier 2 (Warm)</option></select></div>
+        <div class="form-group"><label class="form-label">RTO/RPO 目标</label><select class="form-select"><option selected>RTO 2h / RPO 15min</option><option>RTO 4h / RPO 1h</option><option>RTO 24h / RPO 4h</option></select></div>
+        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '🏗️ 容灾评估'}</button>
+        <div class="result-section"><div class="result-title">容灾架构评估</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">RTO 达成</span><span class="chip chip-pass">2h</span></div><div class="ri-desc">核心系统实际切换时间 1.8h</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">RPO 达成</span><span class="chip chip-pass">12min</span></div><div class="ri-desc">数据同步延迟在可控范围</div></div>
+        </div>
+      `;
+    }
+
+    case 'arch-governance': {
+      return html`
+        <div class="form-group"><label class="form-label">评审周期</label><select class="form-select"><option selected>本季度</option><option>本年度</option><option>全部</option></select></div>
+        <div class="form-group"><label class="form-label">架构域</label><select class="form-select"><option selected>全部</option><option>应用架构</option><option>数据架构</option><option>基础设施</option></select></div>
+        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '审查中...' : '📋 架构评审'}</button>
+        <div class="result-section"><div class="result-title">架构治理报告</div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">评审覆盖率</span><span class="chip chip-pass">100%</span></div><div class="ri-desc">本季 12 个新系统全部通过安全架构评审</div></div>
+          <div class="result-item"><div class="ri-header"><span class="ri-title">技术债务</span><span class="chip chip-medium">3</span></div><div class="ri-desc">遗留系统待迁移，预计 Q3 完成</div></div>
         </div>
       `;
     }

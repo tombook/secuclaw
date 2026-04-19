@@ -1603,6 +1603,11 @@ ${this._renderDarkZone('privacy-officer')}
           this._renderMetricCard(this._mc({ toolId: 'dmz-config', title: '🛡️ DMZ 配置', num: '85%', numColor: '#22c55e', unit: 'DMZ覆盖率', sparkData: [70,75,78,80,82,84,85,85], delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
           this._renderMetricCard(this._mc({ toolId: 'app-sec', title: '💻 应用安全', num: '68', numColor: '#f59e0b', unit: '/100 AppSec', sparkData: [55,58,60,62,64,66,68,68], delta: '↑+13', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
         ])}
+        ${this._renderMetricsZone('数据与容灾 [Phase 1E]', [
+          this._renderMetricCard(this._mc({ toolId: 'data-arch', title: '🗄️ 数据安全架构', num: '92%', numColor: '#22c55e', unit: '数据分类覆盖', sparkData: [78,82,85,87,89,90,91,92], delta: '↑+14%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'dr-arch', title: '🏗️ 容灾架构', num: '2h', numColor: '#22c55e', unit: 'RPO 目标', sparkData: [8,6,5,4,3,3,2,2], delta: '↓-6h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' })),
+          this._renderMetricCard(this._mc({ toolId: 'arch-governance', title: '📋 架构治理', num: '100%', numColor: '#22c55e', unit: '评审覆盖率', sparkData: [80,85,88,92,95,98,99,100], delta: '↑+20%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' })),
+        ])}
 
         ${this._renderFrameworkZone('security-architect')}
         ${this._renderToolGuideZone('security-architect')}
@@ -1648,6 +1653,9 @@ ${this._renderDarkZone('privacy-officer')}
         ])}
 ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
           this._renderMetricCard(this._mc({ toolId: 'disaster-recovery', title: '🔄 灾难恢复', num: '4h', numColor: '#22c55e', unit: 'RTO目标', sparkData: [8,7,6,5,5,4,4,4], delta: '↓-4h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' })),
+        ])}
+        ${this._renderMetricsZone('业务影响分析 [Phase 1E]', [
+          this._renderMetricCard(this._mc({ toolId: 'bia-analysis', title: '📉 BIA 覆盖率', num: '88%', numColor: '#22c55e', unit: '核心流程已分析', sparkData: [70,74,78,80,83,85,87,88], delta: '↑+18%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#22c55e' })),
         ])}
         ${this._renderDarkZone('business-security-officer')}
         ${this._renderFrameworkZone('business-security-officer')}

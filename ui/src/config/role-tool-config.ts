@@ -112,6 +112,10 @@ const T = {
   slaMgmt:           { id: 'sla-mgmt',         label: 'SLA 管理',      icon: 'Clock',        priority: 2 },
   supplyIntel:       { id: 'supply-intel',     label: '供应链情报',    icon: 'Globe',        priority: 2 },
   materialTrack:     { id: 'material-track',   label: '物料追踪',      icon: 'Package',      priority: 3 },
+  dataArch:          { id: 'data-arch',         label: '数据安全架构',  icon: 'Database',     priority: 1 },
+  drArch:            { id: 'dr-arch',           label: '容灾架构',      icon: 'Server',       priority: 2 },
+  archGovernance:    { id: 'arch-governance',   label: '架构治理',      icon: 'Sitemap',      priority: 2 },
+  biaAnalysis:       { id: 'bia-analysis',     label: '业务影响分析',  icon: 'BarChart2',    priority: 1 },
 
   // ─── 第三方安全工具 ──────────────────────
   nessusScan:        { id: 'nessus-scan',           label: 'Nessus 扫描',      icon: 'Shield',       priority: 10 },
@@ -234,6 +238,7 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.disasterRecovery, // [Phase 1B] 灾难恢复规划 RTO/RPO/灾备站点
       // [Phase 1C] 安全意识培训
       T.secAwareness,    // 安全意识培训与钓鱼演练
+      T.biaAnalysis,     // [Phase 1E] 业务影响分析
     ],
   },
 
@@ -321,6 +326,9 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.networkSeg,       // 网络分段设计
       T.dmzConfig,        // DMZ 区域规划
       T.appSec,           // 应用层安全设计
+      T.dataArch,         // [Phase 1E] 数据安全架构
+      T.drArch,           // [Phase 1E] 容灾架构
+      T.archGovernance,   // [Phase 1E] 架构治理
     ],
   },
 
