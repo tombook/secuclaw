@@ -265,6 +265,50 @@ export class ScOverview extends LitElement {
       line-height: 1.4;
     }
 
+    .event-item.is-new {
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.3);
+      animation: pulse 2s ease-out;
+    }
+
+    @keyframes pulse {
+      0% { background: rgba(59,130,246,0.2); }
+      100% { background: transparent; }
+    }
+
+    .event-timeline {
+      position: relative;
+      padding-left: 24px;
+    }
+
+    .event-timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: linear-gradient(to bottom, #3b82f6, #1e293b);
+      border-radius: 1px;
+    }
+
+    .event-dot {
+      position: absolute;
+      left: -16px;
+      top: 10px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid;
+      flex-shrink: 0;
+    }
+
+    .event-dot.critical { border-color: #ef4444; background: rgba(239,68,68,0.2); }
+    .event-dot.warning { border-color: #f59e0b; background: rgba(245,158,11,0.2); }
+    .event-dot.info { border-color: #3b82f6; background: rgba(59,130,246,0.2); }
+    .event-dot.success { border-color: #22c55e; background: rgba(34,197,94,0.2); }
+
     /* ─── RACI Org Chart ─────────────────────── */
     .raci-chart-section {
       background: #111827;
@@ -372,11 +416,15 @@ export class ScOverview extends LitElement {
   @state() private _overview: OverviewData | null = null;
   @state() private _roleStatuses: RoleStatus[] = [];
   @state() private _loading = true;
+  @state() private _events: Array<{ id: string; time: string; roleId: RoleId; text: string; isNew?: boolean }> = [];
   private _mockUnsub: (() => void) | null = null;
+  private _eventTimer: number | null = null;
+  private _eventListRef: Element | null = null;
 
   connectedCallback() {
     super.connectedCallback();
     this._loadData();
+    this._initEvents();
     // Subscribe to mock data changes for live updates
     this._mockUnsub = mockDataStore.subscribe(() => {
       if (!this._loading) this._refreshFromMock();
@@ -386,6 +434,49 @@ export class ScOverview extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this._mockUnsub?.();
+    if (this._eventTimer) window.clearInterval(this._eventTimer);
+  }
+
+  /** Initialize event stream and auto-generate new events */
+  private _initEvents() {
+    const now = new Date();
+    const timeStr = (h: number, m: number) => `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    const baseEvents = [
+      { id: 'e1', time: timeStr(now.getHours(), now.getMinutes() - 2), roleId: 'secuclaw-commander' as RoleId, text: '协调请求：零信任架构迁移方案' },
+      { id: 'e2', time: timeStr(now.getHours(), now.getMinutes() - 17), roleId: 'security-ops' as RoleId, text: 'P1 告警处置完成：可疑进程已隔离' },
+      { id: 'e3', time: timeStr(now.getHours(), now.getMinutes() - 34), roleId: 'security-expert' as RoleId, text: '新漏洞扫描完成：发现 2 个高危 CVE' },
+      { id: 'e4', time: timeStr(now.getHours(), now.getMinutes() - 52), roleId: 'privacy-officer' as RoleId, text: 'GDPR 合规差距报告已生成，3 项需整改' },
+      { id: 'e5', time: timeStr(now.getHours(), now.getMinutes() - 70), roleId: 'supply-chain-security' as RoleId, text: 'SBOM 扫描发现 3 个高危开源组件' },
+      { id: 'e6', time: timeStr(now.getHours() - 1, now.getMinutes() - 37), roleId: 'ciso' as RoleId, text: '风险评分更新：42 → 48，超过预警线' },
+      { id: 'e7', time: timeStr(now.getHours() - 1, now.getMinutes() - 2), roleId: 'security-architect' as RoleId, text: '架构变更审批通过：微服务网关方案' },
+      { id: 'e8', time: timeStr(now.getHours() - 1, now.getMinutes() + 15), roleId: 'business-security-officer' as RoleId, text: 'BCP 季度演练完成，RTO 达标' },
+    ];
+    this._events = baseEvents;
+
+    // Auto-generate new events every 25-45 seconds
+    this._eventTimer = window.setInterval(() => {
+      const eventTemplates: Array<{ roleId: RoleId; text: string }> = [
+        { roleId: 'secuclaw-commander', text: '全域态势更新：3 个高风险项' },
+        { roleId: 'security-ops', text: 'SOAR 自动化执行完成：隔离 1 台受感染主机' },
+        { roleId: 'security-expert', text: '渗透测试阶段完成：发现 1 个新漏洞' },
+        { roleId: 'privacy-officer', text: '数据同意率统计：94.2% 同意率' },
+        { roleId: 'supply-chain-security', text: '供应商安全评估完成：2 个供应商需整改' },
+        { roleId: 'security-architect', text: '零信任策略部署：覆盖 12 个新服务' },
+        { roleId: 'ciso', text: '董事会报告已准备：Q2 安全态势总结' },
+        { roleId: 'business-security-officer', text: '安全 ROI 分析完成：340% 投资回报' },
+      ];
+      const template = eventTemplates[Math.floor(Math.random() * eventTemplates.length)];
+      const now = new Date();
+      const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const newEvent = { id: `e${Date.now()}`, time, roleId: template.roleId, text: template.text, isNew: true };
+      this._events = [newEvent, ...this._events].slice(0, 15);
+      this.requestUpdate();
+      // Auto-clear "isNew" flag after 3 seconds
+      setTimeout(() => {
+        newEvent.isNew = false;
+        this.requestUpdate();
+      }, 3000);
+    }, 25000 + Math.random() * 20000);
   }
 
   /** Refresh KPI from mock store without full reload */
@@ -594,16 +685,6 @@ export class ScOverview extends LitElement {
     if (this._loading) return html`<div style="padding:40px;text-align:center;color:#475569">加载中...</div>`;
 
     const ov = this._overview!;
-    const events = [
-      { time: '14:32', roleId: 'secuclaw-commander' as RoleId, text: '协调请求：零信任架构迁移方案' },
-      { time: '14:15', roleId: 'security-ops' as RoleId, text: 'P1 告警处置完成：可疑进程已隔离' },
-      { time: '13:58', roleId: 'security-expert' as RoleId, text: '新漏洞扫描完成：发现 2 个高危 CVE' },
-      { time: '13:40', roleId: 'privacy-officer' as RoleId, text: 'GDPR 合规差距报告已生成，3 项需整改' },
-      { time: '13:22', roleId: 'supply-chain-security' as RoleId, text: 'SBOM 扫描发现 3 个高危开源组件' },
-      { time: '12:55', roleId: 'ciso' as RoleId, text: '风险评分更新：42 → 48，超过预警线' },
-      { time: '12:30', roleId: 'security-architect' as RoleId, text: '架构变更审批通过：微服务网关方案' },
-      { time: '11:45', roleId: 'business-security-officer' as RoleId, text: 'BCP 季度演练完成，RTO 达标' },
-    ];
 
     return html`
       <!-- Top KPI -->
@@ -671,13 +752,20 @@ export class ScOverview extends LitElement {
         <div class="right-panel">
           <div class="panel-header">
             <span class="icon">📡</span>
-            <span class="title">事件流</span>
+            <span class="title">事件流 · 时间线</span>
           </div>
-          <div class="event-list">
-            ${events.map((e) => {
+          <div
+            class="event-list event-timeline"
+            ${(el: Element) => { this._eventListRef = el; if (el?.scrollTop === 0) el.scrollTop = 0; }}
+          >
+            ${this._events.map((e) => {
               const theme = ROLE_THEMES[e.roleId];
+              const dotType = e.text.includes('高危') || e.text.includes('P1') || e.text.includes('受感染') ? 'critical'
+                : e.text.includes('需整改') || e.text.includes('注意') || e.text.includes('警告') ? 'warning'
+                : e.text.includes('完成') || e.text.includes('通过') || e.text.includes('达标') ? 'success' : 'info';
               return html`
-                <div class="event-item">
+                <div class="event-item ${e.isNew ? 'is-new' : ''}" style="position:relative">
+                  <span class="event-dot ${dotType}"></span>
                   <span class="time">${e.time}</span>
                   <span class="role-tag" style="background: ${theme.primary}">${ROLE_TOOL_CONFIGS[e.roleId].label}</span>
                   <span class="content">${e.text}</span>
