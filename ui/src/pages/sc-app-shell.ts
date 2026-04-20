@@ -555,17 +555,107 @@ export class ScAppShell extends LitElement {
       clip: rect(0,0,0,0);
     }
 
-    /* ─── Responsive ─── */
-    @media (max-width: 768px) {
-      .app-layout { grid-template-columns: 1fr !important; }
-      .sidebar { display: none !important; }
-      .header-bar { padding: 8px 12px !important; }
-      .header-title { font-size: 14px !important; }
-      .raci-section { display: none !important; }
+
+    /* ─── Role Transition Animations ─── */
+    .transition-container {
+      position: relative;
+      overflow: hidden;
     }
+
+    .transition-wrapper {
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .transition-wrapper.exiting {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .transition-wrapper.entering {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    /* ─── Enhanced Responsive Breakpoints ─── */
+    /* Ultra-wide desktop */
+    @media (min-width: 1600px) {
+      :host {
+        grid-template-columns: 260px 1fr;
+      }
+    }
+
+    /* Desktop */
+    @media (max-width: 1400px) and (min-width: 1025px) {
+      :host {
+        grid-template-columns: 200px 1fr;
+      }
+    }
+
+    /* Tablet landscape */
     @media (max-width: 1024px) and (min-width: 769px) {
-      .sidebar { width: 180px !important; min-width: 180px !important; }
+      :host {
+        grid-template-columns: 180px 1fr;
+      }
     }
+
+    /* Tablet portrait / large phone */
+    @media (max-width: 768px) and (min-width: 481px) {
+      :host {
+        grid-template-columns: 64px 1fr;
+      }
+      .sidebar .section-label,
+      .sidebar .nav-label,
+      .sidebar .nav-sep .sep-label,
+      .sidebar .raci-section {
+        display: none !important;
+      }
+      .nav-overview {
+        justify-content: center;
+        padding: 10px 0;
+      }
+      .nav-item {
+        justify-content: center;
+        padding: 10px 0;
+      }
+      .sidebar-brand .logo {
+        font-size: 20px;
+      }
+      .sidebar-brand .version {
+        display: none;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      :host {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "header"
+          "main" !important;
+      }
+      .sidebar {
+        display: none !important;
+      }
+      .header {
+        padding: 8px 12px !important;
+        grid-area: header;
+      }
+      .header-title {
+        font-size: 14px !important;
+      }
+      .header-subtitle {
+        display: none !important;
+      }
+      .header-kpi {
+        display: none !important;
+      }
+      .kbd-cmd-hint {
+        display: none !important;
+      }
+    }
+
   `;
 
   @state() private _view: 'overview' | 'role' | 'market' = 'overview';
