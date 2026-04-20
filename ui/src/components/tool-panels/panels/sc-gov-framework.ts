@@ -37,12 +37,11 @@ export class ScGovFramework extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Gov Framework Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Gov Framework Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Gov Framework Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Gov Framework Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Gov Framework Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Gov Framework Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Board Level: Security Committee",status:"active",risk:"low",detail:"Members: 5 | Meetings: Quarterly | Last: Mar 15 | Next: Jun 15 | Topics: Risk, Budget, Incidents"},
+    {name:"CISO Office: Strategic Direction",status:"active",risk:"low",detail:"Staff: 12 | Direct reports: 4 department heads | Budget ownership: $2.4M | KPIs: 6 tracked"},
+    {name:"Security Operations (SOC)",status:"active",risk:"medium",detail:"Staff: 8 | Shifts: 24/7 | MTTD: 14min | MTTR: 2.3h | Alerts/day: 150 | Tools: 6 integrated"},
+    {name:"GRC (Governance, Risk, Compliance)",status:"active",risk:"medium",detail:"Staff: 4 | Frameworks: ISO 27001, SOC 2, GDPR | Audits: 4/year | Policies: 23 active"},
+    {name:"Architecture & Engineering",status:"active",risk:"low",detail:"Staff: 3 | Projects: Zero Trust rollout | Standards: 15 | Review cycle: Monthly"}
   ];
 
   render() {

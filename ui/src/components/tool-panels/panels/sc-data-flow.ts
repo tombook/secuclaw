@@ -37,12 +37,11 @@ export class ScDataFlow extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Data Flow Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Data Flow Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Data Flow Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Data Flow Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Data Flow Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Data Flow Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"User -> Web App (HTTPS)",status:"encrypted",risk:"low",detail:"TLS 1.3 | Data: Login creds, PII | Direction: Inbound | Risk: Low | Classification: Confidential"},
+    {name:"Web App -> API Gateway (mTLS)",status:"encrypted",risk:"low",detail:"mTLS with service mesh | Data: Business requests | Direction: Internal | Classification: Internal"},
+    {name:"API -> Database (TLS)",status:"encrypted",risk:"medium",detail:"MySQL TLS connection | Data: All business data | Direction: Internal | Classification: Restricted"},
+    {name:"Database -> Analytics (ETL)",status:"partial",risk:"high",detail:"S3 transfer (encrypted) | Data: PII partially masked | Direction: Outbound | Classification: Confidential"},
+    {name:"Analytics -> Report (Export)",status:"attention",risk:"critical",detail:"CSV export via email | Data: Aggregated PII | DLP: Enabled but bypassed | Risk: HIGH"}
   ];
 
   render() {

@@ -37,12 +37,11 @@ export class ScNewsFeed extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"News Feed Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"News Feed Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"News Feed Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"News Feed Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"News Feed Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"News Feed Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CISA: Critical Vulnerability in OpenSSL 3.2",status:"new",risk:"critical",detail:"Source: CISA | Category: CVE | CVSS: 9.8 | Our exposure: 23 assets | Action: Emergency patch"},
+    {name:"NIST: Updated Cybersecurity Framework 2.0",status:"new",risk:"medium",detail:"Source: NIST | Category: Framework | Impact: Governance structure | Action: Gap assessment"},
+    {name:"GDPR: New Schrems III Ruling Impact",status:"new",risk:"high",detail:"Source: EDPB | Category: Regulatory | Impact: EU-US transfers | Action: Legal review"},
+    {name:"MITRE: ATT&CK v15 Released",status:"new",risk:"low",detail:"Source: MITRE | Category: Research | New techniques: 12 | Action: Update detection rules"},
+    {name:"Industry: Cloud Security Alliance Summit",status:"new",risk:"low",detail:"Source: CSA | Category: Industry | Date: May 2026 | Action: Register team"}
   ];
 
   render() {

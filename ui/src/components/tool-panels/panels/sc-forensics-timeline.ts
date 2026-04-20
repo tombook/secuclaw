@@ -37,12 +37,12 @@ export class ScForensicsTimeline extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Forensics Timeline Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Forensics Timeline Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Forensics Timeline Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Forensics Timeline Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Forensics Timeline Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Forensics Timeline Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"03:15 - Initial Compromise",status:"web-shell",risk:"critical",detail:"cmd.exe /c whoami from Apache worker. www-data -> SYSTEM via Potato exploit."},
+    {name:"03:18 - C2 Establishment",status:"beacon",risk:"critical",detail:"HTTPS beacon to 45.33.xx.xx:8443. JA3: 72a8...a8f1 = Cobalt Strike. Sleep: 300s jitter 20%."},
+    {name:"03:22 - Credential Harvest",status:"mimikatz",risk:"critical",detail:"LSASS memory dump. 12 NTLM hashes + 3 Kerberos tickets extracted. DCSync attempted."},
+    {name:"03:28 - Lateral Movement",status:"psexec",risk:"high",detail:"SMB PsExec to DC-01 using harvested Domain Admin creds. Golden Ticket created."},
+    {name:"03:35 - Data Staging",status:"7zip",risk:"high",detail:"50GB archive in C:\temp\. AES-256 encryption. Password in clipboard history."},
+    {name:"03:45 - Exfiltration",status:"dns-tunnel",risk:"critical",detail:"DNS TXT queries to exfil.evil.com. 2.3GB over 45min. 15,000 queries total."}
   ];
 
   render() {

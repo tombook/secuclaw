@@ -37,12 +37,12 @@ export class ScDataClassification extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Data Classification Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Data Classification Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Data Classification Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Data Classification Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Data Classification Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Data Classification Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Customer PII Database",status:"restricted",risk:"critical",detail:"Fields: Name, SSN, DOB, Address | Records: 2.3M | Encryption: AES-256 | Access: Named individuals only"},
+    {name:"Employee HR Records",status:"confidential",risk:"high",detail:"Fields: Name, Salary, Performance | Records: 5,200 | Encryption: Yes | Access: HR + Manager of record"},
+    {name:"Product Source Code",status:"confidential",risk:"medium",detail:"Repositories: 47 | Languages: Go, TypeScript, Python | Access: Engineering team | DLP: Git hooks enabled"},
+    {name:"Marketing Collateral",status:"internal",risk:"low",detail:"Assets: Images, copy, templates | Storage: Cloud CMS | Access: Marketing + Agencies | Classification: Internal"},
+    {name:"Public Documentation",status:"public",risk:"low",detail:"API docs, help center, blog | Storage: CDN | Access: Unrestricted | Review: Quarterly | License: CC-BY-4.0"},
+    {name:"Financial Reports (Pre-release)",status:"restricted",risk:"critical",detail:"Quarterly results, projections | Access: C-suite + Finance | Encryption: Yes | Retention: 7 years"}
   ];
 
   render() {

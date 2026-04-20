@@ -37,12 +37,10 @@ export class ScLogQuery extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Log Query Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Log Query Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Log Query Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Log Query Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Log Query Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Log Query Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Failed Logins (Last 24h)",status:"results",risk:"critical",detail:"Query: source=auth AND action=failed | Results: 1,247 entries | Top source: 45.33.32.1 (547)"},
+    {name:"Privilege Escalation Events",status:"results",risk:"high",detail:"Query: event_id=4672 OR event_id=4673 | Results: 89 entries | Anomaly: 3 off-hours escalations"},
+    {name:"Data Access Anomalies",status:"results",risk:"medium",detail:"Query: resource=customer_db AND volume>1GB | Results: 12 entries | 2 after-hours bulk exports"},
+    {name:"Network Lateral Movement",status:"results",risk:"high",detail:"Query: proto=SMB AND dst!=fileserver | Results: 34 entries | 4 cross-segment connections flagged"}
   ];
 
   render() {

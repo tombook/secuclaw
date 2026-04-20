@@ -37,12 +37,11 @@ export class ScIdentityGov extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Identity Gov Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Identity Gov Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Identity Gov Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Identity Gov Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Identity Gov Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Identity Gov Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"admin_zhang (Domain Admin)",status:"high",risk:"flagged",detail:"Department: IT | Last access: 1h ago | Privileged: Yes | MFA: Enabled | Orphaned: No | Review: Overdue 30d"},
+    {name:"svc_backup (Service Account)",status:"high",risk:"flagged",detail:"Department: Infrastructure | Privileged: Domain Admin | MFA: N/A (service) | Orphaned: No owner | Action: Review permissions"},
+    {name:"contractor_li (External)",status:"medium",risk:"attention",detail:"Department: N/A (vendor) | Last access: 3d ago | Privileged: No | MFA: Enabled | Contract: Expired 7d ago"},
+    {name:" departed_wang (Former)",status:"critical",risk:"orphan",detail:"Department: Engineering (terminated) | Last access: 45d ago | Privileged: Was admin | Orphaned: Yes | Action: DISABLE NOW"},
+    {name:"analyst_chen (Regular)",status:"low",risk:"healthy",detail:"Department: Security | Last access: 30min | Privileged: No | MFA: Enabled | Training: Current | SoD: Clean"}
   ];
 
   render() {

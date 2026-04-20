@@ -37,12 +37,11 @@ export class ScIntegrationHealth extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Integration Health Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Integration Health Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Integration Health Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Integration Health Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Integration Health Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Integration Health Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Splunk SIEM",status:"healthy",risk:"low",detail:"Connection: Active | Last sync: 30s ago | Version: 9.2.1 | Daily EPS: 2.3M | Error rate: 0.02%"},
+    {name:"CrowdStrike Falcon",status:"healthy",risk:"low",detail:"Connection: Active | Last sync: 15s ago | Version: 6.54 | Agents: 2,450 | Detection feed: Live"},
+    {name:"Qualys VMDR",status:"degraded",risk:"medium",detail:"Connection: Slow | Last sync: 2h ago | Version: 4.8 | Scans: 3 queued | API latency: 4.2s"},
+    {name:"VirusTotal",status:"healthy",risk:"low",detail:"Connection: Active | Last sync: 1min ago | API calls today: 1,247/5,000 | Quota: 75% remaining"},
+    {name:"ServiceNow ITSM",status:"down",risk:"high",detail:"Connection: Failed | Last sync: 6h ago | Error: Auth token expired | Impact: Ticket routing broken"}
   ];
 
   render() {

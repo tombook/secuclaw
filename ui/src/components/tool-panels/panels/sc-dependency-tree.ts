@@ -37,12 +37,10 @@ export class ScDependencyTree extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Dependency Tree Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Dependency Tree Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Dependency Tree Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Dependency Tree Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Dependency Tree Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Dependency Tree Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"express@4.18.2 (Direct)",status:"vulnerable",risk:"high",detail:"License: MIT | Transitive: 34 deps | Vulns: C:1 H:2 | Dependants: 12 services"},
+    {name:"lodash@4.17.20 (Direct)",status:"vulnerable",risk:"critical",detail:"License: MIT | CVE-2026-xxxx Prototype Pollution | Upgrade to: 4.17.21+ | Dependants: 8"},
+    {name:"jsonwebtoken@9.0.0 (Direct)",status:"attention",risk:"medium",detail:"License: MIT | Vulns: M:1 | Key confusion vulnerability | Upgrade to: 9.0.2+"},
+    {name:"aws-sdk@2.1350.0 (Direct)",status:"outdated",risk:"low",detail:"License: Apache-2.0 | No vulns | Version outdated (v3 available) | Dependants: 5 services"}
   ];
 
   render() {

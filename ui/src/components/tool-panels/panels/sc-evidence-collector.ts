@@ -37,12 +37,10 @@ export class ScEvidenceCollector extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Evidence Collector Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Evidence Collector Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Evidence Collector Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Evidence Collector Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Evidence Collector Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Evidence Collector Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"SOC 2 CC6.1 - Logical Access",status:"collected",risk:"high",detail:"Evidence: 12 artifacts | Status: Complete | Reviewer: Audit team | Last updated: 5d ago"},
+    {name:"ISO A.9 - Access Control",status:"partial",risk:"medium",detail:"Evidence: 8/10 artifacts | Missing: Remote access logs | Reviewer: ISMS manager | Deadline: Apr 30"},
+    {name:"GDPR Art.30 - Records of Processing",status:"collected",risk:"low",detail:"Evidence: Processing register | Status: Complete | DPO review: Done | Annual update: Scheduled"},
+    {name:"PCI Req 1 - Network Segmentation",status:"pending",risk:"high",detail:"Evidence: 0/5 artifacts | Status: Not started | Reviewer: QSA | Deadline: May 15 | Priority: HIGH"}
   ];
 
   render() {

@@ -37,12 +37,11 @@ export class ScEncryptionMgmt extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Encryption Mgmt Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Encryption Mgmt Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Encryption Mgmt Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Encryption Mgmt Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Encryption Mgmt Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Encryption Mgmt Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"AES-256-GCM (Data at rest)",status:"low",risk:"active",detail:"Key management: HSM | Rotation: 90 days | FIPS 140-2 Level 3 | Used by: All databases | Compliance: Meets PCI"},
+    {name:"TLS 1.3 (Data in transit)",status:"low",risk:"active",detail:"Certificate: ECDSA P-256 | Forward secrecy: Yes | Ciphers: 3 modern suites | No TLS 1.0/1.1 | Score: A+ on SSL Labs"},
+    {name:"RSA-4096 (Key exchange)",status:"low",risk:"active",detail:"Key store: Vault | Rotation: Annual | Used by: API signing | Backup: Shamir secret sharing | Audit: Quarterly"},
+    {name:"ChaCha20-Poly1305 (Mobile)",status:"medium",risk:"active",detail:"Used by: Mobile SDK | Key derivation: HKDF | Nonce: Random 96-bit | Performance: 2x faster than AES on ARM"},
+    {name:"Homomorphic Encryption (POC)",status:"medium",risk:"research",detail:"Scheme: BFV | Use case: Analytics on encrypted data | Performance: 100x overhead | Status: Research phase"}
   ];
 
   render() {

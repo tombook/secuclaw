@@ -37,12 +37,10 @@ export class ScDataTransfer extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Data Transfer Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Data Transfer Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Data Transfer Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Data Transfer Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Data Transfer Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Data Transfer Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"EU -> US (Standard Contractual Clauses)",status:"active",risk:"high",detail:"Data: Customer PII | Volume: 50GB/month | Legal basis: SCC 2021/914 | DPA: Signed | Review: Annual"},
+    {name:"HQ -> China Subsidiary (PIPL)",status:"conditional",risk:"critical",detail:"Data: Employee records | Security assessment: Required | CAC filing: Pending | DPA: Under negotiation"},
+    {name:"UK -> Cloud Provider (AWS eu-west)",status:"active",risk:"low",detail:"Data: Analytics (anonymized) | Adequacy decision: Yes | Encryption: In-transit TLS | Transfer tool: API"},
+    {name:"Japan Office -> HQ (APPI)",status:"active",risk:"medium",detail:"Data: Business contacts | Consent: Obtained | Opt-out available | Security measures: Documented"}
   ];
 
   render() {

@@ -37,12 +37,10 @@ export class ScExfilDetection extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Exfil Detection Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Exfil Detection Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Exfil Detection Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Exfil Detection Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Exfil Detection Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Exfil Detection Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Email Channel DLP",status:"active",risk:"high",detail:"24h violations: 34 | Top: SSN patterns (12), Credit cards (8), Source code (6) | Blocked: 28, Warned: 6"},
+    {name:"USB Device Monitor",status:"monitoring",risk:"medium",detail:"Active USB devices: 23 | Blocked writes: 3 | Unauthorized devices: 1 (EP-103) | Policy: Encrypted only"},
+    {name:"Cloud Upload Detection",status:"active",risk:"high",detail:"Cloud apps monitored: 15 | Suspicious uploads: 5 | Large file (>100MB) to personal cloud: 2 incidents"},
+    {name:"Network Exfil (DNS/ICMP)",status:"alert",risk:"critical",detail:"DNS tunnel: 2.3GB via exfil.evil.com | ICMP tunnel: 450MB unusual payload | Blocked: DNS sinkhole active"}
   ];
 
   render() {

@@ -37,12 +37,11 @@ export class ScAlertCorrelation extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Alert Correlation Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Alert Correlation Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Alert Correlation Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Alert Correlation Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Alert Correlation Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Alert Correlation Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Brute Force Cluster (3 IPs)",status:"correlated",risk:"critical",detail:"547 failures in 15min targeting 12 accounts. Pattern: distributed password spray from 45.x, 103.x, 185.x"},
+    {name:"Impossible Travel (admin_zhang)",status:"correlated",risk:"high",detail:"Login Beijing 02:15 CST then Tokyo 02:22 JST. 4,200km in 7 minutes. Session terminated."},
+    {name:"Data Staging (db-replica-01)",status:"correlated",risk:"high",detail:"50GB archive in /tmp. Process: mysqldump -> 7zip -> /tmp. Correlation: follows brute force pattern."},
+    {name:"C2 Beacon (EP-042)",status:"correlated",risk:"critical",detail:"300s HTTPS beacon to 45.33.xx.xx. JA3 match: Cobalt Strike. Correlates with brute force source."},
+    {name:"Anomalous Privilege Escalation",status:"monitoring",risk:"medium",detail:"Service account svc_backup added to Domain Admins group. Correlation: follows C2 beacon by 15min."}
   ];
 
   render() {

@@ -37,12 +37,10 @@ export class ScOrchestration extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Orchestration Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Orchestration Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Orchestration Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Orchestration Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Orchestration Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Orchestration Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"SOAR: Phishing Response",status:"active",risk:"high",detail:"Steps: 6 | Auto-execution: 80% | Avg time: 3min | Success rate: 94% | Last run: 2h ago"},
+    {name:"SOAR: Malware Containment",status:"active",risk:"critical",detail:"Steps: 8 | Auto-execution: 65% | Avg time: 12min | Success rate: 89% | Last run: 1d ago"},
+    {name:"SOAR: Brute Force Block",status:"active",risk:"medium",detail:"Steps: 4 | Auto-execution: 95% | Avg time: 30s | Success rate: 98% | Last run: 4h ago"},
+    {name:"SOAR: Data Exfil Stop",status:"active",risk:"critical",detail:"Steps: 7 | Auto-execution: 50% | Avg time: 8min | Success rate: 85% | Last run: 3d ago"}
   ];
 
   render() {

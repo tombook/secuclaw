@@ -37,12 +37,10 @@ export class ScContainerSecurity extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Container Security Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Container Security Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Container Security Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Container Security Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Container Security Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Container Security Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"web-app:v2.4.1 (Running: 12 pods)",status:"vulnerable",risk:"high",detail:"Base: node:18-alpine | Vulns: C:1 H:4 M:12 | CIS: 72% | Running as root: Yes (fix!)"},
+    {name:"api-svc:v1.8.0 (Running: 6 pods)",status:"attention",risk:"medium",detail:"Base: golang:1.21 | Vulns: H:2 M:5 | CIS: 85% | Network policy: Default deny"},
+    {name:"data-worker:v3.1.2 (Running: 3 pods)",status:"healthy",risk:"low",detail:"Base: python:3.12-slim | Vulns: M:3 | CIS: 91% | Read-only filesystem | No new vulns"},
+    {name:"nginx-sidecar:latest (Running: 21 pods)",status:"critical",risk:"critical",detail:"Base: nginx:latest (pinned?) | Vulns: C:2 H:6 | No image scanning in CI | Image size: 420MB"}
   ];
 
   render() {

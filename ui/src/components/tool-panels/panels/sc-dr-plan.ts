@@ -37,12 +37,10 @@ export class ScDrPlan extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Dr Plan Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Dr Plan Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Dr Plan Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Dr Plan Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Dr Plan Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Dr Plan Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Failover: Core Banking -> Shanghai DR",status:"ready",risk:"critical",detail:"Type: Warm standby | Switch time: 45min | Data sync: Async (1h lag) | DNS TTL: 300s"},
+    {name:"Failover: Payment -> Active-Active",status:"ready",risk:"high",detail:"Type: Active-active | Switch time: <1min | Data sync: Sync | Load balancer health check: 10s"},
+    {name:"Failover: Portal -> Cloud DR",status:"draft",risk:"medium",detail:"Type: Cold standby | Switch time: 4h estimated | Data sync: Daily backup | Terraform IaC: In progress"},
+    {name:"Communication Plan",status:"ready",risk:"high",detail:"Internal: Slack + SMS | External: Status page | Regulators: Template ready | Customers: Email template"}
   ];
 
   render() {

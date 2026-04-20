@@ -37,12 +37,11 @@ export class ScIrPlaybook extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Ir Playbook Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Ir Playbook Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Ir Playbook Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Ir Playbook Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Ir Playbook Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Ir Playbook Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Ransomware Response Playbook",status:"active",risk:"critical",detail:"Steps: 8 | Current step: 4 (Containment) | Elapsed: 45min | Analyst: Li Wei"},
+    {name:"Phishing Incident Playbook",status:"ready",risk:"high",detail:"Steps: 6 | Status: Ready | Trigger: Phishing alert + user report | Last activated: 3d ago"},
+    {name:"Data Breach Notification",status:"ready",risk:"critical",detail:"Steps: 7 | Status: Ready | Legal review: Complete | Regulatory: 72h GDPR notification"},
+    {name:"DDoS Mitigation Playbook",status:"ready",risk:"medium",detail:"Steps: 5 | Status: Ready | Cloudflare integration tested | Last drill: 30d ago"},
+    {name:"Insider Threat Investigation",status:"ready",risk:"high",detail:"Steps: 9 | Status: Ready | Forensics toolkit: Updated | Legal liaison: On call"}
   ];
 
   render() {

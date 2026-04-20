@@ -37,12 +37,10 @@ export class ScTrainingModule extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Training Module Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Training Module Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Training Module Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Training Module Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Training Module Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Training Module Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Phishing Awareness 2026",status:"active",risk:"high",detail:"Duration: 30min | Completion: 82% | Quiz pass rate: 89% | Content: 12 scenarios + 5 quizzes"},
+    {name:"Password Security Best Practices",status:"active",risk:"medium",detail:"Duration: 15min | Completion: 95% | Quiz pass rate: 94% | Content: MFA setup + password managers"},
+    {name:"Data Handling & Classification",status:"active",risk:"high",detail:"Duration: 25min | Completion: 71% | Quiz pass rate: 85% | Content: Classification levels + handling rules"},
+    {name:"Social Engineering Defense",status:"new",risk:"medium",detail:"Duration: 20min | Completion: 45% | Quiz pass rate: N/A | Content: Pretexting, baiting, tailgating"}
   ];
 
   render() {

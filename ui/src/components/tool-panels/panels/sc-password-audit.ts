@@ -37,12 +37,11 @@ export class ScPasswordAudit extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Password Audit Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Password Audit Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Password Audit Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Password Audit Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Password Audit Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Password Audit Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Password Policy Compliance",status:"failing",risk:"high",detail:"Min length: 8 (target: 14) | Complexity: Weak | History: 3 (target: 12) | Lockout: No"},
+    {name:"Active Directory - 2,450 accounts",status:"weak",risk:"critical",detail:"342 accounts (14%) with passwords cracked in <1h | Top: Summer2026!, Welcome123"},
+    {name:"Service Accounts - 89 accounts",status:"critical",risk:"critical",detail:"23 accounts with non-expiring passwords | 12 using NTLM | 5 with clear-text in configs"},
+    {name:"VPN Accounts - 156 users",status:"attention",risk:"high",detail:"MFA bypass: 12 users | Static OTP seeds: 8 users | Last password change: 180+ days: 34 users"},
+    {name:"Privileged Accounts - 45 users",status:"critical",risk:"critical",detail:"Shared admin accounts: 5 | No MFA: 3 | Password reuse detected: 8 across systems"}
   ];
 
   render() {

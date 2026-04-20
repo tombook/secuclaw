@@ -37,12 +37,12 @@ export class ScApiSecurity extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Api Security Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Api Security Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Api Security Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Api Security Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Api Security Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Api Security Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"POST /api/auth/login",status:"BOLA Risk",risk:"high",detail:"No rate limiting. 10K req/min tested. No account lockout after 5 failures."},
+    {name:"GET /api/users/{id}",status:"IDOR",risk:"critical",detail:"Sequential IDs expose any user profile. No ownership validation in controller."},
+    {name:"PUT /api/orders",status:"Mass Assignment",risk:"high",detail:"role=admin settable via JSON body. No input whitelist in DTO."},
+    {name:"POST /api/upload",status:"SSRF",risk:"critical",detail:"URL parameter fetches http://169.254.169.254/metadata. IAM creds extractable."},
+    {name:"GET /api/reports?sort=",status:"SQL Injection",risk:"high",detail:"Union-based extraction confirmed via sort parameter. Full DB dump achieved."},
+    {name:"DELETE /api/sessions",status:"Missing Auth",risk:"medium",detail:"No Authorization header required. Any user can delete any session."}
   ];
 
   render() {

@@ -37,12 +37,10 @@ export class ScDlpDashboard extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Dlp Dashboard Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Dlp Dashboard Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Dlp Dashboard Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Dlp Dashboard Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Dlp Dashboard Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Dlp Dashboard Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Email DLP Policy",status:"active",risk:"high",detail:"Channel: SMTP | Violations (7d): 34 | Blocked: 28 | Warned: 6 | Top type: SSN patterns (12)"},
+    {name:"Web DLP Policy",status:"active",risk:"medium",detail:"Channel: HTTP/HTTPS | Violations (7d): 12 | Blocked: 10 | Top: Source code paste (5) | Cloud upload: Monitored"},
+    {name:"Endpoint DLP Policy",status:"active",risk:"high",detail:"Channel: USB + Clipboard | Violations (7d): 8 | USB blocked: 3 | Clipboard: Monitored | Print: Logged"},
+    {name:"Cloud DLP Policy",status:"active",risk:"medium",detail:"Channel: SaaS APIs | Violations (7d): 5 | Box: 2, Drive: 2, OneDrive: 1 | Auto-encrypt: Enabled"}
   ];
 
   render() {

@@ -37,12 +37,12 @@ export class ScAssetInventory extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Asset Inventory Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Asset Inventory Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Asset Inventory Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Asset Inventory Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Asset Inventory Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Asset Inventory Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"web-prod-01 | Ubuntu 22.04",status:"critical",risk:"server",detail:"IP: 10.0.1.10 | Apache 2.4.52 | Criticality: P1 | Owner: Platform | Last scan: 2h ago"},
+    {name:"db-master-01 | MySQL 8.0",status:"critical",risk:"database",detail:"IP: 10.0.2.5 | 2TB storage | Criticality: P1 | Owner: DBA | Last scan: 1h ago"},
+    {name:"nginx-lb-02 | Nginx 1.24",status:"high",risk:"network",detail:"IP: 10.0.1.2 | Load Balancer | Criticality: P2 | Owner: Infra | Last scan: 3h ago"},
+    {name:"k8s-node-03 | K8s 1.28",status:"high",risk:"container",detail:"IP: 10.0.3.15 | 24 pods | Criticality: P2 | Owner: DevOps | Last scan: 30min ago"},
+    {name:"cache-01 | Redis 7.2",status:"high",risk:"server",detail:"IP: 10.0.2.10 | 64GB RAM | Criticality: P2 | Owner: Platform | Last scan: 1h ago"},
+    {name:"endpoint-42 | macOS 14.4",status:"low",risk:"endpoint",detail:"CrowdStrike EDR | User: Zhang Wei | Criticality: P4 | Last check-in: 5min ago"}
   ];
 
   render() {

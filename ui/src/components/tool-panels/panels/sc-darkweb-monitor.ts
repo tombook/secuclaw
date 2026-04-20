@@ -37,12 +37,11 @@ export class ScDarkwebMonitor extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Darkweb Monitor Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Darkweb Monitor Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Darkweb Monitor Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Darkweb Monitor Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Darkweb Monitor Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Darkweb Monitor Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Credential Dump: corp.com",status:"critical",risk:"alert",detail:"Source: stealer logs | Emails: 1,247 @corp.com | Passwords: 834 plaintext | Breach date: Mar 15 | Last seen: Apr 18"},
+    {name:"Database Sale: Customer PII",status:"critical",risk:"alert",detail:"Source: Dark forum | Records: 500K | Price: $5,000 BTC | Includes: Name, SSN, DOB | Verification: Sample matched"},
+    {name:"Brand Impersonation: corp-login",status:"high",risk:"active",detail:"Source: Phishing kit marketplace | Domain: corp-login.xyz | Kit price: $150 | Targeted: Employee portal"},
+    {name:"Infrastructure Exposure",status:"medium",risk:"monitoring",detail:"Source: Paste site | Content: Internal IP range + credentials | Posted: Apr 19 | Removed: Yes | Rotation: Done"},
+    {name:"Threat Actor Mention",status:"high",risk:"monitoring",detail:"Source: Forum post | Actor: Unknown | Target: Financial sector | Mention: corp.com | Credibility: Medium"}
   ];
 
   render() {

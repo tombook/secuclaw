@@ -37,12 +37,11 @@ export class ScWafDashboard extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Waf Dashboard Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Waf Dashboard Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Waf Dashboard Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Waf Dashboard Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Waf Dashboard Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Waf Dashboard Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"SQL Injection Block (Top)",status:"critical",risk:"active",detail:"Blocked today: 342 | Top pattern: UNION SELECT | Sources: 5 unique IPs | Rule: SQLi-001 | FP rate: 1.2%"},
+    {name:"XSS Attack Block",status:"high",risk:"active",detail:"Blocked today: 156 | Top pattern: <script> tag injection | Sources: 8 IPs | Rule: XSS-003 | FP rate: 2.1%"},
+    {name:"Bot Traffic Filter",status:"medium",risk:"active",detail:"Blocked today: 2,340 | Top UA: python-requests/2.31 | Rate limited: 450 IPs | Challenge: 89% failed CAPTCHA"},
+    {name:"Geo-blocking (Sanctioned)",status:"low",risk:"active",detail:"Countries blocked: 5 | Blocked today: 23 | Rules: OFAC compliance | Whitelist: 3 approved IPs from sanctioned regions"},
+    {name:"False Positive Queue",status:"medium",risk:"review",detail:"FP reports: 12 today | Auto-whitelisted: 8 | Manual review needed: 4 | Avg resolution: 2h | FP trend: Down 15%"}
   ];
 
   render() {

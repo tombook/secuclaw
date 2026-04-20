@@ -37,12 +37,10 @@ export class ScPhishingSim extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Phishing Sim Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Phishing Sim Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Phishing Sim Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Phishing Sim Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Phishing Sim Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Phishing Sim Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Campaign Apr 2026: Invoice Scam",status:"high",risk:"active",detail:"Sent: 500 | Opened: 45% | Clicked: 23% | Submitted creds: 8% | Template: Overdue invoice | Dept hit: Finance 34%"},
+    {name:"Campaign Mar 2026: IT Alert",status:"medium",risk:"completed",detail:"Sent: 500 | Opened: 52% | Clicked: 18% | Submitted: 5% | Template: Password expiry | Improvement: -3% clicks"},
+    {name:"Campaign Feb 2026: CEO Urgent",status:"high",risk:"completed",detail:"Sent: 50 (execs only) | Opened: 80% | Clicked: 40% | Submitted: 20% | Template: Wire transfer | VIP risk: HIGH"},
+    {name:"Template Library: 12 templates",status:"medium",risk:"ready",detail:"Categories: Invoice, IT alert, HR update, CEO urgent, Package delivery, Doc share, Password reset, Bonus, Meeting, Covid"}
   ];
 
   render() {

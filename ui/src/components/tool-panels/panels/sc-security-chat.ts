@@ -37,12 +37,10 @@ export class ScSecurityChat extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Security Chat Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Security Chat Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Security Chat Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Security Chat Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Security Chat Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Security Chat Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"AI Security Assistant",status:"low",risk:"active",detail:"Capabilities: Risk analysis, Threat lookup, Compliance check, Policy search, Incident guidance | Model: GLM-5.1"},
+    {name:"Suggested: What is our risk score?",status:"high",risk:"suggested",detail:"Response: Current risk score 7.2/10. Top risks: Ransomware (20), Data breach (15), Supply chain (12)"},
+    {name:"Suggested: Recent incidents summary",status:"medium",risk:"suggested",detail:"Response: 23 incidents this month. P1: 2 (ransomware attempt, data exfil). P2: 5. Trend: +12% YoY"},
+    {name:"Suggested: GDPR compliance status",status:"high",risk:"suggested",detail:"Response: GDPR compliance 88%. Gaps: Art.25 PbD (2 projects), Art.13 notices (mobile app), Art.30 records"}
   ];
 
   render() {

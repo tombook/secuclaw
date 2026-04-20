@@ -37,12 +37,11 @@ export class ScNetworkTopo extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Network Topo Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Network Topo Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Network Topo Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Network Topo Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Network Topo Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Network Topo Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Internet Zone (Public)",status:"exposed",risk:"high",detail:"WAF: Cloudflare | CDN: Static assets | DDoS protection | Rate limiting: 10K/min | Bot management"},
+    {name:"DMZ (Semi-trusted)",status:"monitored",risk:"critical",detail:"Reverse proxy: Nginx | Load balancer: HAProxy | Mail relay: Postfix | IDS: Suricata | VLAN 100"},
+    {name:"Application Tier (Trusted)",status:"segmented",risk:"medium",detail:"K8s cluster: 24 pods | Service mesh: Istio | API gateway: Kong | mTLS enabled | VLAN 200"},
+    {name:"Data Tier (Restricted)",status:"protected",risk:"critical",detail:"MySQL cluster: 3 nodes | Redis sentinel | S3 buckets (encrypted) | No direct internet access | VLAN 300"},
+    {name:"Management Tier (Isolated)",status:"air-gapped",risk:"high",detail:"Jump box only | Bastion host | Session recording | No internet | VPN + MFA required | VLAN 400"}
   ];
 
   render() {

@@ -37,12 +37,11 @@ export class ScPolicyChecker extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Policy Checker Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Policy Checker Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Policy Checker Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Policy Checker Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Policy Checker Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Policy Checker Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Access Control Policy",status:"gap",risk:"high",detail:"Systems: 5/10 compliant | Gap: 2 systems lack MFA | 3 with stale accounts | Review: Overdue 30d"},
+    {name:"Encryption Policy",status:"pass",risk:"medium",detail:"Systems: 8/10 compliant | Gap: 2 legacy systems no TLS 1.3 | Compensating controls: Documented"},
+    {name:"Incident Response Policy",status:"pass",risk:"low",detail:"Systems: 10/10 compliant | Playbooks: 5 active | Last drill: 14d ago | Contact list: Current"},
+    {name:"Data Retention Policy",status:"gap",risk:"high",detail:"Systems: 4/10 compliant | Gap: 6 systems no automated purge | Manual process: Error-prone"},
+    {name:"Change Management Policy",status:"partial",risk:"medium",detail:"Systems: 7/10 compliant | Gap: 3 shadow IT changes detected | Approval workflow: Bypassed"}
   ];
 
   render() {

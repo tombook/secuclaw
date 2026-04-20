@@ -37,12 +37,10 @@ export class ScSecQuiz extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Sec Quiz Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Sec Quiz Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Sec Quiz Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Sec Quiz Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Sec Quiz Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Sec Quiz Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Q1: Phishing Email Identification",status:"active",risk:"medium",detail:"Pass rate: 87% | Common wrong: Legitimate marketing vs phishing | Improvement: Add more examples"},
+    {name:"Q2: Password Strength Assessment",status:"active",risk:"low",detail:"Pass rate: 94% | Common wrong: Length vs complexity tradeoff | Well understood topic"},
+    {name:"Q3: Social Engineering Scenarios",status:"attention",risk:"high",detail:"Pass rate: 72% | Common wrong: Tailgating acceptance | Need: More scenario-based training"},
+    {name:"Q4: Data Classification Quiz",status:"active",risk:"medium",detail:"Pass rate: 83% | Common wrong: Confidential vs Restricted | Need: Clearer definitions"}
   ];
 
   render() {

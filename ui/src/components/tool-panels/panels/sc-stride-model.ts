@@ -37,12 +37,12 @@ export class ScStrideModel extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Stride Model Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Stride Model Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Stride Model Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Stride Model Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Stride Model Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Stride Model Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"S - Spoofing: API Authentication",status:"high",risk:"analyzed",detail:"Threat: Token theft via XSS | Component: Auth service | Impact: Account takeover | Mitigation: CSP + HttpOnly + Short TTL"},
+    {name:"T - Tampering: Database Records",status:"critical",risk:"analyzed",detail:"Threat: SQL injection data modification | Component: MySQL | Impact: Data integrity loss | Mitigation: Parameterized queries + checksums"},
+    {name:"R - Repudiation: Admin Actions",status:"high",risk:"analyzed",detail:"Threat: Shared admin accounts deny attribution | Component: Admin panel | Impact: No accountability | Mitigation: Named accounts + audit log"},
+    {name:"I - Info Disclosure: API Response",status:"high",risk:"analyzed",detail:"Threat: Excessive data in API responses | Component: REST API | Impact: PII leak | Mitigation: Field filtering + DLP"},
+    {name:"D - Denial of Service: Web App",status:"medium",risk:"analyzed",detail:"Threat: Volumetric DDoS + application layer | Component: Web frontend | Impact: Service outage | Mitigation: CDN + rate limit + WAF"},
+    {name:"E - Elevation of Privilege: JWT",status:"critical",risk:"analyzed",detail:"Threat: JWT role tampering | Component: Auth middleware | Impact: Admin access | Mitigation: Signed tokens + server-side validation"}
   ];
 
   render() {

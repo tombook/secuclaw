@@ -37,12 +37,12 @@ export class ScIncidentTimeline extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Incident Timeline Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Incident Timeline Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Incident Timeline Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Incident Timeline Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Incident Timeline Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Incident Timeline Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"03:15 - Detection (SIEM)",status:"complete",risk:"critical",detail:"Alert: Brute force pattern. 547 failures in 15min. Analyst: Li Wei. Duration: 3min."},
+    {name:"03:18 - Triage (SOC L1)",status:"complete",risk:"high",detail:"Confirmed: Active attack. Escalated P1. CISO + Legal notified. Analyst: Wang Jun. Duration: 8min."},
+    {name:"03:26 - Analysis (SOC L2)",status:"complete",risk:"critical",detail:"SQLi confirmed. C2 beacon on EP-042. Lateral movement via SMB. Analyst: Chen Tao. Duration: 22min."},
+    {name:"03:48 - Containment (IR)",status:"complete",risk:"high",detail:"EP-042 isolated. C2 IP blocked. DNS sinkhole. Credentials rotated. Analyst: Li Wei. Duration: 15min."},
+    {name:"04:15 - Eradication (IR)",status:"complete",risk:"medium",detail:"Backdoor removed. Registry cleaned. Golden Ticket revoked. Analyst: Wang Jun. Duration: 27min."},
+    {name:"04:45 - Recovery (Ops)",status:"complete",risk:"low",detail:"Rebuilt from golden image. EDR scan clean. Services restored. Users notified. Analyst: Chen Tao."}
   ];
 
   render() {

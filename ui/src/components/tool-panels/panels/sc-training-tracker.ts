@@ -37,12 +37,10 @@ export class ScTrainingTracker extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Training Tracker Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Training Tracker Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Training Tracker Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Training Tracker Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Training Tracker Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Training Tracker Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Engineering (120 people)",status:"attention",risk:"high",detail:"Completion: 78% | Phishing click rate: 12% | Overdue: 26 | Avg quiz score: 82% | Next: May 15"},
+    {name:"Sales (85 people)",status:"on-track",risk:"medium",detail:"Completion: 91% | Phishing click rate: 8% | Overdue: 8 | Avg quiz score: 88% | Next: May 10"},
+    {name:"Finance (45 people)",status:"complete",risk:"low",detail:"Completion: 100% | Phishing click rate: 3% | Overdue: 0 | Avg quiz score: 94% | Best department"},
+    {name:"Executive (12 people)",status:"overdue",risk:"high",detail:"Completion: 58% | Phishing click rate: 25% | Overdue: 5 | Avg quiz score: 76% | VIP targets"}
   ];
 
   render() {

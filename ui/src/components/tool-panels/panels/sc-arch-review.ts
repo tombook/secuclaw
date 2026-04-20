@@ -37,12 +37,11 @@ export class ScArchReview extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Arch Review Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Arch Review Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Arch Review Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Arch Review Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Arch Review Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Arch Review Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Authentication Architecture",status:"review",risk:"high",detail:"OAuth 2.0 + OIDC | MFA: TOTP+WebAuthn | Session: JWT with rotation | SSO: 3 providers integrated"},
+    {name:"Authorization Model",status:"pass",risk:"medium",detail:"RBAC + ABAC hybrid | Policy engine: OPA | Entitlement review: Quarterly | Admin escalation: JIT"},
+    {name:"Encryption Standards",status:"pass",risk:"low",detail:"TLS 1.3 enforced | AES-256-GCM at rest | Key management: HSM | Certificate rotation: 90 days"},
+    {name:"Logging & Monitoring",status:"attention",risk:"high",detail:"SIEM: Splunk | Log retention: 1 year | Correlation rules: 156 | Gap: API gateway logs not ingested"},
+    {name:"Network Architecture",status:"action",risk:"critical",detail:"Missing: Network segmentation between prod/staging | No IDS in internal network | DNS monitoring: partial"}
   ];
 
   render() {

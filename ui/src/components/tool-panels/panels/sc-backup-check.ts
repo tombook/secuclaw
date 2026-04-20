@@ -37,12 +37,11 @@ export class ScBackupCheck extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Backup Check Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Backup Check Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Backup Check Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Backup Check Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Backup Check Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Backup Check Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Core DB: Full Daily",status:"low",risk:"healthy",detail:"System: db-master-01 | Type: Full | Last run: 6h ago | Size: 2.1TB | Encrypted: AES-256 | RPO: 24h met"},
+    {name:"App Config: Incremental",status:"medium",risk:"attention",detail:"System: k8s-cluster | Type: Incremental | Last run: 2d ago | Size: 450MB | Gap: 48h since last backup"},
+    {name:"Customer Data: Differential",status:"low",risk:"healthy",detail:"System: s3-data-lake | Type: Differential | Last run: 1h ago | Size: 12GB | Cross-region: Yes"},
+    {name:"Log Archive: Continuous",status:"low",risk:"healthy",detail:"System: splunk-indexer | Type: Stream | Size: 500GB/day | Retention: 1 year | Immutable: WORM storage"},
+    {name:"DR Site: Full Weekly",status:"high",risk:"overdue",detail:"System: dr-shanghai | Type: Full | Last run: 12d ago | Overdue by 5d | Action: Manual trigger required"}
   ];
 
   render() {

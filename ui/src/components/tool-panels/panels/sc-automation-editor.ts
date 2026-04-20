@@ -37,12 +37,11 @@ export class ScAutomationEditor extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Automation Editor Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Automation Editor Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Automation Editor Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Automation Editor Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Automation Editor Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Automation Editor Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Phishing Auto-Triage Playbook",status:"high",risk:"active",detail:"Steps: 6 | Auto-analyze headers + URLs + attachments | Block sender | Quarantine email | Notify user | Log in SIEM"},
+    {name:"Brute Force Block Playbook",status:"medium",risk:"active",detail:"Steps: 4 | Detect pattern (>5 failures/10min) | Block IP at firewall | Disable account | Alert SOC"},
+    {name:"Malware Containment Playbook",status:"critical",risk:"active",detail:"Steps: 8 | Isolate endpoint | Kill process | Collect artifacts | Submit to sandbox | Update AV | Scan subnet"},
+    {name:"Data Exfiltration Stop Playbook",status:"critical",risk:"active",detail:"Steps: 7 | Alert triage | Block destination | Quarantine source | Collect evidence | Notify DPO | Forensic image"},
+    {name:"Ransomware Isolation Playbook",status:"critical",risk:"active",detail:"Steps: 6 | Detect encryption | Isolate host | Block C2 | Preserve evidence | Check backup integrity | Restore"}
   ];
 
   render() {

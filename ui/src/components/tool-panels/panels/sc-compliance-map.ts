@@ -37,12 +37,10 @@ export class ScComplianceMap extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Compliance Map Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Compliance Map Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Compliance Map Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Compliance Map Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Compliance Map Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Compliance Map Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"ISO 27001: 114 controls",status:"mapped",risk:"medium",detail:"Implemented: 92% | Gap: 9 controls | Cross-map: NIST (85%), SOC 2 (78%), GDPR (72%)"},
+    {name:"NIST CSF 2.0: 106 subcategories",status:"mapped",risk:"medium",detail:"Implemented: 87% | Gap: 14 subcategories | Cross-map: ISO (85%), SOC 2 (82%)"},
+    {name:"GDPR: 99 articles",status:"mapped",risk:"high",detail:"Implemented: 88% | Gap: 12 articles | Cross-map: ISO (72%), NIST (68%), PIPL (55%)"},
+    {name:"SOC 2: 5 trust criteria",status:"mapped",risk:"low",detail:"Implemented: 85% | Gap: Security (3), Availability (1) | Cross-map: ISO (78%), NIST (82%)"}
   ];
 
   render() {

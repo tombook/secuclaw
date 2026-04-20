@@ -37,12 +37,10 @@ export class ScSsoConfig extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Sso Config Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Sso Config Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Sso Config Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Sso Config Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Sso Config Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Sso Config Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Okta (Primary IdP)",status:"healthy",risk:"low",detail:"Entity ID: corp.okta.com | SSO URL: https://corp.okta.com/app/sso | Cert expiry: 2027-01 | Users: 4,200"},
+    {name:"Azure AD (Secondary)",status:"healthy",risk:"low",detail:"Entity ID: azure.corp.com | SSO URL: https://login.microsoftonline.com/... | Cert expiry: 2026-09 | Users: 800"},
+    {name:"Google Workspace (Legacy)",status:"attention",risk:"medium",detail:"Entity ID: google.corp.com | Protocol: OIDC | Last sync: 2h ago | Migration: 60% complete to Okta"},
+    {name:"Attribute Mapping",status:"configured",risk:"high",detail:"email: Verified | department: Synced | role: Custom claim | MFA: Required for all apps | Session: 8h max"}
   ];
 
   render() {

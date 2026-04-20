@@ -37,12 +37,10 @@ export class ScContractReview extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Contract Review Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Contract Review Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Contract Review Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Contract Review Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Contract Review Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Contract Review Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CloudCorp MSA 2026",status:"review",risk:"medium",detail:"DPA: Included | Security clauses: 8/10 | Liability cap: 2x annual | Audit right: Annual | Renewal: Q4"},
+    {name:"DataSoft License Agreement",status:"flagged",risk:"high",detail:"DPA: Missing | Security clauses: 3/10 | No breach notification SLA | No audit right | Risk: HIGH"},
+    {name:"SecureNet Service Contract",status:"revision",risk:"high",detail:"DPA: Outdated | Security clauses: 5/10 | SLA: Weak | Indemnification: Limited | Renegotiation needed"},
+    {name:"FinPay Processing Agreement",status:"approved",risk:"low",detail:"DPA: Comprehensive | Security clauses: 10/10 | PCI DSS: Covered | Liability: Full | Audit: Quarterly"}
   ];
 
   render() {

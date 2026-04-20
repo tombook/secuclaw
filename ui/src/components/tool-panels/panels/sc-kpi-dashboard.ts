@@ -37,12 +37,11 @@ export class ScKpiDashboard extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Kpi Dashboard Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Kpi Dashboard Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Kpi Dashboard Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Kpi Dashboard Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Kpi Dashboard Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Kpi Dashboard Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"MTTD: 14min (Target: <10min)",status:"tracking",risk:"high",detail:"Current: 14min | Last quarter: 18min | Trend: Improving | P1: 3min | Action: Tune correlation rules"},
+    {name:"MTTR: 2.3h (Target: <1h)",status:"tracking",risk:"high",detail:"Current: 2.3h | Last quarter: 2.8h | Trend: Improving | P1: 45min | Action: SOAR automation"},
+    {name:"Patch Compliance: 87%",status:"tracking",risk:"medium",detail:"Current: 87% | Target: 95% | Critical: 95% | High: 89% | Action: Automated patching rollout"},
+    {name:"Training Completion: 82%",status:"tracking",risk:"medium",detail:"Current: 82% | Target: 95% | Engineering: 78% | Executive: 58% | Action: Mandatory for execs"},
+    {name:"Vulnerability Remediation: 78%",status:"tracking",risk:"high",detail:"Current: 78% | Target: 90% | Critical SLA: 92% | High SLA: 74% | Action: Dedicated vuln team"}
   ];
 
   render() {

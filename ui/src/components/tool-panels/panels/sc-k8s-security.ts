@@ -37,12 +37,11 @@ export class ScK8sSecurity extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"K8S Security Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"K8S Security Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"K8S Security Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"K8S Security Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"K8S Security Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"K8S Security Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Pod Security Standards",status:"enforcing",risk:"high",detail:"Namespace: 3/5 restricted | Privileged: 0 allowed | HostPID: blocked | RunAsNonRoot: enforced"},
+    {name:"RBAC Audit",status:"over-permissioned",risk:"critical",detail:"ClusterRoles: 45 | Overly broad: 8 | cluster-admin: 3 users (target: 1) | Service accounts: 23"},
+    {name:"Network Policies",status:"partial",risk:"medium",detail:"Namespaces: 5 | Policies: 3/5 (prod, staging, data) | Missing: monitoring, dev | Default deny: Enabled"},
+    {name:"Secrets Management",status:"attention",risk:"high",detail:"Vault integrated: Yes | Sealed secrets: 12 | env vars: 3 (migrate) | Image pull secrets: Rotated monthly"},
+    {name:"Admission Controllers",status:"active",risk:"medium",detail:"OPA Gatekeeper: Enabled | Constraints: 15 | Violations: 2 (dev namespace) | Mutation: PSA labels"}
   ];
 
   render() {

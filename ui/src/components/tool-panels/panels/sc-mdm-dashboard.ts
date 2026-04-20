@@ -37,12 +37,11 @@ export class ScMdmDashboard extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Mdm Dashboard Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Mdm Dashboard Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Mdm Dashboard Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Mdm Dashboard Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Mdm Dashboard Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Mdm Dashboard Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"EP-001: CEO iPhone 15 Pro",status:"low",risk:"compliant",detail:"iOS 17.4 | Enrolled: Yes | Compliance: 100% | Last sync: 2min | Jailbreak: No | Encryption: On"},
+    {name:"EP-015: Sales iPad",status:"medium",risk:"attention",detail:"iPadOS 17.3 (outdated) | Enrolled: Yes | Compliance: 85% | Last sync: 2h | Update pending | No VPN"},
+    {name:"EP-042: Developer MacBook",status:"low",risk:"compliant",detail:"macOS 14.4 | Enrolled: Yes | Compliance: 98% | Last sync: 5min | FileVault: On | CrowdStrike: Active"},
+    {name:"EP-100: Contractor Android",status:"high",risk:"non-compliant",detail:"Android 12 | Enrolled: Partial | Compliance: 45% | Last sync: 7d | Root detected: No | Missing: Work profile"},
+    {name:"EP-200: IoT Tablet (Warehouse)",status:"medium",risk:"managed",detail:"Android 11 (MDM) | Enrolled: Yes | Kiosk mode: Active | Compliance: 90% | App whitelist: 5 apps"}
   ];
 
   render() {

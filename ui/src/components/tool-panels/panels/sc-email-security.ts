@@ -37,12 +37,10 @@ export class ScEmailSecurity extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Email Security Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Email Security Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Email Security Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Email Security Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Email Security Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Email Security Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Spam Detection Rate",status:"healthy",risk:"low",detail:"Blocked: 12,450/day (94.2%) | False positive: 0.3% | ML model: v3.2 | Confidence threshold: 85%"},
+    {name:"Phishing Protection",status:"active",risk:"high",detail:"URL sandbox: Enabled | Attachment detonation: Enabled | Impersonation detection: 12 brands | Catch rate: 97%"},
+    {name:"DMARC/DKIM/SPF Status",status:"pass",risk:"medium",detail:"DMARC: p=reject | DKIM: 2048-bit RSA (valid) | SPF: +a +mx -all | Alignment: Strict"},
+    {name:"Quarantine (5 items)",status:"review",risk:"high",detail:"Sender: unknown@bank-secure.xyz | Reason: Phishing confidence 92% | Action: Admin review pending"}
   ];
 
   render() {

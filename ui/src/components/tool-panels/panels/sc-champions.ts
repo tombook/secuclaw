@@ -37,12 +37,10 @@ export class ScChampions extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Champions Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Champions Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Champions Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Champions Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Champions Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Champions Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Engineering: Li Wei (Score: 95)",status:"gold",risk:"low",detail:"Training: 100% | Tasks completed: 12 | Phishing catch: 100% | Security reviews: 8 | Badge: Gold"},
+    {name:"Sales: Zhang Min (Score: 88)",status:"silver",risk:"low",detail:"Training: 95% | Tasks completed: 9 | Phishing catch: 92% | Security reviews: 5 | Badge: Silver"},
+    {name:"Finance: Wang Jun (Score: 92)",status:"gold",risk:"low",detail:"Training: 100% | Tasks completed: 10 | Phishing catch: 97% | Security reviews: 6 | Badge: Gold"},
+    {name:"HR: Chen Tao (Score: 78)",status:"bronze",risk:"medium",detail:"Training: 85% | Tasks completed: 6 | Phishing catch: 80% | Security reviews: 3 | Badge: Bronze"}
   ];
 
   render() {

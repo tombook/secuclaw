@@ -37,12 +37,11 @@ export class ScAlertSystem extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Alert System Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Alert System Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Alert System Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Alert System Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Alert System Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Alert System Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Email Channel (SecOps DL)",status:"active",risk:"low",detail:"Avg delivery: 2s | Daily volume: 150 | Format: HTML with enrichment | Escalation: 15min -> L2"},
+    {name:"SMS Channel (On-call)",status:"active",risk:"medium",detail:"P1/P2 only | On-call rotation: 4 analysts | Avg response: 8min | Provider: Twilio"},
+    {name:"Slack #security-alerts",status:"active",risk:"low",detail:"Webhook integration | Thread-based tracking | Auto-enrichment: VT + AbuseIPDB | Members: 200+"},
+    {name:"PagerDuty Escalation",status:"active",risk:"low",detail:"Policy: 15min L2 -> 30min L3 -> 45min CISO | Auto-resolve on SOAR action | API v2 connected"},
+    {name:"Quiet Hours (22:00-08:00)",status:"configured",risk:"low",detail:"P1 overrides quiet hours | P2+ queued for morning | Weekend: On-call only | Holiday: Emergency only"}
   ];
 
   render() {

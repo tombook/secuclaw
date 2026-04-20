@@ -37,12 +37,10 @@ export class ScRoiCalculator extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Roi Calculator Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Roi Calculator Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Roi Calculator Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Roi Calculator Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Roi Calculator Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Roi Calculator Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Current Security Investment",status:"calculated",risk:"medium",detail:"Annual budget: $2.4M | Tools: $1.2M | Staff: $800K | Training: $200K | Consulting: $200K"},
+    {name:"Estimated Breach Cost (No Controls)",status:"estimated",risk:"critical",detail:"Probability: 35% | Cost per breach: $4.5M | Expected annual loss: $1.58M"},
+    {name:"Estimated Breach Cost (With Controls)",status:"estimated",risk:"medium",detail:"Probability: 8% | Cost per breach: $1.2M | Expected annual loss: $96K"},
+    {name:"ROI Calculation",status:"result",risk:"low",detail:"Annual savings: $1.48M | 3-year ROI: 185% | Payback period: 1.6 years | NPS improvement: +12"}
   ];
 
   render() {

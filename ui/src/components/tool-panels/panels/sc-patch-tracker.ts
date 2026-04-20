@@ -37,12 +37,11 @@ export class ScPatchTracker extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Patch Tracker Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Patch Tracker Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Patch Tracker Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Patch Tracker Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Patch Tracker Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Patch Tracker Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"PATCH-2026-0421: OpenSSL 3.2.1",status:"critical",risk:"deploying",detail:"CVE-2026-1234 | CVSS 10.0 | System: 23 TLS endpoints | Deployed: 15/23 | ETA: 4h | SLA: 24h"},
+    {name:"PATCH-2026-0420: Log4j 2.22.1",status:"critical",risk:"deployed",detail:"CVE-2026-1156 | CVSS 9.8 | System: 8 Java services | Deployed: 8/8 | Verified: Yes | SLA: Met"},
+    {name:"PATCH-2026-0419: Redis 7.2.4",status:"high",risk:"pending",detail:"CVE-2026-2345 | CVSS 8.6 | System: 12 instances | Scheduled: Tonight 22:00 | Risk: Memory corruption"},
+    {name:"PATCH-2026-0418: Nginx 1.26",status:"medium",risk:"scheduled",detail:"CVE-2026-3456 | CVSS 5.3 | System: 5 reverse proxies | Window: Next maintenance | Accepted: Low exposure"},
+    {name:"PATCH-2026-0410: Windows KB5034441",status:"high",risk:"failed",detail:"CVE-2026-4567 | CVSS 7.5 | System: 120 endpoints | Failed: 12 (reboot needed) | Retry: Auto tonight"}
   ];
 
   render() {

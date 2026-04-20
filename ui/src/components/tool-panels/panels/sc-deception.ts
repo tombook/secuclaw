@@ -37,12 +37,11 @@ export class ScDeception extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Deception Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Deception Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Deception Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Deception Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Deception Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Deception Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Honeypot: Web Server (canary)",status:"critical",risk:"triggered",detail:"Type: Cowrie SSH | Port: 2222 | Last hit: 2h ago | Attacker IP: 185.220.xx.xx | Attempts: 34"},
+    {name:"Honeypot: Database (mysql-fake)",status:"high",risk:"active",detail:"Type: MySQL fake | Port: 3307 | Last hit: 1d ago | Queries: 12 SELECT attempts | No data exposed"},
+    {name:"Canary Token: AWS Keys",status:"critical",risk:"triggered",detail:"Type: AWS canary token | Triggered: 3h ago | Location: GitHub gist | Used from: 203.0.113.42 | AWS region: us-east-1"},
+    {name:"Honeypot: SMB Share",status:"medium",risk:"monitoring",detail:"Type: SMB | Share: backup$ | Last access: 4h ago | Files browsed: 5 | Downloaded: 0 | Honey files intact"},
+    {name:"Canary DNS: sensitive.corp.com",status:"low",risk:"dormant",detail:"Type: DNS canary | Last query: Never | Domain: sensitive-data.corp.com | Monitoring: Active"}
   ];
 
   render() {

@@ -37,12 +37,11 @@ export class ScWirelessSecurity extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Wireless Security Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Wireless Security Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Wireless Security Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Wireless Security Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Wireless Security Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Wireless Security Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"AP-01 | CORP-SECURE",status:"secure",risk:"low",detail:"WPA3-Enterprise | Channel: 6 | Signal: -42dBm | RADIUS auth | 23 clients | No rogue"},
+    {name:"AP-02 | CORP-GUEST",status:"monitor",risk:"medium",detail:"WPA2-PSK | Channel: 11 | Signal: -38dBm | VLAN isolated | 45 clients | Bandwidth limited"},
+    {name:"AP-ROGUE-01 | FreeWiFi",status:"rogue",risk:"critical",detail:"Open | Channel: 1 | Signal: -55dBm | Evil twin detected! | MAC: AA:BB:CC:DD:EE:FF | Blocking"},
+    {name:"AP-03 | CORP-IoT",status:"attention",risk:"high",detail:"WPA2-PSK (weak key) | Channel: 6 | 34 IoT devices | No network isolation | Firmware outdated"},
+    {name:"Client: ceo-phone",status:"monitor",risk:"medium",detail:"Connected to CORP-SECURE | Certificate pinning enabled | Last roaming event: 2min ago | Signal: good"}
   ];
 
   render() {

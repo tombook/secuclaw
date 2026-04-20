@@ -37,12 +37,10 @@ export class ScPurpleTeam extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Purple Team Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Purple Team Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Purple Team Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Purple Team Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Purple Team Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Purple Team Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Exercise: APT29 Emulation",status:"active",risk:"critical",detail:"Red: Initial access via phishing | Blue: Detected at step 3/8 | Gap: Lateral movement not detected | Improvement: New correlation rule"},
+    {name:"Exercise: Ransomware Simulation",status:"completed",risk:"high",detail:"Red: Encryption achieved on 1 endpoint | Blue: Contained in 15min | Gap: Detection delayed 8min | Fix: EDR tuning"},
+    {name:"Exercise: Insider Data Theft",status:"completed",risk:"medium",detail:"Red: 50MB exfiltrated via USB | Blue: Detected after 2h | Gap: USB monitoring gap | Fix: Endpoint DLP policy"},
+    {name:"Exercise: Supply Chain Poison",status:"planned",risk:"high",detail:"Red: Dependency confusion attack | Blue: TBD | Scope: NPM packages | Date: May 2026"}
   ];
 
   render() {

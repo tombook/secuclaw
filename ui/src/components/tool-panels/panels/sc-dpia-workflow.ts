@@ -37,12 +37,11 @@ export class ScDpiaWorkflow extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Dpia Workflow Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Dpia Workflow Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Dpia Workflow Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Dpia Workflow Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Dpia Workflow Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Dpia Workflow Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Step 1: Processing Description",status:"complete",risk:"medium",detail:"Purpose: Customer analytics | Categories: Browsing + Purchase | Scale: 500K users | Retention: 24 months"},
+    {name:"Step 2: Necessity Assessment",status:"complete",risk:"low",detail:"Legal basis: Legitimate interest | Proportionality: Verified | Less intrusive alternatives: Evaluated"},
+    {name:"Step 3: Risk Identification",status:"in-progress",risk:"high",detail:"Risks: Re-identification (High), Profiling (Medium), Unauthorized access (High) | Mitigations: 3/5 defined"},
+    {name:"Step 4: Mitigation Measures",status:"pending",risk:"high",detail:"Encryption at rest: Yes | Access control: RBAC | Retention policy: Automated | Consent mechanism: In progress"},
+    {name:"Step 5: DPA Documentation",status:"pending",risk:"medium",detail:"DPO review: Scheduled | Legal sign-off: Pending | Record of processing: Updated | Audit trail: Enabled"}
   ];
 
   render() {

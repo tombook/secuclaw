@@ -37,12 +37,12 @@ export class ScEndpointDash extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Endpoint Dash Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Endpoint Dash Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Endpoint Dash Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Endpoint Dash Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Endpoint Dash Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Endpoint Dash Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"EP-001 | web-prod-01",status:"compromised",risk:"critical",detail:"Ubuntu 22.04 | Agent: CrowdStrike 6.54 | 12 threats | Last check-in: 5min | EDR: Active threat"},
+    {name:"EP-042 | dev-laptop-zw",status:"healthy",risk:"low",detail:"macOS 14.4 | Agent: CrowdStrike 6.54 | 0 threats | Last check-in: 2min | Compliance: 100%"},
+    {name:"EP-103 | db-replica-01",status:"suspicious",risk:"high",detail:"CentOS 7.9 | Agent: CrowdStrike 6.52 | 3 alerts | Last check-in: 1h | Agent outdated"},
+    {name:"EP-207 | k8s-worker-05",status:"attention",risk:"medium",detail:"Ubuntu 22.04 | Agent: CrowdStrike 6.54 | 1 finding | Last check-in: 8min | CIS: 72%"},
+    {name:"EP-500 | ceo-laptop",status:"healthy",risk:"low",detail:"macOS 14.4 | Agent: CrowdStrike 6.54 | 0 threats | Last check-in: 1min | VIP monitoring"},
+    {name:"EP-301 | iot-camera-12",status:"vulnerable",risk:"critical",detail:"Linux 4.19 | No EDR agent | Firmware outdated | Default credentials | Shadow IT discovery"}
   ];
 
   render() {

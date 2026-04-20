@@ -37,12 +37,12 @@ export class ScAttackPatterns extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Attack Patterns Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Attack Patterns Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Attack Patterns Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Attack Patterns Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Attack Patterns Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Attack Patterns Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"T1190 - Exploit Public-Facing App",status:"active",risk:"critical",detail:"MITRE ATT&CK Initial Access. Exploit web vulnerability for initial foothold. Detection: WAF + HIDS."},
+    {name:"T1059.001 - PowerShell",status:"active",risk:"high",detail:"MITRE ATT&CK Execution. PowerShell scripts for post-exploitation. Detection: AMSI + Script Block Logging."},
+    {name:"T1078 - Valid Accounts",status:"active",risk:"high",detail:"MITRE ATT&CK Defense Evasion. Use stolen credentials. Detection: UEBA + Impossible Travel."},
+    {name:"T1021.001 - Remote Desktop",status:"monitoring",risk:"medium",detail:"MITRE ATT&CK Lateral Movement. RDP for internal movement. Detection: Network + EDR."},
+    {name:"T1048 - Exfiltration Over Alt Protocol",status:"active",risk:"critical",detail:"MITRE ATT&CK Exfiltration. DNS/ICMP tunneling. Detection: DNS analytics + DLP."},
+    {name:"T1055 - Process Injection",status:"active",risk:"high",detail:"MITRE ATT&CK Defense Evasion. Inject into legitimate processes. Detection: EDR + memory scanning."}
   ];
 
   render() {

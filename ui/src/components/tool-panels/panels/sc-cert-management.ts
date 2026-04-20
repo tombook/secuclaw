@@ -37,12 +37,11 @@ export class ScCertManagement extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Cert Management Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Cert Management Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Cert Management Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Cert Management Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Cert Management Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Cert Management Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"*.corp.com (Let's Encrypt)",status:"low",risk:"valid",detail:"Expiry: Jun 15, 2026 (56d) | Algorithm: ECDSA P-256 | Auto-renew: Yes | Used by: 23 services"},
+    {name:"api.corp.com (DigiCert)",status:"low",risk:"valid",detail:"Expiry: Sep 30, 2026 (183d) | Algorithm: RSA-4096 | Auto-renew: Yes | Used by: API gateway"},
+    {name:"vpn.corp.com (GoDaddy)",status:"high",risk:"expiring",detail:"Expiry: May 5, 2026 (15d!) | Algorithm: RSA-2048 | Manual renew | Used by: VPN gateway"},
+    {name:"internal-ca (Self-signed)",status:"medium",risk:"attention",detail:"Expiry: Aug 1, 2026 (134d) | Algorithm: RSA-2048 | CA cert | Used by: Internal services | Plan: Migrate to CFSSL"},
+    {name:"legacy.corp.com (Expired)",status:"critical",risk:"expired",detail:"Expiry: Apr 1, 2026 (EXPIRED) | Used by: 3 legacy apps | Browser warnings: Active | Action: Immediate renewal"}
   ];
 
   render() {

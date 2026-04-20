@@ -37,12 +37,12 @@ export class ScRiskRegister extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Risk Register Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Risk Register Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Risk Register Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Risk Register Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Risk Register Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Risk Register Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"RISK-001: Ransomware Attack",status:"mitigated",risk:"critical",detail:"Likelihood: 4 | Impact: 5 | Score: 20 | Mitigation: EDR + backup + drill | Residual: 8 | Owner: CISO"},
+    {name:"RISK-002: Data Breach (PII)",status:"mitigated",risk:"critical",detail:"Likelihood: 3 | Impact: 5 | Score: 15 | Mitigation: DLP + encryption + access control | Residual: 6"},
+    {name:"RISK-003: Supply Chain Compromise",status:"monitoring",risk:"high",detail:"Likelihood: 3 | Impact: 4 | Score: 12 | Mitigation: SBOM + vendor audit | Residual: 8"},
+    {name:"RISK-004: Insider Threat",status:"mitigated",risk:"high",detail:"Likelihood: 2 | Impact: 5 | Score: 10 | Mitigation: UEBA + DLP + access review | Residual: 4"},
+    {name:"RISK-005: Cloud Misconfiguration",status:"mitigated",risk:"medium",detail:"Likelihood: 3 | Impact: 3 | Score: 9 | Mitigation: CSPM + IaC scanning | Residual: 3"},
+    {name:"RISK-006: Zero-Day Exploit",status:"accepted",risk:"high",detail:"Likelihood: 2 | Impact: 5 | Score: 10 | Mitigation: Defense in depth | Residual: 10 | Annual review"}
   ];
 
   render() {

@@ -37,12 +37,10 @@ export class ScIncidentComms extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Incident Comms Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Incident Comms Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Incident Comms Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Incident Comms Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Incident Comms Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Incident Comms Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Template: Initial P1 Notification",status:"critical",risk:"ready",detail:"Audience: CISO, Legal, Affected business | Channel: Slack #incidents + SMS | SLA: Within 30min of detection"},
+    {name:"Template: Hourly Status Update",status:"high",risk:"ready",detail:"Audience: Incident team | Channel: Slack thread | Content: Timeline, impact, next steps | Owner: Incident commander"},
+    {name:"Template: Regulatory Notification",status:"critical",risk:"ready",detail:"Audience: Regulator (GDPR: DPA within 72h) | Channel: Formal letter | Legal review: Required | Template: Pre-approved"},
+    {name:"Template: Customer Breach Notice",status:"high",risk:"ready",detail:"Audience: Affected customers | Channel: Email | Legal review: Required | Tone: Transparent + remediation steps"}
   ];
 
   render() {

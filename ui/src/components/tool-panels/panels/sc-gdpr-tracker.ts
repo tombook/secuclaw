@@ -37,12 +37,12 @@ export class ScGdprTracker extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Gdpr Tracker Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Gdpr Tracker Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Gdpr Tracker Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Gdpr Tracker Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Gdpr Tracker Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Gdpr Tracker Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Art.5 - Principles (Lawfulness)",status:"compliant",risk:"low",detail:"Legal basis documented for all processing | Review: Annual | Evidence: Processing records complete"},
+    {name:"Art.6 - Lawful Basis",status:"compliant",risk:"low",detail:"6 lawful bases defined | Consent management: Active | Legitimate interest: DPIAs done"},
+    {name:"Art.13/14 - Transparency",status:"partial",risk:"medium",detail:"Privacy notices: 4/5 updated | Cookie consent: Implemented | Gap: Mobile app notice outdated"},
+    {name:"Art.25 - Data Protection by Design",status:"attention",risk:"high",detail:"PbD checklist: 3/5 projects compliant | Gap: 2 new projects without DPIA | Action: Schedule reviews"},
+    {name:"Art.32 - Security of Processing",status:"compliant",risk:"medium",detail:"Encryption: Yes | Pseudonymization: Yes | Testing: Regular | Breach procedure: Documented"},
+    {name:"Art.33 - Breach Notification (72h)",status:"ready",risk:"high",detail:"Procedure: Documented | Authority template: Ready | DPO contact: Updated | Last drill: 30d ago"}
   ];
 
   render() {

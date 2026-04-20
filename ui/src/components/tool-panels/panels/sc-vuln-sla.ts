@@ -37,12 +37,11 @@ export class ScVulnSla extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Vuln Sla Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Vuln Sla Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Vuln Sla Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Vuln Sla Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Vuln Sla Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Vuln Sla Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CVE-2026-1234 | CVSS 10.0 | SLA: 24h",status:"critical",risk:"breached",detail:"Discovered: Apr 18 10:00 | SLA deadline: Apr 19 10:00 | Current: Apr 21 (+48h BREACH) | Status: Emergency patch in progress"},
+    {name:"CVE-2026-1156 | CVSS 9.8 | SLA: 24h",status:"critical",risk:"approaching",detail:"Discovered: Apr 20 08:00 | SLA deadline: Apr 21 08:00 (4h left!) | Status: Patch being deployed (6/8 done)"},
+    {name:"CVE-2026-2345 | CVSS 8.6 | SLA: 7d",status:"high",risk:"within",detail:"Discovered: Apr 18 | SLA deadline: Apr 25 | Remaining: 4 days | Status: Patch scheduled for tonight"},
+    {name:"CVE-2026-3456 | CVSS 5.3 | SLA: 30d",status:"medium",risk:"within",detail:"Discovered: Apr 15 | SLA deadline: May 15 | Remaining: 24 days | Status: Scheduled for next maintenance window"},
+    {name:"SLA Compliance: 87%",status:"high",risk:"tracking",detail:"P1 Critical (24h): 92% compliance | P2 High (7d): 84% | P3 Medium (30d): 89% | Target: 95% across all"}
   ];
 
   render() {

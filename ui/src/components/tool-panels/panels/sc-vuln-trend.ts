@@ -37,12 +37,11 @@ export class ScVulnTrend extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Vuln Trend Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Vuln Trend Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Vuln Trend Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Vuln Trend Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Vuln Trend Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Vuln Trend Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Apr 2026 - Current Month",status:"active",risk:"critical",detail:"Critical: 5 | High: 12 | Medium: 34 | Low: 28 | Total: 79 (down 8 from Mar)"},
+    {name:"Mar 2026",status:"closed",risk:"high",detail:"Critical: 3 | High: 9 | Medium: 39 | Low: 36 | Total: 87. Patch SLA compliance: 84%."},
+    {name:"Feb 2026",status:"closed",risk:"high",detail:"Critical: 4 | High: 7 | Medium: 35 | Low: 33 | Total: 79. Zero-day response: 2 events."},
+    {name:"Jan 2026",status:"closed",risk:"high",detail:"Critical: 3 | High: 10 | Medium: 37 | Low: 28 | Total: 78. New scanner deployed."},
+    {name:"Q1 2026 Summary",status:"report",risk:"medium",detail:"842 vulns found, 761 remediated (90.4%). Avg MTTD: 14min. Avg MTTR: 2.3h. SLA compliance: 87%."}
   ];
 
   render() {

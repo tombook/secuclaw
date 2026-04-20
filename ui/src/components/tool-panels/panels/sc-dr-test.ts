@@ -37,12 +37,9 @@ export class ScDrTest extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Dr Test Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Dr Test Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Dr Test Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Dr Test Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Dr Test Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Dr Test Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Quarterly DR Drill: Q1 2026",status:"completed",risk:"high",detail:"Date: Jan 15 | Result: Pass | Actual RTO: 52min (target: 4h) | RPO: 45min (target: 1h) | Issues: None"},
+    {name:"Quarterly DR Drill: Q2 2026",status:"scheduled",risk:"medium",detail:"Date: Apr 22 | Scope: Core Banking | Participants: 12 | Duration: 4h | Status: Ready to execute"},
+    {name:"Annual Full DR Test",status:"planned",risk:"critical",detail:"Date: Jun 2026 | Scope: All critical systems | Participants: 45 | Duration: 8h | Regulator invited: Yes"}
   ];
 
   render() {

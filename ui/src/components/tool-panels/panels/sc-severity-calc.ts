@@ -37,12 +37,10 @@ export class ScSeverityCalc extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Severity Calc Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Severity Calc Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Severity Calc Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Severity Calc Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Severity Calc Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Severity Calc Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"P1 Critical | SLA: 1h",status:"calculated",risk:"critical",detail:"Affected: Production DB + 50K users | Data: PII + Financial | Business: Revenue impact $500K/hr"},
+    {name:"P2 High | SLA: 24h",status:"calculated",risk:"high",detail:"Affected: Staging + 0 users | Data: Test data | Business: Delayed deployment"},
+    {name:"P3 Medium | SLA: 7d",status:"calculated",risk:"medium",detail:"Affected: Internal wiki + 200 users | Data: Internal docs | Business: Informational impact"},
+    {name:"P4 Low | SLA: 30d",status:"calculated",risk:"low",detail:"Affected: Dev tools + 5 users | Data: Public repos | Business: Minimal impact"}
   ];
 
   render() {

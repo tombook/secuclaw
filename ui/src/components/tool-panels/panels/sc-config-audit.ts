@@ -37,12 +37,11 @@ export class ScConfigAudit extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Config Audit Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Config Audit Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Config Audit Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Config Audit Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Config Audit Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Config Audit Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"SSH Hardening (5 servers)",status:"partial",risk:"high",detail:"Root login disabled: 3/5 | Key-only auth: 4/5 | Ciphers: Modern on 3/5 | Port: Non-standard"},
+    {name:"Firewall Rules (3 devices)",status:"issues",risk:"critical",detail:"Any-any rules: 2 found | Stale rules: 12 | Shadow rules: 3 | Un documented: 8 | Review overdue: 60d"},
+    {name:"Apache/Nginx Hardening",status:"pass",risk:"medium",detail:"TLS 1.3: Yes | HSTS: Yes | Security headers: 5/6 | Directory listing: Disabled | Server tokens: Off"},
+    {name:"Database Security",status:"attention",risk:"high",detail:"Encryption at rest: Yes | TDE: Enabled | Audit logging: Partial (missing DML) | Default accounts: 2 disabled"},
+    {name:"Active Directory",status:"issues",risk:"critical",detail:"LAPS: Not deployed | Tier model: Not implemented | LMR hash: Still stored | Admin count: 23 (target: <10)"}
   ];
 
   render() {

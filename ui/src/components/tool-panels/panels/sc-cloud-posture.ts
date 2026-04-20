@@ -37,12 +37,10 @@ export class ScCloudPosture extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Cloud Posture Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Cloud Posture Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Cloud Posture Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Cloud Posture Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Cloud Posture Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Cloud Posture Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"AWS Account: prod-main",status:"scanning",risk:"high",detail:"CIS Benchmark: 78% | S3 public: 2 buckets | IAM: 5 stale keys | SG: 3 overly permissive | Region: us-east-1"},
+    {name:"Azure Subscription: corp-prod",status:"compliant",risk:"medium",detail:"CIS Benchmark: 89% | Key Vault: OK | NSG: 1 open rule | Azure AD: Conditional access enabled"},
+    {name:"GCP Project: data-analytics",status:"healthy",risk:"low",detail:"CIS Benchmark: 92% | IAM: Least privilege | BigQuery: Row-level security | VPC: Private cluster"},
+    {name:"Multi-Cloud Inventory",status:"attention",risk:"high",detail:"Total resources: 3,247 | Un-tagged: 234 | Orphaned: 45 | Cross-cloud network: Hub-spoke verified"}
   ];
 
   render() {

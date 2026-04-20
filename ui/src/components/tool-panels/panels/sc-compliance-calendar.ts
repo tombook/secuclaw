@@ -37,12 +37,11 @@ export class ScComplianceCalendar extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Compliance Calendar Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Compliance Calendar Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Compliance Calendar Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Compliance Calendar Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Compliance Calendar Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Compliance Calendar Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Apr 25: SOC 2 Type II Audit",status:"upcoming",risk:"high",detail:"Auditor: Deloitte | Scope: All systems | Readiness: 85% | Evidence: 3 gaps to close"},
+    {name:"May 15: GDPR Annual Review",status:"scheduled",risk:"medium",detail:"DPO: Review scheduled | Data mapping: Complete | DPIA: 2 pending | Training: In progress"},
+    {name:"Jun 01: PCI DSS QSA Assessment",status:"upcoming",risk:"critical",detail:"Scope: Payment systems | Self-assessment: 92% | Remediation: 4 items | QSA: Booked"},
+    {name:"Jun 30: ISO 27001 Surveillance",status:"scheduled",risk:"medium",detail:"Cert body: BSI | Surveillance audit | Last: Dec 2025 | Findings: 2 minor (closed)"},
+    {name:"Jul 15: Regulatory Filing",status:"scheduled",risk:"high",detail:"Regulator: CAC | Report: Annual security assessment | Deadline: Hard | Status: Draft in review"}
   ];
 
   render() {

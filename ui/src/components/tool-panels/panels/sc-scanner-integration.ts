@@ -37,12 +37,11 @@ export class ScScannerIntegration extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Scanner Integration Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Scanner Integration Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Scanner Integration Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Scanner Integration Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Scanner Integration Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Scanner Integration Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Nessus Professional",status:"connected",risk:"medium",detail:"Endpoint: nessus.corp.local:8834 | Scan freq: Daily | Last scan: 2h ago | 1,247 findings synced."},
+    {name:"Qualys VMDR",status:"connected",risk:"medium",detail:"Endpoint: qualys-api.corp.local | Scan freq: Weekly | Last scan: 3d ago | 892 findings synced."},
+    {name:"OpenVAS Community",status:"disconnected",risk:"high",detail:"Endpoint: openvas.corp.local:9392 | Status: Connection timeout | Last sync: 15d ago | Stale data."},
+    {name:"Snyk (SCA)",status:"connected",risk:"low",detail:"Endpoint: api.snyk.io | Scan freq: Per-commit | Last scan: 1h ago | 156 dependency findings."},
+    {name:"False Positive Queue",status:"review",risk:"medium",detail:"5 FPs pending review. 3 verified FPs in last 30 days. FP rate: 4.2% (target: <3%)."}
   ];
 
   render() {

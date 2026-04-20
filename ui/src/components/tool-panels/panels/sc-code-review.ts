@@ -37,12 +37,12 @@ export class ScCodeReview extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Code Review Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Code Review Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Code Review Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Code Review Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Code Review Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Code Review Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"src/auth/login.ts:142",status:"sast",risk:"critical",detail:"SQL Injection | CWE-89 | String concatenation in SQL query. Use parameterized query."},
+    {name:"src/api/users.ts:89",status:"sast",risk:"high",detail:"Hardcoded JWT secret | CWE-798 | Move to environment variable. Use vault for secrets."},
+    {name:"src/upload/handler.ts:34",status:"dast",risk:"high",detail:"Path traversal | CWE-22 | File path not sanitized. Use whitelist approach."},
+    {name:"package-lock.json:lodash@4.17.20",status:"sca",risk:"critical",detail:"Prototype Pollution | CVE-2026-xxxx | Upgrade to 4.17.21+. 15 dependents affected."},
+    {name:"src/views/admin.tsx:201",status:"sast",risk:"medium",detail:"XSS (Reflected) | CWE-79 | Unescaped user input in render. Use DOMPurify."},
+    {name:"Dockerfile:line 3",status:"sca",risk:"high",detail:"Base image: node:14-alpine (EOL) | Upgrade to node:20-alpine. 47 known CVEs in base image."}
   ];
 
   render() {

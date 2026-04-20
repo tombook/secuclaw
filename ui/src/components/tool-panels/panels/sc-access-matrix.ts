@@ -37,12 +37,12 @@ export class ScAccessMatrix extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Access Matrix Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Access Matrix Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Access Matrix Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Access Matrix Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Access Matrix Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Access Matrix Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Admin -> Production DB",status:"denied",risk:"high",detail:"No direct DB access. Must use approved API. Audit trail required. Exception: DBA with JIT."},
+    {name:"Developer -> Staging Env",status:"allowed",risk:"low",detail:"Read-write during business hours. Session recorded. No production data. VPN required."},
+    {name:"DBA -> Production DB",status:"conditional",risk:"medium",detail:"JIT approval required. 2-hour session limit. All queries logged. Quarterly access review."},
+    {name:"Analyst -> Data Warehouse",status:"conditional",risk:"medium",detail:"Aggregated data only. PII columns masked. Max 10K rows/export. Watermarked output."},
+    {name:"Service Account -> API",status:"allowed",risk:"low",detail:"mTLS certificate auth. Auto-rotated every 90 days. Rate limited. No interactive login."},
+    {name:"Auditor -> All Systems",status:"restricted",risk:"critical",detail:"Read-only audit access. CISO approval per session. 4-hour max. Full screen recording."}
   ];
 
   render() {

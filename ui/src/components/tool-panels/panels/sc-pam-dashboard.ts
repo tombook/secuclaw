@@ -37,12 +37,10 @@ export class ScPamDashboard extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Pam Dashboard Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Pam Dashboard Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Pam Dashboard Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Pam Dashboard Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Pam Dashboard Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Pam Dashboard Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"admin_root (Linux root)",status:"critical",risk:"jit-approved",detail:"Type: Shared root | Last used: 2h ago | Session: Active (23min) | Approval: Li Wei | Recording: On"},
+    {name:"svc_deploy (CI/CD)",status:"medium",risk:"active",detail:"Type: Service account | Last used: 15min | Scope: Deploy only | Rotation: 30 days | Certificate auth"},
+    {name:"dba_admin (Database)",status:"high",risk:"jit-pending",detail:"Type: JIT request | Requested by: Wang Jun | Reason: Emergency patch | Approval: Pending CISO | Timeout: 2h"},
+    {name:"backup_operator",status:"medium",risk:"scheduled",detail:"Type: Scheduled task | Runs: Daily 02:00 | Scope: Read-only backup | Credential: Vault-managed | Last rotation: 14d ago"}
   ];
 
   render() {

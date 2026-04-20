@@ -37,12 +37,10 @@ export class ScMetricsExport extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Metrics Export Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Metrics Export Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Metrics Export Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Metrics Export Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Metrics Export Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Metrics Export Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Executive Summary Template",status:"ready",risk:"low",detail:"Format: PDF | Metrics: 6 KPIs | Period: Monthly | Last generated: Apr 1 | Auto-schedule: Available"},
+    {name:"Technical Report Template",status:"ready",risk:"low",detail:"Format: CSV + Charts | Metrics: 25 indicators | Period: Weekly | Last generated: Apr 18"},
+    {name:"Compliance Report Template",status:"ready",risk:"medium",detail:"Format: PDF | Frameworks: 4 | Evidence links: Included | Period: Quarterly | Last: Mar 31"},
+    {name:"Incident Report Template",status:"ready",risk:"high",detail:"Format: PDF | Severity: P1-P4 | Timeline: Included | Lessons learned: Section | Last: Apr 15"}
   ];
 
   render() {

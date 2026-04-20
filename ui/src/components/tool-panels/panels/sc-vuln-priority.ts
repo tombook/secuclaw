@@ -37,12 +37,11 @@ export class ScVulnPriority extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Vuln Priority Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Vuln Priority Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Vuln Priority Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Vuln Priority Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Vuln Priority Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Vuln Priority Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CVE-2026-1234 | EPSS 94%",status:"in-kev",risk:"critical",detail:"CVSS 10.0 + CISA KEV + Asset: Production DB. Priority: P1. Patch within 24h."},
+    {name:"CVE-2026-1156 | EPSS 87%",status:"in-kev",risk:"critical",detail:"CVSS 9.8 + CISA KEV + Asset: Web Frontend. Priority: P1. Patch within 24h."},
+    {name:"CVE-2026-2345 | EPSS 62%",status:"not-in-kev",risk:"high",detail:"CVSS 8.6 + 156 TLS endpoints. Priority: P2. Patch within 7 days."},
+    {name:"CVE-2026-3456 | EPSS 41%",status:"not-in-kev",risk:"medium",detail:"CVSS 7.5 + 12 Redis instances (patched). Priority: P3. Verify patch within 30 days."},
+    {name:"CVE-2026-7890 | EPSS 8%",status:"not-in-kev",risk:"low",detail:"CVSS 5.0 + Internal tools only. Priority: P4. Address in next maintenance window."}
   ];
 
   render() {

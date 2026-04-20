@@ -37,12 +37,10 @@ export class ScVendorOnboard extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Vendor Onboard Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Vendor Onboard Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Vendor Onboard Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Vendor Onboard Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Vendor Onboard Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Vendor Onboard Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Vendor: CyberGuard (Assessment)",status:"phase-1",risk:"high",detail:"Security questionnaire: Sent | Response due: Apr 25 | Risk tier: TBD | Category: Security tools"},
+    {name:"Vendor: DataFlow Inc (Contract)",status:"phase-2",risk:"medium",detail:"Assessment: Passed | DPA: In review | Security clauses: 7/10 | SLA: Negotiating"},
+    {name:"Vendor: NetOps (Monitoring)",status:"phase-3",risk:"low",detail:"Assessment: Passed | Contract: Signed | Monitoring: Active | First audit: Scheduled Q3"},
+    {name:"Vendor: CloudBackup (Rejected)",status:"rejected",risk:"low",detail:"Assessment: Failed (no SOC 2) | DPA: Non-compliant | Risk tier: High | Reason: Insufficient controls"}
   ];
 
   render() {

@@ -37,12 +37,9 @@ export class ScBaselineScan extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Baseline Scan Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Baseline Scan Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Baseline Scan Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Baseline Scan Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Baseline Scan Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Baseline Scan Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CIS Benchmark: Windows Server",status:"scored",risk:"high",detail:"Score: 72/100 | OS: 5 findings | Network: 3 | Access: 4 | Audit: 2 | Total gap: 14 items"},
+    {name:"CIS Benchmark: Linux Ubuntu",status:"scored",risk:"medium",detail:"Score: 81/100 | OS: 3 findings | Network: 2 | Access: 2 | Services: 1 | Total gap: 8 items"},
+    {name:"CIS Benchmark: Kubernetes",status:"scored",risk:"high",detail:"Score: 68/100 | Control Plane: 4 | Worker: 6 | Policies: 3 | Total gap: 13 items"}
   ];
 
   render() {

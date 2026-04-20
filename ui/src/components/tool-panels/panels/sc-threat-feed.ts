@@ -37,12 +37,11 @@ export class ScThreatFeed extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Threat Feed Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Threat Feed Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Threat Feed Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Threat Feed Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Threat Feed Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Threat Feed Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"IP: 45.33.32.1 | C2 Server",status:"enriched",risk:"critical",detail:"Source: AlienVault OTX | Confidence: 95% | Tags: CobaltStrike, APT29 | TLP:RED | First seen: Apr 18"},
+    {name:"Domain: update-svc.xyz | DGA",status:"enriched",risk:"high",detail:"Source: VirusTotal | Confidence: 88% | Tags: DGA, Malware | TLP:AMBER | NXRate: 45%"},
+    {name:"Hash: a3f2b8c1... | Beacon",status:"enriched",risk:"critical",detail:"Source: MalwareBazaar | Confidence: 97% | Tags: CS4.7, Windows | TLP:GREEN | AV detect: 42/68"},
+    {name:"URL: /api/v2/cb | Phishing",status:"new",risk:"high",detail:"Source: PhishTank | Confidence: 82% | Tags: Credential Harvester | TLP:GREEN | Cloudflare hosted"},
+    {name:"IP: 103.224.182.5 | Brute Force",status:"enriched",risk:"medium",detail:"Source: AbuseIPDB | Confidence: 75% | Tags: BruteForce, SSH | TLP:WHITE | Reports: 342"}
   ];
 
   render() {

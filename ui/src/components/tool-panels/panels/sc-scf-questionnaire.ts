@@ -37,12 +37,10 @@ export class ScScfQuestionnaire extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Scf Questionnaire Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Scf Questionnaire Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Scf Questionnaire Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Scf Questionnaire Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Scf Questionnaire Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Scf Questionnaire Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Access Control (17 questions)",status:"in-progress",risk:"high",detail:"Completed: 12/17 | Implemented: 10 | Partial: 2 | Gap: 5 | Score: 59% | Target: 80%"},
+    {name:"Incident Response (12 questions)",status:"complete",risk:"medium",detail:"Completed: 12/12 | Implemented: 10 | Partial: 2 | Gap: 0 | Score: 83% | Target: 80%"},
+    {name:"Risk Management (14 questions)",status:"in-progress",risk:"high",detail:"Completed: 8/14 | Implemented: 6 | Partial: 2 | Gap: 6 | Score: 43% | Target: 80%"},
+    {name:"Data Protection (15 questions)",status:"in-progress",risk:"medium",detail:"Completed: 11/15 | Implemented: 9 | Partial: 2 | Gap: 4 | Score: 60% | Target: 80%"}
   ];
 
   render() {

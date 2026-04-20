@@ -37,12 +37,11 @@ export class ScOsintTool extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Osint Tool Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Osint Tool Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Osint Tool Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Osint Tool Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Osint Tool Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Osint Tool Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"DNS Records: corp.com",status:"collected",risk:"medium",detail:"A: 3 IPs | MX: Google | TXT: SPF+DMARC | NS: Route53 | CNAME: cdn.corp.com -> CloudFront"},
+    {name:"WHOIS: corp.com",status:"collected",risk:"low",detail:"Registrar: GoDaddy | Created: 2015-03-12 | Expires: 2027-03-12 | Org: Corp Inc | DNSSEC: unsigned"},
+    {name:"Shodan: 203.0.113.42",status:"found",risk:"critical",detail:"Open ports: 22(SSH), 80(HTTP), 443(HTTPS), 3306(MySQL), 6379(Redis) | SSL: Expired cert"},
+    {name:"Certificate Transparency",status:"found",risk:"high",detail:"342 certs issued for *.corp.com | 12 expired | 3 wildcard certs | Issuer: Let's Encrypt + DigiCert"},
+    {name:"Dark Web Exposure",status:"found",risk:"critical",detail:"3 credential dumps found | Email domain: corp.com | Breach: 2026-03-15 | 1,247 emails exposed"}
   ];
 
   render() {

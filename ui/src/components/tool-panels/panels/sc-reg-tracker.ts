@@ -37,12 +37,10 @@ export class ScRegTracker extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Reg Tracker Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Reg Tracker Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Reg Tracker Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Reg Tracker Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Reg Tracker Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Reg Tracker Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"GDPR (EU) - Amendment 2026/XXX",status:"tracking",risk:"high",detail:"Jurisdiction: EU | Change: Cookie consent strict | Impact: High | Action: Update cookie banner | Deadline: Jun 2026"},
+    {name:"PIPL (China) - New Standard",status:"tracking",risk:"critical",detail:"Jurisdiction: China | Change: Cross-border data assessment | Impact: Critical | Action: File with CAC | Deadline: May 2026"},
+    {name:"PCI DSS v4.0 - Full Enforcement",status:"tracking",risk:"high",detail:"Jurisdiction: Global | Change: Customized approach | Impact: High | Action: Gap assessment | Deadline: Mar 2027"},
+    {name:"SOX (US) - Annual Attestation",status:"tracking",risk:"medium",detail:"Jurisdiction: US | Change: Cyber risk disclosure | Impact: Medium | Action: Board report update | Deadline: Dec 2026"}
   ];
 
   render() {

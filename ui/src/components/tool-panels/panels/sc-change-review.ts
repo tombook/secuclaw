@@ -37,12 +37,10 @@ export class ScChangeReview extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Change Review Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Change Review Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Change Review Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Change Review Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Change Review Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Change Review Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CHG-2026-0421: DB Schema Migration",status:"pending",risk:"high",detail:"Risk: High | System: Production DB | Requester: Platform Team | Security review: Pending"},
+    {name:"CHG-2026-0420: Firewall Rule Update",status:"approved",risk:"critical",detail:"Risk: Critical | System: Perimeter FW | Requester: Network Team | Security review: Approved with conditions"},
+    {name:"CHG-2026-0419: API Version Upgrade",status:"approved",risk:"medium",detail:"Risk: Medium | System: API Gateway | Requester: API Team | Security review: Pass"},
+    {name:"CHG-2026-0418: VPN Config Change",status:"rejected",risk:"high",detail:"Risk: High | System: VPN Gateway | Requester: IT | Security review: Rejected (split tunnel risk)"}
   ];
 
   render() {

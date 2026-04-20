@@ -37,12 +37,10 @@ export class ScVendorSla extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Vendor Sla Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Vendor Sla Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Vendor Sla Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Vendor Sla Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Vendor Sla Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Vendor Sla Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"CloudCorp: Uptime SLA",status:"met",risk:"low",detail:"Target: 99.99% | Actual: 99.995% | Trend: Stable | Breach: 0 | Credits claimed: $0"},
+    {name:"DataSoft: Response Time",status:"breached",risk:"high",detail:"Target: 4h P1 | Actual: 8h avg | Trend: Degrading | Breach: 3 this quarter | Escalation: Active"},
+    {name:"SecureNet: Resolution Time",status:"attention",risk:"medium",detail:"Target: 24h P2 | Actual: 28h avg | Trend: Degrading | Breach: 1 this quarter | Review scheduled"},
+    {name:"FinPay: Transaction SLA",status:"met",risk:"low",detail:"Target: 99.999% | Actual: 99.9998% | Trend: Improving | Breach: 0 | Tier 1 preferred vendor"}
   ];
 
   render() {

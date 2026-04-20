@@ -37,12 +37,10 @@ export class ScBudgetPlanner extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Budget Planner Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Budget Planner Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Budget Planner Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Budget Planner Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Budget Planner Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Budget Planner Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Security Tools & Licenses",status:"allocated",risk:"high",detail:"Budget: $1.2M | Spent: $980K | Remaining: $220K | Burn rate: On track | Major: SIEM renewal Q3"},
+    {name:"Staff & Compensation",status:"allocated",risk:"medium",detail:"Budget: $800K | Spent: $600K | Remaining: $200K | Headcount: 8 FTE | Open reqs: 2"},
+    {name:"Training & Certification",status:"allocated",risk:"low",detail:"Budget: $200K | Spent: $85K | Remaining: $115K | Certs completed: 4 | Conferences: 2 planned"},
+    {name:"Consulting & Audit",status:"allocated",risk:"medium",detail:"Budget: $200K | Spent: $150K | Remaining: $50K | SOC 2 audit: Booked | Pen test: Completed"}
   ];
 
   render() {

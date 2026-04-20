@@ -37,12 +37,10 @@ export class ScDnsSecurity extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Dns Security Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Dns Security Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Dns Security Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Dns Security Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Dns Security Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Dns Security Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"DNS Query Analysis (24h)",status:"monitoring",risk:"medium",detail:"Total queries: 2.3M | Blocked: 12,450 (0.5%) | DGA detected: 3 | DNSSEC fail: 8"},
+    {name:"DNS Tunneling Detection",status:"alert",risk:"critical",detail:"TXT queries to exfil.evil.com: 15,000 in 45min. Avg label length: 63 chars. Entropy: 4.2/byte."},
+    {name:"DNS Cache Poisoning Check",status:"pass",risk:"low",detail:"All resolvers using DNSSEC validation. Cache TTL normal. No unexpected NXDOMAIN responses."},
+    {name:"DNS Amplification Monitor",status:"watching",risk:"medium",detail:"Outbound ANY queries: 234/hour (elevated). Source: 3 compromised IoT devices. Rate limiting applied."}
   ];
 
   render() {

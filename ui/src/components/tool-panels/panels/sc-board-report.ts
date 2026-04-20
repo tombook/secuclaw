@@ -37,12 +37,10 @@ export class ScBoardReport extends LitElement {
   @state() private _q = '';
 
   private _data: MockItem[] = [
-    {name:"Board Report Item 1",status:"active",risk:"high",detail:"Active monitoring. Status: operational. Last check: 5min ago."},
-    {name:"Board Report Item 2",status:"review",risk:"medium",detail:"Pending review. Assigned to security team."},
-    {name:"Board Report Item 3",status:"pass",risk:"low",detail:"Compliance check passed. Controls verified."},
-    {name:"Board Report Item 4",status:"critical",risk:"critical",detail:"Critical finding. Remediation deadline: 24h."},
-    {name:"Board Report Item 5",status:"active",risk:"medium",detail:"Stable trend over last 30 days."},
-    {name:"Board Report Item 6",status:"draft",risk:"low",detail:"Policy update in progress. Next review: Q3 2026."}
+    {name:"Q1 2026 Executive Summary",status:"draft",risk:"medium",detail:"Risk score: 7.2/10 (down from 7.8) | Incidents: 23 (P1: 2) | Compliance: 87% | Budget: On track"},
+    {name:"Key Incidents (Top 5)",status:"data",risk:"high",detail:"1. Ransomware attempt (contained) 2. Data exfil attempt (blocked) 3. Phishing campaign (8 users) 4. VPN vuln (patched) 5. Insider access (reviewed)"},
+    {name:"Compliance Status",status:"data",risk:"medium",detail:"SOC 2: 85% | ISO 27001: 92% | GDPR: 88% | PCI DSS: 78% | Trend: Improving across all"},
+    {name:"Investment Recommendation",status:"proposal",risk:"high",detail:"Zero Trust Phase 2: $350K | SIEM upgrade: $180K | Additional SOC analyst: $120K | Total ask: $650K"}
   ];
 
   render() {
