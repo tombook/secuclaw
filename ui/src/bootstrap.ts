@@ -32,6 +32,9 @@ import './pages/sc-overview';
 import './components/sc-plugin-market';
 import './pages/sc-app-shell';
 
+// Command Palette
+import './components/sc-command-palette';
+
 // Services
 import { initKeyboardShortcuts } from './services/keyboard-shortcuts';
 

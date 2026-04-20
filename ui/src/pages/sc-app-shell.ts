@@ -16,6 +16,8 @@ import '../components/role-commander/sc-role-commander';
 import '../components/role-commander/sc-role-commander';
 import { settingsStore } from '../stores/settings-store';
 import { pluginStore } from '../plugins/index';
+import '../components/sc-command-palette';
+import type { CommandAction } from '../components/sc-command-palette';
 
 @customElement('sc-app-shell')
 export class ScAppShell extends LitElement {
@@ -578,6 +580,9 @@ export class ScAppShell extends LitElement {
   @state() private _newTaskPriority: 'P1' | 'P2' | 'P3' | 'P4' = 'P2';
   @state() private _showSettings = false;
   @state() private _toolPanelOpen = false;
+  @state() private _commandPaletteOpen = false;
+  @state() private _transitionState: 'idle' | 'exiting' | 'entering' = 'idle';
+
   @state() private _currentToolId = '';
   @state() private _currentToolLabel = '';
   @state() private _currentToolIcon = '🔧';
@@ -673,6 +678,16 @@ export class ScAppShell extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._timer = setInterval(() => { this._time = this._fmtTime(new Date()); }, 1000);
+
+    // Cmd/Ctrl+K → command palette
+    this._boundKeyDown = this._onGlobalKeyDown.bind(this);
+    window.addEventListener('keydown', this._boundKeyDown);
+
+    // Listen for palette-select events from sc-command-palette
+    this.addEventListener('palette-select', (e: Event) => {
+      const action = (e as CustomEvent<{ action: CommandAction }>).detail.action;
+      this._dispatchCommandAction(action);
+    });
     this.addEventListener('open-tool-panel', this._boundHandleToolPanel);
     this.addEventListener('navigate', ((e: CustomEvent) => {
       const { view, roleId } = e.detail;
@@ -682,7 +697,8 @@ export class ScAppShell extends LitElement {
     
     // Escape 键关闭工具面板
     this._escHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && this._toolPanelOpen) {
+      if (e.key === 'Escape' && (this._toolPanelOpen || this._commandPaletteOpen)) {
+        this._commandPaletteOpen = false;
         this._toolPanelOpen = false;
         if (window.location.hash.startsWith('#/tool/')) {
           window.location.hash = `#/${this._currentRoleId || ''}`;
@@ -940,6 +956,73 @@ export class ScAppShell extends LitElement {
     return items.map(i => ({ ...i, time: fmt(i.timeAgo) }));
   }
 
+  private _boundKeyDown: ((e: KeyboardEvent) => void) | null = null;
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._boundKeyDown) {
+      window.removeEventListener('keydown', this._boundKeyDown);
+      this._boundKeyDown = null;
+    }
+  }
+
+  private _onGlobalKeyDown(e: KeyboardEvent) {
+    // Cmd/Ctrl+K → command palette
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      this._commandPaletteOpen = !this._commandPaletteOpen;
+      return;
+    }
+  }
+
+  private _dispatchCommandAction(action: CommandAction) {
+    switch (action.type) {
+      case 'go-overview':
+        this._view = 'overview';
+        this._currentRoleId = null;
+        break;
+      case 'open-market':
+        this._view = 'market';
+        this._currentRoleId = null;
+        break;
+      case 'open-settings':
+        this._showSettings = !this._showSettings;
+        break;
+      case 'switch-role':
+        if (action.roleId) this._switchToRoleWithTransition(action.roleId);
+        break;
+      case 'open-tool':
+        if (action.toolId && action.roleId) {
+          this._currentRoleId = action.roleId;
+          this._view = 'role';
+          setTimeout(() => {
+            const rc = this.shadowRoot?.querySelector('sc-role-commander');
+            if (rc) rc.dispatchEvent(new CustomEvent('open-tool', { detail: { toolId: action.toolId }, bubbles: true, composed: true }));
+          }, 300);
+        }
+        break;
+    }
+  }
+
+  private _switchToRoleWithTransition(roleId: RoleId) {
+    if (this._currentRoleId === roleId && this._view === 'role') {
+      return; // already on this role
+    }
+    // Start transition
+    this._transitionState = 'exiting';
+    this.requestUpdate();
+    setTimeout(() => {
+      this._currentRoleId = roleId;
+      this._view = 'role';
+      this._transitionState = 'entering';
+      this.requestUpdate();
+      setTimeout(() => {
+        this._transitionState = 'idle';
+        this.requestUpdate();
+      }, 400);
+    }, 250);
+  }
+
   render() {
     const activeTheme = this._currentRoleId ? ROLE_THEMES[this._currentRoleId] : null;
     const activeLabel = this._currentRoleId ? ROLE_TOOL_CONFIGS[this._currentRoleId].label : '';
@@ -1116,19 +1199,27 @@ export class ScAppShell extends LitElement {
           <div class="header-kpi danger"><span class="kpi-label">事件</span><span class="kpi-value">7</span></div>
           <div class="header-kpi warning"><span class="kpi-label">待处理</span><span class="kpi-value">23</span></div>
           <span class="header-time">${this._time}</span>
-          <button class="btn-settings" title="系统配置" @click=${() => { this._showSettings = !this._showSettings; }}>⚙</button>
+          <button class="kbd-cmd-hint" title="命令面板 (Cmd+K)" @click=${() => { this._commandPaletteOpen = !this._commandPaletteOpen; }}>
+        <span style="font-size:11px">⌘K</span>
+      </button>
+      <button class="btn-settings" title="系统配置" @click=${() => { this._showSettings = !this._showSettings; }}>⚙</button>
         </div>
       </header>
 
       <!-- Main -->
-      <main class="main">
-        ${this._view === 'market'
-          ? html`<sc-plugin-market></sc-plugin-market>`
-          : this._view === 'role'
-            ? html`<sc-role-commander .roleId=${this._currentRoleId!} .raciHighlightTask=${this._raciHighlightTask}></sc-role-commander>`
-            : html`<sc-overview @role-selected=${(e: CustomEvent) => this._switchToRole(e.detail.roleId)}></sc-overview>`
-        }
+      <main class="main transition-container">
+        <div class="transition-wrapper ${this._transitionState === 'exiting' ? 'exiting' : ''} ${this._transitionState === 'entering' ? 'entering' : ''}">
+          ${this._view === 'market'
+            ? html`<sc-plugin-market></sc-plugin-market>`
+            : this._view === 'role'
+              ? html`<sc-role-commander .roleId=${this._currentRoleId!} .raciHighlightTask=${this._raciHighlightTask}></sc-role-commander>`
+              : html`<sc-overview @role-selected=${(e: CustomEvent) => this._switchToRole(e.detail.roleId)}></sc-overview>`
+          }
+        </div>
       </main>
+
+      <!-- Command Palette -->
+      ${this._commandPaletteOpen ? html`<sc-command-palette></sc-command-palette>` : nothing}
 
       <!-- Settings Panel -->
       ${this._showSettings ? html`
