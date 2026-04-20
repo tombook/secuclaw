@@ -1794,7 +1794,6 @@ ${this._renderDarkZone('security-ops')}
         ])}
         ${this._renderVizZone('security-expert')}
         ${this._renderDarkZone('security-expert')}
-        ${this._renderVizZone('security-expert')}
         ${this._renderFrameworkZone('security-expert')}
         ${this._renderToolGuideZone('security-expert')}
         ${this._renderTimelineZone('security-expert')}
