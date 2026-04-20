@@ -1,11 +1,11 @@
 /**
- * sc-compliance-map - Compliance Map
- * Phase 2+ Evolution - Interactive
+ * sc-compliance-map - Cross-Framework Compliance (CISO)
+ * Framework cards with compliance percentages + cross-map table
  */
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 
-interface MockItem { name: string; status: string; risk: string; detail: string; }
+interface Framework { name: string; controls: number; implemented: number; gaps: number; pct: number; }
 
 @customElement('sc-compliance-map')
 export class ScComplianceMap extends LitElement {
@@ -13,46 +13,57 @@ export class ScComplianceMap extends LitElement {
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; color: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .panel { background: #111827; border-radius: 12px; padding: 20px; }
-    .pt { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .sb { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; width: 100%; margin-bottom: 12px; outline: none; }
-    .sb:focus { border-color: #f59e0b; }
-    .sr { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .sc { background: #0a0e17; border-radius: 6px; padding: 8px 14px; min-width: 80px; }
-    .sv { font-size: 20px; font-weight: 700; }
-    .sl { font-size: 10px; color: #94a3b8; }
-    .il { display: flex; flex-direction: column; gap: 8px; }
-    .it { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; }
-    .it:hover { border-color: #4b5563; }
-    .in { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-    .id { font-size: 12px; color: #94a3b8; line-height: 1.5; }
-    .im { display: flex; gap: 6px; margin-top: 8px; }
-    .b { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-    .bc { background: #450a0a; color: #fca5a5; }
-    .bh { background: #431407; color: #fdba74; }
-    .bm { background: #422006; color: #fde047; }
-    .bl { background: #052e16; color: #86efac; }
-    .bs { background: #172554; color: #93c5fd; }
+    .pt { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .fws { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .fw { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; text-align: center; }
+    .fw-name { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .fw-pct { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+    .fw-detail { font-size: 11px; color: #94a3b8; }
+    .bar { height: 8px; background: #0a0e17; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .bar-fill { height: 100%; border-radius: 4px; }
+    .cross { margin-top: 12px; }
+    .cross-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+    .ctable { width: 100%; font-size: 11px; border-collapse: collapse; }
+    .ctable th { padding: 6px; background: #0a0e17; color: #94a3b8; font-size: 10px; }
+    .ctable td { padding: 6px; text-align: center; border-bottom: 1px solid #1f2937; }
+    .pct-cell { font-weight: 700; }
   `;
 
-  @state() private _q = '';
+  private _fws: Framework[] = [
+    { name: 'ISO 27001:2022', controls: 114, implemented: 105, gaps: 9, pct: 92 },
+    { name: 'NIST CSF 2.0', controls: 106, implemented: 92, gaps: 14, pct: 87 },
+    { name: 'GDPR', controls: 99, implemented: 87, gaps: 12, pct: 88 },
+    { name: 'SOC 2 Type II', controls: 67, implemented: 57, gaps: 10, pct: 85 },
+  ];
 
-  private _data: MockItem[] = [
-    {name:"ISO 27001: 114 controls",status:"mapped",risk:"medium",detail:"Implemented: 92% | Gap: 9 controls | Cross-map: NIST (85%), SOC 2 (78%), GDPR (72%)"},
-    {name:"NIST CSF 2.0: 106 subcategories",status:"mapped",risk:"medium",detail:"Implemented: 87% | Gap: 14 subcategories | Cross-map: ISO (85%), SOC 2 (82%)"},
-    {name:"GDPR: 99 articles",status:"mapped",risk:"high",detail:"Implemented: 88% | Gap: 12 articles | Cross-map: ISO (72%), NIST (68%), PIPL (55%)"},
-    {name:"SOC 2: 5 trust criteria",status:"mapped",risk:"low",detail:"Implemented: 85% | Gap: Security (3), Availability (1) | Cross-map: ISO (78%), NIST (82%)"}
+  private _crossMap = [
+    ['', 'ISO 27001', 'NIST CSF', 'GDPR', 'SOC 2'],
+    ['ISO 27001', '—', '85%', '72%', '78%'],
+    ['NIST CSF', '85%', '—', '68%', '82%'],
+    ['GDPR', '72%', '68%', '—', '65%'],
+    ['SOC 2', '78%', '82%', '65%', '—'],
   ];
 
   render() {
-    const q = this._q.toLowerCase();
-    const f = q ? this._data.filter(i => i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q)) : this._data;
-    const c = f.filter(i => i.risk === 'critical').length;
-    const h = f.filter(i => i.risk === 'high').length;
-    return html`<div class="panel"><div class="pt">Compliance Map</div>
-      <input class="sb" type="text" placeholder="Search..." .value=${this._q} @input=${(e: Event) => { this._q = (e.target as HTMLInputElement).value; }}/>
-      <div class="sr"><div class="sc"><div class="sv">${f.length}</div><div class="sl">Total</div></div><div class="sc"><div class="sv" style="color:#ef4444">${c}</div><div class="sl">Critical</div></div><div class="sc"><div class="sv" style="color:#f97316">${h}</div><div class="sl">High</div></div></div>
-      <div class="il">${f.map(i => html`<div class="it"><div class="in">${i.name}</div><div class="id">${i.detail}</div><div class="im"><span class="b b${i.risk[0]}">${i.risk}</span><span class="b bs">${i.status}</span></div></div>`)}</div>
-      ${f.length === 0 ? html`<div style="text-align:center;padding:30px;color:#6b7280">No results</div>` : nothing}</div>`;
+    return html`<div class="panel">
+      <div class="pt">🗺️ Cross-Framework Compliance Map</div>
+      <div class="fws">${this._fws.map(f => html`
+        <div class="fw">
+          <div class="fw-name">${f.name}</div>
+          <div class="fw-pct" style="color:${f.pct >= 90 ? '#22c55e' : f.pct >= 80 ? '#eab308' : '#ef4444'}">${f.pct}%</div>
+          <div class="fw-detail">${f.implemented}/${f.controls} controls | ${f.gaps} gaps</div>
+          <div class="bar"><div class="bar-fill" style="width:${f.pct}%;background:${f.pct >= 90 ? '#22c55e' : f.pct >= 80 ? '#eab308' : '#ef4444'}"></div></div>
+        </div>
+      `)}</div>
+      <div class="cross">
+        <div class="cross-title">Cross-Framework Coverage Matrix</div>
+        <table class="ctable">
+          ${this._crossMap.map((row, ri) => html`<tr>${row.map((cell, ci) => html`
+            <td style="${ri === 0 || ci === 0 ? 'font-weight:600;color:#e2e8f0;background:#0a0e17' : ''}" class="${ci > 0 && ri > 0 ? 'pct-cell' : ''}">${cell}</td>
+          `)}</tr>`)}
+        </table>
+      </div>
+    </div>`;
   }
 }
 declare global { interface HTMLElementTagNameMap { 'sc-compliance-map': ScComplianceMap; } }

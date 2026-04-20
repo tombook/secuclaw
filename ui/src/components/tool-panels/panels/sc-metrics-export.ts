@@ -1,11 +1,9 @@
 /**
- * sc-metrics-export - Metrics Export
- * Phase 2+ Evolution - Interactive
+ * sc-metrics-export - Security Metrics Export (CISO)
+ * Template selector with preview table and format toggle
  */
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-
-interface MockItem { name: string; status: string; risk: string; detail: string; }
 
 @customElement('sc-metrics-export')
 export class ScMetricsExport extends LitElement {
@@ -13,46 +11,62 @@ export class ScMetricsExport extends LitElement {
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; color: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .panel { background: #111827; border-radius: 12px; padding: 20px; }
-    .pt { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .sb { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; width: 100%; margin-bottom: 12px; outline: none; }
-    .sb:focus { border-color: #f59e0b; }
-    .sr { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .sc { background: #0a0e17; border-radius: 6px; padding: 8px 14px; min-width: 80px; }
-    .sv { font-size: 20px; font-weight: 700; }
-    .sl { font-size: 10px; color: #94a3b8; }
-    .il { display: flex; flex-direction: column; gap: 8px; }
-    .it { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; }
-    .it:hover { border-color: #4b5563; }
-    .in { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-    .id { font-size: 12px; color: #94a3b8; line-height: 1.5; }
-    .im { display: flex; gap: 6px; margin-top: 8px; }
-    .b { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-    .bc { background: #450a0a; color: #fca5a5; }
-    .bh { background: #431407; color: #fdba74; }
-    .bm { background: #422006; color: #fde047; }
-    .bl { background: #052e16; color: #86efac; }
-    .bs { background: #172554; color: #93c5fd; }
+    .pt { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .opt { background: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 12px; cursor: pointer; transition: border-color 0.2s; }
+    .opt:hover, .opt.sel { border-color: #f59e0b; }
+    .opt.sel { background: #1c1917; }
+    .opt-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .opt-desc { font-size: 11px; color: #94a3b8; }
+    .fmt { display: flex; gap: 6px; margin-bottom: 14px; }
+    .fbtn { padding: 6px 14px; border-radius: 4px; font-size: 12px; cursor: pointer; background: #1f2937; border: 1px solid #374151; color: #94a3b8; }
+    .fbtn.sel { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .preview { background: #0a0e17; border-radius: 6px; padding: 12px; margin-bottom: 14px; }
+    .preview-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+    .preview table { width: 100%; font-size: 11px; border-collapse: collapse; }
+    .preview th { text-align: left; padding: 4px 6px; color: #6b7280; font-size: 10px; border-bottom: 1px solid #1f2937; }
+    .preview td { padding: 4px 6px; border-bottom: 1px solid #0f1419; }
+    .gen { padding: 10px 24px; border-radius: 6px; background: #f59e0b; color: #111827; font-weight: 700; font-size: 13px; cursor: pointer; border: none; }
+    .gen:hover { background: #fbbf24; }
   `;
 
-  @state() private _q = '';
+  @state() private _template = 0;
+  @state() private _format = 'pdf';
 
-  private _data: MockItem[] = [
-    {name:"Executive Summary Template",status:"ready",risk:"low",detail:"Format: PDF | Metrics: 6 KPIs | Period: Monthly | Last generated: Apr 1 | Auto-schedule: Available"},
-    {name:"Technical Report Template",status:"ready",risk:"low",detail:"Format: CSV + Charts | Metrics: 25 indicators | Period: Weekly | Last generated: Apr 18"},
-    {name:"Compliance Report Template",status:"ready",risk:"medium",detail:"Format: PDF | Frameworks: 4 | Evidence links: Included | Period: Quarterly | Last: Mar 31"},
-    {name:"Incident Report Template",status:"ready",risk:"high",detail:"Format: PDF | Severity: P1-P4 | Timeline: Included | Lessons learned: Section | Last: Apr 15"}
+  private _templates = [
+    { title: 'Executive Summary', desc: '6 KPIs, risk overview, incidents summary. Monthly.', metrics: [['MTTD', '14min', '10min', 'Improving'], ['MTTR', '2.3h', '1h', 'Improving'], ['Patch %', '87%', '95%', 'Attention'], ['Training', '82%', '95%', 'Attention']] },
+    { title: 'Technical Report', desc: '25 indicators, vulnerability analysis. Weekly.', metrics: [['Critical vulns', '5', '<3', 'Off track'], ['High vulns', '12', '<10', 'Attention'], ['Open findings', '79', '<60', 'Off track'], ['SLA compliance', '87%', '95%', 'Attention']] },
+    { title: 'Compliance Report', desc: 'ISO 27001, SOC 2, GDPR status. Quarterly.', metrics: [['ISO 27001', '92%', '100%', 'On track'], ['SOC 2', '85%', '100%', 'Attention'], ['GDPR', '88%', '100%', 'Attention'], ['PCI DSS', '78%', '100%', 'Off track']] },
+    { title: 'Incident Report', desc: 'P1-P4 timeline, lessons learned. Per incident.', metrics: [['Detection time', '3min', '<5min', 'On track'], ['Response time', '45min', '<1h', 'On track'], ['Containment', '15min', '<30min', 'On track'], ['Recovery', '30min', '<4h', 'On track']] },
   ];
 
   render() {
-    const q = this._q.toLowerCase();
-    const f = q ? this._data.filter(i => i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q)) : this._data;
-    const c = f.filter(i => i.risk === 'critical').length;
-    const h = f.filter(i => i.risk === 'high').length;
-    return html`<div class="panel"><div class="pt">Metrics Export</div>
-      <input class="sb" type="text" placeholder="Search..." .value=${this._q} @input=${(e: Event) => { this._q = (e.target as HTMLInputElement).value; }}/>
-      <div class="sr"><div class="sc"><div class="sv">${f.length}</div><div class="sl">Total</div></div><div class="sc"><div class="sv" style="color:#ef4444">${c}</div><div class="sl">Critical</div></div><div class="sc"><div class="sv" style="color:#f97316">${h}</div><div class="sl">High</div></div></div>
-      <div class="il">${f.map(i => html`<div class="it"><div class="in">${i.name}</div><div class="id">${i.detail}</div><div class="im"><span class="b b${i.risk[0]}">${i.risk}</span><span class="b bs">${i.status}</span></div></div>`)}</div>
-      ${f.length === 0 ? html`<div style="text-align:center;padding:30px;color:#6b7280">No results</div>` : nothing}</div>`;
+    const t = this._templates[this._template];
+    return html`<div class="panel">
+      <div class="pt">📤 Metrics Export</div>
+      <div class="opts">${this._templates.map((tp, i) => html`
+        <div class="opt ${this._template === i ? 'sel' : ''}" @click=${() => { this._template = i; }}>
+          <div class="opt-title">${tp.title}</div>
+          <div class="opt-desc">${tp.desc}</div>
+        </div>
+      `)}</div>
+      <div class="fmt">
+        <span class="fbtn ${this._format === 'pdf' ? 'sel' : ''}" @click=${() => { this._format = 'pdf'; }}>📄 PDF</span>
+        <span class="fbtn ${this._format === 'csv' ? 'sel' : ''}" @click=${() => { this._format = 'csv'; }}>📊 CSV</span>
+        <span class="fbtn ${this._format === 'json' ? 'sel' : ''}" @click=${() => { this._format = 'json'; }}>🔧 JSON</span>
+      </div>
+      <div class="preview">
+        <div class="preview-title">Preview: ${t.title}</div>
+        <table>
+          <tr><th>Metric</th><th>Current</th><th>Target</th><th>Status</th></tr>
+          ${t.metrics.map(m => html`<tr>
+            <td style="font-weight:500">${m[0]}</td><td>${m[1]}</td><td style="color:#6b7280">${m[2]}</td>
+            <td style="color:${m[3]==='On track'?'#22c55e':m[3]==='Attention'?'#eab308':'#ef4444'}">${m[3]}</td>
+          </tr>`)}
+        </table>
+      </div>
+      <button class="gen">Generate ${t.title} (.${this._format})</button>
+    </div>`;
   }
 }
 declare global { interface HTMLElementTagNameMap { 'sc-metrics-export': ScMetricsExport; } }

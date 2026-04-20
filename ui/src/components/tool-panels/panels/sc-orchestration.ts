@@ -1,11 +1,11 @@
 /**
- * sc-orchestration - Orchestration
- * Phase 2+ Evolution - Interactive
+ * sc-orchestration - Security Orchestration (SecuClaw Commander)
+ * SOAR workflow cards with step progress bars
  */
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 
-interface MockItem { name: string; status: string; risk: string; detail: string; }
+interface Workflow { name: string; steps: string[]; autoPct: number; avgTime: string; successRate: number; lastRun: string; status: string; risk: string; }
 
 @customElement('sc-orchestration')
 export class ScOrchestration extends LitElement {
@@ -13,46 +13,57 @@ export class ScOrchestration extends LitElement {
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; color: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .panel { background: #111827; border-radius: 12px; padding: 20px; }
-    .pt { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .sb { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; width: 100%; margin-bottom: 12px; outline: none; }
-    .sb:focus { border-color: #f59e0b; }
-    .sr { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .sc { background: #0a0e17; border-radius: 6px; padding: 8px 14px; min-width: 80px; }
-    .sv { font-size: 20px; font-weight: 700; }
-    .sl { font-size: 10px; color: #94a3b8; }
-    .il { display: flex; flex-direction: column; gap: 8px; }
-    .it { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; }
-    .it:hover { border-color: #4b5563; }
-    .in { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-    .id { font-size: 12px; color: #94a3b8; line-height: 1.5; }
-    .im { display: flex; gap: 6px; margin-top: 8px; }
-    .b { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-    .bc { background: #450a0a; color: #fca5a5; }
-    .bh { background: #431407; color: #fdba74; }
-    .bm { background: #422006; color: #fde047; }
-    .bl { background: #052e16; color: #86efac; }
-    .bs { background: #172554; color: #93c5fd; }
+    .pt { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .wfs { display: flex; flex-direction: column; gap: 12px; }
+    .wf { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; }
+    .wf-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .wf-name { font-size: 14px; font-weight: 600; }
+    .wf-meta { font-size: 11px; color: #94a3b8; display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .steps { display: flex; gap: 0; align-items: center; margin-bottom: 6px; }
+    .step { flex: 1; text-align: center; padding: 6px 2px; font-size: 10px; background: #0a0e17; border-right: 1px solid #1f2937; }
+    .step.done { background: #052e16; color: #86efac; }
+    .step.active { background: #422006; color: #fde047; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .arrow { color: #374151; font-size: 12px; margin: 0 1px; }
+    .bar { height: 6px; border-radius: 3px; background: #0a0e17; overflow: hidden; margin-top: 6px; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+    .c { background: #450a0a; color: #fca5a5; } .h { background: #431407; color: #fdba74; } .m { background: #422006; color: #fde047; }
   `;
 
-  @state() private _q = '';
+  @state() private _expanded = -1;
 
-  private _data: MockItem[] = [
-    {name:"SOAR: Phishing Response",status:"active",risk:"high",detail:"Steps: 6 | Auto-execution: 80% | Avg time: 3min | Success rate: 94% | Last run: 2h ago"},
-    {name:"SOAR: Malware Containment",status:"active",risk:"critical",detail:"Steps: 8 | Auto-execution: 65% | Avg time: 12min | Success rate: 89% | Last run: 1d ago"},
-    {name:"SOAR: Brute Force Block",status:"active",risk:"medium",detail:"Steps: 4 | Auto-execution: 95% | Avg time: 30s | Success rate: 98% | Last run: 4h ago"},
-    {name:"SOAR: Data Exfil Stop",status:"active",risk:"critical",detail:"Steps: 7 | Auto-execution: 50% | Avg time: 8min | Success rate: 85% | Last run: 3d ago"}
+  private _wfs: Workflow[] = [
+    { name: 'Phishing Auto-Response', steps: ['Detect', 'Analyze', 'Block', 'Quarantine', 'Notify', 'Log'], autoPct: 80, avgTime: '3min', successRate: 94, lastRun: '2h ago', status: 'active', risk: 'high' },
+    { name: 'Malware Containment', steps: ['Detect', 'Isolate', 'Kill', 'Collect', 'Submit', 'Scan', 'Restore', 'Report'], autoPct: 65, avgTime: '12min', successRate: 89, lastRun: '1d ago', status: 'active', risk: 'critical' },
+    { name: 'Brute Force Block', steps: ['Detect', 'Block IP', 'Disable Acct', 'Alert SOC'], autoPct: 95, avgTime: '30s', successRate: 98, lastRun: '4h ago', status: 'active', risk: 'medium' },
+    { name: 'Data Exfiltration Stop', steps: ['Alert', 'Block Dest', 'Quarantine', 'Collect', 'Notify DPO', 'Image Disk', 'Report'], autoPct: 50, avgTime: '8min', successRate: 85, lastRun: '3d ago', status: 'active', risk: 'critical' },
   ];
 
   render() {
-    const q = this._q.toLowerCase();
-    const f = q ? this._data.filter(i => i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q)) : this._data;
-    const c = f.filter(i => i.risk === 'critical').length;
-    const h = f.filter(i => i.risk === 'high').length;
-    return html`<div class="panel"><div class="pt">Orchestration</div>
-      <input class="sb" type="text" placeholder="Search..." .value=${this._q} @input=${(e: Event) => { this._q = (e.target as HTMLInputElement).value; }}/>
-      <div class="sr"><div class="sc"><div class="sv">${f.length}</div><div class="sl">Total</div></div><div class="sc"><div class="sv" style="color:#ef4444">${c}</div><div class="sl">Critical</div></div><div class="sc"><div class="sv" style="color:#f97316">${h}</div><div class="sl">High</div></div></div>
-      <div class="il">${f.map(i => html`<div class="it"><div class="in">${i.name}</div><div class="id">${i.detail}</div><div class="im"><span class="b b${i.risk[0]}">${i.risk}</span><span class="b bs">${i.status}</span></div></div>`)}</div>
-      ${f.length === 0 ? html`<div style="text-align:center;padding:30px;color:#6b7280">No results</div>` : nothing}</div>`;
+    return html`<div class="panel">
+      <div class="pt">⚡ Security Orchestration (SOAR)</div>
+      <div class="wfs">${this._wfs.map((wf, wi) => html`
+        <div class="wf" @click=${() => { this._expanded = this._expanded === wi ? -1 : wi; }} style="cursor:pointer">
+          <div class="wf-head">
+            <span class="wf-name">${wf.name}</span>
+            <span class="badge ${wf.risk === 'critical' ? 'c' : wf.risk === 'high' ? 'h' : 'm'}">${wf.risk}</span>
+          </div>
+          <div class="wf-meta">
+            <span>🤖 Auto: ${wf.autoPct}%</span><span>⏱️ Avg: ${wf.avgTime}</span>
+            <span>✅ Success: ${wf.successRate}%</span><span>🕐 Last: ${wf.lastRun}</span>
+          </div>
+          <div class="steps">${wf.steps.map((s, si) => html`
+            <div class="step ${si < Math.floor(wf.steps.length * wf.autoPct / 100) ? 'done' : si === Math.floor(wf.steps.length * wf.autoPct / 100) ? 'active' : ''}">${s}</div>
+          `)}</div>
+          <div class="bar"><div class="bar-fill" style="width:${wf.autoPct}%;background:${wf.autoPct > 80 ? '#22c55e' : wf.autoPct > 60 ? '#eab308' : '#ef4444'}"></div></div>
+          ${this._expanded === wi ? html`<div style="margin-top:10px;font-size:12px;color:#94a3b8">
+            <div><strong>Steps detail:</strong> ${wf.steps.join(' → ')}</div>
+            <div style="margin-top:4px">Automation coverage: ${wf.autoPct}% | Manual steps: ${wf.steps.length - Math.floor(wf.steps.length * wf.autoPct / 100)}</div>
+          </div>` : nothing}
+        </div>
+      `)}</div>
+    </div>`;
   }
 }
 declare global { interface HTMLElementTagNameMap { 'sc-orchestration': ScOrchestration; } }

@@ -1,11 +1,11 @@
 /**
- * sc-kpi-dashboard - Kpi Dashboard
- * Phase 2+ Evolution - Interactive
+ * sc-kpi-dashboard - KPI Dashboard (SecuClaw Commander / CISO)
+ * 6 KPI cards with sparkline SVGs and trend indicators
  */
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 
-interface MockItem { name: string; status: string; risk: string; detail: string; }
+interface KPI { name: string; value: string; target: string; trend: number[]; status: string; icon: string; }
 
 @customElement('sc-kpi-dashboard')
 export class ScKpiDashboard extends LitElement {
@@ -13,47 +13,54 @@ export class ScKpiDashboard extends LitElement {
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; color: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .panel { background: #111827; border-radius: 12px; padding: 20px; }
-    .pt { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .sb { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; width: 100%; margin-bottom: 12px; outline: none; }
-    .sb:focus { border-color: #f59e0b; }
-    .sr { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .sc { background: #0a0e17; border-radius: 6px; padding: 8px 14px; min-width: 80px; }
-    .sv { font-size: 20px; font-weight: 700; }
-    .sl { font-size: 10px; color: #94a3b8; }
-    .il { display: flex; flex-direction: column; gap: 8px; }
-    .it { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; }
-    .it:hover { border-color: #4b5563; }
-    .in { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-    .id { font-size: 12px; color: #94a3b8; line-height: 1.5; }
-    .im { display: flex; gap: 6px; margin-top: 8px; }
-    .b { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-    .bc { background: #450a0a; color: #fca5a5; }
-    .bh { background: #431407; color: #fdba74; }
-    .bm { background: #422006; color: #fde047; }
-    .bl { background: #052e16; color: #86efac; }
-    .bs { background: #172554; color: #93c5fd; }
+    .pt { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .card { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 14px; }
+    .card-icon { font-size: 20px; margin-bottom: 6px; }
+    .card-name { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+    .card-val { font-size: 22px; font-weight: 700; }
+    .card-tgt { font-size: 10px; color: #6b7280; margin-top: 2px; }
+    .card-status { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; display: inline-block; margin-top: 4px; }
+    .on { background: #052e16; color: #86efac; } .warn { background: #422006; color: #fde047; } .off { background: #450a0a; color: #fca5a5; }
+    svg.sp { width: 100%; height: 32px; }
   `;
 
-  @state() private _q = '';
+  @state() private _period = 'month';
 
-  private _data: MockItem[] = [
-    {name:"MTTD: 14min (Target: <10min)",status:"tracking",risk:"high",detail:"Current: 14min | Last quarter: 18min | Trend: Improving | P1: 3min | Action: Tune correlation rules"},
-    {name:"MTTR: 2.3h (Target: <1h)",status:"tracking",risk:"high",detail:"Current: 2.3h | Last quarter: 2.8h | Trend: Improving | P1: 45min | Action: SOAR automation"},
-    {name:"Patch Compliance: 87%",status:"tracking",risk:"medium",detail:"Current: 87% | Target: 95% | Critical: 95% | High: 89% | Action: Automated patching rollout"},
-    {name:"Training Completion: 82%",status:"tracking",risk:"medium",detail:"Current: 82% | Target: 95% | Engineering: 78% | Executive: 58% | Action: Mandatory for execs"},
-    {name:"Vulnerability Remediation: 78%",status:"tracking",risk:"high",detail:"Current: 78% | Target: 90% | Critical SLA: 92% | High SLA: 74% | Action: Dedicated vuln team"}
+  private _kpis: KPI[] = [
+    { name: 'MTTD', value: '14min', target: 'Target: <10min', trend: [22,19,18,16,14,14], status: 'warn', icon: '⏱️' },
+    { name: 'MTTR', value: '2.3h', target: 'Target: <1h', trend: [3.1,2.8,2.6,2.5,2.4,2.3], status: 'warn', icon: '🔧' },
+    { name: 'Patch Compliance', value: '87%', target: 'Target: 95%', trend: [78,80,82,84,86,87], status: 'warn', icon: '📦' },
+    { name: 'Training Done', value: '82%', target: 'Target: 95%', trend: [70,74,76,79,81,82], status: 'warn', icon: '🎓' },
+    { name: 'Vuln Remediation', value: '78%', target: 'Target: 90%', trend: [65,68,72,75,77,78], status: 'off', icon: '🛡️' },
+    { name: 'Incidents This Month', value: '23', target: 'Target: <15', trend: [19,22,25,21,20,23], status: 'off', icon: '🚨' },
   ];
 
+  private _spark(data: number[], color: string): string {
+    const w = 160, h = 28, mn = Math.min(...data), mx = Math.max(...data), r = mx - mn || 1;
+    const pts = data.map((v, i) => `${(i/(data.length-1))*w},${h-((v-mn)/r)*(h-4)-2}`).join(' ');
+    return pts;
+  }
+
   render() {
-    const q = this._q.toLowerCase();
-    const f = q ? this._data.filter(i => i.name.toLowerCase().includes(q) || i.detail.toLowerCase().includes(q)) : this._data;
-    const c = f.filter(i => i.risk === 'critical').length;
-    const h = f.filter(i => i.risk === 'high').length;
-    return html`<div class="panel"><div class="pt">Kpi Dashboard</div>
-      <input class="sb" type="text" placeholder="Search..." .value=${this._q} @input=${(e: Event) => { this._q = (e.target as HTMLInputElement).value; }}/>
-      <div class="sr"><div class="sc"><div class="sv">${f.length}</div><div class="sl">Total</div></div><div class="sc"><div class="sv" style="color:#ef4444">${c}</div><div class="sl">Critical</div></div><div class="sc"><div class="sv" style="color:#f97316">${h}</div><div class="sl">High</div></div></div>
-      <div class="il">${f.map(i => html`<div class="it"><div class="in">${i.name}</div><div class="id">${i.detail}</div><div class="im"><span class="b b${i.risk[0]}">${i.risk}</span><span class="b bs">${i.status}</span></div></div>`)}</div>
-      ${f.length === 0 ? html`<div style="text-align:center;padding:30px;color:#6b7280">No results</div>` : nothing}</div>`;
+    return html`<div class="panel">
+      <div class="pt">📈 Security KPI Dashboard</div>
+      <div class="grid">
+        ${this._kpis.map(k => {
+          const color = k.status === 'on' ? '#22c55e' : k.status === 'warn' ? '#eab308' : '#ef4444';
+          const mn = Math.min(...k.trend), mx = Math.max(...k.trend), r = mx - mn || 1;
+          const pts = k.trend.map((v, i) => `${(i/(k.trend.length-1))*160},${28-((v-mn)/r)*24-2}`).join(' ');
+          return html`<div class="card">
+            <div class="card-icon">${k.icon}</div>
+            <div class="card-name">${k.name}</div>
+            <div class="card-val" style="color:${color}">${k.value}</div>
+            <div class="card-tgt">${k.target}</div>
+            <span class="card-status ${k.status}">${k.status === 'on' ? 'On Track' : k.status === 'warn' ? 'Attention' : 'Off Track'}</span>
+            <svg class="sp" viewBox="0 0 160 28"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>`;
+        })}
+      </div>
+    </div>`;
   }
 }
 declare global { interface HTMLElementTagNameMap { 'sc-kpi-dashboard': ScKpiDashboard; } }
