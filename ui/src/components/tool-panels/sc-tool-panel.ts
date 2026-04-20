@@ -360,6 +360,8 @@ export class ScToolPanel extends LitElement {
   @state() private _result: unknown = null;
   @state() private _execMsg = '';
   @state() private _execSuccess = false;
+  @state() private _execProgress = 0;
+  @state() private _execStep = '';
 
   private _close() {
     this.open = false;
@@ -373,6 +375,28 @@ export class ScToolPanel extends LitElement {
     this._result = null;
     this._execMsg = '';
     this._execSuccess = false;
+    this._execProgress = 0;
+    this._execStep = '';
+    
+    const steps: Record<string, Array<{ label: string; progress: number; delay: number }>> = {
+      'risk-score': [{ label: '加载风险模型...', progress: 20, delay: 200 }, { label: '计算风险因子...', progress: 45, delay: 300 }, { label: '聚合得分...', progress: 70, delay: 250 }, { label: '生成报告...', progress: 90, delay: 200 }],
+      'vuln-scan': [{ label: '连接扫描引擎...', progress: 15, delay: 200 }, { label: 'CVE 数据库同步...', progress: 35, delay: 400 }, { label: '端口扫描...', progress: 60, delay: 350 }, { label: '漏洞验证...', progress: 80, delay: 300 }, { label: '汇总结果...', progress: 95, delay: 150 }],
+      'pen-test': [{ label: '信息收集...', progress: 10, delay: 250 }, { label: '端口扫描...', progress: 30, delay: 400 }, { label: '漏洞利用...', progress: 55, delay: 500 }, { label: '内网横向...', progress: 75, delay: 400 }, { label: '权限提升...', progress: 88, delay: 250 }, { label: '编写报告...', progress: 96, delay: 200 }],
+      'threat-intel': [{ label: '拉取 MISP 源...', progress: 18, delay: 300 }, { label: '解析 IOC...', progress: 40, delay: 400 }, { label: '关联历史事件...', progress: 62, delay: 350 }, { label: '风险评分...', progress: 84, delay: 250 }, { label: '生成简报...', progress: 95, delay: 150 }],
+      'log-analysis': [{ label: '连接 SIEM...', progress: 12, delay: 200 }, { label: '加载事件流...', progress: 35, delay: 400 }, { label: '异常检测...', progress: 58, delay: 450 }, { label: '告警关联...', progress: 75, delay: 300 }, { label: '聚合结果...', progress: 92, delay: 200 }],
+      'incident-mgmt': [{ label: '加载事件详情...', progress: 15, delay: 200 }, { label: '评估影响范围...', progress: 40, delay: 350 }, { label: '隔离受感染资产...', progress: 65, delay: 400 }, { label: '启动恢复流程...', progress: 85, delay: 300 }, { label: '记录事件日志...', progress: 95, delay: 150 }],
+      'gdpr-audit': [{ label: '加载合规框架...', progress: 12, delay: 200 }, { label: '数据映射检查...', progress: 35, delay: 400 }, { label: '同意书审查...', progress: 58, delay: 350 }, { label: 'DPIA 验证...', progress: 75, delay: 300 }, { label: '生成审计报告...', progress: 92, delay: 200 }],
+      'sbom-scan': [{ label: '解析依赖树...', progress: 15, delay: 250 }, { label: 'CVE 匹配...', progress: 40, delay: 450 }, { label: '许可证检查...', progress: 65, delay: 350 }, { label: '风险评分...', progress: 82, delay: 250 }, { label: '生成 SBOM...', progress: 95, delay: 200 }],
+      'zero-trust': [{ label: '身份验证检查...', progress: 15, delay: 250 }, { label: '设备健康评估...', progress: 38, delay: 400 }, { label: '网络分段验证...', progress: 60, delay: 350 }, { label: '策略符合性检查...', progress: 80, delay: 300 }, { label: '计算成熟度...', progress: 94, delay: 180 }],
+      'third-party-risk': [{ label: '加载供应商列表...', progress: 12, delay: 200 }, { label: '安全问卷评估...', progress: 35, delay: 450 }, { label: '漏洞扫描...', progress: 58, delay: 400 }, { label: '合规性验证...', progress: 78, delay: 300 }, { label: '风险评级...', progress: 92, delay: 200 }],
+    };
+    
+    const toolSteps = steps[this.toolId] || [
+      { label: '初始化...', progress: 25, delay: 300 },
+      { label: '处理中...', progress: 60, delay: 400 },
+      { label: '完成...', progress: 90, delay: 250 },
+    ];
+    
     const results: Record<string, { msg: string; data: unknown }> = {
       'risk-score': { msg: '风险评估完成：综合风险 44/100 (中)', data: { score: 44 } },
       'kpi-track': { msg: 'KPI 刷新完成：85% 达成', data: { rate: 85 } },
@@ -405,15 +429,29 @@ export class ScToolPanel extends LitElement {
       'risk-register': { msg: '风险登记更新完成', data: {} },
       'report-gen': { msg: '报告生成完成', data: {} },
     };
-    const duration = 800 + Math.random() * 1200;
-    setTimeout(() => {
-      this._executing = false;
-      const r = results[this.toolId];
-      if (r) { this._result = r.data; this._execMsg = r.msg; }
-      else { this._execMsg = `${this.toolLabel} 执行完成`; }
-      this._execSuccess = true;
-      setTimeout(() => { this._execSuccess = false; }, 5000);
-    }, duration);
+    
+    let stepIndex = 0;
+    const runStep = () => {
+      if (stepIndex < toolSteps.length) {
+        const step = toolSteps[stepIndex];
+        this._execStep = step.label;
+        this._execProgress = step.progress;
+        stepIndex++;
+        setTimeout(runStep, step.delay);
+      } else {
+        this._execProgress = 100;
+        this._execStep = '完成';
+        setTimeout(() => {
+          this._executing = false;
+          const r = results[this.toolId];
+          if (r) { this._result = r.data; this._execMsg = r.msg; }
+          else { this._execMsg = `${this.toolLabel} 执行完成`; }
+          this._execSuccess = true;
+          setTimeout(() => { this._execSuccess = false; }, 5000);
+        }, 300);
+      }
+    };
+    runStep();
   }
 
   render() {
@@ -436,7 +474,16 @@ export class ScToolPanel extends LitElement {
           <button class="panel-close" @click=${this._close} title="关闭">✕</button>
         </div>
         <div class="panel-body">
-          ${this._executing ? html`<div style="text-align:center;padding:40px 0"><div style="display:inline-block;width:28px;height:28px;border:3px solid ${accentColor}33;border-top-color:${accentColor};border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="margin-top:12px;color:#94a3b8;font-size:12px">执行中...</div></div>` : renderToolContent(this.toolId, this.roleId, this._executing, this._result, () => this._execute())}
+          ${this._executing ? html`
+            <div style="text-align:center;padding:36px 0">
+              <div style="display:inline-block;width:36px;height:36px;border:3px solid ${accentColor}33;border-top-color:${accentColor};border-radius:50%;animation:spin 0.8s linear infinite"></div>
+              <div style="margin-top:14px;color:#e2e8f0;font-size:12px;font-weight:600">${this._execStep}</div>
+              <div class="progress-bar" style="margin-top:16px;width:70%;margin-left:auto;margin-right:auto">
+                <div class="fill" style="width:${this._execProgress}%;background:${accentColor}"></div>
+              </div>
+              <div style="margin-top:6px;color:#64748b;font-size:10px">${this._execProgress}%</div>
+            </div>
+          ` : renderToolContent(this.toolId, this.roleId, this._executing, this._result, () => this._execute())}
           ${this._execSuccess ? html`<div style="position:sticky;bottom:0;left:0;right:0;background:#052e16;border-top:1px solid #22c55e33;padding:10px 16px;display:flex;align-items:center;gap:8px;animation:slideUp 0.3s ease-out"><span style="color:#22c55e;font-size:14px">✓</span><span style="color:#86efac;font-size:12px">${this._execMsg}</span></div>` : ''}
         </div>
       </div>
