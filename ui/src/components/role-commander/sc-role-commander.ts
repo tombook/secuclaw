@@ -521,6 +521,23 @@ export class ScRoleCommander extends LitElement {
     if (this._closeMoreBound) { document.removeEventListener('click', this._closeMoreBound); this._closeMoreBound = null; }
   }
 
+  /** Auto-trigger numFlash on metric card value changes */
+  private _prevBigNums: Record<string, string> = {};
+  override updated() {
+    // Find all .rd-big-num elements, flash if value changed
+    const cards = this.renderRoot.querySelectorAll('.rd-big-num');
+    cards.forEach((el) => {
+      const text = el.textContent?.trim() ?? '';
+      const key = el.closest('[data-metric]')?.getAttribute('data-metric') ?? text;
+      if (this._prevBigNums[key] !== undefined && this._prevBigNums[key] !== text) {
+        el.classList.remove('flash');
+        void (el as HTMLElement).offsetWidth; // force reflow
+        el.classList.add('flash');
+      }
+      this._prevBigNums[key] = text;
+    });
+  }
+
   private _getTheme() {
     return ROLE_THEME_CONFIGS[this.roleId] || ROLE_THEME_CONFIGS['ciso']
   }
@@ -1641,7 +1658,7 @@ export class ScRoleCommander extends LitElement {
 
   private _renderMetricCard(c: { toolId: string; title: string; num: string; numColor: string; unit: string; sparkData: number[]; delta: string; deltaColor: string; deltaLabel: string; badge: string; badgeColor: string }) {
     return html`
-      <div class="rd-section" @click=${() => window.location.hash = `/tool/${c.toolId}`}>
+      <div class="rd-section" data-metric="${c.toolId}" @click=${() => window.location.hash = `/tool/${c.toolId}`}>
         <div class="rd-title">${c.title}</div>
         <div class="rd-chart-row">
           <span class="rd-big-num" style="color:${c.numColor}">${c.num}</span>
