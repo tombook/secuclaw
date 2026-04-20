@@ -12,6 +12,7 @@ import { ROLE_TOOL_CONFIGS, ALL_ROLE_IDS } from '../config/role-tool-config';
 import { ROLE_THEMES } from '../config/role-theme-config';
 import { fetchOverview, fetchRoleMetrics, type OverviewData } from '../services/api-service';
 import { ROLE_DASHBOARDS } from '../config/role-dashboard-config';
+import { mockDataStore, getMetric } from '../stores/mock-data-store';
 
 interface RoleStatus {
   roleId: RoleId;
@@ -371,10 +372,51 @@ export class ScOverview extends LitElement {
   @state() private _overview: OverviewData | null = null;
   @state() private _roleStatuses: RoleStatus[] = [];
   @state() private _loading = true;
+  private _mockUnsub: (() => void) | null = null;
 
   connectedCallback() {
     super.connectedCallback();
     this._loadData();
+    // Subscribe to mock data changes for live updates
+    this._mockUnsub = mockDataStore.subscribe(() => {
+      if (!this._loading) this._refreshFromMock();
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._mockUnsub?.();
+  }
+
+  /** Refresh KPI from mock store without full reload */
+  private _refreshFromMock() {
+    // Aggregate overview from mock metrics
+    const riskScore = getMetric('risk-score')?.value ?? this._overview?.score ?? 76;
+    const alerts = getMetric('alert-queue')?.value ?? this._overview?.activeEvents ?? 7;
+    const incidents = getMetric('incident-mgmt')?.value ?? 0;
+    this._overview = {
+      score: Math.max(0, 100 - riskScore),
+      activeEvents: Math.round(alerts + incidents),
+      pendingTasks: this._overview?.pendingTasks ?? 23,
+      collabRequests: this._overview?.collabRequests ?? 12,
+    };
+    // Refresh role statuses from mock
+    this._roleStatuses = ALL_ROLE_IDS.map(roleId => {
+      const dash = ROLE_DASHBOARDS[roleId];
+      const first = dash?.metrics?.[0];
+      let topValue = '--';
+      let topLabel = '';
+      let status: 'normal' | 'warning' | 'danger' = 'normal';
+      if (first) {
+        const m = getMetric(first.toolId);
+        topValue = m ? String(Math.round(m.value)) : '--';
+        topLabel = first.label;
+        if (m && first.dangerThreshold != null && m.value >= first.dangerThreshold) status = 'danger';
+        else if (m && first.warningThreshold != null && m.value >= first.warningThreshold) status = 'warning';
+      }
+      return { roleId, label: ROLE_TOOL_CONFIGS[roleId].label, status, topMetric: topLabel, topValue };
+    });
+    this.requestUpdate();
   }
 
   private async _loadData() {
@@ -406,7 +448,8 @@ export class ScOverview extends LitElement {
         return { roleId, label: ROLE_TOOL_CONFIGS[roleId].label, status, topMetric: topLabel, topValue };
       });
     } catch {
-      this._overview = { score: 76, activeEvents: 7, pendingTasks: 23, collabRequests: 12 };
+      // Fallback to mock data store
+      this._refreshFromMock();
     }
     this._loading = false;
   }
