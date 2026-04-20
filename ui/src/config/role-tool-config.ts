@@ -117,6 +117,94 @@ const T = {
   archGovernance:    { id: 'arch-governance',   label: '架构治理',      icon: 'Sitemap',      priority: 2 },
   biaAnalysis:       { id: 'bia-analysis',     label: '业务影响分析',  icon: 'BarChart2',    priority: 1 },
 
+  // ─── Phase 2: 高级交互面板 ──────────────────
+  darkSimEngine:     { id: 'dark-sim-engine',   label: 'Dark Mode 攻击模拟', icon: 'Sword',      priority: 1 },
+  scanResults:       { id: 'scan-results',      label: '扫描结果详情',  icon: 'Table',         priority: 2 },
+  securityTimeline:  { id: 'security-timeline', label: '安全事件时间线', icon: 'Clock',         priority: 2 },
+
+  // ─── Phase 2+ 工具定义 (81 components) ───
+  attack_surface_graph: { id: 'attack-surface-graph', label: 'Attack Surface Graph', icon: 'Wrench', priority: 2 },
+  risk_gauge: { id: 'risk-gauge', label: 'Risk Gauge', icon: 'Wrench', priority: 2 },
+  vuln_summary_chart: { id: 'vuln-summary-chart', label: 'Vuln Summary Chart', icon: 'Wrench', priority: 2 },
+  pentest_report: { id: 'pentest-report', label: 'Pentest Report', icon: 'Wrench', priority: 2 },
+  access_matrix: { id: 'access-matrix', label: 'Access Matrix', icon: 'Wrench', priority: 2 },
+  forensics_timeline: { id: 'forensics-timeline', label: 'Forensics Timeline', icon: 'Wrench', priority: 2 },
+  malware_analysis: { id: 'malware-analysis', label: 'Malware Analysis', icon: 'Wrench', priority: 2 },
+  vuln_trend: { id: 'vuln-trend', label: 'Vuln Trend', icon: 'Wrench', priority: 2 },
+  vuln_priority: { id: 'vuln-priority', label: 'Vuln Priority', icon: 'Wrench', priority: 2 },
+  attack_patterns: { id: 'attack-patterns', label: 'Attack Patterns', icon: 'Wrench', priority: 2 },
+  scanner_integration: { id: 'scanner-integration', label: 'Scanner Integration', icon: 'Wrench', priority: 2 },
+  endpoint_dash: { id: 'endpoint-dash', label: 'Endpoint Dash', icon: 'Wrench', priority: 2 },
+  severity_calc: { id: 'severity-calc', label: 'Severity Calc', icon: 'Wrench', priority: 2 },
+  osint_tool: { id: 'osint-tool', label: 'Osint Tool', icon: 'Wrench', priority: 2 },
+  code_review: { id: 'code-review', label: 'Code Review', icon: 'Wrench', priority: 2 },
+  exploit_predict: { id: 'exploit-predict', label: 'Exploit Predict', icon: 'Wrench', priority: 2 },
+  password_audit: { id: 'password-audit', label: 'Password Audit', icon: 'Wrench', priority: 2 },
+  wireless_security: { id: 'wireless-security', label: 'Wireless Security', icon: 'Wrench', priority: 2 },
+  risk_heatmap: { id: 'risk-heatmap', label: 'Risk Heatmap', icon: 'Wrench', priority: 2 },
+  roi_calculator: { id: 'roi-calculator', label: 'Roi Calculator', icon: 'Wrench', priority: 2 },
+  budget_planner: { id: 'budget-planner', label: 'Budget Planner', icon: 'Wrench', priority: 2 },
+  gov_framework: { id: 'gov-framework', label: 'Gov Framework', icon: 'Wrench', priority: 2 },
+  board_report: { id: 'board-report', label: 'Board Report', icon: 'Wrench', priority: 2 },
+  kpi_dashboard: { id: 'kpi-dashboard', label: 'Kpi Dashboard', icon: 'Wrench', priority: 2 },
+  metrics_export: { id: 'metrics-export', label: 'Metrics Export', icon: 'Wrench', priority: 2 },
+  compliance_map: { id: 'compliance-map', label: 'Compliance Map', icon: 'Wrench', priority: 2 },
+  champions: { id: 'champions', label: 'Champions', icon: 'Wrench', priority: 2 },
+  orchestration: { id: 'orchestration', label: 'Orchestration', icon: 'Wrench', priority: 2 },
+  purple_team: { id: 'purple-team', label: 'Purple Team', icon: 'Wrench', priority: 2 },
+  risk_register: { id: 'risk-register', label: 'Risk Register', icon: 'Wrench', priority: 2 },
+  policy_checker: { id: 'policy-checker', label: 'Policy Checker', icon: 'Wrench', priority: 2 },
+  reg_tracker: { id: 'reg-tracker', label: 'Reg Tracker', icon: 'Wrench', priority: 2 },
+  compliance_calendar: { id: 'compliance-calendar', label: 'Compliance Calendar', icon: 'Wrench', priority: 2 },
+  gdpr_tracker: { id: 'gdpr-tracker', label: 'Gdpr Tracker', icon: 'Wrench', priority: 2 },
+  evidence_collector: { id: 'evidence-collector', label: 'Evidence Collector', icon: 'Wrench', priority: 2 },
+  scf_questionnaire: { id: 'scf-questionnaire', label: 'Scf Questionnaire', icon: 'Wrench', priority: 2 },
+  news_feed: { id: 'news-feed', label: 'News Feed', icon: 'Wrench', priority: 2 },
+  soc_metrics: { id: 'soc-metrics', label: 'Soc Metrics', icon: 'Wrench', priority: 2 },
+  ir_playbook: { id: 'ir-playbook', label: 'Ir Playbook', icon: 'Wrench', priority: 2 },
+  threat_hunting: { id: 'threat-hunting', label: 'Threat Hunting', icon: 'Wrench', priority: 2 },
+  alert_correlation: { id: 'alert-correlation', label: 'Alert Correlation', icon: 'Wrench', priority: 2 },
+  log_query: { id: 'log-query', label: 'Log Query', icon: 'Wrench', priority: 2 },
+  threat_feed: { id: 'threat-feed', label: 'Threat Feed', icon: 'Wrench', priority: 2 },
+  incident_timeline: { id: 'incident-timeline', label: 'Incident Timeline', icon: 'Wrench', priority: 2 },
+  integration_health: { id: 'integration-health', label: 'Integration Health', icon: 'Wrench', priority: 2 },
+  dns_security: { id: 'dns-security', label: 'Dns Security', icon: 'Wrench', priority: 2 },
+  exfil_detection: { id: 'exfil-detection', label: 'Exfil Detection', icon: 'Wrench', priority: 2 },
+  alert_system: { id: 'alert-system', label: 'Alert System', icon: 'Wrench', priority: 2 },
+  zero_trust_designer: { id: 'zero-trust-designer', label: 'Zero Trust Designer', icon: 'Wrench', priority: 2 },
+  network_topo: { id: 'network-topo', label: 'Network Topo', icon: 'Wrench', priority: 2 },
+  cloud_posture: { id: 'cloud-posture', label: 'Cloud Posture', icon: 'Wrench', priority: 2 },
+  arch_review: { id: 'arch-review', label: 'Arch Review', icon: 'Wrench', priority: 2 },
+  container_security: { id: 'container-security', label: 'Container Security', icon: 'Wrench', priority: 2 },
+  k8s_security: { id: 'k8s-security', label: 'K8S Security', icon: 'Wrench', priority: 2 },
+  config_audit: { id: 'config-audit', label: 'Config Audit', icon: 'Wrench', priority: 2 },
+  baseline_scan: { id: 'baseline-scan', label: 'Baseline Scan', icon: 'Wrench', priority: 2 },
+  data_flow: { id: 'data-flow', label: 'Data Flow', icon: 'Wrench', priority: 2 },
+  dependency_tree: { id: 'dependency-tree', label: 'Dependency Tree', icon: 'Wrench', priority: 2 },
+  privacy_computing: { id: 'privacy-computing', label: 'Privacy Computing', icon: 'Wrench', priority: 2 },
+  dpia_workflow: { id: 'dpia-workflow', label: 'Dpia Workflow', icon: 'Wrench', priority: 2 },
+  data_classification: { id: 'data-classification', label: 'Data Classification', icon: 'Wrench', priority: 2 },
+  data_transfer: { id: 'data-transfer', label: 'Data Transfer', icon: 'Wrench', priority: 2 },
+  sso_config: { id: 'sso-config', label: 'Sso Config', icon: 'Wrench', priority: 2 },
+  dlp_dashboard: { id: 'dlp-dashboard', label: 'Dlp Dashboard', icon: 'Wrench', priority: 2 },
+  email_security: { id: 'email-security', label: 'Email Security', icon: 'Wrench', priority: 2 },
+  bcp_dashboard: { id: 'bcp-dashboard', label: 'Bcp Dashboard', icon: 'Wrench', priority: 2 },
+  bia_analysis: { id: 'bia-analysis', label: 'Bia Analysis', icon: 'Wrench', priority: 2 },
+  dr_plan: { id: 'dr-plan', label: 'Dr Plan', icon: 'Wrench', priority: 2 },
+  dr_test: { id: 'dr-test', label: 'Dr Test', icon: 'Wrench', priority: 2 },
+  vendor_scorecard: { id: 'vendor-scorecard', label: 'Vendor Scorecard', icon: 'Wrench', priority: 2 },
+  contract_review: { id: 'contract-review', label: 'Contract Review', icon: 'Wrench', priority: 2 },
+  training_tracker: { id: 'training-tracker', label: 'Training Tracker', icon: 'Wrench', priority: 2 },
+  training_module: { id: 'training-module', label: 'Training Module', icon: 'Wrench', priority: 2 },
+  sec_quiz: { id: 'sec-quiz', label: 'Sec Quiz', icon: 'Wrench', priority: 2 },
+  change_review: { id: 'change-review', label: 'Change Review', icon: 'Wrench', priority: 2 },
+  supply_chain_graph: { id: 'supply-chain-graph', label: 'Supply Chain Graph', icon: 'Wrench', priority: 2 },
+  vendor_onboard: { id: 'vendor-onboard', label: 'Vendor Onboard', icon: 'Wrench', priority: 2 },
+  vendor_sla: { id: 'vendor-sla', label: 'Vendor Sla', icon: 'Wrench', priority: 2 },
+  vendor_monitor: { id: 'vendor-monitor', label: 'Vendor Monitor', icon: 'Wrench', priority: 2 },
+  material_track: { id: 'material-track', label: 'Material Track', icon: 'Wrench', priority: 2 },
+  supply_intel: { id: 'supply-intel', label: 'Supply Intel', icon: 'Wrench', priority: 2 },
+
   // ─── 第三方安全工具 ──────────────────────
   nessusScan:        { id: 'nessus-scan',           label: 'Nessus 扫描',      icon: 'Shield',       priority: 10 },
   splunkQuery:       { id: 'splunk-query',          label: 'Splunk 查询',      icon: 'Search',       priority: 10 },
@@ -150,7 +238,16 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.threatModel,      // 架构设计(审阅视角)
       T.incidentMgmt,     // 危机管理(监督视角)
       T.vendorEval,       // 供应链评估
-    ],
+          T.compliance_map,
+      T.risk_register,
+      T.policy_checker,
+      T.reg_tracker,
+      T.compliance_calendar,
+      T.gdpr_tracker,
+      T.evidence_collector,
+      T.scf_questionnaire,
+      T.news_feed,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -184,7 +281,21 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.drillMgmt,          // [Phase 1D] 应急演练管理
       T.devsecops,          // [Phase 1D] DevSecOps流水线
       T.perfMgmt,           // [Phase 1D] 安全绩效管理
-    ],
+      // [Phase 2] 高级交互
+      T.darkSimEngine,      // Dark Mode 攻击模拟引擎
+      T.securityTimeline,   // 安全事件时间线
+          T.risk_heatmap,
+      T.roi_calculator,
+      T.budget_planner,
+      T.gov_framework,
+      T.board_report,
+      T.kpi_dashboard,
+      T.metrics_export,
+      T.compliance_map,
+      T.champions,
+      T.orchestration,
+      T.purple_team,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -210,7 +321,14 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       // [Phase 1C] Cookie & 同意管理
       T.cookieMgmt,       // Cookie 管理与审计
       T.consentMgmt,      // 同意管理与用户权利
-    ],
+          T.privacy_computing,
+      T.dpia_workflow,
+      T.data_classification,
+      T.data_transfer,
+      T.sso_config,
+      T.dlp_dashboard,
+      T.email_security,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -239,7 +357,17 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       // [Phase 1C] 安全意识培训
       T.secAwareness,    // 安全意识培训与钓鱼演练
       T.biaAnalysis,     // [Phase 1E] 业务影响分析
-    ],
+          T.bcp_dashboard,
+      T.bia_analysis,
+      T.dr_plan,
+      T.dr_test,
+      T.vendor_scorecard,
+      T.contract_review,
+      T.training_tracker,
+      T.training_module,
+      T.sec_quiz,
+      T.change_review,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -270,7 +398,20 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.nessusScan,       // Nessus 漏洞扫描
       // [Phase 1C] 业务连续性运营
       T.bcpMgmt,         // BCP 运营指标监控
-    ],
+      // [Phase 2] 高级交互
+      T.securityTimeline,  // 安全事件时间线
+          T.soc_metrics,
+      T.ir_playbook,
+      T.threat_hunting,
+      T.alert_correlation,
+      T.log_query,
+      T.threat_feed,
+      T.incident_timeline,
+      T.integration_health,
+      T.dns_security,
+      T.exfil_detection,
+      T.alert_system,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -297,7 +438,29 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.nessusScan,       // Nessus 漏洞扫描
       T.crowdstrikeEdr,   // CrowdStrike EDR
       T.virusTotalScan,   // VirusTotal 恶意软件分析
-    ],
+      // [Phase 2] 高级交互面板
+      T.darkSimEngine,    // Dark Mode 攻击模拟引擎
+      T.scanResults,      // 高级扫描结果表格
+      T.securityTimeline, // 安全事件时间线
+          T.attack_surface_graph,
+      T.risk_gauge,
+      T.vuln_summary_chart,
+      T.pentest_report,
+      T.access_matrix,
+      T.forensics_timeline,
+      T.malware_analysis,
+      T.vuln_trend,
+      T.vuln_priority,
+      T.attack_patterns,
+      T.scanner_integration,
+      T.endpoint_dash,
+      T.severity_calc,
+      T.osint_tool,
+      T.code_review,
+      T.exploit_predict,
+      T.password_audit,
+      T.wireless_security,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -329,7 +492,17 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.dataArch,         // [Phase 1E] 数据安全架构
       T.drArch,           // [Phase 1E] 容灾架构
       T.archGovernance,   // [Phase 1E] 架构治理
-    ],
+          T.zero_trust_designer,
+      T.network_topo,
+      T.cloud_posture,
+      T.arch_review,
+      T.container_security,
+      T.k8s_security,
+      T.config_audit,
+      T.baseline_scan,
+      T.data_flow,
+      T.dependency_tree,
+],
   },
 
   // ═══════════════════════════════════════════════════════════
@@ -360,7 +533,14 @@ export const ROLE_TOOL_CONFIGS: Record<RoleId, RoleToolConfig> = {
       T.slaMgmt,          // [Phase 1D] SLA 管理
       T.supplyIntel,      // [Phase 1D] 供应链威胁情报
       T.materialTrack,    // [Phase 1D] 物料来源追踪
-    ],
+          T.supply_chain_graph,
+      T.vendor_onboard,
+      T.vendor_sla,
+      T.vendor_monitor,
+      T.material_track,
+      T.supply_intel,
+      T.dependency_tree,
+],
   },
 };
 

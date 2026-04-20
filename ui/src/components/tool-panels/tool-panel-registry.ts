@@ -61,6 +61,109 @@ export const TOOL_PANELS: Record<string, ToolPanelDef> = {
   'dr-arch': { toolId: 'dr-arch', label: '容灾架构', icon: '🏗️', mode: 'modal' },
   'arch-governance': { toolId: 'arch-governance', label: '架构治理', icon: '📋', mode: 'modal' },
   'bia-analysis': { toolId: 'bia-analysis', label: '业务影响分析', icon: '📉', mode: 'modal' },
+
+  // ─── Phase 2: Advanced Interactive Panels ───
+  'dark-sim-engine': { toolId: 'dark-sim-engine', label: 'Dark Mode 攻击模拟', icon: '🔴', mode: 'fullscreen' },
+  'scan-results': { toolId: 'scan-results', label: '扫描结果详情', icon: '🔍', mode: 'slide' },
+  'sc-access-matrix': { toolId: 'sc-access-matrix', label: 'Access Matrix', icon: '🔧', mode: 'slide' },
+  'sc-alert-correlation': { toolId: 'sc-alert-correlation', label: 'Alert Correlation', icon: '🔧', mode: 'slide' },
+  'sc-alert-system': { toolId: 'sc-alert-system', label: 'Alert System', icon: '🔧', mode: 'slide' },
+  'sc-api-security': { toolId: 'sc-api-security', label: 'Api Security', icon: '🔧', mode: 'slide' },
+  'sc-arch-review': { toolId: 'sc-arch-review', label: 'Arch Review', icon: '🔧', mode: 'slide' },
+  'sc-asset-inventory': { toolId: 'sc-asset-inventory', label: 'Asset Inventory', icon: '🔧', mode: 'slide' },
+  'sc-attack-patterns': { toolId: 'sc-attack-patterns', label: 'Attack Patterns', icon: '🔧', mode: 'slide' },
+  'sc-attack-surface-graph': { toolId: 'sc-attack-surface-graph', label: 'Attack Surface Graph', icon: '🔧', mode: 'slide' },
+  'sc-automation-editor': { toolId: 'sc-automation-editor', label: 'Automation Editor', icon: '🔧', mode: 'slide' },
+  'sc-backup-check': { toolId: 'sc-backup-check', label: 'Backup Check', icon: '🔧', mode: 'slide' },
+  'sc-baseline-scan': { toolId: 'sc-baseline-scan', label: 'Baseline Scan', icon: '🔧', mode: 'slide' },
+  'sc-bcp-dashboard': { toolId: 'sc-bcp-dashboard', label: 'Bcp Dashboard', icon: '🔧', mode: 'slide' },
+  'sc-bia-analysis': { toolId: 'sc-bia-analysis', label: 'Bia Analysis', icon: '🔧', mode: 'slide' },
+  'sc-board-report': { toolId: 'sc-board-report', label: 'Board Report', icon: '🔧', mode: 'slide' },
+  'sc-budget-planner': { toolId: 'sc-budget-planner', label: 'Budget Planner', icon: '🔧', mode: 'slide' },
+  'sc-cert-management': { toolId: 'sc-cert-management', label: 'Cert Management', icon: '🔧', mode: 'slide' },
+  'sc-champions': { toolId: 'sc-champions', label: 'Champions', icon: '🔧', mode: 'slide' },
+  'sc-change-review': { toolId: 'sc-change-review', label: 'Change Review', icon: '🔧', mode: 'slide' },
+  'sc-cloud-posture': { toolId: 'sc-cloud-posture', label: 'Cloud Posture', icon: '🔧', mode: 'slide' },
+  'sc-code-review': { toolId: 'sc-code-review', label: 'Code Review', icon: '🔧', mode: 'slide' },
+  'sc-compliance-calendar': { toolId: 'sc-compliance-calendar', label: 'Compliance Calendar', icon: '🔧', mode: 'slide' },
+  'sc-compliance-map': { toolId: 'sc-compliance-map', label: 'Compliance Map', icon: '🔧', mode: 'slide' },
+  'sc-config-audit': { toolId: 'sc-config-audit', label: 'Config Audit', icon: '🔧', mode: 'slide' },
+  'sc-container-security': { toolId: 'sc-container-security', label: 'Container Security', icon: '🔧', mode: 'slide' },
+  'sc-contract-review': { toolId: 'sc-contract-review', label: 'Contract Review', icon: '🔧', mode: 'slide' },
+  'sc-darkweb-monitor': { toolId: 'sc-darkweb-monitor', label: 'Darkweb Monitor', icon: '🔧', mode: 'slide' },
+  'sc-data-classification': { toolId: 'sc-data-classification', label: 'Data Classification', icon: '🔧', mode: 'slide' },
+  'sc-data-flow': { toolId: 'sc-data-flow', label: 'Data Flow', icon: '🔧', mode: 'slide' },
+  'sc-data-transfer': { toolId: 'sc-data-transfer', label: 'Data Transfer', icon: '🔧', mode: 'slide' },
+  'sc-deception': { toolId: 'sc-deception', label: 'Deception', icon: '🔧', mode: 'slide' },
+  'sc-dependency-tree': { toolId: 'sc-dependency-tree', label: 'Dependency Tree', icon: '🔧', mode: 'slide' },
+  'sc-dlp-dashboard': { toolId: 'sc-dlp-dashboard', label: 'Dlp Dashboard', icon: '🔧', mode: 'slide' },
+  'sc-dns-security': { toolId: 'sc-dns-security', label: 'Dns Security', icon: '🔧', mode: 'slide' },
+  'sc-dpia-workflow': { toolId: 'sc-dpia-workflow', label: 'Dpia Workflow', icon: '🔧', mode: 'slide' },
+  'sc-dr-plan': { toolId: 'sc-dr-plan', label: 'Dr Plan', icon: '🔧', mode: 'slide' },
+  'sc-dr-test': { toolId: 'sc-dr-test', label: 'Dr Test', icon: '🔧', mode: 'slide' },
+  'sc-email-security': { toolId: 'sc-email-security', label: 'Email Security', icon: '🔧', mode: 'slide' },
+  'sc-encryption-mgmt': { toolId: 'sc-encryption-mgmt', label: 'Encryption Mgmt', icon: '🔧', mode: 'slide' },
+  'sc-endpoint-dash': { toolId: 'sc-endpoint-dash', label: 'Endpoint Dash', icon: '🔧', mode: 'slide' },
+  'sc-evidence-collector': { toolId: 'sc-evidence-collector', label: 'Evidence Collector', icon: '🔧', mode: 'slide' },
+  'sc-exfil-detection': { toolId: 'sc-exfil-detection', label: 'Exfil Detection', icon: '🔧', mode: 'slide' },
+  'sc-exploit-predict': { toolId: 'sc-exploit-predict', label: 'Exploit Predict', icon: '🔧', mode: 'slide' },
+  'sc-forensics-timeline': { toolId: 'sc-forensics-timeline', label: 'Forensics Timeline', icon: '🔧', mode: 'slide' },
+  'sc-gdpr-tracker': { toolId: 'sc-gdpr-tracker', label: 'Gdpr Tracker', icon: '🔧', mode: 'slide' },
+  'sc-gov-framework': { toolId: 'sc-gov-framework', label: 'Gov Framework', icon: '🔧', mode: 'slide' },
+  'sc-identity-gov': { toolId: 'sc-identity-gov', label: 'Identity Gov', icon: '🔧', mode: 'slide' },
+  'sc-incident-comms': { toolId: 'sc-incident-comms', label: 'Incident Comms', icon: '🔧', mode: 'slide' },
+  'sc-incident-timeline': { toolId: 'sc-incident-timeline', label: 'Incident Timeline', icon: '🔧', mode: 'slide' },
+  'sc-integration-health': { toolId: 'sc-integration-health', label: 'Integration Health', icon: '🔧', mode: 'slide' },
+  'sc-ir-playbook': { toolId: 'sc-ir-playbook', label: 'Ir Playbook', icon: '🔧', mode: 'slide' },
+  'sc-k8s-security': { toolId: 'sc-k8s-security', label: 'K8S Security', icon: '🔧', mode: 'slide' },
+  'sc-kpi-dashboard': { toolId: 'sc-kpi-dashboard', label: 'Kpi Dashboard', icon: '🔧', mode: 'slide' },
+  'sc-log-query': { toolId: 'sc-log-query', label: 'Log Query', icon: '🔧', mode: 'slide' },
+  'sc-malware-analysis': { toolId: 'sc-malware-analysis', label: 'Malware Analysis', icon: '🔧', mode: 'slide' },
+  'sc-mdm-dashboard': { toolId: 'sc-mdm-dashboard', label: 'Mdm Dashboard', icon: '🔧', mode: 'slide' },
+  'sc-metrics-export': { toolId: 'sc-metrics-export', label: 'Metrics Export', icon: '🔧', mode: 'slide' },
+  'sc-mitre-navigator': { toolId: 'sc-mitre-navigator', label: 'Mitre Navigator', icon: '🔧', mode: 'slide' },
+  'sc-network-topo': { toolId: 'sc-network-topo', label: 'Network Topo', icon: '🔧', mode: 'slide' },
+  'sc-news-feed': { toolId: 'sc-news-feed', label: 'News Feed', icon: '🔧', mode: 'slide' },
+  'sc-orchestration': { toolId: 'sc-orchestration', label: 'Orchestration', icon: '🔧', mode: 'slide' },
+  'sc-osint-tool': { toolId: 'sc-osint-tool', label: 'Osint Tool', icon: '🔧', mode: 'slide' },
+  'sc-pam-dashboard': { toolId: 'sc-pam-dashboard', label: 'Pam Dashboard', icon: '🔧', mode: 'slide' },
+  'sc-password-audit': { toolId: 'sc-password-audit', label: 'Password Audit', icon: '🔧', mode: 'slide' },
+  'sc-patch-tracker': { toolId: 'sc-patch-tracker', label: 'Patch Tracker', icon: '🔧', mode: 'slide' },
+  'sc-pentest-method': { toolId: 'sc-pentest-method', label: 'Pentest Method', icon: '🔧', mode: 'slide' },
+  'sc-pentest-report': { toolId: 'sc-pentest-report', label: 'Pentest Report', icon: '🔧', mode: 'slide' },
+  'sc-phishing-sim': { toolId: 'sc-phishing-sim', label: 'Phishing Sim', icon: '🔧', mode: 'slide' },
+  'sc-policy-checker': { toolId: 'sc-policy-checker', label: 'Policy Checker', icon: '🔧', mode: 'slide' },
+  'sc-privacy-computing': { toolId: 'sc-privacy-computing', label: 'Privacy Computing', icon: '🔧', mode: 'slide' },
+  'sc-purple-team': { toolId: 'sc-purple-team', label: 'Purple Team', icon: '🔧', mode: 'slide' },
+  'sc-reg-tracker': { toolId: 'sc-reg-tracker', label: 'Reg Tracker', icon: '🔧', mode: 'slide' },
+  'sc-risk-gauge': { toolId: 'sc-risk-gauge', label: 'Risk Gauge', icon: '🔧', mode: 'slide' },
+  'sc-risk-heatmap': { toolId: 'sc-risk-heatmap', label: 'Risk Heatmap', icon: '🔧', mode: 'slide' },
+  'sc-risk-register': { toolId: 'sc-risk-register', label: 'Risk Register', icon: '🔧', mode: 'slide' },
+  'sc-roi-calculator': { toolId: 'sc-roi-calculator', label: 'Roi Calculator', icon: '🔧', mode: 'slide' },
+  'sc-scanner-integration': { toolId: 'sc-scanner-integration', label: 'Scanner Integration', icon: '🔧', mode: 'slide' },
+  'sc-scf-questionnaire': { toolId: 'sc-scf-questionnaire', label: 'Scf Questionnaire', icon: '🔧', mode: 'slide' },
+  'sc-sec-quiz': { toolId: 'sc-sec-quiz', label: 'Sec Quiz', icon: '🔧', mode: 'slide' },
+  'sc-security-chat': { toolId: 'sc-security-chat', label: 'Security Chat', icon: '🔧', mode: 'slide' },
+  'sc-severity-calc': { toolId: 'sc-severity-calc', label: 'Severity Calc', icon: '🔧', mode: 'slide' },
+  'sc-soc-metrics': { toolId: 'sc-soc-metrics', label: 'Soc Metrics', icon: '🔧', mode: 'slide' },
+  'sc-sso-config': { toolId: 'sc-sso-config', label: 'Sso Config', icon: '🔧', mode: 'slide' },
+  'sc-stride-model': { toolId: 'sc-stride-model', label: 'Stride Model', icon: '🔧', mode: 'slide' },
+  'sc-supply-chain-graph': { toolId: 'sc-supply-chain-graph', label: 'Supply Chain Graph', icon: '🔧', mode: 'slide' },
+  'sc-threat-feed': { toolId: 'sc-threat-feed', label: 'Threat Feed', icon: '🔧', mode: 'slide' },
+  'sc-threat-hunting': { toolId: 'sc-threat-hunting', label: 'Threat Hunting', icon: '🔧', mode: 'slide' },
+  'sc-training-module': { toolId: 'sc-training-module', label: 'Training Module', icon: '🔧', mode: 'slide' },
+  'sc-training-tracker': { toolId: 'sc-training-tracker', label: 'Training Tracker', icon: '🔧', mode: 'slide' },
+  'sc-vendor-onboard': { toolId: 'sc-vendor-onboard', label: 'Vendor Onboard', icon: '🔧', mode: 'slide' },
+  'sc-vendor-scorecard': { toolId: 'sc-vendor-scorecard', label: 'Vendor Scorecard', icon: '🔧', mode: 'slide' },
+  'sc-vendor-sla': { toolId: 'sc-vendor-sla', label: 'Vendor Sla', icon: '🔧', mode: 'slide' },
+  'sc-vuln-priority': { toolId: 'sc-vuln-priority', label: 'Vuln Priority', icon: '🔧', mode: 'slide' },
+  'sc-vuln-sla': { toolId: 'sc-vuln-sla', label: 'Vuln Sla', icon: '🔧', mode: 'slide' },
+  'sc-vuln-summary-chart': { toolId: 'sc-vuln-summary-chart', label: 'Vuln Summary Chart', icon: '🔧', mode: 'slide' },
+  'sc-vuln-trend': { toolId: 'sc-vuln-trend', label: 'Vuln Trend', icon: '🔧', mode: 'slide' },
+  'sc-waf-dashboard': { toolId: 'sc-waf-dashboard', label: 'Waf Dashboard', icon: '🔧', mode: 'slide' },
+  'sc-wireless-security': { toolId: 'sc-wireless-security', label: 'Wireless Security', icon: '🔧', mode: 'slide' },
+  'sc-zero-trust-designer': { toolId: 'sc-zero-trust-designer', label: 'Zero Trust Designer', icon: '🔧', mode: 'slide' },
+  'security-timeline': { toolId: 'security-timeline', label: '安全事件时间线', icon: '📅', mode: 'slide' },
 };
 
 // ─── Mock result generators ────────────────────────────────────
@@ -1101,6 +1204,19 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="result-item"><div class="ri-header"><span class="ri-title">技术债务</span><span class="chip chip-medium">3</span></div><div class="ri-desc">遗留系统待迁移，预计 Q3 完成</div></div>
         </div>
       `;
+    }
+
+    // ─── Phase 2: Advanced Interactive Panels ───
+    case 'dark-sim-engine': {
+      return html`<sc-dark-sim-engine></sc-dark-sim-engine>`;
+    }
+
+    case 'scan-results': {
+      return html`<sc-scan-results-table></sc-scan-results-table>`;
+    }
+
+    case 'security-timeline': {
+      return html`<sc-security-timeline></sc-security-timeline>`;
     }
 
     default:
