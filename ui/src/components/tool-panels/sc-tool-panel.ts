@@ -20,6 +20,32 @@ export class ScToolPanel extends LitElement {
       z-index: 1000;
       inset: 0;
       pointer-events: none;
+      /* Theme variables */
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-tertiary: #94a3b8;
+      --border-color: #334155;
+      --accent-color: #3b82f6;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+    }
+
+    :host([theme="light"]) {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #64748b;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #dc2626;
     }
 
     :host([open]) {
@@ -46,8 +72,8 @@ export class ScToolPanel extends LitElement {
       right: 0;
       bottom: 0;
       width: 420px;
-      background: #0f172a;
-      border-left: 1px solid var(--panel-border, #1e293b);
+      background: var(--bg-primary);
+      border-left: 1px solid var(--border-color);
       transform: translateX(100%);
       transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
@@ -132,7 +158,7 @@ export class ScToolPanel extends LitElement {
       border-radius: 3px;
     }
 
-    .panel-close {
+    .panel-close, .panel-theme-toggle {
       width: 28px;
       height: 28px;
       border-radius: 6px;
@@ -145,11 +171,22 @@ export class ScToolPanel extends LitElement {
       align-items: center;
       justify-content: center;
       transition: all 100ms ease;
+      margin-left: 6px;
     }
 
-    .panel-close:hover {
+    .panel-close:hover, .panel-theme-toggle:hover {
       background: #1e293b;
       color: #e2e8f0;
+    }
+
+    :host([theme="light"]) .panel-close, :host([theme="light"]) .panel-theme-toggle {
+      border-color: #e2e8f0;
+      color: #64748b;
+    }
+
+    :host([theme="light"]) .panel-close:hover, :host([theme="light"]) .panel-theme-toggle:hover {
+      background: #f1f5f9;
+      color: #0f172a;
     }
 
     /* ─── Panel Body ─── */
@@ -356,6 +393,56 @@ export class ScToolPanel extends LitElement {
   @property({ type: String }) toolLabel = '';
   @property({ type: String }) toolIcon = '🔧';
   @property({ type: String }) roleId: RoleId = 'security-expert';
+  @property({ type: String, reflect: true }) theme: 'dark' | 'light' = 'dark';
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Load theme from localStorage
+    const savedTheme = localStorage.getItem('secuclaw-theme') as 'dark' | 'light';
+    if (savedTheme) {
+      this.theme = savedTheme;
+    }
+    // Add keyboard shortcut listener
+    window.addEventListener('keydown', this._handleKeydown.bind(this));
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('keydown', this._handleKeydown.bind(this));
+  }
+
+  private _toggleTheme() {
+    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('secuclaw-theme', this.theme);
+    // Emit theme change event for global sync
+    window.dispatchEvent(new CustomEvent('secuclaw-theme-change', { detail: this.theme }));
+  }
+
+  private _handleKeydown(e: KeyboardEvent) {
+    // Only handle shortcuts when panel is open
+    if (!this.open) return;
+
+    // Ctrl/Cmd + D: Toggle theme
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      this._toggleTheme();
+    }
+    // Ctrl/Cmd + K: Open command palette (future feature)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      console.log('Command palette shortcut pressed');
+    }
+    // Ctrl/Cmd + E: Export data (future feature)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+      e.preventDefault();
+      console.log('Export shortcut pressed');
+    }
+    // Esc: Close panel
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this._close();
+    }
+  }
   @state() private _executing = false;
   @state() private _result: unknown = null;
   @state() private _execMsg = '';
@@ -471,6 +558,9 @@ export class ScToolPanel extends LitElement {
           <span class="panel-icon">${this.toolIcon}</span>
           <span class="panel-title">${this.toolLabel}</span>
           <span class="panel-role-tag" style="background:${borderColor}22;color:${borderColor}">${roleLabel}</span>
+          <button class="panel-theme-toggle" @click=${this._toggleTheme} title="切换${this.theme === 'dark' ? '浅色' : '深色'}主题">
+            ${this.theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           <button class="panel-close" @click=${this._close} title="关闭">✕</button>
         </div>
         <div class="panel-body">

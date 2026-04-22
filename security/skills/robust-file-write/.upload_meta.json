@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "A systematic debugging workflow for handling write_file failures by checking path validity, permissions, chunking, and fallback to shell operations.",
+  "created_by": "openspace",
+  "tags": []
+}

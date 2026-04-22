@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "When shell_agent fails with unknown errors during file creation, use write_file directly as a reliable fallback to complete file operations.",
+  "created_by": "openspace",
+  "tags": []
+}

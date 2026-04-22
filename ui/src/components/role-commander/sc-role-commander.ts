@@ -444,14 +444,11 @@ export class ScRoleCommander extends LitElement {
     @media (max-width: 768px) {
       .rd-5col { grid-template-columns: repeat(2, 1fr) !important; }
       .main-content { padding: 8px !important; }
-      .sidebar { width: 48px !important; min-width: 48px !important; }
-      .sidebar .section-label, .sidebar .raci-section, .sidebar .role-nav-label { display: none !important; }
       .zone { margin: 0 6px 6px !important; padding: 8px !important; }
       .rd-big-num { font-size: 20px !important; }
     }
     @media (max-width: 480px) {
       .rd-5col { grid-template-columns: 1fr !important; }
-      .sidebar { display: none !important; }
     }
   `
 
@@ -1810,6 +1807,25 @@ ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
     `
   }
 
+  private _iconMap: Record<string, string> = {
+    BellRing: '🔔', Play: '▶️', ScrollText: '📜', Siren: '🚨', Globe: '🌍', Bot: '🤖',
+    BarChart3: '📊', ListChecks: '📋', Target: '🎯', PiggyBank: '💰', FileText: '📄',
+    FileCode: '📝', FileBarChart: '📈', Shield: '🛡️', Lock: '🔒', Key: '🔑',
+    Eye: '👁️', Search: '🔍', Users: '👥', Building: '🏢', AlertTriangle: '⚠️',
+    CheckCircle: '✅', Clock: '🕐', Database: '🗄️', Cloud: '☁️', Monitor: '🖥️',
+    Activity: '📉', GitBranch: '🔀', Layers: '📚', Cpu: '⚡', Wifi: '📡',
+    Settings: '⚙️', Zap: '⚡', ArrowRight: '→', ChevronDown: '▾', X: '✕',
+    Plus: '＋', ExternalLink: '🔗', Copy: '📋', Download: '⬇️', Upload: '⬆️',
+    Filter: '🔽', RefreshCw: '🔄', Trash: '🗑️', Edit: '✏️', Share: '📤',
+  }
+
+  private _resolveIcon(icon: string): string {
+    // If it's an emoji (multi-byte), use as-is
+    if (/[^\x00-\x7F]/.test(icon)) return icon
+    // Look up Lucide icon name → emoji fallback
+    return this._iconMap[icon] || '📌'
+  }
+
   private _renderRoleDashboard() {
     switch (this.roleId) {
       case 'ciso': return this._renderCisoDashboard()
@@ -1851,7 +1867,7 @@ ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
         ${visible.map(tool => html`
           <div class="tool-tag" @click=${() => this._openToolPanel(tool.id)}>
             <span class="tool-tag-status" style="background: ${this._getToolStatusColor(tool.id)}"></span>
-            <span>${tool.icon} ${tool.label}</span>
+            <span>${this._resolveIcon(tool.icon)} ${tool.label}</span>
           </div>
         `)}
         ${showMore ? html`
@@ -1864,7 +1880,7 @@ ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
                 ${hidden.map(tool => html`
                   <div class="tool-more-item" @click=${() => { this._openToolPanel(tool.id); this._showAllTools = false; }}>
                     <span class="tool-tag-status" style="background: ${this._getToolStatusColor(tool.id)}"></span>
-                    <span>${tool.icon} ${tool.label}</span>
+                    <span>${this._resolveIcon(tool.icon)} ${tool.label}</span>
                   </div>
                 `)}
               </div>
@@ -1965,6 +1981,7 @@ ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
         <div class="main-content">
           ${this._renderRoleDashboard()}
         </div>
+        ${this._renderToolSummary()}
         ${this.roleId !== 'security-architect' && this._showToolResults ? html`
           <div class="zone zone-results">
             <sc-tool-results-panel .roleId=${this.roleId}></sc-tool-results-panel>
@@ -1977,11 +1994,7 @@ ${this._renderMetricsZone('灾难恢复指标 [Phase 1B]', [
             </button>
           </div>
         ` : nothing}
-        ${this._renderToolSummary()}
         ${this._renderAiPanel()}
-        <div class="ai-float-toggle ${this._panelOpen ? 'hidden' : ''}" @click=${this._toggleAiPanel} style="background: ${theme['--role-primary']}">
-          🤖
-        </div>
         ${this._toast ? html`<div style="position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:3000;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44">⚠ ${this._toast}</div>` : nothing}
       </div>
     `

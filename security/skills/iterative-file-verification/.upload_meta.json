@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "A verification workflow that uses directory listing commands after each component batch to track completion and identify gaps.",
+  "created_by": "openspace",
+  "tags": []
+}

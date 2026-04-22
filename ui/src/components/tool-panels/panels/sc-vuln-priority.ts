@@ -1,11 +1,43 @@
 /**
- * sc-vuln-priority — Vulnerability Prioritization (Security Expert Core)
- * CVSS vs EPSS scatter plot + CISA KEV filter + Asset criticality bubbles
+ * sc-vuln-priority - Vuln Priority
+ * Interactive security operations panel with filtering, search, visualization, and export capabilities
  */
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 
-interface Vuln { cve: string; cvss: number; epss: number; kev: boolean; asset: string; criticality: number; priority: string; detail: string; }
+type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+type Status = 'open' | 'in-progress' | 'resolved' | 'closed' | 'escalated' | 'acknowledged' | 'false-positive';
+type Priority = 'p1' | 'p2' | 'p3' | 'p4' | 'p5';
+
+interface PanelItem {
+  id: string;
+  title: string;
+  severity: Severity;
+  status: Status;
+  category: string;
+  source: string;
+  description: string;
+  createdAt: string;
+  assignee: string;
+  tags: string[];
+  priority: Priority;
+  slaMinutes: number;
+  stepsTaken: string[];
+}
+
+interface HistoryEntry {
+  timestamp: string;
+  action: string;
+  user: string;
+  details: string;
+}
+
+interface TrendPoint {
+  date: string;
+  opened: number;
+  resolved: number;
+  critical: number;
+}
 
 @customElement('sc-vuln-priority')
 export class ScVulnPriority extends LitElement {
@@ -13,88 +45,529 @@ export class ScVulnPriority extends LitElement {
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; color: #e2e8f0; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     .panel { background: #111827; border-radius: 12px; padding: 20px; }
-    .pt { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
-    .tab { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; background: #1f2937; border: 1px solid #374151; color: #94a3b8; transition: all 0.2s; }
-    .tab.active { background: #f59e0b; color: #111827; border-color: #f59e0b; }
-    .stats { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .stat { background: #0a0e17; border-radius: 6px; padding: 8px 12px; min-width: 70px; }
-    .sv { font-size: 18px; font-weight: 700; }
-    .sl { font-size: 10px; color: #94a3b8; }
-    svg { width: 100%; height: 260px; }
-    .axis-label { fill: #6b7280; font-size: 10px; }
-    .grid-line { stroke: #1f2937; stroke-width: 1; }
-    .items { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; max-height: 300px; overflow-y: auto; }
-    .item { background: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 10px 12px; font-size: 12px; }
-    .item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .item-name { font-weight: 600; font-size: 13px; }
+    .pt { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .controls-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .search-box { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; flex: 1; min-width: 180px; outline: none; }
+    .search-box:focus { border-color: #f59e0b; }
+    .filter-select { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; outline: none; cursor: pointer; }
+    .btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; transition: all 0.2s; }
+    .btn:hover { border-color: #f59e0b; }
+    .btn.primary { background: #1e40af; border-color: #3b82f6; color: white; }
+    .btn.success { background: #052e16; border-color: #166534; color: #86efac; }
+    .btn.danger { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+    .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .score-card { background: #0a0e17; border-radius: 8px; padding: 12px; text-align: center; border: 1px solid #1e293b; }
+    .score-val { font-size: 22px; font-weight: 700; }
+    .score-lbl { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-top: 2px; }
+    .tabs { display: flex; gap: 0; margin-bottom: 12px; border-bottom: 1px solid #374151; }
+    .tab { padding: 8px 16px; font-size: 12px; font-weight: 600; border: none; background: transparent; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { color: #f59e0b; border-bottom-color: #f59e0b; }
+    .tab:hover { color: #e2e8f0; }
+    .list { display: flex; flex-direction: column; gap: 6px; max-height: 500px; overflow-y: auto; }
+    .item { background: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 12px; cursor: pointer; transition: all 0.2s; }
+    .item:hover { border-color: #4b5563; }
+    .item.expanded { border-color: #f59e0b; }
+    .item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .item-title { font-size: 13px; font-weight: 600; flex: 1; }
+    .badges { display: flex; gap: 4px; flex-shrink: 0; }
     .badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-    .p1 { background: #450a0a; color: #fca5a5; } .p2 { background: #431407; color: #fdba74; }
-    .p3 { background: #422006; color: #fde047; } .p4 { background: #052e16; color: #86efac; }
-    .kev { background: #7f1d1d; color: #fecaca; }
-    .sb { padding: 8px 12px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #e2e8f0; font-size: 13px; width: 100%; margin-bottom: 10px; outline: none; }
-    .sb:focus { border-color: #f59e0b; }
+    .badge-critical { background: #450a0a; color: #fca5a5; }
+    .badge-high { background: #431407; color: #fdba74; }
+    .badge-medium { background: #422006; color: #fde047; }
+    .badge-low { background: #052e16; color: #86efac; }
+    .badge-info { background: #172554; color: #93c5fd; }
+    .badge-open { background: #1e293b; color: #94a3b8; }
+    .badge-remediated { background: #052e16; color: #86efac; }
+    .badge-in-progress { background: #1e3a8a; color: #93c5fd; }
+    .badge-resolved { background: #052e16; color: #86efac; }
+    .badge-escalated { background: #450a0a; color: #fca5a5; }
+    .badge-new { background: #172554; color: #93c5fd; }
+    .badge-acknowledged { background: #1e3a8a; color: #93c5fd; }
+    .badge-false-positive { background: #1e293b; color: #6b7280; }
+    .badge-p1 { background: #450a0a; color: #fca5a5; }
+    .badge-p2 { background: #431407; color: #fdba74; }
+    .badge-p3 { background: #422006; color: #fde047; }
+    .badge-p4 { background: #052e16; color: #86efac; }
+    .badge-p5 { background: #172554; color: #93c5fd; }
+    .badge-completed { background: #052e16; color: #86efac; }
+    .badge-failed { background: #450a0a; color: #fca5a5; }
+    .badge-scheduled { background: #172554; color: #93c5fd; }
+    .badge-active { background: #1e3a8a; color: #93c5fd; }
+    .badge-blocked { background: #431407; color: #fdba74; }
+    .badge-pending { background: #422006; color: #fde047; }
+    .badge-approved { background: #052e16; color: #86efac; }
+    .badge-expired { background: #450a0a; color: #fca5a5; }
+    .badge-revoked { background: #1e293b; color: #6b7280; }
+    .badge-denied { background: #450a0a; color: #fca5a5; }
+    .badge-healthy { background: #052e16; color: #86efac; }
+    .badge-warning { background: #422006; color: #fde047; }
+    .badge-degraded { background: #431407; color: #fdba74; }
+    .item-meta { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .item-detail { margin-top: 10px; padding-top: 10px; border-top: 1px solid #374151; }
+    .chart-container { background: #0a0e17; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .chart-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+    .form-section { background: #1f2937; border: 1px solid #374151; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .form-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 11px; font-weight: 600; color: #94a3b8; }
+    .form-input { padding: 8px 10px; border-radius: 6px; border: 1px solid #374151; background: #0a0e17; color: #e2e8f0; font-size: 13px; outline: none; }
+    .form-input:focus { border-color: #f59e0b; }
+    .empty-state { text-align: center; padding: 40px; color: #6b7280; }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .history-table th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #374151; color: #94a3b8; font-weight: 600; font-size: 11px; }
+    .history-table td { padding: 8px 10px; border-bottom: 1px solid #1e293b; }
+    .history-table tr:hover td { background: #1f2937; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .remediation-box { background: #052e16; border: 1px solid #166534; border-radius: 6px; padding: 10px; font-size: 12px; }
+    .remediation-box strong { color: #86efac; }
+
   `;
 
-  @state() private _filter = 'all';
-  @state() private _q = '';
+  @state() private _searchQuery = '';
+  @state() private _severityFilter: Severity | 'all' = 'all';
+  @state() private _statusFilter: Status | 'all' = 'all';
+  @state() private _activeTab: 'overview' | 'details' | 'trends' | 'history' | 'new' = 'overview';
+  @state() private _expandedId: string | null = null;
+  @state() private _sortField: 'severity' | 'date' | 'title' = 'date';
+  @state() private _sortAsc = false;
 
-  private _data: Vuln[] = [
-    { cve: 'CVE-2026-1234', cvss: 10.0, epss: 94.2, kev: true, asset: 'Production DB', criticality: 5, priority: 'P1', detail: 'Log4Shell v2 RCE. 23 assets affected. Patch available. EPSS 94%.' },
-    { cve: 'CVE-2026-1156', cvss: 9.8, epss: 87.5, kev: true, asset: 'Web Frontend', criticality: 4, priority: 'P1', detail: 'Spring4Shell. 8 assets. Patch in progress (3/8 done).' },
-    { cve: 'CVE-2026-2345', cvss: 8.6, epss: 62.1, kev: false, asset: 'TLS Endpoints', criticality: 3, priority: 'P2', detail: 'OpenSSL buffer overread. 156 endpoints.' },
-    { cve: 'CVE-2026-3456', cvss: 7.5, epss: 41.3, kev: false, asset: 'Redis Cluster', criticality: 4, priority: 'P2', detail: 'Redis auth bypass. 12 instances (patched).' },
-    { cve: 'CVE-2026-4567', cvss: 7.2, epss: 28.7, kev: false, asset: 'Nginx Proxies', criticality: 2, priority: 'P3', detail: 'Nginx misconfig info disclosure. 5 proxies.' },
-    { cve: 'CVE-2026-5678', cvss: 6.5, epss: 15.4, kev: false, asset: 'Internal Wiki', criticality: 1, priority: 'P3', detail: 'Confluence RCE (authenticated). 2 instances.' },
-    { cve: 'CVE-2026-6789', cvss: 5.3, epss: 8.2, kev: false, asset: 'Legacy Apps', criticality: 2, priority: 'P4', detail: 'jQuery XSS. 4 internal apps. Low exposure.' },
-    { cve: 'CVE-2026-7890', cvss: 4.1, epss: 2.3, kev: false, asset: 'Dev Tools', criticality: 1, priority: 'P4', detail: 'Dev tool DoS. Minimal business impact.' },
-    { cve: 'CVE-2026-8901', cvss: 9.1, epss: 78.9, kev: true, asset: 'Payment API', criticality: 5, priority: 'P1', detail: 'Payment gateway RCE. Active exploitation.' },
-    { cve: 'CVE-2026-9012', cvss: 6.8, epss: 12.1, kev: false, asset: 'CDN', criticality: 3, priority: 'P3', detail: 'CDN cache poisoning. Mitigation in place.' },
-    { cve: 'CVE-2026-0123', cvss: 8.0, epss: 55.0, kev: false, asset: 'Auth Service', criticality: 5, priority: 'P2', detail: 'OAuth token manipulation. High asset value.' },
-    { cve: 'CVE-2026-0456', cvss: 3.5, epss: 1.1, kev: false, asset: 'Print Server', criticality: 1, priority: 'P4', detail: 'Print spooler info leak. No external exposure.' },
+  private _items: PanelItem[] = [
+      {
+            "id": "vuln-priority-1",
+            "title": "Vuln Priority Finding #1",
+            "severity": "low",
+            "status": "open",
+            "category": "Security",
+            "source": "SIEM",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-15T00:00:00Z",
+            "assignee": "soc-tier1",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p1",
+            "slaMinutes": 15,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-2",
+            "title": "Vuln Priority Finding #2",
+            "severity": "medium",
+            "status": "open",
+            "category": "Network",
+            "source": "EDR",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-16T02:00:00Z",
+            "assignee": "soc-tier2",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p2",
+            "slaMinutes": 30,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-3",
+            "title": "Vuln Priority Finding #3",
+            "severity": "high",
+            "status": "open",
+            "category": "Access",
+            "source": "Scanner",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-17T04:00:00Z",
+            "assignee": "security-eng",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p3",
+            "slaMinutes": 60,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-4",
+            "title": "Vuln Priority Finding #4",
+            "severity": "low",
+            "status": "open",
+            "category": "Compliance",
+            "source": "Audit",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-18T06:00:00Z",
+            "assignee": "compliance",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p4",
+            "slaMinutes": 120,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-5",
+            "title": "Vuln Priority Finding #5",
+            "severity": "medium",
+            "status": "open",
+            "category": "Operations",
+            "source": "Manual",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-19T08:00:00Z",
+            "assignee": "ops",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p1",
+            "slaMinutes": 240,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-6",
+            "title": "Vuln Priority Finding #6",
+            "severity": "high",
+            "status": "open",
+            "category": "Security",
+            "source": "SIEM",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-20T10:00:00Z",
+            "assignee": "soc-tier1",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p2",
+            "slaMinutes": 15,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-7",
+            "title": "Vuln Priority Finding #7",
+            "severity": "low",
+            "status": "open",
+            "category": "Network",
+            "source": "EDR",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-21T12:00:00Z",
+            "assignee": "soc-tier2",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p3",
+            "slaMinutes": 30,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-8",
+            "title": "Vuln Priority Finding #8",
+            "severity": "medium",
+            "status": "open",
+            "category": "Access",
+            "source": "Scanner",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-22T14:00:00Z",
+            "assignee": "security-eng",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p4",
+            "slaMinutes": 60,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-9",
+            "title": "Vuln Priority Finding #9",
+            "severity": "high",
+            "status": "open",
+            "category": "Compliance",
+            "source": "Audit",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-23T16:00:00Z",
+            "assignee": "compliance",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p1",
+            "slaMinutes": 120,
+            "stepsTaken": []
+      },
+      {
+            "id": "vuln-priority-10",
+            "title": "Vuln Priority Finding #10",
+            "severity": "low",
+            "status": "open",
+            "category": "Operations",
+            "source": "Manual",
+            "description": "Automated vuln priority assessment finding detected during routine scan of infrastructure component. Review and remediation recommended.",
+            "createdAt": "2026-04-24T18:00:00Z",
+            "assignee": "ops",
+            "tags": [
+                  "vuln-priority",
+                  "automated"
+            ],
+            "priority": "p2",
+            "slaMinutes": 240,
+            "stepsTaken": []
+      }
+];
+
+  private _history: HistoryEntry[] = [
+    { timestamp: '2026-04-23 04:15', action: 'Auto-correlated', user: 'system', details: 'Grouped related findings from Vuln Priority analysis' },
+    { timestamp: '2026-04-23 03:00', action: 'Created', user: 'scanner', details: 'New Vuln Priority finding detected by automated assessment' },
+    { timestamp: '2026-04-23 02:30', action: 'Escalated', user: 'soc-tier1', details: 'Escalated critical finding to tier 2 for investigation' },
+    { timestamp: '2026-04-23 01:00', action: 'Updated', user: 'soc-tier2', details: 'Added investigation notes and IOC indicators' },
+    { timestamp: '2026-04-22 22:00', action: 'Resolved', user: 'security-eng', details: 'Remediation applied and verified for Vuln Priority finding' },
+    { timestamp: '2026-04-22 18:00', action: 'Created', user: 'audit', details: 'Compliance audit identified Vuln Priority gap requiring remediation' },
+    { timestamp: '2026-04-22 14:00', action: 'Acknowledged', user: 'ops-team', details: 'Operations team acknowledged finding and created remediation task' },
+    { timestamp: '2026-04-22 10:00', action: 'Assigned', user: 'manager', details: 'Finding assigned to security engineering team for resolution' },
+    { timestamp: '2026-04-21 16:00', action: 'Resolved', user: 'soc-tier1', details: 'False positive confirmed - benign activity flagged by Vuln Priority scan' },
+    { timestamp: '2026-04-21 12:00', action: 'Exported', user: 'compliance', details: 'Exported Vuln Priority findings for Q1 compliance report' },
   ];
 
+  private _trends: TrendPoint[] = [
+    { date: 'Apr 17', opened: 8, resolved: 6, critical: 1 },
+    { date: 'Apr 18', opened: 12, resolved: 10, critical: 2 },
+    { date: 'Apr 19', opened: 6, resolved: 8, critical: 0 },
+    { date: 'Apr 20', opened: 15, resolved: 11, critical: 3 },
+    { date: 'Apr 21', opened: 9, resolved: 12, critical: 1 },
+    { date: 'Apr 22', opened: 11, resolved: 9, critical: 2 },
+    { date: 'Apr 23', opened: 10, resolved: 3, critical: 0 },
+  ];
+
+  private _toggle(id: string) { this._expandedId = this._expandedId === id ? null : id; }
+
+  private _getSevBadge(s: string): string { return `badge-${s}`; }
+
+  private _getFiltered(): PanelItem[] {
+    let result = [...this._items];
+    if (this._severityFilter !== 'all') result = result.filter(i => i.severity === this._severityFilter);
+    if (this._statusFilter !== 'all') result = result.filter(i => i.status === this._statusFilter);
+    if (this._searchQuery) {
+      const q = this._searchQuery.toLowerCase();
+      result = result.filter(i => i.title.toLowerCase().includes(q) || i.description.toLowerCase().includes(q) || i.category.toLowerCase().includes(q) || i.assignee.toLowerCase().includes(q) || i.source.toLowerCase().includes(q));
+    }
+    const sevOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+    result.sort((a, b) => {
+      if (this._sortField === 'severity') return this._sortAsc ? sevOrder[a.severity] - sevOrder[b.severity] : sevOrder[b.severity] - sevOrder[a.severity];
+      if (this._sortField === 'date') return this._sortAsc ? a.createdAt.localeCompare(b.createdAt) : b.createdAt.localeCompare(a.createdAt);
+      return this._sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
+    });
+    return result;
+  }
+
+  private _renderDonut(): unknown {
+    const crit = this._items.filter(i => i.severity === 'critical').length;
+    const high = this._items.filter(i => i.severity === 'high').length;
+    const med = this._items.filter(i => i.severity === 'medium').length;
+    const low = this._items.filter(i => i.severity === 'low' || i.severity === 'info').length;
+    const total = crit + high + med + low || 1;
+    const data = [{ label: 'Critical', val: crit, color: '#ef4444' }, { label: 'High', val: high, color: '#f97316' }, { label: 'Medium', val: med, color: '#eab308' }, { label: 'Low/Info', val: low, color: '#22c55e' }];
+    const cx = 60, cy = 60, r = 40, sw = 14;
+    let cum = -90;
+    return html`
+      <div class="chart-container">
+        <div class="chart-title">Severity Distribution</div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            ${data.filter(d => d.val > 0).map(d => {
+              const angle = (d.val / total) * 360;
+              const s = (cum * Math.PI) / 180;
+              const e = ((cum + angle) * Math.PI) / 180;
+              cum += angle;
+              const x1 = cx + r * Math.cos(s); const y1 = cy + r * Math.sin(s);
+              const x2 = cx + r * Math.cos(e); const y2 = cy + r * Math.sin(e);
+              return html`<path d="M${x1},${y1} A${r},${r} 0 ${angle > 180 ? 1 : 0},1 ${x2},${y2}" fill="none" stroke="${d.color}" stroke-width="${sw}" stroke-linecap="round"/>`;
+            })}
+            <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="#e2e8f0" font-size="18" font-weight="700">${total}</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            ${data.map(d => html`<div style="display:flex;align-items:center;gap:6px;font-size:12px;"><span style="width:10px;height:10px;border-radius:2px;background:${d.color};"></span><span style="color:#94a3b8;">${d.label}:</span><span style="font-weight:700;">${d.val}</span></div>`)}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  private _renderBarChart(): unknown {
+    const data = this._trends;
+    const w = 500, h = 140, pad = 30;
+    const maxVal = Math.max(...data.map(d => Math.max(d.opened, d.resolved)), 20);
+    const barW = (w - pad * 2) / data.length - 8;
+    return html`
+      <div class="chart-container">
+        <div class="chart-title">7-Day Trend</div>
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+          ${data.map((d, i) => {
+            const x = pad + i * (barW + 8);
+            const h1 = (d.opened / maxVal) * (h - pad - 20);
+            const h2 = (d.resolved / maxVal) * (h - pad - 20);
+            return html`<rect x="${x}" y="${h - pad - h1}" width="${barW / 2 - 1}" height="${h1}" rx="2" fill="#ef4444" opacity="0.7"/><rect x="${x + barW / 2 + 1}" y="${h - pad - h2}" width="${barW / 2 - 1}" height="${h2}" rx="2" fill="#22c55e" opacity="0.7"/><text x="${x + barW / 2}" y="${h - 6}" text-anchor="middle" fill="#94a3b8" font-size="9">${d.date}</text>`;
+          })}
+        </svg>
+        <div style="display:flex;gap:16px;font-size:10px;color:#94a3b8;margin-top:8px;">
+          <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px;"></span>Opened</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px;"></span>Resolved</span>
+        </div>
+      </div>`;
+  }
+
+  private _renderGauge(value: number, max: number, label: string, color: string): unknown {
+    const pct = Math.round((value / max) * 100);
+    const cx = 60, cy = 70, r = 45, sw = 12;
+    const circ = 2 * Math.PI * r;
+    const offset = circ * (1 - pct / 100);
+    return html`
+      <div class="score-card" style="text-align:center;">
+        <svg viewBox="0 0 120 100" width="100" height="83">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e293b" stroke-width="${sw}"/>
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+          <text x="${cx}" y="${cy + 5}" text-anchor="middle" fill="#e2e8f0" font-size="16" font-weight="700">${value}</text>
+        </svg>
+        <div class="score-lbl">${label}</div>
+      </div>`;
+  }
+
+  private _exportJSON() {
+    const blob = new Blob([JSON.stringify(this._getFiltered(), null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'sc-vuln-priority-data.json'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private _exportCSV() {
+    const items = this._getFiltered();
+    const header = 'ID,Title,Severity,Status,Category,Source,Assignee,Priority,Created\n';
+    const rows = items.map(i => `"${i.id}","${i.title}","${i.severity}","${i.status}","${i.category}","${i.source}","${i.assignee}","${i.priority}","${i.createdAt}"`).join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'sc-vuln-priority-data.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   render() {
-    const q = this._q.toLowerCase();
-    let filtered = this._data;
-    if (this._filter === 'kev') filtered = filtered.filter(v => v.kev);
-    else if (this._filter === 'p1') filtered = filtered.filter(v => v.priority === 'P1');
-    else if (this._filter === 'p2') filtered = filtered.filter(v => v.priority === 'P2');
-    if (q) filtered = filtered.filter(v => v.cve.toLowerCase().includes(q) || v.asset.toLowerCase().includes(q));
-    const p1 = filtered.filter(v => v.priority === 'P1').length;
-    const p2 = filtered.filter(v => v.priority === 'P2').length;
-    const w = 500, h = 240, pad = 40;
-    const xScale = (v: number) => pad + (v / 10) * (w - pad * 2);
-    const yScale = (v: number) => h - pad - (v / 100) * (h - pad * 2);
-    const color = (v: Vuln) => v.kev ? '#ef4444' : v.epss > 50 ? '#f97316' : v.epss > 15 ? '#eab308' : '#22c55e';
-    const r = (v: Vuln) => 4 + v.criticality * 2;
-    return html`<div class="panel">
-      <div class="pt">🎯 Vulnerability Prioritization (CVSS × EPSS)</div>
-      <input class="sb" placeholder="Search CVE or asset..." .value=${this._q} @input=${(e: Event) => { this._q = (e.target as HTMLInputElement).value; }}/>
-      <div class="tabs">
-        <span class="tab ${this._filter === 'all' ? 'active' : ''}" @click=${() => { this._filter = 'all'; }}>All (${this._data.length})</span>
-        <span class="tab ${this._filter === 'kev' ? 'active' : ''}" @click=${() => { this._filter = 'kev'; }}>CISA KEV</span>
-        <span class="tab ${this._filter === 'p1' ? 'active' : ''}" @click=${() => { this._filter = 'p1'; }}>P1</span>
-        <span class="tab ${this._filter === 'p2' ? 'active' : ''}" @click=${() => { this._filter = 'p2'; }}>P2</span>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="sv" style="color:#ef4444">${p1}</div><div class="sl">P1 Critical</div></div>
-        <div class="stat"><div class="sv" style="color:#f97316">${p2}</div><div class="sl">P2 High</div></div>
-        <div class="stat"><div class="sv">${filtered.length}</div><div class="sl">Showing</div></div>
-      </div>
-      <svg viewBox="0 0 ${w} ${h}">
-        <text x="${w/2}" y="14" text-anchor="middle" class="axis-label">CVSS vs EPSS (bubble = asset criticality)</text>
-        ${[0,2,4,6,8,10].map(v => html`<line x1="${xScale(v)}" y1="${pad}" x2="${xScale(v)}" y2="${h-pad}" class="grid-line"/><text x="${xScale(v)}" y="${h-pad+14}" text-anchor="middle" class="axis-label">${v}</text>`)}
-        ${[0,25,50,75,100].map(v => html`<line x1="${pad}" y1="${yScale(v)}" x2="${w-pad}" y2="${yScale(v)}" class="grid-line"/><text x="${pad-4}" y="${yScale(v)+3}" text-anchor="end" class="axis-label">${v}%</text>`)}
-        <text x="${w/2}" y="${h-2}" text-anchor="middle" class="axis-label">CVSS Score</text>
-        <text x="6" y="${h/2}" text-anchor="middle" class="axis-label" transform="rotate(-90,6,${h/2})">EPSS %</text>
-        ${filtered.map(v => html`<circle cx="${xScale(v.cvss)}" cy="${yScale(v.epss)}" r="${r(v)}" fill="${color(v)}" fill-opacity="${v.kev ? 0.9 : 0.6}" stroke="${color(v)}" stroke-width="1"><title>${v.cve} | CVSS ${v.cvss} | EPSS ${v.epss}% | ${v.asset} | ${v.priority}</title></circle>`)}
-      </svg>
-      <div class="items">${filtered.slice(0, 8).map(v => html`<div class="item">
-        <div class="item-head"><span class="item-name">${v.cve} | ${v.asset}</span><span><span class="badge ${v.priority.toLowerCase()}">${v.priority}</span>${v.kev ? html` <span class="badge kev">KEV</span>` : nothing}</span></div>
-        <div style="color:#94a3b8">CVSS ${v.cvss} | EPSS ${v.epss}% | ${v.detail}</div>
-      </div>`)}</div>
-    </div>`;
+    const items = this._getFiltered();
+    const crit = items.filter(i => i.severity === 'critical').length;
+    const high = items.filter(i => i.severity === 'high').length;
+    const open = items.filter(i => i.status === 'open' || i.status === 'in-progress').length;
+    const resolved = items.filter(i => i.status === 'resolved').length;
+    return html`
+      <div class="panel">
+        <div class="pt">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          Vuln Priority
+        </div>
+        <div class="score-grid">
+          <div class="score-card"><div class="score-val">${items.length}</div><div class="score-lbl">Total Items</div></div>
+          <div class="score-card"><div class="score-val" style="color:#ef4444">${crit}</div><div class="score-lbl">Critical</div></div>
+          <div class="score-card"><div class="score-val" style="color:#f97316">${high}</div><div class="score-lbl">High</div></div>
+          <div class="score-card"><div class="score-val" style="color:#f59e0b">${open}</div><div class="score-lbl">Open</div></div>
+          <div class="score-card"><div class="score-val" style="color:#22c55e">${resolved}</div><div class="score-lbl">Resolved</div></div>
+        </div>
+        <div class="controls-row">
+          <input class="search-box" type="text" placeholder="Search by title, description, category, assignee..." .value=${this._searchQuery} @input=${(e: Event) => { this._searchQuery = (e.target as HTMLInputElement).value; }} />
+          <select class="filter-select" @change=${(e: Event) => { this._severityFilter = (e.target as HTMLSelectElement).value as Severity | 'all'; }}>
+            <option value="all">All Severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option><option value="info">Info</option>
+          </select>
+          <select class="filter-select" @change=${(e: Event) => { this._statusFilter = (e.target as HTMLSelectElement).value as Status | 'all'; }}>
+            <option value="all">All Status</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="resolved">Resolved</option><option value="escalated">Escalated</option><option value="acknowledged">Acknowledged</option><option value="false-positive">False Positive</option>
+          </select>
+          <select class="filter-select" @change=${(e: Event) => { this._sortField = (e.target as HTMLSelectElement).value as 'severity' | 'date' | 'title'; }}>
+            <option value="date">Sort: Date</option><option value="severity">Sort: Severity</option><option value="title">Sort: Title</option>
+          </select>
+          <button class="btn" @click=${() => { this._sortAsc = !this._sortAsc; }}>${this._sortAsc ? '\u2191' : '\u2193'}</button>
+          <button class="btn primary" @click=${() => { this._activeTab = 'new'; }}>New Entry</button>
+          <button class="btn" @click=${() => this._exportJSON()}>JSON</button>
+          <button class="btn" @click=${() => this._exportCSV()}>CSV</button>
+        </div>
+        <div class="tabs">
+          <button class="tab ${this._activeTab === 'overview' ? 'active' : ''}" @click=${() => { this._activeTab = 'overview'; }}>Overview</button>
+          <button class="tab ${this._activeTab === 'details' ? 'active' : ''}" @click=${() => { this._activeTab = 'details'; }}>Details</button>
+          <button class="tab ${this._activeTab === 'trends' ? 'active' : ''}" @click=${() => { this._activeTab = 'trends'; }}>Trends</button>
+          <button class="tab ${this._activeTab === 'history' ? 'active' : ''}" @click=${() => { this._activeTab = 'history'; }}>History</button>
+          <button class="tab ${this._activeTab === 'new' ? 'active' : ''}" @click=${() => { this._activeTab = 'new'; }}>New</button>
+        </div>
+        ${this._activeTab === 'overview' ? html`
+          ${this._renderDonut()}
+          <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+            ${this._renderGauge(open, this._items.length, 'Open Items', open > high ? '#f97316' : '#22c55e')}
+            ${this._renderGauge(resolved, this._items.length, 'Resolved', '#22c55e')}
+            ${this._renderGauge(crit, this._items.length, 'Critical', '#ef4444')}
+          </div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Recent Items</div>
+          <div class="list">
+            ${items.slice(0, 5).map(i => html`
+              <div class="item" @click=${() => this._toggle(i.id)}>
+                <div class="item-header"><div class="item-title">${i.title}</div><div class="badges"><span class="badge ${this._getSevBadge(i.severity)}">${i.severity}</span><span class="badge ${this._getSevBadge(i.status)}">${i.status}</span></div></div>
+                <div class="item-meta">${i.description.substring(0, 100)}${i.description.length > 100 ? '...' : ''}</div>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        ${this._activeTab === 'details' ? html`
+          <div class="list">
+            ${items.map(i => html`
+              <div class="item ${this._expandedId === i.id ? 'expanded' : ''}" @click=${() => this._toggle(i.id)}>
+                <div class="item-header"><div class="item-title">${i.title}</div><div class="badges"><span class="badge ${this._getSevBadge(i.severity)}">${i.severity}</span><span class="badge ${this._getSevBadge(i.status)}">${i.status}</span><span class="badge ${this._getSevBadge(i.priority)}">${i.priority}</span></div></div>
+                <div class="item-meta">${i.description.substring(0, 120)}${i.description.length > 120 ? '...' : ''}</div>
+                ${this._expandedId === i.id ? html`
+                  <div class="item-detail">
+                    <div style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:10px;">${i.description}</div>
+                    <div class="detail-grid">
+                      <div class="score-card"><div class="score-val" style="font-size:14px;">${i.category}</div><div class="score-lbl">Category</div></div>
+                      <div class="score-card"><div class="score-val" style="font-size:14px;">${i.source}</div><div class="score-lbl">Source</div></div>
+                      <div class="score-card"><div class="score-val" style="font-size:14px;">${i.assignee}</div><div class="score-lbl">Assignee</div></div>
+                      <div class="score-card"><div class="score-val" style="font-size:14px;">${i.slaMinutes}m</div><div class="score-lbl">SLA</div></div>
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">Created: ${new Date(i.createdAt).toLocaleString()} | Tags: ${i.tags.join(', ')}</div>
+                    ${i.stepsTaken.length ? html`<div style="margin-bottom:8px;font-size:12px;font-weight:600;">Steps Taken:</div>${i.stepsTaken.map(s => html`<div style="font-size:11px;color:#94a3b8;padding:2px 0;">- ${s}</div>`)}` : nothing}
+                    <div style="margin-top:10px;display:flex;gap:6px;">
+                      <button class="btn success" @click=${(e: Event) => { e.stopPropagation(); }}>Resolve</button>
+                      <button class="btn" @click=${(e: Event) => { e.stopPropagation(); }}>Escalate</button>
+                      <button class="btn" @click=${(e: Event) => { e.stopPropagation(); }}>Reassign</button>
+                      <button class="btn danger" @click=${(e: Event) => { e.stopPropagation(); }}>Dismiss</button>
+                    </div>
+                  </div>
+                ` : nothing}
+              </div>
+            `)}
+            ${items.length === 0 ? html`<div class="empty-state">No items match the current filters</div>` : nothing}
+          </div>
+        ` : nothing}
+        ${this._activeTab === 'trends' ? html`
+          ${this._renderBarChart()}
+          <table class="history-table"><thead><tr><th>Date</th><th>Opened</th><th>Resolved</th><th>Critical</th><th>Net Change</th></tr></thead><tbody>
+            ${this._trends.map(t => html`<tr><td>${t.date}</td><td>${t.opened}</td><td>${t.resolved}</td><td style="color:${t.critical > 0 ? '#ef4444' : '#22c55e'}">${t.critical}</td><td style="color:${t.opened - t.resolved > 0 ? '#ef4444' : '#22c55e'}">${t.opened - t.resolved > 0 ? '+' : ''}${t.opened - t.resolved}</td></tr>`)}
+          </tbody></table>
+        ` : nothing}
+        ${this._activeTab === 'history' ? html`
+          <table class="history-table"><thead><tr><th>Timestamp</th><th>Action</th><th>User</th><th>Details</th></tr></thead><tbody>
+            ${this._history.map(h => html`<tr><td>${h.timestamp}</td><td><span class="badge badge-info">${h.action}</span></td><td>${h.user}</td><td>${h.details}</td></tr>`)}
+          </tbody></table>
+        ` : nothing}
+        ${this._activeTab === 'new' ? html`
+          <div class="form-section">
+            <div class="form-title">Create New Vuln Priority Entry</div>
+            <div class="form-grid">
+              <div class="form-field"><label class="form-label">Title</label><input class="form-input" type="text" placeholder="Enter finding title..."/></div>
+              <div class="form-field"><label class="form-label">Severity</label><select class="form-input"><option>Critical</option><option>High</option><option>Medium</option><option>Low</option><option>Info</option></select></div>
+              <div class="form-field"><label class="form-label">Category</label><select class="form-input"><option>Security</option><option>Network</option><option>Access</option><option>Compliance</option><option>Operations</option></select></div>
+              <div class="form-field"><label class="form-label">Source</label><select class="form-input"><option>SIEM</option><option>EDR</option><option>Scanner</option><option>Audit</option><option>Manual</option></select></div>
+              <div class="form-field"><label class="form-label">Priority</label><select class="form-input"><option>P1</option><option>P2</option><option>P3</option><option>P4</option><option>P5</option></select></div>
+              <div class="form-field"><label class="form-label">Assignee</label><input class="form-input" type="text" placeholder="Team or person..."/></div>
+              <div class="form-field"><label class="form-label">SLA (minutes)</label><input class="form-input" type="number" placeholder="60"/></div>
+              <div class="form-field"><label class="form-label">Tags</label><input class="form-input" type="text" placeholder="Comma-separated tags..."/></div>
+              <div class="form-field" style="grid-column: 1 / -1;"><label class="form-label">Description</label><textarea class="form-input" rows="3" placeholder="Detailed description of the finding..."></textarea></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button class="btn success" @click=${() => { this._activeTab = 'details'; }}>Create Entry</button>
+              <button class="btn" @click=${() => { this._activeTab = 'overview'; }}>Cancel</button>
+            </div>
+          </div>
+        ` : nothing}
+      </div>`;
   }
 }
 declare global { interface HTMLElementTagNameMap { 'sc-vuln-priority': ScVulnPriority; } }

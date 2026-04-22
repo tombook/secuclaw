@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Capture the successful pattern: When creating Lit Elements components with extensive CSS and HTML template strings, use run_shell with heredoc syntax (cat > file << 'ENDOFFILE') instead of write_file. This workaround reliably handles multi-line TypeScript content with template literals.",
+  "created_by": "openspace",
+  "tags": []
+}

@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "When write_file fails with 'unknown error', fall back to shell-based file creation using heredocs, echo, or printf redirection as a reliable alternative.",
+  "created_by": "openspace",
+  "tags": []
+}

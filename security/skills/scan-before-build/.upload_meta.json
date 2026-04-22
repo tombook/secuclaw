@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "A reconnaissance-first workflow that scans existing file structures before creating new modules, revealing complete implementations to avoid redundant work.",
+  "created_by": "openspace",
+  "tags": []
+}

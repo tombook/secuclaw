@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Switch from write_file to run_shell heredoc syntax after repeated write_file failures for reliable multi-component file creation.",
+  "created_by": "openspace",
+  "tags": []
+}

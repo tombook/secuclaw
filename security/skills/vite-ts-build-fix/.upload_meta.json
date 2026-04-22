@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "A reusable workflow for diagnosing and fixing Vite/TypeScript build errors by searching for common syntax issues with grep and fixing them with sed or file rewriting.",
+  "created_by": "openspace",
+  "tags": []
+}

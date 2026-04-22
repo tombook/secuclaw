@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "A batched component creation workflow that builds 2-4 components per iteration, defers index/routing updates to the end, and uses incremental verification between batches.",
+  "created_by": "openspace",
+  "tags": []
+}

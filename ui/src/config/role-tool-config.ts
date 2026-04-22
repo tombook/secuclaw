@@ -48,6 +48,12 @@ export interface RoleToolConfig {
 // ─── Tool Definitions ─────────────────────────────────────────
 
 const T = {
+  "ransomware-simulator": { id: "ransomware-simulator", label: "Ransomware Simulator", icon: "🦹‍♂️", priority: 1 },
+  "blueteam-defense-simulator": { id: "blueteam-defense-simulator", label: "Defense Simulator", icon: "🛡️", priority: 1 },
+  "redteam-operations": { id: "redteam-operations", label: "Red Team Ops", icon: "🎯", priority: 1 },
+  "pentest-workflow": { id: "pentest-workflow", label: "Pen Test Workflow", icon: "🐉", priority: 2 },
+  "mitre-attack-heatmap": { id: "mitre-attack-heatmap", label: "MITRE ATT&CK Heatmap", icon: "🎯", priority: 2 },
+  "attack-path-visualization": { id: "attack-path-visualization", label: "Attack Path Visualization", icon: "🗺️", priority: 2 },
   // ─── 监控 & 运营 ────────────────────────
   alertQueue:        { id: 'alert-queue',      label: '告警队列',      icon: 'BellRing',     priority: 1 },
   soarExec:          { id: 'soar-exec',        label: 'SOAR 剧本',     icon: 'Play',         priority: 2 },

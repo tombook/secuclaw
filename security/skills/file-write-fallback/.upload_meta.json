@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Use run_shell with heredoc syntax as a fallback when write_file encounters unknown errors on file paths.",
+  "created_by": "openspace",
+  "tags": []
+}

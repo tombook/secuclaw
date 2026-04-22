@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Use a template-driven generator script to batch-create multiple similar web components, ensuring complete files and consistent implementation across all components.",
+  "created_by": "openspace",
+  "tags": []
+}

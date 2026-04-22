@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "When creating new dashboard components in an established codebase, read existing components first to understand CSS conventions and patterns before writing new code.",
+  "created_by": "openspace",
+  "tags": []
+}

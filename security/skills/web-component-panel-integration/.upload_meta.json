@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "When creating Web Component panel files in a Lit-based project, always update both bootstrap.ts for imports and tool-panel-registry.ts for definitions in a single workflow step.",
+  "created_by": "openspace",
+  "tags": []
+}

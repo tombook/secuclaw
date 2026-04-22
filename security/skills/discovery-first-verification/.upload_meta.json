@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "A systematic workflow for large codebases that explores existing structure before building, verifying coverage before constructing new features.",
+  "created_by": "openspace",
+  "tags": []
+}

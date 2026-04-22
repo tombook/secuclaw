@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Verify existing implementations first, but for 'continue evolving' tasks distinguish between cataloging existing code and actually modifying/enhancing it.",
+  "created_by": "openspace",
+  "tags": []
+}

@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Use run_shell with heredoc syntax as a reliable fallback when write_file operations fail for multi-line text files.",
+  "created_by": "openspace",
+  "tags": []
+}

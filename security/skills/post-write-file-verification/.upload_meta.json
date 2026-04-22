@@ -1,0 +1,7 @@
+{
+  "origin": "captured",
+  "parent_skill_ids": [],
+  "change_summary": "Capture verification pattern: after file operations, use run_shell with 'wc -l' and 'head -n' to verify file content rather than relying on read_file results which may show stale output or empty state during concurrent writes.",
+  "created_by": "openspace",
+  "tags": []
+}
