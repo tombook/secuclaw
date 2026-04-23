@@ -6880,6 +6880,191 @@ export class ScDarkSimEngine extends LitElement {
     </section>`;
   }
 
+
+  // === Security Investment Heatmap ===
+  private _initDarkSimEngineInvestmentHeatmap() {
+    this._dark_sim_engineInvestmentAreas = [
+      { area: 'Endpoint Protection', q1: 450000, q2: 480000, q3: 520000, q4: 550000, budget: 2000000, roi: 3.2, trend: 'increasing', priority: 'high' },
+      { area: 'Cloud Security', q1: 380000, q2: 420000, q3: 460000, q4: 500000, budget: 1760000, roi: 2.8, trend: 'increasing', priority: 'critical' },
+      { area: 'Identity & Access', q1: 290000, q2: 300000, q3: 310000, q4: 320000, budget: 1220000, roi: 4.1, trend: 'stable', priority: 'high' },
+      { area: 'Vulnerability Mgmt', q1: 180000, q2: 190000, q3: 200000, q4: 210000, budget: 780000, roi: 3.5, trend: 'increasing', priority: 'medium' },
+      { area: 'Security Training', q1: 120000, q2: 130000, q3: 125000, q4: 140000, budget: 515000, roi: 5.2, trend: 'stable', priority: 'medium' },
+      { area: 'Incident Response', q1: 220000, q2: 230000, q3: 240000, q4: 250000, budget: 940000, roi: 2.5, trend: 'increasing', priority: 'high' },
+      { area: 'GRC & Compliance', q1: 160000, q2: 165000, q3: 170000, q4: 175000, budget: 670000, roi: 1.8, trend: 'stable', priority: 'medium' },
+      { area: 'Network Security', q1: 310000, q2: 300000, q3: 290000, q4: 280000, budget: 1180000, roi: 2.2, trend: 'decreasing', priority: 'high' },
+      { area: 'AppSec & DevSecOps', q1: 200000, q2: 230000, q3: 260000, q4: 290000, budget: 980000, roi: 3.8, trend: 'increasing', priority: 'critical' },
+      { area: 'Data Protection', q1: 170000, q2: 185000, q3: 200000, q4: 215000, budget: 770000, roi: 2.9, trend: 'increasing', priority: 'high' }
+    ];
+    this._dark_sim_engineInvestmentRebalance = this._recommendDarkSimEngineRebalance();
+    this._dark_sim_engineInvestmentROI = this._calcDarkSimEngineInvestmentROI();
+  }
+
+  private _recommendDarkSimEngineRebalance(): Array<Record<string, unknown>> {
+    const totalBudget = this._dark_sim_engineInvestmentAreas.reduce((sum: number, a: Record<string, unknown>) => sum + Number(a.budget || 0), 0);
+    return this._dark_sim_engineInvestmentAreas
+      .filter((a: Record<string, unknown>) => Number(a.roi) < 3.0 && String(a.trend) === 'decreasing')
+      .map((a: Record<string, unknown>) => ({
+        area: a.area, currentAllocation: Number(a.budget),
+        currentPercent: Math.round(Number(a.budget) / totalBudget * 100),
+        recommendedShift: -5, targetArea: 'AppSec & DevSecOps',
+        estimatedROIImpact: '+0.8', riskOfReduction: 'low'
+      }));
+  }
+
+  private _calcDarkSimEngineInvestmentROI(): Array<Record<string, unknown>> {
+    return this._dark_sim_engineInvestmentAreas.map((a: Record<string, unknown>) => ({
+      area: a.area, annualInvestment: Number(a.budget),
+      estimatedLossPrevention: Math.round(Number(a.budget) * Number(a.roi)),
+      netROI: Number(a.roi), costPerEmployee: Math.round(Number(a.budget) / 850),
+      industryAverage: Math.round(Number(a.roi) * 0.85),
+      performanceVsIndustry: Math.round((Number(a.roi) / (Number(a.roi) * 0.85) - 1) * 100)
+    })).sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.netROI) - Number(a.netROI));
+  }
+
+
+  // === Security Architecture Evolution Tracker ===
+  private _initDarkSimEngineArchEvolution() {
+    this._dark_sim_engineArchComponents = [
+      { componentId: 'arch-001', name: 'Zero Trust Network', version: '3.2', maturity: 'optimized', dependencies: 8, riskScore: 12, techDebt: 'low', lastReview: '2026-04-20', nextReview: '2026-07-20', owner: 'Network Arch' },
+      { componentId: 'arch-002', name: 'Micro-segmentation Fabric', version: '2.1', maturity: 'managed', dependencies: 5, riskScore: 25, techDebt: 'medium', lastReview: '2026-04-15', nextReview: '2026-07-15', owner: 'Network Arch' },
+      { componentId: 'arch-003', name: 'Cloud Security Broker', version: '4.0', maturity: 'optimized', dependencies: 12, riskScore: 8, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Cloud Arch' },
+      { componentId: 'arch-004', name: 'Identity Fabric', version: '2.5', maturity: 'managed', dependencies: 15, riskScore: 30, techDebt: 'medium', lastReview: '2026-04-18', nextReview: '2026-07-18', owner: 'Identity Arch' },
+      { componentId: 'arch-005', name: 'Data Protection Suite', version: '3.0', maturity: 'defined', dependencies: 7, riskScore: 42, techDebt: 'high', lastReview: '2026-04-10', nextReview: '2026-07-10', owner: 'Data Arch' },
+      { componentId: 'arch-006', name: 'SIEM/SOAR Platform', version: '5.1', maturity: 'optimized', dependencies: 20, riskScore: 15, techDebt: 'low', lastReview: '2026-04-21', nextReview: '2026-07-21', owner: 'SOC Arch' },
+      { componentId: 'arch-007', name: 'Container Security Stack', version: '2.0', maturity: 'managed', dependencies: 6, riskScore: 28, techDebt: 'medium', lastReview: '2026-04-19', nextReview: '2026-07-19', owner: 'Platform Arch' },
+      { componentId: 'arch-008', name: 'API Gateway Security', version: '3.5', maturity: 'managed', dependencies: 10, riskScore: 22, techDebt: 'low', lastReview: '2026-04-17', nextReview: '2026-07-17', owner: 'App Arch' },
+      { componentId: 'arch-009', name: 'Secrets Management', version: '4.2', maturity: 'optimized', dependencies: 18, riskScore: 10, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Security Eng' },
+      { componentId: 'arch-010', name: 'Threat Intel Platform', version: '2.8', maturity: 'managed', dependencies: 9, riskScore: 20, techDebt: 'medium', lastReview: '2026-04-16', nextReview: '2026-07-16', owner: 'Threat Intel' }
+    ];
+    this._dark_sim_engineArchRoadmap = this._planDarkSimEngineArchRoadmap();
+    this._dark_sim_engineArchRiskSurface = this._mapDarkSimEngineArchRiskSurface();
+    this._dark_sim_engineArchTechDebt = this._assessDarkSimEngineTechDebt();
+    this._dark_sim_engineArchEvolutionTimeline = this._buildDarkSimEngineEvolutionTimeline();
+  }
+
+  private _planDarkSimEngineArchRoadmap(): Array<Record<string, unknown>> {
+    return [
+      { phase: 'Q2 2026', initiatives: ['Zero Trust Phase 3', 'CSPM Enhancement', 'Container Runtime Protection'], budget: 850000, status: 'in-progress', completion: 45 },
+      { phase: 'Q3 2026', initiatives: ['SASE Deployment', 'AI-Driven Detection', 'Data Mesh Security'], budget: 1200000, status: 'planned', completion: 0 },
+      { phase: 'Q4 2026', initiatives: ['Identity Federation', 'Quantum-Ready Crypto', 'XDR Integration'], budget: 950000, status: 'planned', completion: 0 },
+      { phase: 'Q1 2027', initiatives: ['Autonomous SOC', 'Supply Chain Security', 'Zero Trust Phase 4'], budget: 1100000, status: 'planned', completion: 0 }
+    ];
+  }
+
+  private _mapDarkSimEngineArchRiskSurface(): Array<Record<string, unknown>> {
+    return [
+      { riskArea: 'External Attack Surface', attackVectors: 234, exposedServices: 12, shadowIT: 8, riskScore: 68, mitigationStatus: 'active' },
+      { riskArea: 'Internal Lateral Movement', attackVectors: 89, exposedServices: 45, shadowIT: 3, riskScore: 42, mitigationStatus: 'monitored' },
+      { riskArea: 'Cloud Misconfiguration', attackVectors: 156, exposedServices: 7, shadowIT: 15, riskScore: 55, mitigationStatus: 'active' },
+      { riskArea: 'Third-Party Integration', attackVectors: 67, exposedServices: 23, shadowIT: 12, riskScore: 73, mitigationStatus: 'review-needed' },
+      { riskArea: 'Data Exfiltration Path', attackVectors: 45, exposedServices: 5, shadowIT: 2, riskScore: 38, mitigationStatus: 'monitored' },
+      { riskArea: 'Supply Chain Dependencies', attackVectors: 312, exposedServices: 34, shadowIT: 0, riskScore: 61, mitigationStatus: 'active' }
+    ];
+  }
+
+  private _assessDarkSimEngineTechDebt(): Array<Record<string, unknown>> {
+    return this._dark_sim_engineArchComponents
+      .filter((c: Record<string, unknown>) => String(c.techDebt) !== 'low')
+      .map((c: Record<string, unknown>) => ({
+        componentId: c.componentId, componentName: c.name, version: c.version,
+        debtLevel: c.techDebt, debtItems: Math.floor(3 + Math.random() * 8),
+        estimatedRemediation: `${Math.floor(2 + Math.random() * 6)} weeks`,
+        remediationCost: Math.round(50000 + Math.random() * 200000),
+        businessImpact: String(c.techDebt) === 'high' ? 'high' : 'medium',
+        priority: String(c.techDebt) === 'high' ? 1 : String(c.techDebt) === 'medium' ? 2 : 3
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.priority) - Number(b.priority));
+  }
+
+  private _buildDarkSimEngineEvolutionTimeline(): Array<Record<string, unknown>> {
+    return [
+      { year: '2023', milestone: 'Security Baseline Established', components: 4, maturityAvg: 'initial', investment: 1200000 },
+      { year: '2024', milestone: 'Zero Trust Phase 1', components: 6, maturityAvg: 'developing', investment: 1800000 },
+      { year: '2025', milestone: 'Cloud-Native Security', components: 8, maturityAvg: 'defined', investment: 2200000 },
+      { year: '2026', milestone: 'AI-Augmented Security', components: 10, maturityAvg: 'managed', investment: 2800000 },
+      { year: '2027', milestone: 'Autonomous Defense Target', components: 12, maturityAvg: 'optimized', investment: 3200000 }
+    ];
+  }
+
+  // === Security Design Patterns Library ===
+  private _initDarkSimEngineDesignPatterns() {
+    this._dark_sim_engineDesignPatterns = [
+      { patternId: 'dp-001', name: 'Defense in Depth', category: 'architectural', applicability: 95, implementation: 'deployed', controls: 12, layers: 5, reference: 'NIST SP 800-53' },
+      { patternId: 'dp-002', name: 'Least Privilege Access', category: 'access-control', applicability: 98, implementation: 'partial', controls: 8, layers: 3, reference: 'NIST SP 800-53 AC-6' },
+      { patternId: 'dp-003', name: 'Secure-by-Default', category: 'development', applicability: 90, implementation: 'deployed', controls: 15, layers: 4, reference: 'OWASP ASVS' },
+      { patternId: 'dp-004', name: 'Zero Trust Architecture', category: 'architectural', applicability: 88, implementation: 'in-progress', controls: 20, layers: 6, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-005', name: 'Immutable Infrastructure', category: 'deployment', applicability: 75, implementation: 'partial', controls: 6, layers: 2, reference: 'CIS Benchmark' },
+      { patternId: 'dp-006', name: 'Break-Glass Procedure', category: 'operations', applicability: 82, implementation: 'deployed', controls: 4, layers: 2, reference: 'ITIL v4' },
+      { patternId: 'dp-007', name: 'Data Classification Matrix', category: 'data', applicability: 92, implementation: 'partial', controls: 10, layers: 3, reference: 'ISO 27001 A.8' },
+      { patternId: 'dp-008', name: 'Threat Modeling Pipeline', category: 'development', applicability: 78, implementation: 'deployed', controls: 8, layers: 3, reference: 'STRIDE/Microsoft' },
+      { patternId: 'dp-009', name: 'Micro-segmentation', category: 'network', applicability: 85, implementation: 'in-progress', controls: 14, layers: 4, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-010', name: 'Security Chaos Engineering', category: 'resilience', applicability: 65, implementation: 'planned', controls: 5, layers: 2, reference: 'Chaos Engineering' }
+    ];
+    this._dark_sim_enginePatternCompliance = this._assessDarkSimEnginePatternCompliance();
+    this._dark_sim_enginePatternGaps = this._identifyDarkSimEnginePatternGaps();
+  }
+
+  private _assessDarkSimEnginePatternCompliance(): Array<Record<string, unknown>> {
+    return this._dark_sim_engineDesignPatterns.map((pat: Record<string, unknown>) => ({
+      patternId: pat.patternId, patternName: pat.name,
+      compliancePercent: String(pat.implementation) === 'deployed' ? 100 : String(pat.implementation) === 'in-progress' ? Math.round(40 + Math.random() * 40) : Math.round(10 + Math.random() * 30),
+      controlCoverage: Math.round(Number(pat.controls) / 20 * 100),
+      layerDepth: pat.layers, riskMitigation: Math.round(Number(pat.applicability) * 0.8),
+      maturityLevel: String(pat.implementation) === 'deployed' ? 'level-4' : String(pat.implementation) === 'in-progress' ? 'level-3' : String(pat.implementation) === 'partial' ? 'level-2' : 'level-1'
+    }));
+  }
+
+  private _identifyDarkSimEnginePatternGaps(): Array<Record<string, unknown>> {
+    return this._dark_sim_engineDesignPatterns
+      .filter((p: Record<string, unknown>) => String(p.implementation) !== 'deployed')
+      .map((p: Record<string, unknown>) => ({
+        patternId: p.patternId, patternName: p.name, currentStatus: p.implementation,
+        targetStatus: 'deployed', gapDescription: `${String(p.implementation)} implementation needs to reach deployed state`,
+        estimatedEffort: `${Math.floor(2 + Math.random() * 8)} sprints`,
+        dependencies: Math.floor(1 + Math.random() * 4), blockers: Math.floor(Math.random() * 3),
+        priority: Number(p.applicability) > 85 ? 'high' : 'medium'
+      }));
+  }
+
+  // === Security Capacity Planning Model ===
+  private _initDarkSimEngineCapacityPlanning() {
+    this._dark_sim_engineCapacityModels = [
+      { resourceId: 'cap-001', resourceType: 'SIEM EPS', currentCapacity: 50000, peakUsage: 42000, projectedGrowth: 0.15, threshold: 0.8, unit: 'events/sec', costPerUnit: 0.002 },
+      { resourceId: 'cap-002', resourceType: 'Storage (Logs)', currentCapacity: 50, peakUsage: 38, projectedGrowth: 0.25, threshold: 0.75, unit: 'TB', costPerUnit: 120 },
+      { resourceId: 'cap-003', resourceType: 'SOC Analysts', currentCapacity: 12, peakUsage: 10, projectedGrowth: 0.10, threshold: 0.85, unit: 'FTE', costPerUnit: 150000 },
+      { resourceId: 'cap-004', resourceType: 'Vulnerability Scans', currentCapacity: 500, peakUsage: 380, projectedGrowth: 0.20, threshold: 0.80, unit: 'scans/day', costPerUnit: 0.5 },
+      { resourceId: 'cap-005', resourceType: 'API Rate Limits', currentCapacity: 100000, peakUsage: 67000, projectedGrowth: 0.30, threshold: 0.70, unit: 'calls/min', costPerUnit: 0.0001 },
+      { resourceId: 'cap-006', resourceType: 'Threat Hunt Sessions', currentCapacity: 20, peakUsage: 15, projectedGrowth: 0.15, threshold: 0.75, unit: 'sessions/week', costPerUnit: 500 },
+      { resourceId: 'cap-007', resourceType: 'Incident Response', currentCapacity: 5, peakUsage: 3, projectedGrowth: 0.10, threshold: 0.60, unit: 'concurrent', costPerUnit: 50000 },
+      { resourceId: 'cap-008', resourceType: 'Compliance Audits', currentCapacity: 4, peakUsage: 3, projectedGrowth: 0.05, threshold: 0.75, unit: 'audits/quarter', costPerUnit: 75000 }
+    ];
+    this._dark_sim_engineCapacityForecast = this._forecastDarkSimEngineCapacity();
+    this._dark_sim_engineCapacityAlerts = this._checkDarkSimEngineCapacityAlerts();
+  }
+
+  private _forecastDarkSimEngineCapacity(): Array<Record<string, unknown>> {
+    return Array.from({ length: 6 }, (_, i) => ({
+      period: `2026-${String(i + 7).padStart(2, '0')}`,
+      projectedLoad: Math.round(70 + i * 5 + Math.random() * 10),
+      availableCapacity: Math.round(85 + i * 2 + Math.random() * 5),
+      riskOfExhaustion: Math.round(10 + i * 8 + Math.random() * 10),
+      recommendation: i > 3 ? 'scale-up-recommended' : 'monitor',
+      estimatedCost: Math.round(50000 + i * 15000 + Math.random() * 10000)
+    }));
+  }
+
+  private _checkDarkSimEngineCapacityAlerts(): Array<Record<string, unknown>> {
+    return this._dark_sim_engineCapacityModels
+      .filter((c: Record<string, unknown>) => Number(c.peakUsage) / Number(c.currentCapacity) > Number(c.threshold) * 0.9)
+      .map((c: Record<string, unknown>) => ({
+        resourceId: c.resourceId, resourceType: c.resourceType,
+        utilization: Math.round(Number(c.peakUsage) / Number(c.currentCapacity) * 100),
+        threshold: Math.round(Number(c.threshold) * 100),
+        timeToExhaust: `${Math.round((1 - Number(c.peakUsage) / Number(c.currentCapacity)) / Number(c.projectedGrowth) * 12)} months`,
+        action: 'scale-required', estimatedCost: Math.round(Number(c.currentCapacity) * Number(c.costPerUnit) * 1.5)
+      }));
+  }
+
   render() {
     return html`
       <div class="sim-engine">

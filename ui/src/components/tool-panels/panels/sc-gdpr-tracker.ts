@@ -6822,6 +6822,362 @@ private _executionHistory: ExecutionRecord[] = [
     </section>`;
   }
 
+
+  // === Security Metrics Normalization Engine ===
+  private _initGdprTrackerMetricsEngine() {
+    this._gdpr_trackerNormalizationRules = [
+      { metricId: 'mttr', sourceFormat: 'minutes', targetFormat: 'hours', transformFn: 'divide(60)', teamScope: 'all', benchmarkAlign: 'NIST' },
+      { metricId: 'mttd', sourceFormat: 'seconds', targetFormat: 'minutes', transformFn: 'divide(60)', teamScope: 'soc', benchmarkAlign: 'SANS' },
+      { metricId: 'vuln-count', sourceFormat: 'total', targetFormat: 'per-asset', transformFn: 'divide(asset_count)', teamScope: 'vuln-mgmt', benchmarkAlign: 'CIS' },
+      { metricId: 'patch-coverage', sourceFormat: 'percentage', targetFormat: 'percentage', transformFn: 'identity', teamScope: 'infra', benchmarkAlign: 'ISO27001' },
+      { metricId: 'phishing-click-rate', sourceFormat: 'percentage', targetFormat: 'percentage', transformFn: 'identity', teamScope: 'awareness', benchmarkAlign: 'NIST' },
+      { metricId: 'incident-count', sourceFormat: 'total', targetFormat: 'per-month', transformFn: 'divide(days/30)', teamScope: 'soc', benchmarkAlign: 'SANS' },
+      { metricId: 'coverage-score', sourceFormat: 'raw', targetFormat: 'percentage', transformFn: 'multiply(100)', teamScope: 'governance', benchmarkAlign: 'COBIT' },
+      { metricId: 'risk-score', sourceFormat: '0-100', targetFormat: '0-100', transformFn: 'identity', teamScope: 'risk', benchmarkAlign: 'FAIR' }
+    ];
+    this._gdpr_trackerIndustryBenchmarks = this._loadGdprTrackerBenchmarks();
+    this._gdpr_trackerKpiCatalog = this._defineGdprTrackerKpiCatalog();
+    this._gdpr_trackerMetricOwnership = this._buildGdprTrackerMetricOwnership();
+    this._gdpr_trackerNormTrends = this._calcGdprTrackerNormTrends();
+  }
+
+  private _loadGdprTrackerBenchmarks(): Array<Record<string, unknown>> {
+    return [
+      { name: 'SANS 2026 SOC Metrics', source: 'SANS Institute', metrics: 42, lastUpdated: '2026-03-15', relevance: 'high', alignment: 87 },
+      { name: 'NIST CSF 2.0 KPIs', source: 'NIST', metrics: 35, lastUpdated: '2026-02-28', relevance: 'high', alignment: 92 },
+      { name: 'CIS Controls v8 Metrics', source: 'CIS', metrics: 28, lastUpdated: '2026-01-20', relevance: 'medium', alignment: 78 },
+      { name: 'ISO 27001:2022 Annex A', source: 'ISO', metrics: 93, lastUpdated: '2025-12-10', relevance: 'high', alignment: 85 },
+      { name: 'FAIR Model Quantitative', source: 'FAIR Institute', metrics: 18, lastUpdated: '2026-04-01', relevance: 'medium', alignment: 71 }
+    ];
+  }
+
+  private _defineGdprTrackerKpiCatalog(): Array<Record<string, unknown>> {
+    return [
+      { kpiId: 'kpi-01', name: 'Mean Time to Detect', unit: 'minutes', target: '<15', current: 12.3, trend: 'improving', owner: 'SOC Lead', frequency: 'daily' },
+      { kpiId: 'kpi-02', name: 'Mean Time to Respond', unit: 'minutes', target: '<60', current: 45.7, trend: 'improving', owner: 'SOC Lead', frequency: 'daily' },
+      { kpiId: 'kpi-03', name: 'Patch Compliance Rate', unit: 'percentage', target: '>95', current: 91.2, trend: 'stable', owner: 'IT Ops', frequency: 'weekly' },
+      { kpiId: 'kpi-04', name: 'Critical Vuln Backlog', unit: 'count', target: '<10', current: 7, trend: 'improving', owner: 'Vuln Mgmt', frequency: 'daily' },
+      { kpiId: 'kpi-05', name: 'Phishing Simulation Click Rate', unit: 'percentage', target: '<5', current: 8.3, trend: 'degrading', owner: 'Awareness', frequency: 'monthly' },
+      { kpiId: 'kpi-06', name: 'Security Awareness Score', unit: 'score', target: '>80', current: 76.5, trend: 'improving', owner: 'GRC', frequency: 'quarterly' },
+      { kpiId: 'kpi-07', name: 'Third-Party Risk Score', unit: 'score', target: '>70', current: 68.9, trend: 'stable', owner: 'Vendor Mgmt', frequency: 'monthly' },
+      { kpiId: 'kpi-08', name: 'Compliance Score', unit: 'percentage', target: '>90', current: 85.4, trend: 'improving', owner: 'GRC', frequency: 'monthly' },
+      { kpiId: 'kpi-09', name: 'Incident Response Time P95', unit: 'minutes', target: '<120', current: 98.2, trend: 'improving', owner: 'IR Lead', frequency: 'weekly' },
+      { kpiId: 'kpi-10', name: 'False Positive Rate', unit: 'percentage', target: '<10', current: 14.7, trend: 'degrading', owner: 'Detection Eng', frequency: 'weekly' },
+      { kpiId: 'kpi-11', name: 'Asset Coverage', unit: 'percentage', target: '>98', current: 96.1, trend: 'stable', owner: 'Asset Mgmt', frequency: 'monthly' },
+      { kpiId: 'kpi-12', name: 'Encryption Coverage', unit: 'percentage', target: '>99', current: 97.8, trend: 'improving', owner: 'Crypto Eng', frequency: 'monthly' },
+      { kpiId: 'kpi-13', name: 'Access Review Completion', unit: 'percentage', target: '>95', current: 88.3, trend: 'degrading', owner: 'IAM', frequency: 'quarterly' },
+      { kpiId: 'kpi-14', name: 'Backup Success Rate', unit: 'percentage', target: '>99.5', current: 99.1, trend: 'stable', owner: 'IT Ops', frequency: 'daily' },
+      { kpiId: 'kpi-15', name: 'Security Debt Ratio', unit: 'percentage', target: '<15', current: 18.2, trend: 'degrading', owner: 'AppSec', frequency: 'quarterly' }
+    ];
+  }
+
+  private _buildGdprTrackerMetricOwnership(): Array<Record<string, unknown>> {
+    return [
+      { team: 'SOC', metrics: ['mttd', 'mttr', 'incident-count', 'false-positive-rate'], dataSources: ['SIEM', 'Ticketing', 'SOAR'], qualityScore: 88 },
+      { team: 'Vuln Management', metrics: ['vuln-count', 'patch-coverage', 'critical-backlog'], dataSources: ['Scanner', 'CMDB', 'Patch Mgmt'], qualityScore: 82 },
+      { team: 'GRC', metrics: ['compliance-score', 'risk-score', 'access-review'], dataSources: ['GRC Platform', 'IAM', 'Policy Engine'], qualityScore: 75 },
+      { team: 'Awareness', metrics: ['phishing-click-rate', 'awareness-score'], dataSources: ['Training Platform', 'Phishing Sim'], qualityScore: 91 },
+      { team: 'AppSec', metrics: ['security-debt', 'code-coverage'], dataSources: ['SCA', 'SAST', 'DAST'], qualityScore: 79 }
+    ];
+  }
+
+  private _calcGdprTrackerNormTrends(): Array<Record<string, unknown>> {
+    return Array.from({ length: 12 }, (_, i) => ({
+      month: `2026-${String(i + 1).padStart(2, '0')}`,
+      normalizedScore: Math.round(70 + Math.random() * 25),
+      benchmarkDelta: Math.round((Math.random() - 0.3) * 15),
+      metricsCount: Math.floor(30 + Math.random() * 15),
+      dataQualityScore: Math.round(75 + Math.random() * 20)
+    }));
+  }
+
+
+  // === SOC Intelligence Hub - Threat Analysis Engine ===
+  private _initGdprTrackerSocIntelHub() {
+    this._gdpr_trackerThreatActors = [
+      { actorId: 'ta-001', name: 'APT-PHANTOM SPIDER', country: 'Unknown', sophistication: 'advanced', motivation: 'espionage', sector: 'technology', activeSince: '2021', confidence: 92, iocs: 347, incidents: 23, trend: 'increasing' },
+      { actorId: 'ta-002', name: 'CYBER VOLT TIGER', country: 'East Asia', sophistication: 'advanced', motivation: 'financial', sector: 'finance', activeSince: '2020', confidence: 87, iocs: 521, incidents: 45, trend: 'stable' },
+      { actorId: 'ta-003', name: 'DARK NEBULA GROUP', country: 'Eastern Europe', sophistication: 'moderate', motivation: 'financial', sector: 'healthcare', activeSince: '2022', confidence: 78, iocs: 189, incidents: 12, trend: 'increasing' },
+      { actorId: 'ta-004', name: 'SHADOW STORM COLLECTIVE', country: 'Unknown', sophistication: 'advanced', motivation: 'sabotage', sector: 'energy', activeSince: '2019', confidence: 84, iocs: 293, incidents: 8, trend: 'stable' },
+      { actorId: 'ta-005', name: 'SILENT COBRA SYNDICATE', country: 'Southeast Asia', sophistication: 'moderate', motivation: 'espionage', sector: 'government', activeSince: '2023', confidence: 71, iocs: 156, incidents: 19, trend: 'increasing' },
+      { actorId: 'ta-006', name: 'IRON PHOENIX APT', country: 'Middle East', sophistication: 'advanced', motivation: 'espionage', sector: 'defense', activeSince: '2018', confidence: 91, iocs: 612, incidents: 31, trend: 'stable' },
+      { actorId: 'ta-007', name: 'GHOST SIGNAL NETWORK', country: 'Unknown', sophistication: 'low', motivation: 'financial', sector: 'retail', activeSince: '2024', confidence: 65, iocs: 78, incidents: 67, trend: 'increasing' },
+      { actorId: 'ta-008', name: 'CRIMSON DRAGON UNIT', country: 'East Asia', sophistication: 'advanced', motivation: 'espionage', sector: 'telecom', activeSince: '2020', confidence: 89, iocs: 445, incidents: 27, trend: 'stable' }
+    ];
+    this._gdpr_trackerTtpMapping = this._buildGdprTrackerTtpMatrix();
+    this._gdpr_trackerThreatCampaigns = this._trackGdprTrackerActiveCampaigns();
+    this._gdpr_trackerIntelFeeds = this._configureGdprTrackerIntelFeeds();
+    this._gdpr_trackerThreatScores = this._calcGdprTrackerThreatScores();
+    this._gdpr_trackerPredictiveAnalysis = this._runGdprTrackerPredictiveThreatModel();
+  }
+
+  private _buildGdprTrackerTtpMatrix(): Array<Record<string, unknown>> {
+    const techniques = [
+      { techniqueId: 'T1566', name: 'Phishing', tactic: 'Initial Access', frequency: 94, detectionRate: 89, mitigation: 'awareness-training', actorCount: 8 },
+      { techniqueId: 'T1059', name: 'Command and Scripting Interpreter', tactic: 'Execution', frequency: 88, detectionRate: 76, mitigation: 'edr-monitoring', actorCount: 7 },
+      { techniqueId: 'T1078', name: 'Valid Accounts', tactic: 'Persistence', frequency: 82, detectionRate: 62, mitigation: 'pam-implementation', actorCount: 6 },
+      { techniqueId: 'T1083', name: 'File and Directory Discovery', tactic: 'Discovery', frequency: 91, detectionRate: 71, mitigation: 'file-integrity-monitoring', actorCount: 8 },
+      { techniqueId: 'T1048', name: 'Exfiltration Over Alternative Protocol', tactic: 'Exfiltration', frequency: 67, detectionRate: 54, mitigation: 'dlp-controls', actorCount: 5 },
+      { techniqueId: 'T1055', name: 'Process Injection', tactic: 'Defense Evasion', frequency: 79, detectionRate: 68, mitigation: 'amsi-enabled', actorCount: 7 },
+      { techniqueId: 'T1021', name: 'Remote Services', tactic: 'Lateral Movement', frequency: 74, detectionRate: 81, mitigation: 'network-segmentation', actorCount: 6 },
+      { techniqueId: 'T1498', name: 'Network Denial of Service', tactic: 'Impact', frequency: 45, detectionRate: 92, mitigation: 'ddos-mitigation', actorCount: 3 },
+      { techniqueId: 'T1003', name: 'OS Credential Dumping', tactic: 'Credential Access', frequency: 85, detectionRate: 73, mitigation: 'lsa-protection', actorCount: 7 },
+      { techniqueId: 'T1133', name: 'External Remote Services', tactic: 'Initial Access', frequency: 58, detectionRate: 85, mitigation: 'vpn-mfa', actorCount: 4 },
+      { techniqueId: 'T1070', name: 'Indicator Removal', tactic: 'Defense Evasion', frequency: 71, detectionRate: 59, mitigation: 'log-forwarding', actorCount: 6 },
+      { techniqueId: 'T1110', name: 'Brute Force', tactic: 'Credential Access', frequency: 63, detectionRate: 94, mitigation: 'account-lockout', actorCount: 5 }
+    ];
+    return techniques;
+  }
+
+  private _trackGdprTrackerActiveCampaigns(): Array<Record<string, unknown>> {
+    return [
+      { campaignId: 'camp-001', name: 'Operation Phantom Edge', actorId: 'ta-001', status: 'active', startDate: '2026-03-15', targetSector: 'technology', targets: 12, compromised: 3, indicatorCount: 89, severity: 'critical' },
+      { campaignId: 'camp-002', name: 'Dark Harvest Finance', actorId: 'ta-002', status: 'active', startDate: '2026-02-28', targetSector: 'finance', targets: 8, compromised: 5, indicatorCount: 234, severity: 'high' },
+      { campaignId: 'camp-003', name: 'Silent Patient', actorId: 'ta-005', status: 'monitoring', startDate: '2026-04-01', targetSector: 'government', targets: 5, compromised: 0, indicatorCount: 34, severity: 'medium' },
+      { campaignId: 'camp-004', name: 'Storm Surge', actorId: 'ta-004', status: 'dormant', startDate: '2025-11-20', targetSector: 'energy', targets: 15, compromised: 2, indicatorCount: 167, severity: 'high' },
+      { campaignId: 'camp-005', name: 'Night Shift', actorId: 'ta-007', status: 'active', startDate: '2026-04-10', targetSector: 'retail', targets: 25, compromised: 8, indicatorCount: 45, severity: 'medium' },
+      { campaignId: 'camp-006', name: 'Red Horizon', actorId: 'ta-006', status: 'active', startDate: '2026-01-15', targetSector: 'defense', targets: 6, compromised: 1, indicatorCount: 312, severity: 'critical' }
+    ];
+  }
+
+  private _configureGdprTrackerIntelFeeds(): Array<Record<string, unknown>> {
+    return [
+      { feedId: 'feed-001', name: 'STIX/TAXII Community Feed', type: 'structured', format: 'stix-2.1', updateFreq: '15min', lastUpdate: '2026-04-23T17:00:00Z', iocCount: 45230, quality: 'high', source: 'MISP Community' },
+      { feedId: 'feed-002', name: 'Commercial Threat Intel', type: 'structured', format: 'stix-2.1', updateFreq: '1h', lastUpdate: '2026-04-23T16:00:00Z', iocCount: 89100, quality: 'high', source: 'CrowdStrike' },
+      { feedId: 'feed-003', name: 'OSINT Dark Web Monitor', type: 'unstructured', format: 'json', updateFreq: '30min', lastUpdate: '2026-04-23T16:30:00Z', iocCount: 12800, quality: 'medium', source: 'Internal Crawler' },
+      { feedId: 'feed-004', name: 'Vulnerability Disclosure Feed', type: 'structured', format: 'cve-json', updateFreq: '6h', lastUpdate: '2026-04-23T12:00:00Z', iocCount: 34500, quality: 'high', source: 'NVD/NIST' },
+      { feedId: 'feed-005', name: 'Malware Bazaar Samples', type: 'structured', format: 'json', updateFreq: '1h', lastUpdate: '2026-04-23T16:00:00Z', iocCount: 67800, quality: 'medium', source: 'Abuse.ch' },
+      { feedId: 'feed-006', name: 'Country-Specific CERT Alerts', type: 'unstructured', format: 'rss', updateFreq: '12h', lastUpdate: '2026-04-23T06:00:00Z', iocCount: 2300, quality: 'medium', source: 'Multi-CERT' }
+    ];
+  }
+
+  private _calcGdprTrackerThreatScores(): Array<Record<string, unknown>> {
+    return this._gdpr_trackerThreatActors.map((actor: Record<string, unknown>) => ({
+      actorId: actor.actorId, actorName: actor.name,
+      compositeScore: Math.round((Number(actor.confidence) * 0.3 + Number(actor.iocs) / 10 * 0.2 + Number(actor.incidents) * 2 * 0.3 + (Number(actor.sophistication) === 'advanced' ? 30 : 20) * 0.2)),
+      riskLevel: Number(actor.incidents) > 30 ? 'critical' : Number(actor.incidents) > 15 ? 'high' : Number(actor.incidents) > 8 ? 'medium' : 'low',
+      watchlistStatus: Number(actor.incidents) > 20 ? 'priority-watch' : 'standard-watch',
+      lastActivityDaysAgo: Math.floor(Math.random() * 30) + 1,
+      exposureScore: Math.round(Number(actor.iocs) / 7),
+      mitigationCoverage: Math.round(60 + Math.random() * 35)
+    })).sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.compositeScore) - Number(a.compositeScore));
+  }
+
+  private _runGdprTrackerPredictiveThreatModel(): Array<Record<string, unknown>> {
+    return [
+      { predictionId: 'pred-001', threatType: 'ransomware', probability: 78, timeHorizon: '30d', confidence: 82, affectedAssets: 23, recommendedActions: ['patch-critical', 'backup-verify', 'network-segment'], estimatedImpact: 'high' },
+      { predictionId: 'pred-002', threatType: 'supply-chain-attack', probability: 45, timeHorizon: '90d', confidence: 67, affectedAssets: 8, recommendedActions: ['vendor-audit', 'sbom-analysis', 'dependency-monitor'], estimatedImpact: 'critical' },
+      { predictionId: 'pred-003', threatType: 'insider-threat', probability: 32, timeHorizon: '60d', confidence: 58, affectedAssets: 5, recommendedActions: ['ueba-monitor', 'access-review', 'dap-scan'], estimatedImpact: 'high' },
+      { predictionId: 'pred-004', threatType: 'zero-day-exploit', probability: 25, timeHorizon: '90d', confidence: 45, affectedAssets: 45, recommendedActions: ['virtual-patching', 'waf-rules', 'network-isolation'], estimatedImpact: 'critical' },
+      { predictionId: 'pred-005', threatType: 'credential-stuffing', probability: 65, timeHorizon: '14d', confidence: 75, affectedAssets: 12, recommendedActions: ['mfa-enforce', 'password-policy', 'rate-limit'], estimatedImpact: 'medium' },
+      { predictionId: 'pred-006', threatType: 'business-email-compromise', probability: 55, timeHorizon: '30d', confidence: 71, affectedAssets: 3, recommendedActions: ['email-auth', 'ceo-fraud-training', 'payment-controls'], estimatedImpact: 'high' }
+    ];
+  }
+
+  // === SOC Workflow Automation Engine ===
+  private _initGdprTrackerWorkflowEngine() {
+    this._gdpr_trackerWorkflows = [
+      { workflowId: 'wf-001', name: 'Phishing Triage', triggerType: 'alert', autoSteps: 5, manualSteps: 2, avgDuration: '8min', successRate: 94.2, lastRun: '2026-04-23T16:55:00Z', totalRuns: 3420, active: true },
+      { workflowId: 'wf-002', name: 'Vuln Remediation', triggerType: 'scheduled', autoSteps: 8, manualSteps: 3, avgDuration: '4h', successRate: 87.6, lastRun: '2026-04-23T14:00:00Z', totalRuns: 890, active: true },
+      { workflowId: 'wf-003', name: 'Incident Escalation', triggerType: 'alert', autoSteps: 3, manualSteps: 4, avgDuration: '2h', successRate: 91.8, lastRun: '2026-04-23T15:30:00Z', totalRuns: 156, active: true },
+      { workflowId: 'wf-004', name: 'Access Review Cycle', triggerType: 'scheduled', autoSteps: 6, manualSteps: 1, avgDuration: '24h', successRate: 96.1, lastRun: '2026-04-22T00:00:00Z', totalRuns: 48, active: true },
+      { workflowId: 'wf-005', name: 'Threat Intel Enrichment', triggerType: 'alert', autoSteps: 7, manualSteps: 0, avgDuration: '3min', successRate: 99.1, lastRun: '2026-04-23T17:00:00Z', totalRuns: 28900, active: true },
+      { workflowId: 'wf-006', name: 'Compliance Evidence Collection', triggerType: 'scheduled', autoSteps: 10, manualSteps: 2, avgDuration: '6h', successRate: 82.3, lastRun: '2026-04-21T00:00:00Z', totalRuns: 24, active: true },
+      { workflowId: 'wf-007', name: 'Malware Analysis Pipeline', triggerType: 'alert', autoSteps: 12, manualSteps: 1, avgDuration: '45min', successRate: 88.7, lastRun: '2026-04-23T16:20:00Z', totalRuns: 567, active: true },
+      { workflowId: 'wf-008', name: 'DR Failover Test', triggerType: 'manual', autoSteps: 4, manualSteps: 3, avgDuration: '2h', successRate: 79.5, lastRun: '2026-04-15T10:00:00Z', totalRuns: 12, active: true }
+    ];
+    this._gdpr_trackerWorkflowMetrics = this._aggregateGdprTrackerWorkflowMetrics();
+    this._gdpr_trackerWorkflowBottlenecks = this._identifyGdprTrackerBottlenecks();
+    this._gdpr_trackerAutomationROI = this._calcGdprTrackerAutomationROI();
+  }
+
+  private _aggregateGdprTrackerWorkflowMetrics(): Record<string, unknown> {
+    const totalRuns = this._gdpr_trackerWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.totalRuns), 0);
+    const avgSuccess = this._gdpr_trackerWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.successRate), 0) / this._gdpr_trackerWorkflows.length;
+    const totalAutoSteps = this._gdpr_trackerWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.autoSteps), 0);
+    const totalManualSteps = this._gdpr_trackerWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.manualSteps), 0);
+    return {
+      totalWorkflowsExecuted: totalRuns, avgSuccessRate: Math.round(avgSuccess * 10) / 10,
+      automationRatio: Math.round(totalAutoSteps / (totalAutoSteps + totalManualSteps) * 100),
+      timeSavedHours: Math.round(totalRuns * 0.15), costSaved: Math.round(totalRuns * 0.15 * 75),
+      activeWorkflows: this._gdpr_trackerWorkflows.filter((w: Record<string, unknown>) => w.active).length,
+      avgStepsPerWorkflow: Math.round((totalAutoSteps + totalManualSteps) / this._gdpr_trackerWorkflows.length)
+    };
+  }
+
+  private _identifyGdprTrackerBottlenecks(): Array<Record<string, unknown>> {
+    return [
+      { workflowId: 'wf-002', stepName: 'patch-validation', avgWait: '45min', failureRate: 12.3, suggestion: 'add-parallel-validation' },
+      { workflowId: 'wf-006', stepName: 'evidence-collection', avgWait: '2h', failureRate: 17.7, suggestion: 'increase-api-rate-limits' },
+      { workflowId: 'wf-008', stepName: 'failover-verification', avgWait: '30min', failureRate: 20.5, suggestion: 'pre-stage-test-environments' },
+      { workflowId: 'wf-003', stepName: 'analyst-assignment', avgWait: '15min', failureRate: 5.2, suggestion: 'auto-assign-by-skill' }
+    ];
+  }
+
+  private _calcGdprTrackerAutomationROI(): Array<Record<string, unknown>> {
+    return this._gdpr_trackerWorkflows.map((w: Record<string, unknown>) => ({
+      workflowId: w.workflowId, workflowName: w.name,
+      manualCostPerRun: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 75),
+      automatedCostPerRun: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 15),
+      savingsPerRun: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 60),
+      annualSavings: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 60 * Number(w.totalRuns) / 365),
+      automationInvestment: Math.round(Number(w.autoSteps) * 5000),
+      paybackPeriodDays: Math.round(Number(w.autoSteps) * 5000 / (Number(w.avgDuration.replace(/[^0-9]/g, '')) * 60 * Number(w.totalRuns) / 365) * 365)
+    }));
+  }
+
+  // === Security Posture Continuous Assessment ===
+  private _runGdprTrackerPostureAssessment() {
+    this._gdpr_trackerPostureDimensions = [
+      { dimension: 'Network Security', score: 87, weight: 0.15, trend: 'improving', keyFindings: ['firewall-rules-optimized', 'segmentation-improved'], riskItems: 3 },
+      { dimension: 'Endpoint Security', score: 82, weight: 0.12, trend: 'stable', keyFindings: ['edr-coverage-95-pct', 'patch-compliance-91'], riskItems: 5 },
+      { dimension: 'Identity & Access', score: 78, weight: 0.13, trend: 'improving', keyFindings: ['mfa-rollout-87-pct', 'pam-implemented'], riskItems: 7 },
+      { dimension: 'Data Protection', score: 74, weight: 0.14, trend: 'degrading', keyFindings: ['dlp-gaps-identified', 'encryption-97-pct'], riskItems: 9 },
+      { dimension: 'Application Security', score: 69, weight: 0.11, trend: 'stable', keyFindings: ['sast-coverage-78-pct', 'sca-integrated'], riskItems: 12 },
+      { dimension: 'Cloud Security', score: 81, weight: 0.12, trend: 'improving', keyFindings: ['cspm-deployed', 'iam-policies-tightened'], riskItems: 4 },
+      { dimension: 'Vulnerability Management', score: 76, weight: 0.10, trend: 'improving', keyFindings: ['scan-frequency-weekly', 'critical-backlog-7'], riskItems: 6 },
+      { dimension: 'Incident Response', score: 85, weight: 0.08, trend: 'stable', keyFindings: ['playbooks-12-defined', 'mttd-12min'], riskItems: 2 },
+      { dimension: 'Compliance & Governance', score: 83, weight: 0.05, trend: 'improving', keyFindings: ['audit-passed-3-of-4', 'policy-updated'], riskItems: 1 }
+    ];
+    this._gdpr_trackerOverallPostureScore = this._gdpr_trackerPostureDimensions.reduce(
+      (s: number, d: Record<string, unknown>) => s + Number(d.score) * Number(d.weight), 0
+    );
+    this._gdpr_trackerPostureHistory = Array.from({ length: 30 }, (_, i) => ({
+      date: `2026-${String(Math.floor(i / 30) + 3).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`,
+      score: Math.round(75 + Math.random() * 15), assessments: Math.floor(5 + Math.random() * 10),
+      findings: Math.floor(10 + Math.random() * 20), remediated: Math.floor(5 + Math.random() * 15)
+    }));
+    this._gdpr_trackerPostureRecommendations = this._generateGdprTrackerPostureRecommendations();
+  }
+
+  private _generateGdprTrackerPostureRecommendations(): Array<Record<string, unknown>> {
+    return [
+      { priority: 1, title: 'Address DLP Coverage Gaps', effort: 'medium', impact: 'high', timeline: '30d', status: 'in-progress', owner: 'Data Protection Lead' },
+      { priority: 2, title: 'Increase SAST/DAST Coverage', effort: 'high', impact: 'high', timeline: '60d', status: 'planned', owner: 'AppSec Lead' },
+      { priority: 3, title: 'Complete MFA Rollout', effort: 'low', impact: 'medium', timeline: '14d', status: 'in-progress', owner: 'IAM Lead' },
+      { priority: 4, title: 'Reduce Critical Vuln Backlog', effort: 'medium', impact: 'critical', timeline: '7d', status: 'in-progress', owner: 'Vuln Mgmt Lead' },
+      { priority: 5, title: 'Enhance Cloud IAM Policies', effort: 'medium', impact: 'high', timeline: '21d', status: 'planned', owner: 'Cloud Security Lead' }
+    ];
+  }
+
+
+  // === Security Integration & Interoperability Matrix ===
+  private _initGdprTrackerIntegrationMatrix() {
+    this._gdpr_trackerIntegrations = [
+      { integrationId: 'int-001', name: 'SIEM to SOAR', type: 'bidirectional', status: 'active', latency: 250, dataVolume: '500 eps', protocol: 'REST API', version: 'v3', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.02 },
+      { integrationId: 'int-002', name: 'EDR to SIEM', type: 'unidirectional', status: 'active', latency: 100, dataVolume: '200 eps', protocol: 'Syslog', version: 'v2', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.01 },
+      { integrationId: 'int-003', name: 'Vulnerability Scanner to Risk Register', type: 'unidirectional', status: 'active', latency: 5000, dataVolume: '10 scans/day', protocol: 'Webhook', version: 'v1', lastSync: '2026-04-23T14:00:00Z', errorRate: 0.05 },
+      { integrationId: 'int-004', name: 'IAM to SIEM', type: 'bidirectional', status: 'active', latency: 150, dataVolume: '100 eps', protocol: 'REST API', version: 'v2', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.03 },
+      { integrationId: 'int-005', name: 'Threat Intel to SIEM', type: 'unidirectional', status: 'degraded', latency: 1200, dataVolume: '50 ioc/h', protocol: 'STIX/TAXII', version: 'v2.1', lastSync: '2026-04-23T16:30:00Z', errorRate: 0.12 },
+      { integrationId: 'int-006', name: 'Cloud Provider to CSPM', type: 'unidirectional', status: 'active', latency: 300, dataVolume: 'config changes', protocol: 'Event Stream', version: 'v1', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.04 },
+      { integrationId: 'int-007', name: 'Ticket System to SOAR', type: 'bidirectional', status: 'active', latency: 500, dataVolume: '50 tickets/day', protocol: 'REST API', version: 'v3', lastSync: '2026-04-23T16:55:00Z', errorRate: 0.06 },
+      { integrationId: 'int-008', name: 'DLP to SIEM', type: 'unidirectional', status: 'warning', latency: 2000, dataVolume: '30 alerts/day', protocol: 'Syslog', version: 'v1', lastSync: '2026-04-23T16:45:00Z', errorRate: 0.15 },
+      { integrationId: 'int-009', name: 'Compliance Platform to GRC', type: 'bidirectional', status: 'active', latency: 3000, dataVolume: 'daily sync', protocol: 'REST API', version: 'v2', lastSync: '2026-04-23T00:00:00Z', errorRate: 0.08 },
+      { integrationId: 'int-010', name: 'Container Registry to Scanner', type: 'unidirectional', status: 'active', latency: 800, dataVolume: '100 images/day', protocol: 'Webhook', version: 'v1', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.03 }
+    ];
+    this._gdpr_trackerIntegrationHealth = this._assessGdprTrackerIntegrationHealth();
+    this._gdpr_trackerIntegrationAlerts = this._monitorGdprTrackerIntegrationAlerts();
+    this._gdpr_trackerDataFlowMatrix = this._buildGdprTrackerDataFlowMatrix();
+    this._gdpr_trackerIntegrationSLA = this._trackGdprTrackerIntegrationSLA();
+  }
+
+  private _assessGdprTrackerIntegrationHealth(): Record<string, unknown> {
+    const active = this._gdpr_trackerIntegrations.filter((i: Record<string, unknown>) => i.status === 'active').length;
+    const degraded = this._gdpr_trackerIntegrations.filter((i: Record<string, unknown>) => i.status === 'degraded').length;
+    const warning = this._gdpr_trackerIntegrations.filter((i: Record<string, unknown>) => i.status === 'warning').length;
+    const avgLatency = this._gdpr_trackerIntegrations.reduce((s: number, i: Record<string, unknown>) => s + Number(i.latency), 0) / this._gdpr_trackerIntegrations.length;
+    const avgErrorRate = this._gdpr_trackerIntegrations.reduce((s: number, i: Record<string, unknown>) => s + Number(i.errorRate), 0) / this._gdpr_trackerIntegrations.length;
+    return {
+      totalIntegrations: this._gdpr_trackerIntegrations.length, active, degraded, warning,
+      healthScore: Math.round((active / this._gdpr_trackerIntegrations.length) * 100),
+      avgLatencyMs: Math.round(avgLatency), avgErrorRate: Math.round(avgErrorRate * 1000) / 10,
+      dataFreshness: '95%', coverage: '92%'
+    };
+  }
+
+  private _monitorGdprTrackerIntegrationAlerts(): Array<Record<string, unknown>> {
+    return this._gdpr_trackerIntegrations
+      .filter((i: Record<string, unknown>) => i.status !== 'active')
+      .map((i: Record<string, unknown>) => ({
+        integrationId: i.integrationId, integrationName: i.name,
+        status: i.status, currentErrorRate: Number(i.errorRate) * 100,
+        thresholdErrorRate: 5.0, currentLatency: Number(i.latency),
+        thresholdLatency: 1000, lastIncident: '2026-04-23T16:' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00Z',
+        autoRemediationAttempted: Math.random() > 0.5,
+        manualInterventionRequired: Math.random() > 0.6,
+        impactDescription: `Integration degraded affecting ${i.name} data flow`
+      }));
+  }
+
+  private _buildGdprTrackerDataFlowMatrix(): Array<Record<string, unknown>> {
+    const sources = ['SIEM', 'SOAR', 'EDR', 'IAM', 'CSPM', 'DLP', 'Scanner', 'Threat Intel', 'GRC', 'Tickets'];
+    const matrix: Array<Record<string, unknown>> = [];
+    for (let i = 0; i < sources.length; i++) {
+      for (let j = 0; j < sources.length; j++) {
+        if (i !== j && Math.random() > 0.6) {
+          matrix.push({
+            from: sources[i], to: sources[j], dataType: ['alerts', 'ioc', 'config', 'telemetry', 'policy'][Math.floor(Math.random() * 5)],
+            frequency: ['realtime', 'near-realtime', 'batch', 'on-demand'][Math.floor(Math.random() * 4)],
+            protocol: ['REST', 'Syslog', 'Webhook', 'STIX', 'gRPC'][Math.floor(Math.random() * 5)],
+            encrypted: Math.random() > 0.1, authenticated: Math.random() > 0.05,
+            dataClassification: ['internal', 'confidential', 'restricted'][Math.floor(Math.random() * 3)]
+          });
+        }
+      }
+    }
+    return matrix;
+  }
+
+  private _trackGdprTrackerIntegrationSLA(): Array<Record<string, unknown>> {
+    return this._gdpr_trackerIntegrations.map((i: Record<string, unknown>) => ({
+      integrationId: i.integrationId, integrationName: i.name,
+      slaUptime: 99.5 + Math.random() * 0.49,
+      actualUptime: 99.0 + Math.random() * 0.99,
+      slaLatency: Number(i.latency) * 2,
+      actualLatencyP95: Math.round(Number(i.latency) * (1 + Math.random() * 0.5)),
+      slaMet: Math.random() > 0.15,
+      breachesThisMonth: Math.floor(Math.random() * 5),
+      mttr: Math.round(5 + Math.random() * 30)
+    }));
+  }
+
+  // === Security Service Mesh Configuration ===
+  private _initGdprTrackerServiceMesh() {
+    this._gdpr_trackerMeshServices = [
+      { serviceId: 'mesh-001', name: 'auth-service', namespace: 'security', replicas: 3, cpuUsage: 45, memoryUsage: 62, requestRate: 1250, errorRate: 0.02, latencyP99: 45, version: 'v2.3.1', securityLevel: 'high' },
+      { serviceId: 'mesh-002', name: 'policy-engine', namespace: 'security', replicas: 2, cpuUsage: 38, memoryUsage: 55, requestRate: 800, errorRate: 0.01, latencyP99: 120, version: 'v1.8.0', securityLevel: 'high' },
+      { serviceId: 'mesh-003', name: 'threat-analyzer', namespace: 'analytics', replicas: 4, cpuUsage: 72, memoryUsage: 81, requestRate: 3400, errorRate: 0.04, latencyP99: 250, version: 'v3.1.0', securityLevel: 'medium' },
+      { serviceId: 'mesh-004', name: 'log-aggregator', namespace: 'infrastructure', replicas: 5, cpuUsage: 58, memoryUsage: 74, requestRate: 15000, errorRate: 0.01, latencyP99: 30, version: 'v4.0.2', securityLevel: 'medium' },
+      { serviceId: 'mesh-005', name: 'alert-dispatcher', namespace: 'security', replicas: 2, cpuUsage: 22, memoryUsage: 35, requestRate: 450, errorRate: 0.03, latencyP99: 80, version: 'v1.5.0', securityLevel: 'high' },
+      { serviceId: 'mesh-006', name: 'vuln-scanner', namespace: 'security', replicas: 3, cpuUsage: 85, memoryUsage: 90, requestRate: 50, errorRate: 0.05, latencyP99: 5000, version: 'v2.0.0', securityLevel: 'low' }
+    ];
+    this._gdpr_trackerMeshHealth = this._calcGdprTrackerMeshHealth();
+    this._gdpr_trackerMeshTraffic = this._analyzeGdprTrackerMeshTraffic();
+  }
+
+  private _calcGdprTrackerMeshHealth(): Record<string, unknown> {
+    const healthy = this._gdpr_trackerMeshServices.filter((s: Record<string, unknown>) => Number(s.errorRate) < 0.03).length;
+    return {
+      totalServices: this._gdpr_trackerMeshServices.length, healthyServices: healthy,
+      healthPercent: Math.round(healthy / this._gdpr_trackerMeshServices.length * 100),
+      totalReplicas: this._gdpr_trackerMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.replicas), 0),
+      avgCpuUsage: Math.round(this._gdpr_trackerMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.cpuUsage), 0) / this._gdpr_trackerMeshServices.length),
+      avgMemoryUsage: Math.round(this._gdpr_trackerMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.memoryUsage), 0) / this._gdpr_trackerMeshServices.length),
+      avgLatencyP99: Math.round(this._gdpr_trackerMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.latencyP99), 0) / this._gdpr_trackerMeshServices.length)
+    };
+  }
+
+  private _analyzeGdprTrackerMeshTraffic(): Array<Record<string, unknown>> {
+    return this._gdpr_trackerMeshServices.map((s: Record<string, unknown>) => ({
+      serviceId: s.serviceId, serviceName: s.name,
+      inboundTraffic: Math.round(Number(s.requestRate) * (0.8 + Math.random() * 0.4)),
+      outboundTraffic: Math.round(Number(s.requestRate) * (0.6 + Math.random() * 0.8)),
+      trafficAnomalies: Math.floor(Math.random() * 5),
+      peakTrafficHour: Math.floor(9 + Math.random() * 10),
+      encryptionEnabled: true, mTLS: String(s.securityLevel) === 'high'
+    }));
+  }
+
   render() {    if (this._gdprRules.length === 0) { this._initGdprRules(); this._initGdprCvss(); this._runGdprAnomalyDetection(); this._generateGdprPredictions(); this._initGdprApprovals(); this._initGdprActivity(); this._initGdprNotifications(); }
 
     const items = this._getFiltered();

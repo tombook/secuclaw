@@ -7547,6 +7547,192 @@ export class ScThreatHuntingWorkspace extends LitElement {
     </section>`;
   }
 
+
+  // === Security Controls Effectiveness Matrix ===
+  private _initThreatHuntingWorkspaceControlsMatrix() {
+    this._threat_hunting_workspaceControlEffectiveness = [
+      { controlId: 'ce-001', controlName: 'Next-Gen Firewall', category: 'Network', effectiveness: 92, blockingRate: 94.5, falsePositives: 3.2, coverage: 98, incidentsPrevented: 15420, costAnnual: 280000, maturity: 'optimized' },
+      { controlId: 'ce-002', controlName: 'EDR Platform', category: 'Endpoint', effectiveness: 88, blockingRate: 91.2, falsePositives: 5.1, coverage: 95, incidentsPrevented: 8930, costAnnual: 450000, maturity: 'managed' },
+      { controlId: 'ce-003', controlName: 'Email Security Gateway', category: 'Email', effectiveness: 85, blockingRate: 97.8, falsePositives: 1.2, coverage: 100, incidentsPrevented: 23100, costAnnual: 120000, maturity: 'optimized' },
+      { controlId: 'ce-004', controlName: 'WAF with Bot Protection', category: 'Web', effectiveness: 79, blockingRate: 88.3, falsePositives: 7.4, coverage: 82, incidentsPrevented: 5670, costAnnual: 95000, maturity: 'defined' },
+      { controlId: 'ce-005', controlName: 'DLP Suite', category: 'Data', effectiveness: 72, blockingRate: 76.1, falsePositives: 12.8, coverage: 68, incidentsPrevented: 2340, costAnnual: 180000, maturity: 'defined' },
+      { controlId: 'ce-006', controlName: 'CASB Solution', category: 'Cloud', effectiveness: 81, blockingRate: 84.7, falsePositives: 6.3, coverage: 78, incidentsPrevented: 4120, costAnnual: 150000, maturity: 'managed' },
+      { controlId: 'ce-007', controlName: 'PAM Solution', category: 'Identity', effectiveness: 90, blockingRate: 95.6, falsePositives: 2.1, coverage: 92, incidentsPrevented: 6780, costAnnual: 220000, maturity: 'optimized' },
+      { controlId: 'ce-008', controlName: 'SIEM Platform', category: 'Detection', effectiveness: 86, blockingRate: 72.3, falsePositives: 8.9, coverage: 94, incidentsPrevented: 12300, costAnnual: 380000, maturity: 'managed' }
+    ];
+    this._threat_hunting_workspaceControlGaps = this._identifyThreatHuntingWorkspaceControlGaps();
+    this._threat_hunting_workspaceControlInvestmentPriority = this._prioritizeThreatHuntingWorkspaceControlInvestment();
+  }
+
+  private _identifyThreatHuntingWorkspaceControlGaps(): Array<Record<string, unknown>> {
+    return this._threat_hunting_workspaceControlEffectiveness
+      .filter((c: Record<string, unknown>) => Number(c.effectiveness) < 80 || Number(c.coverage) < 85)
+      .map((c: Record<string, unknown>) => ({
+        controlId: c.controlId, controlName: c.controlName, category: c.category,
+        gapType: Number(c.effectiveness) < 80 ? 'effectiveness' : 'coverage',
+        currentScore: Number(c.effectiveness < 80 ? c.effectiveness : c.coverage),
+        targetScore: 90, improvementNeeded: Number(c.effectiveness < 80 ? c.effectiveness : c.coverage) < 80 ? 90 - Number(c.effectiveness < 80 ? c.effectiveness : c.coverage) : 5,
+        estimatedCost: Math.round(50000 + Math.random() * 150000),
+        impact: Number(c.effectiveness) < 75 ? 'high' : 'medium'
+      }));
+  }
+
+  private _prioritizeThreatHuntingWorkspaceControlInvestment(): Array<Record<string, unknown>> {
+    return this._threat_hunting_workspaceControlEffectiveness
+      .map((c: Record<string, unknown>) => ({
+        controlId: c.controlId, controlName: c.controlName,
+        costEffectiveness: Math.round(Number(c.incidentsPrevented) / Number(c.costAnnual) * 1000),
+        roi: (Number(c.incidentsPrevented) * 450) / Number(c.costAnnual),
+        recommendation: Number(c.effectiveness) >= 90 ? 'maintain' : Number(c.effectiveness) >= 80 ? 'optimize' : 'invest',
+        annualBudget: Number(c.costAnnual), projectedSavings: Math.round(Number(c.incidentsPrevented) * 450)
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.costEffectiveness) - Number(a.costEffectiveness));
+  }
+
+
+  // === Security Architecture Evolution Tracker ===
+  private _initThreatHuntingWorkspaceArchEvolution() {
+    this._threat_hunting_workspaceArchComponents = [
+      { componentId: 'arch-001', name: 'Zero Trust Network', version: '3.2', maturity: 'optimized', dependencies: 8, riskScore: 12, techDebt: 'low', lastReview: '2026-04-20', nextReview: '2026-07-20', owner: 'Network Arch' },
+      { componentId: 'arch-002', name: 'Micro-segmentation Fabric', version: '2.1', maturity: 'managed', dependencies: 5, riskScore: 25, techDebt: 'medium', lastReview: '2026-04-15', nextReview: '2026-07-15', owner: 'Network Arch' },
+      { componentId: 'arch-003', name: 'Cloud Security Broker', version: '4.0', maturity: 'optimized', dependencies: 12, riskScore: 8, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Cloud Arch' },
+      { componentId: 'arch-004', name: 'Identity Fabric', version: '2.5', maturity: 'managed', dependencies: 15, riskScore: 30, techDebt: 'medium', lastReview: '2026-04-18', nextReview: '2026-07-18', owner: 'Identity Arch' },
+      { componentId: 'arch-005', name: 'Data Protection Suite', version: '3.0', maturity: 'defined', dependencies: 7, riskScore: 42, techDebt: 'high', lastReview: '2026-04-10', nextReview: '2026-07-10', owner: 'Data Arch' },
+      { componentId: 'arch-006', name: 'SIEM/SOAR Platform', version: '5.1', maturity: 'optimized', dependencies: 20, riskScore: 15, techDebt: 'low', lastReview: '2026-04-21', nextReview: '2026-07-21', owner: 'SOC Arch' },
+      { componentId: 'arch-007', name: 'Container Security Stack', version: '2.0', maturity: 'managed', dependencies: 6, riskScore: 28, techDebt: 'medium', lastReview: '2026-04-19', nextReview: '2026-07-19', owner: 'Platform Arch' },
+      { componentId: 'arch-008', name: 'API Gateway Security', version: '3.5', maturity: 'managed', dependencies: 10, riskScore: 22, techDebt: 'low', lastReview: '2026-04-17', nextReview: '2026-07-17', owner: 'App Arch' },
+      { componentId: 'arch-009', name: 'Secrets Management', version: '4.2', maturity: 'optimized', dependencies: 18, riskScore: 10, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Security Eng' },
+      { componentId: 'arch-010', name: 'Threat Intel Platform', version: '2.8', maturity: 'managed', dependencies: 9, riskScore: 20, techDebt: 'medium', lastReview: '2026-04-16', nextReview: '2026-07-16', owner: 'Threat Intel' }
+    ];
+    this._threat_hunting_workspaceArchRoadmap = this._planThreatHuntingWorkspaceArchRoadmap();
+    this._threat_hunting_workspaceArchRiskSurface = this._mapThreatHuntingWorkspaceArchRiskSurface();
+    this._threat_hunting_workspaceArchTechDebt = this._assessThreatHuntingWorkspaceTechDebt();
+    this._threat_hunting_workspaceArchEvolutionTimeline = this._buildThreatHuntingWorkspaceEvolutionTimeline();
+  }
+
+  private _planThreatHuntingWorkspaceArchRoadmap(): Array<Record<string, unknown>> {
+    return [
+      { phase: 'Q2 2026', initiatives: ['Zero Trust Phase 3', 'CSPM Enhancement', 'Container Runtime Protection'], budget: 850000, status: 'in-progress', completion: 45 },
+      { phase: 'Q3 2026', initiatives: ['SASE Deployment', 'AI-Driven Detection', 'Data Mesh Security'], budget: 1200000, status: 'planned', completion: 0 },
+      { phase: 'Q4 2026', initiatives: ['Identity Federation', 'Quantum-Ready Crypto', 'XDR Integration'], budget: 950000, status: 'planned', completion: 0 },
+      { phase: 'Q1 2027', initiatives: ['Autonomous SOC', 'Supply Chain Security', 'Zero Trust Phase 4'], budget: 1100000, status: 'planned', completion: 0 }
+    ];
+  }
+
+  private _mapThreatHuntingWorkspaceArchRiskSurface(): Array<Record<string, unknown>> {
+    return [
+      { riskArea: 'External Attack Surface', attackVectors: 234, exposedServices: 12, shadowIT: 8, riskScore: 68, mitigationStatus: 'active' },
+      { riskArea: 'Internal Lateral Movement', attackVectors: 89, exposedServices: 45, shadowIT: 3, riskScore: 42, mitigationStatus: 'monitored' },
+      { riskArea: 'Cloud Misconfiguration', attackVectors: 156, exposedServices: 7, shadowIT: 15, riskScore: 55, mitigationStatus: 'active' },
+      { riskArea: 'Third-Party Integration', attackVectors: 67, exposedServices: 23, shadowIT: 12, riskScore: 73, mitigationStatus: 'review-needed' },
+      { riskArea: 'Data Exfiltration Path', attackVectors: 45, exposedServices: 5, shadowIT: 2, riskScore: 38, mitigationStatus: 'monitored' },
+      { riskArea: 'Supply Chain Dependencies', attackVectors: 312, exposedServices: 34, shadowIT: 0, riskScore: 61, mitigationStatus: 'active' }
+    ];
+  }
+
+  private _assessThreatHuntingWorkspaceTechDebt(): Array<Record<string, unknown>> {
+    return this._threat_hunting_workspaceArchComponents
+      .filter((c: Record<string, unknown>) => String(c.techDebt) !== 'low')
+      .map((c: Record<string, unknown>) => ({
+        componentId: c.componentId, componentName: c.name, version: c.version,
+        debtLevel: c.techDebt, debtItems: Math.floor(3 + Math.random() * 8),
+        estimatedRemediation: `${Math.floor(2 + Math.random() * 6)} weeks`,
+        remediationCost: Math.round(50000 + Math.random() * 200000),
+        businessImpact: String(c.techDebt) === 'high' ? 'high' : 'medium',
+        priority: String(c.techDebt) === 'high' ? 1 : String(c.techDebt) === 'medium' ? 2 : 3
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.priority) - Number(b.priority));
+  }
+
+  private _buildThreatHuntingWorkspaceEvolutionTimeline(): Array<Record<string, unknown>> {
+    return [
+      { year: '2023', milestone: 'Security Baseline Established', components: 4, maturityAvg: 'initial', investment: 1200000 },
+      { year: '2024', milestone: 'Zero Trust Phase 1', components: 6, maturityAvg: 'developing', investment: 1800000 },
+      { year: '2025', milestone: 'Cloud-Native Security', components: 8, maturityAvg: 'defined', investment: 2200000 },
+      { year: '2026', milestone: 'AI-Augmented Security', components: 10, maturityAvg: 'managed', investment: 2800000 },
+      { year: '2027', milestone: 'Autonomous Defense Target', components: 12, maturityAvg: 'optimized', investment: 3200000 }
+    ];
+  }
+
+  // === Security Design Patterns Library ===
+  private _initThreatHuntingWorkspaceDesignPatterns() {
+    this._threat_hunting_workspaceDesignPatterns = [
+      { patternId: 'dp-001', name: 'Defense in Depth', category: 'architectural', applicability: 95, implementation: 'deployed', controls: 12, layers: 5, reference: 'NIST SP 800-53' },
+      { patternId: 'dp-002', name: 'Least Privilege Access', category: 'access-control', applicability: 98, implementation: 'partial', controls: 8, layers: 3, reference: 'NIST SP 800-53 AC-6' },
+      { patternId: 'dp-003', name: 'Secure-by-Default', category: 'development', applicability: 90, implementation: 'deployed', controls: 15, layers: 4, reference: 'OWASP ASVS' },
+      { patternId: 'dp-004', name: 'Zero Trust Architecture', category: 'architectural', applicability: 88, implementation: 'in-progress', controls: 20, layers: 6, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-005', name: 'Immutable Infrastructure', category: 'deployment', applicability: 75, implementation: 'partial', controls: 6, layers: 2, reference: 'CIS Benchmark' },
+      { patternId: 'dp-006', name: 'Break-Glass Procedure', category: 'operations', applicability: 82, implementation: 'deployed', controls: 4, layers: 2, reference: 'ITIL v4' },
+      { patternId: 'dp-007', name: 'Data Classification Matrix', category: 'data', applicability: 92, implementation: 'partial', controls: 10, layers: 3, reference: 'ISO 27001 A.8' },
+      { patternId: 'dp-008', name: 'Threat Modeling Pipeline', category: 'development', applicability: 78, implementation: 'deployed', controls: 8, layers: 3, reference: 'STRIDE/Microsoft' },
+      { patternId: 'dp-009', name: 'Micro-segmentation', category: 'network', applicability: 85, implementation: 'in-progress', controls: 14, layers: 4, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-010', name: 'Security Chaos Engineering', category: 'resilience', applicability: 65, implementation: 'planned', controls: 5, layers: 2, reference: 'Chaos Engineering' }
+    ];
+    this._threat_hunting_workspacePatternCompliance = this._assessThreatHuntingWorkspacePatternCompliance();
+    this._threat_hunting_workspacePatternGaps = this._identifyThreatHuntingWorkspacePatternGaps();
+  }
+
+  private _assessThreatHuntingWorkspacePatternCompliance(): Array<Record<string, unknown>> {
+    return this._threat_hunting_workspaceDesignPatterns.map((pat: Record<string, unknown>) => ({
+      patternId: pat.patternId, patternName: pat.name,
+      compliancePercent: String(pat.implementation) === 'deployed' ? 100 : String(pat.implementation) === 'in-progress' ? Math.round(40 + Math.random() * 40) : Math.round(10 + Math.random() * 30),
+      controlCoverage: Math.round(Number(pat.controls) / 20 * 100),
+      layerDepth: pat.layers, riskMitigation: Math.round(Number(pat.applicability) * 0.8),
+      maturityLevel: String(pat.implementation) === 'deployed' ? 'level-4' : String(pat.implementation) === 'in-progress' ? 'level-3' : String(pat.implementation) === 'partial' ? 'level-2' : 'level-1'
+    }));
+  }
+
+  private _identifyThreatHuntingWorkspacePatternGaps(): Array<Record<string, unknown>> {
+    return this._threat_hunting_workspaceDesignPatterns
+      .filter((p: Record<string, unknown>) => String(p.implementation) !== 'deployed')
+      .map((p: Record<string, unknown>) => ({
+        patternId: p.patternId, patternName: p.name, currentStatus: p.implementation,
+        targetStatus: 'deployed', gapDescription: `${String(p.implementation)} implementation needs to reach deployed state`,
+        estimatedEffort: `${Math.floor(2 + Math.random() * 8)} sprints`,
+        dependencies: Math.floor(1 + Math.random() * 4), blockers: Math.floor(Math.random() * 3),
+        priority: Number(p.applicability) > 85 ? 'high' : 'medium'
+      }));
+  }
+
+  // === Security Capacity Planning Model ===
+  private _initThreatHuntingWorkspaceCapacityPlanning() {
+    this._threat_hunting_workspaceCapacityModels = [
+      { resourceId: 'cap-001', resourceType: 'SIEM EPS', currentCapacity: 50000, peakUsage: 42000, projectedGrowth: 0.15, threshold: 0.8, unit: 'events/sec', costPerUnit: 0.002 },
+      { resourceId: 'cap-002', resourceType: 'Storage (Logs)', currentCapacity: 50, peakUsage: 38, projectedGrowth: 0.25, threshold: 0.75, unit: 'TB', costPerUnit: 120 },
+      { resourceId: 'cap-003', resourceType: 'SOC Analysts', currentCapacity: 12, peakUsage: 10, projectedGrowth: 0.10, threshold: 0.85, unit: 'FTE', costPerUnit: 150000 },
+      { resourceId: 'cap-004', resourceType: 'Vulnerability Scans', currentCapacity: 500, peakUsage: 380, projectedGrowth: 0.20, threshold: 0.80, unit: 'scans/day', costPerUnit: 0.5 },
+      { resourceId: 'cap-005', resourceType: 'API Rate Limits', currentCapacity: 100000, peakUsage: 67000, projectedGrowth: 0.30, threshold: 0.70, unit: 'calls/min', costPerUnit: 0.0001 },
+      { resourceId: 'cap-006', resourceType: 'Threat Hunt Sessions', currentCapacity: 20, peakUsage: 15, projectedGrowth: 0.15, threshold: 0.75, unit: 'sessions/week', costPerUnit: 500 },
+      { resourceId: 'cap-007', resourceType: 'Incident Response', currentCapacity: 5, peakUsage: 3, projectedGrowth: 0.10, threshold: 0.60, unit: 'concurrent', costPerUnit: 50000 },
+      { resourceId: 'cap-008', resourceType: 'Compliance Audits', currentCapacity: 4, peakUsage: 3, projectedGrowth: 0.05, threshold: 0.75, unit: 'audits/quarter', costPerUnit: 75000 }
+    ];
+    this._threat_hunting_workspaceCapacityForecast = this._forecastThreatHuntingWorkspaceCapacity();
+    this._threat_hunting_workspaceCapacityAlerts = this._checkThreatHuntingWorkspaceCapacityAlerts();
+  }
+
+  private _forecastThreatHuntingWorkspaceCapacity(): Array<Record<string, unknown>> {
+    return Array.from({ length: 6 }, (_, i) => ({
+      period: `2026-${String(i + 7).padStart(2, '0')}`,
+      projectedLoad: Math.round(70 + i * 5 + Math.random() * 10),
+      availableCapacity: Math.round(85 + i * 2 + Math.random() * 5),
+      riskOfExhaustion: Math.round(10 + i * 8 + Math.random() * 10),
+      recommendation: i > 3 ? 'scale-up-recommended' : 'monitor',
+      estimatedCost: Math.round(50000 + i * 15000 + Math.random() * 10000)
+    }));
+  }
+
+  private _checkThreatHuntingWorkspaceCapacityAlerts(): Array<Record<string, unknown>> {
+    return this._threat_hunting_workspaceCapacityModels
+      .filter((c: Record<string, unknown>) => Number(c.peakUsage) / Number(c.currentCapacity) > Number(c.threshold) * 0.9)
+      .map((c: Record<string, unknown>) => ({
+        resourceId: c.resourceId, resourceType: c.resourceType,
+        utilization: Math.round(Number(c.peakUsage) / Number(c.currentCapacity) * 100),
+        threshold: Math.round(Number(c.threshold) * 100),
+        timeToExhaust: `${Math.round((1 - Number(c.peakUsage) / Number(c.currentCapacity)) / Number(c.projectedGrowth) * 12)} months`,
+        action: 'scale-required', estimatedCost: Math.round(Number(c.currentCapacity) * Number(c.costPerUnit) * 1.5)
+      }));
+  }
+
   render() {
     return html`${this.thRenderRound17()}
       <div class="panel">

@@ -6823,6 +6823,305 @@ private _executionHistory: ExecutionRecord[] = [
     </section>`;
   }
 
+
+  // === Security Controls Effectiveness Matrix ===
+  private _initScannerIntegrationControlsMatrix() {
+    this._scanner_integrationControlEffectiveness = [
+      { controlId: 'ce-001', controlName: 'Next-Gen Firewall', category: 'Network', effectiveness: 92, blockingRate: 94.5, falsePositives: 3.2, coverage: 98, incidentsPrevented: 15420, costAnnual: 280000, maturity: 'optimized' },
+      { controlId: 'ce-002', controlName: 'EDR Platform', category: 'Endpoint', effectiveness: 88, blockingRate: 91.2, falsePositives: 5.1, coverage: 95, incidentsPrevented: 8930, costAnnual: 450000, maturity: 'managed' },
+      { controlId: 'ce-003', controlName: 'Email Security Gateway', category: 'Email', effectiveness: 85, blockingRate: 97.8, falsePositives: 1.2, coverage: 100, incidentsPrevented: 23100, costAnnual: 120000, maturity: 'optimized' },
+      { controlId: 'ce-004', controlName: 'WAF with Bot Protection', category: 'Web', effectiveness: 79, blockingRate: 88.3, falsePositives: 7.4, coverage: 82, incidentsPrevented: 5670, costAnnual: 95000, maturity: 'defined' },
+      { controlId: 'ce-005', controlName: 'DLP Suite', category: 'Data', effectiveness: 72, blockingRate: 76.1, falsePositives: 12.8, coverage: 68, incidentsPrevented: 2340, costAnnual: 180000, maturity: 'defined' },
+      { controlId: 'ce-006', controlName: 'CASB Solution', category: 'Cloud', effectiveness: 81, blockingRate: 84.7, falsePositives: 6.3, coverage: 78, incidentsPrevented: 4120, costAnnual: 150000, maturity: 'managed' },
+      { controlId: 'ce-007', controlName: 'PAM Solution', category: 'Identity', effectiveness: 90, blockingRate: 95.6, falsePositives: 2.1, coverage: 92, incidentsPrevented: 6780, costAnnual: 220000, maturity: 'optimized' },
+      { controlId: 'ce-008', controlName: 'SIEM Platform', category: 'Detection', effectiveness: 86, blockingRate: 72.3, falsePositives: 8.9, coverage: 94, incidentsPrevented: 12300, costAnnual: 380000, maturity: 'managed' }
+    ];
+    this._scanner_integrationControlGaps = this._identifyScannerIntegrationControlGaps();
+    this._scanner_integrationControlInvestmentPriority = this._prioritizeScannerIntegrationControlInvestment();
+  }
+
+  private _identifyScannerIntegrationControlGaps(): Array<Record<string, unknown>> {
+    return this._scanner_integrationControlEffectiveness
+      .filter((c: Record<string, unknown>) => Number(c.effectiveness) < 80 || Number(c.coverage) < 85)
+      .map((c: Record<string, unknown>) => ({
+        controlId: c.controlId, controlName: c.controlName, category: c.category,
+        gapType: Number(c.effectiveness) < 80 ? 'effectiveness' : 'coverage',
+        currentScore: Number(c.effectiveness < 80 ? c.effectiveness : c.coverage),
+        targetScore: 90, improvementNeeded: Number(c.effectiveness < 80 ? c.effectiveness : c.coverage) < 80 ? 90 - Number(c.effectiveness < 80 ? c.effectiveness : c.coverage) : 5,
+        estimatedCost: Math.round(50000 + Math.random() * 150000),
+        impact: Number(c.effectiveness) < 75 ? 'high' : 'medium'
+      }));
+  }
+
+  private _prioritizeScannerIntegrationControlInvestment(): Array<Record<string, unknown>> {
+    return this._scanner_integrationControlEffectiveness
+      .map((c: Record<string, unknown>) => ({
+        controlId: c.controlId, controlName: c.controlName,
+        costEffectiveness: Math.round(Number(c.incidentsPrevented) / Number(c.costAnnual) * 1000),
+        roi: (Number(c.incidentsPrevented) * 450) / Number(c.costAnnual),
+        recommendation: Number(c.effectiveness) >= 90 ? 'maintain' : Number(c.effectiveness) >= 80 ? 'optimize' : 'invest',
+        annualBudget: Number(c.costAnnual), projectedSavings: Math.round(Number(c.incidentsPrevented) * 450)
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.costEffectiveness) - Number(a.costEffectiveness));
+  }
+
+
+  // === Security Architecture Evolution Tracker ===
+  private _initScannerIntegrationArchEvolution() {
+    this._scanner_integrationArchComponents = [
+      { componentId: 'arch-001', name: 'Zero Trust Network', version: '3.2', maturity: 'optimized', dependencies: 8, riskScore: 12, techDebt: 'low', lastReview: '2026-04-20', nextReview: '2026-07-20', owner: 'Network Arch' },
+      { componentId: 'arch-002', name: 'Micro-segmentation Fabric', version: '2.1', maturity: 'managed', dependencies: 5, riskScore: 25, techDebt: 'medium', lastReview: '2026-04-15', nextReview: '2026-07-15', owner: 'Network Arch' },
+      { componentId: 'arch-003', name: 'Cloud Security Broker', version: '4.0', maturity: 'optimized', dependencies: 12, riskScore: 8, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Cloud Arch' },
+      { componentId: 'arch-004', name: 'Identity Fabric', version: '2.5', maturity: 'managed', dependencies: 15, riskScore: 30, techDebt: 'medium', lastReview: '2026-04-18', nextReview: '2026-07-18', owner: 'Identity Arch' },
+      { componentId: 'arch-005', name: 'Data Protection Suite', version: '3.0', maturity: 'defined', dependencies: 7, riskScore: 42, techDebt: 'high', lastReview: '2026-04-10', nextReview: '2026-07-10', owner: 'Data Arch' },
+      { componentId: 'arch-006', name: 'SIEM/SOAR Platform', version: '5.1', maturity: 'optimized', dependencies: 20, riskScore: 15, techDebt: 'low', lastReview: '2026-04-21', nextReview: '2026-07-21', owner: 'SOC Arch' },
+      { componentId: 'arch-007', name: 'Container Security Stack', version: '2.0', maturity: 'managed', dependencies: 6, riskScore: 28, techDebt: 'medium', lastReview: '2026-04-19', nextReview: '2026-07-19', owner: 'Platform Arch' },
+      { componentId: 'arch-008', name: 'API Gateway Security', version: '3.5', maturity: 'managed', dependencies: 10, riskScore: 22, techDebt: 'low', lastReview: '2026-04-17', nextReview: '2026-07-17', owner: 'App Arch' },
+      { componentId: 'arch-009', name: 'Secrets Management', version: '4.2', maturity: 'optimized', dependencies: 18, riskScore: 10, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Security Eng' },
+      { componentId: 'arch-010', name: 'Threat Intel Platform', version: '2.8', maturity: 'managed', dependencies: 9, riskScore: 20, techDebt: 'medium', lastReview: '2026-04-16', nextReview: '2026-07-16', owner: 'Threat Intel' }
+    ];
+    this._scanner_integrationArchRoadmap = this._planScannerIntegrationArchRoadmap();
+    this._scanner_integrationArchRiskSurface = this._mapScannerIntegrationArchRiskSurface();
+    this._scanner_integrationArchTechDebt = this._assessScannerIntegrationTechDebt();
+    this._scanner_integrationArchEvolutionTimeline = this._buildScannerIntegrationEvolutionTimeline();
+  }
+
+  private _planScannerIntegrationArchRoadmap(): Array<Record<string, unknown>> {
+    return [
+      { phase: 'Q2 2026', initiatives: ['Zero Trust Phase 3', 'CSPM Enhancement', 'Container Runtime Protection'], budget: 850000, status: 'in-progress', completion: 45 },
+      { phase: 'Q3 2026', initiatives: ['SASE Deployment', 'AI-Driven Detection', 'Data Mesh Security'], budget: 1200000, status: 'planned', completion: 0 },
+      { phase: 'Q4 2026', initiatives: ['Identity Federation', 'Quantum-Ready Crypto', 'XDR Integration'], budget: 950000, status: 'planned', completion: 0 },
+      { phase: 'Q1 2027', initiatives: ['Autonomous SOC', 'Supply Chain Security', 'Zero Trust Phase 4'], budget: 1100000, status: 'planned', completion: 0 }
+    ];
+  }
+
+  private _mapScannerIntegrationArchRiskSurface(): Array<Record<string, unknown>> {
+    return [
+      { riskArea: 'External Attack Surface', attackVectors: 234, exposedServices: 12, shadowIT: 8, riskScore: 68, mitigationStatus: 'active' },
+      { riskArea: 'Internal Lateral Movement', attackVectors: 89, exposedServices: 45, shadowIT: 3, riskScore: 42, mitigationStatus: 'monitored' },
+      { riskArea: 'Cloud Misconfiguration', attackVectors: 156, exposedServices: 7, shadowIT: 15, riskScore: 55, mitigationStatus: 'active' },
+      { riskArea: 'Third-Party Integration', attackVectors: 67, exposedServices: 23, shadowIT: 12, riskScore: 73, mitigationStatus: 'review-needed' },
+      { riskArea: 'Data Exfiltration Path', attackVectors: 45, exposedServices: 5, shadowIT: 2, riskScore: 38, mitigationStatus: 'monitored' },
+      { riskArea: 'Supply Chain Dependencies', attackVectors: 312, exposedServices: 34, shadowIT: 0, riskScore: 61, mitigationStatus: 'active' }
+    ];
+  }
+
+  private _assessScannerIntegrationTechDebt(): Array<Record<string, unknown>> {
+    return this._scanner_integrationArchComponents
+      .filter((c: Record<string, unknown>) => String(c.techDebt) !== 'low')
+      .map((c: Record<string, unknown>) => ({
+        componentId: c.componentId, componentName: c.name, version: c.version,
+        debtLevel: c.techDebt, debtItems: Math.floor(3 + Math.random() * 8),
+        estimatedRemediation: `${Math.floor(2 + Math.random() * 6)} weeks`,
+        remediationCost: Math.round(50000 + Math.random() * 200000),
+        businessImpact: String(c.techDebt) === 'high' ? 'high' : 'medium',
+        priority: String(c.techDebt) === 'high' ? 1 : String(c.techDebt) === 'medium' ? 2 : 3
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.priority) - Number(b.priority));
+  }
+
+  private _buildScannerIntegrationEvolutionTimeline(): Array<Record<string, unknown>> {
+    return [
+      { year: '2023', milestone: 'Security Baseline Established', components: 4, maturityAvg: 'initial', investment: 1200000 },
+      { year: '2024', milestone: 'Zero Trust Phase 1', components: 6, maturityAvg: 'developing', investment: 1800000 },
+      { year: '2025', milestone: 'Cloud-Native Security', components: 8, maturityAvg: 'defined', investment: 2200000 },
+      { year: '2026', milestone: 'AI-Augmented Security', components: 10, maturityAvg: 'managed', investment: 2800000 },
+      { year: '2027', milestone: 'Autonomous Defense Target', components: 12, maturityAvg: 'optimized', investment: 3200000 }
+    ];
+  }
+
+  // === Security Design Patterns Library ===
+  private _initScannerIntegrationDesignPatterns() {
+    this._scanner_integrationDesignPatterns = [
+      { patternId: 'dp-001', name: 'Defense in Depth', category: 'architectural', applicability: 95, implementation: 'deployed', controls: 12, layers: 5, reference: 'NIST SP 800-53' },
+      { patternId: 'dp-002', name: 'Least Privilege Access', category: 'access-control', applicability: 98, implementation: 'partial', controls: 8, layers: 3, reference: 'NIST SP 800-53 AC-6' },
+      { patternId: 'dp-003', name: 'Secure-by-Default', category: 'development', applicability: 90, implementation: 'deployed', controls: 15, layers: 4, reference: 'OWASP ASVS' },
+      { patternId: 'dp-004', name: 'Zero Trust Architecture', category: 'architectural', applicability: 88, implementation: 'in-progress', controls: 20, layers: 6, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-005', name: 'Immutable Infrastructure', category: 'deployment', applicability: 75, implementation: 'partial', controls: 6, layers: 2, reference: 'CIS Benchmark' },
+      { patternId: 'dp-006', name: 'Break-Glass Procedure', category: 'operations', applicability: 82, implementation: 'deployed', controls: 4, layers: 2, reference: 'ITIL v4' },
+      { patternId: 'dp-007', name: 'Data Classification Matrix', category: 'data', applicability: 92, implementation: 'partial', controls: 10, layers: 3, reference: 'ISO 27001 A.8' },
+      { patternId: 'dp-008', name: 'Threat Modeling Pipeline', category: 'development', applicability: 78, implementation: 'deployed', controls: 8, layers: 3, reference: 'STRIDE/Microsoft' },
+      { patternId: 'dp-009', name: 'Micro-segmentation', category: 'network', applicability: 85, implementation: 'in-progress', controls: 14, layers: 4, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-010', name: 'Security Chaos Engineering', category: 'resilience', applicability: 65, implementation: 'planned', controls: 5, layers: 2, reference: 'Chaos Engineering' }
+    ];
+    this._scanner_integrationPatternCompliance = this._assessScannerIntegrationPatternCompliance();
+    this._scanner_integrationPatternGaps = this._identifyScannerIntegrationPatternGaps();
+  }
+
+  private _assessScannerIntegrationPatternCompliance(): Array<Record<string, unknown>> {
+    return this._scanner_integrationDesignPatterns.map((pat: Record<string, unknown>) => ({
+      patternId: pat.patternId, patternName: pat.name,
+      compliancePercent: String(pat.implementation) === 'deployed' ? 100 : String(pat.implementation) === 'in-progress' ? Math.round(40 + Math.random() * 40) : Math.round(10 + Math.random() * 30),
+      controlCoverage: Math.round(Number(pat.controls) / 20 * 100),
+      layerDepth: pat.layers, riskMitigation: Math.round(Number(pat.applicability) * 0.8),
+      maturityLevel: String(pat.implementation) === 'deployed' ? 'level-4' : String(pat.implementation) === 'in-progress' ? 'level-3' : String(pat.implementation) === 'partial' ? 'level-2' : 'level-1'
+    }));
+  }
+
+  private _identifyScannerIntegrationPatternGaps(): Array<Record<string, unknown>> {
+    return this._scanner_integrationDesignPatterns
+      .filter((p: Record<string, unknown>) => String(p.implementation) !== 'deployed')
+      .map((p: Record<string, unknown>) => ({
+        patternId: p.patternId, patternName: p.name, currentStatus: p.implementation,
+        targetStatus: 'deployed', gapDescription: `${String(p.implementation)} implementation needs to reach deployed state`,
+        estimatedEffort: `${Math.floor(2 + Math.random() * 8)} sprints`,
+        dependencies: Math.floor(1 + Math.random() * 4), blockers: Math.floor(Math.random() * 3),
+        priority: Number(p.applicability) > 85 ? 'high' : 'medium'
+      }));
+  }
+
+  // === Security Capacity Planning Model ===
+  private _initScannerIntegrationCapacityPlanning() {
+    this._scanner_integrationCapacityModels = [
+      { resourceId: 'cap-001', resourceType: 'SIEM EPS', currentCapacity: 50000, peakUsage: 42000, projectedGrowth: 0.15, threshold: 0.8, unit: 'events/sec', costPerUnit: 0.002 },
+      { resourceId: 'cap-002', resourceType: 'Storage (Logs)', currentCapacity: 50, peakUsage: 38, projectedGrowth: 0.25, threshold: 0.75, unit: 'TB', costPerUnit: 120 },
+      { resourceId: 'cap-003', resourceType: 'SOC Analysts', currentCapacity: 12, peakUsage: 10, projectedGrowth: 0.10, threshold: 0.85, unit: 'FTE', costPerUnit: 150000 },
+      { resourceId: 'cap-004', resourceType: 'Vulnerability Scans', currentCapacity: 500, peakUsage: 380, projectedGrowth: 0.20, threshold: 0.80, unit: 'scans/day', costPerUnit: 0.5 },
+      { resourceId: 'cap-005', resourceType: 'API Rate Limits', currentCapacity: 100000, peakUsage: 67000, projectedGrowth: 0.30, threshold: 0.70, unit: 'calls/min', costPerUnit: 0.0001 },
+      { resourceId: 'cap-006', resourceType: 'Threat Hunt Sessions', currentCapacity: 20, peakUsage: 15, projectedGrowth: 0.15, threshold: 0.75, unit: 'sessions/week', costPerUnit: 500 },
+      { resourceId: 'cap-007', resourceType: 'Incident Response', currentCapacity: 5, peakUsage: 3, projectedGrowth: 0.10, threshold: 0.60, unit: 'concurrent', costPerUnit: 50000 },
+      { resourceId: 'cap-008', resourceType: 'Compliance Audits', currentCapacity: 4, peakUsage: 3, projectedGrowth: 0.05, threshold: 0.75, unit: 'audits/quarter', costPerUnit: 75000 }
+    ];
+    this._scanner_integrationCapacityForecast = this._forecastScannerIntegrationCapacity();
+    this._scanner_integrationCapacityAlerts = this._checkScannerIntegrationCapacityAlerts();
+  }
+
+  private _forecastScannerIntegrationCapacity(): Array<Record<string, unknown>> {
+    return Array.from({ length: 6 }, (_, i) => ({
+      period: `2026-${String(i + 7).padStart(2, '0')}`,
+      projectedLoad: Math.round(70 + i * 5 + Math.random() * 10),
+      availableCapacity: Math.round(85 + i * 2 + Math.random() * 5),
+      riskOfExhaustion: Math.round(10 + i * 8 + Math.random() * 10),
+      recommendation: i > 3 ? 'scale-up-recommended' : 'monitor',
+      estimatedCost: Math.round(50000 + i * 15000 + Math.random() * 10000)
+    }));
+  }
+
+  private _checkScannerIntegrationCapacityAlerts(): Array<Record<string, unknown>> {
+    return this._scanner_integrationCapacityModels
+      .filter((c: Record<string, unknown>) => Number(c.peakUsage) / Number(c.currentCapacity) > Number(c.threshold) * 0.9)
+      .map((c: Record<string, unknown>) => ({
+        resourceId: c.resourceId, resourceType: c.resourceType,
+        utilization: Math.round(Number(c.peakUsage) / Number(c.currentCapacity) * 100),
+        threshold: Math.round(Number(c.threshold) * 100),
+        timeToExhaust: `${Math.round((1 - Number(c.peakUsage) / Number(c.currentCapacity)) / Number(c.projectedGrowth) * 12)} months`,
+        action: 'scale-required', estimatedCost: Math.round(Number(c.currentCapacity) * Number(c.costPerUnit) * 1.5)
+      }));
+  }
+
+
+  // === Risk Quantification & Scenario Analysis Engine ===
+  private _initScannerIntegrationRiskQuantification() {
+    this._scanner_integrationRiskScenarios = [
+      { scenarioId: 'rs-001', name: 'Ransomware Attack on Core Systems', likelihood: 0.35, impactFinancial: 4500000, impactOperational: 72, impactReputational: 'high', affectedAssets: 45, recoveryTime: '5-10 days', currentControls: ['backups', 'edr', 'network-segmentation'], residualRisk: 'medium' },
+      { scenarioId: 'rs-002', name: 'Data Breach via Third Party', likelihood: 0.25, impactFinancial: 8200000, impactOperational: 48, impactReputational: 'critical', affectedAssets: 120000, recoveryTime: '3-6 months', currentControls: ['vendor-assessment', 'dlp', 'contractual'], residualRisk: 'high' },
+      { scenarioId: 'rs-003', name: 'Cloud Misconfiguration Exposure', likelihood: 0.55, impactFinancial: 1200000, impactOperational: 24, impactReputational: 'medium', affectedAssets: 15, recoveryTime: '1-3 days', currentControls: ['cspm', 'iam-policies', 'monitoring'], residualRisk: 'low' },
+      { scenarioId: 'rs-004', name: 'Insider Data Theft', likelihood: 0.15, impactFinancial: 3500000, impactOperational: 36, impactReputational: 'high', affectedAssets: 80, recoveryTime: '2-4 weeks', currentControls: ['ueba', 'dap', 'access-controls'], residualRisk: 'medium' },
+      { scenarioId: 'rs-005', name: 'Supply Chain Compromise', likelihood: 0.20, impactFinancial: 6800000, impactOperational: 96, impactReputational: 'critical', affectedAssets: 500, recoveryTime: '1-3 months', currentControls: ['sbom', 'code-review', 'vendor-monitoring'], residualRisk: 'high' },
+      { scenarioId: 'rs-006', name: 'DDoS Attack on Public Services', likelihood: 0.45, impactFinancial: 800000, impactOperational: 12, impactReputational: 'medium', affectedAssets: 8, recoveryTime: '2-24 hours', currentControls: ['ddos-protection', 'cdn', 'rate-limiting'], residualRisk: 'low' },
+      { scenarioId: 'rs-007', name: 'Zero-Day Exploit in Critical Software', likelihood: 0.10, impactFinancial: 5500000, impactOperational: 72, impactReputational: 'high', affectedAssets: 200, recoveryTime: '1-4 weeks', currentControls: ['virtual-patching', 'waf', 'isolation'], residualRisk: 'medium' },
+      { scenarioId: 'rs-008', name: 'Business Email Compromise', likelihood: 0.40, impactFinancial: 2500000, impactOperational: 6, impactReputational: 'medium', affectedAssets: 5, recoveryTime: '1-5 days', currentControls: ['email-security', 'mfa', 'awareness-training'], residualRisk: 'low' }
+    ];
+    this._scanner_integrationRiskQuantification = this._calcScannerIntegrationFinancialRisk();
+    this._scanner_integrationScenarioHeatmap = this._buildScannerIntegrationScenarioHeatmap();
+    this._scanner_integrationRiskMitigationPlans = this._generateScannerIntegrationMitigationPlans();
+    this._scanner_integrationMonteCarloResults = this._runScannerIntegrationMonteCarloSimulation();
+  }
+
+  private _calcScannerIntegrationFinancialRisk(): Array<Record<string, unknown>> {
+    return this._scanner_integrationRiskScenarios.map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      annualizedLossExpectancy: Math.round(Number(s.likelihood) * Number(s.impactFinancial)),
+      singleLossExpectancy: Number(s.impactFinancial),
+      annualOccurrenceRate: Number(s.likelihood),
+      riskTreatmentCost: Math.round(Number(s.impactFinancial) * 0.15),
+      netRiskAfterTreatment: Math.round(Number(s.likelihood) * Number(s.impactFinancial) * 0.4),
+      riskReductionPercent: Math.round(60 + Math.random() * 25),
+      costBenefitRatio: Math.round((Number(s.likelihood) * Number(s.impactFinancial) * 0.6) / (Number(s.impactFinancial) * 0.15))
+    })).sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.annualizedLossExpectancy) - Number(a.annualizedLossExpectancy));
+  }
+
+  private _buildScannerIntegrationScenarioHeatmap(): Array<Record<string, unknown>> {
+    return this._scanner_integrationRiskScenarios.map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      likelihoodBand: Number(s.likelihood) >= 0.4 ? 'high' : Number(s.likelihood) >= 0.2 ? 'medium' : 'low',
+      impactBand: Number(s.impactFinancial) >= 5000000 ? 'critical' : Number(s.impactFinancial) >= 2000000 ? 'high' : Number(s.impactFinancial) >= 500000 ? 'medium' : 'low',
+      riskLevel: Number(s.likelihood) * Number(s.impactFinancial) >= 2000000 ? 'extreme' : Number(s.likelihood) * Number(s.impactFinancial) >= 500000 ? 'high' : 'medium',
+      trend: Math.random() > 0.5 ? 'increasing' : 'stable',
+      lastAssessed: '2026-04-22', nextReview: '2026-07-22'
+    }));
+  }
+
+  private _generateScannerIntegrationMitigationPlans(): Array<Record<string, unknown>> {
+    return this._scanner_integrationRiskScenarios.filter((s: Record<string, unknown>) => String(s.residualRisk) !== 'low').map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      currentResidualRisk: s.residualRisk, targetResidualRisk: 'low',
+      mitigationActions: [
+        { action: 'enhance-detection', effort: 'medium', cost: 150000, effectiveness: 0.35 },
+        { action: 'add-preventive-control', effort: 'high', cost: 300000, effectiveness: 0.50 },
+        { action: 'improve-response-playbook', effort: 'low', cost: 50000, effectiveness: 0.15 }
+      ],
+      totalMitigationBudget: 500000, estimatedRiskReduction: 0.65,
+      implementationTimeline: 'Q3 2026', owner: 'CISO Office',
+      priority: Number(s.impactFinancial) > 5000000 ? 'critical' : 'high'
+    }));
+  }
+
+  private _runScannerIntegrationMonteCarloSimulation(): Record<string, unknown> {
+    const iterations = 10000;
+    let totalLosses = 0;
+    let maxLoss = 0;
+    let minLoss = Infinity;
+    const lossBuckets: Record<string, number> = { '0-500K': 0, '500K-1M': 0, '1M-5M': 0, '5M-10M': 0, '10M+': 0 };
+    for (let i = 0; i < iterations; i++) {
+      let annualLoss = 0;
+      for (const s of this._scanner_integrationRiskScenarios) {
+        if (Math.random() < Number(s.likelihood)) {
+          annualLoss += Number(s.impactFinancial) * (0.5 + Math.random() * 0.5);
+        }
+      }
+      totalLosses += annualLoss;
+      if (annualLoss > maxLoss) maxLoss = annualLoss;
+      if (annualLoss < minLoss) minLoss = annualLoss;
+      if (annualLoss < 500000) lossBuckets['0-500K']++;
+      else if (annualLoss < 1000000) lossBuckets['500K-1M']++;
+      else if (annualLoss < 5000000) lossBuckets['1M-5M']++;
+      else if (annualLoss < 10000000) lossBuckets['5M-10M']++;
+      else lossBuckets['10M+']++;
+    }
+    return {
+      iterations, meanAnnualLoss: Math.round(totalLosses / iterations),
+      maxLoss: Math.round(maxLoss), minLoss: Math.round(minLoss),
+      lossBuckets, var95: Math.round(totalLosses / iterations * 2.1),
+      var99: Math.round(totalLosses / iterations * 3.5),
+      probabilityOfBreach: Math.round(this._scanner_integrationRiskScenarios.reduce((s: number, r: Record<string, unknown>) => s + Number(r.likelihood), 0) * 100) / this._scanner_integrationRiskScenarios.length
+    };
+  }
+
+  // === Security Incident Cost Modeling ===
+  private _initScannerIntegrationIncidentCostModel() {
+    this._scanner_integrationIncidentCostCategories = [
+      { category: 'Detection & Investigation', avgCost: 125000, minCost: 50000, maxCost: 500000, timeToComplete: '3-7 days', responsible: 'SOC Team', includes: ['forensic-analysis', 'evidence-collection', 'timeline-reconstruction'] },
+      { category: 'Containment & Eradication', avgCost: 280000, minCost: 100000, maxCost: 1200000, timeToComplete: '1-5 days', responsible: 'IR Team', includes: ['system-isolation', 'malware-removal', 'patching'] },
+      { category: 'Recovery & Restoration', avgCost: 350000, minCost: 150000, maxCost: 2000000, timeToComplete: '5-30 days', responsible: 'IT Operations', includes: ['system-restore', 'data-recovery', 'service-restoration'] },
+      { category: 'Notification & Communication', avgCost: 180000, minCost: 50000, maxCost: 800000, timeToComplete: '1-3 days', responsible: 'Legal/Comms', includes: ['regulatory-notification', 'customer-communication', 'public-relations'] },
+      { category: 'Legal & Regulatory', avgCost: 450000, minCost: 100000, maxCost: 5000000, timeToComplete: '3-12 months', responsible: 'Legal', includes: ['legal-fees', 'regulatory-fines', 'settlements'] },
+      { category: 'Business Disruption', avgCost: 520000, minCost: 200000, maxCost: 3000000, timeToComplete: '1-30 days', responsible: 'Business Units', includes: ['lost-revenue', 'productivity-loss', 'opportunity-cost'] },
+      { category: 'Post-Incident Hardening', avgCost: 200000, minCost: 75000, maxCost: 600000, timeToComplete: '1-6 months', responsible: 'Security Engineering', includes: ['control-improvements', 'tool-deployment', 'process-changes'] }
+    ];
+    this._scanner_integrationTotalIncidentCost = this._scanner_integrationIncidentCostCategories.reduce((s: number, c: Record<string, unknown>) => s + Number(c.avgCost), 0);
+    this._scanner_integrationCostBySeverity = this._modelScannerIntegrationCostBySeverity();
+  }
+
+  private _modelScannerIntegrationCostBySeverity(): Array<Record<string, unknown>> {
+    return [
+      { severity: 'low', avgTotalCost: 85000, responseTime: '2h', staffRequired: 3, historicalCount: 45, trend: 'stable' },
+      { severity: 'medium', avgTotalCost: 350000, responseTime: '8h', staffRequired: 8, historicalCount: 18, trend: 'decreasing' },
+      { severity: 'high', avgTotalCost: 1200000, responseTime: '24h', staffRequired: 15, historicalCount: 6, trend: 'stable' },
+      { severity: 'critical', avgTotalCost: 4500000, responseTime: '1h', staffRequired: 30, historicalCount: 2, trend: 'increasing' }
+    ];
+  }
+
   render() {    if (this._sciRules.length === 0) { this._initSciRules(); this._initSciCvss(); this._runSciAnomalyDetection(); this._generateSciPredictions(); this._initSciApprovals(); this._initSciActivity(); this._initSciNotifications(); }
 
     const items = this._getFiltered();

@@ -6710,6 +6710,310 @@ private _executionHistory: ExecutionRecord[] = [
     </section>`;
   }
 
+
+  // === Security Controls Effectiveness Matrix ===
+  private _initIntegrationHealthControlsMatrix() {
+    this._integration_healthControlEffectiveness = [
+      { controlId: 'ce-001', controlName: 'Next-Gen Firewall', category: 'Network', effectiveness: 92, blockingRate: 94.5, falsePositives: 3.2, coverage: 98, incidentsPrevented: 15420, costAnnual: 280000, maturity: 'optimized' },
+      { controlId: 'ce-002', controlName: 'EDR Platform', category: 'Endpoint', effectiveness: 88, blockingRate: 91.2, falsePositives: 5.1, coverage: 95, incidentsPrevented: 8930, costAnnual: 450000, maturity: 'managed' },
+      { controlId: 'ce-003', controlName: 'Email Security Gateway', category: 'Email', effectiveness: 85, blockingRate: 97.8, falsePositives: 1.2, coverage: 100, incidentsPrevented: 23100, costAnnual: 120000, maturity: 'optimized' },
+      { controlId: 'ce-004', controlName: 'WAF with Bot Protection', category: 'Web', effectiveness: 79, blockingRate: 88.3, falsePositives: 7.4, coverage: 82, incidentsPrevented: 5670, costAnnual: 95000, maturity: 'defined' },
+      { controlId: 'ce-005', controlName: 'DLP Suite', category: 'Data', effectiveness: 72, blockingRate: 76.1, falsePositives: 12.8, coverage: 68, incidentsPrevented: 2340, costAnnual: 180000, maturity: 'defined' },
+      { controlId: 'ce-006', controlName: 'CASB Solution', category: 'Cloud', effectiveness: 81, blockingRate: 84.7, falsePositives: 6.3, coverage: 78, incidentsPrevented: 4120, costAnnual: 150000, maturity: 'managed' },
+      { controlId: 'ce-007', controlName: 'PAM Solution', category: 'Identity', effectiveness: 90, blockingRate: 95.6, falsePositives: 2.1, coverage: 92, incidentsPrevented: 6780, costAnnual: 220000, maturity: 'optimized' },
+      { controlId: 'ce-008', controlName: 'SIEM Platform', category: 'Detection', effectiveness: 86, blockingRate: 72.3, falsePositives: 8.9, coverage: 94, incidentsPrevented: 12300, costAnnual: 380000, maturity: 'managed' }
+    ];
+    this._integration_healthControlGaps = this._identifyIntegrationHealthControlGaps();
+    this._integration_healthControlInvestmentPriority = this._prioritizeIntegrationHealthControlInvestment();
+  }
+
+  private _identifyIntegrationHealthControlGaps(): Array<Record<string, unknown>> {
+    return this._integration_healthControlEffectiveness
+      .filter((c: Record<string, unknown>) => Number(c.effectiveness) < 80 || Number(c.coverage) < 85)
+      .map((c: Record<string, unknown>) => ({
+        controlId: c.controlId, controlName: c.controlName, category: c.category,
+        gapType: Number(c.effectiveness) < 80 ? 'effectiveness' : 'coverage',
+        currentScore: Number(c.effectiveness < 80 ? c.effectiveness : c.coverage),
+        targetScore: 90, improvementNeeded: Number(c.effectiveness < 80 ? c.effectiveness : c.coverage) < 80 ? 90 - Number(c.effectiveness < 80 ? c.effectiveness : c.coverage) : 5,
+        estimatedCost: Math.round(50000 + Math.random() * 150000),
+        impact: Number(c.effectiveness) < 75 ? 'high' : 'medium'
+      }));
+  }
+
+  private _prioritizeIntegrationHealthControlInvestment(): Array<Record<string, unknown>> {
+    return this._integration_healthControlEffectiveness
+      .map((c: Record<string, unknown>) => ({
+        controlId: c.controlId, controlName: c.controlName,
+        costEffectiveness: Math.round(Number(c.incidentsPrevented) / Number(c.costAnnual) * 1000),
+        roi: (Number(c.incidentsPrevented) * 450) / Number(c.costAnnual),
+        recommendation: Number(c.effectiveness) >= 90 ? 'maintain' : Number(c.effectiveness) >= 80 ? 'optimize' : 'invest',
+        annualBudget: Number(c.costAnnual), projectedSavings: Math.round(Number(c.incidentsPrevented) * 450)
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.costEffectiveness) - Number(a.costEffectiveness));
+  }
+
+
+  // === Security Architecture Evolution Tracker ===
+  private _initIntegrationHealthArchEvolution() {
+    this._integration_healthArchComponents = [
+      { componentId: 'arch-001', name: 'Zero Trust Network', version: '3.2', maturity: 'optimized', dependencies: 8, riskScore: 12, techDebt: 'low', lastReview: '2026-04-20', nextReview: '2026-07-20', owner: 'Network Arch' },
+      { componentId: 'arch-002', name: 'Micro-segmentation Fabric', version: '2.1', maturity: 'managed', dependencies: 5, riskScore: 25, techDebt: 'medium', lastReview: '2026-04-15', nextReview: '2026-07-15', owner: 'Network Arch' },
+      { componentId: 'arch-003', name: 'Cloud Security Broker', version: '4.0', maturity: 'optimized', dependencies: 12, riskScore: 8, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Cloud Arch' },
+      { componentId: 'arch-004', name: 'Identity Fabric', version: '2.5', maturity: 'managed', dependencies: 15, riskScore: 30, techDebt: 'medium', lastReview: '2026-04-18', nextReview: '2026-07-18', owner: 'Identity Arch' },
+      { componentId: 'arch-005', name: 'Data Protection Suite', version: '3.0', maturity: 'defined', dependencies: 7, riskScore: 42, techDebt: 'high', lastReview: '2026-04-10', nextReview: '2026-07-10', owner: 'Data Arch' },
+      { componentId: 'arch-006', name: 'SIEM/SOAR Platform', version: '5.1', maturity: 'optimized', dependencies: 20, riskScore: 15, techDebt: 'low', lastReview: '2026-04-21', nextReview: '2026-07-21', owner: 'SOC Arch' },
+      { componentId: 'arch-007', name: 'Container Security Stack', version: '2.0', maturity: 'managed', dependencies: 6, riskScore: 28, techDebt: 'medium', lastReview: '2026-04-19', nextReview: '2026-07-19', owner: 'Platform Arch' },
+      { componentId: 'arch-008', name: 'API Gateway Security', version: '3.5', maturity: 'managed', dependencies: 10, riskScore: 22, techDebt: 'low', lastReview: '2026-04-17', nextReview: '2026-07-17', owner: 'App Arch' },
+      { componentId: 'arch-009', name: 'Secrets Management', version: '4.2', maturity: 'optimized', dependencies: 18, riskScore: 10, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Security Eng' },
+      { componentId: 'arch-010', name: 'Threat Intel Platform', version: '2.8', maturity: 'managed', dependencies: 9, riskScore: 20, techDebt: 'medium', lastReview: '2026-04-16', nextReview: '2026-07-16', owner: 'Threat Intel' }
+    ];
+    this._integration_healthArchRoadmap = this._planIntegrationHealthArchRoadmap();
+    this._integration_healthArchRiskSurface = this._mapIntegrationHealthArchRiskSurface();
+    this._integration_healthArchTechDebt = this._assessIntegrationHealthTechDebt();
+    this._integration_healthArchEvolutionTimeline = this._buildIntegrationHealthEvolutionTimeline();
+  }
+
+  private _planIntegrationHealthArchRoadmap(): Array<Record<string, unknown>> {
+    return [
+      { phase: 'Q2 2026', initiatives: ['Zero Trust Phase 3', 'CSPM Enhancement', 'Container Runtime Protection'], budget: 850000, status: 'in-progress', completion: 45 },
+      { phase: 'Q3 2026', initiatives: ['SASE Deployment', 'AI-Driven Detection', 'Data Mesh Security'], budget: 1200000, status: 'planned', completion: 0 },
+      { phase: 'Q4 2026', initiatives: ['Identity Federation', 'Quantum-Ready Crypto', 'XDR Integration'], budget: 950000, status: 'planned', completion: 0 },
+      { phase: 'Q1 2027', initiatives: ['Autonomous SOC', 'Supply Chain Security', 'Zero Trust Phase 4'], budget: 1100000, status: 'planned', completion: 0 }
+    ];
+  }
+
+  private _mapIntegrationHealthArchRiskSurface(): Array<Record<string, unknown>> {
+    return [
+      { riskArea: 'External Attack Surface', attackVectors: 234, exposedServices: 12, shadowIT: 8, riskScore: 68, mitigationStatus: 'active' },
+      { riskArea: 'Internal Lateral Movement', attackVectors: 89, exposedServices: 45, shadowIT: 3, riskScore: 42, mitigationStatus: 'monitored' },
+      { riskArea: 'Cloud Misconfiguration', attackVectors: 156, exposedServices: 7, shadowIT: 15, riskScore: 55, mitigationStatus: 'active' },
+      { riskArea: 'Third-Party Integration', attackVectors: 67, exposedServices: 23, shadowIT: 12, riskScore: 73, mitigationStatus: 'review-needed' },
+      { riskArea: 'Data Exfiltration Path', attackVectors: 45, exposedServices: 5, shadowIT: 2, riskScore: 38, mitigationStatus: 'monitored' },
+      { riskArea: 'Supply Chain Dependencies', attackVectors: 312, exposedServices: 34, shadowIT: 0, riskScore: 61, mitigationStatus: 'active' }
+    ];
+  }
+
+  private _assessIntegrationHealthTechDebt(): Array<Record<string, unknown>> {
+    return this._integration_healthArchComponents
+      .filter((c: Record<string, unknown>) => String(c.techDebt) !== 'low')
+      .map((c: Record<string, unknown>) => ({
+        componentId: c.componentId, componentName: c.name, version: c.version,
+        debtLevel: c.techDebt, debtItems: Math.floor(3 + Math.random() * 8),
+        estimatedRemediation: `${Math.floor(2 + Math.random() * 6)} weeks`,
+        remediationCost: Math.round(50000 + Math.random() * 200000),
+        businessImpact: String(c.techDebt) === 'high' ? 'high' : 'medium',
+        priority: String(c.techDebt) === 'high' ? 1 : String(c.techDebt) === 'medium' ? 2 : 3
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.priority) - Number(b.priority));
+  }
+
+  private _buildIntegrationHealthEvolutionTimeline(): Array<Record<string, unknown>> {
+    return [
+      { year: '2023', milestone: 'Security Baseline Established', components: 4, maturityAvg: 'initial', investment: 1200000 },
+      { year: '2024', milestone: 'Zero Trust Phase 1', components: 6, maturityAvg: 'developing', investment: 1800000 },
+      { year: '2025', milestone: 'Cloud-Native Security', components: 8, maturityAvg: 'defined', investment: 2200000 },
+      { year: '2026', milestone: 'AI-Augmented Security', components: 10, maturityAvg: 'managed', investment: 2800000 },
+      { year: '2027', milestone: 'Autonomous Defense Target', components: 12, maturityAvg: 'optimized', investment: 3200000 }
+    ];
+  }
+
+  // === Security Design Patterns Library ===
+  private _initIntegrationHealthDesignPatterns() {
+    this._integration_healthDesignPatterns = [
+      { patternId: 'dp-001', name: 'Defense in Depth', category: 'architectural', applicability: 95, implementation: 'deployed', controls: 12, layers: 5, reference: 'NIST SP 800-53' },
+      { patternId: 'dp-002', name: 'Least Privilege Access', category: 'access-control', applicability: 98, implementation: 'partial', controls: 8, layers: 3, reference: 'NIST SP 800-53 AC-6' },
+      { patternId: 'dp-003', name: 'Secure-by-Default', category: 'development', applicability: 90, implementation: 'deployed', controls: 15, layers: 4, reference: 'OWASP ASVS' },
+      { patternId: 'dp-004', name: 'Zero Trust Architecture', category: 'architectural', applicability: 88, implementation: 'in-progress', controls: 20, layers: 6, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-005', name: 'Immutable Infrastructure', category: 'deployment', applicability: 75, implementation: 'partial', controls: 6, layers: 2, reference: 'CIS Benchmark' },
+      { patternId: 'dp-006', name: 'Break-Glass Procedure', category: 'operations', applicability: 82, implementation: 'deployed', controls: 4, layers: 2, reference: 'ITIL v4' },
+      { patternId: 'dp-007', name: 'Data Classification Matrix', category: 'data', applicability: 92, implementation: 'partial', controls: 10, layers: 3, reference: 'ISO 27001 A.8' },
+      { patternId: 'dp-008', name: 'Threat Modeling Pipeline', category: 'development', applicability: 78, implementation: 'deployed', controls: 8, layers: 3, reference: 'STRIDE/Microsoft' },
+      { patternId: 'dp-009', name: 'Micro-segmentation', category: 'network', applicability: 85, implementation: 'in-progress', controls: 14, layers: 4, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-010', name: 'Security Chaos Engineering', category: 'resilience', applicability: 65, implementation: 'planned', controls: 5, layers: 2, reference: 'Chaos Engineering' }
+    ];
+    this._integration_healthPatternCompliance = this._assessIntegrationHealthPatternCompliance();
+    this._integration_healthPatternGaps = this._identifyIntegrationHealthPatternGaps();
+  }
+
+  private _assessIntegrationHealthPatternCompliance(): Array<Record<string, unknown>> {
+    return this._integration_healthDesignPatterns.map((pat: Record<string, unknown>) => ({
+      patternId: pat.patternId, patternName: pat.name,
+      compliancePercent: String(pat.implementation) === 'deployed' ? 100 : String(pat.implementation) === 'in-progress' ? Math.round(40 + Math.random() * 40) : Math.round(10 + Math.random() * 30),
+      controlCoverage: Math.round(Number(pat.controls) / 20 * 100),
+      layerDepth: pat.layers, riskMitigation: Math.round(Number(pat.applicability) * 0.8),
+      maturityLevel: String(pat.implementation) === 'deployed' ? 'level-4' : String(pat.implementation) === 'in-progress' ? 'level-3' : String(pat.implementation) === 'partial' ? 'level-2' : 'level-1'
+    }));
+  }
+
+  private _identifyIntegrationHealthPatternGaps(): Array<Record<string, unknown>> {
+    return this._integration_healthDesignPatterns
+      .filter((p: Record<string, unknown>) => String(p.implementation) !== 'deployed')
+      .map((p: Record<string, unknown>) => ({
+        patternId: p.patternId, patternName: p.name, currentStatus: p.implementation,
+        targetStatus: 'deployed', gapDescription: `${String(p.implementation)} implementation needs to reach deployed state`,
+        estimatedEffort: `${Math.floor(2 + Math.random() * 8)} sprints`,
+        dependencies: Math.floor(1 + Math.random() * 4), blockers: Math.floor(Math.random() * 3),
+        priority: Number(p.applicability) > 85 ? 'high' : 'medium'
+      }));
+  }
+
+  // === Security Capacity Planning Model ===
+  private _initIntegrationHealthCapacityPlanning() {
+    this._integration_healthCapacityModels = [
+      { resourceId: 'cap-001', resourceType: 'SIEM EPS', currentCapacity: 50000, peakUsage: 42000, projectedGrowth: 0.15, threshold: 0.8, unit: 'events/sec', costPerUnit: 0.002 },
+      { resourceId: 'cap-002', resourceType: 'Storage (Logs)', currentCapacity: 50, peakUsage: 38, projectedGrowth: 0.25, threshold: 0.75, unit: 'TB', costPerUnit: 120 },
+      { resourceId: 'cap-003', resourceType: 'SOC Analysts', currentCapacity: 12, peakUsage: 10, projectedGrowth: 0.10, threshold: 0.85, unit: 'FTE', costPerUnit: 150000 },
+      { resourceId: 'cap-004', resourceType: 'Vulnerability Scans', currentCapacity: 500, peakUsage: 380, projectedGrowth: 0.20, threshold: 0.80, unit: 'scans/day', costPerUnit: 0.5 },
+      { resourceId: 'cap-005', resourceType: 'API Rate Limits', currentCapacity: 100000, peakUsage: 67000, projectedGrowth: 0.30, threshold: 0.70, unit: 'calls/min', costPerUnit: 0.0001 },
+      { resourceId: 'cap-006', resourceType: 'Threat Hunt Sessions', currentCapacity: 20, peakUsage: 15, projectedGrowth: 0.15, threshold: 0.75, unit: 'sessions/week', costPerUnit: 500 },
+      { resourceId: 'cap-007', resourceType: 'Incident Response', currentCapacity: 5, peakUsage: 3, projectedGrowth: 0.10, threshold: 0.60, unit: 'concurrent', costPerUnit: 50000 },
+      { resourceId: 'cap-008', resourceType: 'Compliance Audits', currentCapacity: 4, peakUsage: 3, projectedGrowth: 0.05, threshold: 0.75, unit: 'audits/quarter', costPerUnit: 75000 }
+    ];
+    this._integration_healthCapacityForecast = this._forecastIntegrationHealthCapacity();
+    this._integration_healthCapacityAlerts = this._checkIntegrationHealthCapacityAlerts();
+  }
+
+  private _forecastIntegrationHealthCapacity(): Array<Record<string, unknown>> {
+    return Array.from({ length: 6 }, (_, i) => ({
+      period: `2026-${String(i + 7).padStart(2, '0')}`,
+      projectedLoad: Math.round(70 + i * 5 + Math.random() * 10),
+      availableCapacity: Math.round(85 + i * 2 + Math.random() * 5),
+      riskOfExhaustion: Math.round(10 + i * 8 + Math.random() * 10),
+      recommendation: i > 3 ? 'scale-up-recommended' : 'monitor',
+      estimatedCost: Math.round(50000 + i * 15000 + Math.random() * 10000)
+    }));
+  }
+
+  private _checkIntegrationHealthCapacityAlerts(): Array<Record<string, unknown>> {
+    return this._integration_healthCapacityModels
+      .filter((c: Record<string, unknown>) => Number(c.peakUsage) / Number(c.currentCapacity) > Number(c.threshold) * 0.9)
+      .map((c: Record<string, unknown>) => ({
+        resourceId: c.resourceId, resourceType: c.resourceType,
+        utilization: Math.round(Number(c.peakUsage) / Number(c.currentCapacity) * 100),
+        threshold: Math.round(Number(c.threshold) * 100),
+        timeToExhaust: `${Math.round((1 - Number(c.peakUsage) / Number(c.currentCapacity)) / Number(c.projectedGrowth) * 12)} months`,
+        action: 'scale-required', estimatedCost: Math.round(Number(c.currentCapacity) * Number(c.costPerUnit) * 1.5)
+      }));
+  }
+
+
+  // === Security Integration & Interoperability Matrix ===
+  private _initIntegrationHealthIntegrationMatrix() {
+    this._integration_healthIntegrations = [
+      { integrationId: 'int-001', name: 'SIEM to SOAR', type: 'bidirectional', status: 'active', latency: 250, dataVolume: '500 eps', protocol: 'REST API', version: 'v3', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.02 },
+      { integrationId: 'int-002', name: 'EDR to SIEM', type: 'unidirectional', status: 'active', latency: 100, dataVolume: '200 eps', protocol: 'Syslog', version: 'v2', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.01 },
+      { integrationId: 'int-003', name: 'Vulnerability Scanner to Risk Register', type: 'unidirectional', status: 'active', latency: 5000, dataVolume: '10 scans/day', protocol: 'Webhook', version: 'v1', lastSync: '2026-04-23T14:00:00Z', errorRate: 0.05 },
+      { integrationId: 'int-004', name: 'IAM to SIEM', type: 'bidirectional', status: 'active', latency: 150, dataVolume: '100 eps', protocol: 'REST API', version: 'v2', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.03 },
+      { integrationId: 'int-005', name: 'Threat Intel to SIEM', type: 'unidirectional', status: 'degraded', latency: 1200, dataVolume: '50 ioc/h', protocol: 'STIX/TAXII', version: 'v2.1', lastSync: '2026-04-23T16:30:00Z', errorRate: 0.12 },
+      { integrationId: 'int-006', name: 'Cloud Provider to CSPM', type: 'unidirectional', status: 'active', latency: 300, dataVolume: 'config changes', protocol: 'Event Stream', version: 'v1', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.04 },
+      { integrationId: 'int-007', name: 'Ticket System to SOAR', type: 'bidirectional', status: 'active', latency: 500, dataVolume: '50 tickets/day', protocol: 'REST API', version: 'v3', lastSync: '2026-04-23T16:55:00Z', errorRate: 0.06 },
+      { integrationId: 'int-008', name: 'DLP to SIEM', type: 'unidirectional', status: 'warning', latency: 2000, dataVolume: '30 alerts/day', protocol: 'Syslog', version: 'v1', lastSync: '2026-04-23T16:45:00Z', errorRate: 0.15 },
+      { integrationId: 'int-009', name: 'Compliance Platform to GRC', type: 'bidirectional', status: 'active', latency: 3000, dataVolume: 'daily sync', protocol: 'REST API', version: 'v2', lastSync: '2026-04-23T00:00:00Z', errorRate: 0.08 },
+      { integrationId: 'int-010', name: 'Container Registry to Scanner', type: 'unidirectional', status: 'active', latency: 800, dataVolume: '100 images/day', protocol: 'Webhook', version: 'v1', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.03 }
+    ];
+    this._integration_healthIntegrationHealth = this._assessIntegrationHealthIntegrationHealth();
+    this._integration_healthIntegrationAlerts = this._monitorIntegrationHealthIntegrationAlerts();
+    this._integration_healthDataFlowMatrix = this._buildIntegrationHealthDataFlowMatrix();
+    this._integration_healthIntegrationSLA = this._trackIntegrationHealthIntegrationSLA();
+  }
+
+  private _assessIntegrationHealthIntegrationHealth(): Record<string, unknown> {
+    const active = this._integration_healthIntegrations.filter((i: Record<string, unknown>) => i.status === 'active').length;
+    const degraded = this._integration_healthIntegrations.filter((i: Record<string, unknown>) => i.status === 'degraded').length;
+    const warning = this._integration_healthIntegrations.filter((i: Record<string, unknown>) => i.status === 'warning').length;
+    const avgLatency = this._integration_healthIntegrations.reduce((s: number, i: Record<string, unknown>) => s + Number(i.latency), 0) / this._integration_healthIntegrations.length;
+    const avgErrorRate = this._integration_healthIntegrations.reduce((s: number, i: Record<string, unknown>) => s + Number(i.errorRate), 0) / this._integration_healthIntegrations.length;
+    return {
+      totalIntegrations: this._integration_healthIntegrations.length, active, degraded, warning,
+      healthScore: Math.round((active / this._integration_healthIntegrations.length) * 100),
+      avgLatencyMs: Math.round(avgLatency), avgErrorRate: Math.round(avgErrorRate * 1000) / 10,
+      dataFreshness: '95%', coverage: '92%'
+    };
+  }
+
+  private _monitorIntegrationHealthIntegrationAlerts(): Array<Record<string, unknown>> {
+    return this._integration_healthIntegrations
+      .filter((i: Record<string, unknown>) => i.status !== 'active')
+      .map((i: Record<string, unknown>) => ({
+        integrationId: i.integrationId, integrationName: i.name,
+        status: i.status, currentErrorRate: Number(i.errorRate) * 100,
+        thresholdErrorRate: 5.0, currentLatency: Number(i.latency),
+        thresholdLatency: 1000, lastIncident: '2026-04-23T16:' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00Z',
+        autoRemediationAttempted: Math.random() > 0.5,
+        manualInterventionRequired: Math.random() > 0.6,
+        impactDescription: `Integration degraded affecting ${i.name} data flow`
+      }));
+  }
+
+  private _buildIntegrationHealthDataFlowMatrix(): Array<Record<string, unknown>> {
+    const sources = ['SIEM', 'SOAR', 'EDR', 'IAM', 'CSPM', 'DLP', 'Scanner', 'Threat Intel', 'GRC', 'Tickets'];
+    const matrix: Array<Record<string, unknown>> = [];
+    for (let i = 0; i < sources.length; i++) {
+      for (let j = 0; j < sources.length; j++) {
+        if (i !== j && Math.random() > 0.6) {
+          matrix.push({
+            from: sources[i], to: sources[j], dataType: ['alerts', 'ioc', 'config', 'telemetry', 'policy'][Math.floor(Math.random() * 5)],
+            frequency: ['realtime', 'near-realtime', 'batch', 'on-demand'][Math.floor(Math.random() * 4)],
+            protocol: ['REST', 'Syslog', 'Webhook', 'STIX', 'gRPC'][Math.floor(Math.random() * 5)],
+            encrypted: Math.random() > 0.1, authenticated: Math.random() > 0.05,
+            dataClassification: ['internal', 'confidential', 'restricted'][Math.floor(Math.random() * 3)]
+          });
+        }
+      }
+    }
+    return matrix;
+  }
+
+  private _trackIntegrationHealthIntegrationSLA(): Array<Record<string, unknown>> {
+    return this._integration_healthIntegrations.map((i: Record<string, unknown>) => ({
+      integrationId: i.integrationId, integrationName: i.name,
+      slaUptime: 99.5 + Math.random() * 0.49,
+      actualUptime: 99.0 + Math.random() * 0.99,
+      slaLatency: Number(i.latency) * 2,
+      actualLatencyP95: Math.round(Number(i.latency) * (1 + Math.random() * 0.5)),
+      slaMet: Math.random() > 0.15,
+      breachesThisMonth: Math.floor(Math.random() * 5),
+      mttr: Math.round(5 + Math.random() * 30)
+    }));
+  }
+
+  // === Security Service Mesh Configuration ===
+  private _initIntegrationHealthServiceMesh() {
+    this._integration_healthMeshServices = [
+      { serviceId: 'mesh-001', name: 'auth-service', namespace: 'security', replicas: 3, cpuUsage: 45, memoryUsage: 62, requestRate: 1250, errorRate: 0.02, latencyP99: 45, version: 'v2.3.1', securityLevel: 'high' },
+      { serviceId: 'mesh-002', name: 'policy-engine', namespace: 'security', replicas: 2, cpuUsage: 38, memoryUsage: 55, requestRate: 800, errorRate: 0.01, latencyP99: 120, version: 'v1.8.0', securityLevel: 'high' },
+      { serviceId: 'mesh-003', name: 'threat-analyzer', namespace: 'analytics', replicas: 4, cpuUsage: 72, memoryUsage: 81, requestRate: 3400, errorRate: 0.04, latencyP99: 250, version: 'v3.1.0', securityLevel: 'medium' },
+      { serviceId: 'mesh-004', name: 'log-aggregator', namespace: 'infrastructure', replicas: 5, cpuUsage: 58, memoryUsage: 74, requestRate: 15000, errorRate: 0.01, latencyP99: 30, version: 'v4.0.2', securityLevel: 'medium' },
+      { serviceId: 'mesh-005', name: 'alert-dispatcher', namespace: 'security', replicas: 2, cpuUsage: 22, memoryUsage: 35, requestRate: 450, errorRate: 0.03, latencyP99: 80, version: 'v1.5.0', securityLevel: 'high' },
+      { serviceId: 'mesh-006', name: 'vuln-scanner', namespace: 'security', replicas: 3, cpuUsage: 85, memoryUsage: 90, requestRate: 50, errorRate: 0.05, latencyP99: 5000, version: 'v2.0.0', securityLevel: 'low' }
+    ];
+    this._integration_healthMeshHealth = this._calcIntegrationHealthMeshHealth();
+    this._integration_healthMeshTraffic = this._analyzeIntegrationHealthMeshTraffic();
+  }
+
+  private _calcIntegrationHealthMeshHealth(): Record<string, unknown> {
+    const healthy = this._integration_healthMeshServices.filter((s: Record<string, unknown>) => Number(s.errorRate) < 0.03).length;
+    return {
+      totalServices: this._integration_healthMeshServices.length, healthyServices: healthy,
+      healthPercent: Math.round(healthy / this._integration_healthMeshServices.length * 100),
+      totalReplicas: this._integration_healthMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.replicas), 0),
+      avgCpuUsage: Math.round(this._integration_healthMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.cpuUsage), 0) / this._integration_healthMeshServices.length),
+      avgMemoryUsage: Math.round(this._integration_healthMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.memoryUsage), 0) / this._integration_healthMeshServices.length),
+      avgLatencyP99: Math.round(this._integration_healthMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.latencyP99), 0) / this._integration_healthMeshServices.length)
+    };
+  }
+
+  private _analyzeIntegrationHealthMeshTraffic(): Array<Record<string, unknown>> {
+    return this._integration_healthMeshServices.map((s: Record<string, unknown>) => ({
+      serviceId: s.serviceId, serviceName: s.name,
+      inboundTraffic: Math.round(Number(s.requestRate) * (0.8 + Math.random() * 0.4)),
+      outboundTraffic: Math.round(Number(s.requestRate) * (0.6 + Math.random() * 0.8)),
+      trafficAnomalies: Math.floor(Math.random() * 5),
+      peakTrafficHour: Math.floor(9 + Math.random() * 10),
+      encryptionEnabled: true, mTLS: String(s.securityLevel) === 'high'
+    }));
+  }
+
   render() {    if (this._ihRules.length === 0) { this._initIhRules(); this._initIhCvss(); this._runIhAnomalyDetection(); this._generateIhPredictions(); this._initIhApprovals(); this._initIhActivity(); this._initIhNotifications(); }
 
     const items = this._getFiltered();

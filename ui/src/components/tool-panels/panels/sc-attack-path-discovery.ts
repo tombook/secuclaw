@@ -6522,6 +6522,332 @@ export class ScAttackPathDiscovery extends LitElement {
     </section>`;
   }
 
+
+  // === Security Metrics Normalization Engine ===
+  private _initAttackPathDiscoveryMetricsEngine() {
+    this._attack_path_discoveryNormalizationRules = [
+      { metricId: 'mttr', sourceFormat: 'minutes', targetFormat: 'hours', transformFn: 'divide(60)', teamScope: 'all', benchmarkAlign: 'NIST' },
+      { metricId: 'mttd', sourceFormat: 'seconds', targetFormat: 'minutes', transformFn: 'divide(60)', teamScope: 'soc', benchmarkAlign: 'SANS' },
+      { metricId: 'vuln-count', sourceFormat: 'total', targetFormat: 'per-asset', transformFn: 'divide(asset_count)', teamScope: 'vuln-mgmt', benchmarkAlign: 'CIS' },
+      { metricId: 'patch-coverage', sourceFormat: 'percentage', targetFormat: 'percentage', transformFn: 'identity', teamScope: 'infra', benchmarkAlign: 'ISO27001' },
+      { metricId: 'phishing-click-rate', sourceFormat: 'percentage', targetFormat: 'percentage', transformFn: 'identity', teamScope: 'awareness', benchmarkAlign: 'NIST' },
+      { metricId: 'incident-count', sourceFormat: 'total', targetFormat: 'per-month', transformFn: 'divide(days/30)', teamScope: 'soc', benchmarkAlign: 'SANS' },
+      { metricId: 'coverage-score', sourceFormat: 'raw', targetFormat: 'percentage', transformFn: 'multiply(100)', teamScope: 'governance', benchmarkAlign: 'COBIT' },
+      { metricId: 'risk-score', sourceFormat: '0-100', targetFormat: '0-100', transformFn: 'identity', teamScope: 'risk', benchmarkAlign: 'FAIR' }
+    ];
+    this._attack_path_discoveryIndustryBenchmarks = this._loadAttackPathDiscoveryBenchmarks();
+    this._attack_path_discoveryKpiCatalog = this._defineAttackPathDiscoveryKpiCatalog();
+    this._attack_path_discoveryMetricOwnership = this._buildAttackPathDiscoveryMetricOwnership();
+    this._attack_path_discoveryNormTrends = this._calcAttackPathDiscoveryNormTrends();
+  }
+
+  private _loadAttackPathDiscoveryBenchmarks(): Array<Record<string, unknown>> {
+    return [
+      { name: 'SANS 2026 SOC Metrics', source: 'SANS Institute', metrics: 42, lastUpdated: '2026-03-15', relevance: 'high', alignment: 87 },
+      { name: 'NIST CSF 2.0 KPIs', source: 'NIST', metrics: 35, lastUpdated: '2026-02-28', relevance: 'high', alignment: 92 },
+      { name: 'CIS Controls v8 Metrics', source: 'CIS', metrics: 28, lastUpdated: '2026-01-20', relevance: 'medium', alignment: 78 },
+      { name: 'ISO 27001:2022 Annex A', source: 'ISO', metrics: 93, lastUpdated: '2025-12-10', relevance: 'high', alignment: 85 },
+      { name: 'FAIR Model Quantitative', source: 'FAIR Institute', metrics: 18, lastUpdated: '2026-04-01', relevance: 'medium', alignment: 71 }
+    ];
+  }
+
+  private _defineAttackPathDiscoveryKpiCatalog(): Array<Record<string, unknown>> {
+    return [
+      { kpiId: 'kpi-01', name: 'Mean Time to Detect', unit: 'minutes', target: '<15', current: 12.3, trend: 'improving', owner: 'SOC Lead', frequency: 'daily' },
+      { kpiId: 'kpi-02', name: 'Mean Time to Respond', unit: 'minutes', target: '<60', current: 45.7, trend: 'improving', owner: 'SOC Lead', frequency: 'daily' },
+      { kpiId: 'kpi-03', name: 'Patch Compliance Rate', unit: 'percentage', target: '>95', current: 91.2, trend: 'stable', owner: 'IT Ops', frequency: 'weekly' },
+      { kpiId: 'kpi-04', name: 'Critical Vuln Backlog', unit: 'count', target: '<10', current: 7, trend: 'improving', owner: 'Vuln Mgmt', frequency: 'daily' },
+      { kpiId: 'kpi-05', name: 'Phishing Simulation Click Rate', unit: 'percentage', target: '<5', current: 8.3, trend: 'degrading', owner: 'Awareness', frequency: 'monthly' },
+      { kpiId: 'kpi-06', name: 'Security Awareness Score', unit: 'score', target: '>80', current: 76.5, trend: 'improving', owner: 'GRC', frequency: 'quarterly' },
+      { kpiId: 'kpi-07', name: 'Third-Party Risk Score', unit: 'score', target: '>70', current: 68.9, trend: 'stable', owner: 'Vendor Mgmt', frequency: 'monthly' },
+      { kpiId: 'kpi-08', name: 'Compliance Score', unit: 'percentage', target: '>90', current: 85.4, trend: 'improving', owner: 'GRC', frequency: 'monthly' },
+      { kpiId: 'kpi-09', name: 'Incident Response Time P95', unit: 'minutes', target: '<120', current: 98.2, trend: 'improving', owner: 'IR Lead', frequency: 'weekly' },
+      { kpiId: 'kpi-10', name: 'False Positive Rate', unit: 'percentage', target: '<10', current: 14.7, trend: 'degrading', owner: 'Detection Eng', frequency: 'weekly' },
+      { kpiId: 'kpi-11', name: 'Asset Coverage', unit: 'percentage', target: '>98', current: 96.1, trend: 'stable', owner: 'Asset Mgmt', frequency: 'monthly' },
+      { kpiId: 'kpi-12', name: 'Encryption Coverage', unit: 'percentage', target: '>99', current: 97.8, trend: 'improving', owner: 'Crypto Eng', frequency: 'monthly' },
+      { kpiId: 'kpi-13', name: 'Access Review Completion', unit: 'percentage', target: '>95', current: 88.3, trend: 'degrading', owner: 'IAM', frequency: 'quarterly' },
+      { kpiId: 'kpi-14', name: 'Backup Success Rate', unit: 'percentage', target: '>99.5', current: 99.1, trend: 'stable', owner: 'IT Ops', frequency: 'daily' },
+      { kpiId: 'kpi-15', name: 'Security Debt Ratio', unit: 'percentage', target: '<15', current: 18.2, trend: 'degrading', owner: 'AppSec', frequency: 'quarterly' }
+    ];
+  }
+
+  private _buildAttackPathDiscoveryMetricOwnership(): Array<Record<string, unknown>> {
+    return [
+      { team: 'SOC', metrics: ['mttd', 'mttr', 'incident-count', 'false-positive-rate'], dataSources: ['SIEM', 'Ticketing', 'SOAR'], qualityScore: 88 },
+      { team: 'Vuln Management', metrics: ['vuln-count', 'patch-coverage', 'critical-backlog'], dataSources: ['Scanner', 'CMDB', 'Patch Mgmt'], qualityScore: 82 },
+      { team: 'GRC', metrics: ['compliance-score', 'risk-score', 'access-review'], dataSources: ['GRC Platform', 'IAM', 'Policy Engine'], qualityScore: 75 },
+      { team: 'Awareness', metrics: ['phishing-click-rate', 'awareness-score'], dataSources: ['Training Platform', 'Phishing Sim'], qualityScore: 91 },
+      { team: 'AppSec', metrics: ['security-debt', 'code-coverage'], dataSources: ['SCA', 'SAST', 'DAST'], qualityScore: 79 }
+    ];
+  }
+
+  private _calcAttackPathDiscoveryNormTrends(): Array<Record<string, unknown>> {
+    return Array.from({ length: 12 }, (_, i) => ({
+      month: `2026-${String(i + 1).padStart(2, '0')}`,
+      normalizedScore: Math.round(70 + Math.random() * 25),
+      benchmarkDelta: Math.round((Math.random() - 0.3) * 15),
+      metricsCount: Math.floor(30 + Math.random() * 15),
+      dataQualityScore: Math.round(75 + Math.random() * 20)
+    }));
+  }
+
+
+  // === Security Architecture Evolution Tracker ===
+  private _initAttackPathDiscoveryArchEvolution() {
+    this._attack_path_discoveryArchComponents = [
+      { componentId: 'arch-001', name: 'Zero Trust Network', version: '3.2', maturity: 'optimized', dependencies: 8, riskScore: 12, techDebt: 'low', lastReview: '2026-04-20', nextReview: '2026-07-20', owner: 'Network Arch' },
+      { componentId: 'arch-002', name: 'Micro-segmentation Fabric', version: '2.1', maturity: 'managed', dependencies: 5, riskScore: 25, techDebt: 'medium', lastReview: '2026-04-15', nextReview: '2026-07-15', owner: 'Network Arch' },
+      { componentId: 'arch-003', name: 'Cloud Security Broker', version: '4.0', maturity: 'optimized', dependencies: 12, riskScore: 8, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Cloud Arch' },
+      { componentId: 'arch-004', name: 'Identity Fabric', version: '2.5', maturity: 'managed', dependencies: 15, riskScore: 30, techDebt: 'medium', lastReview: '2026-04-18', nextReview: '2026-07-18', owner: 'Identity Arch' },
+      { componentId: 'arch-005', name: 'Data Protection Suite', version: '3.0', maturity: 'defined', dependencies: 7, riskScore: 42, techDebt: 'high', lastReview: '2026-04-10', nextReview: '2026-07-10', owner: 'Data Arch' },
+      { componentId: 'arch-006', name: 'SIEM/SOAR Platform', version: '5.1', maturity: 'optimized', dependencies: 20, riskScore: 15, techDebt: 'low', lastReview: '2026-04-21', nextReview: '2026-07-21', owner: 'SOC Arch' },
+      { componentId: 'arch-007', name: 'Container Security Stack', version: '2.0', maturity: 'managed', dependencies: 6, riskScore: 28, techDebt: 'medium', lastReview: '2026-04-19', nextReview: '2026-07-19', owner: 'Platform Arch' },
+      { componentId: 'arch-008', name: 'API Gateway Security', version: '3.5', maturity: 'managed', dependencies: 10, riskScore: 22, techDebt: 'low', lastReview: '2026-04-17', nextReview: '2026-07-17', owner: 'App Arch' },
+      { componentId: 'arch-009', name: 'Secrets Management', version: '4.2', maturity: 'optimized', dependencies: 18, riskScore: 10, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Security Eng' },
+      { componentId: 'arch-010', name: 'Threat Intel Platform', version: '2.8', maturity: 'managed', dependencies: 9, riskScore: 20, techDebt: 'medium', lastReview: '2026-04-16', nextReview: '2026-07-16', owner: 'Threat Intel' }
+    ];
+    this._attack_path_discoveryArchRoadmap = this._planAttackPathDiscoveryArchRoadmap();
+    this._attack_path_discoveryArchRiskSurface = this._mapAttackPathDiscoveryArchRiskSurface();
+    this._attack_path_discoveryArchTechDebt = this._assessAttackPathDiscoveryTechDebt();
+    this._attack_path_discoveryArchEvolutionTimeline = this._buildAttackPathDiscoveryEvolutionTimeline();
+  }
+
+  private _planAttackPathDiscoveryArchRoadmap(): Array<Record<string, unknown>> {
+    return [
+      { phase: 'Q2 2026', initiatives: ['Zero Trust Phase 3', 'CSPM Enhancement', 'Container Runtime Protection'], budget: 850000, status: 'in-progress', completion: 45 },
+      { phase: 'Q3 2026', initiatives: ['SASE Deployment', 'AI-Driven Detection', 'Data Mesh Security'], budget: 1200000, status: 'planned', completion: 0 },
+      { phase: 'Q4 2026', initiatives: ['Identity Federation', 'Quantum-Ready Crypto', 'XDR Integration'], budget: 950000, status: 'planned', completion: 0 },
+      { phase: 'Q1 2027', initiatives: ['Autonomous SOC', 'Supply Chain Security', 'Zero Trust Phase 4'], budget: 1100000, status: 'planned', completion: 0 }
+    ];
+  }
+
+  private _mapAttackPathDiscoveryArchRiskSurface(): Array<Record<string, unknown>> {
+    return [
+      { riskArea: 'External Attack Surface', attackVectors: 234, exposedServices: 12, shadowIT: 8, riskScore: 68, mitigationStatus: 'active' },
+      { riskArea: 'Internal Lateral Movement', attackVectors: 89, exposedServices: 45, shadowIT: 3, riskScore: 42, mitigationStatus: 'monitored' },
+      { riskArea: 'Cloud Misconfiguration', attackVectors: 156, exposedServices: 7, shadowIT: 15, riskScore: 55, mitigationStatus: 'active' },
+      { riskArea: 'Third-Party Integration', attackVectors: 67, exposedServices: 23, shadowIT: 12, riskScore: 73, mitigationStatus: 'review-needed' },
+      { riskArea: 'Data Exfiltration Path', attackVectors: 45, exposedServices: 5, shadowIT: 2, riskScore: 38, mitigationStatus: 'monitored' },
+      { riskArea: 'Supply Chain Dependencies', attackVectors: 312, exposedServices: 34, shadowIT: 0, riskScore: 61, mitigationStatus: 'active' }
+    ];
+  }
+
+  private _assessAttackPathDiscoveryTechDebt(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryArchComponents
+      .filter((c: Record<string, unknown>) => String(c.techDebt) !== 'low')
+      .map((c: Record<string, unknown>) => ({
+        componentId: c.componentId, componentName: c.name, version: c.version,
+        debtLevel: c.techDebt, debtItems: Math.floor(3 + Math.random() * 8),
+        estimatedRemediation: `${Math.floor(2 + Math.random() * 6)} weeks`,
+        remediationCost: Math.round(50000 + Math.random() * 200000),
+        businessImpact: String(c.techDebt) === 'high' ? 'high' : 'medium',
+        priority: String(c.techDebt) === 'high' ? 1 : String(c.techDebt) === 'medium' ? 2 : 3
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.priority) - Number(b.priority));
+  }
+
+  private _buildAttackPathDiscoveryEvolutionTimeline(): Array<Record<string, unknown>> {
+    return [
+      { year: '2023', milestone: 'Security Baseline Established', components: 4, maturityAvg: 'initial', investment: 1200000 },
+      { year: '2024', milestone: 'Zero Trust Phase 1', components: 6, maturityAvg: 'developing', investment: 1800000 },
+      { year: '2025', milestone: 'Cloud-Native Security', components: 8, maturityAvg: 'defined', investment: 2200000 },
+      { year: '2026', milestone: 'AI-Augmented Security', components: 10, maturityAvg: 'managed', investment: 2800000 },
+      { year: '2027', milestone: 'Autonomous Defense Target', components: 12, maturityAvg: 'optimized', investment: 3200000 }
+    ];
+  }
+
+  // === Security Design Patterns Library ===
+  private _initAttackPathDiscoveryDesignPatterns() {
+    this._attack_path_discoveryDesignPatterns = [
+      { patternId: 'dp-001', name: 'Defense in Depth', category: 'architectural', applicability: 95, implementation: 'deployed', controls: 12, layers: 5, reference: 'NIST SP 800-53' },
+      { patternId: 'dp-002', name: 'Least Privilege Access', category: 'access-control', applicability: 98, implementation: 'partial', controls: 8, layers: 3, reference: 'NIST SP 800-53 AC-6' },
+      { patternId: 'dp-003', name: 'Secure-by-Default', category: 'development', applicability: 90, implementation: 'deployed', controls: 15, layers: 4, reference: 'OWASP ASVS' },
+      { patternId: 'dp-004', name: 'Zero Trust Architecture', category: 'architectural', applicability: 88, implementation: 'in-progress', controls: 20, layers: 6, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-005', name: 'Immutable Infrastructure', category: 'deployment', applicability: 75, implementation: 'partial', controls: 6, layers: 2, reference: 'CIS Benchmark' },
+      { patternId: 'dp-006', name: 'Break-Glass Procedure', category: 'operations', applicability: 82, implementation: 'deployed', controls: 4, layers: 2, reference: 'ITIL v4' },
+      { patternId: 'dp-007', name: 'Data Classification Matrix', category: 'data', applicability: 92, implementation: 'partial', controls: 10, layers: 3, reference: 'ISO 27001 A.8' },
+      { patternId: 'dp-008', name: 'Threat Modeling Pipeline', category: 'development', applicability: 78, implementation: 'deployed', controls: 8, layers: 3, reference: 'STRIDE/Microsoft' },
+      { patternId: 'dp-009', name: 'Micro-segmentation', category: 'network', applicability: 85, implementation: 'in-progress', controls: 14, layers: 4, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-010', name: 'Security Chaos Engineering', category: 'resilience', applicability: 65, implementation: 'planned', controls: 5, layers: 2, reference: 'Chaos Engineering' }
+    ];
+    this._attack_path_discoveryPatternCompliance = this._assessAttackPathDiscoveryPatternCompliance();
+    this._attack_path_discoveryPatternGaps = this._identifyAttackPathDiscoveryPatternGaps();
+  }
+
+  private _assessAttackPathDiscoveryPatternCompliance(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryDesignPatterns.map((pat: Record<string, unknown>) => ({
+      patternId: pat.patternId, patternName: pat.name,
+      compliancePercent: String(pat.implementation) === 'deployed' ? 100 : String(pat.implementation) === 'in-progress' ? Math.round(40 + Math.random() * 40) : Math.round(10 + Math.random() * 30),
+      controlCoverage: Math.round(Number(pat.controls) / 20 * 100),
+      layerDepth: pat.layers, riskMitigation: Math.round(Number(pat.applicability) * 0.8),
+      maturityLevel: String(pat.implementation) === 'deployed' ? 'level-4' : String(pat.implementation) === 'in-progress' ? 'level-3' : String(pat.implementation) === 'partial' ? 'level-2' : 'level-1'
+    }));
+  }
+
+  private _identifyAttackPathDiscoveryPatternGaps(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryDesignPatterns
+      .filter((p: Record<string, unknown>) => String(p.implementation) !== 'deployed')
+      .map((p: Record<string, unknown>) => ({
+        patternId: p.patternId, patternName: p.name, currentStatus: p.implementation,
+        targetStatus: 'deployed', gapDescription: `${String(p.implementation)} implementation needs to reach deployed state`,
+        estimatedEffort: `${Math.floor(2 + Math.random() * 8)} sprints`,
+        dependencies: Math.floor(1 + Math.random() * 4), blockers: Math.floor(Math.random() * 3),
+        priority: Number(p.applicability) > 85 ? 'high' : 'medium'
+      }));
+  }
+
+  // === Security Capacity Planning Model ===
+  private _initAttackPathDiscoveryCapacityPlanning() {
+    this._attack_path_discoveryCapacityModels = [
+      { resourceId: 'cap-001', resourceType: 'SIEM EPS', currentCapacity: 50000, peakUsage: 42000, projectedGrowth: 0.15, threshold: 0.8, unit: 'events/sec', costPerUnit: 0.002 },
+      { resourceId: 'cap-002', resourceType: 'Storage (Logs)', currentCapacity: 50, peakUsage: 38, projectedGrowth: 0.25, threshold: 0.75, unit: 'TB', costPerUnit: 120 },
+      { resourceId: 'cap-003', resourceType: 'SOC Analysts', currentCapacity: 12, peakUsage: 10, projectedGrowth: 0.10, threshold: 0.85, unit: 'FTE', costPerUnit: 150000 },
+      { resourceId: 'cap-004', resourceType: 'Vulnerability Scans', currentCapacity: 500, peakUsage: 380, projectedGrowth: 0.20, threshold: 0.80, unit: 'scans/day', costPerUnit: 0.5 },
+      { resourceId: 'cap-005', resourceType: 'API Rate Limits', currentCapacity: 100000, peakUsage: 67000, projectedGrowth: 0.30, threshold: 0.70, unit: 'calls/min', costPerUnit: 0.0001 },
+      { resourceId: 'cap-006', resourceType: 'Threat Hunt Sessions', currentCapacity: 20, peakUsage: 15, projectedGrowth: 0.15, threshold: 0.75, unit: 'sessions/week', costPerUnit: 500 },
+      { resourceId: 'cap-007', resourceType: 'Incident Response', currentCapacity: 5, peakUsage: 3, projectedGrowth: 0.10, threshold: 0.60, unit: 'concurrent', costPerUnit: 50000 },
+      { resourceId: 'cap-008', resourceType: 'Compliance Audits', currentCapacity: 4, peakUsage: 3, projectedGrowth: 0.05, threshold: 0.75, unit: 'audits/quarter', costPerUnit: 75000 }
+    ];
+    this._attack_path_discoveryCapacityForecast = this._forecastAttackPathDiscoveryCapacity();
+    this._attack_path_discoveryCapacityAlerts = this._checkAttackPathDiscoveryCapacityAlerts();
+  }
+
+  private _forecastAttackPathDiscoveryCapacity(): Array<Record<string, unknown>> {
+    return Array.from({ length: 6 }, (_, i) => ({
+      period: `2026-${String(i + 7).padStart(2, '0')}`,
+      projectedLoad: Math.round(70 + i * 5 + Math.random() * 10),
+      availableCapacity: Math.round(85 + i * 2 + Math.random() * 5),
+      riskOfExhaustion: Math.round(10 + i * 8 + Math.random() * 10),
+      recommendation: i > 3 ? 'scale-up-recommended' : 'monitor',
+      estimatedCost: Math.round(50000 + i * 15000 + Math.random() * 10000)
+    }));
+  }
+
+  private _checkAttackPathDiscoveryCapacityAlerts(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryCapacityModels
+      .filter((c: Record<string, unknown>) => Number(c.peakUsage) / Number(c.currentCapacity) > Number(c.threshold) * 0.9)
+      .map((c: Record<string, unknown>) => ({
+        resourceId: c.resourceId, resourceType: c.resourceType,
+        utilization: Math.round(Number(c.peakUsage) / Number(c.currentCapacity) * 100),
+        threshold: Math.round(Number(c.threshold) * 100),
+        timeToExhaust: `${Math.round((1 - Number(c.peakUsage) / Number(c.currentCapacity)) / Number(c.projectedGrowth) * 12)} months`,
+        action: 'scale-required', estimatedCost: Math.round(Number(c.currentCapacity) * Number(c.costPerUnit) * 1.5)
+      }));
+  }
+
+
+  // === Risk Quantification & Scenario Analysis Engine ===
+  private _initAttackPathDiscoveryRiskQuantification() {
+    this._attack_path_discoveryRiskScenarios = [
+      { scenarioId: 'rs-001', name: 'Ransomware Attack on Core Systems', likelihood: 0.35, impactFinancial: 4500000, impactOperational: 72, impactReputational: 'high', affectedAssets: 45, recoveryTime: '5-10 days', currentControls: ['backups', 'edr', 'network-segmentation'], residualRisk: 'medium' },
+      { scenarioId: 'rs-002', name: 'Data Breach via Third Party', likelihood: 0.25, impactFinancial: 8200000, impactOperational: 48, impactReputational: 'critical', affectedAssets: 120000, recoveryTime: '3-6 months', currentControls: ['vendor-assessment', 'dlp', 'contractual'], residualRisk: 'high' },
+      { scenarioId: 'rs-003', name: 'Cloud Misconfiguration Exposure', likelihood: 0.55, impactFinancial: 1200000, impactOperational: 24, impactReputational: 'medium', affectedAssets: 15, recoveryTime: '1-3 days', currentControls: ['cspm', 'iam-policies', 'monitoring'], residualRisk: 'low' },
+      { scenarioId: 'rs-004', name: 'Insider Data Theft', likelihood: 0.15, impactFinancial: 3500000, impactOperational: 36, impactReputational: 'high', affectedAssets: 80, recoveryTime: '2-4 weeks', currentControls: ['ueba', 'dap', 'access-controls'], residualRisk: 'medium' },
+      { scenarioId: 'rs-005', name: 'Supply Chain Compromise', likelihood: 0.20, impactFinancial: 6800000, impactOperational: 96, impactReputational: 'critical', affectedAssets: 500, recoveryTime: '1-3 months', currentControls: ['sbom', 'code-review', 'vendor-monitoring'], residualRisk: 'high' },
+      { scenarioId: 'rs-006', name: 'DDoS Attack on Public Services', likelihood: 0.45, impactFinancial: 800000, impactOperational: 12, impactReputational: 'medium', affectedAssets: 8, recoveryTime: '2-24 hours', currentControls: ['ddos-protection', 'cdn', 'rate-limiting'], residualRisk: 'low' },
+      { scenarioId: 'rs-007', name: 'Zero-Day Exploit in Critical Software', likelihood: 0.10, impactFinancial: 5500000, impactOperational: 72, impactReputational: 'high', affectedAssets: 200, recoveryTime: '1-4 weeks', currentControls: ['virtual-patching', 'waf', 'isolation'], residualRisk: 'medium' },
+      { scenarioId: 'rs-008', name: 'Business Email Compromise', likelihood: 0.40, impactFinancial: 2500000, impactOperational: 6, impactReputational: 'medium', affectedAssets: 5, recoveryTime: '1-5 days', currentControls: ['email-security', 'mfa', 'awareness-training'], residualRisk: 'low' }
+    ];
+    this._attack_path_discoveryRiskQuantification = this._calcAttackPathDiscoveryFinancialRisk();
+    this._attack_path_discoveryScenarioHeatmap = this._buildAttackPathDiscoveryScenarioHeatmap();
+    this._attack_path_discoveryRiskMitigationPlans = this._generateAttackPathDiscoveryMitigationPlans();
+    this._attack_path_discoveryMonteCarloResults = this._runAttackPathDiscoveryMonteCarloSimulation();
+  }
+
+  private _calcAttackPathDiscoveryFinancialRisk(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryRiskScenarios.map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      annualizedLossExpectancy: Math.round(Number(s.likelihood) * Number(s.impactFinancial)),
+      singleLossExpectancy: Number(s.impactFinancial),
+      annualOccurrenceRate: Number(s.likelihood),
+      riskTreatmentCost: Math.round(Number(s.impactFinancial) * 0.15),
+      netRiskAfterTreatment: Math.round(Number(s.likelihood) * Number(s.impactFinancial) * 0.4),
+      riskReductionPercent: Math.round(60 + Math.random() * 25),
+      costBenefitRatio: Math.round((Number(s.likelihood) * Number(s.impactFinancial) * 0.6) / (Number(s.impactFinancial) * 0.15))
+    })).sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.annualizedLossExpectancy) - Number(a.annualizedLossExpectancy));
+  }
+
+  private _buildAttackPathDiscoveryScenarioHeatmap(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryRiskScenarios.map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      likelihoodBand: Number(s.likelihood) >= 0.4 ? 'high' : Number(s.likelihood) >= 0.2 ? 'medium' : 'low',
+      impactBand: Number(s.impactFinancial) >= 5000000 ? 'critical' : Number(s.impactFinancial) >= 2000000 ? 'high' : Number(s.impactFinancial) >= 500000 ? 'medium' : 'low',
+      riskLevel: Number(s.likelihood) * Number(s.impactFinancial) >= 2000000 ? 'extreme' : Number(s.likelihood) * Number(s.impactFinancial) >= 500000 ? 'high' : 'medium',
+      trend: Math.random() > 0.5 ? 'increasing' : 'stable',
+      lastAssessed: '2026-04-22', nextReview: '2026-07-22'
+    }));
+  }
+
+  private _generateAttackPathDiscoveryMitigationPlans(): Array<Record<string, unknown>> {
+    return this._attack_path_discoveryRiskScenarios.filter((s: Record<string, unknown>) => String(s.residualRisk) !== 'low').map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      currentResidualRisk: s.residualRisk, targetResidualRisk: 'low',
+      mitigationActions: [
+        { action: 'enhance-detection', effort: 'medium', cost: 150000, effectiveness: 0.35 },
+        { action: 'add-preventive-control', effort: 'high', cost: 300000, effectiveness: 0.50 },
+        { action: 'improve-response-playbook', effort: 'low', cost: 50000, effectiveness: 0.15 }
+      ],
+      totalMitigationBudget: 500000, estimatedRiskReduction: 0.65,
+      implementationTimeline: 'Q3 2026', owner: 'CISO Office',
+      priority: Number(s.impactFinancial) > 5000000 ? 'critical' : 'high'
+    }));
+  }
+
+  private _runAttackPathDiscoveryMonteCarloSimulation(): Record<string, unknown> {
+    const iterations = 10000;
+    let totalLosses = 0;
+    let maxLoss = 0;
+    let minLoss = Infinity;
+    const lossBuckets: Record<string, number> = { '0-500K': 0, '500K-1M': 0, '1M-5M': 0, '5M-10M': 0, '10M+': 0 };
+    for (let i = 0; i < iterations; i++) {
+      let annualLoss = 0;
+      for (const s of this._attack_path_discoveryRiskScenarios) {
+        if (Math.random() < Number(s.likelihood)) {
+          annualLoss += Number(s.impactFinancial) * (0.5 + Math.random() * 0.5);
+        }
+      }
+      totalLosses += annualLoss;
+      if (annualLoss > maxLoss) maxLoss = annualLoss;
+      if (annualLoss < minLoss) minLoss = annualLoss;
+      if (annualLoss < 500000) lossBuckets['0-500K']++;
+      else if (annualLoss < 1000000) lossBuckets['500K-1M']++;
+      else if (annualLoss < 5000000) lossBuckets['1M-5M']++;
+      else if (annualLoss < 10000000) lossBuckets['5M-10M']++;
+      else lossBuckets['10M+']++;
+    }
+    return {
+      iterations, meanAnnualLoss: Math.round(totalLosses / iterations),
+      maxLoss: Math.round(maxLoss), minLoss: Math.round(minLoss),
+      lossBuckets, var95: Math.round(totalLosses / iterations * 2.1),
+      var99: Math.round(totalLosses / iterations * 3.5),
+      probabilityOfBreach: Math.round(this._attack_path_discoveryRiskScenarios.reduce((s: number, r: Record<string, unknown>) => s + Number(r.likelihood), 0) * 100) / this._attack_path_discoveryRiskScenarios.length
+    };
+  }
+
+  // === Security Incident Cost Modeling ===
+  private _initAttackPathDiscoveryIncidentCostModel() {
+    this._attack_path_discoveryIncidentCostCategories = [
+      { category: 'Detection & Investigation', avgCost: 125000, minCost: 50000, maxCost: 500000, timeToComplete: '3-7 days', responsible: 'SOC Team', includes: ['forensic-analysis', 'evidence-collection', 'timeline-reconstruction'] },
+      { category: 'Containment & Eradication', avgCost: 280000, minCost: 100000, maxCost: 1200000, timeToComplete: '1-5 days', responsible: 'IR Team', includes: ['system-isolation', 'malware-removal', 'patching'] },
+      { category: 'Recovery & Restoration', avgCost: 350000, minCost: 150000, maxCost: 2000000, timeToComplete: '5-30 days', responsible: 'IT Operations', includes: ['system-restore', 'data-recovery', 'service-restoration'] },
+      { category: 'Notification & Communication', avgCost: 180000, minCost: 50000, maxCost: 800000, timeToComplete: '1-3 days', responsible: 'Legal/Comms', includes: ['regulatory-notification', 'customer-communication', 'public-relations'] },
+      { category: 'Legal & Regulatory', avgCost: 450000, minCost: 100000, maxCost: 5000000, timeToComplete: '3-12 months', responsible: 'Legal', includes: ['legal-fees', 'regulatory-fines', 'settlements'] },
+      { category: 'Business Disruption', avgCost: 520000, minCost: 200000, maxCost: 3000000, timeToComplete: '1-30 days', responsible: 'Business Units', includes: ['lost-revenue', 'productivity-loss', 'opportunity-cost'] },
+      { category: 'Post-Incident Hardening', avgCost: 200000, minCost: 75000, maxCost: 600000, timeToComplete: '1-6 months', responsible: 'Security Engineering', includes: ['control-improvements', 'tool-deployment', 'process-changes'] }
+    ];
+    this._attack_path_discoveryTotalIncidentCost = this._attack_path_discoveryIncidentCostCategories.reduce((s: number, c: Record<string, unknown>) => s + Number(c.avgCost), 0);
+    this._attack_path_discoveryCostBySeverity = this._modelAttackPathDiscoveryCostBySeverity();
+  }
+
+  private _modelAttackPathDiscoveryCostBySeverity(): Array<Record<string, unknown>> {
+    return [
+      { severity: 'low', avgTotalCost: 85000, responseTime: '2h', staffRequired: 3, historicalCount: 45, trend: 'stable' },
+      { severity: 'medium', avgTotalCost: 350000, responseTime: '8h', staffRequired: 8, historicalCount: 18, trend: 'decreasing' },
+      { severity: 'high', avgTotalCost: 1200000, responseTime: '24h', staffRequired: 15, historicalCount: 6, trend: 'stable' },
+      { severity: 'critical', avgTotalCost: 4500000, responseTime: '1h', staffRequired: 30, historicalCount: 2, trend: 'increasing' }
+    ];
+  }
+
   render() {
     return html`
       <div class="panel">

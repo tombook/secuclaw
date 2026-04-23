@@ -8310,6 +8310,352 @@ export class ScPrivacyBreach extends LitElement {
     </section>`;
   }
 
+
+  // === Security Compliance Automation Hub ===
+  private _initPrivacyBreachComplianceHub() {
+    const privacy_breachComplianceControls = [
+      { id: 'ctrl-1', name: 'Access Control Policy', framework: 'NIST 800-53', status: 'compliant', evidenceCount: 14, lastAssessed: '2026-04-20', owner: 'CISO Office', severity: 'high' },
+      { id: 'ctrl-2', name: 'Data Encryption Standards', framework: 'ISO 27001', status: 'partial', evidenceCount: 9, lastAssessed: '2026-04-18', owner: 'Security Engineering', severity: 'critical' },
+      { id: 'ctrl-3', name: 'Incident Response Plan', framework: 'NIST CSF', status: 'compliant', evidenceCount: 22, lastAssessed: '2026-04-22', owner: 'SOC Team', severity: 'high' },
+      { id: 'ctrl-4', name: 'Vulnerability Management', framework: 'CIS Controls', status: 'drift-detected', evidenceCount: 7, lastAssessed: '2026-04-15', owner: 'Vuln Management', severity: 'medium' },
+      { id: 'ctrl-5', name: 'Security Awareness Training', framework: 'PCI DSS', status: 'compliant', evidenceCount: 31, lastAssessed: '2026-04-21', owner: 'GRC Team', severity: 'low' },
+      { id: 'ctrl-6', name: 'Network Segmentation', framework: 'NIST 800-53', status: 'non-compliant', evidenceCount: 3, lastAssessed: '2026-04-10', owner: 'Network Security', severity: 'critical' },
+      { id: 'ctrl-7', name: 'Logging and Monitoring', framework: 'SOC 2', status: 'compliant', evidenceCount: 18, lastAssessed: '2026-04-19', owner: 'SOC Team', severity: 'high' },
+      { id: 'ctrl-8', name: 'Third-Party Risk Management', framework: 'ISO 27001', status: 'partial', evidenceCount: 5, lastAssessed: '2026-04-12', owner: 'Vendor Management', severity: 'medium' },
+      { id: 'ctrl-9', name: 'Business Continuity Planning', framework: 'NIST CSF', status: 'compliant', evidenceCount: 12, lastAssessed: '2026-04-17', owner: 'BCP Team', severity: 'high' },
+      { id: 'ctrl-10', name: 'Data Loss Prevention', framework: 'GDPR', status: 'drift-detected', evidenceCount: 8, lastAssessed: '2026-04-14', owner: 'Data Protection', severity: 'high' }
+    ];
+    this._privacy_breachComplianceScore = this._calcPrivacyBreachComplianceScore(privacy_breachComplianceControls);
+    this._privacy_breachDriftAlerts = privacy_breachComplianceControls.filter(c => c.status === 'drift-detected' || c.status === 'non-compliant');
+    this._privacy_breachRemediationQueue = this._generatePrivacyBreachRemediationPlan(privacy_breachComplianceControls);
+    this._privacy_breachRegulatoryChanges = this._detectPrivacyBreachRegulatoryImpact(privacy_breachComplianceControls);
+  }
+
+  private _calcPrivacyBreachComplianceScore(controls: Array<Record<string, unknown>>): number {
+    const weights: Record<string, number> = { compliant: 100, partial: 60, 'drift-detected': 30, 'non-compliant': 0 };
+    const severityMultiplier: Record<string, number> = { critical: 1.5, high: 1.2, medium: 1.0, low: 0.8 };
+    let totalWeight = 0;
+    let weightedScore = 0;
+    for (const ctrl of controls) {
+      const w = weights[String(ctrl.status)] || 0;
+      const m = severityMultiplier[String(ctrl.severity)] || 1.0;
+      totalWeight += m;
+      weightedScore += w * m;
+    }
+    return totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 0;
+  }
+
+  private _generatePrivacyBreachRemediationPlan(controls: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+    return controls.filter(c => c.status !== 'compliant').map((c, i) => ({
+      controlId: c.id, controlName: c.name, priority: i + 1, estimatedEffort: `${Math.floor(Math.random() * 40 + 8)}h`,
+      assignedTo: c.owner, deadline: '2026-05-15', autoRemediation: Math.random() > 0.5,
+      progress: Math.floor(Math.random() * 60), approvalStatus: Math.random() > 0.3 ? 'approved' : 'pending'
+    }));
+  }
+
+  private _detectPrivacyBreachRegulatoryImpact(controls: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+    return [
+      { regulation: 'EU AI Act 2026', affectedControls: 3, impactLevel: 'high', actionRequired: true, deadline: '2026-06-01', description: 'New AI governance requirements' },
+      { regulation: 'NIST CSF 2.0 Update', affectedControls: 5, impactLevel: 'medium', actionRequired: true, deadline: '2026-07-15', description: 'Framework alignment adjustments' },
+      { regulation: 'SEC Cyber Disclosure', affectedControls: 2, impactLevel: 'high', actionRequired: false, deadline: '2026-05-01', description: 'Material incident reporting' },
+      { regulation: 'DORA Compliance', affectedControls: 4, impactLevel: 'critical', actionRequired: true, deadline: '2026-05-30', description: 'Digital operational resilience' }
+    ];
+  }
+
+  private _runPrivacyBreachContinuousMonitoring(): void {
+    const monitoringChecks = [
+      { checkType: 'configuration-drift', interval: '15m', lastRun: '2026-04-23T17:00:00Z', findings: 2, autoRemediated: 1 },
+      { checkType: 'policy-violation', interval: '30m', lastRun: '2026-04-23T16:45:00Z', findings: 0, autoRemediated: 0 },
+      { checkType: 'evidence-freshness', interval: '1h', lastRun: '2026-04-23T16:00:00Z', findings: 3, autoRemediated: 0 },
+      { checkType: 'access-review', interval: '24h', lastRun: '2026-04-23T00:00:00Z', findings: 7, autoRemediated: 5 },
+      { checkType: 'encryption-validation', interval: '6h', lastRun: '2026-04-23T12:00:00Z', findings: 1, autoRemediated: 1 },
+      { checkType: 'compliance-score-calc', interval: '1h', lastRun: '2026-04-23T17:00:00Z', findings: 0, autoRemediated: 0 }
+    ];
+    this._privacy_breachMonitoringChecks = monitoringChecks;
+  }
+
+
+  // === SOC Intelligence Hub - Threat Analysis Engine ===
+  private _initPrivacyBreachSocIntelHub() {
+    this._privacy_breachThreatActors = [
+      { actorId: 'ta-001', name: 'APT-PHANTOM SPIDER', country: 'Unknown', sophistication: 'advanced', motivation: 'espionage', sector: 'technology', activeSince: '2021', confidence: 92, iocs: 347, incidents: 23, trend: 'increasing' },
+      { actorId: 'ta-002', name: 'CYBER VOLT TIGER', country: 'East Asia', sophistication: 'advanced', motivation: 'financial', sector: 'finance', activeSince: '2020', confidence: 87, iocs: 521, incidents: 45, trend: 'stable' },
+      { actorId: 'ta-003', name: 'DARK NEBULA GROUP', country: 'Eastern Europe', sophistication: 'moderate', motivation: 'financial', sector: 'healthcare', activeSince: '2022', confidence: 78, iocs: 189, incidents: 12, trend: 'increasing' },
+      { actorId: 'ta-004', name: 'SHADOW STORM COLLECTIVE', country: 'Unknown', sophistication: 'advanced', motivation: 'sabotage', sector: 'energy', activeSince: '2019', confidence: 84, iocs: 293, incidents: 8, trend: 'stable' },
+      { actorId: 'ta-005', name: 'SILENT COBRA SYNDICATE', country: 'Southeast Asia', sophistication: 'moderate', motivation: 'espionage', sector: 'government', activeSince: '2023', confidence: 71, iocs: 156, incidents: 19, trend: 'increasing' },
+      { actorId: 'ta-006', name: 'IRON PHOENIX APT', country: 'Middle East', sophistication: 'advanced', motivation: 'espionage', sector: 'defense', activeSince: '2018', confidence: 91, iocs: 612, incidents: 31, trend: 'stable' },
+      { actorId: 'ta-007', name: 'GHOST SIGNAL NETWORK', country: 'Unknown', sophistication: 'low', motivation: 'financial', sector: 'retail', activeSince: '2024', confidence: 65, iocs: 78, incidents: 67, trend: 'increasing' },
+      { actorId: 'ta-008', name: 'CRIMSON DRAGON UNIT', country: 'East Asia', sophistication: 'advanced', motivation: 'espionage', sector: 'telecom', activeSince: '2020', confidence: 89, iocs: 445, incidents: 27, trend: 'stable' }
+    ];
+    this._privacy_breachTtpMapping = this._buildPrivacyBreachTtpMatrix();
+    this._privacy_breachThreatCampaigns = this._trackPrivacyBreachActiveCampaigns();
+    this._privacy_breachIntelFeeds = this._configurePrivacyBreachIntelFeeds();
+    this._privacy_breachThreatScores = this._calcPrivacyBreachThreatScores();
+    this._privacy_breachPredictiveAnalysis = this._runPrivacyBreachPredictiveThreatModel();
+  }
+
+  private _buildPrivacyBreachTtpMatrix(): Array<Record<string, unknown>> {
+    const techniques = [
+      { techniqueId: 'T1566', name: 'Phishing', tactic: 'Initial Access', frequency: 94, detectionRate: 89, mitigation: 'awareness-training', actorCount: 8 },
+      { techniqueId: 'T1059', name: 'Command and Scripting Interpreter', tactic: 'Execution', frequency: 88, detectionRate: 76, mitigation: 'edr-monitoring', actorCount: 7 },
+      { techniqueId: 'T1078', name: 'Valid Accounts', tactic: 'Persistence', frequency: 82, detectionRate: 62, mitigation: 'pam-implementation', actorCount: 6 },
+      { techniqueId: 'T1083', name: 'File and Directory Discovery', tactic: 'Discovery', frequency: 91, detectionRate: 71, mitigation: 'file-integrity-monitoring', actorCount: 8 },
+      { techniqueId: 'T1048', name: 'Exfiltration Over Alternative Protocol', tactic: 'Exfiltration', frequency: 67, detectionRate: 54, mitigation: 'dlp-controls', actorCount: 5 },
+      { techniqueId: 'T1055', name: 'Process Injection', tactic: 'Defense Evasion', frequency: 79, detectionRate: 68, mitigation: 'amsi-enabled', actorCount: 7 },
+      { techniqueId: 'T1021', name: 'Remote Services', tactic: 'Lateral Movement', frequency: 74, detectionRate: 81, mitigation: 'network-segmentation', actorCount: 6 },
+      { techniqueId: 'T1498', name: 'Network Denial of Service', tactic: 'Impact', frequency: 45, detectionRate: 92, mitigation: 'ddos-mitigation', actorCount: 3 },
+      { techniqueId: 'T1003', name: 'OS Credential Dumping', tactic: 'Credential Access', frequency: 85, detectionRate: 73, mitigation: 'lsa-protection', actorCount: 7 },
+      { techniqueId: 'T1133', name: 'External Remote Services', tactic: 'Initial Access', frequency: 58, detectionRate: 85, mitigation: 'vpn-mfa', actorCount: 4 },
+      { techniqueId: 'T1070', name: 'Indicator Removal', tactic: 'Defense Evasion', frequency: 71, detectionRate: 59, mitigation: 'log-forwarding', actorCount: 6 },
+      { techniqueId: 'T1110', name: 'Brute Force', tactic: 'Credential Access', frequency: 63, detectionRate: 94, mitigation: 'account-lockout', actorCount: 5 }
+    ];
+    return techniques;
+  }
+
+  private _trackPrivacyBreachActiveCampaigns(): Array<Record<string, unknown>> {
+    return [
+      { campaignId: 'camp-001', name: 'Operation Phantom Edge', actorId: 'ta-001', status: 'active', startDate: '2026-03-15', targetSector: 'technology', targets: 12, compromised: 3, indicatorCount: 89, severity: 'critical' },
+      { campaignId: 'camp-002', name: 'Dark Harvest Finance', actorId: 'ta-002', status: 'active', startDate: '2026-02-28', targetSector: 'finance', targets: 8, compromised: 5, indicatorCount: 234, severity: 'high' },
+      { campaignId: 'camp-003', name: 'Silent Patient', actorId: 'ta-005', status: 'monitoring', startDate: '2026-04-01', targetSector: 'government', targets: 5, compromised: 0, indicatorCount: 34, severity: 'medium' },
+      { campaignId: 'camp-004', name: 'Storm Surge', actorId: 'ta-004', status: 'dormant', startDate: '2025-11-20', targetSector: 'energy', targets: 15, compromised: 2, indicatorCount: 167, severity: 'high' },
+      { campaignId: 'camp-005', name: 'Night Shift', actorId: 'ta-007', status: 'active', startDate: '2026-04-10', targetSector: 'retail', targets: 25, compromised: 8, indicatorCount: 45, severity: 'medium' },
+      { campaignId: 'camp-006', name: 'Red Horizon', actorId: 'ta-006', status: 'active', startDate: '2026-01-15', targetSector: 'defense', targets: 6, compromised: 1, indicatorCount: 312, severity: 'critical' }
+    ];
+  }
+
+  private _configurePrivacyBreachIntelFeeds(): Array<Record<string, unknown>> {
+    return [
+      { feedId: 'feed-001', name: 'STIX/TAXII Community Feed', type: 'structured', format: 'stix-2.1', updateFreq: '15min', lastUpdate: '2026-04-23T17:00:00Z', iocCount: 45230, quality: 'high', source: 'MISP Community' },
+      { feedId: 'feed-002', name: 'Commercial Threat Intel', type: 'structured', format: 'stix-2.1', updateFreq: '1h', lastUpdate: '2026-04-23T16:00:00Z', iocCount: 89100, quality: 'high', source: 'CrowdStrike' },
+      { feedId: 'feed-003', name: 'OSINT Dark Web Monitor', type: 'unstructured', format: 'json', updateFreq: '30min', lastUpdate: '2026-04-23T16:30:00Z', iocCount: 12800, quality: 'medium', source: 'Internal Crawler' },
+      { feedId: 'feed-004', name: 'Vulnerability Disclosure Feed', type: 'structured', format: 'cve-json', updateFreq: '6h', lastUpdate: '2026-04-23T12:00:00Z', iocCount: 34500, quality: 'high', source: 'NVD/NIST' },
+      { feedId: 'feed-005', name: 'Malware Bazaar Samples', type: 'structured', format: 'json', updateFreq: '1h', lastUpdate: '2026-04-23T16:00:00Z', iocCount: 67800, quality: 'medium', source: 'Abuse.ch' },
+      { feedId: 'feed-006', name: 'Country-Specific CERT Alerts', type: 'unstructured', format: 'rss', updateFreq: '12h', lastUpdate: '2026-04-23T06:00:00Z', iocCount: 2300, quality: 'medium', source: 'Multi-CERT' }
+    ];
+  }
+
+  private _calcPrivacyBreachThreatScores(): Array<Record<string, unknown>> {
+    return this._privacy_breachThreatActors.map((actor: Record<string, unknown>) => ({
+      actorId: actor.actorId, actorName: actor.name,
+      compositeScore: Math.round((Number(actor.confidence) * 0.3 + Number(actor.iocs) / 10 * 0.2 + Number(actor.incidents) * 2 * 0.3 + (Number(actor.sophistication) === 'advanced' ? 30 : 20) * 0.2)),
+      riskLevel: Number(actor.incidents) > 30 ? 'critical' : Number(actor.incidents) > 15 ? 'high' : Number(actor.incidents) > 8 ? 'medium' : 'low',
+      watchlistStatus: Number(actor.incidents) > 20 ? 'priority-watch' : 'standard-watch',
+      lastActivityDaysAgo: Math.floor(Math.random() * 30) + 1,
+      exposureScore: Math.round(Number(actor.iocs) / 7),
+      mitigationCoverage: Math.round(60 + Math.random() * 35)
+    })).sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.compositeScore) - Number(a.compositeScore));
+  }
+
+  private _runPrivacyBreachPredictiveThreatModel(): Array<Record<string, unknown>> {
+    return [
+      { predictionId: 'pred-001', threatType: 'ransomware', probability: 78, timeHorizon: '30d', confidence: 82, affectedAssets: 23, recommendedActions: ['patch-critical', 'backup-verify', 'network-segment'], estimatedImpact: 'high' },
+      { predictionId: 'pred-002', threatType: 'supply-chain-attack', probability: 45, timeHorizon: '90d', confidence: 67, affectedAssets: 8, recommendedActions: ['vendor-audit', 'sbom-analysis', 'dependency-monitor'], estimatedImpact: 'critical' },
+      { predictionId: 'pred-003', threatType: 'insider-threat', probability: 32, timeHorizon: '60d', confidence: 58, affectedAssets: 5, recommendedActions: ['ueba-monitor', 'access-review', 'dap-scan'], estimatedImpact: 'high' },
+      { predictionId: 'pred-004', threatType: 'zero-day-exploit', probability: 25, timeHorizon: '90d', confidence: 45, affectedAssets: 45, recommendedActions: ['virtual-patching', 'waf-rules', 'network-isolation'], estimatedImpact: 'critical' },
+      { predictionId: 'pred-005', threatType: 'credential-stuffing', probability: 65, timeHorizon: '14d', confidence: 75, affectedAssets: 12, recommendedActions: ['mfa-enforce', 'password-policy', 'rate-limit'], estimatedImpact: 'medium' },
+      { predictionId: 'pred-006', threatType: 'business-email-compromise', probability: 55, timeHorizon: '30d', confidence: 71, affectedAssets: 3, recommendedActions: ['email-auth', 'ceo-fraud-training', 'payment-controls'], estimatedImpact: 'high' }
+    ];
+  }
+
+  // === SOC Workflow Automation Engine ===
+  private _initPrivacyBreachWorkflowEngine() {
+    this._privacy_breachWorkflows = [
+      { workflowId: 'wf-001', name: 'Phishing Triage', triggerType: 'alert', autoSteps: 5, manualSteps: 2, avgDuration: '8min', successRate: 94.2, lastRun: '2026-04-23T16:55:00Z', totalRuns: 3420, active: true },
+      { workflowId: 'wf-002', name: 'Vuln Remediation', triggerType: 'scheduled', autoSteps: 8, manualSteps: 3, avgDuration: '4h', successRate: 87.6, lastRun: '2026-04-23T14:00:00Z', totalRuns: 890, active: true },
+      { workflowId: 'wf-003', name: 'Incident Escalation', triggerType: 'alert', autoSteps: 3, manualSteps: 4, avgDuration: '2h', successRate: 91.8, lastRun: '2026-04-23T15:30:00Z', totalRuns: 156, active: true },
+      { workflowId: 'wf-004', name: 'Access Review Cycle', triggerType: 'scheduled', autoSteps: 6, manualSteps: 1, avgDuration: '24h', successRate: 96.1, lastRun: '2026-04-22T00:00:00Z', totalRuns: 48, active: true },
+      { workflowId: 'wf-005', name: 'Threat Intel Enrichment', triggerType: 'alert', autoSteps: 7, manualSteps: 0, avgDuration: '3min', successRate: 99.1, lastRun: '2026-04-23T17:00:00Z', totalRuns: 28900, active: true },
+      { workflowId: 'wf-006', name: 'Compliance Evidence Collection', triggerType: 'scheduled', autoSteps: 10, manualSteps: 2, avgDuration: '6h', successRate: 82.3, lastRun: '2026-04-21T00:00:00Z', totalRuns: 24, active: true },
+      { workflowId: 'wf-007', name: 'Malware Analysis Pipeline', triggerType: 'alert', autoSteps: 12, manualSteps: 1, avgDuration: '45min', successRate: 88.7, lastRun: '2026-04-23T16:20:00Z', totalRuns: 567, active: true },
+      { workflowId: 'wf-008', name: 'DR Failover Test', triggerType: 'manual', autoSteps: 4, manualSteps: 3, avgDuration: '2h', successRate: 79.5, lastRun: '2026-04-15T10:00:00Z', totalRuns: 12, active: true }
+    ];
+    this._privacy_breachWorkflowMetrics = this._aggregatePrivacyBreachWorkflowMetrics();
+    this._privacy_breachWorkflowBottlenecks = this._identifyPrivacyBreachBottlenecks();
+    this._privacy_breachAutomationROI = this._calcPrivacyBreachAutomationROI();
+  }
+
+  private _aggregatePrivacyBreachWorkflowMetrics(): Record<string, unknown> {
+    const totalRuns = this._privacy_breachWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.totalRuns), 0);
+    const avgSuccess = this._privacy_breachWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.successRate), 0) / this._privacy_breachWorkflows.length;
+    const totalAutoSteps = this._privacy_breachWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.autoSteps), 0);
+    const totalManualSteps = this._privacy_breachWorkflows.reduce((s: number, w: Record<string, unknown>) => s + Number(w.manualSteps), 0);
+    return {
+      totalWorkflowsExecuted: totalRuns, avgSuccessRate: Math.round(avgSuccess * 10) / 10,
+      automationRatio: Math.round(totalAutoSteps / (totalAutoSteps + totalManualSteps) * 100),
+      timeSavedHours: Math.round(totalRuns * 0.15), costSaved: Math.round(totalRuns * 0.15 * 75),
+      activeWorkflows: this._privacy_breachWorkflows.filter((w: Record<string, unknown>) => w.active).length,
+      avgStepsPerWorkflow: Math.round((totalAutoSteps + totalManualSteps) / this._privacy_breachWorkflows.length)
+    };
+  }
+
+  private _identifyPrivacyBreachBottlenecks(): Array<Record<string, unknown>> {
+    return [
+      { workflowId: 'wf-002', stepName: 'patch-validation', avgWait: '45min', failureRate: 12.3, suggestion: 'add-parallel-validation' },
+      { workflowId: 'wf-006', stepName: 'evidence-collection', avgWait: '2h', failureRate: 17.7, suggestion: 'increase-api-rate-limits' },
+      { workflowId: 'wf-008', stepName: 'failover-verification', avgWait: '30min', failureRate: 20.5, suggestion: 'pre-stage-test-environments' },
+      { workflowId: 'wf-003', stepName: 'analyst-assignment', avgWait: '15min', failureRate: 5.2, suggestion: 'auto-assign-by-skill' }
+    ];
+  }
+
+  private _calcPrivacyBreachAutomationROI(): Array<Record<string, unknown>> {
+    return this._privacy_breachWorkflows.map((w: Record<string, unknown>) => ({
+      workflowId: w.workflowId, workflowName: w.name,
+      manualCostPerRun: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 75),
+      automatedCostPerRun: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 15),
+      savingsPerRun: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 60),
+      annualSavings: Math.round(Number(w.avgDuration.replace(/[^0-9]/g, '')) * 60 * Number(w.totalRuns) / 365),
+      automationInvestment: Math.round(Number(w.autoSteps) * 5000),
+      paybackPeriodDays: Math.round(Number(w.autoSteps) * 5000 / (Number(w.avgDuration.replace(/[^0-9]/g, '')) * 60 * Number(w.totalRuns) / 365) * 365)
+    }));
+  }
+
+  // === Security Posture Continuous Assessment ===
+  private _runPrivacyBreachPostureAssessment() {
+    this._privacy_breachPostureDimensions = [
+      { dimension: 'Network Security', score: 87, weight: 0.15, trend: 'improving', keyFindings: ['firewall-rules-optimized', 'segmentation-improved'], riskItems: 3 },
+      { dimension: 'Endpoint Security', score: 82, weight: 0.12, trend: 'stable', keyFindings: ['edr-coverage-95-pct', 'patch-compliance-91'], riskItems: 5 },
+      { dimension: 'Identity & Access', score: 78, weight: 0.13, trend: 'improving', keyFindings: ['mfa-rollout-87-pct', 'pam-implemented'], riskItems: 7 },
+      { dimension: 'Data Protection', score: 74, weight: 0.14, trend: 'degrading', keyFindings: ['dlp-gaps-identified', 'encryption-97-pct'], riskItems: 9 },
+      { dimension: 'Application Security', score: 69, weight: 0.11, trend: 'stable', keyFindings: ['sast-coverage-78-pct', 'sca-integrated'], riskItems: 12 },
+      { dimension: 'Cloud Security', score: 81, weight: 0.12, trend: 'improving', keyFindings: ['cspm-deployed', 'iam-policies-tightened'], riskItems: 4 },
+      { dimension: 'Vulnerability Management', score: 76, weight: 0.10, trend: 'improving', keyFindings: ['scan-frequency-weekly', 'critical-backlog-7'], riskItems: 6 },
+      { dimension: 'Incident Response', score: 85, weight: 0.08, trend: 'stable', keyFindings: ['playbooks-12-defined', 'mttd-12min'], riskItems: 2 },
+      { dimension: 'Compliance & Governance', score: 83, weight: 0.05, trend: 'improving', keyFindings: ['audit-passed-3-of-4', 'policy-updated'], riskItems: 1 }
+    ];
+    this._privacy_breachOverallPostureScore = this._privacy_breachPostureDimensions.reduce(
+      (s: number, d: Record<string, unknown>) => s + Number(d.score) * Number(d.weight), 0
+    );
+    this._privacy_breachPostureHistory = Array.from({ length: 30 }, (_, i) => ({
+      date: `2026-${String(Math.floor(i / 30) + 3).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`,
+      score: Math.round(75 + Math.random() * 15), assessments: Math.floor(5 + Math.random() * 10),
+      findings: Math.floor(10 + Math.random() * 20), remediated: Math.floor(5 + Math.random() * 15)
+    }));
+    this._privacy_breachPostureRecommendations = this._generatePrivacyBreachPostureRecommendations();
+  }
+
+  private _generatePrivacyBreachPostureRecommendations(): Array<Record<string, unknown>> {
+    return [
+      { priority: 1, title: 'Address DLP Coverage Gaps', effort: 'medium', impact: 'high', timeline: '30d', status: 'in-progress', owner: 'Data Protection Lead' },
+      { priority: 2, title: 'Increase SAST/DAST Coverage', effort: 'high', impact: 'high', timeline: '60d', status: 'planned', owner: 'AppSec Lead' },
+      { priority: 3, title: 'Complete MFA Rollout', effort: 'low', impact: 'medium', timeline: '14d', status: 'in-progress', owner: 'IAM Lead' },
+      { priority: 4, title: 'Reduce Critical Vuln Backlog', effort: 'medium', impact: 'critical', timeline: '7d', status: 'in-progress', owner: 'Vuln Mgmt Lead' },
+      { priority: 5, title: 'Enhance Cloud IAM Policies', effort: 'medium', impact: 'high', timeline: '21d', status: 'planned', owner: 'Cloud Security Lead' }
+    ];
+  }
+
+
+  // === Risk Quantification & Scenario Analysis Engine ===
+  private _initPrivacyBreachRiskQuantification() {
+    this._privacy_breachRiskScenarios = [
+      { scenarioId: 'rs-001', name: 'Ransomware Attack on Core Systems', likelihood: 0.35, impactFinancial: 4500000, impactOperational: 72, impactReputational: 'high', affectedAssets: 45, recoveryTime: '5-10 days', currentControls: ['backups', 'edr', 'network-segmentation'], residualRisk: 'medium' },
+      { scenarioId: 'rs-002', name: 'Data Breach via Third Party', likelihood: 0.25, impactFinancial: 8200000, impactOperational: 48, impactReputational: 'critical', affectedAssets: 120000, recoveryTime: '3-6 months', currentControls: ['vendor-assessment', 'dlp', 'contractual'], residualRisk: 'high' },
+      { scenarioId: 'rs-003', name: 'Cloud Misconfiguration Exposure', likelihood: 0.55, impactFinancial: 1200000, impactOperational: 24, impactReputational: 'medium', affectedAssets: 15, recoveryTime: '1-3 days', currentControls: ['cspm', 'iam-policies', 'monitoring'], residualRisk: 'low' },
+      { scenarioId: 'rs-004', name: 'Insider Data Theft', likelihood: 0.15, impactFinancial: 3500000, impactOperational: 36, impactReputational: 'high', affectedAssets: 80, recoveryTime: '2-4 weeks', currentControls: ['ueba', 'dap', 'access-controls'], residualRisk: 'medium' },
+      { scenarioId: 'rs-005', name: 'Supply Chain Compromise', likelihood: 0.20, impactFinancial: 6800000, impactOperational: 96, impactReputational: 'critical', affectedAssets: 500, recoveryTime: '1-3 months', currentControls: ['sbom', 'code-review', 'vendor-monitoring'], residualRisk: 'high' },
+      { scenarioId: 'rs-006', name: 'DDoS Attack on Public Services', likelihood: 0.45, impactFinancial: 800000, impactOperational: 12, impactReputational: 'medium', affectedAssets: 8, recoveryTime: '2-24 hours', currentControls: ['ddos-protection', 'cdn', 'rate-limiting'], residualRisk: 'low' },
+      { scenarioId: 'rs-007', name: 'Zero-Day Exploit in Critical Software', likelihood: 0.10, impactFinancial: 5500000, impactOperational: 72, impactReputational: 'high', affectedAssets: 200, recoveryTime: '1-4 weeks', currentControls: ['virtual-patching', 'waf', 'isolation'], residualRisk: 'medium' },
+      { scenarioId: 'rs-008', name: 'Business Email Compromise', likelihood: 0.40, impactFinancial: 2500000, impactOperational: 6, impactReputational: 'medium', affectedAssets: 5, recoveryTime: '1-5 days', currentControls: ['email-security', 'mfa', 'awareness-training'], residualRisk: 'low' }
+    ];
+    this._privacy_breachRiskQuantification = this._calcPrivacyBreachFinancialRisk();
+    this._privacy_breachScenarioHeatmap = this._buildPrivacyBreachScenarioHeatmap();
+    this._privacy_breachRiskMitigationPlans = this._generatePrivacyBreachMitigationPlans();
+    this._privacy_breachMonteCarloResults = this._runPrivacyBreachMonteCarloSimulation();
+  }
+
+  private _calcPrivacyBreachFinancialRisk(): Array<Record<string, unknown>> {
+    return this._privacy_breachRiskScenarios.map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      annualizedLossExpectancy: Math.round(Number(s.likelihood) * Number(s.impactFinancial)),
+      singleLossExpectancy: Number(s.impactFinancial),
+      annualOccurrenceRate: Number(s.likelihood),
+      riskTreatmentCost: Math.round(Number(s.impactFinancial) * 0.15),
+      netRiskAfterTreatment: Math.round(Number(s.likelihood) * Number(s.impactFinancial) * 0.4),
+      riskReductionPercent: Math.round(60 + Math.random() * 25),
+      costBenefitRatio: Math.round((Number(s.likelihood) * Number(s.impactFinancial) * 0.6) / (Number(s.impactFinancial) * 0.15))
+    })).sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(b.annualizedLossExpectancy) - Number(a.annualizedLossExpectancy));
+  }
+
+  private _buildPrivacyBreachScenarioHeatmap(): Array<Record<string, unknown>> {
+    return this._privacy_breachRiskScenarios.map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      likelihoodBand: Number(s.likelihood) >= 0.4 ? 'high' : Number(s.likelihood) >= 0.2 ? 'medium' : 'low',
+      impactBand: Number(s.impactFinancial) >= 5000000 ? 'critical' : Number(s.impactFinancial) >= 2000000 ? 'high' : Number(s.impactFinancial) >= 500000 ? 'medium' : 'low',
+      riskLevel: Number(s.likelihood) * Number(s.impactFinancial) >= 2000000 ? 'extreme' : Number(s.likelihood) * Number(s.impactFinancial) >= 500000 ? 'high' : 'medium',
+      trend: Math.random() > 0.5 ? 'increasing' : 'stable',
+      lastAssessed: '2026-04-22', nextReview: '2026-07-22'
+    }));
+  }
+
+  private _generatePrivacyBreachMitigationPlans(): Array<Record<string, unknown>> {
+    return this._privacy_breachRiskScenarios.filter((s: Record<string, unknown>) => String(s.residualRisk) !== 'low').map((s: Record<string, unknown>) => ({
+      scenarioId: s.scenarioId, scenarioName: s.name,
+      currentResidualRisk: s.residualRisk, targetResidualRisk: 'low',
+      mitigationActions: [
+        { action: 'enhance-detection', effort: 'medium', cost: 150000, effectiveness: 0.35 },
+        { action: 'add-preventive-control', effort: 'high', cost: 300000, effectiveness: 0.50 },
+        { action: 'improve-response-playbook', effort: 'low', cost: 50000, effectiveness: 0.15 }
+      ],
+      totalMitigationBudget: 500000, estimatedRiskReduction: 0.65,
+      implementationTimeline: 'Q3 2026', owner: 'CISO Office',
+      priority: Number(s.impactFinancial) > 5000000 ? 'critical' : 'high'
+    }));
+  }
+
+  private _runPrivacyBreachMonteCarloSimulation(): Record<string, unknown> {
+    const iterations = 10000;
+    let totalLosses = 0;
+    let maxLoss = 0;
+    let minLoss = Infinity;
+    const lossBuckets: Record<string, number> = { '0-500K': 0, '500K-1M': 0, '1M-5M': 0, '5M-10M': 0, '10M+': 0 };
+    for (let i = 0; i < iterations; i++) {
+      let annualLoss = 0;
+      for (const s of this._privacy_breachRiskScenarios) {
+        if (Math.random() < Number(s.likelihood)) {
+          annualLoss += Number(s.impactFinancial) * (0.5 + Math.random() * 0.5);
+        }
+      }
+      totalLosses += annualLoss;
+      if (annualLoss > maxLoss) maxLoss = annualLoss;
+      if (annualLoss < minLoss) minLoss = annualLoss;
+      if (annualLoss < 500000) lossBuckets['0-500K']++;
+      else if (annualLoss < 1000000) lossBuckets['500K-1M']++;
+      else if (annualLoss < 5000000) lossBuckets['1M-5M']++;
+      else if (annualLoss < 10000000) lossBuckets['5M-10M']++;
+      else lossBuckets['10M+']++;
+    }
+    return {
+      iterations, meanAnnualLoss: Math.round(totalLosses / iterations),
+      maxLoss: Math.round(maxLoss), minLoss: Math.round(minLoss),
+      lossBuckets, var95: Math.round(totalLosses / iterations * 2.1),
+      var99: Math.round(totalLosses / iterations * 3.5),
+      probabilityOfBreach: Math.round(this._privacy_breachRiskScenarios.reduce((s: number, r: Record<string, unknown>) => s + Number(r.likelihood), 0) * 100) / this._privacy_breachRiskScenarios.length
+    };
+  }
+
+  // === Security Incident Cost Modeling ===
+  private _initPrivacyBreachIncidentCostModel() {
+    this._privacy_breachIncidentCostCategories = [
+      { category: 'Detection & Investigation', avgCost: 125000, minCost: 50000, maxCost: 500000, timeToComplete: '3-7 days', responsible: 'SOC Team', includes: ['forensic-analysis', 'evidence-collection', 'timeline-reconstruction'] },
+      { category: 'Containment & Eradication', avgCost: 280000, minCost: 100000, maxCost: 1200000, timeToComplete: '1-5 days', responsible: 'IR Team', includes: ['system-isolation', 'malware-removal', 'patching'] },
+      { category: 'Recovery & Restoration', avgCost: 350000, minCost: 150000, maxCost: 2000000, timeToComplete: '5-30 days', responsible: 'IT Operations', includes: ['system-restore', 'data-recovery', 'service-restoration'] },
+      { category: 'Notification & Communication', avgCost: 180000, minCost: 50000, maxCost: 800000, timeToComplete: '1-3 days', responsible: 'Legal/Comms', includes: ['regulatory-notification', 'customer-communication', 'public-relations'] },
+      { category: 'Legal & Regulatory', avgCost: 450000, minCost: 100000, maxCost: 5000000, timeToComplete: '3-12 months', responsible: 'Legal', includes: ['legal-fees', 'regulatory-fines', 'settlements'] },
+      { category: 'Business Disruption', avgCost: 520000, minCost: 200000, maxCost: 3000000, timeToComplete: '1-30 days', responsible: 'Business Units', includes: ['lost-revenue', 'productivity-loss', 'opportunity-cost'] },
+      { category: 'Post-Incident Hardening', avgCost: 200000, minCost: 75000, maxCost: 600000, timeToComplete: '1-6 months', responsible: 'Security Engineering', includes: ['control-improvements', 'tool-deployment', 'process-changes'] }
+    ];
+    this._privacy_breachTotalIncidentCost = this._privacy_breachIncidentCostCategories.reduce((s: number, c: Record<string, unknown>) => s + Number(c.avgCost), 0);
+    this._privacy_breachCostBySeverity = this._modelPrivacyBreachCostBySeverity();
+  }
+
+  private _modelPrivacyBreachCostBySeverity(): Array<Record<string, unknown>> {
+    return [
+      { severity: 'low', avgTotalCost: 85000, responseTime: '2h', staffRequired: 3, historicalCount: 45, trend: 'stable' },
+      { severity: 'medium', avgTotalCost: 350000, responseTime: '8h', staffRequired: 8, historicalCount: 18, trend: 'decreasing' },
+      { severity: 'high', avgTotalCost: 1200000, responseTime: '24h', staffRequired: 15, historicalCount: 6, trend: 'stable' },
+      { severity: 'critical', avgTotalCost: 4500000, responseTime: '1h', staffRequired: 30, historicalCount: 2, trend: 'increasing' }
+    ];
+  }
+
   render() {
     return html`${this.pbRenderRound17()}
       <div class="panel">

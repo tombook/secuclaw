@@ -6918,6 +6918,332 @@ private _executionHistory: ExecutionRecord[] = [
     </section>`;
   }
 
+
+  // === Security Compliance Automation Hub ===
+  private _initCertManagementComplianceHub() {
+    const cert_managementComplianceControls = [
+      { id: 'ctrl-1', name: 'Access Control Policy', framework: 'NIST 800-53', status: 'compliant', evidenceCount: 14, lastAssessed: '2026-04-20', owner: 'CISO Office', severity: 'high' },
+      { id: 'ctrl-2', name: 'Data Encryption Standards', framework: 'ISO 27001', status: 'partial', evidenceCount: 9, lastAssessed: '2026-04-18', owner: 'Security Engineering', severity: 'critical' },
+      { id: 'ctrl-3', name: 'Incident Response Plan', framework: 'NIST CSF', status: 'compliant', evidenceCount: 22, lastAssessed: '2026-04-22', owner: 'SOC Team', severity: 'high' },
+      { id: 'ctrl-4', name: 'Vulnerability Management', framework: 'CIS Controls', status: 'drift-detected', evidenceCount: 7, lastAssessed: '2026-04-15', owner: 'Vuln Management', severity: 'medium' },
+      { id: 'ctrl-5', name: 'Security Awareness Training', framework: 'PCI DSS', status: 'compliant', evidenceCount: 31, lastAssessed: '2026-04-21', owner: 'GRC Team', severity: 'low' },
+      { id: 'ctrl-6', name: 'Network Segmentation', framework: 'NIST 800-53', status: 'non-compliant', evidenceCount: 3, lastAssessed: '2026-04-10', owner: 'Network Security', severity: 'critical' },
+      { id: 'ctrl-7', name: 'Logging and Monitoring', framework: 'SOC 2', status: 'compliant', evidenceCount: 18, lastAssessed: '2026-04-19', owner: 'SOC Team', severity: 'high' },
+      { id: 'ctrl-8', name: 'Third-Party Risk Management', framework: 'ISO 27001', status: 'partial', evidenceCount: 5, lastAssessed: '2026-04-12', owner: 'Vendor Management', severity: 'medium' },
+      { id: 'ctrl-9', name: 'Business Continuity Planning', framework: 'NIST CSF', status: 'compliant', evidenceCount: 12, lastAssessed: '2026-04-17', owner: 'BCP Team', severity: 'high' },
+      { id: 'ctrl-10', name: 'Data Loss Prevention', framework: 'GDPR', status: 'drift-detected', evidenceCount: 8, lastAssessed: '2026-04-14', owner: 'Data Protection', severity: 'high' }
+    ];
+    this._cert_managementComplianceScore = this._calcCertManagementComplianceScore(cert_managementComplianceControls);
+    this._cert_managementDriftAlerts = cert_managementComplianceControls.filter(c => c.status === 'drift-detected' || c.status === 'non-compliant');
+    this._cert_managementRemediationQueue = this._generateCertManagementRemediationPlan(cert_managementComplianceControls);
+    this._cert_managementRegulatoryChanges = this._detectCertManagementRegulatoryImpact(cert_managementComplianceControls);
+  }
+
+  private _calcCertManagementComplianceScore(controls: Array<Record<string, unknown>>): number {
+    const weights: Record<string, number> = { compliant: 100, partial: 60, 'drift-detected': 30, 'non-compliant': 0 };
+    const severityMultiplier: Record<string, number> = { critical: 1.5, high: 1.2, medium: 1.0, low: 0.8 };
+    let totalWeight = 0;
+    let weightedScore = 0;
+    for (const ctrl of controls) {
+      const w = weights[String(ctrl.status)] || 0;
+      const m = severityMultiplier[String(ctrl.severity)] || 1.0;
+      totalWeight += m;
+      weightedScore += w * m;
+    }
+    return totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 0;
+  }
+
+  private _generateCertManagementRemediationPlan(controls: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+    return controls.filter(c => c.status !== 'compliant').map((c, i) => ({
+      controlId: c.id, controlName: c.name, priority: i + 1, estimatedEffort: `${Math.floor(Math.random() * 40 + 8)}h`,
+      assignedTo: c.owner, deadline: '2026-05-15', autoRemediation: Math.random() > 0.5,
+      progress: Math.floor(Math.random() * 60), approvalStatus: Math.random() > 0.3 ? 'approved' : 'pending'
+    }));
+  }
+
+  private _detectCertManagementRegulatoryImpact(controls: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+    return [
+      { regulation: 'EU AI Act 2026', affectedControls: 3, impactLevel: 'high', actionRequired: true, deadline: '2026-06-01', description: 'New AI governance requirements' },
+      { regulation: 'NIST CSF 2.0 Update', affectedControls: 5, impactLevel: 'medium', actionRequired: true, deadline: '2026-07-15', description: 'Framework alignment adjustments' },
+      { regulation: 'SEC Cyber Disclosure', affectedControls: 2, impactLevel: 'high', actionRequired: false, deadline: '2026-05-01', description: 'Material incident reporting' },
+      { regulation: 'DORA Compliance', affectedControls: 4, impactLevel: 'critical', actionRequired: true, deadline: '2026-05-30', description: 'Digital operational resilience' }
+    ];
+  }
+
+  private _runCertManagementContinuousMonitoring(): void {
+    const monitoringChecks = [
+      { checkType: 'configuration-drift', interval: '15m', lastRun: '2026-04-23T17:00:00Z', findings: 2, autoRemediated: 1 },
+      { checkType: 'policy-violation', interval: '30m', lastRun: '2026-04-23T16:45:00Z', findings: 0, autoRemediated: 0 },
+      { checkType: 'evidence-freshness', interval: '1h', lastRun: '2026-04-23T16:00:00Z', findings: 3, autoRemediated: 0 },
+      { checkType: 'access-review', interval: '24h', lastRun: '2026-04-23T00:00:00Z', findings: 7, autoRemediated: 5 },
+      { checkType: 'encryption-validation', interval: '6h', lastRun: '2026-04-23T12:00:00Z', findings: 1, autoRemediated: 1 },
+      { checkType: 'compliance-score-calc', interval: '1h', lastRun: '2026-04-23T17:00:00Z', findings: 0, autoRemediated: 0 }
+    ];
+    this._cert_managementMonitoringChecks = monitoringChecks;
+  }
+
+
+  // === Security Architecture Evolution Tracker ===
+  private _initCertManagementArchEvolution() {
+    this._cert_managementArchComponents = [
+      { componentId: 'arch-001', name: 'Zero Trust Network', version: '3.2', maturity: 'optimized', dependencies: 8, riskScore: 12, techDebt: 'low', lastReview: '2026-04-20', nextReview: '2026-07-20', owner: 'Network Arch' },
+      { componentId: 'arch-002', name: 'Micro-segmentation Fabric', version: '2.1', maturity: 'managed', dependencies: 5, riskScore: 25, techDebt: 'medium', lastReview: '2026-04-15', nextReview: '2026-07-15', owner: 'Network Arch' },
+      { componentId: 'arch-003', name: 'Cloud Security Broker', version: '4.0', maturity: 'optimized', dependencies: 12, riskScore: 8, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Cloud Arch' },
+      { componentId: 'arch-004', name: 'Identity Fabric', version: '2.5', maturity: 'managed', dependencies: 15, riskScore: 30, techDebt: 'medium', lastReview: '2026-04-18', nextReview: '2026-07-18', owner: 'Identity Arch' },
+      { componentId: 'arch-005', name: 'Data Protection Suite', version: '3.0', maturity: 'defined', dependencies: 7, riskScore: 42, techDebt: 'high', lastReview: '2026-04-10', nextReview: '2026-07-10', owner: 'Data Arch' },
+      { componentId: 'arch-006', name: 'SIEM/SOAR Platform', version: '5.1', maturity: 'optimized', dependencies: 20, riskScore: 15, techDebt: 'low', lastReview: '2026-04-21', nextReview: '2026-07-21', owner: 'SOC Arch' },
+      { componentId: 'arch-007', name: 'Container Security Stack', version: '2.0', maturity: 'managed', dependencies: 6, riskScore: 28, techDebt: 'medium', lastReview: '2026-04-19', nextReview: '2026-07-19', owner: 'Platform Arch' },
+      { componentId: 'arch-008', name: 'API Gateway Security', version: '3.5', maturity: 'managed', dependencies: 10, riskScore: 22, techDebt: 'low', lastReview: '2026-04-17', nextReview: '2026-07-17', owner: 'App Arch' },
+      { componentId: 'arch-009', name: 'Secrets Management', version: '4.2', maturity: 'optimized', dependencies: 18, riskScore: 10, techDebt: 'low', lastReview: '2026-04-22', nextReview: '2026-07-22', owner: 'Security Eng' },
+      { componentId: 'arch-010', name: 'Threat Intel Platform', version: '2.8', maturity: 'managed', dependencies: 9, riskScore: 20, techDebt: 'medium', lastReview: '2026-04-16', nextReview: '2026-07-16', owner: 'Threat Intel' }
+    ];
+    this._cert_managementArchRoadmap = this._planCertManagementArchRoadmap();
+    this._cert_managementArchRiskSurface = this._mapCertManagementArchRiskSurface();
+    this._cert_managementArchTechDebt = this._assessCertManagementTechDebt();
+    this._cert_managementArchEvolutionTimeline = this._buildCertManagementEvolutionTimeline();
+  }
+
+  private _planCertManagementArchRoadmap(): Array<Record<string, unknown>> {
+    return [
+      { phase: 'Q2 2026', initiatives: ['Zero Trust Phase 3', 'CSPM Enhancement', 'Container Runtime Protection'], budget: 850000, status: 'in-progress', completion: 45 },
+      { phase: 'Q3 2026', initiatives: ['SASE Deployment', 'AI-Driven Detection', 'Data Mesh Security'], budget: 1200000, status: 'planned', completion: 0 },
+      { phase: 'Q4 2026', initiatives: ['Identity Federation', 'Quantum-Ready Crypto', 'XDR Integration'], budget: 950000, status: 'planned', completion: 0 },
+      { phase: 'Q1 2027', initiatives: ['Autonomous SOC', 'Supply Chain Security', 'Zero Trust Phase 4'], budget: 1100000, status: 'planned', completion: 0 }
+    ];
+  }
+
+  private _mapCertManagementArchRiskSurface(): Array<Record<string, unknown>> {
+    return [
+      { riskArea: 'External Attack Surface', attackVectors: 234, exposedServices: 12, shadowIT: 8, riskScore: 68, mitigationStatus: 'active' },
+      { riskArea: 'Internal Lateral Movement', attackVectors: 89, exposedServices: 45, shadowIT: 3, riskScore: 42, mitigationStatus: 'monitored' },
+      { riskArea: 'Cloud Misconfiguration', attackVectors: 156, exposedServices: 7, shadowIT: 15, riskScore: 55, mitigationStatus: 'active' },
+      { riskArea: 'Third-Party Integration', attackVectors: 67, exposedServices: 23, shadowIT: 12, riskScore: 73, mitigationStatus: 'review-needed' },
+      { riskArea: 'Data Exfiltration Path', attackVectors: 45, exposedServices: 5, shadowIT: 2, riskScore: 38, mitigationStatus: 'monitored' },
+      { riskArea: 'Supply Chain Dependencies', attackVectors: 312, exposedServices: 34, shadowIT: 0, riskScore: 61, mitigationStatus: 'active' }
+    ];
+  }
+
+  private _assessCertManagementTechDebt(): Array<Record<string, unknown>> {
+    return this._cert_managementArchComponents
+      .filter((c: Record<string, unknown>) => String(c.techDebt) !== 'low')
+      .map((c: Record<string, unknown>) => ({
+        componentId: c.componentId, componentName: c.name, version: c.version,
+        debtLevel: c.techDebt, debtItems: Math.floor(3 + Math.random() * 8),
+        estimatedRemediation: `${Math.floor(2 + Math.random() * 6)} weeks`,
+        remediationCost: Math.round(50000 + Math.random() * 200000),
+        businessImpact: String(c.techDebt) === 'high' ? 'high' : 'medium',
+        priority: String(c.techDebt) === 'high' ? 1 : String(c.techDebt) === 'medium' ? 2 : 3
+      }))
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.priority) - Number(b.priority));
+  }
+
+  private _buildCertManagementEvolutionTimeline(): Array<Record<string, unknown>> {
+    return [
+      { year: '2023', milestone: 'Security Baseline Established', components: 4, maturityAvg: 'initial', investment: 1200000 },
+      { year: '2024', milestone: 'Zero Trust Phase 1', components: 6, maturityAvg: 'developing', investment: 1800000 },
+      { year: '2025', milestone: 'Cloud-Native Security', components: 8, maturityAvg: 'defined', investment: 2200000 },
+      { year: '2026', milestone: 'AI-Augmented Security', components: 10, maturityAvg: 'managed', investment: 2800000 },
+      { year: '2027', milestone: 'Autonomous Defense Target', components: 12, maturityAvg: 'optimized', investment: 3200000 }
+    ];
+  }
+
+  // === Security Design Patterns Library ===
+  private _initCertManagementDesignPatterns() {
+    this._cert_managementDesignPatterns = [
+      { patternId: 'dp-001', name: 'Defense in Depth', category: 'architectural', applicability: 95, implementation: 'deployed', controls: 12, layers: 5, reference: 'NIST SP 800-53' },
+      { patternId: 'dp-002', name: 'Least Privilege Access', category: 'access-control', applicability: 98, implementation: 'partial', controls: 8, layers: 3, reference: 'NIST SP 800-53 AC-6' },
+      { patternId: 'dp-003', name: 'Secure-by-Default', category: 'development', applicability: 90, implementation: 'deployed', controls: 15, layers: 4, reference: 'OWASP ASVS' },
+      { patternId: 'dp-004', name: 'Zero Trust Architecture', category: 'architectural', applicability: 88, implementation: 'in-progress', controls: 20, layers: 6, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-005', name: 'Immutable Infrastructure', category: 'deployment', applicability: 75, implementation: 'partial', controls: 6, layers: 2, reference: 'CIS Benchmark' },
+      { patternId: 'dp-006', name: 'Break-Glass Procedure', category: 'operations', applicability: 82, implementation: 'deployed', controls: 4, layers: 2, reference: 'ITIL v4' },
+      { patternId: 'dp-007', name: 'Data Classification Matrix', category: 'data', applicability: 92, implementation: 'partial', controls: 10, layers: 3, reference: 'ISO 27001 A.8' },
+      { patternId: 'dp-008', name: 'Threat Modeling Pipeline', category: 'development', applicability: 78, implementation: 'deployed', controls: 8, layers: 3, reference: 'STRIDE/Microsoft' },
+      { patternId: 'dp-009', name: 'Micro-segmentation', category: 'network', applicability: 85, implementation: 'in-progress', controls: 14, layers: 4, reference: 'NIST SP 800-207' },
+      { patternId: 'dp-010', name: 'Security Chaos Engineering', category: 'resilience', applicability: 65, implementation: 'planned', controls: 5, layers: 2, reference: 'Chaos Engineering' }
+    ];
+    this._cert_managementPatternCompliance = this._assessCertManagementPatternCompliance();
+    this._cert_managementPatternGaps = this._identifyCertManagementPatternGaps();
+  }
+
+  private _assessCertManagementPatternCompliance(): Array<Record<string, unknown>> {
+    return this._cert_managementDesignPatterns.map((pat: Record<string, unknown>) => ({
+      patternId: pat.patternId, patternName: pat.name,
+      compliancePercent: String(pat.implementation) === 'deployed' ? 100 : String(pat.implementation) === 'in-progress' ? Math.round(40 + Math.random() * 40) : Math.round(10 + Math.random() * 30),
+      controlCoverage: Math.round(Number(pat.controls) / 20 * 100),
+      layerDepth: pat.layers, riskMitigation: Math.round(Number(pat.applicability) * 0.8),
+      maturityLevel: String(pat.implementation) === 'deployed' ? 'level-4' : String(pat.implementation) === 'in-progress' ? 'level-3' : String(pat.implementation) === 'partial' ? 'level-2' : 'level-1'
+    }));
+  }
+
+  private _identifyCertManagementPatternGaps(): Array<Record<string, unknown>> {
+    return this._cert_managementDesignPatterns
+      .filter((p: Record<string, unknown>) => String(p.implementation) !== 'deployed')
+      .map((p: Record<string, unknown>) => ({
+        patternId: p.patternId, patternName: p.name, currentStatus: p.implementation,
+        targetStatus: 'deployed', gapDescription: `${String(p.implementation)} implementation needs to reach deployed state`,
+        estimatedEffort: `${Math.floor(2 + Math.random() * 8)} sprints`,
+        dependencies: Math.floor(1 + Math.random() * 4), blockers: Math.floor(Math.random() * 3),
+        priority: Number(p.applicability) > 85 ? 'high' : 'medium'
+      }));
+  }
+
+  // === Security Capacity Planning Model ===
+  private _initCertManagementCapacityPlanning() {
+    this._cert_managementCapacityModels = [
+      { resourceId: 'cap-001', resourceType: 'SIEM EPS', currentCapacity: 50000, peakUsage: 42000, projectedGrowth: 0.15, threshold: 0.8, unit: 'events/sec', costPerUnit: 0.002 },
+      { resourceId: 'cap-002', resourceType: 'Storage (Logs)', currentCapacity: 50, peakUsage: 38, projectedGrowth: 0.25, threshold: 0.75, unit: 'TB', costPerUnit: 120 },
+      { resourceId: 'cap-003', resourceType: 'SOC Analysts', currentCapacity: 12, peakUsage: 10, projectedGrowth: 0.10, threshold: 0.85, unit: 'FTE', costPerUnit: 150000 },
+      { resourceId: 'cap-004', resourceType: 'Vulnerability Scans', currentCapacity: 500, peakUsage: 380, projectedGrowth: 0.20, threshold: 0.80, unit: 'scans/day', costPerUnit: 0.5 },
+      { resourceId: 'cap-005', resourceType: 'API Rate Limits', currentCapacity: 100000, peakUsage: 67000, projectedGrowth: 0.30, threshold: 0.70, unit: 'calls/min', costPerUnit: 0.0001 },
+      { resourceId: 'cap-006', resourceType: 'Threat Hunt Sessions', currentCapacity: 20, peakUsage: 15, projectedGrowth: 0.15, threshold: 0.75, unit: 'sessions/week', costPerUnit: 500 },
+      { resourceId: 'cap-007', resourceType: 'Incident Response', currentCapacity: 5, peakUsage: 3, projectedGrowth: 0.10, threshold: 0.60, unit: 'concurrent', costPerUnit: 50000 },
+      { resourceId: 'cap-008', resourceType: 'Compliance Audits', currentCapacity: 4, peakUsage: 3, projectedGrowth: 0.05, threshold: 0.75, unit: 'audits/quarter', costPerUnit: 75000 }
+    ];
+    this._cert_managementCapacityForecast = this._forecastCertManagementCapacity();
+    this._cert_managementCapacityAlerts = this._checkCertManagementCapacityAlerts();
+  }
+
+  private _forecastCertManagementCapacity(): Array<Record<string, unknown>> {
+    return Array.from({ length: 6 }, (_, i) => ({
+      period: `2026-${String(i + 7).padStart(2, '0')}`,
+      projectedLoad: Math.round(70 + i * 5 + Math.random() * 10),
+      availableCapacity: Math.round(85 + i * 2 + Math.random() * 5),
+      riskOfExhaustion: Math.round(10 + i * 8 + Math.random() * 10),
+      recommendation: i > 3 ? 'scale-up-recommended' : 'monitor',
+      estimatedCost: Math.round(50000 + i * 15000 + Math.random() * 10000)
+    }));
+  }
+
+  private _checkCertManagementCapacityAlerts(): Array<Record<string, unknown>> {
+    return this._cert_managementCapacityModels
+      .filter((c: Record<string, unknown>) => Number(c.peakUsage) / Number(c.currentCapacity) > Number(c.threshold) * 0.9)
+      .map((c: Record<string, unknown>) => ({
+        resourceId: c.resourceId, resourceType: c.resourceType,
+        utilization: Math.round(Number(c.peakUsage) / Number(c.currentCapacity) * 100),
+        threshold: Math.round(Number(c.threshold) * 100),
+        timeToExhaust: `${Math.round((1 - Number(c.peakUsage) / Number(c.currentCapacity)) / Number(c.projectedGrowth) * 12)} months`,
+        action: 'scale-required', estimatedCost: Math.round(Number(c.currentCapacity) * Number(c.costPerUnit) * 1.5)
+      }));
+  }
+
+
+  // === Security Integration & Interoperability Matrix ===
+  private _initCertManagementIntegrationMatrix() {
+    this._cert_managementIntegrations = [
+      { integrationId: 'int-001', name: 'SIEM to SOAR', type: 'bidirectional', status: 'active', latency: 250, dataVolume: '500 eps', protocol: 'REST API', version: 'v3', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.02 },
+      { integrationId: 'int-002', name: 'EDR to SIEM', type: 'unidirectional', status: 'active', latency: 100, dataVolume: '200 eps', protocol: 'Syslog', version: 'v2', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.01 },
+      { integrationId: 'int-003', name: 'Vulnerability Scanner to Risk Register', type: 'unidirectional', status: 'active', latency: 5000, dataVolume: '10 scans/day', protocol: 'Webhook', version: 'v1', lastSync: '2026-04-23T14:00:00Z', errorRate: 0.05 },
+      { integrationId: 'int-004', name: 'IAM to SIEM', type: 'bidirectional', status: 'active', latency: 150, dataVolume: '100 eps', protocol: 'REST API', version: 'v2', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.03 },
+      { integrationId: 'int-005', name: 'Threat Intel to SIEM', type: 'unidirectional', status: 'degraded', latency: 1200, dataVolume: '50 ioc/h', protocol: 'STIX/TAXII', version: 'v2.1', lastSync: '2026-04-23T16:30:00Z', errorRate: 0.12 },
+      { integrationId: 'int-006', name: 'Cloud Provider to CSPM', type: 'unidirectional', status: 'active', latency: 300, dataVolume: 'config changes', protocol: 'Event Stream', version: 'v1', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.04 },
+      { integrationId: 'int-007', name: 'Ticket System to SOAR', type: 'bidirectional', status: 'active', latency: 500, dataVolume: '50 tickets/day', protocol: 'REST API', version: 'v3', lastSync: '2026-04-23T16:55:00Z', errorRate: 0.06 },
+      { integrationId: 'int-008', name: 'DLP to SIEM', type: 'unidirectional', status: 'warning', latency: 2000, dataVolume: '30 alerts/day', protocol: 'Syslog', version: 'v1', lastSync: '2026-04-23T16:45:00Z', errorRate: 0.15 },
+      { integrationId: 'int-009', name: 'Compliance Platform to GRC', type: 'bidirectional', status: 'active', latency: 3000, dataVolume: 'daily sync', protocol: 'REST API', version: 'v2', lastSync: '2026-04-23T00:00:00Z', errorRate: 0.08 },
+      { integrationId: 'int-010', name: 'Container Registry to Scanner', type: 'unidirectional', status: 'active', latency: 800, dataVolume: '100 images/day', protocol: 'Webhook', version: 'v1', lastSync: '2026-04-23T17:00:00Z', errorRate: 0.03 }
+    ];
+    this._cert_managementIntegrationHealth = this._assessCertManagementIntegrationHealth();
+    this._cert_managementIntegrationAlerts = this._monitorCertManagementIntegrationAlerts();
+    this._cert_managementDataFlowMatrix = this._buildCertManagementDataFlowMatrix();
+    this._cert_managementIntegrationSLA = this._trackCertManagementIntegrationSLA();
+  }
+
+  private _assessCertManagementIntegrationHealth(): Record<string, unknown> {
+    const active = this._cert_managementIntegrations.filter((i: Record<string, unknown>) => i.status === 'active').length;
+    const degraded = this._cert_managementIntegrations.filter((i: Record<string, unknown>) => i.status === 'degraded').length;
+    const warning = this._cert_managementIntegrations.filter((i: Record<string, unknown>) => i.status === 'warning').length;
+    const avgLatency = this._cert_managementIntegrations.reduce((s: number, i: Record<string, unknown>) => s + Number(i.latency), 0) / this._cert_managementIntegrations.length;
+    const avgErrorRate = this._cert_managementIntegrations.reduce((s: number, i: Record<string, unknown>) => s + Number(i.errorRate), 0) / this._cert_managementIntegrations.length;
+    return {
+      totalIntegrations: this._cert_managementIntegrations.length, active, degraded, warning,
+      healthScore: Math.round((active / this._cert_managementIntegrations.length) * 100),
+      avgLatencyMs: Math.round(avgLatency), avgErrorRate: Math.round(avgErrorRate * 1000) / 10,
+      dataFreshness: '95%', coverage: '92%'
+    };
+  }
+
+  private _monitorCertManagementIntegrationAlerts(): Array<Record<string, unknown>> {
+    return this._cert_managementIntegrations
+      .filter((i: Record<string, unknown>) => i.status !== 'active')
+      .map((i: Record<string, unknown>) => ({
+        integrationId: i.integrationId, integrationName: i.name,
+        status: i.status, currentErrorRate: Number(i.errorRate) * 100,
+        thresholdErrorRate: 5.0, currentLatency: Number(i.latency),
+        thresholdLatency: 1000, lastIncident: '2026-04-23T16:' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00Z',
+        autoRemediationAttempted: Math.random() > 0.5,
+        manualInterventionRequired: Math.random() > 0.6,
+        impactDescription: `Integration degraded affecting ${i.name} data flow`
+      }));
+  }
+
+  private _buildCertManagementDataFlowMatrix(): Array<Record<string, unknown>> {
+    const sources = ['SIEM', 'SOAR', 'EDR', 'IAM', 'CSPM', 'DLP', 'Scanner', 'Threat Intel', 'GRC', 'Tickets'];
+    const matrix: Array<Record<string, unknown>> = [];
+    for (let i = 0; i < sources.length; i++) {
+      for (let j = 0; j < sources.length; j++) {
+        if (i !== j && Math.random() > 0.6) {
+          matrix.push({
+            from: sources[i], to: sources[j], dataType: ['alerts', 'ioc', 'config', 'telemetry', 'policy'][Math.floor(Math.random() * 5)],
+            frequency: ['realtime', 'near-realtime', 'batch', 'on-demand'][Math.floor(Math.random() * 4)],
+            protocol: ['REST', 'Syslog', 'Webhook', 'STIX', 'gRPC'][Math.floor(Math.random() * 5)],
+            encrypted: Math.random() > 0.1, authenticated: Math.random() > 0.05,
+            dataClassification: ['internal', 'confidential', 'restricted'][Math.floor(Math.random() * 3)]
+          });
+        }
+      }
+    }
+    return matrix;
+  }
+
+  private _trackCertManagementIntegrationSLA(): Array<Record<string, unknown>> {
+    return this._cert_managementIntegrations.map((i: Record<string, unknown>) => ({
+      integrationId: i.integrationId, integrationName: i.name,
+      slaUptime: 99.5 + Math.random() * 0.49,
+      actualUptime: 99.0 + Math.random() * 0.99,
+      slaLatency: Number(i.latency) * 2,
+      actualLatencyP95: Math.round(Number(i.latency) * (1 + Math.random() * 0.5)),
+      slaMet: Math.random() > 0.15,
+      breachesThisMonth: Math.floor(Math.random() * 5),
+      mttr: Math.round(5 + Math.random() * 30)
+    }));
+  }
+
+  // === Security Service Mesh Configuration ===
+  private _initCertManagementServiceMesh() {
+    this._cert_managementMeshServices = [
+      { serviceId: 'mesh-001', name: 'auth-service', namespace: 'security', replicas: 3, cpuUsage: 45, memoryUsage: 62, requestRate: 1250, errorRate: 0.02, latencyP99: 45, version: 'v2.3.1', securityLevel: 'high' },
+      { serviceId: 'mesh-002', name: 'policy-engine', namespace: 'security', replicas: 2, cpuUsage: 38, memoryUsage: 55, requestRate: 800, errorRate: 0.01, latencyP99: 120, version: 'v1.8.0', securityLevel: 'high' },
+      { serviceId: 'mesh-003', name: 'threat-analyzer', namespace: 'analytics', replicas: 4, cpuUsage: 72, memoryUsage: 81, requestRate: 3400, errorRate: 0.04, latencyP99: 250, version: 'v3.1.0', securityLevel: 'medium' },
+      { serviceId: 'mesh-004', name: 'log-aggregator', namespace: 'infrastructure', replicas: 5, cpuUsage: 58, memoryUsage: 74, requestRate: 15000, errorRate: 0.01, latencyP99: 30, version: 'v4.0.2', securityLevel: 'medium' },
+      { serviceId: 'mesh-005', name: 'alert-dispatcher', namespace: 'security', replicas: 2, cpuUsage: 22, memoryUsage: 35, requestRate: 450, errorRate: 0.03, latencyP99: 80, version: 'v1.5.0', securityLevel: 'high' },
+      { serviceId: 'mesh-006', name: 'vuln-scanner', namespace: 'security', replicas: 3, cpuUsage: 85, memoryUsage: 90, requestRate: 50, errorRate: 0.05, latencyP99: 5000, version: 'v2.0.0', securityLevel: 'low' }
+    ];
+    this._cert_managementMeshHealth = this._calcCertManagementMeshHealth();
+    this._cert_managementMeshTraffic = this._analyzeCertManagementMeshTraffic();
+  }
+
+  private _calcCertManagementMeshHealth(): Record<string, unknown> {
+    const healthy = this._cert_managementMeshServices.filter((s: Record<string, unknown>) => Number(s.errorRate) < 0.03).length;
+    return {
+      totalServices: this._cert_managementMeshServices.length, healthyServices: healthy,
+      healthPercent: Math.round(healthy / this._cert_managementMeshServices.length * 100),
+      totalReplicas: this._cert_managementMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.replicas), 0),
+      avgCpuUsage: Math.round(this._cert_managementMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.cpuUsage), 0) / this._cert_managementMeshServices.length),
+      avgMemoryUsage: Math.round(this._cert_managementMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.memoryUsage), 0) / this._cert_managementMeshServices.length),
+      avgLatencyP99: Math.round(this._cert_managementMeshServices.reduce((s: number, svc: Record<string, unknown>) => s + Number(svc.latencyP99), 0) / this._cert_managementMeshServices.length)
+    };
+  }
+
+  private _analyzeCertManagementMeshTraffic(): Array<Record<string, unknown>> {
+    return this._cert_managementMeshServices.map((s: Record<string, unknown>) => ({
+      serviceId: s.serviceId, serviceName: s.name,
+      inboundTraffic: Math.round(Number(s.requestRate) * (0.8 + Math.random() * 0.4)),
+      outboundTraffic: Math.round(Number(s.requestRate) * (0.6 + Math.random() * 0.8)),
+      trafficAnomalies: Math.floor(Math.random() * 5),
+      peakTrafficHour: Math.floor(9 + Math.random() * 10),
+      encryptionEnabled: true, mTLS: String(s.securityLevel) === 'high'
+    }));
+  }
+
   render() {    if (this._cmRules.length === 0) { this._initCmRules(); this._initCmCvss(); this._runCmAnomalyDetection(); this._generateCmPredictions(); this._initCmApprovals(); this._initCmActivity(); this._initCmNotifications(); }
 
     const items = this._getFiltered();
