@@ -1679,32 +1679,46 @@ export class ScRoleCommander extends LitElement {
     `;
   }
 
-  // ─── CISO: Executive Dashboard with 3-zone grid layout ───
+  // ─── CISO: Executive Dashboard — logical reorganization ───
+  // Layout logic:
+  //   Row 1: Core Metrics (5 cards, full width)
+  //   Row 2: Decision Matrix | SKILL Viz + Framework Coverage (merged as "Security Posture")
+  //   Row 3: Legal Compliance | Dark Side Attack Simulation
+  //   Row 4: Tool Guide (full width, compact cards)
+  //   Row 5: Event Timeline (full width)
+  // No collapsing, no hiding — all content always visible.
   private _renderCisoDashboard() {
     return html`
       <div class="ciso-role-grid">
-        <!-- Zone 1: Executive Summary -->
-        <div class="ciso-zone-exec">
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricsZone('', [
-              this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '44', numColor: '#fbbf24', unit: '/100', sparkData: [52,48,55,51,47,44,49,46,43,48,45,44], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
-              this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '85%', numColor: '#3b82f6', unit: '达成率', sparkData: [78,80,82,81,83,85,84,85], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P3 轻', badgeColor: '#22c55e' })),
-              this._renderMetricCard(this._mc({ toolId: 'board-report', title: '📋 董事会报告', num: '2', numColor: '#f59e0b', unit: '待提交', sparkData: [3,2,4,2,3,2,1,2], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
-              this._renderMetricCard(this._mc({ toolId: 'budget-dash', title: '💰 预算仪表盘', num: '63%', numColor: '#22c55e', unit: '使用率', sparkData: [45,50,55,58,60,62,63,63], delta: '↑+18%', deltaColor: '#f59e0b', deltaLabel: '本年度', badge: 'P3 轻', badgeColor: '#22c55e' })),
-              this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
-            ])}
+
+        <!-- ── Row 1: Executive Metrics ── -->
+        <div class="ciso-metrics-strip">
+          ${[
+            this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '44', numColor: '#fbbf24', unit: '/100', sparkData: [52,48,55,51,47,44,49,46,43,48,45,44], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
+            this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '85%', numColor: '#3b82f6', unit: '达成率', sparkData: [78,80,82,81,83,85,84,85], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P3 轻', badgeColor: '#22c55e' })),
+            this._renderMetricCard(this._mc({ toolId: 'board-report', title: '📋 董事会报告', num: '2', numColor: '#f59e0b', unit: '待提交', sparkData: [3,2,4,2,3,2,1,2], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
+            this._renderMetricCard(this._mc({ toolId: 'budget-dash', title: '💰 预算仪表盘', num: '63%', numColor: '#22c55e', unit: '使用率', sparkData: [45,50,55,58,60,62,63,63], delta: '↑+18%', deltaColor: '#f59e0b', deltaLabel: '本年度', badge: 'P3 轻', badgeColor: '#22c55e' })),
+            this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
+          ]}
+
+        <!-- ── Row 2: Decision Matrix | Security Posture (SKILL Viz + Framework merged) ── -->
+        <div class="ciso-zone-ops">
+          <div class="ciso-panel">
+            ${this._renderDecisionZone('ciso')}
           </div>
-          <div class="ciso-zone-ops">
-            <div class="ciso-panel">
-              ${this._renderDecisionZone('ciso')}
+          <div class="ciso-panel" style="display:flex;flex-direction:column;gap:0;">
+            <div class="ciso-panel-header" style="border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:10px;margin-bottom:0;">
+              <span class="ciso-panel-title"><span class="icon">📊</span> 安全态势总览</span>
+              <span style="font-size:10px;color:#64748b;">SKILL + Framework</span>
             </div>
-            <div class="ciso-panel">
-              ${this._renderFrameworkZone('ciso')}
+            <div style="flex:1;overflow:auto;">
+              ${this._renderVizZone('ciso')}
+              ${this._renderFrameworkZoneExpanded('ciso')}
             </div>
           </div>
         </div>
 
-        <!-- Zone 2: Operations & Intelligence -->
+        <!-- ── Row 3: Legal Compliance | Dark Side Simulation ── -->
         <div class="ciso-zone-ops">
           <div class="ciso-panel">
             ${this._renderLegalZone('ciso')}
@@ -1713,21 +1727,46 @@ export class ScRoleCommander extends LitElement {
             ${this._renderDarkZone('ciso')}
           </div>
         </div>
-        <div class="ciso-zone-ops">
-          <div class="ciso-panel">
-            ${this._renderVizZone('ciso')}
-          </div>
-          <div class="ciso-panel">
-            ${this._renderToolGuideZone('ciso')}
-          </div>
+
+        <!-- ── Row 4: Tool Guide (full width) ── -->
+        <div class="ciso-panel">
+          ${this._renderToolGuideZone('ciso')}
         </div>
 
-        <!-- Zone 3: Activity Feed -->
-        <div class="ciso-zone-feed ciso-panel">
+        <!-- ── Row 5: Event Timeline (full width) ── -->
+        <div class="ciso-panel">
           ${this._renderTimelineZone('ciso')}
         </div>
+
       </div>
     `
+  }
+
+  /** Framework Zone — always expanded, no toggle (for CISO merged view) */
+  private _renderFrameworkZoneExpanded(roleId: string) {
+    const cfg = ScRoleCommander.FRAMEWORK_COVERAGE[roleId];
+    if (!cfg) return nothing;
+    const mitrePct = Math.round((cfg.mitre.covered / cfg.mitre.total) * 100);
+    const scfPct = Math.round((cfg.scf.covered / cfg.scf.total) * 100);
+    return html`
+      <div style="padding:8px 12px;">
+        <div style="font-size:11px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 安全框架覆盖度</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:#0f172a;border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
+            <div style="font-size:20px;font-weight:700;color:#ef4444;">${mitrePct}%</div>
+            <div style="font-size:9px;color:#475569;">${cfg.mitre.covered} / ${cfg.mitre.total} techniques</div>
+            <div style="margin-top:4px;">${cfg.mitre.topGaps.map(g => html`<div style="font-size:9px;color:#f87171;">• ${g}</div>`)}</div>
+          </div>
+          <div style="background:#0f172a;border-radius:6px;padding:8px;">
+            <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
+            <div style="font-size:20px;font-weight:700;color:#3b82f6;">${scfPct}%</div>
+            <div style="font-size:9px;color:#475569;">${cfg.scf.covered} / ${cfg.scf.total} controls</div>
+            <div style="margin-top:4px;">${cfg.scf.topGaps.map(g => html`<div style="font-size:9px;color:#60a5fa;">• ${g}</div>`)}</div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   // ─── 指挥官: 全域态势, AI调度, 事件管理, 风险评分板, 董事会报告 ───
