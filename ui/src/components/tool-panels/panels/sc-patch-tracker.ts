@@ -940,7 +940,369 @@ private _executionHistory: ExecutionRecord[] = [
     URL.revokeObjectURL(url);
   }
 
-  render() {
+
+  // --- Domain Rules Engine ---
+  @state() private _ptRules: { id: string; name: string; category: string; severity: Severity; enabled: boolean; lastEval: string; passRate: number }[] = [];
+  private _initPtRules() {
+    const rules = [
+      { id: 'R-001', name: 'Primary Compliance Check', category: 'Core', severity: 'critical' as Severity, enabled: true, lastEval: '2026-04-23T08:00:00Z', passRate: 88 },
+      { id: 'R-002', name: 'Secondary Validation', category: 'Operations', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-23T07:30:00Z', passRate: 74 },
+      { id: 'R-003', name: 'Tertiary Assessment', category: 'Infrastructure', severity: 'medium' as Severity, enabled: true, lastEval: '2026-04-23T06:00:00Z', passRate: 82 },
+      { id: 'R-004', name: 'Quaternary Audit', category: 'Security', severity: 'critical' as Severity, enabled: true, lastEval: '2026-04-23T05:00:00Z', passRate: 65 },
+      { id: 'R-005', name: 'Quinary Review', category: 'Governance', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-23T04:00:00Z', passRate: 91 },
+      { id: 'R-006', name: 'Senary Inspection', category: 'Access Control', severity: 'medium' as Severity, enabled: false, lastEval: '2026-04-22T20:00:00Z', passRate: 53 },
+      { id: 'R-007', name: 'Septenary Check', category: 'Data Protection', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-22T18:00:00Z', passRate: 78 },
+      { id: 'R-008', name: 'Octenary Scan', category: 'Network', severity: 'critical' as Severity, enabled: true, lastEval: '2026-04-22T14:00:00Z', passRate: 96 },
+    ];
+    this._ptRules = rules;
+  }
+  private _evaluatePtRules(): { passed: number; failed: number; skipped: number; total: number } {
+    let passed = 0, failed = 0, skipped = 0;
+    this._ptRules.forEach(r => { if (!r.enabled) { skipped++; } else if (r.passRate >= 80) { passed++; } else { failed++; } });
+    return { passed, failed, skipped, total: this._ptRules.length };
+  }
+
+  // --- CVSS Scoring ---
+  @state() private _ptcvssData: { itemId: string; vector: string; base: number; temporal: number; environmental: number; overall: number }[] = [];
+  private _initPtCvss() {
+    const vectors = ['CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', 'CVSS:3.1/AV:A/AC:H/PR:L/UI:R/S:C/C:L/I:L/A:N', 'CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N', 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H', 'CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:U/C:N/I:L/A:N'];
+    this._ptcvssData = vectors.map((v, i) => {
+      const base = parseFloat((Math.random() * 6 + 3).toFixed(1));
+      const temporal = parseFloat((base * (0.7 + Math.random() * 0.3)).toFixed(1));
+      const environmental = parseFloat((temporal * (0.8 + Math.random() * 0.2)).toFixed(1));
+      return { itemId: 'V-' + String(i + 1).padStart(3, '0'), vector: v, base, temporal, environmental, overall: environmental };
+    });
+  }
+
+  // --- Anomaly Detection ---
+  @state() private _ptanomalies: { id: string; type: string; severity: Severity; description: string; detected: string; confidence: number; affected: string[] }[] = [];
+  private _runPtAnomalyDetection() {
+    const types = [
+      { type: 'Spike in violation rate', severity: 'high' as Severity, desc: 'Detected 280% increase in violations over the last 24 hours', affected: ['Core', 'Operations'] },
+      { type: 'SLA breach pattern', severity: 'critical' as Severity, desc: 'Recurring SLA breaches on weekends indicating staffing gaps', affected: ['SLA', 'Staffing'] },
+      { type: 'Baseline drift detected', severity: 'medium' as Severity, desc: 'Score drifted 10 points below established baseline over 7 days', affected: ['Metrics', 'Baseline'] },
+      { type: 'Unusual escalation volume', severity: 'high' as Severity, desc: 'Escalation rate 2.5x above normal in infrastructure controls', affected: ['Infrastructure', 'Controls'] },
+      { type: 'Stale findings accumulation', severity: 'low' as Severity, desc: '18 findings older than 90 days without status change', affected: ['Maintenance'] },
+    ];
+    this._ptanomalies = types.map((a, i) => ({
+      id: 'ANO-' + String(i + 1).padStart(3, '0'), type: a.type, severity: a.severity,
+      description: a.desc, detected: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+      confidence: parseFloat((0.65 + Math.random() * 0.30).toFixed(2)), affected: a.affected,
+    }));
+  }
+
+  // --- Trend Prediction ---
+  @state() private _ptpredictions: { horizon: string; metric: string; current: number; predicted: number; direction: 'up' | 'down' | 'stable'; confidence: number }[] = [];
+  private _generatePtPredictions() {
+    this._ptpredictions = [
+      { horizon: '7 days', metric: 'Compliance Score', current: 78, predicted: 75, direction: 'down' as const, confidence: 0.82 },
+      { horizon: '7 days', metric: 'Open Critical Items', current: 12, predicted: 15, direction: 'up' as const, confidence: 0.71 },
+      { horizon: '30 days', metric: 'Overall Score', current: 78, predicted: 82, direction: 'up' as const, confidence: 0.64 },
+      { horizon: '30 days', metric: 'SLA Rate', current: 88, predicted: 91, direction: 'up' as const, confidence: 0.73 },
+      { horizon: '30 days', metric: 'Readiness', current: 72, predicted: 68, direction: 'down' as const, confidence: 0.59 },
+      { horizon: '90 days', metric: 'Risk Score', current: 45, predicted: 38, direction: 'down' as const, confidence: 0.51 },
+      { horizon: '90 days', metric: 'Maturity Level', current: 3.2, predicted: 3.5, direction: 'up' as const, confidence: 0.47 },
+    ];
+  }
+
+  // --- Approval Workflow ---
+  @state() private _ptApprovals: { id: string; title: string; requester: string; status: 'pending' | 'approved' | 'rejected' | 'expired'; createdAt: string; priority: Priority; type: string }[] = [];
+  private _initPtApprovals() {
+    this._ptApprovals = [
+      { id: 'APR-001', title: 'Emergency exception request for critical finding', requester: 'Alice Chen', status: 'pending', createdAt: '2026-04-23T07:00:00Z', priority: 'p1', type: 'Exception' },
+      { id: 'APR-002', title: 'Extend compliance deadline for quarterly audit', requester: 'Bob Martinez', status: 'pending', createdAt: '2026-04-22T18:00:00Z', priority: 'p2', type: 'Extension' },
+      { id: 'APR-003', title: 'Disable security control for system migration', requester: 'Carol Wu', status: 'rejected', createdAt: '2026-04-22T14:00:00Z', priority: 'p1', type: 'Policy Change' },
+      { id: 'APR-004', title: 'New assessment approval for third-party vendor', requester: 'Dave Kim', status: 'approved', createdAt: '2026-04-21T10:00:00Z', priority: 'p3', type: 'Vendor' },
+      { id: 'APR-005', title: 'Network rule change for partner integration', requester: 'Eve Johnson', status: 'expired', createdAt: '2026-04-19T08:00:00Z', priority: 'p2', type: 'Network' },
+    ];
+  }
+  private _approvePtItem(id: string) { const item = this._ptApprovals.find(a => a.id === id); if (item) item.status = 'approved'; this.requestUpdate(); }
+  private _rejectPtItem(id: string) { const item = this._ptApprovals.find(a => a.id === id); if (item) item.status = 'rejected'; this.requestUpdate(); }
+
+  // --- Activity Feed ---
+  @state() private _ptActivity: { id: string; action: string; user: string; target: string; timestamp: string }[] = [];
+  private _initPtActivity() {
+    const actions = [
+      { action: 'Updated compliance rule R-003', user: 'Alice Chen', target: 'Policy Update' },
+      { action: 'Approved exception APR-004', user: 'Bob Martinez', target: 'Vendor Assessment' },
+      { action: 'Created new finding F-1024', user: 'Carol Wu', target: 'Cloud Misconfiguration' },
+      { action: 'Resolved finding F-0987', user: 'Dave Kim', target: 'Unencrypted Storage' },
+      { action: 'Escalated finding F-1015 to P1', user: 'Eve Johnson', target: 'Exposed Credentials' },
+      { action: 'Ran automated scan', user: 'System', target: 'Full Infrastructure' },
+      { action: 'Updated risk score for asset A-2048', user: 'Alice Chen', target: 'Database Server' },
+      { action: 'Rejected policy change request', user: 'Bob Martinez', target: 'Encryption Policy' },
+    ];
+    this._ptActivity = actions.map((a, i) => ({ id: 'ACT-' + String(i + 1).padStart(3, '0'), ...a, timestamp: new Date(Date.now() - i * 3600000).toISOString() }));
+  }
+
+  // --- Notification System ---
+  @state() private _ptNotifications: { id: string; message: string; type: 'info' | 'warning' | 'error' | 'success'; read: boolean; timestamp: string }[] = [];
+  private _initPtNotifications() {
+    this._ptNotifications = [
+      { id: 'NTF-001', message: 'Score dropped below threshold', type: 'warning', read: false, timestamp: new Date().toISOString() },
+      { id: 'NTF-002', message: '3 items approaching SLA deadline within 24h', type: 'error', read: false, timestamp: new Date(Date.now() - 1800000).toISOString() },
+      { id: 'NTF-003', message: 'Weekly report generated successfully', type: 'success', read: true, timestamp: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'NTF-004', message: 'New framework mapped to existing controls', type: 'info', read: true, timestamp: new Date(Date.now() - 14400000).toISOString() },
+    ];
+  }
+  private _markPtNotifRead(id: string) { const n = this._ptNotifications.find(x => x.id === id); if (n) n.read = true; this.requestUpdate(); }
+
+  // --- Panel Configuration ---
+  @state() private _ptConfig: { layout: 'compact' | 'default' | 'expanded'; theme: 'dark' | 'midnight' | 'slate'; showAnomalies: boolean; showPredictions: boolean; autoRefresh: boolean; refreshInterval: number } = {
+    layout: 'default', theme: 'dark', showAnomalies: true, showPredictions: true, autoRefresh: true, refreshInterval: 60,
+  };
+  private _ptPresets: { name: string; config: typeof this._ptConfig }[] = [
+    { name: 'Analyst View', config: { layout: 'expanded', theme: 'dark', showAnomalies: true, showPredictions: false, autoRefresh: true, refreshInterval: 30 } },
+    { name: 'Executive Summary', config: { layout: 'compact', theme: 'slate', showAnomalies: false, showPredictions: true, autoRefresh: false, refreshInterval: 300 } },
+    { name: 'Audit Mode', config: { layout: 'expanded', theme: 'midnight', showAnomalies: true, showPredictions: true, autoRefresh: true, refreshInterval: 60 } },
+  ];
+  private _applyPtPreset(preset: typeof this._ptPresets[0]) { this._ptConfig = { ...preset.config }; this.requestUpdate(); }
+
+  private _renderPtTreemapSVG(): string {
+    const categories = [
+      { name: 'Critical', value: 28, color: '#ef4444' },
+      { name: 'High', value: 22, color: '#f97316' },
+      { name: 'Medium', value: 18, color: '#eab308' },
+      { name: 'Low', value: 14, color: '#22c55e' },
+      { name: 'Info', value: 10, color: '#3b82f6' },
+      { name: 'Monitoring', value: 8, color: '#8b5cf6' },
+    ];
+    const total = categories.reduce((s, c) => s + c.value, 0);
+    const w = 480, h = 200;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    let x = 0, rowH = h, rowStart = 0, rowSum = 0;
+    for (let i = 0; i < categories.length; i++) {
+      const c = categories[i];
+      if (rowSum + c.value > total * 0.55 && rowStart < i) {
+        const rw = (rowSum / total) * w;
+        let ry = 0;
+        for (let j = rowStart; j < i; j++) {
+          const ch = (categories[j].value / rowSum) * rowH;
+          svg += '<rect x="' + x + '" y="' + ry + '" width="' + rw + '" height="' + ch + '" rx="3" fill="' + categories[j].color + '" opacity="0.35" stroke="' + categories[j].color + '" stroke-width="0.5"/>';
+          svg += '<text x="' + (x + rw / 2) + '" y="' + (ry + ch / 2) + '" fill="#e2e8f0" font-size="8" text-anchor="middle" dominant-baseline="middle">' + categories[j].name + ' (' + categories[j].value + ')</text>';
+          ry += ch;
+        }
+        x += rw; rowH = h; rowStart = i; rowSum = c.value;
+      } else { rowSum += c.value; }
+    }
+    if (rowStart < categories.length) {
+      const rw = w - x; let ry = 0;
+      for (let j = rowStart; j < categories.length; j++) {
+        const ch = (categories[j].value / rowSum) * rowH;
+        svg += '<rect x="' + x + '" y="' + ry + '" width="' + rw + '" height="' + ch + '" rx="3" fill="' + categories[j].color + '" opacity="0.35" stroke="' + categories[j].color + '" stroke-width="0.5"/>';
+        svg += '<text x="' + (x + rw / 2) + '" y="' + (ry + ch / 2) + '" fill="#e2e8f0" font-size="8" text-anchor="middle" dominant-baseline="middle">' + categories[j].name + ' (' + categories[j].value + ')</text>';
+        ry += ch;
+      }
+    }
+    svg += '</svg>';
+    return svg;
+  }
+
+  private _renderPtSankeySVG(): string {
+    const sources = ['Source A', 'Source B', 'Source C'];
+    const targets = ['Target 1', 'Target 2', 'Target 3', 'Target 4'];
+    const links: { s: number; t: number; v: number }[] = [
+      { s: 0, t: 0, v: 14 }, { s: 0, t: 1, v: 8 }, { s: 0, t: 3, v: 5 },
+      { s: 1, t: 1, v: 10 }, { s: 1, t: 2, v: 12 },
+      { s: 2, t: 0, v: 6 }, { s: 2, t: 2, v: 9 }, { s: 2, t: 3, v: 7 },
+    ];
+    const w = 520, h = 180, lx = 20, rx = 400, nodeW = 14;
+    const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e'];
+    const targetH: number[] = targets.map(() => 0);
+    links.forEach(l => { targetH[l.t] += l.v; });
+    const maxH = Math.max(...targets.map((_, i) => targetH[i]));
+    const scaleY = (h - 10) / maxH;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    sources.forEach((s, i) => { const sy = 10 + i * (h - 10) / sources.length; svg += '<rect x="' + lx + '" y="' + sy + '" width="' + nodeW + '" height="12" rx="2" fill="#6366f1"/>'; svg += '<text x="' + (lx - 2) + '" y="' + (sy + 7) + '" fill="#9ca3af" font-size="7" text-anchor="end">' + s + '</text>'; });
+    targets.forEach((t, i) => {
+      const ty = (h - targetH[i] * scaleY) / 2;
+      svg += '<rect x="' + rx + '" y="' + ty + '" width="' + nodeW + '" height="' + (targetH[i] * scaleY) + '" rx="2" fill="' + colors[i] + '"/>';
+      svg += '<text x="' + (rx + nodeW + 3) + '" y="' + (ty + targetH[i] * scaleY / 2) + '" fill="#9ca3af" font-size="7">' + t + '</text>';
+    });
+    links.forEach(l => {
+      const sx = lx + nodeW; const sy = 10 + l.s * (h - 10) / sources.length + 4;
+      const tx = rx; const targetOffset = links.filter(ll => ll.t === l.t && ll.s < l.s).reduce((s, ll) => s + ll.v, 0);
+      const ty = (h - targetH[l.t] * scaleY) / 2 + targetOffset * scaleY;
+      const sw = l.v * 0.6; const tw = l.v * scaleY;
+      const mx = (sx + tx) / 2;
+      svg += '<path d="M' + sx + ' ' + (sy - sw / 2) + ' C' + mx + ' ' + (sy - sw / 2) + ' ' + mx + ' ' + ty + ' ' + tx + ' ' + ty + '" fill="' + colors[l.t] + '" opacity="0.25"/>';
+      svg += '<path d="M' + sx + ' ' + (sy + sw / 2) + ' C' + mx + ' ' + (sy + sw / 2) + ' ' + mx + ' ' + (ty + tw) + ' ' + tx + ' ' + (ty + tw) + '" fill="' + colors[l.t] + '" opacity="0.25"/>';
+    });
+    svg += '</svg>';
+    return svg;
+  }
+
+  // --- Render: Rules Engine ---
+  private _renderPtRules(): any {
+    const ev = this._evaluatePtRules();
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Rules Engine</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <span class="badge badge-success">$${ev.passed} Passed</span>
+          <span class="badge badge-error">$${ev.failed} Failed</span>
+          <span class="badge" style="background:#374151">$${ev.skipped} Skipped</span>
+          <span class="badge" style="background:#1f2937">$${ev.total} Total</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto">
+          $${this._ptRules.map(r => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#1f2937;border-radius:4px;font-size:10px">
+              <span style="width:8px;height:8px;border-radius:50%;background:$${r.passRate >= 80 ? '#22c55e' : '#ef4444'}"></span>
+              <span style="flex:1;font-weight:600">$${r.name}</span>
+              <span style="color:#9ca3af">$${r.category}</span>
+              <span class="badge badge-$${r.severity === 'critical' ? 'error' : r.severity === 'high' ? 'warning' : 'info'}">$${r.severity}</span>
+              <span style="font-weight:700;color:$${r.passRate >= 80 ? '#22c55e' : '#ef4444'}">$${r.passRate}%</span>
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Anomaly Panel ---
+  private _renderPtAnomalies(): any {
+    const sc = (s: Severity) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : s === 'medium' ? '#eab308' : '#22c55e';
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Anomaly Detection</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto">
+          $${this._ptanomalies.map(a => html`
+            <div style="padding:6px 8px;background:#1f2937;border-radius:4px;border-left:3px solid $${sc(a.severity)}">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span class="badge badge-$${a.severity === 'critical' ? 'error' : a.severity === 'high' ? 'warning' : 'info'}">$${a.severity}</span>
+                <span style="font-weight:600;font-size:10px">$${a.type}</span>
+                <span style="margin-left:auto;font-size:9px;color:#9ca3af">$${(a.confidence * 100).toFixed(0)}%</span>
+              </div>
+              <div style="font-size:9px;color:#9ca3af;margin-bottom:3px">$${a.description}</div>
+              <div style="display:flex;gap:4px">$${a.affected.map(af => html`<span class="badge" style="background:#374151;font-size:8px">$${af}</span>`)}</div>
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Predictions ---
+  private _renderPtPredictions(): any {
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Trend Predictions</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          $${this._ptpredictions.map(pr => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#1f2937;border-radius:4px;font-size:10px">
+              <span class="badge" style="background:#374151">$${pr.horizon}</span>
+              <span style="flex:1">$${pr.metric}</span>
+              <span style="color:#9ca3af">$${pr.current}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="$${pr.direction === 'up' ? '#22c55e' : pr.direction === 'down' ? '#ef4444' : '#eab308'}" stroke-width="2"><path d="$${pr.direction === 'up' ? 'M12 19V5M5 12l7-7 7 7' : pr.direction === 'down' ? 'M12 5v14M19 12l-7 7-7-7' : 'M5 12h14'}"/></svg>
+              <span style="font-weight:700;color:$${pr.direction === 'up' ? '#22c55e' : pr.direction === 'down' ? '#ef4444' : '#eab308'}">$${pr.predicted}</span>
+              <span style="font-size:8px;color:#6b7280">$${(pr.confidence * 100).toFixed(0)}%</span>
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Approvals ---
+  private _renderPtApprovals(): any {
+    const stc = (s: string) => s === 'pending' ? '#eab308' : s === 'approved' ? '#22c55e' : s === 'rejected' ? '#ef4444' : '#6b7280';
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Approval Workflow</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto">
+          $${this._ptApprovals.map(a => html`
+            <div style="padding:6px 8px;background:#1f2937;border-radius:4px">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="width:8px;height:8px;border-radius:50%;background:$${stc(a.status)}"></span>
+                <span style="font-weight:600;font-size:10px;flex:1">$${a.title}</span>
+                <span class="badge badge-$${a.priority === 'p1' ? 'error' : a.priority === 'p2' ? 'warning' : 'info'}">$${a.priority}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:9px;color:#9ca3af;margin-bottom:3px">
+                <span>By $${a.requester}</span><span>Type: $${a.type}</span>
+                <span>Status: <span style="color:$${stc(a.status)};text-transform:capitalize">$${a.status}</span></span>
+              </div>
+              $${a.status === 'pending' ? html`
+                <div style="display:flex;gap:4px;margin-top:4px">
+                  <button class="btn success" style="padding:2px 8px;font-size:9px" @click=$${() => this._approvePtItem(a.id)}>Approve</button>
+                  <button class="btn error" style="padding:2px 8px;font-size:9px" @click=$${() => this._rejectPtItem(a.id)}>Reject</button>
+                </div>` : nothing}
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Activity Feed ---
+  private _renderPtActivity(): any {
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Activity Feed</div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto">
+          $${this._ptActivity.map(a => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#1f2937;border-radius:4px;font-size:10px">
+              <div style="width:20px;height:20px;border-radius:50%;background:#374151;display:flex;align-items:center;justify-content:center;font-size:9px">•</div>
+              <div style="flex:1"><span style="font-weight:600">$${a.user}</span> $${a.action}</div>
+              <span style="font-size:8px;color:#6b7280">$${new Date(a.timestamp).toLocaleTimeString()}</span>
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Notifications ---
+  private _renderPtNotifications(): any {
+    const tc = (t: string) => t === 'error' ? '#ef4444' : t === 'warning' ? '#eab308' : t === 'success' ? '#22c55e' : '#3b82f6';
+    const unread = this._ptNotifications.filter(n => !n.read).length;
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Notifications $${unread > 0 ? html`<span class="badge badge-error">$${unread} new</span>` : nothing}</div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto">
+          $${this._ptNotifications.map(n => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:$${n.read ? '#1f2937' : '#252a36'};border-radius:4px;font-size:10px;opacity:$${n.read ? '0.6' : '1'};cursor:pointer" @click=$${() => this._markPtNotifRead(n.id)}>
+              <span style="width:8px;height:8px;border-radius:50%;background:$${tc(n.type)}"></span>
+              <span style="flex:1">$${n.message}</span>
+              $${!n.read ? html`<span style="width:6px;height:6px;border-radius:50%;background:#3b82f6"></span>` : nothing}
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Panel Config ---
+  private _renderPtConfig(): any {
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Panel Configuration</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Layout</span>
+            <select class="form-input" style="flex:1" @change=$${(e: Event) => { this._ptConfig.layout = (e.target as HTMLSelectElement).value as any; this.requestUpdate(); }}>
+              <option value="compact" ?selected=$${this._ptConfig.layout === 'compact'}>Compact</option>
+              <option value="default" ?selected=$${this._ptConfig.layout === 'default'}>Default</option>
+              <option value="expanded" ?selected=$${this._ptConfig.layout === 'expanded'}>Expanded</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Theme</span>
+            <select class="form-input" style="flex:1" @change=$${(e: Event) => { this._ptConfig.theme = (e.target as HTMLSelectElement).value as any; this.requestUpdate(); }}>
+              <option value="dark" ?selected=$${this._ptConfig.theme === 'dark'}>Dark</option>
+              <option value="midnight" ?selected=$${this._ptConfig.theme === 'midnight'}>Midnight</option>
+              <option value="slate" ?selected=$${this._ptConfig.theme === 'slate'}>Slate</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Auto Refresh</span>
+            <input type="checkbox" ?checked=$${this._ptConfig.autoRefresh} @change=$${() => { this._ptConfig.autoRefresh = !this._ptConfig.autoRefresh; this.requestUpdate(); }}/>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Show Anomalies</span>
+            <input type="checkbox" ?checked=$${this._ptConfig.showAnomalies} @change=$${() => { this._ptConfig.showAnomalies = !this._ptConfig.showAnomalies; this.requestUpdate(); }}/>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Show Predictions</span>
+            <input type="checkbox" ?checked=$${this._ptConfig.showPredictions} @change=$${() => { this._ptConfig.showPredictions = !this._ptConfig.showPredictions; this.requestUpdate(); }}/>
+          </div>
+          <div style="margin-top:6px;font-weight:600">Presets</div>
+          <div style="display:flex;gap:4px">
+            $${this._ptPresets.map(ps => html`<button class="btn" style="padding:2px 8px;font-size:9px" @click=$${() => this._applyPtPreset(ps)}>$${ps.name}</button>`)}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  render() {    if (this._ptRules.length === 0) { this._initPtRules(); this._initPtCvss(); this._runPtAnomalyDetection(); this._generatePtPredictions(); this._initPtApprovals(); this._initPtActivity(); this._initPtNotifications(); }
+
     const items = this._getFiltered();
     const crit = items.filter(i => i.severity === 'critical').length;
     const high = items.filter(i => i.severity === 'high').length;
@@ -983,6 +1345,11 @@ private _executionHistory: ExecutionRecord[] = [
           <button class="tab ${this._activeTab === 'trends' ? 'active' : ''}" @click=${() => { this._activeTab = 'trends'; }}>Trends</button>
           <button class="tab ${this._activeTab === 'history' ? 'active' : ''}" @click=${() => { this._activeTab = 'history'; }}>History</button>
           <button class="tab ${this._activeTab === 'settings' ? 'active' : ''}" @click=${() => { this._activeTab = 'settings'; }}>Settings</button>
+          <button class="tab ${this._activeTab === 'rules' ? 'active' : ''}" @click=${() => { this._activeTab = 'rules'; }}>Rules</button>
+          <button class="tab ${this._activeTab === 'anomalies' ? 'active' : ''}" @click=${() => { this._activeTab = 'anomalies'; }}>Anomalies</button>
+          <button class="tab ${this._activeTab === 'predictions' ? 'active' : ''}" @click=${() => { this._activeTab = 'predictions'; }}>Predict</button>
+          <button class="tab ${this._activeTab === 'approvals' ? 'active' : ''}" @click=${() => { this._activeTab = 'approvals'; }}>Approvals</button>
+          <button class="tab ${this._activeTab === 'config' ? 'active' : ''}" @click=${() => { this._activeTab = 'config'; }}>Config</button>
           <button class="tab ${this._activeTab === 'new' ? 'active' : ''}" @click=${() => { this._activeTab = 'new'; }}>New</button>
         </div>
         ${this._activeTab === 'overview' ? html`
@@ -1042,6 +1409,34 @@ private _executionHistory: ExecutionRecord[] = [
           <table class="history-table"><thead><tr><th>Timestamp</th><th>Action</th><th>User</th><th>Details</th></tr></thead><tbody>
             ${this._history.map(h => html`<tr><td>${h.timestamp}</td><td><span class="badge badge-info">${h.action}</span></td><td>${h.user}</td><td>${h.details}</td></tr>`)}
           </tbody></table>
+        ` : nothing}
+        
+        ${this._activeTab === 'rules' ? html`
+          ${this._renderPtRules()}
+          <div style="margin-top:12px;font-size:11px;font-weight:600;margin-bottom:6px">Category Treemap</div>
+          <div style="background:#1a1d27;border-radius:8px;padding:12px">${this._renderPtTreemapSVG()}</div>
+          <div style="margin-top:12px;font-size:11px;font-weight:600;margin-bottom:6px">Data Flow (Sankey)</div>
+          <div style="background:#1a1d27;border-radius:8px;padding:12px">${this._renderPtSankeySVG()}</div>
+          ${this._renderPtActivity()}
+        ` : nothing}
+        ${this._activeTab === 'anomalies' ? html`
+          ${this._renderPtAnomalies()}
+          ${this._renderPtNotifications()}
+        ` : nothing}
+        ${this._activeTab === 'predictions' ? html`
+          ${this._renderPtPredictions()}
+          <div style="margin-top:12px;font-size:11px;font-weight:600;margin-bottom:6px">CVSS Scoring</div>
+          <div style="background:#1a1d27;border-radius:8px;padding:12px">
+            <table class="history-table"><thead><tr><th>ID</th><th>Base</th><th>Temporal</th><th>Environmental</th><th>Overall</th></tr></thead><tbody>
+              ${this._ptcvssData.map(c => html`<tr><td>${c.itemId}</td><td style="color:${c.base >= 7 ? '#ef4444' : c.base >= 4 ? '#eab308' : '#22c55e'}">${c.base}</td><td>${c.temporal}</td><td>${c.environmental}</td><td style="font-weight:700;color:${c.overall >= 7 ? '#ef4444' : c.overall >= 4 ? '#eab308' : '#22c55e'}">${c.overall}</td></tr>`)}
+            </tbody></table>
+          </div>
+        ` : nothing}
+        ${this._activeTab === 'approvals' ? html`
+          ${this._renderPtApprovals()}
+        ` : nothing}
+        ${this._activeTab === 'config' ? html`
+          ${this._renderPtConfig()}
         ` : nothing}
         ${this._activeTab === 'new' ? html`
           <div class="form-section">

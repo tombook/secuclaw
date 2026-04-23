@@ -701,7 +701,412 @@ export class ScComplianceMap extends LitElement {
     URL.revokeObjectURL(url);
   }
 
+  // --- Compliance Rules Engine ---
+  @state() private _compRules: { id: string; name: string; category: string; severity: Severity; enabled: boolean; lastEval: string; passRate: number }[] = [];
+  private _initCompRules() {
+    const rules = [
+      { id: 'CR-001', name: 'Encryption at Rest Required', category: 'Data Protection', severity: 'critical' as Severity, enabled: true, lastEval: '2026-04-23T08:00:00Z', passRate: 87 },
+      { id: 'CR-002', name: 'MFA Enforcement', category: 'Access Control', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-23T07:30:00Z', passRate: 94 },
+      { id: 'CR-003', name: 'Logging Retention Policy', category: 'Operations', severity: 'medium' as Severity, enabled: true, lastEval: '2026-04-23T06:00:00Z', passRate: 76 },
+      { id: 'CR-004', name: 'Network Segmentation', category: 'Network', severity: 'critical' as Severity, enabled: true, lastEval: '2026-04-23T05:45:00Z', passRate: 82 },
+      { id: 'CR-005', name: 'Patch Management SLA', category: 'Vulnerability', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-23T04:00:00Z', passRate: 65 },
+      { id: 'CR-006', name: 'Privileged Access Review', category: 'Access Control', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-23T03:00:00Z', passRate: 71 },
+      { id: 'CR-007', name: 'Data Classification Tagging', category: 'Data Protection', severity: 'medium' as Severity, enabled: false, lastEval: '2026-04-22T20:00:00Z', passRate: 53 },
+      { id: 'CR-008', name: 'Incident Response Drill', category: 'Operations', severity: 'high' as Severity, enabled: true, lastEval: '2026-04-22T18:00:00Z', passRate: 88 },
+      { id: 'CR-009', name: 'Third-Party Risk Assessment', category: 'Compliance', severity: 'medium' as Severity, enabled: true, lastEval: '2026-04-22T16:00:00Z', passRate: 60 },
+      { id: 'CR-010', name: 'Backup Encryption', category: 'Data Protection', severity: 'critical' as Severity, enabled: true, lastEval: '2026-04-22T14:00:00Z', passRate: 95 },
+    ];
+    this._compRules = rules;
+  }
+  private _evaluateCompRules(): { passed: number; failed: number; skipped: number; total: number } {
+    let passed = 0, failed = 0, skipped = 0;
+    this._compRules.forEach(r => { if (!r.enabled) { skipped++; } else if (r.passRate >= 80) { passed++; } else { failed++; } });
+    return { passed, failed, skipped, total: this._compRules.length };
+  }
+
+  // --- CVSS Scoring Integration ---
+  @state() private _compcvssData: { itemId: string; vector: string; base: number; temporal: number; environmental: number; overall: number }[] = [];
+  private _initCvssData() {
+    const vectors = ['CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H', 'CVSS:3.1/AV:A/AC:H/PR:L/UI:R/S:C/C:L/I:L/A:N', 'CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N', 'CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H', 'CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:U/C:N/I:L/A:N'];
+    this._compcvssData = vectors.map((v, i) => {
+      const base = parseFloat((Math.random() * 6 + 3).toFixed(1));
+      const temporal = parseFloat((base * (0.7 + Math.random() * 0.3)).toFixed(1));
+      const environmental = parseFloat((temporal * (0.8 + Math.random() * 0.2)).toFixed(1));
+      return { itemId: 'CVS-' + String(i + 1).padStart(3, '0'), vector: v, base, temporal, environmental, overall: environmental };
+    });
+  }
+
+  // --- Anomaly Detection Engine ---
+  @state() private _companomalies: { id: string; type: string; severity: Severity; description: string; detected: string; confidence: number; affected: string[] }[] = [];
+  private _runAnomalyDetection() {
+    const anomalyTypes = [
+      { type: 'Spike in compliance violations', severity: 'high' as Severity, desc: 'Detected 340% increase in compliance violations over the last 24 hours across 3 frameworks', affected: ['SOC2', 'ISO27001', 'PCI-DSS'] },
+      { type: 'SLA breach pattern', severity: 'critical' as Severity, desc: 'Recurring SLA breaches detected for P1 items on weekends, indicating staffing gaps', affected: ['Incident Response', 'Change Management'] },
+      { type: 'Drift from baseline', severity: 'medium' as Severity, desc: 'Overall compliance score drifted 12 points below established baseline over 7 days', affected: ['Access Control', 'Data Protection'] },
+      { type: 'Unusual escalation volume', severity: 'high' as Severity, desc: 'Escalation rate 2.5x above normal, concentrated in cloud infrastructure controls', affected: ['Cloud Security', 'Network Security'] },
+      { type: 'Stale findings accumulation', severity: 'low' as Severity, desc: '23 findings older than 90 days without status change detected in risk register', affected: ['Vulnerability Management'] },
+      { type: 'Audit gap detected', severity: 'medium' as Severity, desc: 'Gap analysis shows 4 control areas with no audit evidence in the last 6 months', affected: ['Governance', 'Operations'] },
+    ];
+    this._companomalies = anomalyTypes.map((a, i) => ({
+      id: 'ANO-' + String(i + 1).padStart(3, '0'),
+      type: a.type,
+      severity: a.severity,
+      description: a.desc,
+      detected: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+      confidence: parseFloat((0.65 + Math.random() * 0.30).toFixed(2)),
+      affected: a.affected,
+    }));
+  }
+
+  // --- Trend Prediction Engine ---
+  @state() private _comppredictions: { horizon: string; metric: string; current: number; predicted: number; direction: 'up' | 'down' | 'stable'; confidence: number }[] = [];
+  private _generatePredictions() {
+    const preds = [
+      { horizon: '7 days', metric: 'Compliance Score', current: 78, predicted: 75, direction: 'down' as const, confidence: 0.82 },
+      { horizon: '7 days', metric: 'Open Critical Findings', current: 12, predicted: 15, direction: 'up' as const, confidence: 0.71 },
+      { horizon: '30 days', metric: 'Compliance Score', current: 78, predicted: 82, direction: 'up' as const, confidence: 0.64 },
+      { horizon: '30 days', metric: 'SLA Compliance Rate', current: 88, predicted: 91, direction: 'up' as const, confidence: 0.73 },
+      { horizon: '30 days', metric: 'Audit Readiness', current: 72, predicted: 68, direction: 'down' as const, confidence: 0.59 },
+      { horizon: '90 days', metric: 'Overall Risk Score', current: 45, predicted: 38, direction: 'down' as const, confidence: 0.51 },
+      { horizon: '90 days', metric: 'Maturity Level', current: 3.2, predicted: 3.5, direction: 'up' as const, confidence: 0.47 },
+    ];
+    this._comppredictions = preds;
+  }
+
+  // --- Treemap SVG ---
+  private _renderTreemapSVG(): string {
+    const categories = [
+      { name: 'Access Control', value: 34, color: '#ef4444' },
+      { name: 'Data Protection', value: 28, color: '#f97316' },
+      { name: 'Network', value: 22, color: '#eab308' },
+      { name: 'Operations', value: 18, color: '#22c55e' },
+      { name: 'Compliance', value: 15, color: '#3b82f6' },
+      { name: 'Vulnerability', value: 12, color: '#8b5cf6' },
+      { name: 'Identity', value: 10, color: '#ec4899' },
+      { name: 'Cloud', value: 8, color: '#06b6d4' },
+    ];
+    const total = categories.reduce((s, c) => s + c.value, 0);
+    const w = 480, h = 200;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    let x = 0, y = 0, rowH = h;
+    let rowStart = 0;
+    let rowSum = 0;
+    const ratio = w / h;
+    for (let i = 0; i < categories.length; i++) {
+      const c = categories[i];
+      if (rowSum + c.value > total * 0.55 && rowStart < i) {
+        const rw = (rowSum / total) * w;
+        let ry = 0;
+        for (let j = rowStart; j < i; j++) {
+          const ch = (categories[j].value / rowSum) * rowH;
+          svg += '<rect x="' + x + '" y="' + ry + '" width="' + rw + '" height="' + ch + '" rx="3" fill="' + categories[j].color + '" opacity="0.35" stroke="' + categories[j].color + '" stroke-width="0.5"/>';
+          svg += '<text x="' + (x + rw / 2) + '" y="' + (ry + ch / 2) + '" fill="#e2e8f0" font-size="8" text-anchor="middle" dominant-baseline="middle">' + categories[j].name + ' (' + categories[j].value + ')</text>';
+          ry += ch;
+        }
+        x += rw;
+        rowH = h;
+        rowStart = i;
+        rowSum = c.value;
+      } else {
+        rowSum += c.value;
+      }
+    }
+    if (rowStart < categories.length) {
+      const rw = w - x;
+      let ry = 0;
+      for (let j = rowStart; j < categories.length; j++) {
+        const ch = (categories[j].value / rowSum) * rowH;
+        svg += '<rect x="' + x + '" y="' + ry + '" width="' + rw + '" height="' + ch + '" rx="3" fill="' + categories[j].color + '" opacity="0.35" stroke="' + categories[j].color + '" stroke-width="0.5"/>';
+        svg += '<text x="' + (x + rw / 2) + '" y="' + (ry + ch / 2) + '" fill="#e2e8f0" font-size="8" text-anchor="middle" dominant-baseline="middle">' + categories[j].name + ' (' + categories[j].value + ')</text>';
+        ry += ch;
+      }
+    }
+    svg += '</svg>';
+    return svg;
+  }
+
+  // --- Sankey Diagram SVG ---
+  private _renderSankeySVG(): string {
+    const sources = ['Compliance Audit', 'Vulnerability Scan', 'Risk Assessment', 'Penetration Test'];
+    const targets = ['Access Control', 'Data Protection', 'Network', 'Operations', 'Compliance'];
+    const links: { s: number; t: number; v: number }[] = [
+      { s: 0, t: 0, v: 12 }, { s: 0, t: 4, v: 8 }, { s: 1, t: 2, v: 15 }, { s: 1, t: 0, v: 7 },
+      { s: 1, t: 1, v: 10 }, { s: 2, t: 0, v: 9 }, { s: 2, t: 3, v: 6 }, { s: 2, t: 4, v: 11 },
+      { s: 3, t: 2, v: 8 }, { s: 3, t: 1, v: 5 }, { s: 3, t: 0, v: 4 },
+    ];
+    const w = 520, h = 180, lx = 20, rx = 400, nodeW = 14;
+    const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
+    const targetH: number[] = targets.map(() => 0);
+    links.forEach(l => { targetH[l.t] += l.v; });
+    const maxH = Math.max(...targets.map((_, i) => targetH[i]));
+    const scaleY = (h - 10) / maxH;
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" xmlns="http://www.w3.org/2000/svg">';
+    sources.forEach((s, i) => { const sy = 10 + i * (h - 10) / sources.length; svg += '<rect x="' + lx + '" y="' + sy + '" width="' + nodeW + '" height="12" rx="2" fill="#6366f1"/>'; svg += '<text x="' + (lx - 2) + '" y="' + (sy + 7) + '" fill="#9ca3af" font-size="7" text-anchor="end">' + s + '</text>'; });
+    targets.forEach((t, i) => {
+      const ty = (h - targetH[i] * scaleY) / 2;
+      svg += '<rect x="' + rx + '" y="' + ty + '" width="' + nodeW + '" height="' + (targetH[i] * scaleY) + '" rx="2" fill="' + colors[i] + '"/>';
+      svg += '<text x="' + (rx + nodeW + 3) + '" y="' + (ty + targetH[i] * scaleY / 2) + '" fill="#9ca3af" font-size="7">' + t + '</text>';
+    });
+    links.forEach(l => {
+      const sx = lx + nodeW;
+      const sy = 10 + l.s * (h - 10) / sources.length + 4;
+      const tx = rx;
+      const targetOffset = links.filter(ll => ll.t === l.t && ll.s < l.s).reduce((s, ll) => s + ll.v, 0);
+      const ty = (h - targetH[l.t] * scaleY) / 2 + targetOffset * scaleY;
+      const sw = l.v * 0.6;
+      const tw = l.v * scaleY;
+      svg += '<path d="M' + sx + ' ' + (sy - sw / 2) + ' C' + ((sx + tx) / 2) + ' ' + (sy - sw / 2) + ' ' + ((sx + tx) / 2) + ' ' + (ty) + ' ' + tx + ' ' + ty + '" fill="' + colors[l.t] + '" opacity="0.25"/>';
+      svg += '<path d="M' + sx + ' ' + (sy + sw / 2) + ' C' + ((sx + tx) / 2) + ' ' + (sy + sw / 2) + ' ' + ((sx + tx) / 2) + ' ' + (ty + tw) + ' ' + tx + ' ' + (ty + tw) + '" fill="' + colors[l.t] + '" opacity="0.25"/>';
+    });
+    svg += '</svg>';
+    return svg;
+  }
+
+  // --- Approval Workflow ---
+  @state() private _compApprovals: { id: string; title: string; requester: string; status: 'pending' | 'approved' | 'rejected' | 'expired'; createdAt: string; priority: Priority; type: string }[] = [];
+  private _initApprovals() {
+    this._compApprovals = [
+      { id: 'APR-001', title: 'Emergency patch exception for CVE-2026-1234', requester: 'Alice Chen', status: 'pending', createdAt: '2026-04-23T07:00:00Z', priority: 'p1', type: 'Exception' },
+      { id: 'APR-002', title: 'Extend compliance deadline for SOC2 audit', requester: 'Bob Martinez', status: 'pending', createdAt: '2026-04-22T18:00:00Z', priority: 'p2', type: 'Extension' },
+      { id: 'APR-003', title: 'Disable encryption for legacy system migration', requester: 'Carol Wu', status: 'rejected', createdAt: '2026-04-22T14:00:00Z', priority: 'p1', type: 'Policy Change' },
+      { id: 'APR-004', title: 'New vendor security assessment approval', requester: 'Dave Kim', status: 'approved', createdAt: '2026-04-21T10:00:00Z', priority: 'p3', type: 'Vendor' },
+      { id: 'APR-005', title: 'Firewall rule change for partner integration', requester: 'Eve Johnson', status: 'expired', createdAt: '2026-04-19T08:00:00Z', priority: 'p2', type: 'Network' },
+    ];
+  }
+  private _approveCompItem(id: string) {
+    const item = this._compApprovals.find(a => a.id === id);
+    if (item) item.status = 'approved';
+    this.requestUpdate();
+  }
+  private _rejectCompItem(id: string) {
+    const item = this._compApprovals.find(a => a.id === id);
+    if (item) item.status = 'rejected';
+    this.requestUpdate();
+  }
+
+  // --- Activity Feed ---
+  @state() private _compActivity: { id: string; action: string; user: string; target: string; timestamp: string; icon: string }[] = [];
+  private _initActivityFeed() {
+    const actions = [
+      { action: 'Updated compliance rule CR-003', user: 'Alice Chen', target: 'Logging Policy', icon: 'pencil' },
+      { action: 'Approved exception APR-004', user: 'Bob Martinez', target: 'Vendor Assessment', icon: 'check' },
+      { action: 'Created new finding F-1024', user: 'Carol Wu', target: 'Cloud Misconfiguration', icon: 'plus' },
+      { action: 'Resolved finding F-0987', user: 'Dave Kim', target: 'Unencrypted S3 Bucket', icon: 'check-circle' },
+      { action: 'Escalated finding F-1015 to P1', user: 'Eve Johnson', target: 'Exposed API Key', icon: 'arrow-up' },
+      { action: 'Ran compliance scan', user: 'System', target: 'Full Infrastructure', icon: 'scan' },
+      { action: 'Updated risk score for asset A-2048', user: 'Alice Chen', target: 'Database Server', icon: 'bar-chart' },
+      { action: 'Rejected policy change request', user: 'Bob Martinez', target: 'Encryption Policy', icon: 'x-circle' },
+    ];
+    this._compActivity = actions.map((a, i) => ({ id: 'ACT-' + String(i + 1).padStart(3, '0'), ...a, timestamp: new Date(Date.now() - i * 3600000).toISOString() }));
+  }
+
+  // --- Notification System ---
+  @state() private _compNotifications: { id: string; message: string; type: 'info' | 'warning' | 'error' | 'success'; read: boolean; timestamp: string }[] = [];
+  private _initNotifications() {
+    this._compNotifications = [
+      { id: 'NTF-001', message: 'Compliance score dropped below threshold (75)', type: 'warning', read: false, timestamp: new Date().toISOString() },
+      { id: 'NTF-002', message: '3 findings approaching SLA deadline within 24h', type: 'error', read: false, timestamp: new Date(Date.now() - 1800000).toISOString() },
+      { id: 'NTF-003', message: 'Weekly compliance report generated successfully', type: 'success', read: true, timestamp: new Date(Date.now() - 7200000).toISOString() },
+      { id: 'NTF-004', message: 'New compliance framework GDPR mapped to 12 controls', type: 'info', read: true, timestamp: new Date(Date.now() - 14400000).toISOString() },
+    ];
+  }
+  private _markNotificationRead(id: string) {
+    const n = this._compNotifications.find(x => x.id === id);
+    if (n) n.read = true;
+    this.requestUpdate();
+  }
+
+  // --- Panel Configuration ---
+  @state() private _compConfig: { layout: 'compact' | 'default' | 'expanded'; theme: 'dark' | 'midnight' | 'slate'; showAnomalies: boolean; showPredictions: boolean; showRules: boolean; autoRefresh: boolean; refreshInterval: number; compactMode: boolean } = {
+    layout: 'default', theme: 'dark', showAnomalies: true, showPredictions: true, showRules: true, autoRefresh: true, refreshInterval: 60, compactMode: false,
+  };
+  private _compPresets: { name: string; config: typeof this._compConfig }[] = [
+    { name: 'Analyst View', config: { layout: 'expanded', theme: 'dark', showAnomalies: true, showPredictions: false, showRules: true, autoRefresh: true, refreshInterval: 30, compactMode: false } },
+    { name: 'Executive Summary', config: { layout: 'compact', theme: 'slate', showAnomalies: false, showPredictions: true, showRules: false, autoRefresh: false, refreshInterval: 300, compactMode: true } },
+    { name: 'Audit Mode', config: { layout: 'expanded', theme: 'midnight', showAnomalies: true, showPredictions: true, showRules: true, autoRefresh: true, refreshInterval: 60, compactMode: false } },
+  ];
+  private _applyCompPreset(preset: typeof this._compPresets[0]) { this._compConfig = { ...preset.config }; this.requestUpdate(); }
+
+  // --- Render: Rules Engine Panel ---
+  private _renderRulesEngine(): any {
+    const eval_ = this._evaluateCompRules();
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Compliance Rules Engine</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <span class="badge badge-success">${eval_.passed} Passed</span>
+          <span class="badge badge-error">${eval_.failed} Failed</span>
+          <span class="badge" style="background:#374151">${eval_.skipped} Skipped</span>
+          <span class="badge" style="background:#1f2937">${eval_.total} Total</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto">
+          ${this._compRules.map(r => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#1f2937;border-radius:4px;font-size:10px">
+              <span style="width:8px;height:8px;border-radius:50%;background:${r.passRate >= 80 ? '#22c55e' : '#ef4444'}"></span>
+              <span style="flex:1;font-weight:600">${r.name}</span>
+              <span style="color:#9ca3af">${r.category}</span>
+              <span class="badge badge-${r.severity === 'critical' ? 'error' : r.severity === 'high' ? 'warning' : 'info'}">${r.severity}</span>
+              <span style="font-weight:700;color:${r.passRate >= 80 ? '#22c55e' : '#ef4444'}">${r.passRate}%</span>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Anomaly Detection Panel ---
+  private _renderAnomalyPanel(): any {
+    const sevColor = (s: Severity) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : s === 'medium' ? '#eab308' : '#22c55e';
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Anomaly Detection</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto">
+          ${this._companomalies.map(a => html`
+            <div style="padding:6px 8px;background:#1f2937;border-radius:4px;border-left:3px solid ${sevColor(a.severity)}">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span class="badge badge-${a.severity === 'critical' ? 'error' : a.severity === 'high' ? 'warning' : 'info'}">${a.severity}</span>
+                <span style="font-weight:600;font-size:10px">${a.type}</span>
+                <span style="margin-left:auto;font-size:9px;color:#9ca3af">${(a.confidence * 100).toFixed(0)}% confidence</span>
+              </div>
+              <div style="font-size:9px;color:#9ca3af;margin-bottom:3px">${a.description}</div>
+              <div style="display:flex;gap:4px">${a.affected.map(af => html`<span class="badge" style="background:#374151;font-size:8px">${af}</span>`)}</div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Predictions Panel ---
+  private _renderPredictionsPanel(): any {
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Trend Predictions</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${this._comppredictions.map(p => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#1f2937;border-radius:4px;font-size:10px">
+              <span class="badge" style="background:#374151">${p.horizon}</span>
+              <span style="flex:1">${p.metric}</span>
+              <span style="color:#9ca3af">${p.current}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${p.direction === 'up' ? (p.metric.includes('Score') || p.metric.includes('Rate') || p.metric.includes('Level') ? '#22c55e' : '#ef4444') : (p.metric.includes('Score') || p.metric.includes('Rate') || p.metric.includes('Level') ? '#ef4444' : '#22c55e')}" stroke-width="2"><path d="${p.direction === 'up' ? 'M12 19V5M5 12l7-7 7 7' : p.direction === 'down' ? 'M12 5v14M19 12l-7 7-7-7' : 'M5 12h14'}"/></svg>
+              <span style="font-weight:700;color:${p.direction === 'up' ? '#22c55e' : p.direction === 'down' ? '#ef4444' : '#eab308'}">${p.predicted}</span>
+              <span style="font-size:8px;color:#6b7280">${(p.confidence * 100).toFixed(0)}%</span>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Approvals Panel ---
+  private _renderApprovalsPanel(): any {
+    const statusColor = (s: string) => s === 'pending' ? '#eab308' : s === 'approved' ? '#22c55e' : s === 'rejected' ? '#ef4444' : '#6b7280';
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Approval Workflow</div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto">
+          ${this._compApprovals.map(a => html`
+            <div style="padding:6px 8px;background:#1f2937;border-radius:4px">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${statusColor(a.status)}"></span>
+                <span style="font-weight:600;font-size:10px;flex:1">${a.title}</span>
+                <span class="badge badge-${a.priority === 'p1' ? 'error' : a.priority === 'p2' ? 'warning' : 'info'}">${a.priority}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:9px;color:#9ca3af;margin-bottom:3px">
+                <span>By ${a.requester}</span>
+                <span>Type: ${a.type}</span>
+                <span>Status: <span style="color:${statusColor(a.status)};text-transform:capitalize">${a.status}</span></span>
+              </div>
+              ${a.status === 'pending' ? html`
+                <div style="display:flex;gap:4px;margin-top:4px">
+                  <button class="btn success" style="padding:2px 8px;font-size:9px" @click=${() => this._approveCompItem(a.id)}>Approve</button>
+                  <button class="btn error" style="padding:2px 8px;font-size:9px" @click=${() => this._rejectCompItem(a.id)}>Reject</button>
+                </div>
+              ` : nothing}
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Activity Feed ---
+  private _renderActivityFeed(): any {
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Activity Feed</div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto">
+          ${this._compActivity.map(a => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#1f2937;border-radius:4px;font-size:10px">
+              <div style="width:20px;height:20px;border-radius:50%;background:#374151;display:flex;align-items:center;justify-content:center;font-size:9px">${a.icon === 'check' ? '\u2713' : a.icon === 'plus' ? '+' : a.icon === 'scan' ? '\u25CE' : '\u2022'}</div>
+              <div style="flex:1"><span style="font-weight:600">${a.user}</span> ${a.action}</div>
+              <span style="font-size:8px;color:#6b7280">${new Date(a.timestamp).toLocaleTimeString()}</span>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Notifications ---
+  private _renderNotifications(): any {
+    const typeIcon = (t: string) => t === 'error' ? '\u26A0' : t === 'warning' ? '\u26A0' : t === 'success' ? '\u2713' : '\u2139';
+    const typeColor = (t: string) => t === 'error' ? '#ef4444' : t === 'warning' ? '#eab308' : t === 'success' ? '#22c55e' : '#3b82f6';
+    const unread = this._compNotifications.filter(n => !n.read).length;
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Notifications ${unread > 0 ? html`<span class="badge badge-error">${unread} new</span>` : nothing}</div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto">
+          ${this._compNotifications.map(n => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:${n.read ? '#1f2937' : '#252a36'};border-radius:4px;font-size:10px;opacity:${n.read ? '0.6' : '1'};cursor:pointer" @click=${() => this._markNotificationRead(n.id)}>
+              <span style="color:${typeColor(n.type)};font-size:12px">${typeIcon(n.type)}</span>
+              <span style="flex:1">${n.message}</span>
+              ${!n.read ? html`<span style="width:6px;height:6px;border-radius:50%;background:#3b82f6"></span>` : nothing}
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // --- Render: Panel Config ---
+  private _renderPanelConfig(): any {
+    return html`
+      <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-top:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Panel Configuration</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Layout</span>
+            <select class="form-input" style="flex:1" @change=${(e: Event) => { this._compConfig.layout = (e.target as HTMLSelectElement).value as any; this.requestUpdate(); }}>
+              <option value="compact" ?selected=${this._compConfig.layout === 'compact'}>Compact</option>
+              <option value="default" ?selected=${this._compConfig.layout === 'default'}>Default</option>
+              <option value="expanded" ?selected=${this._compConfig.layout === 'expanded'}>Expanded</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Theme</span>
+            <select class="form-input" style="flex:1" @change=${(e: Event) => { this._compConfig.theme = (e.target as HTMLSelectElement).value as any; this.requestUpdate(); }}>
+              <option value="dark" ?selected=${this._compConfig.theme === 'dark'}>Dark</option>
+              <option value="midnight" ?selected=${this._compConfig.theme === 'midnight'}>Midnight</option>
+              <option value="slate" ?selected=${this._compConfig.theme === 'slate'}>Slate</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Auto Refresh</span>
+            <input type="checkbox" ?checked=${this._compConfig.autoRefresh} @change=${() => { this._compConfig.autoRefresh = !this._compConfig.autoRefresh; this.requestUpdate(); }}/>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Show Anomalies</span>
+            <input type="checkbox" ?checked=${this._compConfig.showAnomalies} @change=${() => { this._compConfig.showAnomalies = !this._compConfig.showAnomalies; this.requestUpdate(); }}/>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:100px">Show Predictions</span>
+            <input type="checkbox" ?checked=${this._compConfig.showPredictions} @change=${() => { this._compConfig.showPredictions = !this._compConfig.showPredictions; this.requestUpdate(); }}/>
+          </div>
+          <div style="margin-top:6px;font-weight:600">Presets</div>
+          <div style="display:flex;gap:4px">
+            ${this._compPresets.map(p => html`<button class="btn" style="padding:2px 8px;font-size:9px" @click=${() => this._applyCompPreset(p)}>${p.name}</button>`)}
+          </div>
+        </div>
+      </div>`;
+  }
+
   render() {
+    if (this._compRules.length === 0) { this._initCompRules(); this._initCvssData(); this._runAnomalyDetection(); this._generatePredictions(); this._initApprovals(); this._initActivityFeed(); this._initNotifications(); }
     const items = this._getFiltered();
     const crit = items.filter(i => i.severity === 'critical').length;
     const high = items.filter(i => i.severity === 'high').length;
@@ -741,6 +1146,11 @@ export class ScComplianceMap extends LitElement {
           <button class="tab ${this._activeTab === 'details' ? 'active' : ''}" @click=${() => { this._activeTab = 'details'; }}>Details</button>
           <button class="tab ${this._activeTab === 'trends' ? 'active' : ''}" @click=${() => { this._activeTab = 'trends'; }}>Trends</button>
           <button class="tab ${this._activeTab === 'history' ? 'active' : ''}" @click=${() => { this._activeTab = 'history'; }}>History</button>
+          <button class="tab ${this._activeTab === 'rules' ? 'active' : ''}" @click=${() => { this._activeTab = 'rules'; }}>Rules</button>
+          <button class="tab ${this._activeTab === 'anomalies' ? 'active' : ''}" @click=${() => { this._activeTab = 'anomalies'; }}>Anomalies</button>
+          <button class="tab ${this._activeTab === 'predictions' ? 'active' : ''}" @click=${() => { this._activeTab = 'predictions'; }}>Predict</button>
+          <button class="tab ${this._activeTab === 'approvals' ? 'active' : ''}" @click=${() => { this._activeTab = 'approvals'; }}>Approvals</button>
+          <button class="tab ${this._activeTab === 'config' ? 'active' : ''}" @click=${() => { this._activeTab = 'config'; }}>Config</button>
           <button class="tab ${this._activeTab === 'new' ? 'active' : ''}" @click=${() => { this._activeTab = 'new'; }}>New</button>
         </div>
         ${this._activeTab === 'overview' ? html`
@@ -800,6 +1210,33 @@ export class ScComplianceMap extends LitElement {
           <table class="history-table"><thead><tr><th>Timestamp</th><th>Action</th><th>User</th><th>Details</th></tr></thead><tbody>
             ${this._history.map(h => html`<tr><td>${h.timestamp}</td><td><span class="badge badge-info">${h.action}</span></td><td>${h.user}</td><td>${h.details}</td></tr>`)}
           </tbody></table>
+        ` : nothing}
+        ${this._activeTab === 'rules' ? html`
+          ${this._renderRulesEngine()}
+          <div style="margin-top:12px;font-size:11px;font-weight:600;margin-bottom:6px">Category Treemap</div>
+          <div style="background:#1a1d27;border-radius:8px;padding:12px">${this._renderTreemapSVG()}</div>
+          <div style="margin-top:12px;font-size:11px;font-weight:600;margin-bottom:6px">Finding Flow (Sankey)</div>
+          <div style="background:#1a1d27;border-radius:8px;padding:12px">${this._renderSankeySVG()}</div>
+          ${this._renderActivityFeed()}
+        ` : nothing}
+        ${this._activeTab === 'anomalies' ? html`
+          ${this._renderAnomalyPanel()}
+          ${this._renderNotifications()}
+        ` : nothing}
+        ${this._activeTab === 'predictions' ? html`
+          ${this._renderPredictionsPanel()}
+          <div style="margin-top:12px;font-size:11px;font-weight:600;margin-bottom:6px">CVSS Scoring</div>
+          <div style="background:#1a1d27;border-radius:8px;padding:12px">
+            <table class="history-table"><thead><tr><th>ID</th><th>Base</th><th>Temporal</th><th>Environmental</th><th>Overall</th></tr></thead><tbody>
+              ${this._compcvssData.map(c => html`<tr><td>${c.itemId}</td><td style="color:${c.base >= 7 ? '#ef4444' : c.base >= 4 ? '#eab308' : '#22c55e'}">${c.base}</td><td>${c.temporal}</td><td>${c.environmental}</td><td style="font-weight:700;color:${c.overall >= 7 ? '#ef4444' : c.overall >= 4 ? '#eab308' : '#22c55e'}">${c.overall}</td></tr>`)}
+            </tbody></table>
+          </div>
+        ` : nothing}
+        ${this._activeTab === 'approvals' ? html`
+          ${this._renderApprovalsPanel()}
+        ` : nothing}
+        ${this._activeTab === 'config' ? html`
+          ${this._renderPanelConfig()}
         ` : nothing}
         ${this._activeTab === 'new' ? html`
           <div class="form-section">
