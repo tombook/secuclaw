@@ -4313,6 +4313,203 @@ private _executionHistory: ExecutionRecord[] = [
 
 
 
+
+  // === Security Investment Prioritization Module ===
+  private _investmentProposals: Array<{id:string;title:string;category:string;estimatedCost:number;annualSavings:number;roi:number;riskReduction:number;complexity:string;timeline:string;resources:number;status:string;score:number;priority:number}> = [];
+  private _investmentCategories: Array<{name:string;budget:number;allocated:number;remaining:number;color:string}> = [];
+  private _investmentRoadmap: Array<{quarter:string;proposals:string[];totalBudget:number;expectedRiskReduction:number}> = [];
+
+  private _initInvestmentPrioritization(): void {
+    this._investmentProposals = [
+      {id:'INV-001',title:'Zero Trust Network Architecture',category:'Infrastructure',estimatedCost:450000,annualSavings:280000,roi:62.2,riskReduction:28,complexity:'high',timeline:'Q2-Q4 2026',resources:8,status:'approved',score:94,priority:1},
+      {id:'INV-002',title:'AI-Powered Threat Detection Platform',category:'Detection',estimatedCost:320000,annualSavings:210000,roi:65.6,riskReduction:24,complexity:'medium',timeline:'Q2-Q3 2026',resources:5,status:'approved',score:91,priority:2},
+      {id:'INV-003',title:'Cloud Security Posture Management',category:'Cloud',estimatedCost:180000,annualSavings:150000,roi:83.3,riskReduction:18,complexity:'low',timeline:'Q2 2026',resources:3,status:'in-progress',score:89,priority:3},
+      {id:'INV-004',title:'Security Awareness Training Platform',category:'People',estimatedCost:120000,annualSavings:95000,roi:79.2,riskReduction:15,complexity:'low',timeline:'Q2 2026',resources:2,status:'approved',score:85,priority:4},
+      {id:'INV-005',title:'Endpoint Detection and Response Upgrade',category:'Endpoint',estimatedCost:250000,annualSavings:175000,roi:70.0,riskReduction:22,complexity:'medium',timeline:'Q3 2026',resources:4,status:'planned',score:83,priority:5},
+      {id:'INV-006',title:'Data Loss Prevention Enhancement',category:'Data',estimatedCost:200000,annualSavings:140000,roi:70.0,riskReduction:20,complexity:'medium',timeline:'Q3 2026',resources:4,status:'planned',score:81,priority:6},
+      {id:'INV-007',title:'Vulnerability Management Automation',category:'Vulnerability',estimatedCost:150000,annualSavings:120000,roi:80.0,riskReduction:16,complexity:'low',timeline:'Q2-Q3 2026',resources:3,status:'in-progress',score:80,priority:7},
+      {id:'INV-008',title:'Security Orchestration and Automation',category:'Operations',estimatedCost:280000,annualSavings:200000,roi:71.4,riskReduction:14,complexity:'high',timeline:'Q3-Q4 2026',resources:6,status:'planned',score:78,priority:8},
+      {id:'INV-009',title:'Identity and Access Management Modernization',category:'Identity',estimatedCost:350000,annualSavings:220000,roi:62.9,riskReduction:25,complexity:'high',timeline:'Q3-Q4 2026',resources:7,status:'evaluation',score:76,priority:9},
+      {id:'INV-010',title:'Third-Party Risk Management Platform',category:'Vendor',estimatedCost:90000,annualSavings:70000,roi:77.8,riskReduction:12,complexity:'low',timeline:'Q2 2026',resources:2,status:'approved',score:74,priority:10},
+      {id:'INV-011',title:'Security Metrics and Reporting Dashboard',category:'Governance',estimatedCost:75000,annualSavings:50000,roi:66.7,riskReduction:8,complexity:'low',timeline:'Q2 2026',resources:2,status:'in-progress',score:72,priority:11},
+      {id:'INV-012',title:'Incident Response Retainer Expansion',category:'Services',estimatedCost:200000,annualSavings:100000,roi:50.0,riskReduction:10,complexity:'low',timeline:'Q2 2026',resources:1,status:'approved',score:70,priority:12}
+    ];
+    this._investmentCategories = [
+      {name:'Infrastructure',budget:500000,allocated:450000,remaining:50000,color:'#4CAF50'},
+      {name:'Detection',budget:400000,allocated:320000,remaining:80000,color:'#2196F3'},
+      {name:'Cloud',budget:250000,allocated:180000,remaining:70000,color:'#FF9800'},
+      {name:'People',budget:200000,allocated:120000,remaining:80000,color:'#9C27B0'},
+      {name:'Endpoint',budget:300000,allocated:250000,remaining:50000,color:'#F44336'},
+      {name:'Data',budget:250000,allocated:200000,remaining:50000,color:'#00BCD4'},
+      {name:'Vulnerability',budget:200000,allocated:150000,remaining:50000,color:'#795548'},
+      {name:'Operations',budget:350000,allocated:280000,remaining:70000,color:'#607D8B'},
+      {name:'Identity',budget:400000,allocated:350000,remaining:50000,color:'#E91E63'},
+      {name:'Vendor',budget:150000,allocated:90000,remaining:60000,color:'#3F51B5'},
+      {name:'Governance',budget:100000,allocated:75000,remaining:25000,color:'#009688'},
+      {name:'Services',budget:250000,allocated:200000,remaining:50000,color:'#FF5722'}
+    ];
+    this._investmentRoadmap = [
+      {quarter:'Q2 2026',proposals:['INV-003','INV-004','INV-010','INV-011','INV-012'],totalBudget:665000,expectedRiskReduction:15},
+      {quarter:'Q3 2026',proposals:['INV-002','INV-005','INV-006','INV-007'],totalBudget:1000000,expectedRiskReduction:22},
+      {quarter:'Q4 2026',proposals:['INV-001','INV-008','INV-009'],totalBudget:1080000,expectedRiskReduction:18}
+    ];
+  }
+
+  private _getInvestmentSummary(): {totalBudget:number;totalAllocated:number;totalSavings:number;avgRoi:number;topPriority:string} {
+    const totalBudget = this._investmentCategories.reduce((s,c) => s + c.budget, 0);
+    const totalAllocated = this._investmentCategories.reduce((s,c) => s + c.allocated, 0);
+    const totalSavings = this._investmentProposals.reduce((s,p) => s + p.annualSavings, 0);
+    const avgRoi = this._investmentProposals.reduce((s,p) => s + p.roi, 0) / this._investmentProposals.length;
+    const topPriority = this._investmentProposals[0]?.title || '';
+    return {totalBudget, totalAllocated, totalSavings, avgRoi: Math.round(avgRoi * 10) / 10, topPriority};
+  }
+
+  private _getComplexityBreakdown(): {low:number;medium:number;high:number} {
+    return {
+      low: this._investmentProposals.filter(p => p.complexity === 'low').length,
+      medium: this._investmentProposals.filter(p => p.complexity === 'medium').length,
+      high: this._investmentProposals.filter(p => p.complexity === 'high').length
+    };
+  }
+
+
+  // --- Investment Risk-Return Analysis ---
+  private _investmentRiskMatrix: Array<{id:string;title:string;riskLevel:string;returnLevel:string;quadrant:string;riskFactors:string[];returnDrivers:string[]}> = [];
+  private _investmentBudgetUtilization: {totalAllocated:number;totalSpent:number;totalCommitted:number;available:number;burnRate:number;runwayMonths:number} = {totalAllocated:0,totalSpent:0,totalCommitted:0,available:0,burnRate:0,runwayMonths:0};
+  private _investmentDependencies: Array<{from:string;to:string;type:string;description:string;status:string}> = [];
+  private _investmentStakeholderFeedback: Array<{proposalId:string;stakeholder:string;role:string;sentiment:string;comments:string;rating:number}> = [];
+
+  private _initInvestmentRiskReturn(): void {
+    this._investmentRiskMatrix = [
+      {id:'INV-001',title:'Zero Trust Network Architecture',riskLevel:'high',returnLevel:'high',quadrant:'Q1-Strategic',riskFactors:['Complex migration','Potential disruption','Skill gap','Vendor lock-in'],returnDrivers:['Reduced attack surface','Compliance alignment','Long-term cost savings']},
+      {id:'INV-002',title:'AI-Powered Threat Detection',riskLevel:'medium',returnLevel:'high',quadrant:'Q2-Opportunistic',riskFactors:['Model accuracy','Integration complexity','Training data quality'],returnDrivers:['Faster detection','Reduced false positives','Automation of routine tasks']},
+      {id:'INV-003',title:'Cloud Security Posture Management',riskLevel:'low',returnLevel:'medium',quadrant:'Q3-Efficiency',riskFactors:['Multi-cloud complexity','API rate limits'],returnDrivers:['Misconfiguration prevention','Compliance automation','Visibility improvement']},
+      {id:'INV-004',title:'Security Awareness Training',riskLevel:'low',returnLevel:'medium',quadrant:'Q3-Efficiency',riskFactors:['Employee engagement','Content freshness'],returnDrivers:['Reduced phishing susceptibility','Culture improvement','Compliance requirement']},
+      {id:'INV-005',title:'EDR Upgrade',riskLevel:'medium',returnLevel:'medium',quadrant:'Q2-Opportunistic',riskFactors:['Deployment disruption','Agent compatibility'],returnDrivers:['Better endpoint visibility','Automated response','Reduced incident impact']}
+    ];
+    this._investmentBudgetUtilization = {
+      totalAllocated: 3450000,
+      totalSpent: 890000,
+      totalCommitted: 1250000,
+      available: 1310000,
+      burnRate: 285000,
+      runwayMonths: 4.6
+    };
+    this._investmentDependencies = [
+      {from:'INV-001',to:'INV-008',type:'enables',description:'Zero Trust architecture enables better SOAR automation',status:'pending'},
+      {from:'INV-002',to:'INV-005',type:'enhances',description:'AI detection improves EDR correlation capabilities',status:'pending'},
+      {from:'INV-003',to:'INV-001',type:'prerequisite',description:'Cloud security posture must be assessed before Zero Trust migration',status:'active'},
+      {from:'INV-004',to:'INV-002',type:'supports',description:'Trained users reduce noise in AI detection system',status:'active'},
+      {from:'INV-009',to:'INV-001',type:'complements',description:'Modern IAM complements Zero Trust network segmentation',status:'planned'}
+    ];
+    this._investmentStakeholderFeedback = [
+      {proposalId:'INV-001',stakeholder:'CISO',role:'Executive Sponsor',sentiment:'positive',comments:'Critical for our security posture transformation',rating:5},
+      {proposalId:'INV-001',stakeholder:'CTO',role:'Technical Lead',sentiment:'cautious',comments:'Migration timeline is aggressive, recommend phased approach',rating:3},
+      {proposalId:'INV-002',stakeholder:'SOC Manager',role:'User',sentiment:'very positive',comments:'This would significantly reduce our analyst workload',rating:5},
+      {proposalId:'INV-003',stakeholder:'Cloud Architect',role:'Technical Lead',sentiment:'positive',comments:'Essential for our multi-cloud strategy',rating:4},
+      {proposalId:'INV-004',stakeholder:'HR Director',role:'Business Partner',sentiment:'positive',comments:'Strong support for improving security culture',rating:4},
+      {proposalId:'INV-009',stakeholder:'IT Director',role:'Technical Lead',sentiment:'cautious',comments:'Concerned about user experience impact during transition',rating:3}
+    ];
+  }
+
+  private _getInvestmentRiskSummary(): {highRisk:number;mediumRisk:number;lowRisk:number;avgStakeholderRating:number;topDependency:string} {
+    const highRisk = this._investmentRiskMatrix.filter(r => r.riskLevel === 'high').length;
+    const mediumRisk = this._investmentRiskMatrix.filter(r => r.riskLevel === 'medium').length;
+    const avgRating = this._investmentStakeholderFeedback.reduce((s,f) => s + f.rating, 0) / this._investmentStakeholderFeedback.length;
+    const topDep = this._investmentDependencies.find(d => d.type === 'prerequisite' && d.status === 'active')?.description || 'none';
+    return {highRisk, mediumRisk, lowRisk: this._investmentRiskMatrix.filter(r => r.riskLevel === 'low').length, avgStakeholderRating: Math.round(avgRating * 10) / 10, topDependency: topDep};
+  }
+
+
+
+  // === Security Orchestration Playbook Engine ===
+  private _playbookDefinitions: Array<{id:string;name:string;category:string;triggerType:string;steps:number;avgExecutionTime:string;successRate:number;lastExecuted:string;version:number;author:string}> = [];
+  private _playbookExecutions: Array<{id:string;playbookId:string;triggeredBy:string;startTime:string;endTime:string;status:string;duration:string;stepsCompleted:number;stepsTotal:number;error:string|null}> = [];
+  private _playbookActions: Array<{id:string;name:string;type:string;integration:string;parameters:Record<string,string>;timeoutSec:number;retryCount:number;fallbackAction:string|null}> = [];
+  private _playbookSchedules: Array<{id:string;playbookId:string;schedule:string;lastRun:string;nextRun:string;enabled:boolean;timezone:string}> = [];
+
+  private _initPlaybookEngine(): void {
+    this._playbookDefinitions = [
+      {id:'PB-001',name:'Phishing Triage and Response',category:'Email Security',triggerType:'alert',steps:12,avgExecutionTime:'3.5 min',successRate:97.2,lastExecuted:'2026-04-23T12:30:00Z',version:4,author:'SOC Team'},
+      {id:'PB-002',name:'Malware Containment Procedure',category:'Endpoint Security',triggerType:'alert',steps:18,avgExecutionTime:'8.2 min',successRate:94.8,lastExecuted:'2026-04-23T10:15:00Z',version:6,author:'Forensics Team'},
+      {id:'PB-003',name:'Vulnerability Auto-Remediation',category:'Vulnerability Management',triggerType:'scheduled',steps:8,avgExecutionTime:'15.0 min',successRate:89.5,lastExecuted:'2026-04-23T06:00:00Z',version:3,author:'Patch Team'},
+      {id:'PB-004',name:'User Account Lockout Investigation',category:'Identity',triggerType:'alert',steps:10,avgExecutionTime:'2.8 min',successRate:98.1,lastExecuted:'2026-04-23T13:05:00Z',version:5,author:'IAM Team'},
+      {id:'PB-005',name:'Data Exfiltration Response',category:'Data Security',triggerType:'alert',steps:22,avgExecutionTime:'12.5 min',successRate:91.3,lastExecuted:'2026-04-22T22:30:00Z',version:7,author:'DLP Team'},
+      {id:'PB-006',name:'Cloud Misconfiguration Remediation',category:'Cloud Security',triggerType:'scheduled',steps:14,avgExecutionTime:'6.8 min',successRate:86.7,lastExecuted:'2026-04-23T04:00:00Z',version:2,author:'Cloud SecOps'}
+    ];
+    this._playbookExecutions = [
+      {id:'PE-001',playbookId:'PB-001',triggeredBy:'Alert: Phishing Email Detected',startTime:'2026-04-23T12:30:00Z',endTime:'2026-04-23T12:33:30Z',status:'completed',duration:'3m 30s',stepsCompleted:12,stepsTotal:12,error:null},
+      {id:'PE-002',playbookId:'PB-002',triggeredBy:'Alert: Malware Signature Match',startTime:'2026-04-23T10:15:00Z',endTime:'2026-04-23T10:23:12Z',status:'completed',duration:'8m 12s',stepsCompleted:18,stepsTotal:18,error:null},
+      {id:'PE-003',playbookId:'PB-003',triggeredBy:'Scheduled: Daily Vulnerability Scan',startTime:'2026-04-23T06:00:00Z',endTime:'2026-04-23T06:14:45Z',status:'completed',duration:'14m 45s',stepsCompleted:8,stepsTotal:8,error:null},
+      {id:'PE-004',playbookId:'PB-004',triggeredBy:'Alert: Multiple Failed Logins',startTime:'2026-04-23T13:05:00Z',endTime:'2026-04-23T13:07:48Z',status:'completed',duration:'2m 48s',stepsCompleted:10,stepsTotal:10,error:null},
+      {id:'PE-005',playbookId:'PB-005',triggeredBy:'Alert: Unusual Data Transfer',startTime:'2026-04-22T22:30:00Z',endTime:'2026-04-22T22:38:15Z',status:'completed',duration:'8m 15s',stepsCompleted:20,stepsTotal:22,error:'DLP agent timeout on workstation-089'}
+    ];
+    this._playbookActions = [
+      {id:'ACT-PB-001',name:'Quarantine Email',type:'email_action',integration:'Microsoft 365',parameters:{action:'quarantine',sender_match:'true',notify_recipient:'true'},timeoutSec:30,retryCount:3,fallbackAction:'Move to Junk'},
+      {id:'ACT-PB-002',name:'Isolate Endpoint',type:'endpoint_action',integration:'CrowdStrike Falcon',parameters:{action:'network_isolation',preserve_state:'true'},timeoutSec:60,retryCount:2,fallbackAction:'Block via Firewall'},
+      {id:'ACT-PB-003',name:'Disable User Account',type:'identity_action',integration:'Azure AD',parameters:{action:'disable',revoke_sessions:'true',notify_manager:'true'},timeoutSec:30,retryCount:3,fallbackAction:'Block via IAM Policy'},
+      {id:'ACT-PB-004',name:'Create JIRA Ticket',type:'ticket_action',integration:'JIRA Cloud',parameters:{project:'SEC',issue_type:'Task',priority:'High'},timeoutSec:45,retryCount:2,fallbackAction:'Send Slack Notification'},
+      {id:'ACT-PB-005',name:'Enrich IOC with Threat Intel',type:'intel_action',integration:'VirusTotal API',parameters:{resource_type:'auto',include_reputation:'true'},timeoutSec:120,retryCount:1,fallbackAction:'Manual Enrichment'}
+    ];
+    this._playbookSchedules = [
+      {id:'SCH-001',playbookId:'PB-003',schedule:'0 6 * * *',lastRun:'2026-04-23T06:00:00Z',nextRun:'2026-04-24T06:00:00Z',enabled:true,timezone:'UTC'},
+      {id:'SCH-002',playbookId:'PB-006',schedule:'0 4 * * *',lastRun:'2026-04-23T04:00:00Z',nextRun:'2026-04-24T04:00:00Z',enabled:true,timezone:'UTC'},
+      {id:'SCH-003',playbookId:'PB-001',schedule:'*/15 * * * *',lastRun:'2026-04-23T13:45:00Z',nextRun:'2026-04-23T14:00:00Z',enabled:true,timezone:'UTC'}
+    ];
+  }
+
+  private _getPlaybookStats(): {totalPlaybooks:number;activeSchedules:number;avgSuccessRate:number;totalExecutionsToday:number;avgExecutionTime:string;needsAttention:number} {
+    const avgSuccess = Math.round(this._playbookDefinitions.reduce((s,p) => s + p.successRate, 0) / this._playbookDefinitions.length * 10) / 10;
+    const needsAttention = this._playbookDefinitions.filter(p => p.successRate < 90).length;
+    return {totalPlaybooks: this._playbookDefinitions.length, activeSchedules: this._playbookSchedules.filter(s => s.enabled).length, avgSuccessRate: avgSuccess, totalExecutionsToday: this._playbookExecutions.length, avgExecutionTime: '7.9 min', needsAttention};
+  }
+
+
+  // === Security Awareness Program Analytics ===
+  private _awarenessCampaigns: Array<{id:string;name:string;type:string;targetAudience:string;participants:number;completionRate:number;passRate:number;startDate:string;endDate:string;status:string}> = [];
+  private _awarenessPhishingSims: Array<{id:string;campaignName:string;sentCount:number;clickCount:number;credentialCount:number;reportCount:number;clickRate:number;credentialRate:number;reportRate:number;date:string;difficulty:string}> = [];
+  private _awarenessRiskScores: Array<{department:string;avgScore:number;trend:string;riskLevel:string;complianceRate:number;topWeakArea:string;improvementRate:number}> = [];
+  private _awarenessContent: Array<{id:string;title:string;type:string;category:string;duration:string;difficulty:string;completionCount:number;avgScore:number;rating:number}> = [];
+
+  private _initAwarenessAnalytics(): void {
+    this._awarenessCampaigns = [
+      {id:'AWC-001',name:'Q2 Security Foundations',type:'mandatory_training',targetAudience:'All Employees',participants:2840,completionRate:78.4,passRate:92.1,startDate:'2026-04-01',endDate:'2026-06-30',status:'active'},
+      {id:'AWC-002',name:'Executive Security Briefing',type:'workshop',targetAudience:'C-Suite and Directors',participants:45,completionRate:88.9,passRate:100,startDate:'2026-04-15',endDate:'2026-04-15',status:'completed'},
+      {id:'AWC-003',name:'Developer Secure Coding Bootcamp',type:'training',targetAudience:'Engineering',participants:320,completionRate:65.2,passRate:87.5,startDate:'2026-04-10',endDate:'2026-05-10',status:'active'},
+      {id:'AWC-004',name:'Remote Work Security Essentials',type:'e-learning',targetAudience:'Remote Workers',participants:1250,completionRate:82.1,passRate:94.3,startDate:'2026-03-01',endDate:'2026-04-30',status:'active'}
+    ];
+    this._awarenessPhishingSims = [
+      {id:'PS-001',campaignName:'April Tax Scam Simulation',sentCount:2840,clickCount:156,credentialCount:23,reportCount:412,clickRate:5.5,credentialRate:0.8,reportRate:14.5,date:'2026-04-15',difficulty:'medium'},
+      {id:'PS-002',campaignName:'IT Support Impersonation',sentCount:2840,clickCount:198,credentialCount:45,reportCount:356,clickRate:7.0,credentialRate:1.6,reportRate:12.5,date:'2026-04-01',difficulty:'medium'},
+      {id:'PS-003',campaignName:'CEO Fraud Email',sentCount:150,clickCount:8,credentialCount:2,reportCount:42,clickRate:5.3,credentialRate:1.3,reportRate:28.0,date:'2026-03-20',difficulty:'hard'},
+      {id:'PS-004',campaignName:'Package Delivery Scam',sentCount:2840,clickCount:245,credentialCount:67,reportCount:298,clickRate:8.6,credentialRate:2.4,reportRate:10.5,date:'2026-03-01',difficulty:'easy'}
+    ];
+    this._awarenessRiskScores = [
+      {department:'Engineering',avgScore:82.5,trend:'improving',riskLevel:'low',complianceRate:85.2,topWeakArea:'Secret Management',improvementRate:12.3},
+      {department:'Sales',avgScore:68.4,trend:'stable',riskLevel:'medium',complianceRate:72.1,topWeakArea:'Social Engineering',improvementRate:5.8},
+      {department:'Finance',avgScore:75.2,trend:'improving',riskLevel:'medium',complianceRate:80.5,topWeakArea:'Phishing Recognition',improvementRate:8.4},
+      {department:'HR',avgScore:71.8,trend:'declining',riskLevel:'medium',complianceRate:76.3,topWeakArea:'Data Privacy',improvementRate:-2.1},
+      {department:'Executive',avgScore:88.2,trend:'improving',riskLevel:'low',complianceRate:92.1,topWeakArea:'Mobile Security',improvementRate:15.2},
+      {department:'Marketing',avgScore:65.3,trend:'stable',riskLevel:'high',complianceRate:68.7,topWeakArea:'Social Media Security',improvementRate:3.2}
+    ];
+    this._awarenessContent = [
+      {id:'AC-001',title:'Recognizing Phishing Emails',type:'interactive_module',category:'Phishing',duration:'15 min',difficulty:'beginner',completionCount:2450,avgScore:88.5,rating:4.5},
+      {id:'AC-002',title:'Password Security Best Practices',type:'video',category:'Identity',duration:'8 min',difficulty:'beginner',completionCount:2680,avgScore:92.1,rating:4.2},
+      {id:'AC-003',title:'Secure Remote Work Practices',type:'interactive_module',category:'Remote Work',duration:'20 min',difficulty:'intermediate',completionCount:1200,avgScore:85.3,rating:4.7},
+      {id:'AC-004',title:'Data Classification and Handling',type:'e-learning',category:'Data Security',duration:'25 min',difficulty:'intermediate',completionCount:1890,avgScore:80.2,rating:3.8},
+      {id:'AC-005',title:'Social Engineering Defense',type:'simulation',category:'Social Engineering',duration:'30 min',difficulty:'advanced',completionCount:780,avgScore:76.8,rating:4.6}
+    ];
+  }
+
+  private _getAwarenessSummary(): {avgCompletionRate:number;avgPhishingClickRate:number;highRiskDepts:number;totalParticipants:number;overallRiskScore:number;improvingDepts:number} {
+    const avgCompletion = Math.round(this._awarenessCampaigns.reduce((s,c) => s + c.completionRate, 0) / this._awarenessCampaigns.length * 10) / 10;
+    const avgClickRate = Math.round(this._awarenessPhishingSims.reduce((s,p) => s + p.clickRate, 0) / this._awarenessPhishingSims.length * 10) / 10;
+    const highRiskDepts = this._awarenessRiskScores.filter(d => d.riskLevel === 'high').length;
+    const improvingDepts = this._awarenessRiskScores.filter(d => d.trend === 'improving').length;
+    const overallRiskScore = Math.round(this._awarenessRiskScores.reduce((s,d) => s + d.avgScore, 0) / this._awarenessRiskScores.length * 10) / 10;
+    return {avgCompletionRate: avgCompletion, avgPhishingClickRate: avgClickRate, highRiskDepts, totalParticipants: 2840, overallRiskScore, improvingDepts};
+  }
+
   render() {    if (this._ntRules.length === 0) { this._initNtRules(); this._initNtCvss(); this._runNtAnomalyDetection(); this._generateNtPredictions(); this._initNtApprovals(); this._initNtActivity(); this._initNtNotifications(); }
 
     const items = this._getFiltered();

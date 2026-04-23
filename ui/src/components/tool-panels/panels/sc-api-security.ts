@@ -4313,6 +4313,254 @@ private _executionHistory: ExecutionRecord[] = [
 
 
 
+
+  // === Security Vendor Comparison Module ===
+  private _vendorData: Array<{id:string;name:string;category:string;rating:number;price:number;features:string[];integrations:number;support:string;contractLength:string;trialAvailable:boolean}> = [];
+  private _vendorCriteria: Array<{name:string;weight:number;description:string}> = [];
+  private _vendorScores: Array<{vendorId:string;vendorName:string;criteria:string;score:number;notes:string}> = [];
+  private _vendorRecommendation: {vendorId:string;reason:string;alternatives:string[];overallScore:number} | null = null;
+
+  private _initVendorComparison(): void {
+    this._vendorCriteria = [
+      {name:'Security Effectiveness',weight:0.25,description:'Detection accuracy, false positive rate, threat coverage'},
+      {name:'Integration Capability',weight:0.15,description:'API availability, SIEM/SOAR integration, data format support'},
+      {name:'Total Cost of Ownership',weight:0.20,description:'License cost, implementation cost, ongoing maintenance'},
+      {name:'Vendor Stability',weight:0.10,description:'Financial health, market position, customer retention rate'},
+      {name:'Support Quality',weight:0.10,description:'Response time, expertise level, escalation process'},
+      {name:'Scalability',weight:0.08,description:'Performance at scale, multi-tenant support, geographic coverage'},
+      {name:'Compliance Coverage',weight:0.07,description:'Regulatory certifications, audit support, reporting capabilities'},
+      {name:'Innovation Roadmap',weight:0.05,description:'AI/ML capabilities, future features, R&D investment'}
+    ];
+    this._vendorData = [
+      {id:'VND-001',name:'CrowdStrike Falcon',category:'Endpoint Security',rating:4.7,price:15,features:['Endpoint Detection','Threat Intelligence','Managed Detection','Cloud Workload Protection','Identity Protection'],integrations:85,support:'24/7 Premium',contractLength:'3 years',trialAvailable:true},
+      {id:'VND-002',name:'Palo Alto Cortex XDR',category:'Endpoint Security',rating:4.5,price:18,features:['Endpoint Detection','Network Security','Cloud Security','SOC Automation','IoT Security'],integrations:72,support:'24/7 Standard',contractLength:'2 years',trialAvailable:true},
+      {id:'VND-003',name:'Microsoft Defender for Endpoint',category:'Endpoint Security',rating:4.3,price:12,features:['Endpoint Detection','Threat Analytics','Auto Investigation','Microsoft 365 Integration','Attack Surface Reduction'],integrations:95,support:'Business Hours + Emergency',contractLength:'Annual',trialAvailable:true},
+      {id:'VND-004',name:'SentinelOne Singularity',category:'Endpoint Security',rating:4.6,price:16,features:['Endpoint Detection','AI Autonomous Response','Ransomware Protection','Cloud Visibility','IoT Security'],integrations:68,support:'24/7 Premium',contractLength:'3 years',trialAvailable:true},
+      {id:'VND-005',name:'Trellix Endpoint Security',category:'Endpoint Security',rating:4.1,price:13,features:['Endpoint Detection','Adaptive Threat Prevention','Real-Time Threat Response','Forensic Analysis','Endpoint Forensics'],integrations:78,support:'Business Hours',contractLength:'2 years',trialAvailable:true}
+    ];
+    this._vendorScores = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Security Effectiveness',score:95,notes:'Industry-leading detection with minimal false positives'},
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Integration Capability',score:88,notes:'Extensive API marketplace with 500+ integrations'},
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Total Cost of Ownership',score:75,notes:'Premium pricing but strong value proposition'},
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Vendor Stability',score:92,notes:'Market leader with strong financial position'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Security Effectiveness',score:90,notes:'Strong cross-layer correlation capabilities'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Integration Capability',score:82,notes:'Excellent within Palo Alto ecosystem'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Total Cost of Ownership',score:68,notes:'Higher total cost with network security bundle'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Vendor Stability',score:94,notes:'Established market leader in network security'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Security Effectiveness',score:85,notes:'Significantly improved detection capabilities'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Integration Capability',score:96,notes:'Best-in-class Microsoft ecosystem integration'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Total Cost of Ownership',score:90,notes:'Best value if already using Microsoft 365'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Vendor Stability',score:98,notes:'Microsoft financial stability is unmatched'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Security Effectiveness',score:93,notes:'Excellent AI-driven autonomous response'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Integration Capability',score:80,notes:'Growing integration ecosystem'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Total Cost of Ownership',score:78,notes:'Competitive pricing with good value'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Vendor Stability',score:85,notes:'Rapidly growing with strong market position'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Security Effectiveness',score:82,notes:'Solid detection with good forensics'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Integration Capability',score:85,notes:'Good legacy integration from McAfee/FireEye'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Total Cost of Ownership',score:82,notes:'Cost-effective for enterprise deployments'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Vendor Stability',score:78,notes:'Post-merger integration still stabilizing'}
+    ];
+    this._vendorRecommendation = {
+      vendorId:'VND-001',
+      reason:'CrowdStrike Falcon offers the best combination of security effectiveness, integration breadth, and vendor stability. Its AI-driven detection consistently tops independent tests.',
+      alternatives:['VND-004','VND-003'],
+      overallScore:91.2
+    };
+  }
+
+  private _calculateVendorOverallScore(vendorId: string): number {
+    const scores = this._vendorScores.filter(s => s.vendorId === vendorId);
+    if (scores.length === 0) return 0;
+    const totalWeight = scores.reduce((s, sc) => {
+      const criteria = this._vendorCriteria.find(c => c.name === sc.criteria);
+      return s + (criteria?.weight || 0.1);
+    }, 0);
+    const weightedScore = scores.reduce((s, sc) => {
+      const criteria = this._vendorCriteria.find(c => c.name === sc.criteria);
+      return s + sc.score * (criteria?.weight || 0.1);
+    }, 0);
+    return Math.round((weightedScore / totalWeight) * 10) / 10;
+  }
+
+  private _getPricingComparison(): Array<{vendor:string;monthly:number;annual:number;threeYear:number;savingsVsMonthly:number}> {
+    return this._vendorData.map(v => ({
+      vendor: v.name,
+      monthly: v.price,
+      annual: Math.round(v.price * 12 * 0.9),
+      threeYear: Math.round(v.price * 36 * 0.8),
+      savingsVsMonthly: 20
+    }));
+  }
+
+
+  // --- Vendor Deep Analysis ---
+  private _vendorTrialResults: Array<{vendorId:string;vendorName:string;trialPeriod:string;detectionRate:number;falsePositiveRate:number;performanceImpact:number;easeOfDeployment:number;overallScore:number;recommendation:string}> = [];
+  private _vendorContractTerms: Array<{vendorId:string;vendorName:string;minTerm:string;autoRenewal:boolean;exitClause:string;dataProcessingLocation:string;slaUptime:number;supportResponseTime:string}> = [];
+  private _vendorMarketPosition: Array<{vendorId:string;vendorName:string;marketShare:number;founded:number;employees:number;funding:string;customers:number;gartnerQuadrant:string}> = [];
+
+  private _initVendorDeepAnalysis(): void {
+    this._vendorTrialResults = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',trialPeriod:'30 days',detectionRate:98.2,falsePositiveRate:1.8,performanceImpact:2.1,easeOfDeployment:8.5,overallScore:93.5,recommendation:'Strongly recommended for deployment'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',trialPeriod:'30 days',detectionRate:96.8,falsePositiveRate:2.5,performanceImpact:3.2,easeOfDeployment:7.8,overallScore:90.2,recommendation:'Recommended with cross-layer focus'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',trialPeriod:'60 days',detectionRate:95.1,falsePositiveRate:3.1,performanceImpact:1.8,easeOfDeployment:9.2,overallScore:88.7,recommendation:'Best value for Microsoft ecosystem'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',trialPeriod:'30 days',detectionRate:97.5,falsePositiveRate:2.0,performanceImpact:2.5,easeOfDeployment:8.0,overallScore:91.8,recommendation:'Excellent AI-driven autonomous response'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',trialPeriod:'30 days',detectionRate:93.4,falsePositiveRate:3.8,performanceImpact:2.8,easeOfDeployment:7.2,overallScore:85.1,recommendation:'Solid option with legacy compatibility'}
+    ];
+    this._vendorContractTerms = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',minTerm:'3 years',autoRenewal:true,exitClause:'90-day written notice',dataProcessingLocation:'US, EU',slaUptime:99.99,supportResponseTime:'15 min (P1)'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',minTerm:'2 years',autoRenewal:true,exitClause:'60-day written notice',dataProcessingLocation:'US',slaUptime:99.95,supportResponseTime:'30 min (P1)'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',minTerm:'Annual',autoRenewal:false,exitClause:'30-day notice',dataProcessingLocation:'Global',slaUptime:99.9,supportResponseTime:'1 hour (P1)'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',minTerm:'3 years',autoRenewal:true,exitClause:'90-day written notice',dataProcessingLocation:'US, EU, APAC',slaUptime:99.99,supportResponseTime:'15 min (P1)'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',minTerm:'2 years',autoRenewal:false,exitClause:'60-day written notice',dataProcessingLocation:'US, EU',slaUptime:99.9,supportResponseTime:'30 min (P1)'}
+    ];
+    this._vendorMarketPosition = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',marketShare:18.5,founded:2011,employees:7800,funding:'IPO 2019',customers:22000,gartnerQuadrant:'Leader'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',marketShare:14.2,founded:2005,employees:16000,funding:'Public',customers:80000,gartnerQuadrant:'Leader'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',marketShare:22.8,founded:1975,employees:221000,funding:'Public',customers:500000,gartnerQuadrant:'Leader'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',marketShare:8.3,founded:2013,employees:3000,funding:'IPO 2021',customers:10000,gartnerQuadrant:'Challenger'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',marketShare:6.1,founded:2022,employees:4500,funding:'Private equity',customers:35000,gartnerQuadrant:'Visionary'}
+    ];
+  }
+
+  private _getVendorRanking(): Array<{rank:number;vendorName:string;overallScore:number;recommendation:string;keyStrength:string}> {
+    return this._vendorTrialResults
+      .sort((a,b) => b.overallScore - a.overallScore)
+      .map((v,i) => ({
+        rank: i + 1,
+        vendorName: v.vendorName,
+        overallScore: v.overallScore,
+        recommendation: v.recommendation,
+        keyStrength: v.detectionRate > 97 ? 'Detection excellence' : v.easeOfDeployment > 9 ? 'Easy deployment' : 'Balanced capability'
+      }));
+  }
+
+
+
+  // === Security Data Lake Analytics ===
+  private _dataLakeSources: Array<{id:string;name:string;type:string;status:string;eventsPerDay:number;lastIngested:string;retentionDays:number;storageUsed:string;schemaVersion:number}> = [];
+  private _dataLakeQueries: Array<{id:string;name:string;description:string;author:string;lastRun:string;avgRuntime:string;frequency:string;sharedWith:number;saved:boolean}> = [];
+  private _dataLakeInsights: Array<{id:string;title:string;severity:string;description:string;affectedSystems:string[];recommendation:string;detectedAt:string;confidence:number;category:string}> = [];
+  private _dataLakeStats: {totalEventsToday:number;storageUsed:string;queryCount:number;avgQueryTime:string;ingestionLag:string;dataFreshness:string} = {totalEventsToday:0,storageUsed:'',queryCount:0,avgQueryTime:'',ingestionLag:'',dataFreshness:''};
+
+  private _initDataLakeAnalytics(): void {
+    this._dataLakeSources = [
+      {id:'DL-SRC-001',name:'Firewall Logs',type:'network',status:'active',eventsPerDay:2500000,lastIngested:'2026-04-23T13:55:00Z',retentionDays:365,storageUsed:'2.3 TB',schemaVersion:3},
+      {id:'DL-SRC-002',name:'Endpoint Detection Events',type:'endpoint',status:'active',eventsPerDay:1800000,lastIngested:'2026-04-23T13:58:00Z',retentionDays:180,storageUsed:'1.8 TB',schemaVersion:2},
+      {id:'DL-SRC-003',name:'Authentication Logs',type:'identity',status:'active',eventsPerDay:950000,lastIngested:'2026-04-23T13:59:00Z',retentionDays:730,storageUsed:'0.9 TB',schemaVersion:4},
+      {id:'DL-SRC-004',name:'Cloud Audit Trails',type:'cloud',status:'active',eventsPerDay:1200000,lastIngested:'2026-04-23T13:56:00Z',retentionDays:365,storageUsed:'1.2 TB',schemaVersion:2},
+      {id:'DL-SRC-005',name:'DNS Query Logs',type:'network',status:'active',eventsPerDay:4500000,lastIngested:'2026-04-23T13:57:00Z',retentionDays:90,storageUsed:'3.8 TB',schemaVersion:1},
+      {id:'DL-SRC-006',name:'Email Security Logs',type:'email',status:'degraded',eventsPerDay:320000,lastIngested:'2026-04-23T12:30:00Z',retentionDays:365,storageUsed:'0.4 TB',schemaVersion:2},
+      {id:'DL-SRC-007',name:'DLP Events',type:'data',status:'active',eventsPerDay:180000,lastIngested:'2026-04-23T13:54:00Z',retentionDays:365,storageUsed:'0.3 TB',schemaVersion:1}
+    ];
+    this._dataLakeQueries = [
+      {id:'DLQ-001',name:'Lateral Movement Detection',description:'Identify unusual network connections between internal systems',author:'SOC Team',lastRun:'2026-04-23T13:00:00Z',avgRuntime:'45s',frequency:'hourly',sharedWith:8,saved:true},
+      {id:'DLQ-002',name:'Privilege Escalation Patterns',description:'Detect unusual privilege elevation events across systems',author:'IAM Team',lastRun:'2026-04-23T12:00:00Z',avgRuntime:'32s',frequency:'hourly',sharedWith:5,saved:true},
+      {id:'DLQ-003',name:'Data Exfiltration Indicators',description:'Find large data transfers to external or unusual destinations',author:'DLP Team',lastRun:'2026-04-23T11:00:00Z',avgRuntime:'1m 12s',frequency:'daily',sharedWith:3,saved:true},
+      {id:'DLQ-004',name:'Impossible Travel Detection',description:'Identify logins from geographically impossible locations',author:'SOC Team',lastRun:'2026-04-23T13:30:00Z',avgRuntime:'28s',frequency:'real-time',sharedWith:6,saved:true},
+      {id:'DLQ-005',name:'Anomalous DNS Queries',description:'Detect DNS tunneling and DGA domain lookups',author:'Network Sec',lastRun:'2026-04-23T13:15:00Z',avgRuntime:'55s',frequency:'every 30 min',sharedWith:4,saved:true}
+    ];
+    this._dataLakeInsights = [
+      {id:'INS-001',title:'Unusual RDP Connections from External IP',severity:'high',description:'Multiple RDP connections from previously unseen external IP addresses to internal workstations',affectedSystems:['workstation-023','workstation-045','workstation-067'],recommendation:'Investigate source IPs and consider blocking RDP from external networks',detectedAt:'2026-04-23T12:45:00Z',confidence:0.85,category:'network'},
+      {id:'INS-002',title:'Spike in Failed Authentication Attempts',severity:'medium',description:'3x increase in failed login attempts across VPN gateway compared to weekly average',affectedSystems:['vpn-gateway-01','vpn-gateway-02'],recommendation:'Enable account lockout policy and deploy CAPTCHA for VPN login',detectedAt:'2026-04-23T11:30:00Z',confidence:0.78,category:'identity'},
+      {id:'INS-003',title:'Sensitive Data Access Outside Business Hours',severity:'medium',description:'PII database accessed by 3 users between 02:00-04:00 AM, outside normal working hours',affectedSystems:['pii-database-01'],recommendation:'Review user access patterns and verify legitimate business need',detectedAt:'2026-04-23T10:00:00Z',confidence:0.72,category:'data'}
+    ];
+    this._dataLakeStats = {
+      totalEventsToday: 11450000,
+      storageUsed: '10.7 TB',
+      queryCount: 847,
+      avgQueryTime: '42s',
+      ingestionLag: '2.3 min',
+      dataFreshness: '99.2%'
+    };
+  }
+
+  private _getDataLakeHealthSummary(): {activeSources:number;degradedSources:number;totalStorage:string;eventsPerSecond:number;ingestionLag:string;freshness:string} {
+    const activeSources = this._dataLakeSources.filter(s => s.status === 'active').length;
+    const degradedSources = this._dataLakeSources.filter(s => s.status !== 'active').length;
+    const eventsPerSecond = Math.round(this._dataLakeStats.totalEventsToday / 86400);
+    return {activeSources, degradedSources, totalStorage: this._dataLakeStats.storageUsed, eventsPerSecond, ingestionLag: this._dataLakeStats.ingestionLag, freshness: this._dataLakeStats.dataFreshness};
+  }
+
+
+  // === Cyber Kill Chain Analysis ===
+  private _killChainStages: Array<{stage:string;description:string;detectionMethods:string[];mitigationActions:string[];currentThreatLevel:string;incidentCount:number;avgTimeInStage:string}> = [];
+  private _killChainAttacks: Array<{id:string;name:string;stagesCompleted:string[];currentStage:string;progress:number;severity:string;targetAsset:string;startTime:string;estimatedImpact:number}> = [];
+  private _killChainMetrics: {totalAttacksTracked:number;stoppedAtRecon:number;stoppedAtWeaponize:number;stoppedAtDeliver:number;stoppedAtExploit:number;stoppedAtInstall:number;stoppedAtCommand:number;stoppedAtExfiltrate:number;fullChainCompleted:number} = {totalAttacksTracked:0,stoppedAtRecon:0,stoppedAtWeaponize:0,stoppedAtDeliver:0,stoppedAtExploit:0,stoppedAtInstall:0,stoppedAtCommand:0,stoppedAtExfiltrate:0,fullChainCompleted:0};
+
+  private _initKillChainAnalysis(): void {
+    this._killChainStages = [
+      {stage:'Reconnaissance',description:'Adversary researches target organization, systems, and vulnerabilities',detectionMethods:['Web analytics','DNS monitoring','Social media scanning','Honeypot alerts'],mitigationActions:['Minimize public exposure','Monitor dark web mentions','Deploy deception technology'],currentThreatLevel:'elevated',incidentCount:245,avgTimeInStage:'7-14 days'},
+      {stage:'Weaponization',description:'Adversary creates malware payload or exploit tool targeting identified vulnerabilities',detectionMethods:['Threat intel feeds','YARA rules','Malware sandbox analysis'],mitigationActions:['Keep systems patched','Deploy application whitelisting','Maintain threat intel subscriptions'],currentThreatLevel:'moderate',incidentCount:89,avgTimeInStage:'3-5 days'},
+      {stage:'Delivery',description:'Adversary transmits weaponized payload to target via email, web, or USB',detectionMethods:['Email filtering','Web proxy logs','Endpoint detection','Network IDS'],mitigationActions:['Email security gateway','Web filtering','User awareness training','Endpoint protection'],currentThreatLevel:'high',incidentCount:312,avgTimeInStage:'1-2 days'},
+      {stage:'Exploitation',description:'Payload exploits vulnerability on target system',detectionMethods:['IDS/IPS alerts','Endpoint detection','Vulnerability scanner','SIEM correlation'],mitigationActions:['Patch management','Application hardening','Exploit prevention','Runtime protection'],currentThreatLevel:'high',incidentCount:156,avgTimeInStage:'minutes to hours'},
+      {stage:'Installation',description:'Adversary installs backdoor or persistent access mechanism',detectionMethods:['File integrity monitoring','Process monitoring','Registry monitoring','Scheduled task audit'],mitigationActions:['Application whitelisting','File integrity monitoring','Privilege restriction','EDR solutions'],currentThreatLevel:'high',incidentCount:78,avgTimeInStage:'hours'},
+      {stage:'Command and Control',description:'Adversary establishes communication channel for remote command execution',detectionMethods:['Network traffic analysis','DNS monitoring','Beacon detection','SSL inspection'],mitigationActions:['Egress filtering','DNS filtering','Network segmentation','Proxy enforcement'],currentThreatLevel:'high',incidentCount:67,avgTimeInStage:'days to weeks'},
+      {stage:'Actions on Objectives',description:'Adversary achieves goals: data exfiltration, encryption, or destruction',detectionMethods:['DLP alerts','Anomaly detection','Data access monitoring','Network flow analysis'],mitigationActions:['DLP controls','Data encryption','Access controls','Backup verification'],currentThreatLevel:'critical',incidentCount:34,avgTimeInStage:'hours to days'}
+    ];
+    this._killChainAttacks = [
+      {id:'KCA-001',name:'APT29 Spear Phishing Campaign',stagesCompleted:['Reconnaissance','Weaponization','Delivery'],currentStage:'Exploitation',progress:42,severity:'critical',targetAsset:'Executive Email',startTime:'2026-04-18T08:00:00Z',estimatedImpact:4500000},
+      {id:'KCA-002',name:'FIN7 POS Malware Deployment',stagesCompleted:['Reconnaissance','Weaponization','Delivery','Exploitation','Installation'],currentStage:'Command and Control',progress:71,severity:'high',targetAsset:'POS Systems',startTime:'2026-04-15T14:00:00Z',estimatedImpact:2800000},
+      {id:'KCA-003',name:'Ransomware-as-a-Service Operation',stagesCompleted:['Reconnaissance','Delivery','Exploitation'],currentStage:'Installation',progress:57,severity:'critical',targetAsset:'File Servers',startTime:'2026-04-20T22:00:00Z',estimatedImpact:8500000}
+    ];
+    this._killChainMetrics = {totalAttacksTracked:892,stoppedAtRecon:312,stoppedAtWeaponize:89,stoppedAtDeliver:245,stoppedAtExploit:156,stoppedAtInstall:78,stoppedAtCommand:45,stoppedAtExfiltrate:34,fullChainCompleted:3};
+  }
+
+  private _getKillChainSummary(): {totalTracked:number;interruptionRate:number;mostCommonStopStage:string;fullChainRate:number;topActiveAttack:string} {
+    const interruptionRate = Math.round(((this._killChainMetrics.totalTrackedTracked - this._killChainMetrics.fullChainCompleted) / this._killChainMetrics.totalTrackedTracked) * 10000) / 100;
+    return {totalTracked: this._killChainMetrics.totalTrackedTracked, interruptionRate, mostCommonStopStage:'Delivery', fullChainRate: 0.34, topActiveAttack: this._killChainAttacks.sort((a,b) => b.progress - a.progress)[0]?.name || ''};
+  }
+
+
+
+  // === Security Operations Center Dashboard Module ===
+  private _socDashAnalysts: Array<{id:string;name:string;status:string;currentAssignment:string;alertsHandled:number;avgResponseTime:string;shift:string;skillLevel:string}> = [];
+  private _socDashAlerts: Array<{id:string;severity:string;source:string;description:string;assignee:string;createdAt:string;status:string;slaDeadline:string;slaBreachRisk:boolean}> = [];
+  private _socDashPerformance: {escalationRate:number;meanTimeToAck:string;meanTimeToContain:string;meanTimeToResolve:string;analystUtilization:number;shiftCoverage:number;toolsUptime:number} = {escalationRate:0,meanTimeToAck:'',meanTimeToContain:'',meanTimeToResolve:'',analystUtilization:0,shiftCoverage:0,toolsUptime:0};
+  private _socDashEscalationPaths: Array<{fromRole:string;toRole:string;condition:string;avgTime:string;count:number}> = [];
+
+  private _initSocDashboardModule(): void {
+    this._socDashAnalysts = [
+      {id:'AN-001',name:'Alice Chen',status:'active',currentAssignment:'Investigating phishing alert',alertsHandled:34,avgResponseTime:'4.2 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-002',name:'Bob Smith',status:'active',currentAssignment:'Malware analysis in progress',alertsHandled:28,avgResponseTime:'5.1 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-003',name:'Carol Jones',status:'active',currentAssignment:'Incident response coordination',alertsHandled:22,avgResponseTime:'6.3 min',shift:'Day (06:00-14:00)',skillLevel:'intermediate'},
+      {id:'AN-004',name:'David Lee',status:'break',currentAssignment:'None',alertsHandled:31,avgResponseTime:'4.8 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-005',name:'Eve Wilson',status:'active',currentAssignment:'Threat hunting investigation',alertsHandled:19,avgResponseTime:'7.2 min',shift:'Day (06:00-14:00)',skillLevel:'intermediate'},
+      {id:'AN-006',name:'Frank Garcia',status:'active',currentAssignment:'Vulnerability triage',alertsHandled:25,avgResponseTime:'5.5 min',shift:'Night (14:00-22:00)',skillLevel:'intermediate'},
+      {id:'AN-007',name:'Grace Kim',status:'active',currentAssignment:'Compliance monitoring',alertsHandled:16,avgResponseTime:'8.1 min',shift:'Night (14:00-22:00)',skillLevel:'junior'}
+    ];
+    this._socDashAlerts = [
+      {id:'SOC-A-001',severity:'critical',source:'IDS',description:'Possible ransomware activity detected on server-045',assignee:'Alice Chen',createdAt:'2026-04-23T13:45:00Z',status:'investigating',slaDeadline:'2026-04-23T14:00:00Z',slaBreachRisk:true},
+      {id:'SOC-A-002',severity:'high',source:'SIEM',description:'Correlated login anomalies from 3 user accounts',assignee:'Bob Smith',createdAt:'2026-04-23T13:30:00Z',status:'investigating',slaDeadline:'2026-04-23T14:30:00Z',slaBreachRisk:false},
+      {id:'SOC-A-003',severity:'high',source:'EDR',description:'Suspicious PowerShell execution on workstation-023',assignee:'Carol Jones',createdAt:'2026-04-23T13:15:00Z',status:'triage',slaDeadline:'2026-04-23T14:15:00Z',slaBreachRisk:false},
+      {id:'SOC-A-004',severity:'medium',source:'WAF',description:'SQL injection attempt blocked on web application',assignee:'David Lee',createdAt:'2026-04-23T13:00:00Z',status:'resolved',slaDeadline:'2026-04-23T15:00:00Z',slaBreachRisk:false},
+      {id:'SOC-A-005',severity:'medium',source:'DLP',description:'Large file transfer to external USB device detected',assignee:'Eve Wilson',createdAt:'2026-04-23T12:45:00Z',status:'pending',slaDeadline:'2026-04-23T14:45:00Z',slaBreachRisk:false},
+      {id:'SOC-A-006',severity:'low',source:'Vuln Scanner',description:'New critical vulnerability CVE-2026-5678 detected',assignee:'Frank Garcia',createdAt:'2026-04-23T12:30:00Z',status:'pending',slaDeadline:'2026-04-23T18:30:00Z',slaBreachRisk:false}
+    ];
+    this._socDashPerformance = {
+      escalationRate: 12.5,
+      meanTimeToAck: '3.8 min',
+      meanTimeToContain: '18.5 min',
+      meanTimeToResolve: '2.4 hours',
+      analystUtilization: 78.2,
+      shiftCoverage: 92.3,
+      toolsUptime: 99.95
+    };
+    this._socDashEscalationPaths = [
+      {fromRole:'Junior Analyst',toRole:'Senior Analyst',condition:'Severity high or above',avgTime:'8 min',count:45},
+      {fromRole:'Senior Analyst',toRole:'SOC Manager',condition:'Severity critical or analyst unavailable',avgTime:'15 min',count:18},
+      {fromRole:'SOC Manager',toRole:'CISO',condition:'Active breach confirmed or executive impact',avgTime:'5 min',count:4},
+      {fromRole:'SOC Manager',toRole:'Legal Counsel',condition:'Data breach involving PII or regulated data',avgTime:'10 min',count:6}
+    ];
+  }
+
+  private _getSocDashSummary(): {activeAnalysts:number;openAlerts:number;criticalAlerts:number;utilization:number;slaBreachRiskCount:number;shiftStatus:string} {
+    const activeAnalysts = this._socDashAnalysts.filter(a => a.status === 'active').length;
+    const openAlerts = this._socDashAlerts.filter(a => a.status !== 'resolved').length;
+    const criticalAlerts = this._socDashAlerts.filter(a => a.severity === 'critical' && a.status !== 'resolved').length;
+    const slaBreachRiskCount = this._socDashAlerts.filter(a => a.slaBreachRisk).length;
+    return {activeAnalysts, openAlerts, criticalAlerts, utilization: this._socDashPerformance.analystUtilization, slaBreachRiskCount, shiftStatus:'Day shift - fully staffed'};
+  }
+
   render() {    if (this._apsRules.length === 0) { this._initApsRules(); this._initApsCvss(); this._runApsAnomalyDetection(); this._generateApsPredictions(); this._initApsApprovals(); this._initApsActivity(); this._initApsNotifications(); }
 
     const items = this._getFiltered();

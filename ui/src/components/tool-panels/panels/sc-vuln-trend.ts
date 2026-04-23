@@ -4245,6 +4245,220 @@ private _executionHistory: ExecutionRecord[] = [
 
 
 
+
+  // === Security Vendor Comparison Module ===
+  private _vendorData: Array<{id:string;name:string;category:string;rating:number;price:number;features:string[];integrations:number;support:string;contractLength:string;trialAvailable:boolean}> = [];
+  private _vendorCriteria: Array<{name:string;weight:number;description:string}> = [];
+  private _vendorScores: Array<{vendorId:string;vendorName:string;criteria:string;score:number;notes:string}> = [];
+  private _vendorRecommendation: {vendorId:string;reason:string;alternatives:string[];overallScore:number} | null = null;
+
+  private _initVendorComparison(): void {
+    this._vendorCriteria = [
+      {name:'Security Effectiveness',weight:0.25,description:'Detection accuracy, false positive rate, threat coverage'},
+      {name:'Integration Capability',weight:0.15,description:'API availability, SIEM/SOAR integration, data format support'},
+      {name:'Total Cost of Ownership',weight:0.20,description:'License cost, implementation cost, ongoing maintenance'},
+      {name:'Vendor Stability',weight:0.10,description:'Financial health, market position, customer retention rate'},
+      {name:'Support Quality',weight:0.10,description:'Response time, expertise level, escalation process'},
+      {name:'Scalability',weight:0.08,description:'Performance at scale, multi-tenant support, geographic coverage'},
+      {name:'Compliance Coverage',weight:0.07,description:'Regulatory certifications, audit support, reporting capabilities'},
+      {name:'Innovation Roadmap',weight:0.05,description:'AI/ML capabilities, future features, R&D investment'}
+    ];
+    this._vendorData = [
+      {id:'VND-001',name:'CrowdStrike Falcon',category:'Endpoint Security',rating:4.7,price:15,features:['Endpoint Detection','Threat Intelligence','Managed Detection','Cloud Workload Protection','Identity Protection'],integrations:85,support:'24/7 Premium',contractLength:'3 years',trialAvailable:true},
+      {id:'VND-002',name:'Palo Alto Cortex XDR',category:'Endpoint Security',rating:4.5,price:18,features:['Endpoint Detection','Network Security','Cloud Security','SOC Automation','IoT Security'],integrations:72,support:'24/7 Standard',contractLength:'2 years',trialAvailable:true},
+      {id:'VND-003',name:'Microsoft Defender for Endpoint',category:'Endpoint Security',rating:4.3,price:12,features:['Endpoint Detection','Threat Analytics','Auto Investigation','Microsoft 365 Integration','Attack Surface Reduction'],integrations:95,support:'Business Hours + Emergency',contractLength:'Annual',trialAvailable:true},
+      {id:'VND-004',name:'SentinelOne Singularity',category:'Endpoint Security',rating:4.6,price:16,features:['Endpoint Detection','AI Autonomous Response','Ransomware Protection','Cloud Visibility','IoT Security'],integrations:68,support:'24/7 Premium',contractLength:'3 years',trialAvailable:true},
+      {id:'VND-005',name:'Trellix Endpoint Security',category:'Endpoint Security',rating:4.1,price:13,features:['Endpoint Detection','Adaptive Threat Prevention','Real-Time Threat Response','Forensic Analysis','Endpoint Forensics'],integrations:78,support:'Business Hours',contractLength:'2 years',trialAvailable:true}
+    ];
+    this._vendorScores = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Security Effectiveness',score:95,notes:'Industry-leading detection with minimal false positives'},
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Integration Capability',score:88,notes:'Extensive API marketplace with 500+ integrations'},
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Total Cost of Ownership',score:75,notes:'Premium pricing but strong value proposition'},
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',criteria:'Vendor Stability',score:92,notes:'Market leader with strong financial position'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Security Effectiveness',score:90,notes:'Strong cross-layer correlation capabilities'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Integration Capability',score:82,notes:'Excellent within Palo Alto ecosystem'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Total Cost of Ownership',score:68,notes:'Higher total cost with network security bundle'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',criteria:'Vendor Stability',score:94,notes:'Established market leader in network security'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Security Effectiveness',score:85,notes:'Significantly improved detection capabilities'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Integration Capability',score:96,notes:'Best-in-class Microsoft ecosystem integration'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Total Cost of Ownership',score:90,notes:'Best value if already using Microsoft 365'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',criteria:'Vendor Stability',score:98,notes:'Microsoft financial stability is unmatched'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Security Effectiveness',score:93,notes:'Excellent AI-driven autonomous response'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Integration Capability',score:80,notes:'Growing integration ecosystem'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Total Cost of Ownership',score:78,notes:'Competitive pricing with good value'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',criteria:'Vendor Stability',score:85,notes:'Rapidly growing with strong market position'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Security Effectiveness',score:82,notes:'Solid detection with good forensics'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Integration Capability',score:85,notes:'Good legacy integration from McAfee/FireEye'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Total Cost of Ownership',score:82,notes:'Cost-effective for enterprise deployments'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',criteria:'Vendor Stability',score:78,notes:'Post-merger integration still stabilizing'}
+    ];
+    this._vendorRecommendation = {
+      vendorId:'VND-001',
+      reason:'CrowdStrike Falcon offers the best combination of security effectiveness, integration breadth, and vendor stability. Its AI-driven detection consistently tops independent tests.',
+      alternatives:['VND-004','VND-003'],
+      overallScore:91.2
+    };
+  }
+
+  private _calculateVendorOverallScore(vendorId: string): number {
+    const scores = this._vendorScores.filter(s => s.vendorId === vendorId);
+    if (scores.length === 0) return 0;
+    const totalWeight = scores.reduce((s, sc) => {
+      const criteria = this._vendorCriteria.find(c => c.name === sc.criteria);
+      return s + (criteria?.weight || 0.1);
+    }, 0);
+    const weightedScore = scores.reduce((s, sc) => {
+      const criteria = this._vendorCriteria.find(c => c.name === sc.criteria);
+      return s + sc.score * (criteria?.weight || 0.1);
+    }, 0);
+    return Math.round((weightedScore / totalWeight) * 10) / 10;
+  }
+
+  private _getPricingComparison(): Array<{vendor:string;monthly:number;annual:number;threeYear:number;savingsVsMonthly:number}> {
+    return this._vendorData.map(v => ({
+      vendor: v.name,
+      monthly: v.price,
+      annual: Math.round(v.price * 12 * 0.9),
+      threeYear: Math.round(v.price * 36 * 0.8),
+      savingsVsMonthly: 20
+    }));
+  }
+
+
+  // --- Vendor Deep Analysis ---
+  private _vendorTrialResults: Array<{vendorId:string;vendorName:string;trialPeriod:string;detectionRate:number;falsePositiveRate:number;performanceImpact:number;easeOfDeployment:number;overallScore:number;recommendation:string}> = [];
+  private _vendorContractTerms: Array<{vendorId:string;vendorName:string;minTerm:string;autoRenewal:boolean;exitClause:string;dataProcessingLocation:string;slaUptime:number;supportResponseTime:string}> = [];
+  private _vendorMarketPosition: Array<{vendorId:string;vendorName:string;marketShare:number;founded:number;employees:number;funding:string;customers:number;gartnerQuadrant:string}> = [];
+
+  private _initVendorDeepAnalysis(): void {
+    this._vendorTrialResults = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',trialPeriod:'30 days',detectionRate:98.2,falsePositiveRate:1.8,performanceImpact:2.1,easeOfDeployment:8.5,overallScore:93.5,recommendation:'Strongly recommended for deployment'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',trialPeriod:'30 days',detectionRate:96.8,falsePositiveRate:2.5,performanceImpact:3.2,easeOfDeployment:7.8,overallScore:90.2,recommendation:'Recommended with cross-layer focus'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',trialPeriod:'60 days',detectionRate:95.1,falsePositiveRate:3.1,performanceImpact:1.8,easeOfDeployment:9.2,overallScore:88.7,recommendation:'Best value for Microsoft ecosystem'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',trialPeriod:'30 days',detectionRate:97.5,falsePositiveRate:2.0,performanceImpact:2.5,easeOfDeployment:8.0,overallScore:91.8,recommendation:'Excellent AI-driven autonomous response'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',trialPeriod:'30 days',detectionRate:93.4,falsePositiveRate:3.8,performanceImpact:2.8,easeOfDeployment:7.2,overallScore:85.1,recommendation:'Solid option with legacy compatibility'}
+    ];
+    this._vendorContractTerms = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',minTerm:'3 years',autoRenewal:true,exitClause:'90-day written notice',dataProcessingLocation:'US, EU',slaUptime:99.99,supportResponseTime:'15 min (P1)'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',minTerm:'2 years',autoRenewal:true,exitClause:'60-day written notice',dataProcessingLocation:'US',slaUptime:99.95,supportResponseTime:'30 min (P1)'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',minTerm:'Annual',autoRenewal:false,exitClause:'30-day notice',dataProcessingLocation:'Global',slaUptime:99.9,supportResponseTime:'1 hour (P1)'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',minTerm:'3 years',autoRenewal:true,exitClause:'90-day written notice',dataProcessingLocation:'US, EU, APAC',slaUptime:99.99,supportResponseTime:'15 min (P1)'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',minTerm:'2 years',autoRenewal:false,exitClause:'60-day written notice',dataProcessingLocation:'US, EU',slaUptime:99.9,supportResponseTime:'30 min (P1)'}
+    ];
+    this._vendorMarketPosition = [
+      {vendorId:'VND-001',vendorName:'CrowdStrike Falcon',marketShare:18.5,founded:2011,employees:7800,funding:'IPO 2019',customers:22000,gartnerQuadrant:'Leader'},
+      {vendorId:'VND-002',vendorName:'Palo Alto Cortex XDR',marketShare:14.2,founded:2005,employees:16000,funding:'Public',customers:80000,gartnerQuadrant:'Leader'},
+      {vendorId:'VND-003',vendorName:'Microsoft Defender for Endpoint',marketShare:22.8,founded:1975,employees:221000,funding:'Public',customers:500000,gartnerQuadrant:'Leader'},
+      {vendorId:'VND-004',vendorName:'SentinelOne Singularity',marketShare:8.3,founded:2013,employees:3000,funding:'IPO 2021',customers:10000,gartnerQuadrant:'Challenger'},
+      {vendorId:'VND-005',vendorName:'Trellix Endpoint Security',marketShare:6.1,founded:2022,employees:4500,funding:'Private equity',customers:35000,gartnerQuadrant:'Visionary'}
+    ];
+  }
+
+  private _getVendorRanking(): Array<{rank:number;vendorName:string;overallScore:number;recommendation:string;keyStrength:string}> {
+    return this._vendorTrialResults
+      .sort((a,b) => b.overallScore - a.overallScore)
+      .map((v,i) => ({
+        rank: i + 1,
+        vendorName: v.vendorName,
+        overallScore: v.overallScore,
+        recommendation: v.recommendation,
+        keyStrength: v.detectionRate > 97 ? 'Detection excellence' : v.easeOfDeployment > 9 ? 'Easy deployment' : 'Balanced capability'
+      }));
+  }
+
+
+
+  // === Security Data Lake Analytics ===
+  private _dataLakeSources: Array<{id:string;name:string;type:string;status:string;eventsPerDay:number;lastIngested:string;retentionDays:number;storageUsed:string;schemaVersion:number}> = [];
+  private _dataLakeQueries: Array<{id:string;name:string;description:string;author:string;lastRun:string;avgRuntime:string;frequency:string;sharedWith:number;saved:boolean}> = [];
+  private _dataLakeInsights: Array<{id:string;title:string;severity:string;description:string;affectedSystems:string[];recommendation:string;detectedAt:string;confidence:number;category:string}> = [];
+  private _dataLakeStats: {totalEventsToday:number;storageUsed:string;queryCount:number;avgQueryTime:string;ingestionLag:string;dataFreshness:string} = {totalEventsToday:0,storageUsed:'',queryCount:0,avgQueryTime:'',ingestionLag:'',dataFreshness:''};
+
+  private _initDataLakeAnalytics(): void {
+    this._dataLakeSources = [
+      {id:'DL-SRC-001',name:'Firewall Logs',type:'network',status:'active',eventsPerDay:2500000,lastIngested:'2026-04-23T13:55:00Z',retentionDays:365,storageUsed:'2.3 TB',schemaVersion:3},
+      {id:'DL-SRC-002',name:'Endpoint Detection Events',type:'endpoint',status:'active',eventsPerDay:1800000,lastIngested:'2026-04-23T13:58:00Z',retentionDays:180,storageUsed:'1.8 TB',schemaVersion:2},
+      {id:'DL-SRC-003',name:'Authentication Logs',type:'identity',status:'active',eventsPerDay:950000,lastIngested:'2026-04-23T13:59:00Z',retentionDays:730,storageUsed:'0.9 TB',schemaVersion:4},
+      {id:'DL-SRC-004',name:'Cloud Audit Trails',type:'cloud',status:'active',eventsPerDay:1200000,lastIngested:'2026-04-23T13:56:00Z',retentionDays:365,storageUsed:'1.2 TB',schemaVersion:2},
+      {id:'DL-SRC-005',name:'DNS Query Logs',type:'network',status:'active',eventsPerDay:4500000,lastIngested:'2026-04-23T13:57:00Z',retentionDays:90,storageUsed:'3.8 TB',schemaVersion:1},
+      {id:'DL-SRC-006',name:'Email Security Logs',type:'email',status:'degraded',eventsPerDay:320000,lastIngested:'2026-04-23T12:30:00Z',retentionDays:365,storageUsed:'0.4 TB',schemaVersion:2},
+      {id:'DL-SRC-007',name:'DLP Events',type:'data',status:'active',eventsPerDay:180000,lastIngested:'2026-04-23T13:54:00Z',retentionDays:365,storageUsed:'0.3 TB',schemaVersion:1}
+    ];
+    this._dataLakeQueries = [
+      {id:'DLQ-001',name:'Lateral Movement Detection',description:'Identify unusual network connections between internal systems',author:'SOC Team',lastRun:'2026-04-23T13:00:00Z',avgRuntime:'45s',frequency:'hourly',sharedWith:8,saved:true},
+      {id:'DLQ-002',name:'Privilege Escalation Patterns',description:'Detect unusual privilege elevation events across systems',author:'IAM Team',lastRun:'2026-04-23T12:00:00Z',avgRuntime:'32s',frequency:'hourly',sharedWith:5,saved:true},
+      {id:'DLQ-003',name:'Data Exfiltration Indicators',description:'Find large data transfers to external or unusual destinations',author:'DLP Team',lastRun:'2026-04-23T11:00:00Z',avgRuntime:'1m 12s',frequency:'daily',sharedWith:3,saved:true},
+      {id:'DLQ-004',name:'Impossible Travel Detection',description:'Identify logins from geographically impossible locations',author:'SOC Team',lastRun:'2026-04-23T13:30:00Z',avgRuntime:'28s',frequency:'real-time',sharedWith:6,saved:true},
+      {id:'DLQ-005',name:'Anomalous DNS Queries',description:'Detect DNS tunneling and DGA domain lookups',author:'Network Sec',lastRun:'2026-04-23T13:15:00Z',avgRuntime:'55s',frequency:'every 30 min',sharedWith:4,saved:true}
+    ];
+    this._dataLakeInsights = [
+      {id:'INS-001',title:'Unusual RDP Connections from External IP',severity:'high',description:'Multiple RDP connections from previously unseen external IP addresses to internal workstations',affectedSystems:['workstation-023','workstation-045','workstation-067'],recommendation:'Investigate source IPs and consider blocking RDP from external networks',detectedAt:'2026-04-23T12:45:00Z',confidence:0.85,category:'network'},
+      {id:'INS-002',title:'Spike in Failed Authentication Attempts',severity:'medium',description:'3x increase in failed login attempts across VPN gateway compared to weekly average',affectedSystems:['vpn-gateway-01','vpn-gateway-02'],recommendation:'Enable account lockout policy and deploy CAPTCHA for VPN login',detectedAt:'2026-04-23T11:30:00Z',confidence:0.78,category:'identity'},
+      {id:'INS-003',title:'Sensitive Data Access Outside Business Hours',severity:'medium',description:'PII database accessed by 3 users between 02:00-04:00 AM, outside normal working hours',affectedSystems:['pii-database-01'],recommendation:'Review user access patterns and verify legitimate business need',detectedAt:'2026-04-23T10:00:00Z',confidence:0.72,category:'data'}
+    ];
+    this._dataLakeStats = {
+      totalEventsToday: 11450000,
+      storageUsed: '10.7 TB',
+      queryCount: 847,
+      avgQueryTime: '42s',
+      ingestionLag: '2.3 min',
+      dataFreshness: '99.2%'
+    };
+  }
+
+  private _getDataLakeHealthSummary(): {activeSources:number;degradedSources:number;totalStorage:string;eventsPerSecond:number;ingestionLag:string;freshness:string} {
+    const activeSources = this._dataLakeSources.filter(s => s.status === 'active').length;
+    const degradedSources = this._dataLakeSources.filter(s => s.status !== 'active').length;
+    const eventsPerSecond = Math.round(this._dataLakeStats.totalEventsToday / 86400);
+    return {activeSources, degradedSources, totalStorage: this._dataLakeStats.storageUsed, eventsPerSecond, ingestionLag: this._dataLakeStats.ingestionLag, freshness: this._dataLakeStats.dataFreshness};
+  }
+
+
+  // === Security Awareness Program Analytics ===
+  private _awarenessCampaigns: Array<{id:string;name:string;type:string;targetAudience:string;participants:number;completionRate:number;passRate:number;startDate:string;endDate:string;status:string}> = [];
+  private _awarenessPhishingSims: Array<{id:string;campaignName:string;sentCount:number;clickCount:number;credentialCount:number;reportCount:number;clickRate:number;credentialRate:number;reportRate:number;date:string;difficulty:string}> = [];
+  private _awarenessRiskScores: Array<{department:string;avgScore:number;trend:string;riskLevel:string;complianceRate:number;topWeakArea:string;improvementRate:number}> = [];
+  private _awarenessContent: Array<{id:string;title:string;type:string;category:string;duration:string;difficulty:string;completionCount:number;avgScore:number;rating:number}> = [];
+
+  private _initAwarenessAnalytics(): void {
+    this._awarenessCampaigns = [
+      {id:'AWC-001',name:'Q2 Security Foundations',type:'mandatory_training',targetAudience:'All Employees',participants:2840,completionRate:78.4,passRate:92.1,startDate:'2026-04-01',endDate:'2026-06-30',status:'active'},
+      {id:'AWC-002',name:'Executive Security Briefing',type:'workshop',targetAudience:'C-Suite and Directors',participants:45,completionRate:88.9,passRate:100,startDate:'2026-04-15',endDate:'2026-04-15',status:'completed'},
+      {id:'AWC-003',name:'Developer Secure Coding Bootcamp',type:'training',targetAudience:'Engineering',participants:320,completionRate:65.2,passRate:87.5,startDate:'2026-04-10',endDate:'2026-05-10',status:'active'},
+      {id:'AWC-004',name:'Remote Work Security Essentials',type:'e-learning',targetAudience:'Remote Workers',participants:1250,completionRate:82.1,passRate:94.3,startDate:'2026-03-01',endDate:'2026-04-30',status:'active'}
+    ];
+    this._awarenessPhishingSims = [
+      {id:'PS-001',campaignName:'April Tax Scam Simulation',sentCount:2840,clickCount:156,credentialCount:23,reportCount:412,clickRate:5.5,credentialRate:0.8,reportRate:14.5,date:'2026-04-15',difficulty:'medium'},
+      {id:'PS-002',campaignName:'IT Support Impersonation',sentCount:2840,clickCount:198,credentialCount:45,reportCount:356,clickRate:7.0,credentialRate:1.6,reportRate:12.5,date:'2026-04-01',difficulty:'medium'},
+      {id:'PS-003',campaignName:'CEO Fraud Email',sentCount:150,clickCount:8,credentialCount:2,reportCount:42,clickRate:5.3,credentialRate:1.3,reportRate:28.0,date:'2026-03-20',difficulty:'hard'},
+      {id:'PS-004',campaignName:'Package Delivery Scam',sentCount:2840,clickCount:245,credentialCount:67,reportCount:298,clickRate:8.6,credentialRate:2.4,reportRate:10.5,date:'2026-03-01',difficulty:'easy'}
+    ];
+    this._awarenessRiskScores = [
+      {department:'Engineering',avgScore:82.5,trend:'improving',riskLevel:'low',complianceRate:85.2,topWeakArea:'Secret Management',improvementRate:12.3},
+      {department:'Sales',avgScore:68.4,trend:'stable',riskLevel:'medium',complianceRate:72.1,topWeakArea:'Social Engineering',improvementRate:5.8},
+      {department:'Finance',avgScore:75.2,trend:'improving',riskLevel:'medium',complianceRate:80.5,topWeakArea:'Phishing Recognition',improvementRate:8.4},
+      {department:'HR',avgScore:71.8,trend:'declining',riskLevel:'medium',complianceRate:76.3,topWeakArea:'Data Privacy',improvementRate:-2.1},
+      {department:'Executive',avgScore:88.2,trend:'improving',riskLevel:'low',complianceRate:92.1,topWeakArea:'Mobile Security',improvementRate:15.2},
+      {department:'Marketing',avgScore:65.3,trend:'stable',riskLevel:'high',complianceRate:68.7,topWeakArea:'Social Media Security',improvementRate:3.2}
+    ];
+    this._awarenessContent = [
+      {id:'AC-001',title:'Recognizing Phishing Emails',type:'interactive_module',category:'Phishing',duration:'15 min',difficulty:'beginner',completionCount:2450,avgScore:88.5,rating:4.5},
+      {id:'AC-002',title:'Password Security Best Practices',type:'video',category:'Identity',duration:'8 min',difficulty:'beginner',completionCount:2680,avgScore:92.1,rating:4.2},
+      {id:'AC-003',title:'Secure Remote Work Practices',type:'interactive_module',category:'Remote Work',duration:'20 min',difficulty:'intermediate',completionCount:1200,avgScore:85.3,rating:4.7},
+      {id:'AC-004',title:'Data Classification and Handling',type:'e-learning',category:'Data Security',duration:'25 min',difficulty:'intermediate',completionCount:1890,avgScore:80.2,rating:3.8},
+      {id:'AC-005',title:'Social Engineering Defense',type:'simulation',category:'Social Engineering',duration:'30 min',difficulty:'advanced',completionCount:780,avgScore:76.8,rating:4.6}
+    ];
+  }
+
+  private _getAwarenessSummary(): {avgCompletionRate:number;avgPhishingClickRate:number;highRiskDepts:number;totalParticipants:number;overallRiskScore:number;improvingDepts:number} {
+    const avgCompletion = Math.round(this._awarenessCampaigns.reduce((s,c) => s + c.completionRate, 0) / this._awarenessCampaigns.length * 10) / 10;
+    const avgClickRate = Math.round(this._awarenessPhishingSims.reduce((s,p) => s + p.clickRate, 0) / this._awarenessPhishingSims.length * 10) / 10;
+    const highRiskDepts = this._awarenessRiskScores.filter(d => d.riskLevel === 'high').length;
+    const improvingDepts = this._awarenessRiskScores.filter(d => d.trend === 'improving').length;
+    const overallRiskScore = Math.round(this._awarenessRiskScores.reduce((s,d) => s + d.avgScore, 0) / this._awarenessRiskScores.length * 10) / 10;
+    return {avgCompletionRate: avgCompletion, avgPhishingClickRate: avgClickRate, highRiskDepts, totalParticipants: 2840, overallRiskScore, improvingDepts};
+  }
+
   render() {    if (this._vtRules.length === 0) { this._initVtRules(); this._initVtCvss(); this._runVtAnomalyDetection(); this._generateVtPredictions(); this._initVtApprovals(); this._initVtActivity(); this._initVtNotifications(); }
 
     const items = this._getFiltered();

@@ -5638,6 +5638,261 @@ export class ScZeroTrustBypass extends LitElement {
 
 
 
+
+  // === Security Metrics Forecasting Module ===
+  private _metricsForecastData: Array<{metric:string;current:number;unit:string;forecast1m:number;forecast3m:number;forecast6m:number;confidence:number;direction:string;seasonalFactor:number;anomalyFlag:boolean}> = [];
+  private _metricsHistoricalData: Array<{month:string;mttr:number;mttd:number;vulnCount:number;patchRate:number;incidentCount:number;trainingRate:number}> = [];
+  private _metricsForecastChart: string = '';
+  private _metricsAnomalies: Array<{metric:string;expected:number;actual:number;deviation:number;severity:string;date:string}> = [];
+
+  private _initMetricsForecasting(): void {
+    this._metricsForecastData = [
+      {metric:'Mean Time to Respond (MTTR)',current:4.2,unit:'hours',forecast1m:3.8,forecast3m:3.2,forecast6m:2.8,confidence:0.87,direction:'improving',seasonalFactor:0.95,anomalyFlag:false},
+      {metric:'Mean Time to Detect (MTTD)',current:2.1,unit:'hours',forecast1m:1.9,forecast3m:1.5,forecast6m:1.2,confidence:0.82,direction:'improving',seasonalFactor:1.02,anomalyFlag:false},
+      {metric:'Open Vulnerabilities',current:342,unit:'count',forecast1m:310,forecast3m:280,forecast6m:250,confidence:0.74,direction:'improving',seasonalFactor:1.08,anomalyFlag:true},
+      {metric:'Patch Compliance Rate',current:87.3,unit:'%',forecast1m:89.1,forecast3m:91.5,forecast6m:93.2,confidence:0.79,direction:'improving',seasonalFactor:0.98,anomalyFlag:false},
+      {metric:'Phishing Click Rate',current:3.2,unit:'%',forecast1m:2.9,forecast3m:2.5,forecast6m:2.1,confidence:0.71,direction:'improving',seasonalFactor:1.15,anomalyFlag:false},
+      {metric:'Security Incidents / Month',current:12,unit:'count',forecast1m:11,forecast3m:10,forecast6m:9,confidence:0.68,direction:'improving',seasonalFactor:1.05,anomalyFlag:false},
+      {metric:'False Positive Rate',current:18.5,unit:'%',forecast1m:16.2,forecast3m:14.0,forecast6m:12.5,confidence:0.76,direction:'improving',seasonalFactor:0.97,anomalyFlag:true},
+      {metric:'Endpoint Compliance',current:94.1,unit:'%',forecast1m:95.0,forecast3m:96.2,forecast6m:97.0,confidence:0.83,direction:'improving',seasonalFactor:0.99,anomalyFlag:false},
+      {metric:'Avg Vulnerability Age',current:45.3,unit:'days',forecast1m:40.1,forecast3m:35.8,forecast6m:32.0,confidence:0.72,direction:'improving',seasonalFactor:1.03,anomalyFlag:false},
+      {metric:'Third-Party Risk Score',current:72.5,unit:'score',forecast1m:70.2,forecast3m:68.0,forecast6m:65.5,confidence:0.65,direction:'improving',seasonalFactor:1.01,anomalyFlag:false},
+      {metric:'Security Training Completion',current:78.4,unit:'%',forecast1m:82.0,forecast3m:86.5,forecast6m:90.0,confidence:0.81,direction:'improving',seasonalFactor:0.96,anomalyFlag:false},
+      {metric:'Encryption Coverage',current:91.7,unit:'%',forecast1m:93.0,forecast3m:94.5,forecast6m:95.8,confidence:0.88,direction:'improving',seasonalFactor:1.00,anomalyFlag:false}
+    ];
+    this._metricsHistoricalData = [
+      {month:'2025-11',mttr:5.8,mttd:3.4,vulnCount:412,patchRate:79.5,incidentCount:18,trainingRate:62.1},
+      {month:'2025-12',mttr:5.5,mttd:3.1,vulnCount:398,patchRate:81.2,incidentCount:16,trainingRate:64.8},
+      {month:'2026-01',mttr:5.1,mttd:2.8,vulnCount:385,patchRate:82.8,incidentCount:15,trainingRate:67.3},
+      {month:'2026-02',mttr:4.8,mttd:2.5,vulnCount:371,patchRate:84.1,incidentCount:14,trainingRate:70.0},
+      {month:'2026-03',mttr:4.5,mttd:2.3,vulnCount:358,patchRate:85.9,incidentCount:13,trainingRate:73.5},
+      {month:'2026-04',mttr:4.2,mttd:2.1,vulnCount:342,patchRate:87.3,incidentCount:12,trainingRate:78.4}
+    ];
+    this._metricsAnomalies = [
+      {metric:'Open Vulnerabilities',expected:355,actual:342,deviation:3.7,severity:'low',date:'2026-04-15'},
+      {metric:'False Positive Rate',expected:15.0,actual:18.5,deviation:23.3,severity:'medium',date:'2026-04-10'},
+      {metric:'Security Incidents / Month',expected:14,actual:12,deviation:14.3,severity:'low',date:'2026-04-20'},
+      {metric:'Phishing Click Rate',expected:3.8,actual:3.2,deviation:15.8,severity:'low',date:'2026-04-18'}
+    ];
+  }
+
+  private _calculateForecastTrend(metric: string): {slope:number;acceleration:number;projection:string} {
+    const data = this._metricsForecastData.find(m => m.metric === metric);
+    if (!data) return {slope:0,acceleration:0,projection:'insufficient data'};
+    const slope = -(data.current - data.forecast6m) / 6;
+    const acceleration = slope > 0 ? 0.05 : -0.02;
+    const projection = data.direction === 'improving' ? 'on track for target' : 'needs intervention';
+    return {slope: Math.round(slope * 100) / 100, acceleration, projection};
+  }
+
+  private _getSeasonalInsights(): Array<{season:string;riskLevel:string;factors:string[];recommendation:string}> {
+    return [
+      {season:'Q1 (Jan-Mar)',riskLevel:'medium',factors:['Post-holiday phishing surge','Annual security audit preparation','Budget allocation period'],recommendation:'Increase phishing simulation frequency and prepare audit documentation'},
+      {season:'Q2 (Apr-Jun)',riskLevel:'high',factors:['Q2 earnings period attacks','Conference season social engineering','Summer staffing shortages'],recommendation:'Strengthen executive protection and cross-train security staff'},
+      {season:'Q3 (Jul-Sep)',riskLevel:'medium',factors:['Vacation season reduced coverage','Major patch release cycles','Back-to-school phishing campaigns'],recommendation:'Automate routine tasks and ensure on-call rotation coverage'},
+      {season:'Q4 (Oct-Dec)',riskLevel:'high',factors:['Holiday shopping scam surge','Year-end compliance deadlines','Black Friday attack campaigns'],recommendation:'Pre-position additional monitoring resources and finalize compliance reports early'}
+    ];
+  }
+
+  private _getMetricsConfidenceSummary(): {highConfidence:number;mediumConfidence:number;lowConfidence:number;avgConfidence:number} {
+    const high = this._metricsForecastData.filter(m => m.confidence >= 0.80).length;
+    const medium = this._metricsForecastData.filter(m => m.confidence >= 0.70 && m.confidence < 0.80).length;
+    const low = this._metricsForecastData.filter(m => m.confidence < 0.70).length;
+    const avg = this._metricsForecastData.reduce((s, m) => s + m.confidence, 0) / this._metricsForecastData.length;
+    return {highConfidence:high, mediumConfidence:medium, lowConfidence:low, avgConfidence:Math.round(avg * 100) / 100};
+  }
+
+
+  // --- Advanced Metrics Analysis ---
+  private _metricsRegressionModel: {slope:number;intercept:number;rSquared:number;standardError:number;dataPoints:number;lastUpdated:string} = {slope:0,intercept:0,rSquared:0,standardError:0,dataPoints:0,lastUpdated:''};
+  private _metricsCorrelations: Array<{metricA:string;metricB:string;correlation:number;strength:string;direction:string}> = [];
+  private _metricsBenchmarks: Record<string, {industryAvg:number;topQuartile:number;current:number;percentile:number;gap:string}> = {};
+  private _metricsGoals: Array<{metric:string;target:number;deadline:string;current:number;progress:number;onTrack:boolean}> = [];
+  private _metricsAlertThresholds: Array<{metric:string;warningThreshold:number;criticalThreshold:number;currentValue:number;status:string;lastBreached:string}> = [];
+
+  private _initAdvancedMetricsAnalysis(): void {
+    this._metricsRegressionModel = {slope:-0.28,intercept:5.9,rSquared:0.94,standardError:0.15,dataPoints:6,lastUpdated:'2026-04-23T12:00:00Z'};
+    this._metricsCorrelations = [
+      {metricA:'Training Completion Rate',metricB:'Phishing Click Rate',correlation:-0.89,strength:'strong',direction:'negative'},
+      {metricA:'Patch Compliance Rate',metricB:'Open Vulnerabilities',correlation:-0.82,strength:'strong',direction:'negative'},
+      {metricA:'Endpoint Compliance',metricB:'Security Incidents',correlation:-0.76,strength:'strong',direction:'negative'},
+      {metricA:'MTTD',metricB:'MTTR',correlation:0.71,strength:'moderate',direction:'positive'},
+      {metricA:'False Positive Rate',metricB:'Analyst Burnout Score',correlation:0.85,strength:'strong',direction:'positive'},
+      {metricA:'Encryption Coverage',metricB:'Data Breach Risk',correlation:-0.68,strength:'moderate',direction:'negative'}
+    ];
+    this._metricsBenchmarks = {
+      'MTTR': {industryAvg:6.5,topQuartile:3.8,current:4.2,percentile:62,gap:'1.5h to top quartile'},
+      'MTTD': {industryAvg:4.2,topQuartile:1.5,current:2.1,percentile:68,gap:'0.6h to top quartile'},
+      'Patch Compliance': {industryAvg:72,topQuartile:92,current:87.3,percentile:71,gap:'4.7% to top quartile'},
+      'Phishing Click Rate': {industryAvg:8.5,topQuartile:2.0,current:3.2,percentile:74,gap:'1.2% to top quartile'},
+      'Training Completion': {industryAvg:65,topQuartile:95,current:78.4,percentile:58,gap:'16.6% to top quartile'}
+    };
+    this._metricsGoals = [
+      {metric:'MTTR',target:3.0,deadline:'2026-09-30',current:4.2,progress:52,onTrack:true},
+      {metric:'MTTD',target:1.5,deadline:'2026-09-30',current:2.1,progress:58,onTrack:true},
+      {metric:'Patch Compliance Rate',target:95,deadline:'2026-12-31',current:87.3,progress:53,onTrack:true},
+      {metric:'Phishing Click Rate',target:2.0,deadline:'2026-12-31',current:3.2,progress:46,onTrack:true},
+      {metric:'Security Training Completion',target:95,deadline:'2026-12-31',current:78.4,progress:43,onTrack:false},
+      {metric:'Open Vulnerabilities',target:200,deadline:'2026-12-31',current:342,progress:38,onTrack:false},
+      {metric:'Encryption Coverage',target:98,deadline:'2026-09-30',current:91.7,progress:60,onTrack:true},
+      {metric:'False Positive Rate',target:10,deadline:'2026-12-31',current:18.5,progress:27,onTrack:false}
+    ];
+    this._metricsAlertThresholds = [
+      {metric:'MTTR',warningThreshold:5.0,criticalThreshold:8.0,currentValue:4.2,status:'normal',lastBreached:'2026-03-15'},
+      {metric:'MTTD',warningThreshold:3.0,criticalThreshold:5.0,currentValue:2.1,status:'normal',lastBreached:'2026-02-20'},
+      {metric:'Open Vulnerabilities',warningThreshold:400,criticalThreshold:600,currentValue:342,status:'normal',lastBreached:'2026-01-10'},
+      {metric:'False Positive Rate',warningThreshold:15,criticalThreshold:25,currentValue:18.5,status:'warning',lastBreached:'2026-04-10'},
+      {metric:'Phishing Click Rate',warningThreshold:5,criticalThreshold:10,currentValue:3.2,status:'normal',lastBreached:'2026-03-05'},
+      {metric:'Patch Compliance Rate',warningThreshold:80,criticalThreshold:70,currentValue:87.3,status:'normal',lastBreached:'2025-12-01'}
+    ];
+  }
+
+  private _getMetricsGoalSummary(): {onTrack:number;atRisk:number;behind:number;avgProgress:number} {
+    const onTrack = this._metricsGoals.filter(g => g.onTrack).length;
+    const behind = this._metricsGoals.filter(g => !g.onTrack && g.progress < 40).length;
+    const atRisk = this._metricsGoals.length - onTrack - behind;
+    const avgProgress = Math.round(this._metricsGoals.reduce((s,g) => s + g.progress, 0) / this._metricsGoals.length);
+    return {onTrack, atRisk, behind, avgProgress};
+  }
+
+  private _getStrongestCorrelations(): Array<{metricA:string;metricB:string;correlation:number;insight:string}> {
+    return this._metricsCorrelations
+      .filter(c => c.strength === 'strong')
+      .sort((a,b) => Math.abs(b.correlation) - Math.abs(a.correlation))
+      .map(c => ({
+        metricA: c.metricA,
+        metricB: c.metricB,
+        correlation: c.correlation,
+        insight: c.direction === 'negative' ? 'Improving ' + c.metricA + ' will improve ' + c.metricB : 'Monitor ' + c.metricA + ' impact on ' + c.metricB
+      }));
+  }
+
+  private _getMetricsAlertSummary(): {normal:number;warning:number;critical:number;mostRecentBreach:string} {
+    const normal = this._metricsAlertThresholds.filter(a => a.status === 'normal').length;
+    const warning = this._metricsAlertThresholds.filter(a => a.status === 'warning').length;
+    const critical = this._metricsAlertThresholds.filter(a => a.status === 'critical').length;
+    const mostRecent = this._metricsAlertThresholds.sort((a,b) => b.lastBreached.localeCompare(a.lastBreached))[0]?.lastBreached || 'none';
+    return {normal, warning, critical, mostRecentBreach: mostRecent};
+  }
+
+
+
+  // === Security Compliance Matrix Engine ===
+  private _complianceFrameworks: Array<{id:string;name:string;version:string;status:string;lastAssessed:string;complianceScore:number;controlsTotal:number;controlsCompliant:number;controlsPartial:number;controlsNonCompliant:number}> = [];
+  private _complianceControlMapping: Array<{controlId:string;controlName:string;frameworkId:string;category:string;severity:string;status:string;evidenceCount:number;lastTested:string;nextReview:string;owner:string}> = [];
+  private _complianceGaps: Array<{id:string;frameworkId:string;controlId:string;description:string;severity:string;remediationPlan:string;targetDate:string;status:string;assignee:string}> = [];
+  private _complianceEvidenceStore: Array<{id:string;controlId:string;frameworkId:string;evidenceType:string;fileName:string;uploadedAt:string;uploadedBy:string;verifiedBy:string;verifiedAt:string;status:string}> = [];
+
+  private _initComplianceMatrix(): void {
+    this._complianceFrameworks = [
+      {id:'FW-SOC2',name:'SOC 2 Type II',version:'2024',status:'active',lastAssessed:'2026-04-01',complianceScore:92.4,controlsTotal:64,controlsCompliant:52,controlsPartial:8,controlsNonCompliant:4},
+      {id:'FW-ISO27001',name:'ISO 27001:2022',version:'2022',status:'active',lastAssessed:'2026-03-15',complianceScore:88.7,controlsTotal:93,controlsCompliant:74,controlsPartial:12,controlsNonCompliant:7},
+      {id:'FW-PCIDSS',name:'PCI DSS 4.0',version:'4.0',status:'active',lastAssessed:'2026-04-10',complianceScore:95.1,controlsTotal:78,controlsCompliant:68,controlsPartial:6,controlsNonCompliant:4},
+      {id:'FW-GDPR',name:'GDPR',version:'2018',status:'active',lastAssessed:'2026-03-20',complianceScore:86.2,controlsTotal:49,controlsCompliant:36,controlsPartial:8,controlsNonCompliant:5},
+      {id:'FW-HIPAA',name:'HIPAA',version:'2013',status:'active',lastAssessed:'2026-02-28',complianceScore:84.5,controlsTotal:58,controlsCompliant:42,controlsPartial:10,controlsNonCompliant:6}
+    ];
+    this._complianceGaps = [
+      {id:'GAP-001',frameworkId:'FW-SOC2',controlId:'CC6.1',description:'Missing multi-factor authentication for legacy systems',severity:'high',remediationPlan:'Deploy MFA to all remaining legacy systems by end of Q2',targetDate:'2026-06-30',status:'in-progress',assignee:'IT Security'},
+      {id:'GAP-002',frameworkId:'FW-ISO27001',controlId:'A.12.4.1',description:'Event logging coverage incomplete for cloud services',severity:'medium',remediationPlan:'Implement centralized logging for all cloud environments',targetDate:'2026-07-31',status:'planned',assignee:'Cloud Ops'},
+      {id:'GAP-003',frameworkId:'FW-GDPR',controlId:'Art.35',description:'Data Protection Impact Assessment process needs formalization',severity:'high',remediationPlan:'Establish DPIA workflow with legal review integration',targetDate:'2026-05-31',status:'in-progress',assignee:'Privacy Office'},
+      {id:'GAP-004',frameworkId:'FW-HIPAA',controlId:'164.312(a)',description:'Encryption at rest not fully implemented for legacy databases',severity:'critical',remediationPlan:'Migrate legacy databases to encrypted storage or implement TDE',targetDate:'2026-06-15',status:'in-progress',assignee:'DBA Team'}
+    ];
+    this._complianceEvidenceStore = [
+      {id:'EVD-C-001',controlId:'CC6.1',frameworkId:'FW-SOC2',evidenceType:'configuration_snapshot',fileName:'mfa-deployment-status.xlsx',uploadedAt:'2026-04-15T10:00:00Z',uploadedBy:'IT Security',verifiedBy:'Auditor',verifiedAt:'2026-04-16T14:00:00Z',status:'verified'},
+      {id:'EVD-C-002',controlId:'CC7.2',frameworkId:'FW-SOC2',evidenceType:'access_log',fileName:'access-review-Q1-2026.csv',uploadedAt:'2026-04-01T09:00:00Z',uploadedBy:'IAM Team',verifiedBy:'Auditor',verifiedAt:'2026-04-05T16:00:00Z',status:'verified'},
+      {id:'EVD-C-003',controlId:'A.12.4.1',frameworkId:'FW-ISO27001',evidenceType:'policy_document',fileName:'cloud-logging-policy-v3.pdf',uploadedAt:'2026-04-10T11:00:00Z',uploadedBy:'Cloud Ops',verifiedBy:'',verifiedAt:'',status:'pending_review'},
+      {id:'EVD-C-004',controlId:'164.312(a)',frameworkId:'FW-HIPAA',evidenceType:'encryption_report',fileName:'encryption-coverage-audit.pdf',uploadedAt:'2026-04-12T14:00:00Z',uploadedBy:'DBA Team',verifiedBy:'Compliance',verifiedAt:'2026-04-14T10:00:00Z',status:'verified'}
+    ];
+  }
+
+  private _getComplianceSummary(): {avgScore:number;totalGaps:number;criticalGaps:number;overdueGaps:number;nextAudit:string;evidencePendingReview:number} {
+    const avgScore = Math.round(this._complianceFrameworks.reduce((s,f) => s + f.complianceScore, 0) / this._complianceFrameworks.length * 10) / 10;
+    const criticalGaps = this._complianceGaps.filter(g => g.severity === 'critical').length;
+    const overdueGaps = this._complianceGaps.filter(g => new Date(g.targetDate) < new Date() && g.status !== 'resolved').length;
+    const evidencePending = this._complianceEvidenceStore.filter(e => e.status === 'pending_review').length;
+    return {avgScore, totalGaps: this._complianceGaps.length, criticalGaps, overdueGaps, nextAudit:'2026-05-15', evidencePendingReview: evidencePending};
+  }
+
+
+  // === Cyber Kill Chain Analysis ===
+  private _killChainStages: Array<{stage:string;description:string;detectionMethods:string[];mitigationActions:string[];currentThreatLevel:string;incidentCount:number;avgTimeInStage:string}> = [];
+  private _killChainAttacks: Array<{id:string;name:string;stagesCompleted:string[];currentStage:string;progress:number;severity:string;targetAsset:string;startTime:string;estimatedImpact:number}> = [];
+  private _killChainMetrics: {totalAttacksTracked:number;stoppedAtRecon:number;stoppedAtWeaponize:number;stoppedAtDeliver:number;stoppedAtExploit:number;stoppedAtInstall:number;stoppedAtCommand:number;stoppedAtExfiltrate:number;fullChainCompleted:number} = {totalAttacksTracked:0,stoppedAtRecon:0,stoppedAtWeaponize:0,stoppedAtDeliver:0,stoppedAtExploit:0,stoppedAtInstall:0,stoppedAtCommand:0,stoppedAtExfiltrate:0,fullChainCompleted:0};
+
+  private _initKillChainAnalysis(): void {
+    this._killChainStages = [
+      {stage:'Reconnaissance',description:'Adversary researches target organization, systems, and vulnerabilities',detectionMethods:['Web analytics','DNS monitoring','Social media scanning','Honeypot alerts'],mitigationActions:['Minimize public exposure','Monitor dark web mentions','Deploy deception technology'],currentThreatLevel:'elevated',incidentCount:245,avgTimeInStage:'7-14 days'},
+      {stage:'Weaponization',description:'Adversary creates malware payload or exploit tool targeting identified vulnerabilities',detectionMethods:['Threat intel feeds','YARA rules','Malware sandbox analysis'],mitigationActions:['Keep systems patched','Deploy application whitelisting','Maintain threat intel subscriptions'],currentThreatLevel:'moderate',incidentCount:89,avgTimeInStage:'3-5 days'},
+      {stage:'Delivery',description:'Adversary transmits weaponized payload to target via email, web, or USB',detectionMethods:['Email filtering','Web proxy logs','Endpoint detection','Network IDS'],mitigationActions:['Email security gateway','Web filtering','User awareness training','Endpoint protection'],currentThreatLevel:'high',incidentCount:312,avgTimeInStage:'1-2 days'},
+      {stage:'Exploitation',description:'Payload exploits vulnerability on target system',detectionMethods:['IDS/IPS alerts','Endpoint detection','Vulnerability scanner','SIEM correlation'],mitigationActions:['Patch management','Application hardening','Exploit prevention','Runtime protection'],currentThreatLevel:'high',incidentCount:156,avgTimeInStage:'minutes to hours'},
+      {stage:'Installation',description:'Adversary installs backdoor or persistent access mechanism',detectionMethods:['File integrity monitoring','Process monitoring','Registry monitoring','Scheduled task audit'],mitigationActions:['Application whitelisting','File integrity monitoring','Privilege restriction','EDR solutions'],currentThreatLevel:'high',incidentCount:78,avgTimeInStage:'hours'},
+      {stage:'Command and Control',description:'Adversary establishes communication channel for remote command execution',detectionMethods:['Network traffic analysis','DNS monitoring','Beacon detection','SSL inspection'],mitigationActions:['Egress filtering','DNS filtering','Network segmentation','Proxy enforcement'],currentThreatLevel:'high',incidentCount:67,avgTimeInStage:'days to weeks'},
+      {stage:'Actions on Objectives',description:'Adversary achieves goals: data exfiltration, encryption, or destruction',detectionMethods:['DLP alerts','Anomaly detection','Data access monitoring','Network flow analysis'],mitigationActions:['DLP controls','Data encryption','Access controls','Backup verification'],currentThreatLevel:'critical',incidentCount:34,avgTimeInStage:'hours to days'}
+    ];
+    this._killChainAttacks = [
+      {id:'KCA-001',name:'APT29 Spear Phishing Campaign',stagesCompleted:['Reconnaissance','Weaponization','Delivery'],currentStage:'Exploitation',progress:42,severity:'critical',targetAsset:'Executive Email',startTime:'2026-04-18T08:00:00Z',estimatedImpact:4500000},
+      {id:'KCA-002',name:'FIN7 POS Malware Deployment',stagesCompleted:['Reconnaissance','Weaponization','Delivery','Exploitation','Installation'],currentStage:'Command and Control',progress:71,severity:'high',targetAsset:'POS Systems',startTime:'2026-04-15T14:00:00Z',estimatedImpact:2800000},
+      {id:'KCA-003',name:'Ransomware-as-a-Service Operation',stagesCompleted:['Reconnaissance','Delivery','Exploitation'],currentStage:'Installation',progress:57,severity:'critical',targetAsset:'File Servers',startTime:'2026-04-20T22:00:00Z',estimatedImpact:8500000}
+    ];
+    this._killChainMetrics = {totalAttacksTracked:892,stoppedAtRecon:312,stoppedAtWeaponize:89,stoppedAtDeliver:245,stoppedAtExploit:156,stoppedAtInstall:78,stoppedAtCommand:45,stoppedAtExfiltrate:34,fullChainCompleted:3};
+  }
+
+  private _getKillChainSummary(): {totalTracked:number;interruptionRate:number;mostCommonStopStage:string;fullChainRate:number;topActiveAttack:string} {
+    const interruptionRate = Math.round(((this._killChainMetrics.totalTrackedTracked - this._killChainMetrics.fullChainCompleted) / this._killChainMetrics.totalTrackedTracked) * 10000) / 100;
+    return {totalTracked: this._killChainMetrics.totalTrackedTracked, interruptionRate, mostCommonStopStage:'Delivery', fullChainRate: 0.34, topActiveAttack: this._killChainAttacks.sort((a,b) => b.progress - a.progress)[0]?.name || ''};
+  }
+
+
+
+  // === Security Operations Center Dashboard Module ===
+  private _socDashAnalysts: Array<{id:string;name:string;status:string;currentAssignment:string;alertsHandled:number;avgResponseTime:string;shift:string;skillLevel:string}> = [];
+  private _socDashAlerts: Array<{id:string;severity:string;source:string;description:string;assignee:string;createdAt:string;status:string;slaDeadline:string;slaBreachRisk:boolean}> = [];
+  private _socDashPerformance: {escalationRate:number;meanTimeToAck:string;meanTimeToContain:string;meanTimeToResolve:string;analystUtilization:number;shiftCoverage:number;toolsUptime:number} = {escalationRate:0,meanTimeToAck:'',meanTimeToContain:'',meanTimeToResolve:'',analystUtilization:0,shiftCoverage:0,toolsUptime:0};
+  private _socDashEscalationPaths: Array<{fromRole:string;toRole:string;condition:string;avgTime:string;count:number}> = [];
+
+  private _initSocDashboardModule(): void {
+    this._socDashAnalysts = [
+      {id:'AN-001',name:'Alice Chen',status:'active',currentAssignment:'Investigating phishing alert',alertsHandled:34,avgResponseTime:'4.2 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-002',name:'Bob Smith',status:'active',currentAssignment:'Malware analysis in progress',alertsHandled:28,avgResponseTime:'5.1 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-003',name:'Carol Jones',status:'active',currentAssignment:'Incident response coordination',alertsHandled:22,avgResponseTime:'6.3 min',shift:'Day (06:00-14:00)',skillLevel:'intermediate'},
+      {id:'AN-004',name:'David Lee',status:'break',currentAssignment:'None',alertsHandled:31,avgResponseTime:'4.8 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-005',name:'Eve Wilson',status:'active',currentAssignment:'Threat hunting investigation',alertsHandled:19,avgResponseTime:'7.2 min',shift:'Day (06:00-14:00)',skillLevel:'intermediate'},
+      {id:'AN-006',name:'Frank Garcia',status:'active',currentAssignment:'Vulnerability triage',alertsHandled:25,avgResponseTime:'5.5 min',shift:'Night (14:00-22:00)',skillLevel:'intermediate'},
+      {id:'AN-007',name:'Grace Kim',status:'active',currentAssignment:'Compliance monitoring',alertsHandled:16,avgResponseTime:'8.1 min',shift:'Night (14:00-22:00)',skillLevel:'junior'}
+    ];
+    this._socDashAlerts = [
+      {id:'SOC-A-001',severity:'critical',source:'IDS',description:'Possible ransomware activity detected on server-045',assignee:'Alice Chen',createdAt:'2026-04-23T13:45:00Z',status:'investigating',slaDeadline:'2026-04-23T14:00:00Z',slaBreachRisk:true},
+      {id:'SOC-A-002',severity:'high',source:'SIEM',description:'Correlated login anomalies from 3 user accounts',assignee:'Bob Smith',createdAt:'2026-04-23T13:30:00Z',status:'investigating',slaDeadline:'2026-04-23T14:30:00Z',slaBreachRisk:false},
+      {id:'SOC-A-003',severity:'high',source:'EDR',description:'Suspicious PowerShell execution on workstation-023',assignee:'Carol Jones',createdAt:'2026-04-23T13:15:00Z',status:'triage',slaDeadline:'2026-04-23T14:15:00Z',slaBreachRisk:false},
+      {id:'SOC-A-004',severity:'medium',source:'WAF',description:'SQL injection attempt blocked on web application',assignee:'David Lee',createdAt:'2026-04-23T13:00:00Z',status:'resolved',slaDeadline:'2026-04-23T15:00:00Z',slaBreachRisk:false},
+      {id:'SOC-A-005',severity:'medium',source:'DLP',description:'Large file transfer to external USB device detected',assignee:'Eve Wilson',createdAt:'2026-04-23T12:45:00Z',status:'pending',slaDeadline:'2026-04-23T14:45:00Z',slaBreachRisk:false},
+      {id:'SOC-A-006',severity:'low',source:'Vuln Scanner',description:'New critical vulnerability CVE-2026-5678 detected',assignee:'Frank Garcia',createdAt:'2026-04-23T12:30:00Z',status:'pending',slaDeadline:'2026-04-23T18:30:00Z',slaBreachRisk:false}
+    ];
+    this._socDashPerformance = {
+      escalationRate: 12.5,
+      meanTimeToAck: '3.8 min',
+      meanTimeToContain: '18.5 min',
+      meanTimeToResolve: '2.4 hours',
+      analystUtilization: 78.2,
+      shiftCoverage: 92.3,
+      toolsUptime: 99.95
+    };
+    this._socDashEscalationPaths = [
+      {fromRole:'Junior Analyst',toRole:'Senior Analyst',condition:'Severity high or above',avgTime:'8 min',count:45},
+      {fromRole:'Senior Analyst',toRole:'SOC Manager',condition:'Severity critical or analyst unavailable',avgTime:'15 min',count:18},
+      {fromRole:'SOC Manager',toRole:'CISO',condition:'Active breach confirmed or executive impact',avgTime:'5 min',count:4},
+      {fromRole:'SOC Manager',toRole:'Legal Counsel',condition:'Data breach involving PII or regulated data',avgTime:'10 min',count:6}
+    ];
+  }
+
+  private _getSocDashSummary(): {activeAnalysts:number;openAlerts:number;criticalAlerts:number;utilization:number;slaBreachRiskCount:number;shiftStatus:string} {
+    const activeAnalysts = this._socDashAnalysts.filter(a => a.status === 'active').length;
+    const openAlerts = this._socDashAlerts.filter(a => a.status !== 'resolved').length;
+    const criticalAlerts = this._socDashAlerts.filter(a => a.severity === 'critical' && a.status !== 'resolved').length;
+    const slaBreachRiskCount = this._socDashAlerts.filter(a => a.slaBreachRisk).length;
+    return {activeAnalysts, openAlerts, criticalAlerts, utilization: this._socDashPerformance.analystUtilization, slaBreachRiskCount, shiftStatus:'Day shift - fully staffed'};
+  }
+
   render() {
     const overallScore = this._getOverallScore();
     const scoreColor = overallScore >= 80 ? '#34d399' : overallScore >= 60 ? '#fbbf24' : '#f87171';

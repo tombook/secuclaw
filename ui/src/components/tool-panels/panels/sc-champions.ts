@@ -3395,6 +3395,269 @@ export class ScChampions extends LitElement {
 
 
 
+
+  // === Security Audit Trail Viewer Module ===
+  private _auditLogs: Array<{id:string;timestamp:string;userId:string;userName:string;action:string;category:string;resource:string;ipAddress:string;userAgent:string;result:string;details:string;riskLevel:string;sessionId:string}> = [];
+  private _auditStatistics: {totalLogs:number;highRisk:number;uniqueUsers:number;actionsToday:number;failedAttempts:number;exportedCount:number} = {totalLogs:0,highRisk:0,uniqueUsers:0,actionsToday:0,failedAttempts:0,exportedCount:0};
+  private _auditIntegrityHash: string = '';
+  private _auditSuspiciousEntries: Array<{id:string;reason:string;severity:string;timestamp:string;userId:string}> = [];
+  private _auditFilter: {category:string;user:string;dateFrom:string;dateTo:string;riskLevel:string;action:string} = {category:'all',user:'',dateFrom:'',dateTo:'',riskLevel:'all',action:''};
+
+  private _initAuditTrailData(): void {
+    this._auditLogs = [
+      {id:'AUD-001',timestamp:'2026-04-23T13:45:00Z',userId:'u-alice',userName:'Alice Chen',action:'policy.update',category:'policy',resource:'Firewall Rule Set #42',ipAddress:'10.0.1.100',userAgent:'Chrome/120.0',result:'success',details:'Updated inbound rule for port 443 to allow only from CDN IPs',riskLevel:'medium',sessionId:'sess-abc123'},
+      {id:'AUD-002',timestamp:'2026-04-23T13:42:00Z',userId:'u-bob',userName:'Bob Smith',action:'user.privilege_escalate',category:'access',resource:'Production Database',ipAddress:'10.0.2.50',userAgent:'Firefox/118.0',result:'success',details:'Granted temporary admin access for maintenance window',riskLevel:'high',sessionId:'sess-def456'},
+      {id:'AUD-003',timestamp:'2026-04-23T13:38:00Z',userId:'u-carol',userName:'Carol Jones',action:'data.export',category:'data',resource:'Customer PII Dataset',ipAddress:'10.0.3.75',userAgent:'Chrome/120.0',result:'success',details:'Exported 15,000 customer records for compliance audit',riskLevel:'high',sessionId:'sess-ghi789'},
+      {id:'AUD-004',timestamp:'2026-04-23T13:35:00Z',userId:'u-unknown',userName:'Unknown User',action:'auth.failed',category:'auth',resource:'VPN Gateway',ipAddress:'203.0.113.45',userAgent:'Unknown/0.0',result:'failure',details:'Multiple failed login attempts from external IP',riskLevel:'critical',sessionId:'sess-xyz000'},
+      {id:'AUD-005',timestamp:'2026-04-23T13:30:00Z',userId:'u-david',userName:'David Lee',action:'config.change',category:'config',resource:'SIEM Correlation Rules',ipAddress:'10.0.4.200',userAgent:'Chrome/120.0',result:'success',details:'Added new correlation rule for APT lateral movement detection',riskLevel:'medium',sessionId:'sess-jkl123'},
+      {id:'AUD-006',timestamp:'2026-04-23T13:25:00Z',userId:'u-eve',userName:'Eve Wilson',action:'vuln.scan_trigger',category:'vulnerability',resource:'Web Application Farm',ipAddress:'10.0.5.150',userAgent:'Chrome/120.0',result:'success',details:'Initiated scheduled vulnerability scan across 24 web servers',riskLevel:'low',sessionId:'sess-mno456'},
+      {id:'AUD-007',timestamp:'2026-04-23T13:20:00Z',userId:'u-frank',userName:'Frank Garcia',action:'key.rotate',category:'encryption',resource:'Database Encryption Keys',ipAddress:'10.0.6.180',userAgent:'Chrome/120.0',result:'success',details:'Rotated encryption keys for production databases',riskLevel:'medium',sessionId:'sess-pqr789'},
+      {id:'AUD-008',timestamp:'2026-04-23T13:15:00Z',userId:'u-grace',userName:'Grace Kim',action:'incident.create',category:'incident',resource:'INC-2026-0406',ipAddress:'10.0.7.220',userAgent:'Chrome/120.0',result:'success',details:'Created new incident for suspicious login pattern',riskLevel:'high',sessionId:'sess-stu012'},
+      {id:'AUD-009',timestamp:'2026-04-23T13:10:00Z',userId:'u-henry',userName:'Henry Wang',action:'deploy.approval',category:'deployment',resource:'Security Agent v4.2.1',ipAddress:'10.0.8.100',userAgent:'Chrome/120.0',result:'success',details:'Approved deployment of updated security agent to production',riskLevel:'medium',sessionId:'sess-vwx345'},
+      {id:'AUD-010',timestamp:'2026-04-23T13:05:00Z',userId:'u-unknown',userName:'Unknown User',action:'auth.brute_force',category:'auth',resource:'Admin Portal',ipAddress:'198.51.100.23',userAgent:'Python-Requests/2.31',result:'failure',details:'Detected brute force attack with 500+ attempts in 5 minutes',riskLevel:'critical',sessionId:'sess-yza678'}
+    ];
+    this._auditStatistics = {
+      totalLogs: 48752,
+      highRisk: 234,
+      uniqueUsers: 156,
+      actionsToday: 847,
+      failedAttempts: 89,
+      exportedCount: 42
+    };
+    this._auditIntegrityHash = 'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
+    this._auditSuspiciousEntries = [
+      {id:'AUD-004',reason:'Failed authentication attempts from external IP not matching any known user',severity:'critical',timestamp:'2026-04-23T13:35:00Z',userId:'u-unknown'},
+      {id:'AUD-010',reason:'Brute force attack pattern detected - automated tool user agent',severity:'critical',timestamp:'2026-04-23T13:05:00Z',userId:'u-unknown'},
+      {id:'AUD-003',reason:'Large PII data export outside normal business hours',severity:'high',timestamp:'2026-04-23T13:38:00Z',userId:'u-carol'},
+      {id:'AUD-002',reason:'Privilege escalation outside approved maintenance window',severity:'high',timestamp:'2026-04-23T13:42:00Z',userId:'u-bob'}
+    ];
+  }
+
+  private _verifyAuditTrailIntegrity(): {valid:boolean;hash:string;logCount:number;lastVerified:string;gaps:number[]} {
+    return {
+      valid: true,
+      hash: this._auditIntegrityHash,
+      logCount: this._auditStatistics.totalLogs,
+      lastVerified: '2026-04-23T13:50:00Z',
+      gaps: []
+    };
+  }
+
+  private _getAuditCategorySummary(): Array<{category:string;count:number;highRiskCount:number;percentage:number}> {
+    const categories = [...new Set(this._auditLogs.map(l => l.category))];
+    return categories.map(cat => {
+      const catLogs = this._auditLogs.filter(l => l.category === cat);
+      const highRisk = catLogs.filter(l => l.riskLevel === 'critical' || l.riskLevel === 'high').length;
+      return {category:cat, count:catLogs.length, highRiskCount:highRisk, percentage:Math.round((catLogs.length / this._auditLogs.length) * 100)};
+    });
+  }
+
+  private _filterAuditLogs(): Array<typeof this._auditLogs[0]> {
+    return this._auditLogs.filter(log => {
+      if (this._auditFilter.category !== 'all' && log.category !== this._auditFilter.category) return false;
+      if (this._auditFilter.riskLevel !== 'all' && log.riskLevel !== this._auditFilter.riskLevel) return false;
+      if (this._auditFilter.user && !log.userName.toLowerCase().includes(this._auditFilter.user.toLowerCase())) return false;
+      if (this._auditFilter.action && !log.action.includes(this._auditFilter.action)) return false;
+      return true;
+    });
+  }
+
+  private _getAuditRiskDistribution(): {critical:number;high:number;medium:number;low:number} {
+    return {
+      critical: this._auditLogs.filter(l => l.riskLevel === 'critical').length,
+      high: this._auditLogs.filter(l => l.riskLevel === 'high').length,
+      medium: this._auditLogs.filter(l => l.riskLevel === 'medium').length,
+      low: this._auditLogs.filter(l => l.riskLevel === 'low').length
+    };
+  }
+
+
+  // --- Advanced Audit Features ---
+  private _auditExportQueue: Array<{id:string;format:string;status:string;requestedBy:string;requestedAt:string;fileSize:string;downloadUrl:string;expiresAt:string}> = [];
+  private _auditSessionTracking: Array<{sessionId:string;userId:string;startTime:string;endTime:string;actions:number;locations:string[];devices:string[];riskScore:number}> = [];
+  private _auditComplianceMapping: Array<{regulation:string;requiredLogs:string[];retentionDays:number;currentCoverage:number;gaps:string[]}> = [];
+  private _auditUserBehaviorProfile: Array<{userId:string;userName:string;avgActionsPerDay:number;peakHours:string[];frequentResources:string[];riskTrend:string;anomalyScore:number}> = [];
+
+  private _initAdvancedAuditFeatures(): void {
+    this._auditExportQueue = [
+      {id:'EXP-001',format:'CSV',status:'completed',requestedBy:'Alice Chen',requestedAt:'2026-04-23T10:00:00Z',fileSize:'24.5 MB',downloadUrl:'/exports/audit-2026-04-23.csv',expiresAt:'2026-04-30T10:00:00Z'},
+      {id:'EXP-002',format:'JSON',status:'processing',requestedBy:'Bob Smith',requestedAt:'2026-04-23T11:30:00Z',fileSize:'pending',downloadUrl:'',expiresAt:'2026-04-30T11:30:00Z'},
+      {id:'EXP-003',format:'PDF',status:'queued',requestedBy:'Carol Jones',requestedAt:'2026-04-23T12:15:00Z',fileSize:'pending',downloadUrl:'',expiresAt:'2026-04-30T12:15:00Z'}
+    ];
+    this._auditSessionTracking = [
+      {sessionId:'sess-abc123',userId:'u-alice',startTime:'2026-04-23T09:00:00Z',endTime:'2026-04-23T17:00:00Z',actions:47,locations:['Office HQ'],devices:['Workstation-A1','Mobile-M1'],riskScore:12},
+      {sessionId:'sess-def456',userId:'u-bob',startTime:'2026-04-23T08:30:00Z',endTime:'2026-04-23T16:45:00Z',actions:62,locations:['Office HQ','Remote VPN'],devices:['Workstation-B2','Laptop-B3'],riskScore:35},
+      {sessionId:'sess-ghi789',userId:'u-carol',startTime:'2026-04-23T10:00:00Z',endTime:'2026-04-23T14:30:00Z',actions:28,locations:['Remote VPN'],devices:['Laptop-C1'],riskScore:48},
+      {sessionId:'sess-xyz000',userId:'u-unknown',startTime:'2026-04-23T13:30:00Z',endTime:'2026-04-23T13:40:00Z',actions:15,locations:['External'],devices:['Unknown'],riskScore:98}
+    ];
+    this._auditComplianceMapping = [
+      {regulation:'SOC 2 Type II',requiredLogs:['Access logs','Change logs','Incident logs','Policy change logs'],retentionDays:365,currentCoverage:92,gaps:['IoT device access logs partially covered']},
+      {regulation:'GDPR',requiredLogs:['Data access logs','Consent logs','Data processing logs','Breach notification logs'],retentionDays:730,currentCoverage:88,gaps:['Data subject request tracking incomplete']},
+      {regulation:'PCI DSS 4.0',requiredLogs:['Network access logs','Authentication logs','Database access logs','Encryption key management logs'],retentionDays:365,currentCoverage:95,gaps:['Tokenization service logs need integration']},
+      {regulation:'HIPAA',requiredLogs:['PHI access logs','System activity logs','Backup logs','Disposal logs'],retentionDays:2190,currentCoverage:85,gaps:['Medical device integration logging needed']}
+    ];
+    this._auditUserBehaviorProfile = [
+      {userId:'u-alice',userName:'Alice Chen',avgActionsPerDay:45,peakHours:['09:00','10:00','14:00'],frequentResources:['Firewall Rules','Network Policies','VPN Config'],riskTrend:'stable',anomalyScore:8},
+      {userId:'u-bob',userName:'Bob Smith',avgActionsPerDay:58,peakHours:['08:00','09:00','13:00'],frequentResources:['Production Database','Cloud Console','API Gateway'],riskTrend:'slightly elevated',anomalyScore:22},
+      {userId:'u-carol',userName:'Carol Jones',avgActionsPerDay:35,peakHours:['10:00','11:00','15:00'],frequentResources:['Forensic Tools','Evidence Repository','Case Management'],riskTrend:'stable',anomalyScore:15},
+      {userId:'u-david',userName:'David Lee',avgActionsPerDay:52,peakHours:['09:00','13:00','16:00'],frequentResources:['SIEM Console','Threat Intel Feeds','Malware Sandbox'],riskTrend:'stable',anomalyScore:10},
+      {userId:'u-eve',userName:'Eve Wilson',avgActionsPerDay:40,peakHours:['10:00','11:00','14:00'],frequentResources:['Vulnerability Scanner','Patch Management','Risk Dashboard'],riskTrend:'stable',anomalyScore:12}
+    ];
+  }
+
+  private _getAuditExportStats(): {completed:number;processing:number;queued:number;totalSize:string;avgProcessingTime:string} {
+    return {completed:1,processing:1,queued:1,totalSize:'24.5 MB',avgProcessingTime:'4.2 min'};
+  }
+
+  private _getComplianceCoverageSummary(): {avgCoverage:number;bestRegulation:string;worstRegulation:string;totalGaps:number} {
+    const avgCoverage = Math.round(this._auditComplianceMapping.reduce((s,c) => s + c.currentCoverage, 0) / this._auditComplianceMapping.length);
+    const best = this._auditComplianceMapping.sort((a,b) => b.currentCoverage - a.currentCoverage)[0]?.regulation || '';
+    const worst = this._auditComplianceMapping.sort((a,b) => a.currentCoverage - b.currentCoverage)[0]?.regulation || '';
+    const totalGaps = this._auditComplianceMapping.reduce((s,c) => s + c.gaps.length, 0);
+    return {avgCoverage, bestRegulation: best, worstRegulation: worst, totalGaps};
+  }
+
+  private _getHighRiskSessions(): Array<{sessionId:string;userId:string;riskScore:number;reason:string}> {
+    return this._auditSessionTracking
+      .filter(s => s.riskScore > 30)
+      .map(s => ({
+        sessionId: s.sessionId,
+        userId: s.userId,
+        riskScore: s.riskScore,
+        reason: s.riskScore > 80 ? 'External access with failed auth' : 'Elevated activity pattern detected'
+      }));
+  }
+
+
+
+  // === Security Risk Quantification Engine ===
+  private _riskScenarios: Array<{id:string;name:string;category:string;likelihood:number;impact:number;riskScore:number;annualLossExpectancy:number;mitigatedRisk:number;residualRisk:number;riskOwner:string;lastAssessed:string}> = [];
+  private _riskTreatmentPlans: Array<{id:string;scenarioId:string;treatmentType:string;description:string;cost:number;riskReduction:number;status:string;startDate:string;targetDate:string;owner:string}> = [];
+  private _riskTrends: Array<{quarter:string;averageRiskScore:number;highRiskCount:number;criticalRiskCount:number;totalAle:number;riskPostureScore:number}> = [];
+  private _riskAppetiteStatement: {overall:string;categories:Record<string,string>;reviewCycle:string;approvedBy:string;approvedDate:string;nextReview:string} = {overall:'',categories:{},reviewCycle:'',approvedBy:'',approvedDate:'',nextReview:''};
+
+  private _initRiskQuantification(): void {
+    this._riskScenarios = [
+      {id:'RS-001',name:'Ransomware Attack on Critical Infrastructure',category:'Cyber Attack',likelihood:0.35,impact:9500000,riskScore:3325000,annualLossExpectancy:3325000,mitigatedRisk:2800000,residualRisk:525000,riskOwner:'CISO',lastAssessed:'2026-04-01'},
+      {id:'RS-002',name:'Data Breach Exposing Customer PII',category:'Data Breach',likelihood:0.25,impact:12000000,riskScore:3000000,annualLossExpectancy:3000000,mitigatedRisk:2400000,residualRisk:600000,riskOwner:'DPO',lastAssessed:'2026-04-01'},
+      {id:'RS-003',name:'Insider Threat Data Exfiltration',category:'Insider Threat',likelihood:0.15,impact:4500000,riskScore:675000,annualLossExpectancy:675000,mitigatedRisk:540000,residualRisk:135000,riskOwner:'HR Director',lastAssessed:'2026-03-15'},
+      {id:'RS-004',name:'Supply Chain Compromise',category:'Third Party',likelihood:0.20,impact:8000000,riskScore:1600000,annualLossExpectancy:1600000,mitigatedRisk:1280000,residualRisk:320000,riskOwner:'CISO',lastAssessed:'2026-03-15'},
+      {id:'RS-005',name:'Cloud Misconfiguration Leading to Exposure',category:'Cloud',likelihood:0.40,impact:2000000,riskScore:800000,annualLossExpectancy:800000,mitigatedRisk:640000,residualRisk:160000,riskOwner:'Cloud Architect',lastAssessed:'2026-04-01'},
+      {id:'RS-006',name:'Business Email Compromise',category:'Social Engineering',likelihood:0.45,impact:3500000,riskScore:1575000,annualLossExpectancy:1575000,mitigatedRisk:1260000,residualRisk:315000,riskOwner:'CFO',lastAssessed:'2026-04-01'},
+      {id:'RS-007',name:'Zero-Day Exploit in Public-Facing App',category:'Vulnerability',likelihood:0.10,impact:6000000,riskScore:600000,annualLossExpectancy:600000,mitigatedRisk:480000,residualRisk:120000,riskOwner:'CISO',lastAssessed:'2026-03-15'},
+      {id:'RS-008',name:'Regulatory Fine for Non-Compliance',category:'Compliance',likelihood:0.20,impact:5000000,riskScore:1000000,annualLossExpectancy:1000000,mitigatedRisk:800000,residualRisk:200000,riskOwner:'Legal Counsel',lastAssessed:'2026-04-01'}
+    ];
+    this._riskTreatmentPlans = [
+      {id:'TP-001',scenarioId:'RS-001',treatmentType:'mitigate',description:'Deploy advanced endpoint protection with ransomware rollback',cost:350000,riskReduction:40,status:'in-progress',startDate:'2026-02-01',targetDate:'2026-06-30',owner:'IT Security'},
+      {id:'TP-002',scenarioId:'RS-002',treatmentType:'mitigate',description:'Implement data loss prevention across all channels',cost:200000,riskReduction:35,status:'in-progress',startDate:'2026-03-01',targetDate:'2026-07-31',owner:'DLP Team'},
+      {id:'TP-003',scenarioId:'RS-003',treatmentType:'mitigate',description:'Deploy user behavior analytics and insider threat detection',cost:150000,riskReduction:30,status:'planned',startDate:'2026-05-01',targetDate:'2026-09-30',owner:'IAM Team'},
+      {id:'TP-004',scenarioId:'RS-004',treatmentType:'mitigate',description:'Implement vendor risk assessment and continuous monitoring',cost:90000,riskReduction:25,status:'in-progress',startDate:'2026-02-15',targetDate:'2026-06-15',owner:'Vendor Mgmt'},
+      {id:'TP-005',scenarioId:'RS-005',treatmentType:'mitigate',description:'Deploy cloud security posture management platform',cost:180000,riskReduction:45,status:'in-progress',startDate:'2026-03-01',targetDate:'2026-05-31',owner:'Cloud SecOps'}
+    ];
+    this._riskTrends = [
+      {quarter:'Q3 2025',averageRiskScore:3200000,highRiskCount:6,criticalRiskCount:2,totalAle:18500000,riskPostureScore:52},
+      {quarter:'Q4 2025',averageRiskScore:2800000,highRiskCount:5,criticalRiskCount:1,totalAle:16200000,riskPostureScore:58},
+      {quarter:'Q1 2026',averageRiskScore:2400000,highRiskCount:4,criticalRiskCount:1,totalAle:14500000,riskPostureScore:64},
+      {quarter:'Q2 2026',averageRiskScore:2100000,highRiskCount:3,criticalRiskCount:0,totalAle:12575000,riskPostureScore:71}
+    ];
+    this._riskAppetiteStatement = {
+      overall:'The organization accepts a maximum annual residual risk of $2,000,000 across all security risk categories. Risk exceeding this threshold requires executive board approval.',
+      categories:{'Cyber Attack':'Medium-Low','Data Breach':'Low','Insider Threat':'Low','Third Party':'Medium','Cloud':'Medium','Social Engineering':'Medium','Vulnerability':'Low','Compliance':'Low'},
+      reviewCycle:'Quarterly',
+      approvedBy:'Board of Directors',
+      approvedDate:'2026-01-15',
+      nextReview:'2026-07-15'
+    };
+  }
+
+  private _getRiskQuantificationSummary(): {totalAle:number;totalResidualRisk:number;withinAppetite:boolean;riskReductionPercentage:number;topRiskScenario:string;improvementTrend:string} {
+    const totalAle = this._riskScenarios.reduce((s,r) => s + r.annualLossExpectancy, 0);
+    const totalResidual = this._riskScenarios.reduce((s,r) => s + r.residualRisk, 0);
+    const withinAppetite = totalResidual <= 2000000;
+    const topRisk = this._riskScenarios.sort((a,b) => b.riskScore - a.riskScore)[0]?.name || '';
+    return {totalAle, totalResidualRisk: totalResidual, withinAppetite, riskReductionPercentage: Math.round((1 - totalResidual / totalAle) * 100), topRiskScenario: topRisk, improvementTrend: 'improving'};
+  }
+
+
+  // === Cyber Kill Chain Analysis ===
+  private _killChainStages: Array<{stage:string;description:string;detectionMethods:string[];mitigationActions:string[];currentThreatLevel:string;incidentCount:number;avgTimeInStage:string}> = [];
+  private _killChainAttacks: Array<{id:string;name:string;stagesCompleted:string[];currentStage:string;progress:number;severity:string;targetAsset:string;startTime:string;estimatedImpact:number}> = [];
+  private _killChainMetrics: {totalAttacksTracked:number;stoppedAtRecon:number;stoppedAtWeaponize:number;stoppedAtDeliver:number;stoppedAtExploit:number;stoppedAtInstall:number;stoppedAtCommand:number;stoppedAtExfiltrate:number;fullChainCompleted:number} = {totalAttacksTracked:0,stoppedAtRecon:0,stoppedAtWeaponize:0,stoppedAtDeliver:0,stoppedAtExploit:0,stoppedAtInstall:0,stoppedAtCommand:0,stoppedAtExfiltrate:0,fullChainCompleted:0};
+
+  private _initKillChainAnalysis(): void {
+    this._killChainStages = [
+      {stage:'Reconnaissance',description:'Adversary researches target organization, systems, and vulnerabilities',detectionMethods:['Web analytics','DNS monitoring','Social media scanning','Honeypot alerts'],mitigationActions:['Minimize public exposure','Monitor dark web mentions','Deploy deception technology'],currentThreatLevel:'elevated',incidentCount:245,avgTimeInStage:'7-14 days'},
+      {stage:'Weaponization',description:'Adversary creates malware payload or exploit tool targeting identified vulnerabilities',detectionMethods:['Threat intel feeds','YARA rules','Malware sandbox analysis'],mitigationActions:['Keep systems patched','Deploy application whitelisting','Maintain threat intel subscriptions'],currentThreatLevel:'moderate',incidentCount:89,avgTimeInStage:'3-5 days'},
+      {stage:'Delivery',description:'Adversary transmits weaponized payload to target via email, web, or USB',detectionMethods:['Email filtering','Web proxy logs','Endpoint detection','Network IDS'],mitigationActions:['Email security gateway','Web filtering','User awareness training','Endpoint protection'],currentThreatLevel:'high',incidentCount:312,avgTimeInStage:'1-2 days'},
+      {stage:'Exploitation',description:'Payload exploits vulnerability on target system',detectionMethods:['IDS/IPS alerts','Endpoint detection','Vulnerability scanner','SIEM correlation'],mitigationActions:['Patch management','Application hardening','Exploit prevention','Runtime protection'],currentThreatLevel:'high',incidentCount:156,avgTimeInStage:'minutes to hours'},
+      {stage:'Installation',description:'Adversary installs backdoor or persistent access mechanism',detectionMethods:['File integrity monitoring','Process monitoring','Registry monitoring','Scheduled task audit'],mitigationActions:['Application whitelisting','File integrity monitoring','Privilege restriction','EDR solutions'],currentThreatLevel:'high',incidentCount:78,avgTimeInStage:'hours'},
+      {stage:'Command and Control',description:'Adversary establishes communication channel for remote command execution',detectionMethods:['Network traffic analysis','DNS monitoring','Beacon detection','SSL inspection'],mitigationActions:['Egress filtering','DNS filtering','Network segmentation','Proxy enforcement'],currentThreatLevel:'high',incidentCount:67,avgTimeInStage:'days to weeks'},
+      {stage:'Actions on Objectives',description:'Adversary achieves goals: data exfiltration, encryption, or destruction',detectionMethods:['DLP alerts','Anomaly detection','Data access monitoring','Network flow analysis'],mitigationActions:['DLP controls','Data encryption','Access controls','Backup verification'],currentThreatLevel:'critical',incidentCount:34,avgTimeInStage:'hours to days'}
+    ];
+    this._killChainAttacks = [
+      {id:'KCA-001',name:'APT29 Spear Phishing Campaign',stagesCompleted:['Reconnaissance','Weaponization','Delivery'],currentStage:'Exploitation',progress:42,severity:'critical',targetAsset:'Executive Email',startTime:'2026-04-18T08:00:00Z',estimatedImpact:4500000},
+      {id:'KCA-002',name:'FIN7 POS Malware Deployment',stagesCompleted:['Reconnaissance','Weaponization','Delivery','Exploitation','Installation'],currentStage:'Command and Control',progress:71,severity:'high',targetAsset:'POS Systems',startTime:'2026-04-15T14:00:00Z',estimatedImpact:2800000},
+      {id:'KCA-003',name:'Ransomware-as-a-Service Operation',stagesCompleted:['Reconnaissance','Delivery','Exploitation'],currentStage:'Installation',progress:57,severity:'critical',targetAsset:'File Servers',startTime:'2026-04-20T22:00:00Z',estimatedImpact:8500000}
+    ];
+    this._killChainMetrics = {totalAttacksTracked:892,stoppedAtRecon:312,stoppedAtWeaponize:89,stoppedAtDeliver:245,stoppedAtExploit:156,stoppedAtInstall:78,stoppedAtCommand:45,stoppedAtExfiltrate:34,fullChainCompleted:3};
+  }
+
+  private _getKillChainSummary(): {totalTracked:number;interruptionRate:number;mostCommonStopStage:string;fullChainRate:number;topActiveAttack:string} {
+    const interruptionRate = Math.round(((this._killChainMetrics.totalTrackedTracked - this._killChainMetrics.fullChainCompleted) / this._killChainMetrics.totalTrackedTracked) * 10000) / 100;
+    return {totalTracked: this._killChainMetrics.totalTrackedTracked, interruptionRate, mostCommonStopStage:'Delivery', fullChainRate: 0.34, topActiveAttack: this._killChainAttacks.sort((a,b) => b.progress - a.progress)[0]?.name || ''};
+  }
+
+
+
+  // === Security Operations Center Dashboard Module ===
+  private _socDashAnalysts: Array<{id:string;name:string;status:string;currentAssignment:string;alertsHandled:number;avgResponseTime:string;shift:string;skillLevel:string}> = [];
+  private _socDashAlerts: Array<{id:string;severity:string;source:string;description:string;assignee:string;createdAt:string;status:string;slaDeadline:string;slaBreachRisk:boolean}> = [];
+  private _socDashPerformance: {escalationRate:number;meanTimeToAck:string;meanTimeToContain:string;meanTimeToResolve:string;analystUtilization:number;shiftCoverage:number;toolsUptime:number} = {escalationRate:0,meanTimeToAck:'',meanTimeToContain:'',meanTimeToResolve:'',analystUtilization:0,shiftCoverage:0,toolsUptime:0};
+  private _socDashEscalationPaths: Array<{fromRole:string;toRole:string;condition:string;avgTime:string;count:number}> = [];
+
+  private _initSocDashboardModule(): void {
+    this._socDashAnalysts = [
+      {id:'AN-001',name:'Alice Chen',status:'active',currentAssignment:'Investigating phishing alert',alertsHandled:34,avgResponseTime:'4.2 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-002',name:'Bob Smith',status:'active',currentAssignment:'Malware analysis in progress',alertsHandled:28,avgResponseTime:'5.1 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-003',name:'Carol Jones',status:'active',currentAssignment:'Incident response coordination',alertsHandled:22,avgResponseTime:'6.3 min',shift:'Day (06:00-14:00)',skillLevel:'intermediate'},
+      {id:'AN-004',name:'David Lee',status:'break',currentAssignment:'None',alertsHandled:31,avgResponseTime:'4.8 min',shift:'Day (06:00-14:00)',skillLevel:'senior'},
+      {id:'AN-005',name:'Eve Wilson',status:'active',currentAssignment:'Threat hunting investigation',alertsHandled:19,avgResponseTime:'7.2 min',shift:'Day (06:00-14:00)',skillLevel:'intermediate'},
+      {id:'AN-006',name:'Frank Garcia',status:'active',currentAssignment:'Vulnerability triage',alertsHandled:25,avgResponseTime:'5.5 min',shift:'Night (14:00-22:00)',skillLevel:'intermediate'},
+      {id:'AN-007',name:'Grace Kim',status:'active',currentAssignment:'Compliance monitoring',alertsHandled:16,avgResponseTime:'8.1 min',shift:'Night (14:00-22:00)',skillLevel:'junior'}
+    ];
+    this._socDashAlerts = [
+      {id:'SOC-A-001',severity:'critical',source:'IDS',description:'Possible ransomware activity detected on server-045',assignee:'Alice Chen',createdAt:'2026-04-23T13:45:00Z',status:'investigating',slaDeadline:'2026-04-23T14:00:00Z',slaBreachRisk:true},
+      {id:'SOC-A-002',severity:'high',source:'SIEM',description:'Correlated login anomalies from 3 user accounts',assignee:'Bob Smith',createdAt:'2026-04-23T13:30:00Z',status:'investigating',slaDeadline:'2026-04-23T14:30:00Z',slaBreachRisk:false},
+      {id:'SOC-A-003',severity:'high',source:'EDR',description:'Suspicious PowerShell execution on workstation-023',assignee:'Carol Jones',createdAt:'2026-04-23T13:15:00Z',status:'triage',slaDeadline:'2026-04-23T14:15:00Z',slaBreachRisk:false},
+      {id:'SOC-A-004',severity:'medium',source:'WAF',description:'SQL injection attempt blocked on web application',assignee:'David Lee',createdAt:'2026-04-23T13:00:00Z',status:'resolved',slaDeadline:'2026-04-23T15:00:00Z',slaBreachRisk:false},
+      {id:'SOC-A-005',severity:'medium',source:'DLP',description:'Large file transfer to external USB device detected',assignee:'Eve Wilson',createdAt:'2026-04-23T12:45:00Z',status:'pending',slaDeadline:'2026-04-23T14:45:00Z',slaBreachRisk:false},
+      {id:'SOC-A-006',severity:'low',source:'Vuln Scanner',description:'New critical vulnerability CVE-2026-5678 detected',assignee:'Frank Garcia',createdAt:'2026-04-23T12:30:00Z',status:'pending',slaDeadline:'2026-04-23T18:30:00Z',slaBreachRisk:false}
+    ];
+    this._socDashPerformance = {
+      escalationRate: 12.5,
+      meanTimeToAck: '3.8 min',
+      meanTimeToContain: '18.5 min',
+      meanTimeToResolve: '2.4 hours',
+      analystUtilization: 78.2,
+      shiftCoverage: 92.3,
+      toolsUptime: 99.95
+    };
+    this._socDashEscalationPaths = [
+      {fromRole:'Junior Analyst',toRole:'Senior Analyst',condition:'Severity high or above',avgTime:'8 min',count:45},
+      {fromRole:'Senior Analyst',toRole:'SOC Manager',condition:'Severity critical or analyst unavailable',avgTime:'15 min',count:18},
+      {fromRole:'SOC Manager',toRole:'CISO',condition:'Active breach confirmed or executive impact',avgTime:'5 min',count:4},
+      {fromRole:'SOC Manager',toRole:'Legal Counsel',condition:'Data breach involving PII or regulated data',avgTime:'10 min',count:6}
+    ];
+  }
+
+  private _getSocDashSummary(): {activeAnalysts:number;openAlerts:number;criticalAlerts:number;utilization:number;slaBreachRiskCount:number;shiftStatus:string} {
+    const activeAnalysts = this._socDashAnalysts.filter(a => a.status === 'active').length;
+    const openAlerts = this._socDashAlerts.filter(a => a.status !== 'resolved').length;
+    const criticalAlerts = this._socDashAlerts.filter(a => a.severity === 'critical' && a.status !== 'resolved').length;
+    const slaBreachRiskCount = this._socDashAlerts.filter(a => a.slaBreachRisk).length;
+    return {activeAnalysts, openAlerts, criticalAlerts, utilization: this._socDashPerformance.analystUtilization, slaBreachRiskCount, shiftStatus:'Day shift - fully staffed'};
+  }
+
   render() {
     const items = this._getFiltered();
     const crit = items.filter(i => i.severity === 'critical').length;

@@ -4088,6 +4088,227 @@ export class ScForensicsWorkstation extends LitElement {
 
 
 
+
+  // === Security Metrics Forecasting Module ===
+  private _metricsForecastData: Array<{metric:string;current:number;unit:string;forecast1m:number;forecast3m:number;forecast6m:number;confidence:number;direction:string;seasonalFactor:number;anomalyFlag:boolean}> = [];
+  private _metricsHistoricalData: Array<{month:string;mttr:number;mttd:number;vulnCount:number;patchRate:number;incidentCount:number;trainingRate:number}> = [];
+  private _metricsForecastChart: string = '';
+  private _metricsAnomalies: Array<{metric:string;expected:number;actual:number;deviation:number;severity:string;date:string}> = [];
+
+  private _initMetricsForecasting(): void {
+    this._metricsForecastData = [
+      {metric:'Mean Time to Respond (MTTR)',current:4.2,unit:'hours',forecast1m:3.8,forecast3m:3.2,forecast6m:2.8,confidence:0.87,direction:'improving',seasonalFactor:0.95,anomalyFlag:false},
+      {metric:'Mean Time to Detect (MTTD)',current:2.1,unit:'hours',forecast1m:1.9,forecast3m:1.5,forecast6m:1.2,confidence:0.82,direction:'improving',seasonalFactor:1.02,anomalyFlag:false},
+      {metric:'Open Vulnerabilities',current:342,unit:'count',forecast1m:310,forecast3m:280,forecast6m:250,confidence:0.74,direction:'improving',seasonalFactor:1.08,anomalyFlag:true},
+      {metric:'Patch Compliance Rate',current:87.3,unit:'%',forecast1m:89.1,forecast3m:91.5,forecast6m:93.2,confidence:0.79,direction:'improving',seasonalFactor:0.98,anomalyFlag:false},
+      {metric:'Phishing Click Rate',current:3.2,unit:'%',forecast1m:2.9,forecast3m:2.5,forecast6m:2.1,confidence:0.71,direction:'improving',seasonalFactor:1.15,anomalyFlag:false},
+      {metric:'Security Incidents / Month',current:12,unit:'count',forecast1m:11,forecast3m:10,forecast6m:9,confidence:0.68,direction:'improving',seasonalFactor:1.05,anomalyFlag:false},
+      {metric:'False Positive Rate',current:18.5,unit:'%',forecast1m:16.2,forecast3m:14.0,forecast6m:12.5,confidence:0.76,direction:'improving',seasonalFactor:0.97,anomalyFlag:true},
+      {metric:'Endpoint Compliance',current:94.1,unit:'%',forecast1m:95.0,forecast3m:96.2,forecast6m:97.0,confidence:0.83,direction:'improving',seasonalFactor:0.99,anomalyFlag:false},
+      {metric:'Avg Vulnerability Age',current:45.3,unit:'days',forecast1m:40.1,forecast3m:35.8,forecast6m:32.0,confidence:0.72,direction:'improving',seasonalFactor:1.03,anomalyFlag:false},
+      {metric:'Third-Party Risk Score',current:72.5,unit:'score',forecast1m:70.2,forecast3m:68.0,forecast6m:65.5,confidence:0.65,direction:'improving',seasonalFactor:1.01,anomalyFlag:false},
+      {metric:'Security Training Completion',current:78.4,unit:'%',forecast1m:82.0,forecast3m:86.5,forecast6m:90.0,confidence:0.81,direction:'improving',seasonalFactor:0.96,anomalyFlag:false},
+      {metric:'Encryption Coverage',current:91.7,unit:'%',forecast1m:93.0,forecast3m:94.5,forecast6m:95.8,confidence:0.88,direction:'improving',seasonalFactor:1.00,anomalyFlag:false}
+    ];
+    this._metricsHistoricalData = [
+      {month:'2025-11',mttr:5.8,mttd:3.4,vulnCount:412,patchRate:79.5,incidentCount:18,trainingRate:62.1},
+      {month:'2025-12',mttr:5.5,mttd:3.1,vulnCount:398,patchRate:81.2,incidentCount:16,trainingRate:64.8},
+      {month:'2026-01',mttr:5.1,mttd:2.8,vulnCount:385,patchRate:82.8,incidentCount:15,trainingRate:67.3},
+      {month:'2026-02',mttr:4.8,mttd:2.5,vulnCount:371,patchRate:84.1,incidentCount:14,trainingRate:70.0},
+      {month:'2026-03',mttr:4.5,mttd:2.3,vulnCount:358,patchRate:85.9,incidentCount:13,trainingRate:73.5},
+      {month:'2026-04',mttr:4.2,mttd:2.1,vulnCount:342,patchRate:87.3,incidentCount:12,trainingRate:78.4}
+    ];
+    this._metricsAnomalies = [
+      {metric:'Open Vulnerabilities',expected:355,actual:342,deviation:3.7,severity:'low',date:'2026-04-15'},
+      {metric:'False Positive Rate',expected:15.0,actual:18.5,deviation:23.3,severity:'medium',date:'2026-04-10'},
+      {metric:'Security Incidents / Month',expected:14,actual:12,deviation:14.3,severity:'low',date:'2026-04-20'},
+      {metric:'Phishing Click Rate',expected:3.8,actual:3.2,deviation:15.8,severity:'low',date:'2026-04-18'}
+    ];
+  }
+
+  private _calculateForecastTrend(metric: string): {slope:number;acceleration:number;projection:string} {
+    const data = this._metricsForecastData.find(m => m.metric === metric);
+    if (!data) return {slope:0,acceleration:0,projection:'insufficient data'};
+    const slope = -(data.current - data.forecast6m) / 6;
+    const acceleration = slope > 0 ? 0.05 : -0.02;
+    const projection = data.direction === 'improving' ? 'on track for target' : 'needs intervention';
+    return {slope: Math.round(slope * 100) / 100, acceleration, projection};
+  }
+
+  private _getSeasonalInsights(): Array<{season:string;riskLevel:string;factors:string[];recommendation:string}> {
+    return [
+      {season:'Q1 (Jan-Mar)',riskLevel:'medium',factors:['Post-holiday phishing surge','Annual security audit preparation','Budget allocation period'],recommendation:'Increase phishing simulation frequency and prepare audit documentation'},
+      {season:'Q2 (Apr-Jun)',riskLevel:'high',factors:['Q2 earnings period attacks','Conference season social engineering','Summer staffing shortages'],recommendation:'Strengthen executive protection and cross-train security staff'},
+      {season:'Q3 (Jul-Sep)',riskLevel:'medium',factors:['Vacation season reduced coverage','Major patch release cycles','Back-to-school phishing campaigns'],recommendation:'Automate routine tasks and ensure on-call rotation coverage'},
+      {season:'Q4 (Oct-Dec)',riskLevel:'high',factors:['Holiday shopping scam surge','Year-end compliance deadlines','Black Friday attack campaigns'],recommendation:'Pre-position additional monitoring resources and finalize compliance reports early'}
+    ];
+  }
+
+  private _getMetricsConfidenceSummary(): {highConfidence:number;mediumConfidence:number;lowConfidence:number;avgConfidence:number} {
+    const high = this._metricsForecastData.filter(m => m.confidence >= 0.80).length;
+    const medium = this._metricsForecastData.filter(m => m.confidence >= 0.70 && m.confidence < 0.80).length;
+    const low = this._metricsForecastData.filter(m => m.confidence < 0.70).length;
+    const avg = this._metricsForecastData.reduce((s, m) => s + m.confidence, 0) / this._metricsForecastData.length;
+    return {highConfidence:high, mediumConfidence:medium, lowConfidence:low, avgConfidence:Math.round(avg * 100) / 100};
+  }
+
+
+  // --- Advanced Metrics Analysis ---
+  private _metricsRegressionModel: {slope:number;intercept:number;rSquared:number;standardError:number;dataPoints:number;lastUpdated:string} = {slope:0,intercept:0,rSquared:0,standardError:0,dataPoints:0,lastUpdated:''};
+  private _metricsCorrelations: Array<{metricA:string;metricB:string;correlation:number;strength:string;direction:string}> = [];
+  private _metricsBenchmarks: Record<string, {industryAvg:number;topQuartile:number;current:number;percentile:number;gap:string}> = {};
+  private _metricsGoals: Array<{metric:string;target:number;deadline:string;current:number;progress:number;onTrack:boolean}> = [];
+  private _metricsAlertThresholds: Array<{metric:string;warningThreshold:number;criticalThreshold:number;currentValue:number;status:string;lastBreached:string}> = [];
+
+  private _initAdvancedMetricsAnalysis(): void {
+    this._metricsRegressionModel = {slope:-0.28,intercept:5.9,rSquared:0.94,standardError:0.15,dataPoints:6,lastUpdated:'2026-04-23T12:00:00Z'};
+    this._metricsCorrelations = [
+      {metricA:'Training Completion Rate',metricB:'Phishing Click Rate',correlation:-0.89,strength:'strong',direction:'negative'},
+      {metricA:'Patch Compliance Rate',metricB:'Open Vulnerabilities',correlation:-0.82,strength:'strong',direction:'negative'},
+      {metricA:'Endpoint Compliance',metricB:'Security Incidents',correlation:-0.76,strength:'strong',direction:'negative'},
+      {metricA:'MTTD',metricB:'MTTR',correlation:0.71,strength:'moderate',direction:'positive'},
+      {metricA:'False Positive Rate',metricB:'Analyst Burnout Score',correlation:0.85,strength:'strong',direction:'positive'},
+      {metricA:'Encryption Coverage',metricB:'Data Breach Risk',correlation:-0.68,strength:'moderate',direction:'negative'}
+    ];
+    this._metricsBenchmarks = {
+      'MTTR': {industryAvg:6.5,topQuartile:3.8,current:4.2,percentile:62,gap:'1.5h to top quartile'},
+      'MTTD': {industryAvg:4.2,topQuartile:1.5,current:2.1,percentile:68,gap:'0.6h to top quartile'},
+      'Patch Compliance': {industryAvg:72,topQuartile:92,current:87.3,percentile:71,gap:'4.7% to top quartile'},
+      'Phishing Click Rate': {industryAvg:8.5,topQuartile:2.0,current:3.2,percentile:74,gap:'1.2% to top quartile'},
+      'Training Completion': {industryAvg:65,topQuartile:95,current:78.4,percentile:58,gap:'16.6% to top quartile'}
+    };
+    this._metricsGoals = [
+      {metric:'MTTR',target:3.0,deadline:'2026-09-30',current:4.2,progress:52,onTrack:true},
+      {metric:'MTTD',target:1.5,deadline:'2026-09-30',current:2.1,progress:58,onTrack:true},
+      {metric:'Patch Compliance Rate',target:95,deadline:'2026-12-31',current:87.3,progress:53,onTrack:true},
+      {metric:'Phishing Click Rate',target:2.0,deadline:'2026-12-31',current:3.2,progress:46,onTrack:true},
+      {metric:'Security Training Completion',target:95,deadline:'2026-12-31',current:78.4,progress:43,onTrack:false},
+      {metric:'Open Vulnerabilities',target:200,deadline:'2026-12-31',current:342,progress:38,onTrack:false},
+      {metric:'Encryption Coverage',target:98,deadline:'2026-09-30',current:91.7,progress:60,onTrack:true},
+      {metric:'False Positive Rate',target:10,deadline:'2026-12-31',current:18.5,progress:27,onTrack:false}
+    ];
+    this._metricsAlertThresholds = [
+      {metric:'MTTR',warningThreshold:5.0,criticalThreshold:8.0,currentValue:4.2,status:'normal',lastBreached:'2026-03-15'},
+      {metric:'MTTD',warningThreshold:3.0,criticalThreshold:5.0,currentValue:2.1,status:'normal',lastBreached:'2026-02-20'},
+      {metric:'Open Vulnerabilities',warningThreshold:400,criticalThreshold:600,currentValue:342,status:'normal',lastBreached:'2026-01-10'},
+      {metric:'False Positive Rate',warningThreshold:15,criticalThreshold:25,currentValue:18.5,status:'warning',lastBreached:'2026-04-10'},
+      {metric:'Phishing Click Rate',warningThreshold:5,criticalThreshold:10,currentValue:3.2,status:'normal',lastBreached:'2026-03-05'},
+      {metric:'Patch Compliance Rate',warningThreshold:80,criticalThreshold:70,currentValue:87.3,status:'normal',lastBreached:'2025-12-01'}
+    ];
+  }
+
+  private _getMetricsGoalSummary(): {onTrack:number;atRisk:number;behind:number;avgProgress:number} {
+    const onTrack = this._metricsGoals.filter(g => g.onTrack).length;
+    const behind = this._metricsGoals.filter(g => !g.onTrack && g.progress < 40).length;
+    const atRisk = this._metricsGoals.length - onTrack - behind;
+    const avgProgress = Math.round(this._metricsGoals.reduce((s,g) => s + g.progress, 0) / this._metricsGoals.length);
+    return {onTrack, atRisk, behind, avgProgress};
+  }
+
+  private _getStrongestCorrelations(): Array<{metricA:string;metricB:string;correlation:number;insight:string}> {
+    return this._metricsCorrelations
+      .filter(c => c.strength === 'strong')
+      .sort((a,b) => Math.abs(b.correlation) - Math.abs(a.correlation))
+      .map(c => ({
+        metricA: c.metricA,
+        metricB: c.metricB,
+        correlation: c.correlation,
+        insight: c.direction === 'negative' ? 'Improving ' + c.metricA + ' will improve ' + c.metricB : 'Monitor ' + c.metricA + ' impact on ' + c.metricB
+      }));
+  }
+
+  private _getMetricsAlertSummary(): {normal:number;warning:number;critical:number;mostRecentBreach:string} {
+    const normal = this._metricsAlertThresholds.filter(a => a.status === 'normal').length;
+    const warning = this._metricsAlertThresholds.filter(a => a.status === 'warning').length;
+    const critical = this._metricsAlertThresholds.filter(a => a.status === 'critical').length;
+    const mostRecent = this._metricsAlertThresholds.sort((a,b) => b.lastBreached.localeCompare(a.lastBreached))[0]?.lastBreached || 'none';
+    return {normal, warning, critical, mostRecentBreach: mostRecent};
+  }
+
+
+
+  // === Security Compliance Matrix Engine ===
+  private _complianceFrameworks: Array<{id:string;name:string;version:string;status:string;lastAssessed:string;complianceScore:number;controlsTotal:number;controlsCompliant:number;controlsPartial:number;controlsNonCompliant:number}> = [];
+  private _complianceControlMapping: Array<{controlId:string;controlName:string;frameworkId:string;category:string;severity:string;status:string;evidenceCount:number;lastTested:string;nextReview:string;owner:string}> = [];
+  private _complianceGaps: Array<{id:string;frameworkId:string;controlId:string;description:string;severity:string;remediationPlan:string;targetDate:string;status:string;assignee:string}> = [];
+  private _complianceEvidenceStore: Array<{id:string;controlId:string;frameworkId:string;evidenceType:string;fileName:string;uploadedAt:string;uploadedBy:string;verifiedBy:string;verifiedAt:string;status:string}> = [];
+
+  private _initComplianceMatrix(): void {
+    this._complianceFrameworks = [
+      {id:'FW-SOC2',name:'SOC 2 Type II',version:'2024',status:'active',lastAssessed:'2026-04-01',complianceScore:92.4,controlsTotal:64,controlsCompliant:52,controlsPartial:8,controlsNonCompliant:4},
+      {id:'FW-ISO27001',name:'ISO 27001:2022',version:'2022',status:'active',lastAssessed:'2026-03-15',complianceScore:88.7,controlsTotal:93,controlsCompliant:74,controlsPartial:12,controlsNonCompliant:7},
+      {id:'FW-PCIDSS',name:'PCI DSS 4.0',version:'4.0',status:'active',lastAssessed:'2026-04-10',complianceScore:95.1,controlsTotal:78,controlsCompliant:68,controlsPartial:6,controlsNonCompliant:4},
+      {id:'FW-GDPR',name:'GDPR',version:'2018',status:'active',lastAssessed:'2026-03-20',complianceScore:86.2,controlsTotal:49,controlsCompliant:36,controlsPartial:8,controlsNonCompliant:5},
+      {id:'FW-HIPAA',name:'HIPAA',version:'2013',status:'active',lastAssessed:'2026-02-28',complianceScore:84.5,controlsTotal:58,controlsCompliant:42,controlsPartial:10,controlsNonCompliant:6}
+    ];
+    this._complianceGaps = [
+      {id:'GAP-001',frameworkId:'FW-SOC2',controlId:'CC6.1',description:'Missing multi-factor authentication for legacy systems',severity:'high',remediationPlan:'Deploy MFA to all remaining legacy systems by end of Q2',targetDate:'2026-06-30',status:'in-progress',assignee:'IT Security'},
+      {id:'GAP-002',frameworkId:'FW-ISO27001',controlId:'A.12.4.1',description:'Event logging coverage incomplete for cloud services',severity:'medium',remediationPlan:'Implement centralized logging for all cloud environments',targetDate:'2026-07-31',status:'planned',assignee:'Cloud Ops'},
+      {id:'GAP-003',frameworkId:'FW-GDPR',controlId:'Art.35',description:'Data Protection Impact Assessment process needs formalization',severity:'high',remediationPlan:'Establish DPIA workflow with legal review integration',targetDate:'2026-05-31',status:'in-progress',assignee:'Privacy Office'},
+      {id:'GAP-004',frameworkId:'FW-HIPAA',controlId:'164.312(a)',description:'Encryption at rest not fully implemented for legacy databases',severity:'critical',remediationPlan:'Migrate legacy databases to encrypted storage or implement TDE',targetDate:'2026-06-15',status:'in-progress',assignee:'DBA Team'}
+    ];
+    this._complianceEvidenceStore = [
+      {id:'EVD-C-001',controlId:'CC6.1',frameworkId:'FW-SOC2',evidenceType:'configuration_snapshot',fileName:'mfa-deployment-status.xlsx',uploadedAt:'2026-04-15T10:00:00Z',uploadedBy:'IT Security',verifiedBy:'Auditor',verifiedAt:'2026-04-16T14:00:00Z',status:'verified'},
+      {id:'EVD-C-002',controlId:'CC7.2',frameworkId:'FW-SOC2',evidenceType:'access_log',fileName:'access-review-Q1-2026.csv',uploadedAt:'2026-04-01T09:00:00Z',uploadedBy:'IAM Team',verifiedBy:'Auditor',verifiedAt:'2026-04-05T16:00:00Z',status:'verified'},
+      {id:'EVD-C-003',controlId:'A.12.4.1',frameworkId:'FW-ISO27001',evidenceType:'policy_document',fileName:'cloud-logging-policy-v3.pdf',uploadedAt:'2026-04-10T11:00:00Z',uploadedBy:'Cloud Ops',verifiedBy:'',verifiedAt:'',status:'pending_review'},
+      {id:'EVD-C-004',controlId:'164.312(a)',frameworkId:'FW-HIPAA',evidenceType:'encryption_report',fileName:'encryption-coverage-audit.pdf',uploadedAt:'2026-04-12T14:00:00Z',uploadedBy:'DBA Team',verifiedBy:'Compliance',verifiedAt:'2026-04-14T10:00:00Z',status:'verified'}
+    ];
+  }
+
+  private _getComplianceSummary(): {avgScore:number;totalGaps:number;criticalGaps:number;overdueGaps:number;nextAudit:string;evidencePendingReview:number} {
+    const avgScore = Math.round(this._complianceFrameworks.reduce((s,f) => s + f.complianceScore, 0) / this._complianceFrameworks.length * 10) / 10;
+    const criticalGaps = this._complianceGaps.filter(g => g.severity === 'critical').length;
+    const overdueGaps = this._complianceGaps.filter(g => new Date(g.targetDate) < new Date() && g.status !== 'resolved').length;
+    const evidencePending = this._complianceEvidenceStore.filter(e => e.status === 'pending_review').length;
+    return {avgScore, totalGaps: this._complianceGaps.length, criticalGaps, overdueGaps, nextAudit:'2026-05-15', evidencePendingReview: evidencePending};
+  }
+
+
+  // === Security Awareness Program Analytics ===
+  private _awarenessCampaigns: Array<{id:string;name:string;type:string;targetAudience:string;participants:number;completionRate:number;passRate:number;startDate:string;endDate:string;status:string}> = [];
+  private _awarenessPhishingSims: Array<{id:string;campaignName:string;sentCount:number;clickCount:number;credentialCount:number;reportCount:number;clickRate:number;credentialRate:number;reportRate:number;date:string;difficulty:string}> = [];
+  private _awarenessRiskScores: Array<{department:string;avgScore:number;trend:string;riskLevel:string;complianceRate:number;topWeakArea:string;improvementRate:number}> = [];
+  private _awarenessContent: Array<{id:string;title:string;type:string;category:string;duration:string;difficulty:string;completionCount:number;avgScore:number;rating:number}> = [];
+
+  private _initAwarenessAnalytics(): void {
+    this._awarenessCampaigns = [
+      {id:'AWC-001',name:'Q2 Security Foundations',type:'mandatory_training',targetAudience:'All Employees',participants:2840,completionRate:78.4,passRate:92.1,startDate:'2026-04-01',endDate:'2026-06-30',status:'active'},
+      {id:'AWC-002',name:'Executive Security Briefing',type:'workshop',targetAudience:'C-Suite and Directors',participants:45,completionRate:88.9,passRate:100,startDate:'2026-04-15',endDate:'2026-04-15',status:'completed'},
+      {id:'AWC-003',name:'Developer Secure Coding Bootcamp',type:'training',targetAudience:'Engineering',participants:320,completionRate:65.2,passRate:87.5,startDate:'2026-04-10',endDate:'2026-05-10',status:'active'},
+      {id:'AWC-004',name:'Remote Work Security Essentials',type:'e-learning',targetAudience:'Remote Workers',participants:1250,completionRate:82.1,passRate:94.3,startDate:'2026-03-01',endDate:'2026-04-30',status:'active'}
+    ];
+    this._awarenessPhishingSims = [
+      {id:'PS-001',campaignName:'April Tax Scam Simulation',sentCount:2840,clickCount:156,credentialCount:23,reportCount:412,clickRate:5.5,credentialRate:0.8,reportRate:14.5,date:'2026-04-15',difficulty:'medium'},
+      {id:'PS-002',campaignName:'IT Support Impersonation',sentCount:2840,clickCount:198,credentialCount:45,reportCount:356,clickRate:7.0,credentialRate:1.6,reportRate:12.5,date:'2026-04-01',difficulty:'medium'},
+      {id:'PS-003',campaignName:'CEO Fraud Email',sentCount:150,clickCount:8,credentialCount:2,reportCount:42,clickRate:5.3,credentialRate:1.3,reportRate:28.0,date:'2026-03-20',difficulty:'hard'},
+      {id:'PS-004',campaignName:'Package Delivery Scam',sentCount:2840,clickCount:245,credentialCount:67,reportCount:298,clickRate:8.6,credentialRate:2.4,reportRate:10.5,date:'2026-03-01',difficulty:'easy'}
+    ];
+    this._awarenessRiskScores = [
+      {department:'Engineering',avgScore:82.5,trend:'improving',riskLevel:'low',complianceRate:85.2,topWeakArea:'Secret Management',improvementRate:12.3},
+      {department:'Sales',avgScore:68.4,trend:'stable',riskLevel:'medium',complianceRate:72.1,topWeakArea:'Social Engineering',improvementRate:5.8},
+      {department:'Finance',avgScore:75.2,trend:'improving',riskLevel:'medium',complianceRate:80.5,topWeakArea:'Phishing Recognition',improvementRate:8.4},
+      {department:'HR',avgScore:71.8,trend:'declining',riskLevel:'medium',complianceRate:76.3,topWeakArea:'Data Privacy',improvementRate:-2.1},
+      {department:'Executive',avgScore:88.2,trend:'improving',riskLevel:'low',complianceRate:92.1,topWeakArea:'Mobile Security',improvementRate:15.2},
+      {department:'Marketing',avgScore:65.3,trend:'stable',riskLevel:'high',complianceRate:68.7,topWeakArea:'Social Media Security',improvementRate:3.2}
+    ];
+    this._awarenessContent = [
+      {id:'AC-001',title:'Recognizing Phishing Emails',type:'interactive_module',category:'Phishing',duration:'15 min',difficulty:'beginner',completionCount:2450,avgScore:88.5,rating:4.5},
+      {id:'AC-002',title:'Password Security Best Practices',type:'video',category:'Identity',duration:'8 min',difficulty:'beginner',completionCount:2680,avgScore:92.1,rating:4.2},
+      {id:'AC-003',title:'Secure Remote Work Practices',type:'interactive_module',category:'Remote Work',duration:'20 min',difficulty:'intermediate',completionCount:1200,avgScore:85.3,rating:4.7},
+      {id:'AC-004',title:'Data Classification and Handling',type:'e-learning',category:'Data Security',duration:'25 min',difficulty:'intermediate',completionCount:1890,avgScore:80.2,rating:3.8},
+      {id:'AC-005',title:'Social Engineering Defense',type:'simulation',category:'Social Engineering',duration:'30 min',difficulty:'advanced',completionCount:780,avgScore:76.8,rating:4.6}
+    ];
+  }
+
+  private _getAwarenessSummary(): {avgCompletionRate:number;avgPhishingClickRate:number;highRiskDepts:number;totalParticipants:number;overallRiskScore:number;improvingDepts:number} {
+    const avgCompletion = Math.round(this._awarenessCampaigns.reduce((s,c) => s + c.completionRate, 0) / this._awarenessCampaigns.length * 10) / 10;
+    const avgClickRate = Math.round(this._awarenessPhishingSims.reduce((s,p) => s + p.clickRate, 0) / this._awarenessPhishingSims.length * 10) / 10;
+    const highRiskDepts = this._awarenessRiskScores.filter(d => d.riskLevel === 'high').length;
+    const improvingDepts = this._awarenessRiskScores.filter(d => d.trend === 'improving').length;
+    const overallRiskScore = Math.round(this._awarenessRiskScores.reduce((s,d) => s + d.avgScore, 0) / this._awarenessRiskScores.length * 10) / 10;
+    return {avgCompletionRate: avgCompletion, avgPhishingClickRate: avgClickRate, highRiskDepts, totalParticipants: 2840, overallRiskScore, improvingDepts};
+  }
+
   render() {
     const caseArtifacts = this._activeCase ? this._artifacts.filter(a => a.caseId === this._activeCase.id) : [];
     return html`

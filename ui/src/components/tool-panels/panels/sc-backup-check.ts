@@ -4346,6 +4346,264 @@ private _executionHistory: ExecutionRecord[] = [
 
 
 
+
+  // === Security Incident War Room Module ===
+  private _warRoomIncidents: Array<{id:string;title:string;severity:string;status:string;assignedTo:string;startedAt:string;updatedAt:string;participants:string[];evidenceCount:number;actionItems:number}> = [];
+  private _warRoomActiveIncidentId: string = '';
+  private _warRoomFilter: string = 'all';
+  private _warRoomTimeline: Array<{timestamp:string;event:string;actor:string;type:string}> = [];
+  private _warRoomCommunicationLog: Array<{id:string;from:string;to:string;channel:string;message:string;timestamp:string;priority:string}> = [];
+  private _warRoomEvidenceItems: Array<{id:string;name:string;type:string;collectedBy:string;collectedAt:string;hash:string;status:string}> = [];
+  private _warRoomActionItems: Array<{id:string;description:string;assignee:string;priority:string;status:string;dueDate:string;createdAt:string}> = [];
+  private _warRoomParticipants: Array<{id:string;name:string;role:string;department:string;joinTime:string;status:string}> = [];
+
+  private _initWarRoomData(): void {
+    this._warRoomIncidents = [
+      {id:'INC-2026-0401',title:'Ransomware Attack on Finance Server',severity:'critical',status:'active',assignedTo:'Alice Chen',startedAt:'2026-04-23T08:30:00Z',updatedAt:'2026-04-23T12:00:00Z',participants:['alice.chen','bob.smith','carol.jones'],evidenceCount:47,actionItems:12},
+      {id:'INC-2026-0402',title:'Phishing Campaign Targeting Executives',severity:'high',status:'investigating',assignedTo:'Bob Smith',startedAt:'2026-04-22T14:15:00Z',updatedAt:'2026-04-23T09:30:00Z',participants:['bob.smith','david.lee'],evidenceCount:23,actionItems:8},
+      {id:'INC-2026-0403',title:'Unauthorized Data Access in HR Systems',severity:'high',status:'containment',assignedTo:'Carol Jones',startedAt:'2026-04-21T11:00:00Z',updatedAt:'2026-04-23T08:00:00Z',participants:['carol.jones','eve.wilson'],evidenceCount:31,actionItems:15},
+      {id:'INC-2026-0404',title:'Suspicious DNS Tunneling Activity',severity:'medium',status:'monitoring',assignedTo:'David Lee',startedAt:'2026-04-20T16:45:00Z',updatedAt:'2026-04-23T10:15:00Z',participants:['david.lee'],evidenceCount:18,actionItems:6},
+      {id:'INC-2026-0405',title:'Zero-Day Exploit in Web Application',severity:'critical',status:'active',assignedTo:'Eve Wilson',startedAt:'2026-04-23T06:00:00Z',updatedAt:'2026-04-23T13:45:00Z',participants:['eve.wilson','alice.chen','bob.smith'],evidenceCount:52,actionItems:19}
+    ];
+    this._warRoomTimeline = [
+      {timestamp:'2026-04-23T06:00:00Z',event:'Zero-day exploit detected in production web app',actor:'IDS Sensor',type:'detection'},
+      {timestamp:'2026-04-23T06:15:00Z',event:'Incident response team activated',actor:'SOC Manager',type:'response'},
+      {timestamp:'2026-04-23T06:30:00Z',event:'Affected servers isolated from network',actor:'Alice Chen',type:'containment'},
+      {timestamp:'2026-04-23T07:00:00Z',event:'Forensic image captured from compromised host',actor:'Carol Jones',type:'evidence'},
+      {timestamp:'2026-04-23T07:30:00Z',event:'Vendor notified for emergency patch',actor:'Eve Wilson',type:'communication'},
+      {timestamp:'2026-04-23T08:00:00Z',event:'Temporary WAF rules deployed',actor:'Bob Smith',type:'mitigation'},
+      {timestamp:'2026-04-23T09:00:00Z',event:'Malware sample uploaded to analysis sandbox',actor:'David Lee',type:'analysis'},
+      {timestamp:'2026-04-23T10:00:00Z',event:'Communication sent to affected customers',actor:'PR Team',type:'communication'},
+      {timestamp:'2026-04-23T11:00:00Z',event:'Patch testing completed in staging',actor:'DevOps Team',type:'remediation'},
+      {timestamp:'2026-04-23T12:00:00Z',event:'Executive briefing completed',actor:'CISO',type:'reporting'}
+    ];
+    this._warRoomCommunicationLog = [
+      {id:'COM-001',from:'SOC Manager',to:'All IR Team',channel:'Slack #incident-response',message:'All hands - critical incident declared for web application zero-day. War room activated.',timestamp:'2026-04-23T06:20:00Z',priority:'urgent'},
+      {id:'COM-002',from:'Alice Chen',to:'Network Ops',channel:'Email',message:'Please isolate servers 10.0.1.50-60 from the production network immediately.',timestamp:'2026-04-23T06:25:00Z',priority:'high'},
+      {id:'COM-003',from:'Eve Wilson',to:'Vendor Support',channel:'Phone',message:'Emergency patch request for CVE-2026-1234. Active exploitation detected in the wild.',timestamp:'2026-04-23T07:45:00Z',priority:'critical'},
+      {id:'COM-004',from:'Legal Counsel',to:'CISO',channel:'Encrypted Email',message:'Regulatory notification requirements triggered. 72-hour reporting window starts now.',timestamp:'2026-04-23T08:30:00Z',priority:'high'},
+      {id:'COM-005',from:'PR Team',to:'Customer Success',channel:'Slack #crisis-comms',message:'Customer notification draft approved. Ready to send to affected 250 accounts.',timestamp:'2026-04-23T10:30:00Z',priority:'medium'}
+    ];
+    this._warRoomEvidenceItems = [
+      {id:'EVD-001',name:'Forensic image server-50.dd',type:'disk-image',collectedBy:'Carol Jones',collectedAt:'2026-04-23T07:05:00Z',hash:'sha256:a1b2c3d4e5f6',status:'analyzing'},
+      {id:'EVD-002',name:'Network capture pcap-0423.pcap',type:'network-capture',collectedBy:'David Lee',collectedAt:'2026-04-23T07:15:00Z',hash:'sha256:f6e5d4c3b2a1',status:'reviewed'},
+      {id:'EVD-003',name:'Malware sample evil.exe',type:'malware-sample',collectedBy:'David Lee',collectedAt:'2026-04-23T07:45:00Z',hash:'sha256:1a2b3c4d5e6f',status:'analyzed'},
+      {id:'EVD-004',name:'Web server access logs',type:'log-file',collectedBy:'Alice Chen',collectedAt:'2026-04-23T08:00:00Z',hash:'sha256:6f5e4d3c2b1a',status:'preserved'},
+      {id:'EVD-005',name:'Firewall rule change history',type:'config-snapshot',collectedBy:'Bob Smith',collectedAt:'2026-04-23T08:10:00Z',hash:'sha256:aabbccddeeff',status:'preserved'},
+      {id:'EVD-006',name:'Memory dump server-50.mem',type:'memory-dump',collectedBy:'Carol Jones',collectedAt:'2026-04-23T07:30:00Z',hash:'sha256:ffeeddccbbaa',status:'queued'},
+      {id:'EVD-007',name:'Email headers phishing campaign',type:'email-evidence',collectedBy:'Bob Smith',collectedAt:'2026-04-23T09:00:00Z',hash:'sha256:112233445566',status:'analyzed'},
+      {id:'EVD-008',name:'WAF request logs 0423.json',type:'log-file',collectedBy:'Alice Chen',collectedAt:'2026-04-23T10:00:00Z',hash:'sha256:665544332211',status:'reviewed'}
+    ];
+    this._warRoomActionItems = [
+      {id:'ACT-001',description:'Isolate all affected servers from production network',assignee:'Alice Chen',priority:'critical',status:'completed',dueDate:'2026-04-23T07:00:00Z',createdAt:'2026-04-23T06:20:00Z'},
+      {id:'ACT-002',description:'Capture forensic images of compromised hosts',assignee:'Carol Jones',priority:'critical',status:'completed',dueDate:'2026-04-23T08:00:00Z',createdAt:'2026-04-23T06:25:00Z'},
+      {id:'ACT-003',description:'Deploy emergency WAF rules to block exploit pattern',assignee:'Bob Smith',priority:'critical',status:'completed',dueDate:'2026-04-23T09:00:00Z',createdAt:'2026-04-23T06:30:00Z'},
+      {id:'ACT-004',description:'Analyze malware sample in sandbox environment',assignee:'David Lee',priority:'high',status:'in-progress',dueDate:'2026-04-23T14:00:00Z',createdAt:'2026-04-23T07:00:00Z'},
+      {id:'ACT-005',description:'Contact vendor for emergency patch',assignee:'Eve Wilson',priority:'critical',status:'in-progress',dueDate:'2026-04-23T18:00:00Z',createdAt:'2026-04-23T07:30:00Z'},
+      {id:'ACT-006',description:'Prepare regulatory breach notification',assignee:'Legal Counsel',priority:'high',status:'pending',dueDate:'2026-04-26T12:00:00Z',createdAt:'2026-04-23T08:30:00Z'},
+      {id:'ACT-007',description:'Test vendor patch in staging environment',assignee:'DevOps Team',priority:'high',status:'in-progress',dueDate:'2026-04-23T16:00:00Z',createdAt:'2026-04-23T09:00:00Z'},
+      {id:'ACT-008',description:'Notify affected customers via email',assignee:'PR Team',priority:'medium',status:'completed',dueDate:'2026-04-23T12:00:00Z',createdAt:'2026-04-23T10:00:00Z'}
+    ];
+    this._warRoomParticipants = [
+      {id:'alice.chen',name:'Alice Chen',role:'Incident Commander',department:'Security Operations',joinTime:'2026-04-23T06:15:00Z',status:'active'},
+      {id:'bob.smith',name:'Bob Smith',role:'Network Analyst',department:'Network Security',joinTime:'2026-04-23T06:20:00Z',status:'active'},
+      {id:'carol.jones',name:'Carol Jones',role:'Forensic Examiner',department:'Digital Forensics',joinTime:'2026-04-23T06:25:00Z',status:'active'},
+      {id:'david.lee',name:'David Lee',role:'Malware Analyst',department:'Threat Intelligence',joinTime:'2026-04-23T06:30:00Z',status:'active'},
+      {id:'eve.wilson',name:'Eve Wilson',role:'Vulnerability Manager',department:'Patch Management',joinTime:'2026-04-23T06:35:00Z',status:'active'},
+      {id:'frank.garcia',name:'Frank Garcia',role:'Legal Counsel',department:'Legal',joinTime:'2026-04-23T08:00:00Z',status:'standby'},
+      {id:'grace.kim',name:'Grace Kim',role:'PR Lead',department:'Communications',joinTime:'2026-04-23T09:00:00Z',status:'active'},
+      {id:'henry.wang',name:'Henry Wang',role:'DevOps Engineer',department:'Infrastructure',joinTime:'2026-04-23T09:30:00Z',status:'active'}
+    ];
+  }
+
+  private _getWarRoomIncidentStats(): {total:number;active:number;resolved:number;avgMttc:string;avgMttr:string} {
+    const active = this._warRoomIncidents.filter(i => i.status === 'active').length;
+    const resolved = this._warRoomIncidents.filter(i => i.status === 'resolved').length;
+    return {total:this._warRoomIncidents.length, active, resolved, avgMttc:'47min', avgMttr:'4.2h'};
+  }
+
+  private _getWarRoomEvidenceProgress(): {collected:number;analyzed:number;pending:number;total:number} {
+    const analyzed = this._warRoomEvidenceItems.filter(e => e.status === 'analyzed').length;
+    const pending = this._warRoomEvidenceItems.filter(e => e.status === 'pending' || e.status === 'queued').length;
+    return {collected:this._warRoomEvidenceItems.length, analyzed, pending, total:this._warRoomEvidenceItems.length + 5};
+  }
+
+  private _getWarRoomActionSummary(): {completed:number;inProgress:number;pending:number;overdue:number} {
+    return {
+      completed: this._warRoomActionItems.filter(a => a.status === 'completed').length,
+      inProgress: this._warRoomActionItems.filter(a => a.status === 'in-progress').length,
+      pending: this._warRoomActionItems.filter(a => a.status === 'pending').length,
+      overdue: this._warRoomActionItems.filter(a => new Date(a.dueDate) < new Date() && a.status !== 'completed').length
+    };
+  }
+
+
+  // --- War Room Incident Severity Matrix ---
+  private _warRoomSeverityMatrix: Record<string, {color:string;responseTime:string;escalationChain:string[];autoActions:string[]}> = {};
+  private _warRoomStats: {incidentsBySeverity:Record<string,number>;avgResolutionBySeverity:Record<string,string>;escalationRate:number;containmentSuccessRate:number;communicationDelay:string} = {incidentsBySeverity:{},avgResolutionBySeverity:{},escalationRate:0,containmentSuccessRate:0,communicationDelay:''};
+  private _warRoomSLACompliance: Array<{severity:string;targetMttc:string;actualMttc:string;targetMttr:string;actualMttr:string;compliant:boolean}> = [];
+  private _warRoomResourceAllocation: Array<{role:string;assigned:string;available:string;utilization:number;overtimeHours:number}> = [];
+  private _warRoomPostIncidentReviews: Array<{incidentId:string;lessonsLearned:string[];rootCauses:string[];recommendations:string[];followUpItems:string[];reviewDate:string;participants:string[]}> = [];
+  private _warRoomAutomationPolicies: Array<{id:string;name:string;triggerCondition:string;actions:string[];enabled:boolean;lastTriggered:string;triggerCount:number}> = [];
+
+  private _initWarRoomSeverityMatrix(): void {
+    this._warRoomSeverityMatrix = {
+      'critical': {color:'#FF1744',responseTime:'15 minutes',escalationChain:['SOC Analyst','SOC Manager','CISO','CEO'],autoActions:['auto-isolate-affected-systems','enable-enhanced-monitoring','notify-executive-team','preserve-all-evidence']},
+      'high': {color:'#FF5722',responseTime:'30 minutes',escalationChain:['SOC Analyst','SOC Manager','CISO'],autoActions:['enable-enhanced-monitoring','collect-forensic-evidence','notify-affected-team-lead']},
+      'medium': {color:'#FF9800',responseTime:'2 hours',escalationChain:['SOC Analyst','SOC Manager'],autoActions:['collect-forensic-evidence','update-incident-ticket']},
+      'low': {color:'#4CAF50',responseTime:'24 hours',escalationChain:['SOC Analyst'],autoActions:['log-incident','schedule-review']}
+    };
+    this._warRoomStats = {
+      incidentsBySeverity: {'critical':3,'high':8,'medium':15,'low':42},
+      avgResolutionBySeverity: {'critical':'3.5h','high':'8.2h','medium':'24.1h','low':'72.5h'},
+      escalationRate: 18.5,
+      containmentSuccessRate: 94.2,
+      communicationDelay: '4.3 min average'
+    };
+    this._warRoomSLACompliance = [
+      {severity:'critical',targetMttc:'15m',actualMttc:'12m',targetMttr:'4h',actualMttr:'3.5h',compliant:true},
+      {severity:'high',targetMttc:'30m',actualMttc:'28m',targetMttr:'8h',actualMttr:'8.2h',compliant:false},
+      {severity:'medium',targetMttc:'2h',actualMttc:'1.5h',targetMttr:'24h',actualMttr:'24.1h',compliant:false},
+      {severity:'low',targetMttc:'24h',actualMttc:'18h',targetMttr:'72h',actualMttr:'72.5h',compliant:false}
+    ];
+    this._warRoomResourceAllocation = [
+      {role:'Incident Commander',assigned:'3',available:'5',utilization:60,overtimeHours:12},
+      {role:'Network Analyst',assigned:'4',available:'6',utilization:67,overtimeHours:8},
+      {role:'Forensic Examiner',assigned:'2',available:'3',utilization:67,overtimeHours:16},
+      {role:'Malware Analyst',assigned:'3',available:'4',utilization:75,overtimeHours:10},
+      {role:'Communications Lead',assigned:'1',available:'2',utilization:50,overtimeHours:4},
+      {role:'Legal Counsel',assigned:'1',available:'2',utilization:50,overtimeHours:6}
+    ];
+    this._warRoomPostIncidentReviews = [
+      {incidentId:'INC-2026-0398',lessonsLearned:['WAF rules need faster deployment pipeline','Communication templates need pre-approval','Forensic tool chain needs update'],rootCauses:['Unpatched vulnerability in web framework','Insufficient input validation','Missing security headers'],recommendations:['Implement automated WAF rule deployment','Pre-approve 10 communication templates','Upgrade forensic workstation to v3.2'],followUpItems:['FW-RULE-PIPELINE-001','COMMS-TEMPLATE-002','FORENSIC-UPGRADE-003'],reviewDate:'2026-04-15',participants:['alice.chen','bob.smith','carol.jones','david.lee']},
+      {incidentId:'INC-2026-0395',lessonsLearned:['Phishing detection needs improvement','User awareness training frequency too low','Emergency access procedures unclear'],rootCauses:['Sophisticated spear-phishing technique','Quarterly training insufficient','No documented emergency access SOP'],recommendations:['Deploy AI-based email analysis','Move to monthly phishing simulations','Create and distribute emergency access SOP'],followUpItems:['EMAIL-AI-001','TRAINING-FREQ-002','SOP-EMERGENCY-003'],reviewDate:'2026-04-10',participants:['alice.chen','eve.wilson','grace.kim']}
+    ];
+    this._warRoomAutomationPolicies = [
+      {id:'AUTO-001',name:'Critical Isolation Policy',triggerCondition:'severity=critical AND affected_systems>3',actions:['auto-isolate-affected-systems','enable-network-segmentation','preserve-memory-dumps'],enabled:true,lastTriggered:'2026-04-23T06:30:00Z',triggerCount:5},
+      {id:'AUTO-002',name:'Evidence Collection Policy',triggerCondition:'incident_type=ransomware OR incident_type=malware',actions:['auto-collect-forensic-images','capture-network-traffic','snapshot-affected-systems'],enabled:true,lastTriggered:'2026-04-23T07:00:00Z',triggerCount:12},
+      {id:'AUTO-003',name:'Executive Notification Policy',triggerCondition:'severity=critical OR data_breach=confirmed',actions:['send-executive-briefing','activate-crisis-communication','notify-legal-counsel'],enabled:true,lastTriggered:'2026-04-23T08:00:00Z',triggerCount:3},
+      {id:'AUTO-004',name:'Threat Intel Enrichment Policy',triggerCondition:'ioc_extracted=true',actions:['query-threat-intel-feeds','enrich-ioc-context','check-compromise-indicators'],enabled:true,lastTriggered:'2026-04-23T09:15:00Z',triggerCount:47}
+    ];
+  }
+
+  private _getWarRoomSLASummary(): {compliant:number;breached:number;complianceRate:number;worstOffender:string;improvementNeeded:boolean} {
+    const compliant = this._warRoomSLACompliance.filter(s => s.compliant).length;
+    const breached = this._warRoomSLACompliance.filter(s => !s.compliant).length;
+    const worstOffender = this._warRoomSLACompliance.find(s => !s.compliant)?.severity || 'none';
+    return {compliant, breached, complianceRate: Math.round((compliant / this._warRoomSLACompliance.length) * 100), worstOffender, improvementNeeded: breached > 0};
+  }
+
+  private _getWarRoomResourceAlerts(): string[] {
+    const alerts: string[] = [];
+    for (const r of this._warRoomResourceAllocation) {
+      if (r.utilization > 80) alerts.push(r.role + ' at ' + r.utilization + '% utilization - burnout risk');
+      if (r.overtimeHours > 12) alerts.push(r.role + ' has ' + r.overtimeHours + ' overtime hours this week');
+    }
+    return alerts;
+  }
+
+  private _getWarRoomAutomationStats(): {enabled:number;disabled:number;totalTriggers:number;lastTriggered:string} {
+    const enabled = this._warRoomAutomationPolicies.filter(a => a.enabled).length;
+    const totalTriggers = this._warRoomAutomationPolicies.reduce((s,a) => s + a.triggerCount, 0);
+    const lastTriggered = this._warRoomAutomationPolicies.sort((a,b) => b.lastTriggered.localeCompare(a.lastTriggered))[0]?.lastTriggered || '';
+    return {enabled, disabled: this._warRoomAutomationPolicies.length - enabled, totalTriggers, lastTriggered};
+  }
+
+
+
+  // === Threat Intelligence Correlation Engine ===
+  private _tiCorrelationRules: Array<{id:string;name:string;sourceFeed:string;targetType:string;confidenceThreshold:number;actionOnMatch:string;enabled:boolean;matchCount:number;lastMatched:string}> = [];
+  private _tiFeedStatus: Array<{feedId:string;feedName:string;status:string;lastUpdate:string;iocCount:number;freshnessHours:number;coverage:string}> = [];
+  private _tiCorrelationResults: Array<{id:string;ruleId:string;iocType:string;iocValue:string;confidence:number;firstSeen:string;lastSeen:string;affectedAssets:string[];status:string}> = [];
+  private _tiThreatActors: Array<{id:string;name:string;aliases:string[];motivation:string;targetSectors:string[]; sophistication:string;lastActivity:string;associatedIocs:number}> = [];
+
+  private _initThreatIntelligenceCorrelation(): void {
+    this._tiCorrelationRules = [
+      {id:'TCR-001',name:'Malware Hash Lookup',sourceFeed:'VirusTotal',targetType:'file_hash',confidenceThreshold:0.8,actionOnMatch:'alert',enabled:true,matchCount:234,lastMatched:'2026-04-23T12:30:00Z'},
+      {id:'TCR-002',name:'C2 Domain Detection',sourceFeed:'Abuse.ch',targetType:'domain',confidenceThreshold:0.9,actionOnMatch:'block',enabled:true,matchCount:56,lastMatched:'2026-04-23T11:45:00Z'},
+      {id:'TCR-003',name:'Suspicious IP Correlation',sourceFeed:'CrowdStrike Intel',targetType:'ip_address',confidenceThreshold:0.7,actionOnMatch:'alert',enabled:true,matchCount:189,lastMatched:'2026-04-23T13:00:00Z'},
+      {id:'TCR-004',name:'Phishing URL Detection',sourceFeed:'PhishTank',targetType:'url',confidenceThreshold:0.85,actionOnMatch:'block',enabled:true,matchCount:412,lastMatched:'2026-04-23T12:15:00Z'},
+      {id:'TCR-005',name:'APT Indicator Matching',sourceFeed:'MITRE ATT&CK',targetType:'behavioral',confidenceThreshold:0.75,actionOnMatch:'alert',enabled:true,matchCount:28,lastMatched:'2026-04-23T10:30:00Z'}
+    ];
+    this._tiFeedStatus = [
+      {feedId:'TF-001',feedName:'VirusTotal Live',status:'active',lastUpdate:'2026-04-23T13:50:00Z',iocCount:4520000,freshnessHours:0.2,coverage:'Malware hashes, URLs, domains'},
+      {feedId:'TF-002',feedName:'Abuse.ch ThreatFox',status:'active',lastUpdate:'2026-04-23T13:45:00Z',iocCount:1280000,freshnessHours:0.3,coverage:'C2 infrastructure, malware configs'},
+      {feedId:'TF-003',feedName:'CrowdStrike Intel',status:'active',lastUpdate:'2026-04-23T13:40:00Z',iocCount:850000,freshnessHours:0.5,coverage:'Nation-state IOCs, APT profiles'},
+      {feedId:'TF-004',feedName:'PhishTank',status:'active',lastUpdate:'2026-04-23T13:30:00Z',iocCount:320000,freshnessHours:1.0,coverage:'Phishing URLs, email campaigns'},
+      {feedId:'TF-005',feedName:'AlienVault OTX',status:'degraded',lastUpdate:'2026-04-23T11:00:00Z',iocCount:2100000,freshnessHours:3.0,coverage:'Community-driven IOCs, pulses'},
+      {feedId:'TF-006',feedName:'Shodan InternetDB',status:'active',lastUpdate:'2026-04-23T13:55:00Z',iocCount:680000,freshnessHours:0.1,coverage:'Exposed services, vulnerable ports'}
+    ];
+    this._tiCorrelationResults = [
+      {id:'TCR-001-001',ruleId:'TCR-001',iocType:'file_hash',iocValue:'a1b2c3d4e5f6...truncated',confidence:0.95,firstSeen:'2026-04-23T12:30:00Z',lastSeen:'2026-04-23T12:30:00Z',affectedAssets:['workstation-045','workstation-078'],status:'investigating'},
+      {id:'TCR-002-001',ruleId:'TCR-002',iocType:'domain',iocValue:'evil-c2-domain.ru',confidence:0.92,firstSeen:'2026-04-23T11:45:00Z',lastSeen:'2026-04-23T11:50:00Z',affectedAssets:['proxy-server-01'],status:'blocked'},
+      {id:'TCR-003-001',ruleId:'TCR-003',iocType:'ip_address',iocValue:'203.0.113.45',confidence:0.78,firstSeen:'2026-04-23T10:00:00Z',lastSeen:'2026-04-23T13:00:00Z',affectedAssets:['firewall-01','ids-01'],status:'monitoring'}
+    ];
+    this._tiThreatActors = [
+      {id:'TA-001',name:'APT29 (Cozy Bear)',aliases:['The Dukes','Cozy Bear','Midnight Blizzard'],motivation:'Espionage',targetSectors:['Government','Technology','Think Tanks'],sophistication:'advanced',lastActivity:'2026-04-22',associatedIocs:4521},
+      {id:'TA-002',name:'APT28 (Fancy Bear)',aliases:['Fancy Bear','Sofacy','Sednit'],motivation:'Espionage',targetSectors:['Government','Military','Media'],sophistication:'advanced',lastActivity:'2026-04-20',associatedIocs:3876},
+      {id:'TA-003',name:'Lazarus Group',aliases:['Hidden Cobra','Labyrinth Chollima'],motivation:'Financial',targetSectors:['Finance','Cryptocurrency','Defense'],sophistication:'advanced',lastActivity:'2026-04-23',associatedIocs:5234},
+      {id:'TA-004',name:'FIN7',aliases:['Carbanak','Carbon Spider'],motivation:'Financial',targetSectors:['Retail','Hospitality','Finance'],sophistication:'high',lastActivity:'2026-04-18',associatedIocs:2890}
+    ];
+  }
+
+  private _getTISummary(): {activeFeeds:number;degradedFeeds:number;totalIocs:number;correlationsToday:number;blockedThreats:number;topActor:string} {
+    const activeFeeds = this._tiFeedStatus.filter(f => f.status === 'active').length;
+    const degradedFeeds = this._tiFeedStatus.filter(f => f.status !== 'active').length;
+    const totalIocs = this._tiFeedStatus.reduce((s,f) => s + f.iocCount, 0);
+    const blockedThreats = this._tiCorrelationResults.filter(r => r.status === 'blocked').length;
+    return {activeFeeds, degradedFeeds, totalIocs, correlationsToday: this._tiCorrelationResults.length, blockedThreats, topActor: this._tiThreatActors.sort((a,b) => b.associatedIocs - a.associatedIocs)[0]?.name || ''};
+  }
+
+  private _getTIFreshnessAlerts(): string[] {
+    return this._tiFeedStatus.filter(f => f.freshnessHours > 2).map(f => f.feedName + ' last updated ' + f.freshnessHours + ' hours ago');
+  }
+
+
+  // === Security Awareness Program Analytics ===
+  private _awarenessCampaigns: Array<{id:string;name:string;type:string;targetAudience:string;participants:number;completionRate:number;passRate:number;startDate:string;endDate:string;status:string}> = [];
+  private _awarenessPhishingSims: Array<{id:string;campaignName:string;sentCount:number;clickCount:number;credentialCount:number;reportCount:number;clickRate:number;credentialRate:number;reportRate:number;date:string;difficulty:string}> = [];
+  private _awarenessRiskScores: Array<{department:string;avgScore:number;trend:string;riskLevel:string;complianceRate:number;topWeakArea:string;improvementRate:number}> = [];
+  private _awarenessContent: Array<{id:string;title:string;type:string;category:string;duration:string;difficulty:string;completionCount:number;avgScore:number;rating:number}> = [];
+
+  private _initAwarenessAnalytics(): void {
+    this._awarenessCampaigns = [
+      {id:'AWC-001',name:'Q2 Security Foundations',type:'mandatory_training',targetAudience:'All Employees',participants:2840,completionRate:78.4,passRate:92.1,startDate:'2026-04-01',endDate:'2026-06-30',status:'active'},
+      {id:'AWC-002',name:'Executive Security Briefing',type:'workshop',targetAudience:'C-Suite and Directors',participants:45,completionRate:88.9,passRate:100,startDate:'2026-04-15',endDate:'2026-04-15',status:'completed'},
+      {id:'AWC-003',name:'Developer Secure Coding Bootcamp',type:'training',targetAudience:'Engineering',participants:320,completionRate:65.2,passRate:87.5,startDate:'2026-04-10',endDate:'2026-05-10',status:'active'},
+      {id:'AWC-004',name:'Remote Work Security Essentials',type:'e-learning',targetAudience:'Remote Workers',participants:1250,completionRate:82.1,passRate:94.3,startDate:'2026-03-01',endDate:'2026-04-30',status:'active'}
+    ];
+    this._awarenessPhishingSims = [
+      {id:'PS-001',campaignName:'April Tax Scam Simulation',sentCount:2840,clickCount:156,credentialCount:23,reportCount:412,clickRate:5.5,credentialRate:0.8,reportRate:14.5,date:'2026-04-15',difficulty:'medium'},
+      {id:'PS-002',campaignName:'IT Support Impersonation',sentCount:2840,clickCount:198,credentialCount:45,reportCount:356,clickRate:7.0,credentialRate:1.6,reportRate:12.5,date:'2026-04-01',difficulty:'medium'},
+      {id:'PS-003',campaignName:'CEO Fraud Email',sentCount:150,clickCount:8,credentialCount:2,reportCount:42,clickRate:5.3,credentialRate:1.3,reportRate:28.0,date:'2026-03-20',difficulty:'hard'},
+      {id:'PS-004',campaignName:'Package Delivery Scam',sentCount:2840,clickCount:245,credentialCount:67,reportCount:298,clickRate:8.6,credentialRate:2.4,reportRate:10.5,date:'2026-03-01',difficulty:'easy'}
+    ];
+    this._awarenessRiskScores = [
+      {department:'Engineering',avgScore:82.5,trend:'improving',riskLevel:'low',complianceRate:85.2,topWeakArea:'Secret Management',improvementRate:12.3},
+      {department:'Sales',avgScore:68.4,trend:'stable',riskLevel:'medium',complianceRate:72.1,topWeakArea:'Social Engineering',improvementRate:5.8},
+      {department:'Finance',avgScore:75.2,trend:'improving',riskLevel:'medium',complianceRate:80.5,topWeakArea:'Phishing Recognition',improvementRate:8.4},
+      {department:'HR',avgScore:71.8,trend:'declining',riskLevel:'medium',complianceRate:76.3,topWeakArea:'Data Privacy',improvementRate:-2.1},
+      {department:'Executive',avgScore:88.2,trend:'improving',riskLevel:'low',complianceRate:92.1,topWeakArea:'Mobile Security',improvementRate:15.2},
+      {department:'Marketing',avgScore:65.3,trend:'stable',riskLevel:'high',complianceRate:68.7,topWeakArea:'Social Media Security',improvementRate:3.2}
+    ];
+    this._awarenessContent = [
+      {id:'AC-001',title:'Recognizing Phishing Emails',type:'interactive_module',category:'Phishing',duration:'15 min',difficulty:'beginner',completionCount:2450,avgScore:88.5,rating:4.5},
+      {id:'AC-002',title:'Password Security Best Practices',type:'video',category:'Identity',duration:'8 min',difficulty:'beginner',completionCount:2680,avgScore:92.1,rating:4.2},
+      {id:'AC-003',title:'Secure Remote Work Practices',type:'interactive_module',category:'Remote Work',duration:'20 min',difficulty:'intermediate',completionCount:1200,avgScore:85.3,rating:4.7},
+      {id:'AC-004',title:'Data Classification and Handling',type:'e-learning',category:'Data Security',duration:'25 min',difficulty:'intermediate',completionCount:1890,avgScore:80.2,rating:3.8},
+      {id:'AC-005',title:'Social Engineering Defense',type:'simulation',category:'Social Engineering',duration:'30 min',difficulty:'advanced',completionCount:780,avgScore:76.8,rating:4.6}
+    ];
+  }
+
+  private _getAwarenessSummary(): {avgCompletionRate:number;avgPhishingClickRate:number;highRiskDepts:number;totalParticipants:number;overallRiskScore:number;improvingDepts:number} {
+    const avgCompletion = Math.round(this._awarenessCampaigns.reduce((s,c) => s + c.completionRate, 0) / this._awarenessCampaigns.length * 10) / 10;
+    const avgClickRate = Math.round(this._awarenessPhishingSims.reduce((s,p) => s + p.clickRate, 0) / this._awarenessPhishingSims.length * 10) / 10;
+    const highRiskDepts = this._awarenessRiskScores.filter(d => d.riskLevel === 'high').length;
+    const improvingDepts = this._awarenessRiskScores.filter(d => d.trend === 'improving').length;
+    const overallRiskScore = Math.round(this._awarenessRiskScores.reduce((s,d) => s + d.avgScore, 0) / this._awarenessRiskScores.length * 10) / 10;
+    return {avgCompletionRate: avgCompletion, avgPhishingClickRate: avgClickRate, highRiskDepts, totalParticipants: 2840, overallRiskScore, improvingDepts};
+  }
+
   render() {    if (this._bcRules.length === 0) { this._initBcRules(); this._initBcCvss(); this._runBcAnomalyDetection(); this._generateBcPredictions(); this._initBcApprovals(); this._initBcActivity(); this._initBcNotifications(); }
 
     const items = this._getFiltered();
