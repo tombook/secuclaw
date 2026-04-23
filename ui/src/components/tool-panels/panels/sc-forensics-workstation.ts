@@ -3852,4 +3852,428 @@ export class ScForensicsWorkstation extends LitElement {
       </div>`;
   }
 
+  @state() private _fwAle: number = 0;
+  @state() private _fwSroi: number = 0;
+  @state() private _fwCpi: number = 0;
+  @state() private _fwBudgetAlloc: number = 0;
+  @state() private _fwCostBenefit: number = 0;
+
+  // Security Economics Calculator
+  private fwInitEconomics() {
+    this._fwAle = Math.round(2850000 + Math.random() * 4500000);
+    this._fwSroi = Math.round(180 + Math.random() * 320);
+    this._fwCpi = Math.round(45000 + Math.random() * 120000);
+    this._fwBudgetAlloc = Math.round(2500000 + Math.random() * 3000000);
+    this._fwCostBenefit = Math.round(220 + Math.random() * 180);
+  }
+
+  private _fwCalcAle(): { annual: number; perIncident: number; byCategory: Array<{name: string; value: number}> } {
+    const base = this._fwAle;
+    const categories = [
+      { name: "Data Breach", value: Math.round(base * 0.35) },
+      { name: "Ransomware", value: Math.round(base * 0.25) },
+      { name: "Insider Threat", value: Math.round(base * 0.18) },
+      { name: "Business Disruption", value: Math.round(base * 0.12) },
+      { name: "Regulatory Fines", value: Math.round(base * 0.10) }
+    ];
+    return { annual: base, perIncident: Math.round(base / (3 + Math.floor(Math.random() * 8))), byCategory: categories };
+  }
+
+  private _fwCalcSroi(): Array<{year: number; investment: number; savings: number; roi: number}> {
+    const baseInv = this._fwSroi * 10000;
+    const projections: Array<{year: number; investment: number; savings: number; roi: number}> = [];
+    for (let i = 1; i <= 5; i++) {
+      const inv = Math.round(baseInv * (1 + 0.08 * i));
+      const savings = Math.round(inv * (0.6 + i * 0.25));
+      projections.push({ year: 2026 + i, investment: inv, savings, roi: Math.round((savings - inv) / inv * 100) });
+    }
+    return projections;
+  }
+
+  private _fwGetBudgetAlloc(): Array<{category: string; amount: number; pct: number; trend: string}> {
+    const total = this._fwBudgetAlloc;
+    const items = [
+      { category: "Detection & Monitoring", pct: 28, trend: "up" },
+      { category: "Endpoint Protection", pct: 22, trend: "stable" },
+      { category: "Identity & Access", pct: 18, trend: "up" },
+      { category: "Incident Response", pct: 15, trend: "up" },
+      { category: "Training & Awareness", pct: 10, trend: "stable" },
+      { category: "GRC & Compliance", pct: 7, trend: "down" }
+    ];
+    return items.map(it => ({ ...it, amount: Math.round(total * it.pct / 100) }));
+  }
+
+  private _fwGetCostBenefit(): Array<{control: string; cost: number; benefit: number; ratio: number; priority: string}> {
+    const base = this._fwCostBenefit;
+    const controls = [
+      { control: "SIEM Upgrade", costMul: 0.15, benMul: 0.30 },
+      { control: "Zero Trust Network", costMul: 0.22, benMul: 0.35 },
+      { control: "EDR Deployment", costMul: 0.12, benMul: 0.25 },
+      { control: "Security Training", costMul: 0.06, benMul: 0.18 },
+      { control: "Pen Testing", costMul: 0.08, benMul: 0.20 },
+      { control: "Cloud Security Posture", costMul: 0.10, benMul: 0.28 }
+    ];
+    return controls.map(c => {
+      const cost = Math.round(base * 10000 * c.costMul);
+      const benefit = Math.round(base * 10000 * c.benMul);
+      const ratio = Math.round((benefit / cost) * 100) / 100;
+      return { ...c, control: c.control, cost, benefit, ratio, priority: ratio > 2.5 ? "High" : ratio > 1.8 ? "Medium" : "Low" };
+    });
+  }
+
+  private _fwRenderEconomics() {
+    const ale = this._fwCalcAle();
+    const roi = this._fwCalcSroi();
+    const budget = this._fwGetBudgetAlloc();
+    const cb = this._fwGetCostBenefit();
+    const cpi = this._fwCpi;
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Security Economics Calculator</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:#1a1d27;border-radius:6px;padding:10px;text-align:center">
+            <div style="color:#888;font-size:9px">Annual Loss Expectancy</div>
+            <div style="color:#f44;font-size:18px;font-weight:bold">${ale.annual.toLocaleString()}</div>
+            <div style="color:#666;font-size:9px">${ale.perIncident.toLocaleString()} per incident</div>
+          </div>
+          <div style="background:#1a1d27;border-radius:6px;padding:10px;text-align:center">
+            <div style="color:#888;font-size:9px">Security ROI (5yr)</div>
+            <div style="color:#4f4;font-size:18px;font-weight:bold">${roi[4]?.roi || 0}%</div>
+            <div style="color:#666;font-size:9px">Net: ${(roi[4]?.savings - roi[4]?.investment || 0).toLocaleString()}</div>
+          </div>
+          <div style="background:#1a1d27;border-radius:6px;padding:10px;text-align:center">
+            <div style="color:#888;font-size:9px">Cost Per Incident</div>
+            <div style="color:#ff8;font-size:18px;font-weight:bold">${cpi.toLocaleString()}</div>
+            <div style="color:#666;font-size:9px">Insurance offset: ${Math.round(cpi * 0.35).toLocaleString()}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Budget Allocation</div>
+            ${budget.map(b => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#888;font-size:9px;width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.category}</span>
+                <div style="flex:1;background:#1a1d27;border-radius:3px;height:8px;overflow:hidden">
+                  <div style="height:100%;width:${b.pct}%;background:${b.trend === "up" ? "#4f4" : b.trend === "down" ? "#f84" : "#48f"}"></div>
+                </div>
+                <span style="color:#ddd;font-size:9px;width:50px;text-align:right">${b.pct}%</span>
+              </div>`)}</div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Cost-Benefit Analysis</div>
+            ${cb.map(c => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#888;font-size:9px;width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.control}</span>
+                <span style="color:${c.priority === "High" ? "#4f4" : c.priority === "Medium" ? "#ff8" : "#f84"};font-size:9px;width:40px">${c.priority}</span>
+                <span style="color:#ddd;font-size:9px">${c.ratio}x</span>
+              </div>`)}</div>
+        </div>
+      </div>`;
+  }
+
+  @state() private _fwThreatLevel: any = null;
+  @state() private _fwEmergingThreats: any = null;
+  @state() private _fwThreatTrends: any = null;
+  @state() private _fwSectorRadar: any = null;
+  @state() private _fwActorActivity: any = null;
+
+  // Threat Landscape Intelligence
+  private fwInitThreatIntel() {
+    this._fwThreatLevel = {
+      americas: Math.round(50 + Math.random() * 40),
+      europe: Math.round(40 + Math.random() * 45),
+      asiaPacific: Math.round(55 + Math.random() * 35),
+      middleEast: Math.round(45 + Math.random() * 50),
+      africa: Math.round(30 + Math.random() * 40)
+    };
+    this._fwEmergingThreats = [
+      { name: "AI-Powered Phishing", severity: "Critical", region: "Global", trend: "up" },
+      { name: "RaaS Evolution", severity: "High", region: "Americas", trend: "up" },
+      { name: "Supply Chain Compromise", severity: "Critical", region: "APAC", trend: "stable" },
+      { name: "Zero-Day Exploitation", severity: "High", region: "Europe", trend: "up" },
+      { name: "Cloud Misconfiguration", severity: "Medium", region: "Global", trend: "up" },
+      { name: "IoT Botnet Expansion", severity: "Medium", region: "APAC", trend: "stable" },
+      { name: "Deepfake Social Eng.", severity: "High", region: "Europe", trend: "up" },
+      { name: "Cryptojacking Surge", severity: "Low", region: "Americas", trend: "down" },
+      { name: "State-Sponsored APT", severity: "Critical", region: "ME", trend: "stable" },
+      { name: "Insider Data Theft", severity: "High", region: "Global", trend: "up" }
+    ];
+    this._fwThreatTrends = [
+      { month: "Jan", phishing: 142, malware: 89, ransomware: 34 },
+      { month: "Feb", phishing: 158, malware: 95, ransomware: 38 },
+      { month: "Mar", phishing: 175, malware: 102, ransomware: 42 },
+      { month: "Apr", phishing: 163, malware: 98, ransomware: 39 }
+    ];
+    this._fwSectorRadar = [
+      { sector: "Financial", risk: 82, trend: "up" },
+      { sector: "Healthcare", risk: 78, trend: "up" },
+      { sector: "Technology", risk: 71, trend: "stable" },
+      { sector: "Government", risk: 85, trend: "up" },
+      { sector: "Energy", risk: 68, trend: "down" }
+    ];
+    this._fwActorActivity = [
+      { actor: "APT-29", country: "Russia", activity: 85, targets: "Government" },
+      { actor: "Lazarus", country: "DPRK", activity: 72, targets: "Financial" },
+      { actor: "APT-41", country: "China", activity: 68, targets: "Technology" },
+      { actor: "Fancy Bear", country: "Russia", activity: 64, targets: "Healthcare" },
+      { actor: "Charming Kitten", country: "Iran", activity: 58, targets: "Energy" }
+    ];
+  }
+
+  private _fwRenderThreatIntel() {
+    const tl = this._fwThreatLevel;
+    const et = this._fwEmergingThreats;
+    const sr = this._fwSectorRadar;
+    const aa = this._fwActorActivity;
+    const sevColor = (s: string) => s === "Critical" ? "#f44" : s === "High" ? "#f84" : s === "Medium" ? "#ff8" : "#4f4";
+    const regions = ["americas","europe","asiaPacific","middleEast","africa"] as const;
+    const regionLabels: Record<string,string> = {americas:"Americas",europe:"Europe",asiaPacific:"APAC",middleEast:"Middle East",africa:"Africa"};
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Threat Landscape Intelligence</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Global Threat Levels</div>
+            ${regions.map(r => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#888;font-size:9px;width:80px">${regionLabels[r]}</span>
+                <div style="flex:1;background:#1a1d27;border-radius:3px;height:8px;overflow:hidden">
+                  <div style="height:100%;width:${tl[r]}%;background:${tl[r] > 75 ? "#f44" : tl[r] > 50 ? "#f84" : "#4f4"}"></div>
+                </div>
+                <span style="color:#ddd;font-size:9px;width:24px;text-align:right">${tl[r]}</span>
+              </div>`)}</div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Emerging Threats</div>
+            ${et.slice(0, 6).map(t => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                <div style="width:6px;height:6px;border-radius:50%;background:${sevColor(t.severity)}"></div>
+                <span style="color:#ccc;font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</span>
+                <span style="color:${t.trend === "up" ? "#f44" : t.trend === "down" ? "#4f4" : "#888"};font-size:9px">${t.trend === "up" ? "^" : t.trend === "down" ? "v" : "-"}</span>
+              </div>`)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Sector Threat Radar</div>
+            ${sr.map(s => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#888;font-size:9px;width:70px">${s.sector}</span>
+                <div style="flex:1;background:#1a1d27;border-radius:3px;height:8px;overflow:hidden">
+                  <div style="height:100%;width:${s.risk}%;background:${s.risk > 80 ? "#f44" : s.risk > 65 ? "#f84" : "#ff8"}"></div>
+                </div>
+                <span style="color:#ddd;font-size:9px;width:24px;text-align:right">${s.risk}</span>
+              </div>`)}</div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Threat Actor Activity</div>
+            ${aa.map(a => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#ccc;font-size:9px;width:80px">${a.actor}</span>
+                <span style="color:#666;font-size:9px;width:50px">${a.country}</span>
+                <div style="flex:1;background:#1a1d27;border-radius:3px;height:6px;overflow:hidden">
+                  <div style="height:100%;width:${a.activity}%;background:#f84"></div>
+                </div>
+                <span style="color:#888;font-size:9px">${a.activity}</span>
+              </div>`)}</div>
+        </div>
+      </div>`;
+  }
+
+  @state() private _fwPolicies: any = null;
+  @state() private _fwExceptions: any = null;
+  @state() private _fwRiskRegister: any = null;
+  @state() private _fwMeetings: any = null;
+  @state() private _fwDeadlines: any = null;
+
+  // Security Governance Dashboard
+  private fwInitGovernance() {
+    this._fwPolicies = [
+      { name: "Information Security", compliance: 92, lastReview: "2026-03-15", status: "Active" },
+      { name: "Access Control", compliance: 88, lastReview: "2026-03-01", status: "Active" },
+      { name: "Data Protection", compliance: 95, lastReview: "2026-04-01", status: "Active" },
+      { name: "Incident Response", compliance: 78, lastReview: "2026-02-20", status: "Review" },
+      { name: "Change Management", compliance: 85, lastReview: "2026-03-10", status: "Active" },
+      { name: "Vendor Management", compliance: 72, lastReview: "2026-02-28", status: "Overdue" },
+      { name: "Business Continuity", compliance: 81, lastReview: "2026-03-05", status: "Active" },
+      { name: "Cryptography", compliance: 90, lastReview: "2026-03-20", status: "Active" },
+      { name: "Physical Security", compliance: 87, lastReview: "2026-02-15", status: "Review" },
+      { name: "Network Security", compliance: 93, lastReview: "2026-04-05", status: "Active" },
+      { name: "Cloud Security", compliance: 76, lastReview: "2026-02-10", status: "Overdue" },
+      { name: "Third-Party Risk", compliance: 70, lastReview: "2026-01-30", status: "Overdue" }
+    ];
+    this._fwExceptions = [
+      { id: "EXC-001", policy: "Access Control", reason: "Legacy system", risk: "Medium", expiry: "2026-06-30" },
+      { id: "EXC-002", policy: "Encryption", reason: "Performance", risk: "High", expiry: "2026-05-15" },
+      { id: "EXC-003", policy: "Password Policy", reason: "Vendor req", risk: "Low", expiry: "2026-08-01" }
+    ];
+    this._fwRiskRegister = [
+      { id: "RSK-001", desc: "Unpatched Exchange", likelihood: 4, impact: 5, owner: "IT Ops" },
+      { id: "RSK-002", desc: "Shadow IT SaaS", likelihood: 3, impact: 4, owner: "CISO" },
+      { id: "RSK-003", desc: "Privileged Access Creep", likelihood: 3, impact: 5, owner: "IAM Team" },
+      { id: "RSK-004", desc: "DR Plan Gaps", likelihood: 2, impact: 5, owner: "BCP Lead" },
+      { id: "RSK-005", desc: "Vendor Data Sharing", likelihood: 3, impact: 3, owner: "Legal" }
+    ];
+    this._fwMeetings = [
+      { name: "Security Steering", date: "2026-04-25", attendees: 8, status: "Scheduled" },
+      { name: "Risk Committee", date: "2026-04-18", attendees: 6, status: "Completed" },
+      { name: "Audit Review", date: "2026-05-02", attendees: 5, status: "Pending" }
+    ];
+    this._fwDeadlines = [
+      { regulation: "SOC 2 Type II", deadline: "2026-06-15", daysLeft: 53, status: "On Track" },
+      { regulation: "GDPR Annual Review", deadline: "2026-05-25", daysLeft: 32, status: "At Risk" },
+      { regulation: "ISO 27001 Audit", deadline: "2026-07-20", daysLeft: 88, status: "On Track" },
+      { regulation: "PCI DSS v4.0", deadline: "2026-08-30", daysLeft: 129, status: "Planning" }
+    ];
+  }
+
+  private _fwRenderGovernance() {
+    const policies = this._fwPolicies;
+    const risks = this._fwRiskRegister;
+    const deadlines = this._fwDeadlines;
+    const statusColor = (s: string) => s === "Active" ? "#4f4" : s === "Overdue" ? "#f44" : "#ff8";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Security Governance Dashboard</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Policy Compliance (12 policies)</div>
+            ${policies.slice(0, 6).map(pol => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                <div style="width:6px;height:6px;border-radius:50%;background:${statusColor(pol.status)}"></div>
+                <span style="color:#ccc;font-size:9px;flex:1">${pol.name}</span>
+                <span style="color:${pol.compliance >= 85 ? "#4f4" : pol.compliance >= 75 ? "#ff8" : "#f44"};font-size:9px">${pol.compliance}%</span>
+              </div>`)}</div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Risk Register Heat Map</div>
+            ${risks.map(r => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#ccc;font-size:9px;flex:1">${r.desc}</span>
+                <span style="color:#888;font-size:8px">L${r.likelihood}/I${r.impact}</span>
+                <div style="width:24px;height:12px;border-radius:2px;background:${(r.likelihood * r.impact) >= 15 ? "#f44" : (r.likelihood * r.impact) >= 10 ? "#f84" : "#ff8"};opacity:0.8"></div>
+              </div>`)}</div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin-bottom:4px">Regulatory Deadline Countdown</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+          ${deadlines.map(d => html`<div style="background:#1a1d27;border-radius:4px;padding:8px;text-align:center">
+              <div style="color:#888;font-size:8px">${d.regulation}</div>
+              <div style="color:${d.daysLeft < 40 ? "#f44" : d.daysLeft < 90 ? "#ff8" : "#4f4"};font-size:16px;font-weight:bold">${d.daysLeft}d</div>
+              <div style="color:#666;font-size:8px">${d.status}</div>
+            </div>`)}</div>
+      </div>`;
+  }
+
+  @state() private _fwCriticalAssets: any = null;
+  @state() private _fwAssetDeps: any = null;
+  @state() private _fwEolAssets: any = null;
+  @state() private _fwAssetRisk: any = null;
+
+  // Asset Intelligence
+  private fwInitAssetIntel() {
+    this._fwCriticalAssets = [
+      { name: "Core Banking DB", type: "Database", impact: "Critical", risk: 85, owner: "DBA Team" },
+      { name: "Customer API Gateway", type: "Service", impact: "Critical", risk: 72, owner: "Platform" },
+      { name: "Active Directory", type: "Infrastructure", impact: "Critical", risk: 68, owner: "IAM" },
+      { name: "Data Warehouse", type: "Database", impact: "High", risk: 55, owner: "Analytics" },
+      { name: "Email Server", type: "Application", impact: "High", risk: 48, owner: "IT Ops" },
+      { name: "CI/CD Pipeline", type: "DevOps", impact: "High", risk: 62, owner: "DevOps" },
+      { name: "Payment Processor", type: "Service", impact: "Critical", risk: 78, owner: "Finance IT" }
+    ];
+    this._fwAssetDeps = [
+      { from: "Web App", to: "API Gateway", type: "depends" },
+      { from: "API Gateway", to: "Core Banking DB", type: "depends" },
+      { from: "API Gateway", to: "Auth Service", type: "depends" },
+      { from: "Auth Service", to: "Active Directory", type: "depends" },
+      { from: "Payment Processor", to: "Core Banking DB", type: "depends" },
+      { from: "Mobile App", to: "API Gateway", type: "depends" }
+    ];
+    this._fwEolAssets = [
+      { name: "Windows Server 2012 R2", count: 12, eolDate: "2023-10-10", risk: "Critical" },
+      { name: "Oracle 11g", count: 3, eolDate: "2025-12-31", risk: "High" },
+      { name: "Cisco ASA 5505", count: 8, eolDate: "2024-07-15", risk: "High" },
+      { name: "CentOS 7", count: 25, eolDate: "2024-06-30", risk: "Medium" }
+    ];
+    this._fwAssetRisk = { critical: 7, high: 23, medium: 45, low: 128, total: 203 };
+  }
+
+  private _fwRenderAssetIntel() {
+    const assets = this._fwCriticalAssets;
+    const eol = this._fwEolAssets;
+    const ar = this._fwAssetRisk;
+    const impactColor = (i: string) => i === "Critical" ? "#f44" : i === "High" ? "#f84" : "#ff8";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Asset Intelligence</h4>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          ${[["Critical",ar.critical,"#f44"],["High",ar.high,"#f84"],["Medium",ar.medium,"#ff8"],["Low",ar.low,"#4f4"]].map(([l,v,c]) => html`<div style="flex:1;background:#1a1d27;border-radius:4px;padding:6px;text-align:center">
+              <div style="color:${c};font-size:16px;font-weight:bold">${v}</div>
+              <div style="color:#888;font-size:8px">${l}</div>
+            </div>`)}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Critical Assets</div>
+            ${assets.slice(0, 5).map(a => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                <div style="width:6px;height:6px;border-radius:50%;background:${impactColor(a.impact)}"></div>
+                <span style="color:#ccc;font-size:9px;flex:1">${a.name}</span>
+                <span style="color:#888;font-size:8px">R${a.risk}</span>
+              </div>`)}</div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">End-of-Life Assets</div>
+            ${eol.map(e => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="color:#ccc;font-size:9px;flex:1">${e.name}</span>
+                <span style="color:#f84;font-size:9px">${e.count} units</span>
+                <div style="padding:1px 4px;border-radius:2px;background:${e.risk === "Critical" ? "#f44" : e.risk === "High" ? "#f84" : "#ff8"};color:#000;font-size:7px">${e.risk}</div>
+              </div>`)}</div>
+        </div>
+      </div>`;
+  }
+
+  @state() private _fwUserBaseline: any = null;
+  @state() private _fwAnomalyRules: any = null;
+  @state() private _fwDataAccess: any = null;
+  @state() private _fwInsiderRisk: any = null;
+
+  // Insider Threat Detection
+  private fwInitInsiderThreat() {
+    this._fwUserBaseline = [
+      { user: "admin_jdoe", avgLogins: 18, avgFiles: 45, avgNetwork: 2.3, riskScore: 12 },
+      { user: "dev_ssmith", avgLogins: 22, avgFiles: 120, avgNetwork: 5.1, riskScore: 25 },
+      { user: "mgr_jchen", avgLogins: 8, avgFiles: 30, avgNetwork: 1.2, riskScore: 8 },
+      { user: "analyst_mlee", avgLogins: 15, avgFiles: 85, avgNetwork: 3.4, riskScore: 18 },
+      { user: "contractor_abrown", avgLogins: 12, avgFiles: 200, avgNetwork: 8.7, riskScore: 42 }
+    ];
+    this._fwAnomalyRules = [
+      { rule: "After-hours access", enabled: true, triggers: 3, severity: "Medium" },
+      { rule: "Mass download detection", enabled: true, triggers: 1, severity: "Critical" },
+      { rule: "Privilege escalation", enabled: true, triggers: 0, severity: "High" },
+      { rule: "Unusual data transfer", enabled: true, triggers: 5, severity: "High" },
+      { rule: "Account sharing pattern", enabled: false, triggers: 2, severity: "Medium" },
+      { rule: "Departure data spike", enabled: true, triggers: 0, severity: "Critical" }
+    ];
+    this._fwDataAccess = [
+      { resource: "Customer PII DB", accesses: 1245, anomalous: 18, trend: "up" },
+      { resource: "Financial Reports", accesses: 832, anomalous: 5, trend: "stable" },
+      { resource: "Source Code Repo", accesses: 2100, anomalous: 32, trend: "up" },
+      { resource: "Trade Secrets", accesses: 156, anomalous: 8, trend: "up" }
+    ];
+    this._fwInsiderRisk = { totalUsers: 2847, monitored: 342, flagged: 18, investigated: 5, confirmed: 1 };
+  }
+
+  private _fwRenderInsiderThreat() {
+    const baseline = this._fwUserBaseline;
+    const rules = this._fwAnomalyRules;
+    const ir = this._fwInsiderRisk;
+    const sevColor = (s: string) => s === "Critical" ? "#f44" : s === "High" ? "#f84" : "#ff8";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Insider Threat Detection</h4>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          ${[["Monitored",ir.monitored,"#48f"],["Flagged",ir.flagged,"#f84"],["Investigated",ir.investigated,"#ff8"],["Confirmed",ir.confirmed,"#f44"]].map(([l,v,c]) => html`<div style="flex:1;background:#1a1d27;border-radius:4px;padding:6px;text-align:center">
+              <div style="color:${c};font-size:16px;font-weight:bold">${v}</div>
+              <div style="color:#888;font-size:8px">${l}</div>
+            </div>`)}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Anomaly Detection Rules</div>
+            ${rules.map(r => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                <div style="width:6px;height:6px;border-radius:50%;background:${r.enabled ? "#4f4" : "#666"}"></div>
+                <span style="color:#ccc;font-size:9px;flex:1">${r.rule}</span>
+                <span style="color:${sevColor(r.severity)};font-size:8px">${r.triggers}</span>
+              </div>`)}</div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">User Behavior Risk Scores</div>
+            ${baseline.sort((a: any, b: any) => b.riskScore - a.riskScore).slice(0, 5).map(u => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                <span style="color:#ccc;font-size:9px;flex:1">${u.user}</span>
+                <div style="width:40px;background:#1a1d27;border-radius:3px;height:6px;overflow:hidden">
+                  <div style="height:100%;width:${Math.min(100, u.riskScore * 2)}%;background:${u.riskScore > 30 ? "#f44" : u.riskScore > 15 ? "#f84" : "#4f4"}"></div>
+                </div>
+                <span style="color:#ddd;font-size:9px">${u.riskScore}</span>
+              </div>`)}</div>
+        </div>
+      </div>`;
+  }
+
   }
