@@ -450,6 +450,106 @@ export class ScRoleCommander extends LitElement {
     @media (max-width: 480px) {
       .rd-5col { grid-template-columns: 1fr !important; }
     }
+
+    /* === CISO ROLE LAYOUT === */
+    .ciso-role-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 20px;
+    }
+    .ciso-zone-exec {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .ciso-zone-ops {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .ciso-zone-feed {
+      margin-top: 4px;
+    }
+    .ciso-metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    .ciso-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .ciso-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .ciso-panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ciso-panel-title .icon {
+      font-size: 16px;
+    }
+    .ciso-panel-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .ciso-panel-body {
+      min-height: 120px;
+    }
+    .ciso-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+      margin: 12px 0;
+    }
+    @media (max-width: 1200px) {
+      .ciso-zone-ops { grid-template-columns: 1fr; }
+      .ciso-metrics-strip { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .ciso-metrics-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+    /* Reset zone inner styles when wrapped in ciso-panel */
+    .ciso-panel > .zone {
+      margin: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
+    .ciso-panel > .zone.zone-dark {
+      background: transparent !important;
+    }
+    .ciso-panel > .zone.zone-decision {
+      background: transparent !important;
+    }
+    .ciso-panel > .zone.zone-legal {
+      background: transparent !important;
+    }
+    .ciso-panel > .zone.zone-framework {
+      background: transparent !important;
+    }
+    .ciso-panel > .zone.zone-viz {
+      background: transparent !important;
+    }
+    .ciso-panel > .zone.zone-timeline {
+      background: transparent !important;
+    }
+    .ciso-panel > div[style*="margin"] {
+      margin: 0 !important;
+    }
   `
 
   private _storeUnsub: (() => void) | null = null
@@ -1579,24 +1679,53 @@ export class ScRoleCommander extends LitElement {
     `;
   }
 
-  // ─── CISO: 风险评分板, KPI追踪, 董事会报告, 预算仪表盘, 合规检查 ───
+  // ─── CISO: Executive Dashboard with 3-zone grid layout ───
   private _renderCisoDashboard() {
     return html`
-      <div class="role-dash">
-        ${this._renderMetricsZone('核心工具指标', [
-          this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '44', numColor: '#fbbf24', unit: '/100', sparkData: [52,48,55,51,47,44,49,46,43,48,45,44], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
-          this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '85%', numColor: '#3b82f6', unit: '达成率', sparkData: [78,80,82,81,83,85,84,85], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P3 轻', badgeColor: '#22c55e' })),
-          this._renderMetricCard(this._mc({ toolId: 'board-report', title: '📋 董事会报告', num: '2', numColor: '#f59e0b', unit: '待提交', sparkData: [3,2,4,2,3,2,1,2], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
-          this._renderMetricCard(this._mc({ toolId: 'budget-dash', title: '💰 预算仪表盘', num: '63%', numColor: '#22c55e', unit: '使用率', sparkData: [45,50,55,58,60,62,63,63], delta: '↑+18%', deltaColor: '#f59e0b', deltaLabel: '本年度', badge: 'P3 轻', badgeColor: '#22c55e' })),
-          this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
-        ])}
-        ${this._renderVizZone('ciso')}
-        ${this._renderDarkZone('ciso')}
-        ${this._renderDecisionZone('ciso')}
-        ${this._renderLegalZone('ciso')}
-        ${this._renderFrameworkZone('ciso')}
-        ${this._renderToolGuideZone('ciso')}
-        ${this._renderTimelineZone('ciso')}
+      <div class="ciso-role-grid">
+        <!-- Zone 1: Executive Summary -->
+        <div class="ciso-zone-exec">
+          <div class="ciso-metrics-strip">
+            ${this._renderMetricsZone('', [
+              this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '44', numColor: '#fbbf24', unit: '/100', sparkData: [52,48,55,51,47,44,49,46,43,48,45,44], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
+              this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '85%', numColor: '#3b82f6', unit: '达成率', sparkData: [78,80,82,81,83,85,84,85], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P3 轻', badgeColor: '#22c55e' })),
+              this._renderMetricCard(this._mc({ toolId: 'board-report', title: '📋 董事会报告', num: '2', numColor: '#f59e0b', unit: '待提交', sparkData: [3,2,4,2,3,2,1,2], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
+              this._renderMetricCard(this._mc({ toolId: 'budget-dash', title: '💰 预算仪表盘', num: '63%', numColor: '#22c55e', unit: '使用率', sparkData: [45,50,55,58,60,62,63,63], delta: '↑+18%', deltaColor: '#f59e0b', deltaLabel: '本年度', badge: 'P3 轻', badgeColor: '#22c55e' })),
+              this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
+            ])}
+          </div>
+          <div class="ciso-zone-ops">
+            <div class="ciso-panel">
+              ${this._renderDecisionZone('ciso')}
+            </div>
+            <div class="ciso-panel">
+              ${this._renderFrameworkZone('ciso')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone 2: Operations & Intelligence -->
+        <div class="ciso-zone-ops">
+          <div class="ciso-panel">
+            ${this._renderLegalZone('ciso')}
+          </div>
+          <div class="ciso-panel">
+            ${this._renderDarkZone('ciso')}
+          </div>
+        </div>
+        <div class="ciso-zone-ops">
+          <div class="ciso-panel">
+            ${this._renderVizZone('ciso')}
+          </div>
+          <div class="ciso-panel">
+            ${this._renderToolGuideZone('ciso')}
+          </div>
+        </div>
+
+        <!-- Zone 3: Activity Feed -->
+        <div class="ciso-zone-feed ciso-panel">
+          ${this._renderTimelineZone('ciso')}
+        </div>
       </div>
     `
   }
