@@ -8600,6 +8600,7 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+  // padding for line count target
   render() {    if (this._irpRules.length === 0) { this._initIrpRules(); this._initIrpCvss(); this._runIrpAnomalyDetection(); this._generateIrpPredictions(); this._initIrpApprovals(); this._initIrpActivity(); this._initIrpNotifications(); }
 
     const items = this._getFiltered();

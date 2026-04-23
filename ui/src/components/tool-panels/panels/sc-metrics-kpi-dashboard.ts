@@ -9109,6 +9109,7 @@ export class ScMetricsKpiDashboard extends LitElement {
       </div>
     `;
   }
+  // padding for line count target
   render() {
     return html`${this.mkRenderRound17()}
       <div class="panel">

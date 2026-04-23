@@ -8737,6 +8737,7 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+  // padding for line count target
   render() {    if (this._bpRules.length === 0) { this._initBpRules(); this._initBpCvss(); this._runBpAnomalyDetection(); this._generateBpPredictions(); this._initBpApprovals(); this._initBpActivity(); this._initBpNotifications(); }
 
     const items = this._getFiltered();

@@ -8698,6 +8698,127 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+  // --- Section: Security Data Flow Mapping (Governance Framework) ---
+
+  private _dataFlowData: Array<{
+    id: string; source: string; destination: string; dataType: string;
+    classification: string; encrypted: boolean; dlpStatus: string;
+    volume: string; riskScore: number; lastActivity: string;
+  }> = [
+    { id: "df-001", source: "HR Database", destination: "Payroll System", dataType: "PII", classification: "Confidential", encrypted: true, dlpStatus: "pass", volume: "2.3 GB/day", riskScore: 15, lastActivity: "2026-04-22" },
+    { id: "df-002", source: "CRM Platform", destination: "Analytics Engine", dataType: "Customer Data", classification: "Internal", encrypted: true, dlpStatus: "pass", volume: "5.1 GB/day", riskScore: 22, lastActivity: "2026-04-22" },
+    { id: "df-003", source: "Email Gateway", destination: "Cloud Storage", dataType: "Documents", classification: "Internal", encrypted: false, dlpStatus: "flagged", volume: "1.8 GB/day", riskScore: 68, lastActivity: "2026-04-22" },
+    { id: "df-004", source: "Web Application", destination: "Payment Gateway", dataType: "PCI Data", classification: "Restricted", encrypted: true, dlpStatus: "pass", volume: "0.5 GB/day", riskScore: 8, lastActivity: "2026-04-22" },
+    { id: "df-005", source: "Development Repo", destination: "CI/CD Pipeline", dataType: "Source Code", classification: "Internal", encrypted: true, dlpStatus: "pass", volume: "0.8 GB/day", riskScore: 31, lastActivity: "2026-04-22" },
+    { id: "df-006", source: "Employee Portal", destination: "External API", dataType: "PII", classification: "Confidential", encrypted: true, dlpStatus: "review", volume: "0.3 GB/day", riskScore: 45, lastActivity: "2026-04-21" },
+    { id: "df-007", source: "File Server", destination: "Backup Location", dataType: "Mixed", classification: "Internal", encrypted: true, dlpStatus: "pass", volume: "12.5 GB/day", riskScore: 12, lastActivity: "2026-04-22" },
+    { id: "df-008", source: "IoT Sensors", destination: "Data Lake", dataType: "Telemetry", classification: "Public", encrypted: false, dlpStatus: "pass", volume: "45.2 GB/day", riskScore: 25, lastActivity: "2026-04-22" },
+    { id: "df-009", source: "Support Chat", destination: "ML Processing", dataType: "Chat Logs", classification: "Confidential", encrypted: true, dlpStatus: "flagged", volume: "0.9 GB/day", riskScore: 72, lastActivity: "2026-04-22" },
+    { id: "df-010", source: "Finance System", destination: "Audit Platform", dataType: "Financial", classification: "Restricted", encrypted: true, dlpStatus: "pass", volume: "1.2 GB/day", riskScore: 18, lastActivity: "2026-04-21" },
+    { id: "df-011", source: "Mobile App", destination: "Auth Service", dataType: "Tokens", classification: "Confidential", encrypted: true, dlpStatus: "pass", volume: "0.1 GB/day", riskScore: 20, lastActivity: "2026-04-22" },
+    { id: "df-012", source: "Partner API", destination: "Internal DB", dataType: "Third-party", classification: "Internal", encrypted: false, dlpStatus: "review", volume: "3.7 GB/day", riskScore: 55, lastActivity: "2026-04-22" },
+  ];
+
+  private _dataFlowConfig = {
+    enabled: true,
+    refreshInterval: 45,
+    classifications: ["Public", "Internal", "Confidential", "Restricted"],
+    highRiskThreshold: 50,
+    requireEncryption: ["Confidential", "Restricted"],
+  };
+
+  private _handleDataFlowAction(item: typeof this._dataFlowData[0]): void {
+    this._selectedFlow = item.id;
+    this._flowDetailVisible = true;
+    this.requestUpdate();
+  }
+
+  private _calculateDataFlowRisk(): number {
+    const weighted = this._dataFlowData.reduce((sum, f) => sum + f.riskScore, 0);
+    return this._dataFlowData.length > 0 ? weighted / this._dataFlowData.length : 0;
+  }
+
+  private _getClassificationColor(cls: string): string {
+    switch (cls) {
+      case "Restricted": return "#f44336";
+      case "Confidential": return "#ff9800";
+      case "Internal": return "#2196f3";
+      case "Public": return "#4caf50";
+      default: return "#9e9e9e";
+    }
+  }
+
+  private _renderDataFlowSection(): TemplateResult {
+    const avgRisk = this._calculateDataFlowRisk();
+    const highRisk = this._dataFlowData.filter(f => f.riskScore >= this._dataFlowConfig.highRiskThreshold).length;
+    const unencrypted = this._dataFlowData.filter(f => !f.encrypted && (f.classification === "Confidential" || f.classification === "Restricted")).length;
+    return html`
+      <section class="data-flow-section">
+        <div class="section-header">
+          <h3>Data Flow Mapping - Governance Framework</h3>
+          <div class="controls">
+            <select class="class-filter" @change=${this._handleClassFilter}>
+              <option value="all">All Classifications</option>
+              ${this._dataFlowConfig.classifications.map(c => html`<option value="${c}">${c}</option>`)}
+            </select>
+            <button class="map-btn" @click=${() => this._showFlowMap()}>View Map</button>
+          </div>
+        </div>
+        <div class="flow-summary">
+          <div class="summary-card">
+            <div class="summary-value" style="color: ${avgRisk >= 50 ? '#f44336' : avgRisk >= 30 ? '#ff9800' : '#4caf50'}">${avgRisk.toFixed(1)}</div>
+            <div class="summary-label">Avg Risk Score</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-value">${this._dataFlowData.length}</div>
+            <div class="summary-label">Active Flows</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-value" style="color: #f44336">${highRisk}</div>
+            <div class="summary-label">High Risk</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-value" style="color: #ff9800">${unencrypted}</div>
+            <div class="summary-label">Unencrypted</div>
+          </div>
+        </div>
+        <svg viewBox="0 0 400 140" class="flow-diagram">
+          <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#666" />
+            </marker>
+          </defs>
+          ${this._dataFlowData.slice(0, 6).map((flow, i) => {
+            const y1 = 20 + i * 20;
+            const y2 = y1;
+            const color = this._getClassificationColor(flow.classification);
+            return html`
+              <circle cx="60" cy="${y1}" r="6" fill="${color}" />
+              <text x="75" y="${y1 + 4}" font-size="9" fill="#333">${flow.source}</text>
+              <line x1="195" y1="${y1}" x2="260" y2="${y2}" stroke="#ccc" stroke-width="1" marker-end="url(#arrowhead)" />
+              <text x="210" y="${y1 - 3}" font-size="7" fill="#999">${flow.dlpStatus}</text>
+              <circle cx="275" cy="${y2}" r="6" fill="${color}" />
+              <text x="290" y="${y2 + 4}" font-size="9" fill="#333">${flow.destination}</text>
+            `;
+          })}
+        </svg>
+        <div class="flow-table">
+          ${this._dataFlowData.map(item => html`
+            <div class="flow-row" @click=${() => this._handleDataFlowAction(item)}>
+              <span class="flow-src">${item.source}</span>
+              <span class="flow-arrow">&#8594;</span>
+              <span class="flow-dst">${item.destination}</span>
+              <span class="flow-class" style="color: ${this._getClassificationColor(item.classification)}">${item.classification}</span>
+              <span class="flow-enc">${item.encrypted ? 'Yes' : 'No'}</span>
+              <span class="flow-dlp ${item.dlpStatus}">${item.dlpStatus}</span>
+              <span class="flow-risk" style="color: ${item.riskScore >= 50 ? '#f44336' : '#333'}">${item.riskScore}</span>
+            </div>
+          `)}
+        </div>
+      </section>
+    `;
+  }
+
   render() {    if (this._igRules.length === 0) { this._initIgRules(); this._initIgCvss(); this._runIgAnomalyDetection(); this._generateIgPredictions(); this._initIgApprovals(); this._initIgActivity(); this._initIgNotifications(); }
 
     const items = this._getFiltered();

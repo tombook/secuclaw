@@ -8456,6 +8456,128 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+  // --- Section: Security Metrics Trend Analysis (Attack Analysis) ---
+
+  private _metricsTrendData: Array<{
+    id: string; metric: string; current: number; previous: number;
+    change: number; period: string; trend: number[]; threshold: number;
+  }> = [
+    { id: "mt-001", metric: "Threat Detection Rate", current: 94.7, previous: 91.2, change: 3.5, period: "30d", trend: [88, 89, 90, 91, 91, 92, 93, 94, 94, 95], threshold: 90 },
+    { id: "mt-002", metric: "Mean Time to Respond", current: 12.3, previous: 18.7, change: -34.2, period: "30d", trend: [25, 23, 21, 19, 18, 16, 15, 14, 13, 12], threshold: 20 },
+    { id: "mt-003", metric: "False Positive Rate", current: 3.1, previous: 5.8, change: -46.6, period: "30d", trend: [8, 7, 7, 6, 6, 5, 5, 4, 4, 3], threshold: 5 },
+    { id: "mt-004", metric: "Patch Compliance", current: 96.2, previous: 93.1, change: 3.3, period: "30d", trend: [91, 92, 92, 93, 93, 94, 95, 95, 96, 96], threshold: 95 },
+    { id: "mt-005", metric: "Incident Escalation Rate", current: 8.4, previous: 12.1, change: -30.6, period: "30d", trend: [15, 14, 13, 12, 12, 11, 10, 9, 9, 8], threshold: 10 },
+    { id: "mt-006", metric: "Security Awareness Score", current: 87.5, previous: 82.3, change: 6.3, period: "30d", trend: [78, 79, 80, 81, 82, 83, 84, 86, 87, 88], threshold: 85 },
+    { id: "mt-007", metric: "Vulnerability Backlog", current: 142, previous: 287, change: -50.5, period: "30d", trend: [310, 295, 280, 270, 260, 245, 230, 210, 190, 142], threshold: 200 },
+    { id: "mt-008", metric: "Endpoint Coverage", current: 99.1, previous: 97.8, change: 1.3, period: "30d", trend: [96, 97, 97, 97, 98, 98, 98, 99, 99, 99], threshold: 98 },
+    { id: "mt-009", metric: "Data Loss Events", current: 2, previous: 7, change: -71.4, period: "30d", trend: [12, 10, 9, 8, 7, 6, 5, 4, 3, 2], threshold: 5 },
+    { id: "mt-010", metric: "Compliance Score", current: 92.8, previous: 89.4, change: 3.8, period: "30d", trend: [85, 86, 87, 88, 89, 90, 91, 92, 92, 93], threshold: 90 },
+    { id: "mt-011", metric: "Phishing Click Rate", current: 2.1, previous: 4.5, change: -53.3, period: "30d", trend: [7, 6, 6, 5, 5, 4, 3, 3, 2, 2], threshold: 3 },
+    { id: "mt-012", metric: "Access Review Completion", current: 98.3, previous: 94.6, change: 3.9, period: "30d", trend: [92, 93, 94, 94, 95, 96, 97, 97, 98, 98], threshold: 95 },
+  ];
+
+  private _metricsTrendConfig = {
+    enabled: true,
+    refreshInterval: 30,
+    comparisonPeriods: ["7d", "14d", "30d", "90d"],
+    anomalyThreshold: 2.5,
+    trendSmoothing: 0.3,
+  };
+
+  private _handleMetricsTrendAction(item: typeof this._metricsTrendData[0]): void {
+    this._selectedMetric = item.id;
+    this._trendDetailVisible = true;
+    this.requestUpdate();
+  }
+
+  private _calculateTrendSlope(trend: number[]): number {
+    if (trend.length < 2) return 0;
+    const n = trend.length;
+    const xMean = (n - 1) / 2;
+    const yMean = trend.reduce((a, b) => a + b, 0) / n;
+    let num = 0;
+    let den = 0;
+    for (let i = 0; i < n; i++) {
+      num += (i - xMean) * (trend[i] - yMean);
+      den += (i - xMean) * (i - xMean);
+    }
+    return den === 0 ? 0 : num / den;
+  }
+
+  private _isAnomaly(value: number, trend: number[], threshold: number): boolean {
+    const mean = trend.reduce((a, b) => a + b, 0) / trend.length;
+    const stdDev = Math.sqrt(trend.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / trend.length);
+    return stdDev > 0 && Math.abs(value - mean) > threshold * stdDev;
+  }
+
+  private _renderMetricsTrendSection(): TemplateResult {
+    return html`
+      <section class="metrics-trend-section">
+        <div class="section-header">
+          <h3>Security Metrics Trend - Attack Analysis</h3>
+          <div class="controls">
+            <select class="period-select" @change=${this._handlePeriodChange}>
+              ${this._metricsTrendConfig.comparisonPeriods.map(p => html`
+                <option value="${p}">${p}</option>
+              `)}
+            </select>
+            <button class="refresh-btn" @click=${() => this._refreshMetrics()}>Refresh</button>
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="trend-overview-grid">
+            ${this._metricsTrendData.slice(0, 6).map(item => {
+              const slope = this._calculateTrendSlope(item.trend);
+              const isAnomaly = this._isAnomaly(item.current, item.trend, this._metricsTrendConfig.anomalyThreshold);
+              const isPositive = item.metric.includes("Backlog") || item.metric.includes("False Positive")
+                || item.metric.includes("Escalation") || item.metric.includes("Data Loss")
+                || item.metric.includes("Phishing") || item.metric.includes("Time")
+                ? slope < 0 : slope > 0;
+              return html`
+                <div class="metric-card" ?data-anomaly="${isAnomaly}" @click=${() => this._handleMetricsTrendAction(item)}>
+                  <div class="metric-name">${item.metric}</div>
+                  <div class="metric-value ${isPositive ? 'positive' : 'negative'}">${item.current}${item.period === '30d' ? '%' : ''}</div>
+                  <div class="metric-change ${isPositive ? 'positive' : 'negative'}">
+                    ${item.change > 0 ? '+' : ''}${item.change.toFixed(1)}%
+                  </div>
+                  <svg viewBox="0 0 100 30" class="sparkline">
+                    <polyline points="${item.trend.map((v, i) => `${(i / (item.trend.length - 1)) * 100},${30 - (v - Math.min(...item.trend)) / (Math.max(...item.trend) - Math.min(...item.trend) + 0.01) * 28}`).join(' ')}"
+                      fill="none" stroke="${isPositive ? '#4caf50' : '#f44336'}" stroke-width="1.5" />
+                  </svg>
+                  ${isAnomaly ? html`<span class="anomaly-badge">Anomaly</span>` : ''}
+                </div>
+              `;
+            })}
+          </div>
+          <div class="trend-table">
+            <div class="table-header">
+              <span class="col-metric">Metric</span>
+              <span class="col-current">Current</span>
+              <span class="col-previous">Previous</span>
+              <span class="col-change">Change</span>
+              <span class="col-status">Status</span>
+            </div>
+            ${this._metricsTrendData.map(item => {
+              const meets = item.metric.includes("Backlog") || item.metric.includes("False Positive")
+                || item.metric.includes("Escalation") || item.metric.includes("Data Loss")
+                || item.metric.includes("Phishing") || item.metric.includes("Time")
+                ? item.current <= item.threshold : item.current >= item.threshold;
+              return html`
+                <div class="table-row" @click=${() => this._handleMetricsTrendAction(item)}>
+                  <span class="col-metric">${item.metric}</span>
+                  <span class="col-current">${item.current}</span>
+                  <span class="col-previous">${item.previous}</span>
+                  <span class="col-change ${meets ? 'positive' : 'negative'}">${item.change > 0 ? '+' : ''}${item.change.toFixed(1)}%</span>
+                  <span class="col-status">${meets ? html`<span class="status-ok">OK</span>` : html`<span class="status-warn">Warning</span>`}</span>
+                </div>
+              `;
+            })}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
   render() {    if (this._apRules.length === 0) { this._initApRules(); this._initApCvss(); this._runApAnomalyDetection(); this._generateApPredictions(); this._initApApprovals(); this._initApActivity(); this._initApNotifications(); }
 
     const items = this._getFiltered();

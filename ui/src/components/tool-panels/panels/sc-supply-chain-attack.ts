@@ -8702,6 +8702,117 @@ export class ScSupplyChainAttack extends LitElement {
       </div>
     `;
   }
+  // --- Section: Compliance Evidence Collection (Attack Analysis) ---
+
+  private _evidenceData: Array<{
+    id: string; control: string; evidenceType: string; status: string;
+    collectedBy: string; collectedAt: string; reviewStatus: string;
+    expiry: string; tags: string[]; fileCount: number;
+  }> = [
+    { id: "ev-001", control: "ACC-001", evidenceType: "Screenshot", status: "collected", collectedBy: "J. Martinez", collectedAt: "2026-04-20", reviewStatus: "pending", expiry: "2026-10-20", tags: ["access", "review"], fileCount: 3 },
+    { id: "ev-002", control: "ACC-002", evidenceType: "Audit Log", status: "collected", collectedBy: "S. Chen", collectedAt: "2026-04-19", reviewStatus: "approved", expiry: "2026-10-19", tags: ["access", "log"], fileCount: 7 },
+    { id: "ev-003", control: "DAT-001", evidenceType: "Policy Doc", status: "pending", collectedBy: "A. Patel", collectedAt: "2026-04-18", reviewStatus: "pending", expiry: "2026-10-18", tags: ["data", "policy"], fileCount: 1 },
+    { id: "ev-004", control: "DAT-002", evidenceType: "Test Report", status: "collected", collectedBy: "M. Kim", collectedAt: "2026-04-17", reviewStatus: "approved", expiry: "2026-10-17", tags: ["data", "test"], fileCount: 5 },
+    { id: "ev-005", control: "INC-001", evidenceType: "Incident Report", status: "collected", collectedBy: "R. Johnson", collectedAt: "2026-04-16", reviewStatus: "rejected", expiry: "2026-10-16", tags: ["incident", "report"], fileCount: 2 },
+    { id: "ev-006", control: "NET-001", evidenceType: "Scan Output", status: "pending", collectedBy: "L. Wang", collectedAt: "2026-04-15", reviewStatus: "pending", expiry: "2026-10-15", tags: ["network", "scan"], fileCount: 12 },
+    { id: "ev-007", control: "NET-002", evidenceType: "Config Export", status: "collected", collectedBy: "D. Brown", collectedAt: "2026-04-14", reviewStatus: "approved", expiry: "2026-10-14", tags: ["network", "config"], fileCount: 4 },
+    { id: "ev-008", control: "PHY-001", evidenceType: "Photo Evidence", status: "expired", collectedBy: "K. Davis", collectedAt: "2025-10-01", reviewStatus: "approved", expiry: "2026-04-01", tags: ["physical", "photo"], fileCount: 8 },
+    { id: "ev-009", control: "PHY-002", evidenceType: "Visitor Log", status: "collected", collectedBy: "T. Wilson", collectedAt: "2026-04-13", reviewStatus: "pending", expiry: "2026-10-13", tags: ["physical", "log"], fileCount: 2 },
+    { id: "ev-010", control: "HR-001", evidenceType: "Training Cert", status: "collected", collectedBy: "N. Anderson", collectedAt: "2026-04-12", reviewStatus: "approved", expiry: "2026-10-12", tags: ["hr", "training"], fileCount: 1 },
+    { id: "ev-011", control: "HR-002", evidenceType: "Background Check", status: "pending", collectedBy: "P. Thomas", collectedAt: "2026-04-11", reviewStatus: "pending", expiry: "2026-10-11", tags: ["hr", "background"], fileCount: 3 },
+    { id: "ev-012", control: "CRY-001", evidenceType: "Key Rotation Log", status: "collected", collectedBy: "C. Garcia", collectedAt: "2026-04-10", reviewStatus: "approved", expiry: "2026-10-10", tags: ["crypto", "rotation"], fileCount: 6 },
+  ];
+
+  private _evidenceConfig = {
+    enabled: true,
+    refreshInterval: 60,
+    maxFileSize: 50,
+    allowedTypes: ["pdf", "png", "jpg", "csv", "json", "log"],
+    retentionDays: 180,
+    autoArchive: true,
+  };
+
+  private _handleEvidenceAction(item: typeof this._evidenceData[0]): void {
+    this._selectedEvidence = item.id;
+    this._evidenceDetailVisible = true;
+    this.requestUpdate();
+  }
+
+  private _calculateEvidenceCoverage(): number {
+    const total = this._evidenceData.length;
+    const collected = this._evidenceData.filter(e => e.status === "collected").length;
+    return total > 0 ? (collected / total) * 100 : 0;
+  }
+
+  private _getEvidenceChain(controlId: string): string[] {
+    return this._evidenceData
+      .filter(e => e.control === controlId)
+      .sort((a, b) => a.collectedAt.localeCompare(b.collectedAt))
+      .map(e => e.id);
+  }
+
+  private _renderComplianceEvidenceSection(): TemplateResult {
+    const coverage = this._calculateEvidenceCoverage();
+    const approved = this._evidenceData.filter(e => e.reviewStatus === "approved").length;
+    const pending = this._evidenceData.filter(e => e.reviewStatus === "pending").length;
+    const expired = this._evidenceData.filter(e => e.status === "expired").length;
+    return html`
+      <section class="compliance-evidence-section">
+        <div class="section-header">
+          <h3>Compliance Evidence - Attack Analysis</h3>
+          <div class="controls">
+            <button class="upload-btn" @click=${() => this._uploadEvidence()}>Upload Evidence</button>
+            <button class="export-btn" @click=${() => this._exportEvidenceReport()}>Export Report</button>
+          </div>
+        </div>
+        <div class="evidence-stats">
+          <div class="stat-card">
+            <div class="stat-value">${coverage.toFixed(1)}%</div>
+            <div class="stat-label">Coverage</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${approved}</div>
+            <div class="stat-label">Approved</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${pending}</div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${expired}</div>
+            <div class="stat-label">Expired</div>
+          </div>
+        </div>
+        <div class="evidence-timeline">
+          <svg viewBox="0 0 400 160" class="evidence-chain">
+            <line x1="20" y1="80" x2="380" y2="80" stroke="#e0e0e0" stroke-width="2" />
+            ${this._evidenceData.slice(0, 8).map((e, i) => {
+              const x = 20 + (i / 7) * 360;
+              const color = e.reviewStatus === "approved" ? "#4caf50" : e.reviewStatus === "rejected" ? "#f44336" : "#ff9800";
+              return html`
+                <circle cx="${x}" cy="80" r="8" fill="${color}" />
+                <text x="${x}" y="60" text-anchor="middle" font-size="9" fill="#666">${e.control}</text>
+                <text x="${x}" y="105" text-anchor="middle" font-size="8" fill="#999">${e.evidenceType}</text>
+              `;
+            })}
+          </svg>
+        </div>
+        <div class="evidence-list">
+          ${this._evidenceData.map(item => html`
+            <div class="evidence-row" @click=${() => this._handleEvidenceAction(item)}>
+              <span class="ev-control">${item.control}</span>
+              <span class="ev-type">${item.evidenceType}</span>
+              <span class="ev-collector">${item.collectedBy}</span>
+              <span class="ev-date">${item.collectedAt}</span>
+              <span class="ev-files">${item.fileCount} files</span>
+              <span class="ev-status ${item.reviewStatus}">${item.reviewStatus}</span>
+            </div>
+          `)}
+        </div>
+      </section>
+    `;
+  }
+
   render() {
     return html`${this.scRenderRound17()}
       <div class="panel">

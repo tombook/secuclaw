@@ -8473,6 +8473,115 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+  // --- Section: Security ROI Dashboard (Log Analysis) ---
+
+  private _roiData: Array<{
+    id: string; category: string; investment: number; savings: number;
+    roi: number; year: string; status: string; description: string;
+  }> = [
+    { id: "roi-001", category: "Endpoint Protection", investment: 285000, savings: 1240000, roi: 335, year: "2026", status: "active", description: "Next-gen AV and EDR platform" },
+    { id: "roi-002", category: "SIEM Upgrade", investment: 420000, savings: 890000, roi: 112, year: "2026", status: "active", description: "Cloud-native SIEM with ML detection" },
+    { id: "roi-003", category: "Security Training", investment: 95000, savings: 520000, roi: 447, year: "2026", status: "active", description: "Phishing simulation and awareness program" },
+    { id: "roi-004", category: "Vulnerability Mgmt", investment: 180000, savings: 760000, roi: 322, year: "2026", status: "active", description: "Automated patching and vulnerability scanning" },
+    { id: "roi-005", category: "Identity Governance", investment: 310000, savings: 680000, roi: 119, year: "2026", status: "active", description: "PAM and IGA solution deployment" },
+    { id: "roi-006", category: "Cloud Security", investment: 250000, savings: 920000, roi: 268, year: "2026", status: "active", description: "CSPM and CWPP tooling" },
+    { id: "roi-007", category: "Incident Response", investment: 150000, savings: 2100000, roi: 1300, year: "2026", status: "active", description: "IR retainer and automation platform" },
+    { id: "roi-008", category: "Network Security", investment: 380000, savings: 540000, roi: 42, year: "2026", status: "active", description: "NGFW and NDR solution" },
+    { id: "roi-009", category: "Data Protection", investment: 220000, savings: 870000, roi: 295, year: "2026", status: "active", description: "DLP and encryption management" },
+    { id: "roi-010", category: "Compliance Tooling", investment: 175000, savings: 430000, roi: 146, year: "2026", status: "active", description: "GRC platform and automation" },
+    { id: "roi-011", category: "Threat Intelligence", investment: 120000, savings: 350000, roi: 192, year: "2026", status: "active", description: "Commercial TI feeds and TIP" },
+    { id: "roi-012", category: "Red Team Ops", investment: 200000, savings: 1800000, roi: 800, year: "2026", status: "active", description: "Continuous adversary simulation" },
+  ];
+
+  private _roiConfig = {
+    enabled: true,
+    refreshInterval: 300,
+    currency: "USD",
+    fiscalYear: "2026",
+    targetROI: 150,
+    discountRate: 0.08,
+  };
+
+  private _handleROIAction(item: typeof this._roiData[0]): void {
+    this._selectedROI = item.id;
+    this._roiDetailVisible = true;
+    this.requestUpdate();
+  }
+
+  private _calculateTotalROI(): number {
+    const totalInvestment = this._roiData.reduce((sum, r) => sum + r.investment, 0);
+    const totalSavings = this._roiData.reduce((sum, r) => sum + r.savings, 0);
+    return totalInvestment > 0 ? ((totalSavings - totalInvestment) / totalInvestment) * 100 : 0;
+  }
+
+  private _calculateNetSavings(): number {
+    return this._roiData.reduce((sum, r) => sum + r.savings - r.investment, 0);
+  }
+
+  private _renderROISection(): TemplateResult {
+    const totalROI = this._calculateTotalROI();
+    const netSavings = this._calculateNetSavings();
+    const totalInvestment = this._roiData.reduce((sum, r) => sum + r.investment, 0);
+    const totalSavings = this._roiData.reduce((sum, r) => sum + r.savings, 0);
+    return html`
+      <section class="security-roi-section">
+        <div class="section-header">
+          <h3>Security ROI Dashboard - Log Analysis</h3>
+          <div class="controls">
+            <select class="year-filter" @change=${this._handleYearFilter}>
+              <option value="2026">FY 2026</option>
+              <option value="2025">FY 2025</option>
+            </select>
+            <button class="export-btn" @click=${() => this._exportROIReport()}>Export</button>
+          </div>
+        </div>
+        <div class="roi-hero">
+          <div class="hero-card main">
+            <div class="hero-label">Overall ROI</div>
+            <div class="hero-value" style="color: ${totalROI >= this._roiConfig.targetROI ? '#4caf50' : '#ff9800'}">${totalROI.toFixed(0)}%</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-label">Net Savings</div>
+            <div class="hero-value">${'$' + (netSavings / 1000000).toFixed(1)}M</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-label">Total Investment</div>
+            <div class="hero-value">${'$' + (totalInvestment / 1000000).toFixed(1)}M</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-label">Total Savings</div>
+            <div class="hero-value">${'$' + (totalSavings / 1000000).toFixed(1)}M</div>
+          </div>
+        </div>
+        <svg viewBox="0 0 400 180" class="roi-chart">
+          ${this._roiData.slice(0, 10).map((item, i) => {
+            const x = 30 + (i / 9) * 350;
+            const investH = (item.investment / 500000) * 70;
+            const saveH = (item.savings / 2100000) * 140;
+            return html`
+              <rect x="${x - 10}" y="${160 - investH}" width="12" height="${investH}" fill="#f44336" rx="1" opacity="0.7" />
+              <rect x="${x + 4}" y="${160 - saveH}" width="12" height="${saveH}" fill="#4caf50" rx="1" opacity="0.7" />
+              <text x="${x + 3}" y="172" text-anchor="middle" font-size="6" fill="#999" transform="rotate(-35, ${x + 3}, 172)">${item.category}</text>
+            `;
+          })}
+          <text x="20" y="90" font-size="8" fill="#f44336">Investment</text>
+          <text x="20" y="100" font-size="8" fill="#4caf50">Savings</text>
+        </svg>
+        <div class="roi-table">
+          ${this._roiData.map(item => html`
+            <div class="roi-row" @click=${() => this._handleROIAction(item)}>
+              <span class="roi-cat">${item.category}</span>
+              <span class="roi-invest">${'$' + (item.investment / 1000).toFixed(0)}K</span>
+              <span class="roi-save">${'$' + (item.savings / 1000).toFixed(0)}K</span>
+              <span class="roi-pct ${item.roi >= this._roiConfig.targetROI ? 'positive' : 'negative'}">${item.roi}%</span>
+              <span class="roi-desc">${item.description}</span>
+            </div>
+          `)}
+        </div>
+      </section>
+    `;
+  }
+
   render() {    if (this._lqRules.length === 0) { this._initLqRules(); this._initLqCvss(); this._runLqAnomalyDetection(); this._generateLqPredictions(); this._initLqApprovals(); this._initLqActivity(); this._initLqNotifications(); }
 
     const items = this._getFiltered();

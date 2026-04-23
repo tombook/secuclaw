@@ -7774,6 +7774,109 @@ export class ScChampions extends LitElement {
       </div>
     `;
   }
+  // --- Section: Threat Intelligence Feed Integration (Security Champions) ---
+
+  private _threatFeedData: Array<{
+    id: string; source: string; indicator: string; type: string;
+    confidence: number; severity: string; firstSeen: string;
+    lastSeen: string; tags: string[]; description: string;
+  }> = [
+    { id: "ti-001", source: "STIX", indicator: "192.168.45.102", type: "IPv4", confidence: 92, severity: "high", firstSeen: "2026-04-15", lastSeen: "2026-04-22", tags: ["c2", "apt"], description: "Known C2 infrastructure" },
+    { id: "ti-002", source: "MISP", indicator: "malware.sample.exe", type: "File", confidence: 88, severity: "critical", firstSeen: "2026-04-10", lastSeen: "2026-04-21", tags: ["malware", "trojan"], description: "Trojan dropper variant" },
+    { id: "ti-003", source: "OTX", indicator: "evil-domain.com", type: "Domain", confidence: 76, severity: "medium", firstSeen: "2026-04-12", lastSeen: "2026-04-20", tags: ["phishing", "dga"], description: "DGA-generated phishing domain" },
+    { id: "ti-004", source: "STIX", indicator: "CVE-2026-1234", type: "CVE", confidence: 95, severity: "critical", firstSeen: "2026-04-08", lastSeen: "2026-04-22", tags: ["rce", "exploit"], description: "Remote code execution vulnerability" },
+    { id: "ti-005", source: "AlienVault", indicator: "10.0.55.201", type: "IPv4", confidence: 71, severity: "low", firstSeen: "2026-04-05", lastSeen: "2026-04-19", tags: ["scan", "recon"], description: "Port scanning activity" },
+    { id: "ti-006", source: "MISP", indicator: "ssl-cert-fingerprint", type: "Certificate", confidence: 83, severity: "high", firstSeen: "2026-04-14", lastSeen: "2026-04-22", tags: ["mitm", "cert"], description: "Fraudulent SSL certificate" },
+    { id: "ti-007", source: "VirusTotal", indicator: "sha256:abc123...", type: "Hash", confidence: 97, severity: "critical", firstSeen: "2026-04-01", lastSeen: "2026-04-22", tags: ["ransomware", "payload"], description: "Ransomware payload hash" },
+    { id: "ti-008", source: "STIX", indicator: "apt-group-omega", type: "Actor", confidence: 69, severity: "high", firstSeen: "2026-03-20", lastSeen: "2026-04-21", tags: ["apt", "espionage"], description: "State-sponsored threat actor" },
+    { id: "ti-009", source: "OTX", indicator: "phish-login.xyz", type: "URL", confidence: 81, severity: "medium", firstSeen: "2026-04-16", lastSeen: "2026-04-22", tags: ["phishing", "credential"], description: "Credential harvesting page" },
+    { id: "ti-010", source: "CrowdStrike", indicator: "CVE-2026-5678", type: "CVE", confidence: 90, severity: "high", firstSeen: "2026-04-11", lastSeen: "2026-04-22", tags: ["privilege", "escalation"], description: "Local privilege escalation" },
+    { id: "ti-011", source: "MISP", indicator: "jd3k2-malware.dll", type: "File", confidence: 85, severity: "high", firstSeen: "2026-04-13", lastSeen: "2026-04-20", tags: ["malware", "loader"], description: "Second-stage malware loader" },
+    { id: "ti-012", source: "STIX", indicator: "172.16.99.50", type: "IPv4", confidence: 74, severity: "medium", firstSeen: "2026-04-17", lastSeen: "2026-04-22", tags: ["tor", "exit-node"], description: "Tor exit node detected" },
+  ];
+
+  private _threatFeedConfig = {
+    enabled: true,
+    refreshInterval: 15,
+    sources: ["STIX", "MISP", "OTX", "AlienVault", "VirusTotal", "CrowdStrike"],
+    minConfidence: 60,
+    autoBlockThreshold: 90,
+    retentionDays: 90,
+  };
+
+  private _handleThreatIntelAction(item: typeof this._threatFeedData[0]): void {
+    this._selectedIndicator = item.id;
+    this._indicatorDetailVisible = true;
+    this.requestUpdate();
+  }
+
+  private _calculateFeedHealth(): number {
+    const total = this._threatFeedData.length;
+    const highConf = this._threatFeedData.filter(t => t.confidence >= 80).length;
+    return total > 0 ? (highConf / total) * 100 : 0;
+  }
+
+  private _getConfidenceColor(confidence: number): string {
+    if (confidence >= 90) return "#f44336";
+    if (confidence >= 75) return "#ff9800";
+    if (confidence >= 60) return "#ffeb3b";
+    return "#4caf50";
+  }
+
+  private _renderThreatIntelSection(): TemplateResult {
+    const health = this._calculateFeedHealth();
+    const sources = [...new Set(this._threatFeedData.map(t => t.source))];
+    return html`
+      <section class="threat-intel-section">
+        <div class="section-header">
+          <h3>Threat Intelligence Feed - Security Champions</h3>
+          <div class="controls">
+            <select class="source-filter" @change=${this._handleSourceFilter}>
+              <option value="all">All Sources</option>
+              ${sources.map(s => html`<option value="${s}">${s}</option>`)}
+            </select>
+            <button class="refresh-btn" @click=${() => this._refreshThreatFeed()}>Refresh</button>
+          </div>
+        </div>
+        <div class="feed-health-bar">
+          <div class="health-label">Feed Health</div>
+          <div class="health-track">
+            <div class="health-fill" style="width: ${health}%"></div>
+          </div>
+          <div class="health-value">${health.toFixed(0)}%</div>
+        </div>
+        <div class="confidence-distribution">
+          <svg viewBox="0 0 400 120" class="confidence-chart">
+            ${this._threatFeedData.slice(0, 10).map((item, i) => {
+              const x = 20 + (i / 9) * 360;
+              const h = (item.confidence / 100) * 100;
+              const color = this._getConfidenceColor(item.confidence);
+              return html`
+                <rect x="${x - 12}" y="${110 - h}" width="24" height="${h}" fill="${color}" rx="2" />
+                <text x="${x}" y="${105 - h}" text-anchor="middle" font-size="9" fill="#333">${item.confidence}%</text>
+                <text x="${x}" y="118" text-anchor="middle" font-size="7" fill="#999" transform="rotate(-45, ${x}, 118)">${item.source}</text>
+              `;
+            })}
+          </svg>
+        </div>
+        <div class="indicator-list">
+          ${this._threatFeedData.map(item => html`
+            <div class="indicator-row" @click=${() => this._handleThreatIntelAction(item)}>
+              <span class="ind-source">${item.source}</span>
+              <span class="ind-value">${item.indicator}</span>
+              <span class="ind-type">${item.type}</span>
+              <span class="ind-severity ${item.severity}">${item.severity}</span>
+              <div class="ind-confidence">
+                <div class="conf-bar" style="width: ${item.confidence}%; background: ${this._getConfidenceColor(item.confidence)}"></div>
+              </div>
+              <span class="ind-seen">${item.lastSeen}</span>
+            </div>
+          `)}
+        </div>
+      </section>
+    `;
+  }
+
   render() {
     const items = this._getFiltered();
     const crit = items.filter(i => i.severity === 'critical').length;
