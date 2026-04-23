@@ -7543,6 +7543,375 @@ private _executionHistory: ExecutionRecord[] = [
       </section>`;
   }
 
+
+  private _renderBudgetPlanning() {
+    const budgetData = [
+      { category: "Personnel & Training", planned: 1087000, actual: 3681000, utilization: 338.6, q1: "21%", q2: "26%", q3: "24%", q4: "16%" },
+      { category: "Tooling & Licensing", planned: 1094000, actual: 3694000, utilization: 337.7, q1: "24%", q2: "31%", q3: "19%", q4: "17%" },
+      { category: "Infrastructure Security", planned: 1101000, actual: 3707000, utilization: 336.7, q1: "27%", q2: "20%", q3: "30%", q4: "18%" },
+      { category: "Compliance & Audit", planned: 1108000, actual: 3720000, utilization: 335.7, q1: "30%", q2: "25%", q3: "25%", q4: "19%" },
+      { category: "Incident Response", planned: 1115000, actual: 3733000, utilization: 334.8, q1: "17%", q2: "30%", q3: "20%", q4: "20%" },
+      { category: "Third-Party Assessments", planned: 1122000, actual: 3746000, utilization: 333.9, q1: "20%", q2: "35%", q3: "31%", q4: "21%" },
+      { category: "Security Awareness", planned: 1129000, actual: 3759000, utilization: 332.9, q1: "23%", q2: "24%", q3: "26%", q4: "22%" },
+      { category: "Research & Innovation", planned: 1136000, actual: 3772000, utilization: 332.0, q1: "26%", q2: "29%", q3: "21%", q4: "23%" },
+    ];
+    const totalBudget = budgetData.reduce((s, d) => s + d.planned, 0);
+    const totalSpent = budgetData.reduce((s, d) => s + d.actual, 0);
+    const overallUtil = ((totalSpent / totalBudget) * 100).toFixed(1);
+    const headcount = [
+      { team: "SOC Tier 1", current: 16, target: 17, gap: 2, avgSalary: "171k" },
+      { team: "SOC Tier 2", current: 8, target: 16, gap: 1, avgSalary: "89k" },
+      { team: "Threat Intel", current: 17, target: 15, gap: 0, avgSalary: "118k" },
+      { team: "Red Team", current: 9, target: 14, gap: 5, avgSalary: "147k" },
+      { team: "GRC", current: 18, target: 13, gap: 4, avgSalary: "176k" },
+      { team: "AppSec", current: 10, target: 12, gap: 3, avgSalary: "94k" },
+      { team: "Cloud Sec", current: 2, target: 11, gap: 2, avgSalary: "123k" },
+      { team: "Identity & Access", current: 11, target: 10, gap: 1, avgSalary: "152k" },
+    ];
+    const vendorSpend = [
+      { vendor: "CrowdStrike", annual: "380k", contractEnd: "2026-03", renewalRisk: "Low", satisfaction: 5 },
+      { vendor: "Palo Alto", annual: "411k", contractEnd: "2026-04", renewalRisk: "Medium", satisfaction: 4 },
+      { vendor: "Splunk", annual: "442k", contractEnd: "2026-05", renewalRisk: "High", satisfaction: 3 },
+      { vendor: "Qualys", annual: "473k", contractEnd: "2026-06", renewalRisk: "Low", satisfaction: 5 },
+      { vendor: "Rapid7", annual: "504k", contractEnd: "2026-07", renewalRisk: "Medium", satisfaction: 4 },
+      { vendor: "Mandiant", annual: "535k", contractEnd: "2026-08", renewalRisk: "High", satisfaction: 3 },
+      { vendor: "Zscaler", annual: "566k", contractEnd: "2026-09", renewalRisk: "Low", satisfaction: 5 },
+      { vendor: "Duo Security", annual: "597k", contractEnd: "2026-10", renewalRisk: "Medium", satisfaction: 4 },
+    ];
+    const roiProjections = [
+      { area: "Threat Detection", investment: "282k", projectedReturn: "1813k", roiMultiple: "1.5x", confidence: 62 },
+      { area: "Incident Reduction", investment: "325k", projectedReturn: "1860k", roiMultiple: "4.0x", confidence: 79 },
+      { area: "Compliance Savings", investment: "368k", projectedReturn: "1907k", roiMultiple: "3.9x", confidence: 60 },
+      { area: "Automation Gains", investment: "411k", projectedReturn: "1954k", roiMultiple: "3.8x", confidence: 77 },
+      { area: "Risk Avoidance", investment: "454k", projectedReturn: "2001k", roiMultiple: "3.7x", confidence: 94 },
+    ];
+    return html`
+      <section class="budget-planning">
+        <h4>Budget & Resource Planning</h4>
+        <div class="budget-overview">
+          <div class="budget-card"><span class="blabel">Total Budget</span><span class="bval">${totalBudget.toLocaleString()}</span></div>
+          <div class="budget-card"><span class="blabel">Total Spent</span><span class="bval">${totalSpent.toLocaleString()}</span></div>
+          <div class="budget-card"><span class="blabel">Utilization</span><span class="bval">${overallUtil}%</span></div>
+          <div class="budget-card"><span class="blabel">Remaining</span><span class="bval">${(totalBudget - totalSpent).toLocaleString()}</span></div>
+        </div>
+        <div class="budget-table">
+          <h5>Category Breakdown</h5>
+          <div class="bt-header"><span>Category</span><span>Planned</span><span>Actual</span><span>Util</span><span>Q1</span><span>Q2</span><span>Q3</span><span>Q4</span></div>
+          ${budgetData.map(b => html`
+            <div class="bt-row"><span>${b.category}</span><span>${(b.planned/1000).toFixed(0)}k</span><span>${(b.actual/1000).toFixed(0)}k</span><span>${b.utilization}%</span><span>${b.q1}</span><span>${b.q2}</span><span>${b.q3}</span><span>${b.q4}</span></div>
+          `).join("")}
+        </div>
+        <div class="budget-headcount">
+          <h5>Headcount Planning</h5>
+          ${headcount.map(h => html`
+            <div class="hc-row"><span>${h.team}</span><span>${h.current}/${h.target}</span><span>Gap: ${h.gap}</span><span>${h.avgSalary}</span></div>
+          `).join("")}
+        </div>
+        <div class="budget-vendor">
+          <h5>Vendor Spend Analysis</h5>
+          ${vendorSpend.map(v => html`
+            <div class="vs-row"><span>${v.vendor}</span><span>${v.annual}</span><span>Exp: ${v.contractEnd}</span><span>${v.renewalRisk}</span><span>${v.satisfaction}/5</span></div>
+          `).join("")}
+        </div>
+        <div class="budget-roi">
+          <h5>ROI Projections</h5>
+          ${roiProjections.map(rp => html`
+            <div class="roi-row"><span>${rp.area}</span><span>${rp.investment}</span><span>${rp.projectedReturn}</span><span>${rp.roiMultiple}</span><span>${rp.confidence}% conf</span></div>
+          `).join("")}
+        </div>
+      </section>`;
+  }
+
+  private _renderMetricsNormalization() {
+    const kpiCatalog = [
+      { id: "kpi-1", name: "MTTD", owner: "SOC", unit: "minutes", target: 93, current: 94, benchmark: 92, collection: "auto", frequency: "realtime" },
+      { id: "kpi-2", name: "MTTR", owner: "GRC", unit: "%", target: 96, current: 55, benchmark: 69, collection: "semi-auto", frequency: "daily" },
+      { id: "kpi-3", name: "MTTC", owner: "AppSec", unit: "score", target: 99, current: 62, benchmark: 80, collection: "manual", frequency: "weekly" },
+      { id: "kpi-4", name: "Vuln SLA Compliance", owner: "Cloud Sec", unit: "count", target: 72, current: 69, benchmark: 91, collection: "auto", frequency: "monthly" },
+      { id: "kpi-5", name: "Patch Coverage", owner: "Identity", unit: "days", target: 75, current: 76, benchmark: 68, collection: "semi-auto", frequency: "realtime" },
+      { id: "kpi-6", name: "Phishing Click Rate", owner: "Threat Intel", unit: "minutes", target: 78, current: 83, benchmark: 79, collection: "manual", frequency: "daily" },
+      { id: "kpi-7", name: "Training Completion", owner: "Security Ops", unit: "%", target: 81, current: 90, benchmark: 90, collection: "auto", frequency: "weekly" },
+      { id: "kpi-8", name: "Escalation Rate", owner: "Risk Mgmt", unit: "score", target: 84, current: 97, benchmark: 67, collection: "semi-auto", frequency: "monthly" },
+      { id: "kpi-9", name: "False Positive Rate", owner: "SOC", unit: "count", target: 87, current: 58, benchmark: 78, collection: "manual", frequency: "realtime" },
+      { id: "kpi-10", name: "Threat Intel Actionability", owner: "GRC", unit: "days", target: 90, current: 65, benchmark: 89, collection: "auto", frequency: "daily" },
+      { id: "kpi-11", name: "Endpoint Compliance", owner: "AppSec", unit: "minutes", target: 93, current: 72, benchmark: 66, collection: "semi-auto", frequency: "weekly" },
+      { id: "kpi-12", name: "Cloud Misconfig Score", owner: "Cloud Sec", unit: "%", target: 96, current: 79, benchmark: 77, collection: "manual", frequency: "monthly" },
+      { id: "kpi-13", name: "Identity Anomaly Rate", owner: "Identity", unit: "score", target: 99, current: 86, benchmark: 88, collection: "auto", frequency: "realtime" },
+      { id: "kpi-14", name: "DLP Events", owner: "Threat Intel", unit: "count", target: 72, current: 93, benchmark: 65, collection: "semi-auto", frequency: "daily" },
+      { id: "kpi-15", name: "Vendor Risk Avg", owner: "Security Ops", unit: "days", target: 75, current: 100, benchmark: 76, collection: "manual", frequency: "weekly" },
+      { id: "kpi-16", name: "Compliance Audit Pass Rate", owner: "Risk Mgmt", unit: "minutes", target: 78, current: 61, benchmark: 87, collection: "auto", frequency: "monthly" },
+      { id: "kpi-17", name: "Awareness Score", owner: "SOC", unit: "%", target: 81, current: 68, benchmark: 98, collection: "semi-auto", frequency: "realtime" },
+      { id: "kpi-18", name: "SOC Utilization", owner: "GRC", unit: "score", target: 84, current: 75, benchmark: 75, collection: "manual", frequency: "daily" },
+      { id: "kpi-19", name: "Automation Coverage", owner: "AppSec", unit: "count", target: 87, current: 82, benchmark: 86, collection: "auto", frequency: "weekly" },
+      { id: "kpi-20", name: "Risk Register Currency", owner: "Cloud Sec", unit: "days", target: 90, current: 89, benchmark: 97, collection: "semi-auto", frequency: "monthly" },
+    ];
+    const benchmarkSources = [
+      { source: "NIST CSF", mappedKPIs: 8, alignment: 71, lastReview: "2026-06-22", status: "aligned" },
+      { source: "CIS Controls v8", mappedKPIs: 3, alignment: 88, lastReview: "2026-01-17", status: "partial" },
+      { source: "ISO 27001:2022", mappedKPIs: 4, alignment: 66, lastReview: "2026-02-12", status: "reviewing" },
+      { source: "PCI DSS 4.0", mappedKPIs: 5, alignment: 83, lastReview: "2026-03-07", status: "aligned" },
+      { source: "SOC 2 Type II", mappedKPIs: 6, alignment: 61, lastReview: "2026-04-02", status: "partial" },
+      { source: "MITRE ATT&CK", mappedKPIs: 7, alignment: 78, lastReview: "2026-05-25", status: "reviewing" },
+      { source: "SANS Top 20", mappedKPIs: 8, alignment: 95, lastReview: "2026-06-20", status: "aligned" },
+      { source: "OWASP Top 10", mappedKPIs: 3, alignment: 73, lastReview: "2026-01-15", status: "partial" },
+    ];
+    const normalizationRules = [
+      { rule: "Time metrics normalized to minutes", appliesTo: 6, exceptions: 2, version: "v3.3" },
+      { rule: "Percentage metrics capped at 100", appliesTo: 5, exceptions: 0, version: "v3.0" },
+      { rule: "Count metrics use 7-day rolling avg", appliesTo: 4, exceptions: 1, version: "v3.7" },
+      { rule: "Score metrics use 0-100 scale", appliesTo: 3, exceptions: 2, version: "v3.4" },
+      { rule: "Rate metrics per 1000 events", appliesTo: 7, exceptions: 0, version: "v3.1" },
+    ];
+    return html`
+      <section class="metrics-normalization">
+        <h4>Security Metrics Normalization</h4>
+        <div class="mn-summary">
+          <div class="mn-stat"><span class="blabel">Total KPIs</span><span class="bval">${kpiCatalog.length}</span></div>
+          <div class="mn-stat"><span class="blabel">On Target</span><span class="bval">${kpiCatalog.filter(k => k.current >= k.target).length}</span></div>
+          <div class="mn-stat"><span class="blabel">Below Target</span><span class="bval">${kpiCatalog.filter(k => k.current < k.target).length}</span></div>
+          <div class="mn-stat"><span class="blabel">Auto-Collected</span><span class="bval">${kpiCatalog.filter(k => k.collection === "auto").length}</span></div>
+        </div>
+        <div class="mn-kpi-table">
+          <h5>KPI Definition Catalog</h5>
+          <div class="mn-header"><span>KPI</span><span>Owner</span><span>Unit</span><span>Target</span><span>Current</span><span>Benchmark</span><span>Collection</span><span>Freq</span></div>
+          ${kpiCatalog.map(k => html`
+            <div class="mn-row"><span>${k.name}</span><span>${k.owner}</span><span>${k.unit}</span><span>${k.target}</span><span>${k.current}</span><span>${k.benchmark}</span><span>${k.collection}</span><span>${k.frequency}</span></div>
+          `).join("")}
+        </div>
+        <div class="mn-benchmarks">
+          <h5>Industry Benchmark Alignment</h5>
+          ${benchmarkSources.map(b => html`
+            <div class="bm-row"><span>${b.source}</span><span>${b.mappedKPIs} KPIs</span><span>${b.alignment}%</span><span>${b.lastReview}</span><span>${b.status}</span></div>
+          `).join("")}
+        </div>
+        <div class="mn-rules">
+          <h5>Normalization Framework</h5>
+          ${normalizationRules.map(n => html`
+            <div class="nr-row"><span>${n.rule}</span><span>${n.appliesTo} KPIs</span><span>${n.exceptions} exceptions</span><span>${n.version}</span></div>
+          `).join("")}
+        </div>
+      </section>`;
+  }
+
+  private _renderThreatHuntingCampaigns() {
+    const campaigns = [
+      { id: "HC-1001", name: "Lateral Movement Sweep", status: "active", hypothesis: "H1: Actors using pass-the-hash for lateral movement", leadHunter: "Alice Chen", findings: 21, startDate: "2026-02-14", endDate: null, effectiveness: 42 },
+      { id: "HC-1002", name: "Credential Harvesting Hunt", status: "completed", hypothesis: "H2: Actors using web shells for persistence", leadHunter: "Bob Martinez", findings: 24, startDate: "2026-01-25", endDate: "2026-05-03", effectiveness: 61 },
+      { id: "HC-1003", name: "Persistence Mechanism Audit", status: "planned", hypothesis: "H3: Actors using scheduled tasks for data theft", leadHunter: "Carol Wu", findings: 27, startDate: "2026-04-08", endDate: null, effectiveness: 80 },
+      { id: "HC-1004", name: "C2 Beacon Detection", status: "in-review", hypothesis: "H4: Actors using DNS tunneling for C2 communication", leadHunter: "Dave Kim", findings: 30, startDate: "2026-03-19", endDate: null, effectiveness: 40 },
+      { id: "HC-1005", name: "Data Exfiltration Patterns", status: "active", hypothesis: "H5: Actors using encrypted channels for privilege escalation", leadHunter: "Eve Johnson", findings: 33, startDate: "2026-02-02", endDate: null, effectiveness: 59 },
+      { id: "HC-1006", name: "Privilege Escalation Scan", status: "completed", hypothesis: "H6: Actors using token impersonation for defense evasion", leadHunter: "Frank Liu", findings: 36, startDate: "2026-01-13", endDate: "2026-06-15", effectiveness: 78 },
+      { id: "HC-1007", name: "Supply Chain Implant Hunt", status: "planned", hypothesis: "H7: Actors using poisoned images for initial access", leadHunter: "Grace Park", findings: 39, startDate: "2026-04-24", endDate: null, effectiveness: 97 },
+      { id: "HC-1008", name: "Insider Threat Indicators", status: "in-review", hypothesis: "H8: Actors using legitimate tools for credential access", leadHunter: "Hector Silva", findings: 42, startDate: "2026-03-07", endDate: null, effectiveness: 57 },
+      { id: "HC-1009", name: "Cloud Metadata Analysis", status: "active", hypothesis: "H9: Actors using API keys for command execution", leadHunter: "Alice Chen", findings: 45, startDate: "2026-02-18", endDate: null, effectiveness: 76 },
+      { id: "HC-1010", name: "DNS Tunnel Detection", status: "completed", hypothesis: "H10: Actors using encoded subdomains for exfiltration", leadHunter: "Bob Martinez", findings: 0, startDate: "2026-01-01", endDate: "2026-04-27", effectiveness: 95 },
+      { id: "HC-1011", name: "Fileless Malware Search", status: "planned", hypothesis: "H11: Actors using WMI providers for discovery", leadHunter: "Carol Wu", findings: 3, startDate: "2026-04-12", endDate: null, effectiveness: 55 },
+      { id: "HC-1012", name: "Zero-Day Exploit Traces", status: "in-review", hypothesis: "H12: Actors using exploit kits for collection", leadHunter: "Dave Kim", findings: 6, startDate: "2026-03-23", endDate: null, effectiveness: 74 },
+    ];
+    const hunterLeaderboard = [
+      { hunter: "Alice Chen", campaigns: 13, findings: 90, highSeverity: 23, avgScore: 96, streak: 6 },
+      { hunter: "Bob Martinez", campaigns: 10, findings: 119, highSeverity: 2, avgScore: 89, streak: 7 },
+      { hunter: "Carol Wu", campaigns: 7, findings: 32, highSeverity: 7, avgScore: 82, streak: 8 },
+      { hunter: "Dave Kim", campaigns: 4, findings: 61, highSeverity: 12, avgScore: 75, streak: 1 },
+      { hunter: "Eve Johnson", campaigns: 14, findings: 90, highSeverity: 17, avgScore: 68, streak: 2 },
+      { hunter: "Frank Liu", campaigns: 11, findings: 119, highSeverity: 22, avgScore: 61, streak: 3 },
+      { hunter: "Grace Park", campaigns: 8, findings: 32, highSeverity: 1, avgScore: 98, streak: 4 },
+      { hunter: "Hector Silva", campaigns: 5, findings: 61, highSeverity: 6, avgScore: 91, streak: 5 },
+    ];
+    const mitreMapping = [
+      { tactic: "Initial Access", techniques: 10, campaigns: 4, coverage: 92 },
+      { tactic: "Execution", techniques: 9, campaigns: 3, coverage: 72 },
+      { tactic: "Persistence", techniques: 8, campaigns: 2, coverage: 52 },
+      { tactic: "Privilege Escalation", techniques: 7, campaigns: 1, coverage: 32 },
+      { tactic: "Defense Evasion", techniques: 6, campaigns: 6, coverage: 83 },
+      { tactic: "Credential Access", techniques: 5, campaigns: 5, coverage: 63 },
+      { tactic: "Discovery", techniques: 4, campaigns: 4, coverage: 43 },
+      { tactic: "Lateral Movement", techniques: 3, campaigns: 3, coverage: 94 },
+      { tactic: "Collection", techniques: 2, campaigns: 2, coverage: 74 },
+      { tactic: "Exfiltration", techniques: 12, campaigns: 1, coverage: 54 },
+      { tactic: "Command & Control", techniques: 11, campaigns: 6, coverage: 34 },
+      { tactic: "Impact", techniques: 10, campaigns: 5, coverage: 85 },
+    ];
+    return html`
+      <section class="threat-hunting-campaigns">
+        <h4>Threat Hunting Campaign Manager</h4>
+        <div class="th-summary">
+          <div class="th-stat"><span class="blabel">Active</span><span class="bval">${campaigns.filter(c => c.status === "active").length}</span></div>
+          <div class="th-stat"><span class="blabel">Completed</span><span class="bval">${campaigns.filter(c => c.status === "completed").length}</span></div>
+          <div class="th-stat"><span class="blabel">Total Findings</span><span class="bval">${campaigns.reduce((s,c) => s + c.findings, 0)}</span></div>
+          <div class="th-stat"><span class="blabel">Avg Effectiveness</span><span class="bval">${(campaigns.reduce((s,c) => s + c.effectiveness, 0) / campaigns.length).toFixed(0)}%</span></div>
+        </div>
+        <div class="th-campaigns">
+          <h5>Campaign Lifecycle</h5>
+          ${campaigns.map(c => html`
+            <div class="tc-row">
+              <span class="tc-id">${c.id}</span><span class="tc-name">${c.name}</span>
+              <span class="tc-status">${c.status}</span><span class="tc-hunter">${c.leadHunter}</span>
+              <span>${c.findings} findings</span><span>${c.effectiveness}%</span>
+              <span>${c.startDate} - ${c.endDate || "In Progress"}</span>
+              <div class="tc-hypothesis">${c.hypothesis}</div>
+            </div>
+          `).join("")}
+        </div>
+        <div class="th-leaderboard">
+          <h5>Hunter Leaderboard</h5>
+          ${hunterLeaderboard.sort((a,b) => b.findings - a.findings).map((h,i) => html`
+            <div class="hl-row">
+              <span class="hl-rank">${i+1}</span><span class="hl-name">${h.hunter}</span>
+              <span>${h.campaigns} campaigns</span><span>${h.findings} findings</span>
+              <span>${h.highSeverity} high</span><span>Score: ${h.avgScore}</span><span>${h.streak}d streak</span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="th-mitre">
+          <h5>MITRE ATT&CK Coverage</h5>
+          ${mitreMapping.map(m => html`
+            <div class="tm-row"><span>${m.tactic}</span><span>${m.techniques} techniques</span><span>${m.campaigns} campaigns</span><span>${m.coverage}%</span></div>
+          `).join("")}
+        </div>
+      </section>`;
+  }
+
+  private _renderControlInventory() {
+    const controls = [
+      { id: "CTL-2001", name: "MFA Enforcement", domain: "Access Control", status: "implemented", effectiveness: 98, lastTest: "2026-02-06", nextReview: "2026-10-06", owner: "SOC", risk: "Low" },
+      { id: "CTL-2002", name: "Network Segmentation", domain: "Network Security", status: "partial", effectiveness: 11, lastTest: "2026-01-19", nextReview: "2026-11-25", owner: "Network Ops", risk: "Medium" },
+      { id: "CTL-2003", name: "EDR Deployment", domain: "Endpoint Protection", status: "planned", effectiveness: 18, lastTest: "2026-04-04", nextReview: "2026-12-16", owner: "IT Ops", risk: "High" },
+      { id: "CTL-2004", name: "DLP Policy", domain: "Data Protection", status: "gap", effectiveness: 25, lastTest: "2026-03-17", nextReview: "2026-05-07", owner: "Data Gov", risk: "Critical" },
+      { id: "CTL-2005", name: "SSO Integration", domain: "Identity Management", status: "implemented", effectiveness: 51, lastTest: "2026-02-02", nextReview: "2026-06-26", owner: "IAM", risk: "Low" },
+      { id: "CTL-2006", name: "SAST Pipeline", domain: "Application Security", status: "partial", effectiveness: 39, lastTest: "2026-01-15", nextReview: "2026-07-17", owner: "DevSecOps", risk: "Medium" },
+      { id: "CTL-2007", name: "CSPM Scanning", domain: "Cloud Security", status: "planned", effectiveness: 46, lastTest: "2026-04-28", nextReview: "2026-08-08", owner: "Cloud Ops", risk: "High" },
+      { id: "CTL-2008", name: "Badge Access", domain: "Physical Security", status: "gap", effectiveness: 2, lastTest: "2026-03-13", nextReview: "2026-09-27", owner: "Facilities", risk: "Critical" },
+      { id: "CTL-2009", name: "Least Privilege", domain: "Access Control", status: "implemented", effectiveness: 63, lastTest: "2026-02-26", nextReview: "2026-10-18", owner: "SOC", risk: "Low" },
+      { id: "CTL-2010", name: "Firewall Rules", domain: "Network Security", status: "partial", effectiveness: 16, lastTest: "2026-01-11", nextReview: "2026-11-09", owner: "Network Ops", risk: "Medium" },
+      { id: "CTL-2011", name: "Disk Encryption", domain: "Endpoint Protection", status: "planned", effectiveness: 23, lastTest: "2026-04-24", nextReview: "2026-12-28", owner: "IT Ops", risk: "High" },
+      { id: "CTL-2012", name: "Data Classification", domain: "Data Protection", status: "gap", effectiveness: 30, lastTest: "2026-03-09", nextReview: "2026-05-19", owner: "Data Gov", risk: "Critical" },
+      { id: "CTL-2013", name: "PAM Implementation", domain: "Identity Management", status: "implemented", effectiveness: 75, lastTest: "2026-02-22", nextReview: "2026-06-10", owner: "IAM", risk: "Low" },
+      { id: "CTL-2014", name: "DAST Pipeline", domain: "Application Security", status: "partial", effectiveness: 44, lastTest: "2026-01-07", nextReview: "2026-07-01", owner: "DevSecOps", risk: "Medium" },
+      { id: "CTL-2015", name: "IAM Policy Review", domain: "Cloud Security", status: "planned", effectiveness: 0, lastTest: "2026-04-20", nextReview: "2026-08-20", owner: "Cloud Ops", risk: "High" },
+      { id: "CTL-2016", name: "Visitor Management", domain: "Physical Security", status: "gap", effectiveness: 7, lastTest: "2026-03-05", nextReview: "2026-09-11", owner: "Facilities", risk: "Critical" },
+      { id: "CTL-2017", name: "Access Reviews", domain: "Access Control", status: "implemented", effectiveness: 87, lastTest: "2026-02-18", nextReview: "2026-10-02", owner: "SOC", risk: "Low" },
+      { id: "CTL-2018", name: "IDS/IPS Tuning", domain: "Network Security", status: "partial", effectiveness: 21, lastTest: "2026-01-03", nextReview: "2026-11-21", owner: "Network Ops", risk: "Medium" },
+      { id: "CTL-2019", name: "Patch Management", domain: "Endpoint Protection", status: "planned", effectiveness: 28, lastTest: "2026-04-16", nextReview: "2026-12-12", owner: "IT Ops", risk: "High" },
+      { id: "CTL-2020", name: "Backup Encryption", domain: "Data Protection", status: "gap", effectiveness: 35, lastTest: "2026-03-01", nextReview: "2026-05-03", owner: "Data Gov", risk: "Critical" },
+      { id: "CTL-2021", name: "Password Policy", domain: "Identity Management", status: "implemented", effectiveness: 40, lastTest: "2026-02-14", nextReview: "2026-06-22", owner: "IAM", risk: "Low" },
+      { id: "CTL-2022", name: "Container Scanning", domain: "Application Security", status: "partial", effectiveness: 49, lastTest: "2026-01-27", nextReview: "2026-07-13", owner: "DevSecOps", risk: "Medium" },
+      { id: "CTL-2023", name: "WAF Configuration", domain: "Cloud Security", status: "planned", effectiveness: 5, lastTest: "2026-04-12", nextReview: "2026-08-04", owner: "Cloud Ops", risk: "High" },
+      { id: "CTL-2024", name: "CCTV Coverage", domain: "Physical Security", status: "gap", effectiveness: 12, lastTest: "2026-03-25", nextReview: "2026-09-23", owner: "Facilities", risk: "Critical" },
+      { id: "CTL-2025", name: "RBAC Enforcement", domain: "Access Control", status: "implemented", effectiveness: 52, lastTest: "2026-02-10", nextReview: "2026-10-14", owner: "SOC", risk: "Low" },
+      { id: "CTL-2026", name: "VPN Management", domain: "Network Security", status: "partial", effectiveness: 26, lastTest: "2026-01-23", nextReview: "2026-11-05", owner: "Network Ops", risk: "Medium" },
+      { id: "CTL-2027", name: "App Whitelisting", domain: "Endpoint Protection", status: "planned", effectiveness: 33, lastTest: "2026-04-08", nextReview: "2026-12-24", owner: "IT Ops", risk: "High" },
+      { id: "CTL-2028", name: "Key Management", domain: "Data Protection", status: "gap", effectiveness: 40, lastTest: "2026-03-21", nextReview: "2026-05-15", owner: "Data Gov", risk: "Critical" },
+    ];
+    const gapAnalysis = [
+      { gap: "Insufficient MFA coverage for legacy apps", severity: "High", remediationPlan: "Plan R3001", eta: "2026-Q3", estimatedCost: "179k" },
+      { gap: "Missing network micro-segmentation", severity: "Medium", remediationPlan: "Plan R3002", eta: "2026-Q2", estimatedCost: "27k" },
+      { gap: "Inconsistent EDR deployment", severity: "Medium", remediationPlan: "Plan R3003", eta: "2026-Q4", estimatedCost: "56k" },
+      { gap: "DLP not covering cloud storage", severity: "Low", remediationPlan: "Plan R3004", eta: "2026-Q3", estimatedCost: "85k" },
+      { gap: "SSO not integrated with all SaaS", severity: "High", remediationPlan: "Plan R3005", eta: "2026-Q2", estimatedCost: "114k" },
+    ];
+    return html`
+      <section class="control-inventory">
+        <h4>Security Control Inventory</h4>
+        <div class="ci-summary">
+          <div class="ci-stat"><span class="blabel">Total Controls</span><span class="bval">${controls.length}</span></div>
+          <div class="ci-stat"><span class="blabel">Implemented</span><span class="bval">${controls.filter(c => c.status === "implemented").length}</span></div>
+          <div class="ci-stat"><span class="blabel">Partial</span><span class="bval">${controls.filter(c => c.status === "partial").length}</span></div>
+          <div class="ci-stat"><span class="blabel">Gaps</span><span class="bval">${controls.filter(c => c.status === "gap").length}</span></div>
+        </div>
+        <div class="ci-controls">
+          <h5>Control Catalog</h5>
+          ${controls.map(c => html`
+            <div class="cc-row">
+              <span class="cc-id">${c.id}</span><span class="cc-name">${c.name}</span><span>${c.domain}</span>
+              <span>${c.status}</span><span>Eff: ${c.effectiveness}%</span><span>Owner: ${c.owner}</span>
+              <span>Risk: ${c.risk}</span><span>Tested: ${c.lastTest}</span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="ci-gaps">
+          <h5>Gap Analysis</h5>
+          ${gapAnalysis.map(g => html`
+            <div class="ga-row"><span>${g.gap}</span><span>${g.severity}</span><span>${g.remediationPlan}</span><span>ETA: ${g.eta}</span><span>${g.estimatedCost}</span></div>
+          `).join("")}
+        </div>
+      </section>`;
+  }
+
+  private _renderIncidentCostTracker() {
+    const incidents = [
+      { id: "INC-7001", name: "Security Incident 1", severity: "Critical", totalCost: 817000, responseCost: 212420, recoveryCost: 253270, legalCost: 81700, regulatoryCost: 89870, insuranceClaim: 531050, avoidedCost: 346000, date: "2026-02-26" },
+      { id: "INC-7002", name: "Security Incident 2", severity: "High", totalCost: 820000, responseCost: 270600, recoveryCost: 172200, legalCost: 57400, regulatoryCost: 49200, insuranceClaim: 0, avoidedCost: 375000, date: "2026-01-07" },
+      { id: "INC-7003", name: "Security Incident 3", severity: "Medium", totalCost: 823000, responseCost: 156370, recoveryCost: 263360, legalCost: 164600, regulatoryCost: 98760, insuranceClaim: 493800, avoidedCost: 404000, date: "2026-04-16" },
+      { id: "INC-7004", name: "Security Incident 4", severity: "Low", totalCost: 826000, responseCost: 214760, recoveryCost: 181720, legalCost: 140420, regulatoryCost: 57820, insuranceClaim: 0, avoidedCost: 433000, date: "2026-03-25" },
+      { id: "INC-7005", name: "Security Incident 5", severity: "Critical", totalCost: 829000, responseCost: 273570, recoveryCost: 273570, legalCost: 116060, regulatoryCost: 107770, insuranceClaim: 455950, avoidedCost: 462000, date: "2026-02-06" },
+      { id: "INC-7006", name: "Security Incident 6", severity: "High", totalCost: 832000, responseCost: 158080, recoveryCost: 191360, legalCost: 91520, regulatoryCost: 66560, insuranceClaim: 0, avoidedCost: 491000, date: "2026-01-15" },
+      { id: "INC-7007", name: "Security Incident 7", severity: "Medium", totalCost: 835000, responseCost: 217100, recoveryCost: 283900, legalCost: 66800, regulatoryCost: 116900, insuranceClaim: 417500, avoidedCost: 24000, date: "2026-04-24" },
+      { id: "INC-7008", name: "Security Incident 8", severity: "Low", totalCost: 838000, responseCost: 276540, recoveryCost: 201120, legalCost: 41900, regulatoryCost: 75420, insuranceClaim: 0, avoidedCost: 53000, date: "2026-03-05" },
+      { id: "INC-7009", name: "Security Incident 9", severity: "Critical", totalCost: 841000, responseCost: 159790, recoveryCost: 294350, legalCost: 151380, regulatoryCost: 126150, insuranceClaim: 378450, avoidedCost: 82000, date: "2026-02-14" },
+      { id: "INC-7010", name: "Security Incident 10", severity: "High", totalCost: 844000, responseCost: 219440, recoveryCost: 211000, legalCost: 126600, regulatoryCost: 84400, insuranceClaim: 0, avoidedCost: 111000, date: "2026-01-23" },
+      { id: "INC-7011", name: "Security Incident 11", severity: "Medium", totalCost: 847000, responseCost: 279510, recoveryCost: 304920, legalCost: 101640, regulatoryCost: 42350, insuranceClaim: 338800, avoidedCost: 140000, date: "2026-04-04" },
+      { id: "INC-7012", name: "Security Incident 12", severity: "Low", totalCost: 850000, responseCost: 161500, recoveryCost: 221000, legalCost: 76500, regulatoryCost: 93500, insuranceClaim: 0, avoidedCost: 169000, date: "2026-03-13" },
+    ];
+    const yearlyTrend = [
+      { month: "Jan", incidents: 8, totalCost: "624k", avgCost: "93k", insured: 55 },
+      { month: "Feb", incidents: 5, totalCost: "667k", avgCost: "140k", insured: 55 },
+      { month: "Mar", incidents: 2, totalCost: "710k", avgCost: "187k", insured: 55 },
+      { month: "Apr", incidents: 10, totalCost: "753k", avgCost: "53k", insured: 55 },
+      { month: "May", incidents: 7, totalCost: "796k", avgCost: "100k", insured: 55 },
+      { month: "Jun", incidents: 4, totalCost: "88k", avgCost: "147k", insured: 55 },
+    ];
+    const totalCostYtd = incidents.reduce((s, i) => s + i.totalCost, 0);
+    const totalAvoided = incidents.reduce((s, i) => s + i.avoidedCost, 0);
+    const totalInsured = incidents.reduce((s, i) => s + i.insuranceClaim, 0);
+    const projAnnual = totalCostYtd * 3;
+    const projAvoided = totalAvoided * 3;
+    const projInsured = totalInsured * 3;
+    const netExposure = projAnnual - projAvoided - projInsured;
+    return html`
+      <section class="incident-cost-tracker">
+        <h4>Security Incident Cost Tracker</h4>
+        <div class="ict-summary">
+          <div class="ict-stat"><span class="blabel">Total Incidents</span><span class="bval">${incidents.length}</span></div>
+          <div class="ict-stat"><span class="blabel">Total Cost YTD</span><span class="bval">${(totalCostYtd/1e6).toFixed(2)}M</span></div>
+          <div class="ict-stat"><span class="blabel">Cost Avoided</span><span class="bval">${(totalAvoided/1e6).toFixed(2)}M</span></div>
+          <div class="ict-stat"><span class="blabel">Insurance Claims</span><span class="bval">${(totalInsured/1e6).toFixed(2)}M</span></div>
+        </div>
+        <div class="ict-breakdown">
+          <h5>Cost by Severity</h5>
+          ${["Critical","High","Medium","Low"].map(sev => {
+            const filtered = incidents.filter(i => i.severity === sev);
+            const total = filtered.reduce((s,i) => s + i.totalCost, 0);
+            return html`<div class="cb-row"><span>${sev}</span><span>${filtered.length} incidents</span><span>${(total/1000).toFixed(0)}k</span><span>Avg: ${filtered.length ? (total/filtered.length/1000).toFixed(0) : 0}k</span></div>`;
+          }).join("")}
+        </div>
+        <div class="ict-incidents">
+          <h5>Incident Cost Breakdown</h5>
+          ${incidents.map(inc => html`
+            <div class="ic-row">
+              <span>${inc.id}</span><span>${inc.name}</span><span>${inc.severity}</span>
+              <span>${(inc.totalCost/1000).toFixed(0)}k</span>
+              <span>R: ${(inc.responseCost/1000).toFixed(0)}k</span><span>Rec: ${(inc.recoveryCost/1000).toFixed(0)}k</span>
+              <span>L: ${(inc.legalCost/1000).toFixed(0)}k</span><span>Reg: ${(inc.regulatoryCost/1000).toFixed(0)}k</span>
+              <span>Ins: ${(inc.insuranceClaim/1000).toFixed(0)}k</span><span>${inc.date}</span>
+            </div>
+          `).join("")}
+        </div>
+        <div class="ict-trend">
+          <h5>Monthly Cost Trending</h5>
+          ${yearlyTrend.map(y => html`
+            <div class="yt-row"><span>${y.month}</span><span>${y.incidents} incidents</span><span>${y.totalCost}</span><span>Avg: ${y.avgCost}</span><span>Insured: ${y.insured}%</span></div>
+          `).join("")}
+        </div>
+        <div class="ict-projection">
+          <h5>Annual Projection</h5>
+          <div class="proj-row"><span>Projected Annual Cost</span><span>${(projAnnual/1e6).toFixed(2)}M</span></div>
+          <div class="proj-row"><span>Projected Cost Avoided</span><span>${(projAvoided/1e6).toFixed(2)}M</span></div>
+          <div class="proj-row"><span>Projected Insurance Recovery</span><span>${(projInsured/1e6).toFixed(2)}M</span></div>
+          <div class="proj-row"><span>Net Exposure</span><span>${(netExposure/1e6).toFixed(2)}M</span></div>
+        </div>
+      </section>`;
+  }
   }
 
 
