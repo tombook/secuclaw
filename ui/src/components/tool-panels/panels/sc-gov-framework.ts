@@ -2431,6 +2431,288 @@ private _executionHistory: ExecutionRecord[] = [
 
 
 
+
+  // === Security Event Correlation Block ===
+  @state() private _govFrameworkCorrRules: Array<{id:string;name:string;sources:string[];logic:string;severity:string;active:boolean;lastTriggered:string}> = [
+    {id:"CR01",name:"Brute Force Detection",sources:["AD","Firewall","SIEM"],logic:"5 failed logins + firewall block within 10min",severity:"High",active:true,lastTriggered:"2026-04-22T08:30:00Z"},
+    {id:"CR02",name:"Data Exfiltration Pattern",sources:["DLP","Proxy","DNS"],logic:"Large upload + DNS tunneling indicators",severity:"Critical",active:true,lastTriggered:"2026-04-21T14:22:00Z"},
+    {id:"CR03",name:"Lateral Movement Detection",sources:["EDR","AD","Network"],logic:"New admin session + unusual SMB traffic",severity:"High",active:true,lastTriggered:"2026-04-20T11:15:00Z"},
+    {id:"CR04",name:"Malware Beacon Detection",sources:["DNS","Proxy","EDR"],logic:"Periodic DNS queries + known C2 patterns",severity:"Critical",active:true,lastTriggered:"2026-04-22T06:45:00Z"},
+  ];
+  @state() private _govFrameworkEventTimeline: Array<{timestamp:string;source:string;eventType:string;details:string;correlated:boolean}> = [
+    {timestamp:"2026-04-22T10:34:12Z",source:"EDR",eventType:"Process Injection",details:"cmd.exe spawned from powershell",correlated:true},
+    {timestamp:"2026-04-22T10:33:58Z",source:"AD",eventType:"Anomalous Login",details:"Service account used from new IP",correlated:true},
+    {timestamp:"2026-04-22T10:32:01Z",source:"Firewall",eventType:"Port Scan",details:"192.168.1.45 scanning 10.0.0.0/8",correlated:false},
+    {timestamp:"2026-04-22T10:30:45Z",source:"DLP",eventType:"Data Transfer",details:"10MB zip uploaded to external share",correlated:true},
+    {timestamp:"2026-04-22T10:28:33Z",source:"DNS",eventType:"Suspicious Query",details:"Query to known malicious domain",correlated:true},
+  ];
+  @state() private _govFrameworkFalsePosMetrics: {totalEvents:number;correlatedEvents:number;falsePositives:number;fpRate:number;topFpRules:string[]} = {
+    totalEvents: 45230, correlatedEvents: 3847, falsePositives: 892, fpRate: 0.232,
+    topFpRules: ["Port Scan Detection", "Anomalous Login Location", "Large File Download"]
+  };
+  @state() private _govFrameworkEventPatterns: Array<{id:string;pattern:string;frequency:number;firstSeen:string;lastSeen:string;status:string}> = [
+    {id:"EP01",pattern:"Credential stuffing from Tor exit nodes",frequency:23,firstSeen:"2026-03-15",lastSeen:"2026-04-22",status:"Active"},
+    {id:"EP02",pattern:"DNS tunneling via TXT records",frequency:8,firstSeen:"2026-04-01",lastSeen:"2026-04-20",status:"Monitoring"},
+    {id:"EP03",pattern:"Scheduled task persistence mechanism",frequency:3,firstSeen:"2026-04-10",lastSeen:"2026-04-18",status:"Investigating"},
+  ];
+  private _renderGovframeworkEventCorr(): TemplateResult {
+    const rules = this._govFrameworkCorrRules;
+    const timeline = this._govFrameworkEventTimeline;
+    const fpMetrics = this._govFrameworkFalsePosMetrics;
+    return html`
+      <div class="event-corr-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Security Event Correlation</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Correlation Rules</h5>
+            ${rules.map(r => html`
+              <div style="padding:4px 0;border-bottom:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                  <span style="color:#e2e8f0;">${r.name}</span>
+                  <span style="color:${r.severity === "Critical" ? "#ef4444" : "#f97316"};font-size:10px;">${r.severity}</span>
+                </div>
+                <div style="color:#64748b;font-size:10px;">${r.sources.join(" + ")}: ${r.logic}</div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Event Timeline (Recent)</h5>
+            ${timeline.map(e => html`
+              <div style="display:flex;gap:6px;padding:3px 0;font-size:10px;">
+                <span style="color:#64748b;min-width:50px;">${e.timestamp.split("T")[1]?.slice(0,8) || ""}</span>
+                <span style="color:${e.correlated ? "#fbbf24" : "#64748b"};font-weight:${e.correlated ? "bold" : "normal"};">${e.eventType}</span>
+                <span style="color:#94a3b8;">${e.source}</span>
+              </div>
+            `)}
+            <div style="margin-top:8px;padding-top:6px;border-top:1px solid #334155;display:flex;justify-content:space-between;font-size:10px;">
+              <span style="color:#94a3b8;">Total Events: ${fpMetrics.totalEvents.toLocaleString()}</span>
+              <span style="color:#f97316;">FP Rate: ${(fpMetrics.fpRate * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Risk Dashboard Block ===
+  @state() private _govFrameworkRiskTopTen: Array<{id:string;name:string;score:number;trend:string;owner:string;category:string;lastAssessed:string}> = [
+    {id:"R001",name:"Unpatched Critical CVEs",score:95,trend:"up",owner:"IT Ops",category:"Vulnerability",lastAssessed:"2026-04-22"},
+    {id:"R002",name:"Misconfigured Cloud Storage",score:92,trend:"up",owner:"Cloud Team",category:"Configuration",lastAssessed:"2026-04-21"},
+    {id:"R003",name:"Overprivileged Service Accounts",score:88,trend:"stable",owner:"IAM Team",category:"Identity",lastAssessed:"2026-04-20"},
+    {id:"R004",name:"Legacy TLS Dependencies",score:85,trend:"down",owner:"Network",category:"Encryption",lastAssessed:"2026-04-19"},
+    {id:"R005",name:"Third-Party API Key Exposure",score:83,trend:"up",owner:"DevOps",category:"Data Loss",lastAssessed:"2026-04-22"},
+    {id:"R006",name:"Inadequate Network Segmentation",score:80,trend:"stable",owner:"Network",category:"Network",lastAssessed:"2026-04-18"},
+    {id:"R007",name:"Missing MFA on Admin Portals",score:78,trend:"down",owner:"Security",category:"Authentication",lastAssessed:"2026-04-17"},
+    {id:"R008",name:"Outdated Endpoint Protection",score:75,trend:"stable",owner:"Endpoint",category:"Endpoint",lastAssessed:"2026-04-16"},
+    {id:"R009",name:"Insufficient Logging Coverage",score:72,trend:"up",owner:"SOC",category:"Monitoring",lastAssessed:"2026-04-15"},
+    {id:"R010",name:"Shadow IT SaaS Applications",score:70,trend:"stable",owner:"GRC",category:"Governance",lastAssessed:"2026-04-14"},
+  ];
+  @state() private _govFrameworkRiskCategories: Array<{category:string;count:number;avgScore:number;color:string}> = [
+    {category:"Vulnerability",count:47,avgScore:82,color:"#ef4444"},
+    {category:"Configuration",count:32,avgScore:75,color:"#f97316"},
+    {category:"Identity",count:28,avgScore:71,color:"#eab308"},
+    {category:"Network",count:24,avgScore:68,color:"#22c55e"},
+    {category:"Data Loss",count:19,avgScore:65,color:"#3b82f6"},
+    {category:"Encryption",count:15,avgScore:62,color:"#8b5cf6"},
+  ];
+  @state() private _govFrameworkRiskVelocity: Array<{week:string;newRisks:number;closedRisks:number;netChange:number}> = [
+    {week:"W15",newRisks:12,closedRisks:8,netChange:4},
+    {week:"W16",newRisks:15,closedRisks:11,netChange:4},
+    {week:"W17",newRisks:9,closedRisks:14,netChange:-5},
+    {week:"W18",newRisks:18,closedRisks:10,netChange:8},
+    {week:"W19",newRisks:7,closedRisks:16,netChange:-9},
+    {week:"W20",newRisks:11,closedRisks:13,netChange:-2},
+    {week:"W21",newRisks:14,closedRisks:9,netChange:5},
+  ];
+  @state() private _govFrameworkRiskAppetite: {current:number;threshold:number;maxTolerated:number;status:string} = {
+    current: 68, threshold: 55, maxTolerated: 80, status: 'Warning'
+  };
+  @state() private _govFrameworkRiskOwnerMatrix: Array<{owner:string;criticalCount:number;highCount:number;mediumCount:number;complianceRate:number}> = [
+    {owner:"IT Ops",criticalCount:5,highCount:12,mediumCount:23,complianceRate:0.72},
+    {owner:"Cloud Team",criticalCount:3,highCount:9,mediumCount:18,complianceRate:0.81},
+    {owner:"IAM Team",criticalCount:2,highCount:7,mediumCount:14,complianceRate:0.88},
+    {owner:"Network",criticalCount:4,highCount:11,mediumCount:20,complianceRate:0.76},
+    {owner:"DevOps",criticalCount:3,highCount:8,mediumCount:16,complianceRate:0.83},
+    {owner:"Security",criticalCount:1,highCount:5,mediumCount:12,complianceRate:0.91},
+  ];
+  private _renderGovframeworkRiskDash(): TemplateResult {
+    const riskItems = this._govFrameworkRiskTopTen;
+    const velocity = this._govFrameworkRiskVelocity;
+    const appetite = this._govFrameworkRiskAppetite;
+    return html`
+      <div class="risk-dash-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Security Risk Dashboard</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Top 10 Risks</h5>
+            ${riskItems.slice(0, 5).map(r => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #334155;">
+                <span style="color:#e2e8f0;font-size:11px;">${r.name}</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="color:${r.trend === "up" ? "#ef4444" : r.trend === "down" ? "#22c55e" : "#eab308"};font-size:10px;">
+                    ${r.trend === "up" ? "\u2191" : r.trend === "down" ? "\u2193" : "\u2192"}
+                  </span>
+                  <span style="color:#f87171;font-size:11px;font-weight:bold;">${r.score}</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Risk Velocity (Weekly)</h5>
+            ${velocity.map(v => html`
+              <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;">
+                <span style="color:#cbd5e1;">${v.week}</span>
+                <span style="color:${v.netChange > 0 ? "#f87171" : "#4ade80"};">${v.netChange > 0 ? "+" : ""}${v.netChange}</span>
+              </div>
+            `)}
+          </div>
+        </div>
+        <div style="margin-top:12px;background:#1e293b;border-radius:6px;padding:12px;">
+          <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Risk Appetite Gauge</h5>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:8px;background:#334155;border-radius:4px;position:relative;">
+              <div style="height:100%;width:${appetite.current}%;background:${appetite.current > appetite.maxTolerated ? "#ef4444" : appetite.current > appetite.threshold ? "#f97316" : "#22c55e"};border-radius:4px;transition:width 0.3s;"></div>
+              <div style="position:absolute;left:${appetite.threshold}%;top:-2px;width:2px;height:12px;background:#eab308;"></div>
+              <div style="position:absolute;left:${appetite.maxTolerated}%;top:-2px;width:2px;height:12px;background:#ef4444;"></div>
+            </div>
+            <span style="color:#e2e8f0;font-size:11px;">${appetite.current}/100</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === Network Segmentation Validator Block ===
+  @state() private _govFrameworkZones: Array<{id:string;name:string;trustLevel:number;subnet:string;devices:number;policy:string;lastAudit:string}> = [
+    {id:"Z01",name:"DMZ",trustLevel:1,subnet:"10.0.1.0/24",devices:23,policy:"Deny All Inbound",lastAudit:"2026-04-20"},
+    {id:"Z02",name:"Corporate LAN",trustLevel:3,subnet:"10.0.2.0/22",devices:456,policy:"Allow Internal",lastAudit:"2026-04-18"},
+    {id:"Z03",name:"Data Center Core",trustLevel:5,subnet:"10.0.10.0/24",devices:89,policy:"Restricted Access",lastAudit:"2026-04-22"},
+    {id:"Z04",name:"IoT Network",trustLevel:1,subnet:"10.0.20.0/24",devices:312,policy:"Deny All Internet",lastAudit:"2026-04-15"},
+    {id:"Z05",name:"Development",trustLevel:2,subnet:"10.0.30.0/24",devices:67,policy:"Sandbox Rules",lastAudit:"2026-04-19"},
+    {id:"Z06",name:"Management Plane",trustLevel:5,subnet:"10.0.99.0/24",devices:12,policy:"MFA Required",lastAudit:"2026-04-21"},
+  ];
+  @state() private _govFrameworkSegRules: Array<{id:string;source:string;dest:string;action:string;protocol:string;port:string;status:string;hits:number}> = [
+    {id:"SR01",source:"DMZ",dest:"Corporate LAN",action:"DENY",protocol:"TCP",port:"*",status:"Active",hits:14523},
+    {id:"SR02",source:"Corporate LAN",dest:"Data Center Core",action:"ALLOW",protocol:"TCP",port:"443,8443",status:"Active",hits:89234},
+    {id:"SR03",source:"IoT Network",dest:"Internet",action:"DENY",protocol:"*",port:"*",status:"Active",hits:234567},
+    {id:"SR04",source:"Development",dest:"Corporate LAN",action:"DENY",protocol:"*",port:"*",status:"Active",hits:789},
+    {id:"SR05",source:"Corporate LAN",dest:"Management Plane",action:"ALLOW",protocol:"TCP",port:"22,443",status:"Active",hits:3456},
+  ];
+  @state() private _govFrameworkCrossZoneTraffic: Array<{source:string;dest:string;bytes:number;sessions:number;violations:number}> = [
+    {source:"DMZ",dest:"Corporate LAN",bytes:4567890,sessions:234,violations:12},
+    {source:"Corporate LAN",dest:"Data Center Core",bytes:123456789,sessions:5678,violations:3},
+    {source:"IoT Network",dest:"Corporate LAN",bytes:890123,sessions:89,violations:45},
+    {source:"Development",dest:"Internet",bytes:67890123,sessions:3456,violations:0},
+  ];
+  @state() private _govFrameworkMicroSegGaps: Array<{id:string;zone:string;gapType:string;severity:string;recommendation:string}> = [
+    {id:"MSG01",zone:"IoT Network",gapType:"Missing East-West Controls",severity:"High",recommendation:"Implement micro-segmentation with service mesh"},
+    {id:"MSG02",zone:"Corporate LAN",gapType:"Flat Network Subnet",severity:"Critical",recommendation:"Split into VLANs by department"},
+    {id:"MSG03",zone:"Development",gapType:"No Egress Filtering",severity:"Medium",recommendation:"Deploy proxy-based egress controls"},
+  ];
+  private _renderGovframeworkNetworkSeg(): TemplateResult {
+    const zones = this._govFrameworkZones;
+    const gaps = this._govFrameworkMicroSegGaps;
+    return html`
+      <div class="network-seg-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Network Segmentation Validator</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Security Zones</h5>
+            ${zones.map(z => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #334155;">
+                <div>
+                  <span style="color:#e2e8f0;font-size:11px;">${z.name}</span>
+                  <span style="color:#64748b;font-size:10px;margin-left:6px;">${z.subnet}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  ${Array.from({length:5}, (_, i) => html`
+                    <div style="width:8px;height:8px;border-radius:50%;background:${i < z.trustLevel ? "#f59e0b" : "#334155"};"></div>
+                  `)}
+                  <span style="color:#94a3b8;font-size:10px;margin-left:4px;">${z.devices}</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Micro-Segmentation Gaps</h5>
+            ${gaps.map(g => html`
+              <div style="padding:6px 0;border-bottom:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                  <span style="color:#e2e8f0;">${g.gapType}</span>
+                  <span style="color:${g.severity === "Critical" ? "#ef4444" : g.severity === "High" ? "#f97316" : "#eab308"};">${g.severity}</span>
+                </div>
+                <div style="color:#94a3b8;font-size:10px;margin-top:2px;">${g.zone}: ${g.recommendation}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === Cloud Workload Protection Block ===
+  @state() private _govFrameworkContainerScans: Array<{image:string;registry:string;critical:number;high:number;medium:number;scanDate:string;status:string}> = [
+    {image:"nginx:1.25",registry:"docker.io",critical:2,high:5,medium:12,scanDate:"2026-04-22",status:"Vulnerable"},
+    {image:"postgres:16",registry:"ghcr.io",critical:0,high:1,medium:3,scanDate:"2026-04-22",status:"Clean"},
+    {image:"redis:7.2",registry:"docker.io",critical:1,high:3,medium:8,scanDate:"2026-04-21",status:"Vulnerable"},
+    {image:"app-server:v2.3",registry:"ecr.aws",critical:0,high:0,medium:2,scanDate:"2026-04-22",status:"Clean"},
+    {image:"sidecar-proxy:v1.8",registry:"gcr.io",critical:3,high:7,medium:15,scanDate:"2026-04-20",status:"Critical"},
+  ];
+  @state() private _govFrameworkK8sPods: Array<{namespace:string;pod:string;securityContext:string;hostIPC:boolean;hostPID:boolean;privileged:boolean;riskLevel:string}> = [
+    {namespace:"production",pod:"web-frontend-7d9f8",securityContext:"Restricted",hostIPC:false,hostPID:false,privileged:false,riskLevel:"Low"},
+    {namespace:"production",pod:"api-gateway-4b2c1",securityContext:"Baseline",hostIPC:false,hostPID:false,privileged:false,riskLevel:"Medium"},
+    {namespace:"staging",pod:"db-migrator-x8k3m",securityContext:"Privileged",hostIPC:true,hostPID:false,privileged:true,riskLevel:"Critical"},
+    {namespace:"monitoring",pod:"prometheus-q7r2p",securityContext:"Baseline",hostIPC:false,hostPID:false,privileged:false,riskLevel:"Medium"},
+  ];
+  @state() private _govFrameworkServerlessRisk: Array<{function:string;runtime:string;timeout:number;iamPerms:string;externalCalls:number;riskScore:number}> = [
+    {function:"processPayment",runtime:"nodejs20.x",timeout:30,iamPerms:"dynamodb:*",externalCalls:3,riskScore:78},
+    {function:"sendNotification",runtime:"python3.12",timeout:15,iamPerms:"sns:Publish",externalCalls:1,riskScore:25},
+    {function:"imageResizer",runtime:"python3.12",timeout:60,iamPerms:"s3:*",externalCalls:0,riskScore:45},
+    {function:"authValidator",runtime:"go1.x",timeout:10,iamPerms:"cognito-idp:*",externalCalls:2,riskScore:62},
+  ];
+  @state() private _govFrameworkRuntimeAlerts: Array<{id:string;workload:string;alertType:string;severity:string;description:string;timestamp:string}> = [
+    {id:"RTA01",workload:"db-migrator-x8k3m",alertType:"Privilege Escalation",severity:"Critical",description:"Container attempted to access /etc/shadow",timestamp:"2026-04-22T10:34:00Z"},
+    {id:"RTA02",workload:"web-frontend-7d9f8",alertType:"Anomalous Outbound",severity:"High",description:"Unexpected DNS query to known C2 domain",timestamp:"2026-04-22T09:12:00Z"},
+    {id:"RTA03",workload:"sidecar-proxy:v1.8",alertType:"Crypto Mining",severity:"Critical",description:"CPU utilization exceeded 95% for 30 minutes",timestamp:"2026-04-21T23:45:00Z"},
+  ];
+  private _renderGovframeworkCloudWl(): TemplateResult {
+    const containers = this._govFrameworkContainerScans;
+    const pods = this._govFrameworkK8sPods;
+    const alerts = this._govFrameworkRuntimeAlerts;
+    return html`
+      <div class="cloud-wl-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Cloud Workload Protection</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Container Scan Results</h5>
+            ${containers.map(c => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #334155;font-size:11px;">
+                <span style="color:#e2e8f0;">${c.image}</span>
+                <div style="display:flex;gap:8px;">
+                  <span style="color:#ef4444;">${c.critical}C</span>
+                  <span style="color:#f97316;">${c.high}H</span>
+                  <span style="color:#eab308;">${c.medium}M</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Runtime Threat Alerts</h5>
+            ${alerts.map(a => html`
+              <div style="padding:4px 0;border-bottom:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                  <span style="color:#e2e8f0;">${a.alertType}</span>
+                  <span style="color:${a.severity === "Critical" ? "#ef4444" : "#f97316"};">${a.severity}</span>
+                </div>
+                <div style="color:#94a3b8;font-size:10px;">${a.workload}: ${a.description}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {    if (this._gfRules.length === 0) { this._initGfRules(); this._initGfCvss(); this._runGfAnomalyDetection(); this._generateGfPredictions(); this._initGfApprovals(); this._initGfActivity(); this._initGfNotifications(); }
 
     const items = this._getFiltered();

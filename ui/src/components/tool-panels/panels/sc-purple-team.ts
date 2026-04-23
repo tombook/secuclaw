@@ -2869,6 +2869,301 @@ export class ScPurpleTeam extends LitElement {
       </div>
     `;
   }
+
+  // === Network Segmentation Validator Block ===
+  @state() private _purpleTeamZones: Array<{id:string;name:string;trustLevel:number;subnet:string;devices:number;policy:string;lastAudit:string}> = [
+    {id:"Z01",name:"DMZ",trustLevel:1,subnet:"10.0.1.0/24",devices:23,policy:"Deny All Inbound",lastAudit:"2026-04-20"},
+    {id:"Z02",name:"Corporate LAN",trustLevel:3,subnet:"10.0.2.0/22",devices:456,policy:"Allow Internal",lastAudit:"2026-04-18"},
+    {id:"Z03",name:"Data Center Core",trustLevel:5,subnet:"10.0.10.0/24",devices:89,policy:"Restricted Access",lastAudit:"2026-04-22"},
+    {id:"Z04",name:"IoT Network",trustLevel:1,subnet:"10.0.20.0/24",devices:312,policy:"Deny All Internet",lastAudit:"2026-04-15"},
+    {id:"Z05",name:"Development",trustLevel:2,subnet:"10.0.30.0/24",devices:67,policy:"Sandbox Rules",lastAudit:"2026-04-19"},
+    {id:"Z06",name:"Management Plane",trustLevel:5,subnet:"10.0.99.0/24",devices:12,policy:"MFA Required",lastAudit:"2026-04-21"},
+  ];
+  @state() private _purpleTeamSegRules: Array<{id:string;source:string;dest:string;action:string;protocol:string;port:string;status:string;hits:number}> = [
+    {id:"SR01",source:"DMZ",dest:"Corporate LAN",action:"DENY",protocol:"TCP",port:"*",status:"Active",hits:14523},
+    {id:"SR02",source:"Corporate LAN",dest:"Data Center Core",action:"ALLOW",protocol:"TCP",port:"443,8443",status:"Active",hits:89234},
+    {id:"SR03",source:"IoT Network",dest:"Internet",action:"DENY",protocol:"*",port:"*",status:"Active",hits:234567},
+    {id:"SR04",source:"Development",dest:"Corporate LAN",action:"DENY",protocol:"*",port:"*",status:"Active",hits:789},
+    {id:"SR05",source:"Corporate LAN",dest:"Management Plane",action:"ALLOW",protocol:"TCP",port:"22,443",status:"Active",hits:3456},
+  ];
+  @state() private _purpleTeamCrossZoneTraffic: Array<{source:string;dest:string;bytes:number;sessions:number;violations:number}> = [
+    {source:"DMZ",dest:"Corporate LAN",bytes:4567890,sessions:234,violations:12},
+    {source:"Corporate LAN",dest:"Data Center Core",bytes:123456789,sessions:5678,violations:3},
+    {source:"IoT Network",dest:"Corporate LAN",bytes:890123,sessions:89,violations:45},
+    {source:"Development",dest:"Internet",bytes:67890123,sessions:3456,violations:0},
+  ];
+  @state() private _purpleTeamMicroSegGaps: Array<{id:string;zone:string;gapType:string;severity:string;recommendation:string}> = [
+    {id:"MSG01",zone:"IoT Network",gapType:"Missing East-West Controls",severity:"High",recommendation:"Implement micro-segmentation with service mesh"},
+    {id:"MSG02",zone:"Corporate LAN",gapType:"Flat Network Subnet",severity:"Critical",recommendation:"Split into VLANs by department"},
+    {id:"MSG03",zone:"Development",gapType:"No Egress Filtering",severity:"Medium",recommendation:"Deploy proxy-based egress controls"},
+  ];
+  private _renderPurpleteamNetworkSeg(): TemplateResult {
+    const zones = this._purpleTeamZones;
+    const gaps = this._purpleTeamMicroSegGaps;
+    return html`
+      <div class="network-seg-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Network Segmentation Validator</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Security Zones</h5>
+            ${zones.map(z => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #334155;">
+                <div>
+                  <span style="color:#e2e8f0;font-size:11px;">${z.name}</span>
+                  <span style="color:#64748b;font-size:10px;margin-left:6px;">${z.subnet}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  ${Array.from({length:5}, (_, i) => html`
+                    <div style="width:8px;height:8px;border-radius:50%;background:${i < z.trustLevel ? "#f59e0b" : "#334155"};"></div>
+                  `)}
+                  <span style="color:#94a3b8;font-size:10px;margin-left:4px;">${z.devices}</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Micro-Segmentation Gaps</h5>
+            ${gaps.map(g => html`
+              <div style="padding:6px 0;border-bottom:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                  <span style="color:#e2e8f0;">${g.gapType}</span>
+                  <span style="color:${g.severity === "Critical" ? "#ef4444" : g.severity === "High" ? "#f97316" : "#eab308"};">${g.severity}</span>
+                </div>
+                <div style="color:#94a3b8;font-size:10px;margin-top:2px;">${g.zone}: ${g.recommendation}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Training Platform Block ===
+  @state() private _purpleTeamCourses: Array<{id:string;title:string;category:string;duration:number;enrolled:number;completed:number;difficulty:string;rating:number}> = [
+    {id:"C001",title:"Secure Coding Fundamentals",category:"Development",duration:4,enrolled:156,completed:134,difficulty:"Beginner",rating:4.7},
+    {id:"C002",title:"OWASP Top 10 Deep Dive",category:"Application Security",duration:6,enrolled:203,completed:178,difficulty:"Intermediate",rating:4.8},
+    {id:"C003",title:"Cloud Security Architecture",category:"Cloud",duration:8,enrolled:89,completed:67,difficulty:"Advanced",rating:4.5},
+    {id:"C004",title:"Incident Response Procedures",category:"Operations",duration:3,enrolled:245,completed:221,difficulty:"Beginner",rating:4.6},
+    {id:"C005",title:"Network Forensics Mastery",category:"Forensics",duration:10,enrolled:67,completed:48,difficulty:"Advanced",rating:4.9},
+    {id:"C006",title:"Zero Trust Implementation",category:"Architecture",duration:5,enrolled:112,completed:98,difficulty:"Intermediate",rating:4.4},
+    {id:"C007",title:"Phishing Awareness Advanced",category:"Awareness",duration:2,enrolled:312,completed:289,difficulty:"Beginner",rating:4.3},
+    {id:"C008",title:"Container Security Best Practices",category:"DevSecOps",duration:6,enrolled:78,completed:61,difficulty:"Intermediate",rating:4.7},
+    {id:"C009",title:"GDPR Data Protection",category:"Compliance",duration:4,enrolled:187,completed:163,difficulty:"Intermediate",rating:4.2},
+    {id:"C010",title:"Red Team Methodology",category:"Offensive",duration:12,enrolled:45,completed:32,difficulty:"Expert",rating:4.8},
+    {id:"C011",title:"Threat Modeling with STRIDE",category:"Architecture",duration:5,enrolled:98,completed:85,difficulty:"Intermediate",rating:4.6},
+    {id:"C012",title:"SIEM Operations and Tuning",category:"Operations",duration:7,enrolled:134,completed:112,difficulty:"Advanced",rating:4.5},
+  ];
+  @state() private _purpleTeamLearningPaths: Array<{id:string;name:string;courseIds:string[];progress:number;enrolled:number}> = [
+    {id:"LP01",name:"Security Analyst Fundamentals",courseIds:["C001","C004","C007"],progress:72,enrolled:156},
+    {id:"LP02",name:"DevSecOps Engineer",courseIds:["C001","C002","C008","C012"],progress:45,enrolled:78},
+    {id:"LP03",name:"Cloud Security Specialist",courseIds:["C003","C006","C009"],progress:58,enrolled:89},
+    {id:"LP04",name:"Advanced Penetration Tester",courseIds:["C010","C002","C005"],progress:33,enrolled:45},
+  ];
+  @state() private _purpleTeamDeptCompliance: Array<{dept:string;trainedPct:number;targetPct:number;avgScore:number;certCount:number}> = [
+    {dept:"Engineering",trainedPct:88,targetPct:95,avgScore:82,certCount:34},
+    {dept:"Operations",trainedPct:92,targetPct:95,avgScore:87,certCount:28},
+    {dept:"Finance",trainedPct:78,targetPct:90,avgScore:74,certCount:12},
+    {dept:"HR",trainedPct:85,targetPct:90,avgScore:79,certCount:8},
+    {dept:"Legal",trainedPct:71,targetPct:85,avgScore:71,certCount:6},
+  ];
+  @state() private _purpleTeamSkillsGaps: Array<{skill:string;current:number;required:number;gap:number;priority:string}> = [
+    {skill:"Cloud Security",current:62,required:85,gap:23,priority:"High"},
+    {skill:"Threat Hunting",current:55,required:80,gap:25,priority:"High"},
+    {skill:"Incident Response",current:70,required:85,gap:15,priority:"Medium"},
+    {skill:"Secure Coding",current:75,required:90,gap:15,priority:"Medium"},
+    {skill:"Forensics",current:45,required:75,gap:30,priority:"Critical"},
+  ];
+  private _renderPurpleteamTraining(): TemplateResult {
+    const courses = this._purpleTeamCourses;
+    const deptComp = this._purpleTeamDeptCompliance;
+    return html`
+      <div class="training-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Security Training Platform</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Active Courses (12)</h5>
+            ${courses.slice(0, 5).map(c => html`
+              <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #334155;font-size:11px;">
+                <span style="color:#e2e8f0;">${c.title}</span>
+                <span style="color:${c.difficulty === "Advanced" || c.difficulty === "Expert" ? "#f87171" : "#4ade80"};">${c.difficulty}</span>
+              </div>
+              <div style="display:flex;gap:12px;padding:2px 0;font-size:10px;color:#94a3b8;">
+                <span>${c.enrolled} enrolled</span>
+                <span>${c.completed} completed</span>
+                <span>\u2605 ${c.rating}</span>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Department Compliance</h5>
+            ${deptComp.map(d => html`
+              <div style="padding:4px 0;border-bottom:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                  <span style="color:#e2e8f0;">${d.dept}</span>
+                  <span style="color:${d.trainedPct >= d.targetPct ? "#4ade80" : "#fbbf24"};">${d.trainedPct}%</span>
+                </div>
+                <div style="height:4px;background:#334155;border-radius:2px;margin-top:3px;">
+                  <div style="height:100%;width:${d.trainedPct}%;background:${d.trainedPct >= d.targetPct ? "#22c55e" : "#f59e0b"};border-radius:2px;"></div>
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Risk Dashboard Block ===
+  @state() private _purpleTeamRiskTopTen: Array<{id:string;name:string;score:number;trend:string;owner:string;category:string;lastAssessed:string}> = [
+    {id:"R001",name:"Unpatched Critical CVEs",score:95,trend:"up",owner:"IT Ops",category:"Vulnerability",lastAssessed:"2026-04-22"},
+    {id:"R002",name:"Misconfigured Cloud Storage",score:92,trend:"up",owner:"Cloud Team",category:"Configuration",lastAssessed:"2026-04-21"},
+    {id:"R003",name:"Overprivileged Service Accounts",score:88,trend:"stable",owner:"IAM Team",category:"Identity",lastAssessed:"2026-04-20"},
+    {id:"R004",name:"Legacy TLS Dependencies",score:85,trend:"down",owner:"Network",category:"Encryption",lastAssessed:"2026-04-19"},
+    {id:"R005",name:"Third-Party API Key Exposure",score:83,trend:"up",owner:"DevOps",category:"Data Loss",lastAssessed:"2026-04-22"},
+    {id:"R006",name:"Inadequate Network Segmentation",score:80,trend:"stable",owner:"Network",category:"Network",lastAssessed:"2026-04-18"},
+    {id:"R007",name:"Missing MFA on Admin Portals",score:78,trend:"down",owner:"Security",category:"Authentication",lastAssessed:"2026-04-17"},
+    {id:"R008",name:"Outdated Endpoint Protection",score:75,trend:"stable",owner:"Endpoint",category:"Endpoint",lastAssessed:"2026-04-16"},
+    {id:"R009",name:"Insufficient Logging Coverage",score:72,trend:"up",owner:"SOC",category:"Monitoring",lastAssessed:"2026-04-15"},
+    {id:"R010",name:"Shadow IT SaaS Applications",score:70,trend:"stable",owner:"GRC",category:"Governance",lastAssessed:"2026-04-14"},
+  ];
+  @state() private _purpleTeamRiskCategories: Array<{category:string;count:number;avgScore:number;color:string}> = [
+    {category:"Vulnerability",count:47,avgScore:82,color:"#ef4444"},
+    {category:"Configuration",count:32,avgScore:75,color:"#f97316"},
+    {category:"Identity",count:28,avgScore:71,color:"#eab308"},
+    {category:"Network",count:24,avgScore:68,color:"#22c55e"},
+    {category:"Data Loss",count:19,avgScore:65,color:"#3b82f6"},
+    {category:"Encryption",count:15,avgScore:62,color:"#8b5cf6"},
+  ];
+  @state() private _purpleTeamRiskVelocity: Array<{week:string;newRisks:number;closedRisks:number;netChange:number}> = [
+    {week:"W15",newRisks:12,closedRisks:8,netChange:4},
+    {week:"W16",newRisks:15,closedRisks:11,netChange:4},
+    {week:"W17",newRisks:9,closedRisks:14,netChange:-5},
+    {week:"W18",newRisks:18,closedRisks:10,netChange:8},
+    {week:"W19",newRisks:7,closedRisks:16,netChange:-9},
+    {week:"W20",newRisks:11,closedRisks:13,netChange:-2},
+    {week:"W21",newRisks:14,closedRisks:9,netChange:5},
+  ];
+  @state() private _purpleTeamRiskAppetite: {current:number;threshold:number;maxTolerated:number;status:string} = {
+    current: 68, threshold: 55, maxTolerated: 80, status: 'Warning'
+  };
+  @state() private _purpleTeamRiskOwnerMatrix: Array<{owner:string;criticalCount:number;highCount:number;mediumCount:number;complianceRate:number}> = [
+    {owner:"IT Ops",criticalCount:5,highCount:12,mediumCount:23,complianceRate:0.72},
+    {owner:"Cloud Team",criticalCount:3,highCount:9,mediumCount:18,complianceRate:0.81},
+    {owner:"IAM Team",criticalCount:2,highCount:7,mediumCount:14,complianceRate:0.88},
+    {owner:"Network",criticalCount:4,highCount:11,mediumCount:20,complianceRate:0.76},
+    {owner:"DevOps",criticalCount:3,highCount:8,mediumCount:16,complianceRate:0.83},
+    {owner:"Security",criticalCount:1,highCount:5,mediumCount:12,complianceRate:0.91},
+  ];
+  private _renderPurpleteamRiskDash(): TemplateResult {
+    const riskItems = this._purpleTeamRiskTopTen;
+    const velocity = this._purpleTeamRiskVelocity;
+    const appetite = this._purpleTeamRiskAppetite;
+    return html`
+      <div class="risk-dash-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Security Risk Dashboard</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Top 10 Risks</h5>
+            ${riskItems.slice(0, 5).map(r => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #334155;">
+                <span style="color:#e2e8f0;font-size:11px;">${r.name}</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="color:${r.trend === "up" ? "#ef4444" : r.trend === "down" ? "#22c55e" : "#eab308"};font-size:10px;">
+                    ${r.trend === "up" ? "\u2191" : r.trend === "down" ? "\u2193" : "\u2192"}
+                  </span>
+                  <span style="color:#f87171;font-size:11px;font-weight:bold;">${r.score}</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Risk Velocity (Weekly)</h5>
+            ${velocity.map(v => html`
+              <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;">
+                <span style="color:#cbd5e1;">${v.week}</span>
+                <span style="color:${v.netChange > 0 ? "#f87171" : "#4ade80"};">${v.netChange > 0 ? "+" : ""}${v.netChange}</span>
+              </div>
+            `)}
+          </div>
+        </div>
+        <div style="margin-top:12px;background:#1e293b;border-radius:6px;padding:12px;">
+          <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Risk Appetite Gauge</h5>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:8px;background:#334155;border-radius:4px;position:relative;">
+              <div style="height:100%;width:${appetite.current}%;background:${appetite.current > appetite.maxTolerated ? "#ef4444" : appetite.current > appetite.threshold ? "#f97316" : "#22c55e"};border-radius:4px;transition:width 0.3s;"></div>
+              <div style="position:absolute;left:${appetite.threshold}%;top:-2px;width:2px;height:12px;background:#eab308;"></div>
+              <div style="position:absolute;left:${appetite.maxTolerated}%;top:-2px;width:2px;height:12px;background:#ef4444;"></div>
+            </div>
+            <span style="color:#e2e8f0;font-size:11px;">${appetite.current}/100</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === Cloud Workload Protection Block ===
+  @state() private _purpleTeamContainerScans: Array<{image:string;registry:string;critical:number;high:number;medium:number;scanDate:string;status:string}> = [
+    {image:"nginx:1.25",registry:"docker.io",critical:2,high:5,medium:12,scanDate:"2026-04-22",status:"Vulnerable"},
+    {image:"postgres:16",registry:"ghcr.io",critical:0,high:1,medium:3,scanDate:"2026-04-22",status:"Clean"},
+    {image:"redis:7.2",registry:"docker.io",critical:1,high:3,medium:8,scanDate:"2026-04-21",status:"Vulnerable"},
+    {image:"app-server:v2.3",registry:"ecr.aws",critical:0,high:0,medium:2,scanDate:"2026-04-22",status:"Clean"},
+    {image:"sidecar-proxy:v1.8",registry:"gcr.io",critical:3,high:7,medium:15,scanDate:"2026-04-20",status:"Critical"},
+  ];
+  @state() private _purpleTeamK8sPods: Array<{namespace:string;pod:string;securityContext:string;hostIPC:boolean;hostPID:boolean;privileged:boolean;riskLevel:string}> = [
+    {namespace:"production",pod:"web-frontend-7d9f8",securityContext:"Restricted",hostIPC:false,hostPID:false,privileged:false,riskLevel:"Low"},
+    {namespace:"production",pod:"api-gateway-4b2c1",securityContext:"Baseline",hostIPC:false,hostPID:false,privileged:false,riskLevel:"Medium"},
+    {namespace:"staging",pod:"db-migrator-x8k3m",securityContext:"Privileged",hostIPC:true,hostPID:false,privileged:true,riskLevel:"Critical"},
+    {namespace:"monitoring",pod:"prometheus-q7r2p",securityContext:"Baseline",hostIPC:false,hostPID:false,privileged:false,riskLevel:"Medium"},
+  ];
+  @state() private _purpleTeamServerlessRisk: Array<{function:string;runtime:string;timeout:number;iamPerms:string;externalCalls:number;riskScore:number}> = [
+    {function:"processPayment",runtime:"nodejs20.x",timeout:30,iamPerms:"dynamodb:*",externalCalls:3,riskScore:78},
+    {function:"sendNotification",runtime:"python3.12",timeout:15,iamPerms:"sns:Publish",externalCalls:1,riskScore:25},
+    {function:"imageResizer",runtime:"python3.12",timeout:60,iamPerms:"s3:*",externalCalls:0,riskScore:45},
+    {function:"authValidator",runtime:"go1.x",timeout:10,iamPerms:"cognito-idp:*",externalCalls:2,riskScore:62},
+  ];
+  @state() private _purpleTeamRuntimeAlerts: Array<{id:string;workload:string;alertType:string;severity:string;description:string;timestamp:string}> = [
+    {id:"RTA01",workload:"db-migrator-x8k3m",alertType:"Privilege Escalation",severity:"Critical",description:"Container attempted to access /etc/shadow",timestamp:"2026-04-22T10:34:00Z"},
+    {id:"RTA02",workload:"web-frontend-7d9f8",alertType:"Anomalous Outbound",severity:"High",description:"Unexpected DNS query to known C2 domain",timestamp:"2026-04-22T09:12:00Z"},
+    {id:"RTA03",workload:"sidecar-proxy:v1.8",alertType:"Crypto Mining",severity:"Critical",description:"CPU utilization exceeded 95% for 30 minutes",timestamp:"2026-04-21T23:45:00Z"},
+  ];
+  private _renderPurpleteamCloudWl(): TemplateResult {
+    const containers = this._purpleTeamContainerScans;
+    const pods = this._purpleTeamK8sPods;
+    const alerts = this._purpleTeamRuntimeAlerts;
+    return html`
+      <div class="cloud-wl-section" style="margin-top:16px;padding:16px;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+        <h4 style="color:#f1f5f9;margin:0 0 12px 0;font-size:14px;">Cloud Workload Protection</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Container Scan Results</h5>
+            ${containers.map(c => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #334155;font-size:11px;">
+                <span style="color:#e2e8f0;">${c.image}</span>
+                <div style="display:flex;gap:8px;">
+                  <span style="color:#ef4444;">${c.critical}C</span>
+                  <span style="color:#f97316;">${c.high}H</span>
+                  <span style="color:#eab308;">${c.medium}M</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="background:#1e293b;border-radius:6px;padding:12px;">
+            <h5 style="color:#94a3b8;margin:0 0 8px 0;font-size:12px;">Runtime Threat Alerts</h5>
+            ${alerts.map(a => html`
+              <div style="padding:4px 0;border-bottom:1px solid #334155;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;">
+                  <span style="color:#e2e8f0;">${a.alertType}</span>
+                  <span style="color:${a.severity === "Critical" ? "#ef4444" : "#f97316"};">${a.severity}</span>
+                </div>
+                <div style="color:#94a3b8;font-size:10px;">${a.workload}: ${a.description}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {    if (this._ptRules.length === 0) { this._initPtRules(); this._initPtCvss(); this._runPtAnomalyDetection(); this._generatePtPredictions(); this._initPtApprovals(); this._initPtActivity(); this._initPtNotifications(); }
 
     const items = this._getFiltered();
