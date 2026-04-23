@@ -2733,5 +2733,779 @@ export class ScDrTest extends LitElement {
     `;
   }
 
+  
+  // Register new subtabs for extended sections
+  private _drGetNewSubTabs(): {key:string;label:string}[] {
+    return [
+      { key: 'analytics', label: 'Analytics' },
+      { key: 'incident-coord', label: 'IR Coordination' },
+      { key: 'metrics-corr', label: 'Metrics Correlation' },
+      { key: 'api-gateway', label: 'API Gateway' },
+      { key: 'perf-opt', label: 'Performance' },
+    ];
   }
+
+  // ========== Section A: Advanced Analytics Engine ==========
+  @state() private _drBayesianPrior: number = 0.5;
+  @state() private _drBayesianLikelihood: number = 0.7;
+  @state() private _drMonteCarloResults: number[] = [];
+  @state() private _drCorrelationMatrix: number[][] = [];
+  @state() private _drOutlierIndices: number[] = [];
+  @state() private _drTrendComponents: {trend:number;seasonal:number;residual:number}[] = [];
+  @state() private _drAnalyticsView: string = 'bayesian';
+  @state() private _drConfidenceLevel: number = 95;
+  @state() private _drMonteCarloIterations: number = 100;
+
+  private _drCalculateBayesianPosterior(): number {
+    const prior = this._drBayesianPrior;
+    const likelihood = this._drBayesianLikelihood;
+    const falsePositiveRate = 1 - likelihood;
+    const marginal = prior * likelihood + (1 - prior) * falsePositiveRate;
+    return marginal > 0 ? (prior * likelihood) / marginal : 0;
+  }
+
+  private _drRunMonteCarloSimulation(): number[] {
+    const results: number[] = [];
+    const baseRisk = 0.35;
+    const volatility = 0.15;
+    for (let i = 0; i < this._drMonteCarloIterations; i++) {
+      let cumulative = baseRisk;
+      for (let j = 0; j < 12; j++) {
+        const shock = (Math.random() - 0.5) * 2 * volatility;
+        cumulative = Math.max(0, Math.min(1, cumulative + shock * 0.1));
+      }
+      results.push(cumulative);
+    }
+    this._drMonteCarloResults = results;
+    return results;
+  }
+
+  private _drComputeCorrelationMatrix(): number[][] {
+    const events = this._drGenerateMockTimeSeries(6, 50);
+    const n = events.length;
+    const matrix: number[][] = [];
+    for (let i = 0; i < n; i++) {
+      const row: number[] = [];
+      for (let j = 0; j < n; j++) {
+        row.push(this._drPearsonCorrelation(events[i], events[j]));
+      }
+      matrix.push(row);
+    }
+    this._drCorrelationMatrix = matrix;
+    return matrix;
+  }
+
+  private _drPearsonCorrelation(x: number[], y: number[]): number {
+    const n = Math.min(x.length, y.length);
+    if (n < 2) return 0;
+    const mx = x.slice(0, n).reduce((a, b) => a + b, 0) / n;
+    const my = y.slice(0, n).reduce((a, b) => a + b, 0) / n;
+    let num = 0, dx = 0, dy = 0;
+    for (let i = 0; i < n; i++) {
+      const xi = x[i] - mx, yi = y[i] - my;
+      num += xi * yi;
+      dx += xi * xi;
+      dy += yi * yi;
+    }
+    const denom = Math.sqrt(dx * dy);
+    return denom > 0 ? num / denom : 0;
+  }
+
+  private _drDetectOutliersZScore(data: number[]): number[] {
+    const mean = data.reduce((a, b) => a + b, 0) / data.length;
+    const std = Math.sqrt(data.reduce((a, b) => a + (b - mean) ** 2, 0) / data.length);
+    const threshold = 2.0;
+    return data.map((v, i) => Math.abs((v - mean) / (std || 1)) > threshold ? i : -1).filter(i => i >= 0);
+  }
+
+  private _drDetectOutliersIQR(data: number[]): number[] {
+    const sorted = [...data].sort((a, b) => a - b);
+    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+    const iqr = q3 - q1;
+    const lower = q1 - 1.5 * iqr;
+    const upper = q3 + 1.5 * iqr;
+    return data.map((v, i) => v < lower || v > upper ? i : -1).filter(i => i >= 0);
+  }
+
+  private _drDecomposeTrend(data: number[]): {trend:number;seasonal:number;residual:number}[] {
+    const result: {trend:number;seasonal:number;residual:number}[] = [];
+    const window = 5;
+    for (let i = 0; i < data.length; i++) {
+      const start = Math.max(0, i - window);
+      const end = Math.min(data.length, i + window + 1);
+      const trend = data.slice(start, end).reduce((a, b) => a + b, 0) / (end - start);
+      const seasonal = Math.sin((i / 12) * Math.PI * 2) * 0.1;
+      const residual = data[i] - trend - seasonal;
+      result.push({ trend, seasonal, residual });
+    }
+    this._drTrendComponents = result;
+    return result;
+  }
+
+  private _drPredictiveScoreWithCI(data: number[]): {score:number;low:number;high:number} {
+    const recent = data.slice(-10);
+    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const std = Math.sqrt(recent.reduce((a, b) => a + (b - avg) ** 2, 0) / recent.length);
+    const zScore = this._drConfidenceLevel === 99 ? 2.576 : this._drConfidenceLevel === 90 ? 1.645 : 1.96;
+    return { score: avg, low: avg - zScore * std, high: avg + zScore * std };
+  }
+
+  private _drGenerateMockTimeSeries(count: number, length: number): number[][] {
+    const series: number[][] = [];
+    for (let s = 0; s < count; s++) {
+      const arr: number[] = [];
+      let val = 50 + s * 10;
+      for (let i = 0; i < length; i++) {
+        val += (Math.random() - 0.48) * 5;
+        arr.push(Math.max(0, Math.min(100, val)));
+      }
+      series.push(arr);
+    }
+    return series;
+  }
+
+  private _drRenderAnalyticsEngine(): any {
+    const posterior = this._drCalculateBayesianPosterior();
+    const mcResults = this._drMonteCarloResults.length > 0 ? this._drMonteCarloResults : this._drRunMonteCarloSimulation();
+    const mcAvg = mcResults.reduce((a, b) => a + b, 0) / mcResults.length;
+    const mcP95 = [...mcResults].sort((a, b) => a - b)[Math.floor(mcResults.length * 0.95)];
+    const matrix = this._drCorrelationMatrix.length > 0 ? this._drCorrelationMatrix : this._drComputeCorrelationMatrix();
+    const labels = ['Vulns', 'Incidents', 'Phishing', 'Access', 'Compliance', 'Training'];
+    return html`
+      <div class="analytics-engine" style="padding:12px">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="tab ${this._drAnalyticsView === 'bayesian' ? 'active' : ''}" @click=${() => { this._drAnalyticsView = 'bayesian'; }}>Bayesian</button>
+          <button class="tab ${this._drAnalyticsView === 'montecarlo' ? 'active' : ''}" @click=${() => { this._drAnalyticsView = 'montecarlo'; }}>Monte Carlo</button>
+          <button class="tab ${this._drAnalyticsView === 'correlation' ? 'active' : ''}" @click=${() => { this._drAnalyticsView = 'correlation'; }}>Correlation</button>
+          <button class="tab ${this._drAnalyticsView === 'outliers' ? 'active' : ''}" @click=${() => { this._drAnalyticsView = 'outliers'; }}>Outliers</button>
+          <button class="tab ${this._drAnalyticsView === 'trend' ? 'active' : ''}" @click=${() => { this._drAnalyticsView = 'trend'; }}>Trend</button>
+          <button class="tab ${this._drAnalyticsView === 'predictive' ? 'active' : ''}" @click=${() => { this._drAnalyticsView = 'predictive'; }}>Predictive</button>
+        </div>
+        ${this._drAnalyticsView === 'bayesian' ? html`
+          <div class="card" style="padding:12px;margin-bottom:8px">
+            <h4 style="margin:0 0 8px;color:#e0e0e0">Bayesian Risk Probability</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><span style="color:#888">Prior:</span> ${this._drBayesianPrior.toFixed(2)}</div>
+              <div><span style="color:#888">Likelihood:</span> ${this._drBayesianLikelihood.toFixed(2)}</div>
+              <div><span style="color:#888">Posterior:</span> <strong style="color:${posterior > 0.6 ? '#f44' : '#4f4'}">${posterior.toFixed(4)}</strong></div>
+              <div><span style="color:#888">Risk Level:</span> ${posterior > 0.7 ? 'Critical' : posterior > 0.5 ? 'High' : posterior > 0.3 ? 'Medium' : 'Low'}</div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <label style="color:#888;font-size:12px">Prior:</label>
+              <input type="range" min="0" max="100" .value=${String(this._drBayesianPrior * 100)} @input=${(e: any) => { this._drBayesianPrior = Number(e.target.value) / 100; }} style="flex:1" />
+              <label style="color:#888;font-size:12px">Likelihood:</label>
+              <input type="range" min="0" max="100" .value=${String(this._drBayesianLikelihood * 100)} @input=${(e: any) => { this._drBayesianLikelihood = Number(e.target.value) / 100; }} style="flex:1" />
+            </div>
+          </div>
+        ` : nothing}
+        ${this._drAnalyticsView === 'montecarlo' ? html`
+          <div class="card" style="padding:12px;margin-bottom:8px">
+            <h4 style="margin:0 0 8px;color:#e0e0e0">Monte Carlo Risk Simulation (${mcResults.length} iterations)</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div><span style="color:#888">Mean:</span> ${(mcAvg * 100).toFixed(1)}%</div>
+              <div><span style="color:#888">P95 VaR:</span> ${(mcP95 * 100).toFixed(1)}%</div>
+              <div><span style="color:#888">Min:</span> ${(Math.min(...mcResults) * 100).toFixed(1)}%</div>
+            </div>
+            <div style="margin-top:8px">
+              <div style="display:flex;height:60px;align-items:flex-end;gap:1px">${mcResults.slice(0, 50).map(v => html`<div style="flex:1;background:${v > 0.6 ? '#f44' : v > 0.4 ? '#fa0' : '#4a4'};height:${v * 100}%;min-height:2px"></div>`)}</div>
+            </div>
+            <button class="btn" style="margin-top:8px" @click=${() => { this._drRunMonteCarloSimulation(); }}>Re-run Simulation</button>
+          </div>
+        ` : nothing}
+        ${this._drAnalyticsView === 'correlation' ? html`
+          <div class="card" style="padding:12px;margin-bottom:8px">
+            <h4 style="margin:0 0 8px;color:#e0e0e0">Cross-Metric Correlation Matrix</h4>
+            <table style="width:100%;border-collapse:collapse;font-size:11px">
+              <thead><tr><th style="color:#888"></th>${labels.map(l => html`<th style="color:#aaa;padding:2px 4px">${l}</th>`)}</tr></thead>
+              <tbody>${matrix.map((row, i) => html`
+                <tr><td style="color:#aaa;padding:2px 4px">${labels[i]}</td>
+                ${row.map((v, j) => html`<td style="text-align:center;padding:2px 4px;background:rgba(${v > 0.5 ? '255,0,0' : v < -0.5 ? '0,0,255' : '128,128,128'},${Math.abs(v) * 0.6})">${v.toFixed(2)}</td>`)}</tr>
+              `)}</tbody>
+            </table>
+          </div>
+        ` : nothing}
+        ${this._drAnalyticsView === 'outliers' ? html`
+          <div class="card" style="padding:12px;margin-bottom:8px">
+            <h4 style="margin:0 0 8px;color:#e0e0e0">Statistical Outlier Detection</h4>
+            ${['zscore', 'iqr'].map(method => {
+              const data = this._drGenerateMockTimeSeries(1, 30)[0];
+              const outliers = method === 'zscore' ? this._drDetectOutliersZScore(data) : this._drDetectOutliersIQR(data);
+              return html`<div style="margin-bottom:8px">
+                <div style="color:#aaa;font-size:12px">${method === 'zscore' ? 'Z-Score Method' : 'IQR Method'}: ${outliers.length} outliers detected</div>
+                <div style="display:flex;gap:1px;height:30px;align-items:flex-end">${data.map((v, i) => html`<div style="flex:1;background:${outliers.includes(i) ? '#f44' : '#3a3d4a'};height:${v}%;min-height:1px"></div>`)}</div>
+              </div>`;
+            })}
+          </div>
+        ` : nothing}
+        ${this._drAnalyticsView === 'trend' ? html`
+          <div class="card" style="padding:12px;margin-bottom:8px">
+            <h4 style="margin:0 0 8px;color:#e0e0e0">Trend Decomposition</h4>
+            ${['Trend', 'Seasonal', 'Residual'].map((comp, ci) => html`
+              <div style="margin-bottom:8px">
+                <div style="color:#aaa;font-size:12px">${comp}</div>
+                <div style="display:flex;gap:1px;height:25px;align-items:center">${this._drDecomposeTrend(this._drGenerateMockTimeSeries(1, 24)[0]).map(p => {
+                  const val = [p.trend, p.seasonal * 500, p.residual][ci];
+                  return html`<div style="flex:1;background:${ci === 0 ? '#4a9' : ci === 1 ? '#a4a' : '#aa4'};height:${Math.abs(val) * 50}%;min-height:1px"></div>`;
+                })}</div>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        ${this._drAnalyticsView === 'predictive' ? html`
+          <div class="card" style="padding:12px;margin-bottom:8px">
+            <h4 style="margin:0 0 8px;color:#e0e0e0">Predictive Scoring with Confidence Intervals</h4>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <label style="color:#888;font-size:12px">Confidence:</label>
+              <select .value=${String(this._drConfidenceLevel)} @change=${(e: any) => { this._drConfidenceLevel = Number(e.target.value); }}>
+                <option value="90">90%</option><option value="95">95%</option><option value="99">99%</option>
+              </select>
+            </div>
+            ${['Risk Score', 'Compliance', 'Threat Index'].map(label => {
+              const data = this._drGenerateMockTimeSeries(1, 20)[0];
+              const pred = this._drPredictiveScoreWithCI(data);
+              return html`<div style="margin-bottom:6px">
+                <span style="color:#aaa;font-size:12px">${label}:</span>
+                <span style="color:#e0e0e0;font-weight:bold">${pred.score.toFixed(2)}</span>
+                <span style="color:#888;font-size:11px">[${pred.low.toFixed(2)}, ${pred.high.toFixed(2)}]</span>
+              </div>`;
+            })}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // ========== Section B: Incident Response Coordination ==========
+  @state() private _drWarRoomActive: boolean = false;
+  @state() private _drWarRoomParticipants: string[] = ['SOC Lead', 'IR Manager', 'CISO', 'Legal', 'PR'];
+  @state() private _drIncidentSeverity: string = 'P3';
+  @state() private _drEscalationLevel: number = 0;
+  @state() private _drCommTemplate: string = 'initial';
+  @state() private _drLessonsLearned: string = '';
+  @state() private _drPostIncidentAnswers: Record<string, string> = {};
+  @state() private _drWarRoomMessages: {sender:string;time:string;text:string}[] = [];
+
+  private _drGetSeverityMatrix(): {severity:string;responseTime:string;escalation:string;notify:string}[] {
+    return [
+      { severity: 'P1 - Critical', responseTime: '15 min', escalation: 'CISO + CEO + Legal', notify: 'All stakeholders immediately' },
+      { severity: 'P2 - High', responseTime: '30 min', escalation: 'CISO + IR Manager', notify: 'Security team + affected dept heads' },
+      { severity: 'P3 - Medium', responseTime: '2 hours', escalation: 'IR Manager', notify: 'Security team' },
+      { severity: 'P4 - Low', responseTime: '24 hours', escalation: 'SOC Lead', notify: 'Ticket created' },
+    ];
+  }
+
+  private _drGetCommunicationTemplates(): {key:string;subject:string;body:string}[] {
+    return [
+      { key: 'initial', subject: 'Security Incident Notification', body: 'We are investigating a potential security incident. The security team has been activated and is assessing the scope. We will provide updates every 30 minutes. Please do not share this information externally.' },
+      { key: 'escalation', subject: 'Incident Escalation - Action Required', body: 'The incident has been escalated to P1 severity. Additional resources have been engaged. All non-essential access to affected systems has been suspended pending investigation.' },
+      { key: 'contained', subject: 'Incident Containment Update', body: 'The incident has been contained. Affected systems have been isolated. Forensic analysis is ongoing. We will provide a detailed timeline within 24 hours.' },
+      { key: 'resolved', subject: 'Incident Resolution Notification', body: 'The incident has been fully resolved. Root cause analysis is complete. Remediation actions have been implemented. A post-incident review has been scheduled.' },
+      { key: 'external', subject: 'Security Advisory', body: 'We have identified and resolved a security matter. There is no evidence of customer data impact. We are working with relevant authorities and will provide updates as appropriate.' },
+    ];
+  }
+
+  private _drGetStakeholderMatrix(): {role:string;notifyP1:boolean;notifyP2:boolean;notifyP3:boolean;channel:string}[] {
+    return [
+      { role: 'CISO', notifyP1: true, notifyP2: true, notifyP3: false, channel: 'Direct message + Phone' },
+      { role: 'CEO', notifyP1: true, notifyP2: false, notifyP3: false, channel: 'Direct message + Phone' },
+      { role: 'Legal Counsel', notifyP1: true, notifyP2: true, notifyP3: false, channel: 'Email + Phone' },
+      { role: 'PR/Communications', notifyP1: true, notifyP2: false, notifyP3: false, channel: 'Email' },
+      { role: 'IT Operations', notifyP1: true, notifyP2: true, notifyP3: true, channel: 'Slack + Email' },
+      { role: 'Affected Dept Heads', notifyP1: true, notifyP2: true, notifyP3: true, channel: 'Email' },
+      { role: 'Board of Directors', notifyP1: true, notifyP2: false, notifyP3: false, channel: 'Briefed by CEO' },
+    ];
+  }
+
+  private _drGetPostIncidentQuestions(): {id:string;question:string;type:string;options:string[]}[] {
+    return [
+      { id: 'q1', question: 'What was the initial detection method?', type: 'select', options: ['SIEM Alert', 'User Report', 'Threat Intel Feed', 'Automated Scan', 'Third-party Notification'] },
+      { id: 'q2', question: 'How long was the dwell time?', type: 'select', options: ['< 1 hour', '1-24 hours', '1-7 days', '7-30 days', '> 30 days'] },
+      { id: 'q3', question: 'Was the incident response plan followed?', type: 'select', options: ['Fully', 'Partially', 'Deviated significantly', 'No plan existed'] },
+      { id: 'q4', question: 'What was the root cause category?', type: 'select', options: ['Misconfiguration', 'Unpatched Vulnerability', 'Social Engineering', 'Insider Threat', 'Zero-day Exploit', 'Supply Chain'] },
+      { id: 'q5', question: 'What improvements are needed?', type: 'text', options: [] },
+    ];
+  }
+
+  private _drToggleWarRoom(): void {
+    this._drWarRoomActive = !this._drWarRoomActive;
+    if (this._drWarRoomActive) {
+      this._drWarRoomMessages = [
+        { sender: 'System', time: new Date().toLocaleTimeString(), text: 'War room activated. All participants notified.' },
+        { sender: 'SOC Lead', time: new Date().toLocaleTimeString(), text: 'Acknowledged. Investigating initial indicators.' },
+      ];
+    }
+  }
+
+  private _drSendWarRoomMessage(text: string): void {
+    this._drWarRoomMessages = [...this._drWarRoomMessages, {
+      sender: 'You', time: new Date().toLocaleTimeString(), text
+    }];
+  }
+
+  private _drEscalateIncident(): void {
+    const levels = ['P4', 'P3', 'P2', 'P1'];
+    const idx = levels.indexOf(this._drIncidentSeverity);
+    if (idx < levels.length - 1) {
+      this._drIncidentSeverity = levels[idx + 1];
+      this._drEscalationLevel = idx + 1;
+    }
+  }
+
+  private _drRenderIncidentCoordination(): any {
+    const templates = this._drGetCommunicationTemplates();
+    const currentTemplate = templates.find(t => t.key === this._drCommTemplate) || templates[0];
+    const questions = this._drGetPostIncidentQuestions();
+    const severityMatrix = this._drGetSeverityMatrix();
+    const stakeholders = this._drGetStakeholderMatrix();
+    return html`
+      <div class="incident-coordination" style="padding:12px">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="tab ${this._drWarRoomActive ? 'active' : ''}" @click=${() => { this._drToggleWarRoom(); }}>War Room ${this._drWarRoomActive ? '(Active)' : ''}</button>
+          <button class="tab" @click=${() => { this._drEscalateIncident(); }}>Escalate (${this._drIncidentSeverity})</button>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Severity Escalation Matrix</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr><th style="color:#888;text-align:left">Severity</th><th style="color:#888">Response Time</th><th style="color:#888">Escalation</th><th style="color:#888">Notification</th></tr></thead>
+            <tbody>${severityMatrix.map(r => html`
+              <tr style="${r.severity.startsWith(this._drIncidentSeverity) ? 'background:rgba(255,68,68,0.15)' : ''}">
+                <td style="padding:4px;color:${r.severity.includes('P1') ? '#f44' : r.severity.includes('P2') ? '#fa0' : '#aaa'}">${r.severity}</td>
+                <td style="padding:4px;text-align:center;color:#ddd">${r.responseTime}</td>
+                <td style="padding:4px;text-align:center;color:#ddd">${r.escalation}</td>
+                <td style="padding:4px;text-align:center;color:#888;font-size:10px">${r.notify}</td>
+              </tr>
+            `)}</tbody>
+          </table>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Stakeholder Notification Matrix</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr><th style="color:#888;text-align:left">Role</th><th style="color:#888">P1</th><th style="color:#888">P2</th><th style="color:#888">P3</th><th style="color:#888">Channel</th></tr></thead>
+            <tbody>${stakeholders.map(s => html`
+              <tr>
+                <td style="padding:4px;color:#ddd">${s.role}</td>
+                <td style="padding:4px;text-align:center">${s.notifyP1 ? html`<span style="color:#4f4">YES</span>` : html`<span style="color:#666">no</span>`}</td>
+                <td style="padding:4px;text-align:center">${s.notifyP2 ? html`<span style="color:#4f4">YES</span>` : html`<span style="color:#666">no</span>`}</td>
+                <td style="padding:4px;text-align:center">${s.notifyP3 ? html`<span style="color:#4f4">YES</span>` : html`<span style="color:#666">no</span>`}</td>
+                <td style="padding:4px;text-align:center;color:#888">${s.channel}</td>
+              </tr>
+            `)}</tbody>
+          </table>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Communication Templates</h4>
+          <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+            ${templates.map(t => html`<button class="tab ${this._drCommTemplate === t.key ? 'active' : ''}" @click=${() => { this._drCommTemplate = t.key; }}>${t.subject.split(' - ')[0]}</button>`)}
+          </div>
+          <div style="background:#1a1d27;padding:8px;border-radius:4px">
+            <div style="color:#4a9;font-weight:bold;margin-bottom:4px">${currentTemplate.subject}</div>
+            <div style="color:#bbb;font-size:12px;line-height:1.5">${currentTemplate.body}</div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Post-Incident Review Questionnaire</h4>
+          ${questions.map(q => html`
+            <div style="margin-bottom:8px">
+              <div style="color:#aaa;font-size:12px;margin-bottom:4px">${q.question}</div>
+              ${q.type === 'select' ? html`
+                <select style="background:#1a1d27;color:#ddd;border:1px solid #333;padding:4px;border-radius:3px;width:100%;font-size:12px" @change=${(e: any) => { this._drPostIncidentAnswers = {...this._drPostIncidentAnswers, [q.id]: e.target.value}; }}>
+                  <option value="">Select...</option>
+                  ${q.options.map(o => html`<option value="${o}" ${this._drPostIncidentAnswers[q.id] === o ? 'selected' : ''}>${o}</option>`)}
+                </select>
+              ` : html`
+                <textarea style="background:#1a1d27;color:#ddd;border:1px solid #333;padding:4px;border-radius:3px;width:100%;font-size:12px;min-height:40px" placeholder="Enter details..." @input=${(e: any) => { this._drPostIncidentAnswers = {...this._drPostIncidentAnswers, [q.id]: e.target.value}; }}></textarea>
+              `}
+            </div>
+          `)}
+          <div style="margin-top:8px">
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:4px">Lessons Learned</label>
+            <textarea style="background:#1a1d27;color:#ddd;border:1px solid #333;padding:4px;border-radius:3px;width:100%;font-size:12px;min-height:60px" .value=${this._drLessonsLearned} @input=${(e: any) => { this._drLessonsLearned = e.target.value; }}></textarea>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ========== Section C: Security Metrics Correlation ==========
+  @state() private _drMetricData: Record<string, number[]> = {};
+  @state() private _drCompositeScore: number = 72;
+  @state() private _drMetricAlerts: string[] = [];
+  @state() private _drLeadingIndicators: string[] = ['Phishing Click Rate', 'Patch Compliance', 'Training Completion', 'Access Review Age'];
+  @state() private _drLaggingIndicators: string[] = ['Incident Count', 'MTTR', 'Data Breach Cost', 'Compliance Failures'];
+  @state() private _drExecutiveSummary: string = '';
+
+  private _drInitializeMetricData(): void {
+    const metrics = ['Vulnerability Count', 'Incident Rate', 'Patch Coverage', 'Training Score', 'Compliance Pct', 'Access Anomalies'];
+    metrics.forEach(m => {
+      this._drMetricData[m] = this._drGenerateMockTimeSeries(1, 30)[0];
+    });
+  }
+
+  private _drCalculateCompositeScore(): number {
+    const weights: Record<string, number> = {
+      'Vulnerability Count': -0.2, 'Incident Rate': -0.25, 'Patch Coverage': 0.2,
+      'Training Score': 0.15, 'Compliance Pct': 0.15, 'Access Anomalies': -0.05
+    };
+    let score = 75;
+    for (const [metric, weight] of Object.entries(weights)) {
+      const data = this._drMetricData[metric];
+      if (data && data.length > 0) {
+        const recent = data.slice(-7);
+        const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+        score += (avg - 50) * weight;
+      }
+    }
+    this._drCompositeScore = Math.max(0, Math.min(100, score));
+    return this._drCompositeScore;
+  }
+
+  private _drDetectMetricAnomalies(): string[] {
+    const alerts: string[] = [];
+    for (const [metric, data] of Object.entries(this._drMetricData)) {
+      if (!data || data.length < 10) continue;
+      const outliers = this._drDetectOutliersZScore(data);
+      if (outliers.length > 0) {
+        alerts.push(metric + ': ' + outliers.length + ' anomalous data points detected in last ' + data.length + ' periods');
+      }
+      const last = data[data.length - 1];
+      const prev = data[data.length - 2];
+      if (Math.abs(last - prev) / (Math.abs(prev) || 1) > 0.5) {
+        alerts.push(metric + ': ' + (last > prev ? 'Sudden increase' : 'Sudden decrease') + ' of ' + (Math.abs(last - prev) / (Math.abs(prev) || 1) * 100).toFixed(0) + '%');
+      }
+    }
+    this._drMetricAlerts = alerts;
+    return alerts;
+  }
+
+  private _drGenerateExecutiveSummary(): string {
+    const score = this._drCalculateCompositeScore();
+    const alerts = this._drDetectMetricAnomalies();
+    const scoreTrend = score > 80 ? 'improving' : score > 60 ? 'stable' : 'declining';
+    let summary = 'Security Posture Score: ' + score.toFixed(0) + '/100 (' + scoreTrend + '). ';
+    summary += 'Leading indicators show ' + (this._drLeadingIndicators.length > 2 ? 'generally positive' : 'mixed') + ' trends. ';
+    if (alerts.length > 0) {
+      summary += 'Active alerts: ' + alerts.length + '. Key concerns: ' + alerts.slice(0, 3).join('; ') + '. ';
+    } else {
+      summary += 'No critical metric anomalies detected. ';
+    }
+    summary += 'Recommendation: ' + (score > 80 ? 'Maintain current security posture and continue monitoring.' : score > 60 ? 'Focus on patch management and training completion rates.' : 'Immediate attention required for vulnerability remediation and incident response readiness.');
+    this._drExecutiveSummary = summary;
+    return summary;
+  }
+
+  private _drRenderMetricsCorrelation(): any {
+    if (Object.keys(this._drMetricData).length === 0) this._drInitializeMetricData();
+    const score = this._drCalculateCompositeScore();
+    const alerts = this._drDetectMetricAnomalies();
+    const metricNames = Object.keys(this._drMetricData);
+    const corrMatrix = metricNames.map((m1, i) =>
+      metricNames.map((m2, j) => this._drPearsonCorrelation(this._drMetricData[m1] || [], this._drMetricData[m2] || []))
+    );
+    const scoreColor = score > 80 ? '#4f4' : score > 60 ? '#fa0' : '#f44';
+    return html`
+      <div class="metrics-correlation" style="padding:12px">
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Security Posture Composite Score</h4>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="font-size:48px;font-weight:bold;color:${scoreColor}">${score.toFixed(0)}</div>
+            <div style="flex:1">
+              <div style="background:#1a1d27;border-radius:4px;height:16px;overflow:hidden">
+                <div style="height:100%;width:${score}%;background:${scoreColor};border-radius:4px;transition:width 0.5s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;color:#888;font-size:10px;margin-top:2px">
+                <span>0 - Critical</span><span>50 - Fair</span><span>100 - Excellent</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Leading vs Lagging Indicators</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="color:#4a9;font-size:12px;font-weight:bold;margin-bottom:4px">Leading (Predictive)</div>
+              ${this._drLeadingIndicators.map(ind => html`<div style="color:#aaa;font-size:11px;padding:2px 0">- ${ind}</div>`)}
+            </div>
+            <div>
+              <div style="color:#a4a;font-size:12px;font-weight:bold;margin-bottom:4px">Lagging (Reactive)</div>
+              ${this._drLaggingIndicators.map(ind => html`<div style="color:#aaa;font-size:11px;padding:2px 0">- ${ind}</div>`)}
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Cross-Metric Correlation (6x6)</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead><tr><th style="color:#666"></th>${metricNames.map(m => html`<th style="color:#888;padding:1px 2px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.split(' ')[0]}</th>`)}</tr></thead>
+            <tbody>${corrMatrix.map((row, i) => html`
+              <tr><td style="color:#888;padding:1px 2px;font-size:9px">${metricNames[i].split(' ')[0]}</td>
+              ${row.map((v, j) => html`<td style="text-align:center;padding:1px;background:rgba(${v > 0.3 ? '0,200,100' : v < -0.3 ? '200,50,50' : '100,100,100'},${Math.abs(v) * 0.8});font-size:9px">${v.toFixed(1)}</td>`)}</tr>
+            `)}</tbody>
+          </table>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Metric Anomaly Alerts (${alerts.length})</h4>
+          ${alerts.length === 0 ? html`<div style="color:#4f4;font-size:12px">No anomalies detected</div>` : html`
+            ${alerts.map(a => html`<div style="color:#fa0;font-size:11px;padding:2px 0;border-bottom:1px solid #2a2d3a">Warning: ${a}</div>`)}
+          `}
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Executive Summary</h4>
+          <div style="background:#1a1d27;padding:8px;border-radius:4px;color:#bbb;font-size:12px;line-height:1.6">${this._drGenerateExecutiveSummary()}</div>
+          <button class="btn" style="margin-top:8px;font-size:11px" @click=${() => { this._drGenerateExecutiveSummary(); }}>Regenerate Summary</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ========== Section D: API Gateway & Rate Limiting ==========
+  @state() private _drApiEndpoints: {id:string;path:string;method:string;status:string;latency:number;rateLimit:number}[] = [];
+  @state() private _drRateLimitPolicy: {endpoint:string;requestsPerMin:number;burstLimit:number;windowSec:number}[] = [];
+  @state() private _drApiKeys: {id:string;name:string;created:string;expires:string;status:string;lastUsed:string}[] = [];
+  @state() private _drWebhookStatuses: {id:string;url:string;events:string;lastDelivery:string;status:string;retryCount:number}[] = [];
+
+  private _drInitializeApiData(): void {
+    this._drApiEndpoints = [
+      { id: 'api-1', path: '/api/v1/security/events', method: 'POST', status: 'active', latency: 45, rateLimit: 100 },
+      { id: 'api-2', path: '/api/v1/vulnerabilities', method: 'GET', status: 'active', latency: 120, rateLimit: 200 },
+      { id: 'api-3', path: '/api/v1/incidents', method: 'POST', status: 'active', latency: 85, rateLimit: 50 },
+      { id: 'api-4', path: '/api/v1/assets', method: 'GET', status: 'active', latency: 200, rateLimit: 150 },
+      { id: 'api-5', path: '/api/v1/compliance', method: 'GET', status: 'deprecated', latency: 350, rateLimit: 30 },
+    ];
+    this._drRateLimitPolicy = [
+      { endpoint: '/api/v1/security/*', requestsPerMin: 100, burstLimit: 150, windowSec: 60 },
+      { endpoint: '/api/v1/vulnerabilities/*', requestsPerMin: 200, burstLimit: 300, windowSec: 60 },
+      { endpoint: '/api/v1/incidents/*', requestsPerMin: 50, burstLimit: 75, windowSec: 60 },
+      { endpoint: '/api/v1/assets/*', requestsPerMin: 150, burstLimit: 200, windowSec: 60 },
+    ];
+    this._drApiKeys = [
+      { id: 'key-1', name: 'SOC Integration Key', created: '2025-01-15', expires: '2026-01-15', status: 'active', lastUsed: '2 min ago' },
+      { id: 'key-2', name: 'SIEM Connector', created: '2025-03-20', expires: '2026-03-20', status: 'active', lastUsed: '5 min ago' },
+      { id: 'key-3', name: 'Legacy Scanner', created: '2024-06-01', expires: '2025-06-01', status: 'expired', lastUsed: '30 days ago' },
+    ];
+    this._drWebhookStatuses = [
+      { id: 'wh-1', url: 'https://hooks.slack.com/services/T00/B00/xxx', events: 'incident.created', lastDelivery: '1 min ago', status: 'success', retryCount: 0 },
+      { id: 'wh-2', url: 'https://api.pagerduty.com/integration/xxx', events: 'incident.escalated', lastDelivery: '5 min ago', status: 'success', retryCount: 0 },
+      { id: 'wh-3', url: 'https://webhooks.jira.com/xxx', events: 'vulnerability.critical', lastDelivery: 'Failed', status: 'failed', retryCount: 3 },
+    ];
+  }
+
+  private _drUpdateRateLimit(endpoint: string, field: string, value: number): void {
+    this._drRateLimitPolicy = this._drRateLimitPolicy.map(p =>
+      p.endpoint === endpoint ? { ...p, [field]: value } : p
+    );
+  }
+
+  private _drRenderApiGateway(): any {
+    if (this._drApiEndpoints.length === 0) this._drInitializeApiData();
+    const totalRpm = this._drApiEndpoints.reduce((a, e) => a + (Math.random() * e.rateLimit * 0.5), 0);
+    const errorRate = (Math.random() * 2).toFixed(1);
+    return html`
+      <div class="api-gateway" style="padding:12px">
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">API Usage Analytics</h4>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:#4a9;font-size:20px;font-weight:bold">${totalRpm.toFixed(0)}</div>
+              <div style="color:#888;font-size:10px">Requests/min</div>
+            </div>
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:${Number(errorRate) > 1 ? '#f44' : '#4f4'};font-size:20px;font-weight:bold">${errorRate}%</div>
+              <div style="color:#888;font-size:10px">Error Rate</div>
+            </div>
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:#e0e0e0;font-size:20px;font-weight:bold">${this._drApiEndpoints.length}</div>
+              <div style="color:#888;font-size:10px">Active Endpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">API Endpoints</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr><th style="color:#888;text-align:left">Endpoint</th><th style="color:#888">Method</th><th style="color:#888">Latency</th><th style="color:#888">Rate Limit</th><th style="color:#888">Status</th></tr></thead>
+            <tbody>${this._drApiEndpoints.map(e => html`
+              <tr>
+                <td style="padding:4px;color:#ddd;font-family:monospace;font-size:10px">${e.path}</td>
+                <td style="padding:4px;text-align:center"><span style="color:${e.method === 'GET' ? '#4a9' : '#a4a'};font-size:10px">${e.method}</span></td>
+                <td style="padding:4px;text-align:center;color:${e.latency > 200 ? '#fa0' : '#4f4'}">${e.latency}ms</td>
+                <td style="padding:4px;text-align:center;color:#aaa">${e.rateLimit}/min</td>
+                <td style="padding:4px;text-align:center"><span style="color:${e.status === 'active' ? '#4f4' : '#fa0'}">${e.status}</span></td>
+              </tr>
+            `)}</tbody>
+          </table>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Rate Limit Policy Editor</h4>
+          ${this._drRateLimitPolicy.map(p => html`
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:4px;background:#1a1d27;border-radius:4px">
+              <span style="color:#ddd;font-size:10px;font-family:monospace;min-width:160px">${p.endpoint}</span>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="color:#888;font-size:10px">RPM:</span>
+                <input type="number" style="background:#0d0f17;color:#ddd;border:1px solid #333;padding:2px 4px;border-radius:3px;width:60px;font-size:11px" .value=${String(p.requestsPerMin)} @change=${(e: any) => { this._drUpdateRateLimit(p.endpoint, 'requestsPerMin', Number(e.target.value)); }} />
+              </div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="color:#888;font-size:10px">Burst:</span>
+                <input type="number" style="background:#0d0f17;color:#ddd;border:1px solid #333;padding:2px 4px;border-radius:3px;width:60px;font-size:11px" .value=${String(p.burstLimit)} @change=${(e: any) => { this._drUpdateRateLimit(p.endpoint, 'burstLimit', Number(e.target.value)); }} />
+              </div>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="color:#888;font-size:10px">Window:</span>
+                <span style="color:#ddd;font-size:11px">${p.windowSec}s</span>
+              </div>
+            </div>
+          `)}
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">API Key Lifecycle</h4>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr><th style="color:#888;text-align:left">Name</th><th style="color:#888">Created</th><th style="color:#888">Expires</th><th style="color:#888">Last Used</th><th style="color:#888">Status</th></tr></thead>
+            <tbody>${this._drApiKeys.map(k => html`
+              <tr>
+                <td style="padding:4px;color:#ddd">${k.name}</td>
+                <td style="padding:4px;text-align:center;color:#888">${k.created}</td>
+                <td style="padding:4px;text-align:center;color:${k.status === 'expired' ? '#f44' : '#888'}">${k.expires}</td>
+                <td style="padding:4px;text-align:center;color:#888">${k.lastUsed}</td>
+                <td style="padding:4px;text-align:center"><span style="color:${k.status === 'active' ? '#4f4' : '#f44'}">${k.status}</span></td>
+              </tr>
+            `)}</tbody>
+          </table>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Webhook Delivery Status</h4>
+          ${this._drWebhookStatuses.map(w => html`
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:6px;background:#1a1d27;border-radius:4px">
+              <span style="color:${w.status === 'success' ? '#4f4' : '#f44'};font-size:16px">${w.status === 'success' ? '\u2713' : '\u2717'}</span>
+              <div style="flex:1">
+                <div style="color:#ddd;font-size:10px;font-family:monospace">${w.url.substring(0, 50)}...</div>
+                <div style="color:#888;font-size:10px">Events: ${w.events} | Last: ${w.lastDelivery}${w.retryCount > 0 ? ' | Retries: ' + w.retryCount : ''}</div>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // ========== Section E: Performance Optimization Panel ==========
+  @state() private _drRenderTime: number = 0;
+  @state() private _drMemoryEstimate: number = 0;
+  @state() private _drCacheHits: number = 0;
+  @state() private _drCacheMisses: number = 0;
+  @state() private _drLazyLoadingEnabled: boolean = true;
+  @state() private _drVirtualScrollEnabled: boolean = false;
+  @state() private _drPerfHistory: {timestamp:number;renderMs:number;memoryKb:number;cacheRatio:number}[] = [];
+  @state() private _drDataSetSize: number = 1000;
+
+  private _drMeasurePerformance(): void {
+    const start = performance.now();
+    const data = Array.from({ length: this._drDataSetSize }, (_, i) => ({
+      id: i, value: Math.random() * 100, category: ['A', 'B', 'C'][i % 3],
+      timestamp: Date.now() - i * 60000
+    }));
+    const filtered = data.filter(d => d.value > 30).map(d => d.value).sort((a, b) => b - a);
+    const end = performance.now();
+    this._drRenderTime = Math.round((end - start) * 100) / 100;
+    this._drMemoryEstimate = Math.round((this._drDataSetSize * 0.15) * 100) / 100;
+    this._drCacheHits = Math.floor(Math.random() * 80 + 60);
+    this._drCacheMisses = Math.floor(Math.random() * 30 + 10);
+    this._drPerfHistory.push({
+      timestamp: Date.now(), renderMs: this._drRenderTime,
+      memoryKb: this._drMemoryEstimate,
+      cacheRatio: this._drCacheHits / (this._drCacheHits + this._drCacheMisses)
+    });
+    if (this._drPerfHistory.length > 20) this._drPerfHistory = this._drPerfHistory.slice(-20);
+  }
+
+  private _drGetCacheRatio(): number {
+    const total = this._drCacheHits + this._drCacheMisses;
+    return total > 0 ? this._drCacheHits / total : 0;
+  }
+
+  private _drGetPerfRecommendation(): string {
+    if (this._drRenderTime > 50) return 'High render time detected. Consider enabling virtual scrolling and reducing data set size.';
+    if (this._drGetCacheRatio() < 0.7) return 'Cache hit ratio is low. Review cache invalidation strategy and increase cache TTL.';
+    if (this._drMemoryEstimate > 500) return 'High memory usage. Enable lazy loading and consider pagination for large datasets.';
+    if (this._drDataSetSize > 500 && !this._drVirtualScrollEnabled) return 'Large dataset detected. Enable virtual scrolling for optimal performance.';
+    return 'Performance is within acceptable parameters. Continue monitoring.';
+  }
+
+  private _drRenderPerformancePanel(): any {
+    if (this._drPerfHistory.length === 0) this._drMeasurePerformance();
+    const cacheRatio = this._drGetCacheRatio();
+    const recommendation = this._drGetPerfRecommendation();
+    const isWarning = recommendation.includes('detected') || recommendation.includes('low') || recommendation.includes('High');
+    return html`
+      <div class="perf-panel" style="padding:12px">
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Render Performance Metrics</h4>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:${this._drRenderTime > 50 ? '#f44' : '#4f4'};font-size:18px;font-weight:bold">${this._drRenderTime}ms</div>
+              <div style="color:#888;font-size:10px">Render Time</div>
+            </div>
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:${this._drMemoryEstimate > 500 ? '#fa0' : '#4a9'};font-size:18px;font-weight:bold">${this._drMemoryEstimate}KB</div>
+              <div style="color:#888;font-size:10px">Memory Est.</div>
+            </div>
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:${cacheRatio > 0.8 ? '#4f4' : '#fa0'};font-size:18px;font-weight:bold">${(cacheRatio * 100).toFixed(0)}%</div>
+              <div style="color:#888;font-size:10px">Cache Hit Ratio</div>
+            </div>
+            <div style="background:#1a1d27;padding:8px;border-radius:4px;text-align:center">
+              <div style="color:#e0e0e0;font-size:18px;font-weight:bold">${this._drDataSetSize}</div>
+              <div style="color:#888;font-size:10px">Dataset Size</div>
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <label style="color:#888;font-size:12px">Dataset size:</label>
+              <input type="range" min="100" max="10000" step="100" .value=${String(this._drDataSetSize)} @input=${(e: any) => { this._drDataSetSize = Number(e.target.value); }} style="flex:1" />
+              <button class="btn" style="font-size:11px" @click=${() => { this._drMeasurePerformance(); }}>Benchmark</button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Optimization Controls</h4>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;color:#ddd;font-size:12px;cursor:pointer">
+              <input type="checkbox" .checked=${this._drLazyLoadingEnabled} @change=${(e: any) => { this._drLazyLoadingEnabled = e.target.checked; }} />
+              Lazy Loading
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;color:#ddd;font-size:12px;cursor:pointer">
+              <input type="checkbox" .checked=${this._drVirtualScrollEnabled} @change=${(e: any) => { this._drVirtualScrollEnabled = e.target.checked; }} />
+              Virtual Scrolling
+            </label>
+          </div>
+          <div style="margin-top:8px;color:${isWarning ? '#fa0' : '#4f4'};font-size:11px;padding:6px;background:${isWarning ? 'rgba(255,170,0,0.1)' : 'rgba(0,255,0,0.05)'};border-radius:4px">
+            ${recommendation}
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Cache Statistics</h4>
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;color:#888;font-size:10px;margin-bottom:2px">
+                <span>Hits: ${this._drCacheHits}</span><span>Misses: ${this._drCacheMisses}</span>
+              </div>
+              <div style="background:#1a1d27;border-radius:4px;height:10px;overflow:hidden;display:flex">
+                <div style="height:100%;width:${(cacheRatio * 100)}%;background:#4f4"></div>
+                <div style="height:100%;width:${((1 - cacheRatio) * 100)}%;background:#f44"></div>
+              </div>
+            </div>
+            <div style="color:#ddd;font-size:14px;font-weight:bold">${(cacheRatio * 100).toFixed(0)}%</div>
+          </div>
+        </div>
+        <div class="card" style="padding:12px;margin-bottom:8px">
+          <h4 style="margin:0 0 8px;color:#e0e0e0">Performance History</h4>
+          <div style="display:flex;height:40px;align-items:flex-end;gap:1px">
+            ${this._drPerfHistory.slice(-15).map(h => html`
+              <div style="flex:1;background:${h.renderMs > 50 ? '#f44' : '#4a4'};height:${Math.min(100, h.renderMs * 2)}%;min-height:2px" title="${h.renderMs}ms"></div>
+            `)}
+          </div>
+          <div style="display:flex;justify-content:space-between;color:#666;font-size:9px;margin-top:2px">
+            <span>Render time (ms) - last 15 benchmarks</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
 declare global { interface HTMLElementTagNameMap { 'sc-dr-test': ScDrTest; } }
