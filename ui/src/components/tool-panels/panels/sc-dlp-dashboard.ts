@@ -5698,5 +5698,260 @@ private _executionHistory: ExecutionRecord[] = [
   private _dlpdasr15AckAnomaly(id: string) {
     this._dlpdasr15Anomalies = this._dlpdasr15Anomalies.map(a => a.id === id ? {...a, acknowledged: true} : a);
   }
+// ===== SECURITY POSTURE TREND ANALYSIS (R22) =====
+  private _r22PostureTrends = [
+    { month: '2025-05', score: 72, network: 78, endpoint: 65, cloud: 70, identity: 80, data: 68, app: 71 },
+    { month: '2025-06', score: 74, network: 79, endpoint: 67, cloud: 72, identity: 82, data: 70, app: 73 },
+    { month: '2025-07', score: 73, network: 80, endpoint: 66, cloud: 73, identity: 81, data: 69, app: 72 },
+    { month: '2025-08', score: 76, network: 81, endpoint: 69, cloud: 75, identity: 83, data: 72, app: 74 },
+    { month: '2025-09', score: 78, network: 82, endpoint: 71, cloud: 76, identity: 85, data: 74, app: 76 },
+    { month: '2025-10', score: 77, network: 83, endpoint: 72, cloud: 78, identity: 84, data: 73, app: 75 },
+    { month: '2025-11', score: 80, network: 84, endpoint: 74, cloud: 80, identity: 86, data: 76, app: 78 },
+    { month: '2025-12', score: 82, network: 85, endpoint: 76, cloud: 82, identity: 88, data: 78, app: 80 },
+    { month: '2026-01', score: 81, network: 86, endpoint: 77, cloud: 83, identity: 87, data: 77, app: 79 },
+    { month: '2026-02', score: 83, network: 87, endpoint: 79, cloud: 85, identity: 89, data: 79, app: 81 },
+    { month: '2026-03', score: 85, network: 88, endpoint: 81, cloud: 87, identity: 90, data: 81, app: 83 },
+    { month: '2026-04', score: 86, network: 89, endpoint: 82, cloud: 88, identity: 91, data: 83, app: 84 },
+  ];
+
+  private _r22PosturePrediction = [
+    { month: '2026-05', predicted: 88, lower: 85, upper: 91, confidence: 0.82 },
+    { month: '2026-06', predicted: 89, lower: 86, upper: 92, confidence: 0.78 },
+    { month: '2026-07', predicted: 90, lower: 86, upper: 94, confidence: 0.73 },
+  ];
+
+  private _r22IndustryPercentile = { current: 78, peer: 65, industry: 72, top: 92, sector: 81 };
+
+  private _r22QoQDeltas = [
+    { quarter: 'Q1 2026', overall: 5, network: 3, endpoint: 5, cloud: 5, identity: 3, data: 4, app: 4 },
+    { quarter: 'Q4 2025', overall: 4, network: 3, endpoint: 4, cloud: 4, identity: 2, data: 4, app: 3 },
+    { quarter: 'Q3 2025', overall: 3, network: 2, endpoint: 3, cloud: 3, identity: 2, data: 2, app: 2 },
+  ];
+
+  private _r22PostureRecommendations = [
+    { id: 'rec-1', priority: 'high', domain: 'Endpoint', title: 'Deploy EDR to remaining 12% of endpoints', impact: 8, effort: 3, status: 'open' },
+    { id: 'rec-2', priority: 'high', domain: 'Data', title: 'Implement automated DLP policies for PII', impact: 7, effort: 4, status: 'in-progress' },
+    { id: 'rec-3', priority: 'medium', domain: 'Cloud', title: 'Enable CSPM for multi-cloud environment', impact: 6, effort: 3, status: 'open' },
+    { id: 'rec-4', priority: 'medium', domain: 'App', title: 'Integrate SAST into CI/CD pipelines', impact: 7, effort: 5, status: 'planned' },
+    { id: 'rec-5', priority: 'low', domain: 'Identity', title: 'Migrate remaining legacy accounts to SSO', impact: 4, effort: 6, status: 'planned' },
+  ];
+
+  private _r22RenderPostureTrend(): ReturnType<typeof html> {
+    const latest = this._r22PostureTrends[this._r22PostureTrends.length - 1];
+    const prev = this._r22PostureTrends[this._r22PostureTrends.length - 2];
+    const delta = latest.score - prev.score;
+    const barW = (v: number) => Math.max(2, v * 0.6);
+    const dims = ['network', 'endpoint', 'cloud', 'identity', 'data', 'app'] as const;
+    const dimLabels: Record<string, string> = { network: 'Network', endpoint: 'Endpoint', cloud: 'Cloud', identity: 'Identity', data: 'Data', app: 'Application' };
+    return html`
+      <div class="r22-posture-trend" style="background:#0a1628;border:1px solid #1e3a5f;border-radius:8px;padding:16px;margin:12px 0;">
+        <h4 style="color:#00d4ff;margin:0 0 12px;font-size:14px;">Security Posture Trend Analysis</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+              <span style="font-size:32px;font-weight:bold;color:#00ff88;">${latest.score}</span>
+              <span style="color:${delta >= 0 ? '#00ff88' : '#ff4444'};font-size:13px;">${delta >= 0 ? '+' : ''}${delta} pts</span>
+              <span style="color:#8899aa;font-size:11px;">vs last month</span>
+            </div>
+            <div style="color:#8899aa;font-size:11px;margin-bottom:6px;">Industry Percentile: <span style="color:#00d4ff;font-weight:bold;">${this._r22IndustryPercentile.current}%</span></div>
+            ${this._r22PosturePrediction.map(p => html`
+              <div style="font-size:11px;color:#667788;margin:2px 0;">
+                ${p.month}: ${p.predicted} (CI: ${p.lower}-${p.upper}, conf: ${Math.round(p.confidence * 100)}%)
+              </div>
+            `)}
+          </div>
+          <div>
+            ${dims.map(d => html`
+              <div style="margin:3px 0;">
+                <span style="color:#8899aa;font-size:11px;display:inline-block;width:70px;">${dimLabels[d]}</span>
+                <div style="display:inline-block;width:120px;height:8px;background:#1a2a3a;border-radius:4px;vertical-align:middle;">
+                  <div style="width:${barW(latest[d])}%;height:100%;background:${latest[d] >= 85 ? '#00ff88' : latest[d] >= 75 ? '#ffaa00' : '#ff4444'};border-radius:4px;"></div>
+                </div>
+                <span style="color:#ccc;font-size:11px;margin-left:6px;">${latest[d]}</span>
+              </div>
+            `)}
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <span style="color:#8899aa;font-size:11px;">12-Month Trend:</span>
+          <div style="display:flex;align-items:flex-end;gap:2px;height:40px;margin-top:4px;">
+            ${this._r22PostureTrends.map(t => html`
+              <div style="flex:1;height:${t.score * 0.4}px;background:${t.score >= 85 ? '#00ff88' : t.score >= 75 ? '#ffaa00' : '#ff6644'};border-radius:2px 2px 0 0;min-width:4px;" title="${t.month}: ${t.score}"></div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _r22GetPostureSummary(): {improving:string[];stable:string[];declining:string[]} {
+    const dims = ['network', 'endpoint', 'cloud', 'identity', 'data', 'app'] as const;
+    const trends = this._r22PostureTrends;
+    const last3 = trends.slice(-3);
+    return {
+      improving: dims.filter(d => last3[2][d] > last3[0][d] + 1),
+      stable: dims.filter(d => Math.abs(last3[2][d] - last3[0][d]) <= 1),
+      declining: dims.filter(d => last3[2][d] < last3[0][d] - 1),
+    };
+  }
+// ===== THREAT ACTOR PROFILE DATABASE (R22) =====
+  private _r22ThreatActors = [
+    { id: 'TA-001', name: 'APT-Storm', country: 'CN', sophistication: 'advanced', motivation: 'espionage', firstSeen: '2019-03', lastSeen: '2026-04', campaigns: 14, targets: ['Technology','Defense','Healthcare'], tools: ['Cobalt Strike','Custom Implant','Zero-day exploits'], confidence: 92, relationship: ['TA-005'] },
+    { id: 'TA-002', name: 'DarkVault', country: 'RU', sophistication: 'advanced', motivation: 'financial', firstSeen: '2020-06', lastSeen: '2026-03', campaigns: 22, targets: ['Finance','Healthcare','Government'], tools: ['Ryuk','TrickBot','Emotet'], confidence: 88, relationship: ['TA-007'] },
+    { id: 'TA-003', name: 'ShadowSpider', country: 'Unknown', sophistication: 'moderate', motivation: 'sabotage', firstSeen: '2021-01', lastSeen: '2026-04', campaigns: 8, targets: ['Energy','Telecom','Critical Infrastructure'], tools: ['Industroyer','Custom wipers'], confidence: 75, relationship: [] },
+    { id: 'TA-004', name: 'CyberNomad', country: 'KP', sophistication: 'advanced', motivation: 'financial', firstSeen: '2018-09', lastSeen: '2026-02', campaigns: 31, targets: ['Finance','Cryptocurrency','Defense'], tools: ['WannaCry variants','AppleJeus','FastCash'], confidence: 95, relationship: [] },
+    { id: 'TA-005', name: 'PhantomOwl', country: 'IR', sophistication: 'moderate', motivation: 'espionage', firstSeen: '2020-11', lastSeen: '2026-04', campaigns: 11, targets: ['Government','Academia','Media'], tools: ['PowerShell backdoors','Custom RAT'], confidence: 82, relationship: ['TA-001'] },
+    { id: 'TA-006', name: 'IronGhost', country: 'CN', sophistication: 'advanced', motivation: 'espionage', firstSeen: '2017-05', lastSeen: '2026-01', campaigns: 19, targets: ['Technology','Manufacturing','Aerospace'], tools: ['Sourface','PlugX','HiatusRAT'], confidence: 90, relationship: ['TA-001','TA-008'] },
+    { id: 'TA-007', name: 'BitterBug', country: 'RU', sophistication: 'high', motivation: 'espionage', firstSeen: '2019-08', lastSeen: '2026-03', campaigns: 16, targets: ['Government','Military','Think Tanks'], tools: ['Sofacy','X-Agent','Zebrocy'], confidence: 87, relationship: ['TA-002'] },
+    { id: 'TA-008', name: 'NeonTide', country: 'CN', sophistication: 'high', motivation: 'supply-chain', firstSeen: '2021-06', lastSeen: '2026-04', campaigns: 7, targets: ['Software','Technology','Telecom'], tools: ['Supply chain implants','Backdoored SDKs'], confidence: 79, relationship: ['TA-006'] },
+  ];
+
+  private _r22CampaignTimeline = [
+    { actorId: 'TA-001', year: 2024, campaigns: [{ name: 'Op Thunder', start: '2024-02', end: '2024-06', targets: 3, success: true }, { name: 'Op Silent', start: '2024-09', end: '2025-01', targets: 5, success: true }] },
+    { actorId: 'TA-002', year: 2024, campaigns: [{ name: 'Op GoldRush', start: '2024-01', end: '2024-04', targets: 8, success: true }, { name: 'Op DarkNet', start: '2024-07', end: '2024-12', targets: 12, success: false }] },
+    { actorId: 'TA-004', year: 2024, campaigns: [{ name: 'Op CryptoStorm', start: '2024-03', end: '2024-08', targets: 15, success: true }] },
+    { actorId: 'TA-003', year: 2025, campaigns: [{ name: 'Op Blackout', start: '2025-01', end: '2025-05', targets: 4, success: true }, { name: 'Op Cascade', start: '2025-09', end: '2026-01', targets: 6, success: false }] },
+  ];
+
+  private _r22TargetDistribution: Record<string, number> = { Technology: 28, Finance: 22, Healthcare: 18, Government: 20, Defense: 15, Energy: 10, Telecom: 12, Manufacturing: 9, Critical: 8, Other: 14 };
+
+  private _r22RenderThreatActors(): ReturnType<typeof html> {
+    const getMotivationColor = (m: string) => m === 'espionage' ? '#ff6b6b' : m === 'financial' ? '#ffd93d' : m === 'sabotage' ? '#ff4444' : '#6bcb77';
+    return html`
+      <div class="r22-threat-actors" style="background:#0a1628;border:1px solid #1e3a5f;border-radius:8px;padding:16px;margin:12px 0;">
+        <h4 style="color:#ff6b6b;margin:0 0 12px;font-size:14px;">Threat Actor Profile Database</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          ${this._r22ThreatActors.slice(0, 6).map(a => html`
+            <div style="background:#0d1f35;border:1px solid #1a3050;border-radius:6px;padding:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#fff;font-weight:bold;font-size:12px;">${a.name}</span>
+                <span style="background:${getMotivationColor(a.motivation)};color:#000;padding:1px 6px;border-radius:3px;font-size:10px;">${a.motivation}</span>
+              </div>
+              <div style="font-size:10px;color:#8899aa;margin-top:4px;">
+                ${a.country} | ${a.sophistication} | ${a.campaigns} campaigns | Conf: ${a.confidence}%
+              </div>
+              <div style="font-size:10px;color:#667788;margin-top:2px;">Targets: ${a.targets.join(', ')}</div>
+              <div style="font-size:10px;color:#556677;margin-top:2px;">Last seen: ${a.lastSeen}</div>
+            </div>
+          `)}
+        </div>
+        <div style="margin-top:10px;">
+          <span style="color:#8899aa;font-size:11px;">Target Industry Distribution:</span>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+            ${Object.entries(this._r22TargetDistribution).sort((a, b) => b[1] - a[1]).map(([ind, cnt]) => html`
+              <span style="background:#1a2a3a;color:#aaccee;padding:2px 8px;border-radius:4px;font-size:10px;">${ind}: ${cnt}</span>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _r22GetActorRelationships(): {from:string;to:string;type:string}[] {
+    const rels: {from:string;to:string;type:string}[] = [];
+    this._r22ThreatActors.forEach(a => {
+      a.relationship.forEach(r => rels.push({ from: a.id, to: r, type: 'affiliated' }));
+    });
+    return rels;
+  }
+
+  private _r22DetectCampaignOverlap(): {actor1:string;actor2:string;overlap:number;sharedTargets:string[]}[] {
+    const overlaps: {actor1:string;actor2:string;overlap:number;sharedTargets:string[]}[] = [];
+    for (let i = 0; i < this._r22ThreatActors.length; i++) {
+      for (let j = i + 1; j < this._r22ThreatActors.length; j++) {
+        const a = this._r22ThreatActors[i], b = this._r22ThreatActors[j];
+        const shared = a.targets.filter(t => b.targets.includes(t));
+        if (shared.length > 0) overlaps.push({ actor1: a.name, actor2: b.name, overlap: shared.length, sharedTargets: shared });
+      }
+    }
+    return overlaps.sort((a, b) => b.overlap - a.overlap);
+  }
+// ===== SECURITY CONTROL TESTING (R22) =====
+  private _r22ControlTests = [
+    { id: 'CT-001', control: 'Firewall Egress Filtering', category: 'Network', status: 'pass', lastTest: '2026-04-15', tester: 'automated', duration: '2m', severity: 'high' },
+    { id: 'CT-002', control: 'MFA Enforcement', category: 'Identity', status: 'pass', lastTest: '2026-04-14', tester: 'automated', duration: '1m', severity: 'critical' },
+    { id: 'CT-003', control: 'Encryption at Rest', category: 'Data', status: 'conditional', lastTest: '2026-04-13', tester: 'manual', duration: '45m', severity: 'high' },
+    { id: 'CT-004', control: 'Patch Management SLA', category: 'Endpoint', status: 'fail', lastTest: '2026-04-12', tester: 'automated', duration: '5m', severity: 'critical' },
+    { id: 'CT-005', control: 'DLP Data Exfiltration', category: 'Data', status: 'pass', lastTest: '2026-04-11', tester: 'automated', duration: '10m', severity: 'high' },
+    { id: 'CT-006', control: 'SIEM Alert Coverage', category: 'Monitoring', status: 'conditional', lastTest: '2026-04-10', tester: 'manual', duration: '2h', severity: 'medium' },
+    { id: 'CT-007', control: 'Privileged Access Review', category: 'Identity', status: 'pass', lastTest: '2026-04-09', tester: 'manual', duration: '3h', severity: 'high' },
+    { id: 'CT-008', control: 'Network Segmentation', category: 'Network', status: 'fail', lastTest: '2026-04-08', tester: 'automated', duration: '15m', severity: 'critical' },
+    { id: 'CT-009', control: 'Backup Restoration Test', category: 'Operations', status: 'pass', lastTest: '2026-04-07', tester: 'manual', duration: '4h', severity: 'high' },
+    { id: 'CT-010', control: 'Incident Response Drill', category: 'Operations', status: 'conditional', lastTest: '2026-04-06', tester: 'manual', duration: '8h', severity: 'high' },
+    { id: 'CT-011', control: 'Vulnerability Scan Coverage', category: 'Endpoint', status: 'pass', lastTest: '2026-04-05', tester: 'automated', duration: '30m', severity: 'medium' },
+    { id: 'CT-012', control: 'Cloud CSPM Compliance', category: 'Cloud', status: 'fail', lastTest: '2026-04-04', tester: 'automated', duration: '5m', severity: 'high' },
+    { id: 'CT-013', control: 'API Authentication', category: 'Application', status: 'pass', lastTest: '2026-04-03', tester: 'automated', duration: '8m', severity: 'high' },
+    { id: 'CT-014', control: 'Container Image Scanning', category: 'Cloud', status: 'conditional', lastTest: '2026-04-02', tester: 'automated', duration: '12m', severity: 'medium' },
+    { id: 'CT-015', control: 'Secrets Rotation', category: 'Identity', status: 'pass', lastTest: '2026-04-01', tester: 'automated', duration: '3m', severity: 'high' },
+    { id: 'CT-016', control: 'DNS Security Validation', category: 'Network', status: 'pass', lastTest: '2026-03-30', tester: 'automated', duration: '4m', severity: 'medium' },
+    { id: 'CT-017', control: 'Email Gateway Filtering', category: 'Application', status: 'conditional', lastTest: '2026-03-29', tester: 'manual', duration: '1h', severity: 'high' },
+    { id: 'CT-018', control: 'Zero Trust Access Policy', category: 'Identity', status: 'fail', lastTest: '2026-03-28', tester: 'manual', duration: '6h', severity: 'critical' },
+    { id: 'CT-019', control: 'Database Activity Monitoring', category: 'Data', status: 'pass', lastTest: '2026-03-27', tester: 'automated', duration: '7m', severity: 'high' },
+    { id: 'CT-020', control: 'Third-Party Risk Assessment', category: 'Operations', status: 'conditional', lastTest: '2026-03-25', tester: 'manual', duration: '16h', severity: 'high' },
+  ];
+
+  private _r22GetControlStats() {
+    const pass = this._r22ControlTests.filter(t => t.status === 'pass').length;
+    const fail = this._r22ControlTests.filter(t => t.status === 'fail').length;
+    const cond = this._r22ControlTests.filter(t => t.status === 'conditional').length;
+    const total = this._r22ControlTests.length;
+    return { pass, fail, conditional: cond, total, passRate: Math.round(pass / total * 100) };
+  }
+
+  private _r22GetControlGaps(): {category:string;tested:number;total:number;gap:number}[] {
+    const byCategory: Record<string, number[]> = {};
+    this._r22ControlTests.forEach(t => {
+      if (!byCategory[t.category]) byCategory[t.category] = [];
+      byCategory[t.category].push(t.status === 'pass' ? 1 : 0);
+    });
+    const categoryTotals: Record<string, number> = { Network: 8, Identity: 7, Data: 6, Endpoint: 6, Cloud: 7, Application: 5, Monitoring: 4, Operations: 5 };
+    return Object.entries(categoryTotals).map(([cat, tot]) => ({
+      category: cat, tested: (byCategory[cat] || []).length, total: tot,
+      gap: tot - (byCategory[cat] || []).length,
+    })).sort((a, b) => b.gap - a.gap);
+  }
+
+  private _r22RenderControlTesting(): ReturnType<typeof html> {
+    const stats = this._r22GetControlStats();
+    const gaps = this._r22GetControlGaps();
+    return html`
+      <div class="r22-control-testing" style="background:#0a1628;border:1px solid #1e3a5f;border-radius:8px;padding:16px;margin:12px 0;">
+        <h4 style="color:#ffaa00;margin:0 0 12px;font-size:14px;">Security Control Testing</h4>
+        <div style="display:flex;gap:12px;margin-bottom:12px;">
+          <div style="background:#0d1f35;border-radius:6px;padding:10px;flex:1;text-align:center;">
+            <div style="font-size:24px;font-weight:bold;color:#00ff88;">${stats.passRate}%</div>
+            <div style="color:#8899aa;font-size:11px;">Pass Rate</div>
+          </div>
+          <div style="background:#0d1f35;border-radius:6px;padding:10px;flex:1;text-align:center;">
+            <div style="font-size:24px;font-weight:bold;color:#00d4ff;">${stats.pass}/${stats.total}</div>
+            <div style="color:#8899aa;font-size:11px;">Tests Passed</div>
+          </div>
+          <div style="background:#0d1f35;border-radius:6px;padding:10px;flex:1;text-align:center;">
+            <div style="font-size:24px;font-weight:bold;color:#ff4444;">${stats.fail}</div>
+            <div style="color:#8899aa;font-size:11px;">Failed</div>
+          </div>
+          <div style="background:#0d1f35;border-radius:6px;padding:10px;flex:1;text-align:center;">
+            <div style="font-size:24px;font-weight:bold;color:#ffaa00;">${stats.conditional}</div>
+            <div style="color:#8899aa;font-size:11px;">Conditional</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#8899aa;margin-bottom:6px;">Control Gap Analysis by Category:</div>
+        ${gaps.map(g => html`
+          <div style="display:flex;align-items:center;gap:8px;margin:3px 0;">
+            <span style="color:#aaccee;font-size:11px;width:80px;">${g.category}</span>
+            <div style="flex:1;height:8px;background:#1a2a3a;border-radius:4px;">
+              <div style="width:${(g.tested / g.total) * 100}%;height:100%;background:${g.gap === 0 ? '#00ff88' : g.gap <= 2 ? '#ffaa00' : '#ff4444'};border-radius:4px;"></div>
+            </div>
+            <span style="color:#8899aa;font-size:10px;">${g.tested}/${g.total}</span>
+          </div>
+        `)}
+        <div style="margin-top:8px;font-size:10px;color:#667788;">
+          ${this._r22ControlTests.filter(t => t.status === 'fail').map(t => html`
+            <div style="color:#ff4444;">FAIL: ${t.control} (${t.severity}) - Last: ${t.lastTest}</div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
 }
 declare global { interface HTMLElementTagNameMap { 'sc-dlp-dashboard': ScDlpDashboard; } }
