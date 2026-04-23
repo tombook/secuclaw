@@ -5521,7 +5521,7 @@ private _executionHistory: ExecutionRecord[] = [
       {id:'DCR-011',name:'AWS Account ID',pattern:'\b\d{12}\b',category:'Cloud Infrastructure',level:3,enabled:true,matchCount:6789,lastMatch:'2026-04-23T10:00:00Z',accuracy:85.2,falsePositiveRate:8.1},
       {id:'DCR-012',name:'Kubernetes Secret Reference',pattern:'(?:Secret|secret)[s]?:\s*[\w-]+',category:'Infrastructure',level:4,enabled:true,matchCount:890,lastMatch:'2026-04-22T15:30:00Z',accuracy:91.3,falsePositiveRate:4.2},
       {id:'DCR-013',name:'Internal Domain Pattern',pattern:'(?:\.corp|\.internal|\.local|\.staging)\b',category:'Infrastructure',level:2,enabled:true,matchCount:23456,lastMatch:'2026-04-23T14:00:00Z',accuracy:95.6,falsePositiveRate:1.8},
-      {id:'DCR-014',name:'Salary Compensation Keywords',pattern:'(?:salary|compensation|base pay|annual income)\s*[:\$]?\s*[\d,]+',category:'Financial',level:3,enabled:true,matchCount:567,lastMatch:'2026-04-21T14:00:00Z',accuracy:89.7,falsePositiveRate:5.5},
+      {id:'DCR-014',name:'Salary Compensation Keywords',pattern:'(?:salary|compensation|base pay|annual income)\s*[:$]?\s*[\d,]+',category:'Financial',level:3,enabled:true,matchCount:567,lastMatch:'2026-04-21T14:00:00Z',accuracy:89.7,falsePositiveRate:5.5},
       {id:'DCR-015',name:'Medical Record Keywords',pattern:'(?:diagnosis|prescription|medical record|patient ID)\s*[:#]?\s*[\w-]+',category:'Health',level:4,enabled:true,matchCount:345,lastMatch:'2026-04-22T11:00:00Z',accuracy:90.1,falsePositiveRate:4.8},
     ];
     this._dataClassMetrics.levelsBreakdown = [
@@ -8060,6 +8060,538 @@ private _executionHistory: ExecutionRecord[] = [
   }
 
 
+
+  // ─── Security Metrics Drill-Down Analytics (Round 47) ───
+  private _metricsDrillDown: Array<{
+    id: string; name: string; value: number; unit: string;
+    threshold: number; status: 'normal' | 'warning' | 'critical';
+    trend: 'up' | 'down' | 'stable'; source: string;
+    methodology: string; lastUpdated: string;
+    businessUnitComparison: Array<{ bu: string; value: number }>;
+    anomalyDetected: boolean; anomalyScore: number;
+  }> = [
+    { id: 'mtd-001', name: 'Mean Time to Detect (MTTD)', value: 4.2, unit: 'hours',
+      threshold: 8, status: 'normal', trend: 'down', source: 'SIEM Alert Correlation Engine',
+      methodology: 'Calculated as median time from initial compromise indicator to first analyst detection across all incidents in rolling 30-day window',
+      lastUpdated: '2026-04-23T14:30:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 3.1 }, { bu: 'Finance', value: 5.8 }, { bu: 'HR', value: 7.2 }, { bu: 'Sales', value: 4.5 }, { bu: 'Operations', value: 3.9 }],
+      anomalyDetected: false, anomalyScore: 0.12 },
+    { id: 'mtd-002', name: 'Mean Time to Respond (MTTR)', value: 2.1, unit: 'hours',
+      threshold: 4, status: 'normal', trend: 'down', source: 'Incident Response Workflow Tracker',
+      methodology: 'Elapsed time from incident classification to containment action completion, averaged across severity-weighted incidents',
+      lastUpdated: '2026-04-23T14:30:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 1.5 }, { bu: 'Finance', value: 2.8 }, { bu: 'HR', value: 3.1 }, { bu: 'Sales', value: 2.0 }, { bu: 'Operations', value: 1.9 }],
+      anomalyDetected: false, anomalyScore: 0.08 },
+    { id: 'mtd-003', name: 'Vulnerability Remediation SLA Compliance', value: 94.7, unit: '%',
+      threshold: 95, status: 'warning', trend: 'down', source: 'Vulnerability Management Platform',
+      methodology: 'Percentage of vulnerabilities remediated within SLA window, weighted by CVSS severity tier (Critical=24h, High=72h, Medium=14d, Low=30d)',
+      lastUpdated: '2026-04-23T12:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 91.2 }, { bu: 'Finance', value: 96.1 }, { bu: 'HR', value: 98.3 }, { bu: 'Sales', value: 93.8 }, { bu: 'Operations', value: 95.1 }],
+      anomalyDetected: true, anomalyScore: 0.72 },
+    { id: 'mtd-004', name: 'Phishing Simulation Click Rate', value: 3.2, unit: '%',
+      threshold: 5, status: 'normal', trend: 'down', source: 'Security Awareness Training Platform',
+      methodology: 'Aggregate click rate on simulated phishing emails over trailing 90 days, normalized per campaign and department size',
+      lastUpdated: '2026-04-22T18:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 1.8 }, { bu: 'Finance', value: 4.1 }, { bu: 'HR', value: 5.3 }, { bu: 'Sales', value: 3.7 }, { bu: 'Operations', value: 2.4 }],
+      anomalyDetected: false, anomalyScore: 0.15 },
+    { id: 'mtd-005', name: 'Endpoint Detection Coverage', value: 99.1, unit: '%',
+      threshold: 99, status: 'normal', trend: 'stable', source: 'Endpoint Management Console',
+      methodology: 'Percentage of managed endpoints with active EDR agent reporting within last 4 hours, excluding approved offline exceptions',
+      lastUpdated: '2026-04-23T15:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 99.8 }, { bu: 'Finance', value: 98.9 }, { bu: 'HR', value: 99.5 }, { bu: 'Sales', value: 97.2 }, { bu: 'Operations', value: 99.3 }],
+      anomalyDetected: false, anomalyScore: 0.05 },
+    { id: 'mtd-006', name: 'Identity Access Anomaly Rate', value: 0.03, unit: '%',
+      threshold: 0.1, status: 'normal', trend: 'stable', source: 'IAM Analytics Pipeline',
+      methodology: 'Rate of access events flagged by UEBA models as anomalous, calculated as flagged events / total authentication events per day',
+      lastUpdated: '2026-04-23T14:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 0.02 }, { bu: 'Finance', value: 0.04 }, { bu: 'HR', value: 0.01 }, { bu: 'Sales', value: 0.05 }, { bu: 'Operations', value: 0.03 }],
+      anomalyDetected: false, anomalyScore: 0.22 },
+    { id: 'mtd-007', name: 'Cloud Security Posture Score', value: 87.3, unit: '/100',
+      threshold: 85, status: 'normal', trend: 'up', source: 'Cloud Security Posture Management',
+      methodology: 'Composite score derived from CIS benchmark compliance, misconfiguration count, and resource policy adherence across all cloud accounts',
+      lastUpdated: '2026-04-23T13:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 84.1 }, { bu: 'Finance', value: 91.5 }, { bu: 'HR', value: 88.7 }, { bu: 'Sales', value: 82.3 }, { bu: 'Operations', value: 89.4 }],
+      anomalyDetected: false, anomalyScore: 0.18 },
+    { id: 'mtd-008', name: 'Data Loss Prevention Event Rate', value: 12, unit: 'events/day',
+      threshold: 25, status: 'normal', trend: 'stable', source: 'DLP Engine',
+      methodology: 'Count of DLP policy violation events per day averaged over 7-day rolling window, excluding false positives confirmed by analyst review',
+      lastUpdated: '2026-04-23T14:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 18 }, { bu: 'Finance', value: 8 }, { bu: 'HR', value: 3 }, { bu: 'Sales', value: 15 }, { bu: 'Operations', value: 7 }],
+      anomalyDetected: false, anomalyScore: 0.09 },
+    { id: 'mtd-009', name: 'Patch Coverage Ratio', value: 96.8, unit: '%',
+      threshold: 98, status: 'warning', trend: 'up', source: 'Patch Management System',
+      methodology: 'Percentage of assets with all applicable critical and high-severity patches applied within SLA, scanned weekly across all managed assets',
+      lastUpdated: '2026-04-23T06:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 95.2 }, { bu: 'Finance', value: 98.1 }, { bu: 'HR', value: 99.0 }, { bu: 'Sales', value: 93.7 }, { bu: 'Operations', value: 97.5 }],
+      anomalyDetected: true, anomalyScore: 0.65 },
+    { id: 'mtd-010', name: 'Security Awareness Training Completion', value: 91.4, unit: '%',
+      threshold: 95, status: 'warning', trend: 'up', source: 'LMS Security Module',
+      methodology: 'Percentage of active employees who completed mandatory security training modules within current fiscal quarter',
+      lastUpdated: '2026-04-23T10:00:00Z',
+      businessUnitComparison: [{ bu: 'Engineering', value: 88.3 }, { bu: 'Finance', value: 94.7 }, { bu: 'HR', value: 97.1 }, { bu: 'Sales', value: 85.2 }, { bu: 'Operations', value: 92.8 }],
+      anomalyDetected: false, anomalyScore: 0.31 },
+  ];
+
+  private _getMetricsDrillDownSection(): TemplateResult {
+    const criticalCount = this._metricsDrillDown.filter(m => m.status === 'critical').length;
+    const warningCount = this._metricsDrillDown.filter(m => m.status === 'warning').length;
+    return html`
+      <div class="metrics-drilldown-section">
+        <div class="section-header">
+          <h3>Security Metrics Drill-Down Analytics</h3>
+          <div class="metrics-summary-badges">
+            <span class="badge badge-critical">Critical: ${criticalCount}</span>
+            <span class="badge badge-warning">Warning: ${warningCount}</span>
+            <span class="badge badge-normal">Normal: ${this._metricsDrillDown.length - criticalCount - warningCount}</span>
+          </div>
+        </div>
+        <div class="metrics-grid">
+          ${this._metricsDrillDown.map(m => html`
+            <div class="metric-card metric-${m.status}">
+              <div class="metric-header">
+                <span class="metric-name">${m.name}</span>
+                <span class="metric-trend trend-${m.trend}">${m.trend === 'up' ? '▲' : m.trend === 'down' ? '▼' : '●'}</span>
+              </div>
+              <div class="metric-value">${m.value}${m.unit}</div>
+              <div class="metric-threshold">Threshold: ${m.threshold}${m.unit}</div>
+              <div class="metric-source">Source: ${m.source}</div>
+              ${m.anomalyDetected ? html`<div class="metric-anomaly alert-pulse">Anomaly Score: ${m.anomalyScore.toFixed(2)}</div>` : nothing}
+              <details class="metric-details">
+                <summary>Methodology & BU Comparison</summary>
+                <p class="methodology-text">${m.methodology}</p>
+                <div class="bu-comparison">
+                  ${m.businessUnitComparison.map(bu => html`
+                    <div class="bu-bar">
+                      <span class="bu-name">${bu.bu}</span>
+                      <div class="bu-bar-fill" style="width: ${Math.min(bu.value / (m.threshold * 1.5) * 100, 100)}%">${bu.value}</div>
+                    </div>
+                  `)}
+                </div>
+              </details>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── Security Compliance Framework Comparison (Round 47) ───
+  private _complianceFrameworks: Array<{
+    id: string; name: string; version: string;
+    totalControls: number; implementedControls: number;
+    compliancePercent: number; estimatedCost: number;
+    implementationEffort: 'Low' | 'Medium' | 'High' | 'Very High';
+    lastAudit: string; nextAudit: string;
+    keyDomains: string[];
+    overlapMatrix: Record<string, number>;
+  }> = [
+    { id: 'fw-nist', name: 'NIST CSF 2.0', version: '2.0', totalControls: 106,
+      implementedControls: 89, compliancePercent: 83.96, estimatedCost: 285000,
+      implementationEffort: 'Medium', lastAudit: '2026-01-15', nextAudit: '2026-07-15',
+      keyDomains: ['Govern', 'Identify', 'Protect', 'Detect', 'Respond', 'Recover'],
+      overlapMatrix: { 'ISO 27001': 72, 'SOC 2': 65, 'HIPAA': 48, 'PCI DSS': 41 } },
+    { id: 'fw-iso', name: 'ISO/IEC 27001:2022', version: '2022', totalControls: 93,
+      implementedControls: 81, compliancePercent: 87.10, estimatedCost: 320000,
+      implementationEffort: 'High', lastAudit: '2025-11-20', nextAudit: '2026-11-20',
+      keyDomains: ['Organizational', 'People', 'Physical', 'Technological'],
+      overlapMatrix: { 'NIST CSF': 72, 'SOC 2': 78, 'HIPAA': 55, 'PCI DSS': 52 } },
+    { id: 'fw-soc2', name: 'SOC 2 Type II', version: '2017', totalControls: 64,
+      implementedControls: 58, compliancePercent: 90.63, estimatedCost: 195000,
+      implementationEffort: 'Medium', lastAudit: '2026-02-28', nextAudit: '2027-02-28',
+      keyDomains: ['Security', 'Availability', 'Processing Integrity', 'Confidentiality', 'Privacy'],
+      overlapMatrix: { 'NIST CSF': 65, 'ISO 27001': 78, 'HIPAA': 62, 'PCI DSS': 58 } },
+    { id: 'fw-hipaa', name: 'HIPAA Security Rule', version: '2013', totalControls: 78,
+      implementedControls: 61, compliancePercent: 78.21, estimatedCost: 410000,
+      implementationEffort: 'Very High', lastAudit: '2026-03-10', nextAudit: '2026-09-10',
+      keyDomains: ['Administrative Safeguards', 'Physical Safeguards', 'Technical Safeguards', 'Organizational Requirements'],
+      overlapMatrix: { 'NIST CSF': 48, 'ISO 27001': 55, 'SOC 2': 62, 'PCI DSS': 35 } },
+    { id: 'fw-pci', name: 'PCI DSS 4.0', version: '4.0.1', totalControls: 250,
+      implementedControls: 198, compliancePercent: 79.20, estimatedCost: 375000,
+      implementationEffort: 'High', lastAudit: '2026-01-30', nextAudit: '2026-07-30',
+      keyDomains: ['Network Security', 'Data Protection', 'Vulnerability Management', 'Access Control', 'Monitoring', 'Policy'],
+      overlapMatrix: { 'NIST CSF': 41, 'ISO 27001': 52, 'SOC 2': 58, 'HIPAA': 35 } },
+  ];
+
+  private _getComplianceFrameworkSection(): TemplateResult {
+    const avgCompliance = this._complianceFrameworks.reduce((s, f) => s + f.compliancePercent, 0) / this._complianceFrameworks.length;
+    return html`
+      <div class="compliance-framework-section">
+        <div class="section-header">
+          <h3>Compliance Framework Comparison</h3>
+          <span class="avg-score">Avg Compliance: ${avgCompliance.toFixed(1)}%</span>
+        </div>
+        <div class="framework-grid">
+          ${this._complianceFrameworks.map(fw => html`
+            <div class="framework-card">
+              <div class="fw-name">${fw.name} <span class="fw-version">v${fw.version}</span></div>
+              <div class="fw-compliance-ring" style="--pct: ${fw.compliancePercent}">
+                <span>${fw.compliancePercent.toFixed(1)}%</span>
+              </div>
+              <div class="fw-controls">Controls: ${fw.implementedControls}/${fw.totalControls}</div>
+              <div class="fw-effort effort-${fw.implementationEffort.toLowerCase().replace(' ', '-')}">Effort: ${fw.implementationEffort}</div>
+              <div class="fw-cost">Est. Cost: $${(fw.estimatedCost / 1000).toFixed(0)}K</div>
+              <div class="fw-audit-dates">Last: ${fw.lastAudit} | Next: ${fw.nextAudit}</div>
+              <div class="fw-domains">
+                ${fw.keyDomains.map(d => html`<span class="fw-domain-tag">${d}</span>`)}
+              </div>
+              <details class="fw-overlap-details">
+                <summary>Control Overlap Matrix (%)</summary>
+                <div class="overlap-matrix">
+                  ${Object.entries(fw.overlapMatrix).map(([name, pct]) => html`
+                    <div class="overlap-row">
+                      <span class="overlap-name">${name}</span>
+                      <div class="overlap-bar" style="width: ${pct}%">${pct}%</div>
+                    </div>
+                  `)}
+                </div>
+              </details>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── Security Threat Hunting Workspace (Round 47) ───
+  private _huntingHypotheses: Array<{
+    id: string; title: string; status: 'active' | 'testing' | 'confirmed' | 'debunked';
+    priority: 'P1' | 'P2' | 'P3'; assignedHunter: string;
+    createdDate: string; lastActivity: string;
+    queriesRun: number; findingsCount: number;
+    confidenceScore: number; mitreTactics: string[];
+    description: string; relatedIndicators: number;
+  }> = [
+    { id: 'th-001', title: 'Credential dumping via LSASS memory access by non-admin tools', status: 'testing',
+      priority: 'P1', assignedHunter: 'A. Chen', createdDate: '2026-04-15', lastActivity: '2026-04-23T14:20:00Z',
+      queriesRun: 23, findingsCount: 3, confidenceScore: 0.78,
+      mitreTactics: ['Credential Access', 'Defense Evasion'],
+      description: 'Investigating potential credential harvesting through process memory inspection by unauthorized binaries mimicking legitimate admin tools',
+      relatedIndicators: 7 },
+    { id: 'th-002', title: 'Lateral movement via WMI event subscription persistence', status: 'active',
+      priority: 'P1', assignedHunter: 'M. Rodriguez', createdDate: '2026-04-10', lastActivity: '2026-04-23T13:45:00Z',
+      queriesRun: 41, findingsCount: 1, confidenceScore: 0.92,
+      mitreTactics: ['Lateral Movement', 'Persistence', 'Execution'],
+      description: 'Hunting for WMI event consumers used as persistence and lateral movement channels across endpoints',
+      relatedIndicators: 12 },
+    { id: 'th-003', title: 'DNS tunneling through custom subdomain encoding patterns', status: 'confirmed',
+      priority: 'P1', assignedHunter: 'J. Park', createdDate: '2026-04-08', lastActivity: '2026-04-22T16:30:00Z',
+      queriesRun: 56, findingsCount: 8, confidenceScore: 0.95,
+      mitreTactics: ['Command and Control', 'Exfiltration'],
+      description: 'Confirmed DNS exfiltration channel using encoded subdomains matching entropy-based detection signatures',
+      relatedIndicators: 23 },
+    { id: 'th-004', title: 'Scheduled task abuse for privilege escalation chains', status: 'testing',
+      priority: 'P2', assignedHunter: 'S. Williams', createdDate: '2026-04-18', lastActivity: '2026-04-23T11:00:00Z',
+      queriesRun: 15, findingsCount: 0, confidenceScore: 0.35,
+      mitreTactics: ['Privilege Escalation', 'Persistence', 'Execution'],
+      description: 'Examining scheduled task creation patterns for multi-stage privilege escalation chains',
+      relatedIndicators: 4 },
+    { id: 'th-005', title: 'Fileless malware via PowerShell reflection injection', status: 'active',
+      priority: 'P1', assignedHunter: 'A. Chen', createdDate: '2026-04-12', lastActivity: '2026-04-23T15:10:00Z',
+      queriesRun: 34, findingsCount: 5, confidenceScore: 0.82,
+      mitreTactics: ['Defense Evasion', 'Execution', 'Persistence'],
+      description: 'Detecting in-memory PowerShell assembly injection techniques bypassing AMSI and script block logging',
+      relatedIndicators: 15 },
+    { id: 'th-006', title: 'Service account Kerberos ticket abuse patterns', status: 'testing',
+      priority: 'P2', assignedHunter: 'L. Thompson', createdDate: '2026-04-20', lastActivity: '2026-04-23T09:30:00Z',
+      queriesRun: 8, findingsCount: 0, confidenceScore: 0.21,
+      mitreTactics: ['Credential Access', 'Lateral Movement'],
+      description: 'Hunting for unusual Kerberos TGT request patterns from service accounts indicating potential ticket theft',
+      relatedIndicators: 3 },
+    { id: 'th-007', title: 'Registry run keys used for multi-user persistence', status: 'debunked',
+      priority: 'P3', assignedHunter: 'M. Rodriguez', createdDate: '2026-04-05', lastActivity: '2026-04-21T17:00:00Z',
+      queriesRun: 62, findingsCount: 0, confidenceScore: 0.05,
+      mitreTactics: ['Persistence', 'Execution'],
+      description: 'Investigated suspicious run key entries determined to be legitimate software updates',
+      relatedIndicators: 2 },
+    { id: 'th-008', title: 'Cloud API key extraction from environment variables and metadata', status: 'active',
+      priority: 'P2', assignedHunter: 'J. Park', createdDate: '2026-04-16', lastActivity: '2026-04-23T12:15:00Z',
+      queriesRun: 19, findingsCount: 2, confidenceScore: 0.67,
+      mitreTactics: ['Credential Access', 'Discovery'],
+      description: 'Monitoring for anomalous reads to cloud instance metadata endpoints and environment variable access patterns',
+      relatedIndicators: 9 },
+  ];
+
+  private _getThreatHuntingSection(): TemplateResult {
+    const activeCount = this._huntingHypotheses.filter(h => h.status === 'active').length;
+    const confirmedCount = this._huntingHypotheses.filter(h => h.status === 'confirmed').length;
+    const totalFindings = this._huntingHypotheses.reduce((s, h) => s + h.findingsCount, 0);
+    return html`
+      <div class="threat-hunting-section">
+        <div class="section-header">
+          <h3>Threat Hunting Workspace</h3>
+          <div class="hunting-stats">
+            <span class="stat-active">Active: ${activeCount}</span>
+            <span class="stat-confirmed">Confirmed: ${confirmedCount}</span>
+            <span class="stat-findings">Total Findings: ${totalFindings}</span>
+          </div>
+        </div>
+        <div class="hypothesis-list">
+          ${this._huntingHypotheses.map(h => html`
+            <div class="hypothesis-card status-${h.status} priority-${h.priority}">
+              <div class="hypothesis-header">
+                <span class="hypothesis-id">${h.id}</span>
+                <span class="hypothesis-priority">${h.priority}</span>
+                <span class="hypothesis-status status-badge-${h.status}">${h.status}</span>
+              </div>
+              <div class="hypothesis-title">${h.title}</div>
+              <div class="hypothesis-meta">
+                <span>Hunter: ${h.assignedHunter}</span>
+                <span>Queries: ${h.queriesRun}</span>
+                <span>Findings: ${h.findingsCount}</span>
+                <span>Indicators: ${h.relatedIndicators}</span>
+              </div>
+              <div class="confidence-bar">
+                <span>Confidence:</span>
+                <div class="confidence-fill" style="width: ${h.confidenceScore * 100}%">${(h.confidenceScore * 100).toFixed(0)}%</div>
+              </div>
+              <div class="mitre-tactics">
+                ${h.mitreTactics.map(t => html`<span class="tactic-tag">${t}</span>`)}
+              </div>
+              <p class="hypothesis-desc">${h.description}</p>
+              <div class="hypothesis-timeline">Last Activity: ${h.lastActivity}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── Security Service Health Dashboard (Round 47) ───
+  private _securityServices: Array<{
+    id: string; name: string; category: string;
+    uptimePercent: number; status: 'healthy' | 'degraded' | 'down' | 'maintenance';
+    currentLoad: number; maxCapacity: number;
+    slaTarget: number; slaActual: number;
+    lastIncident: string; incidentImpact: 'none' | 'low' | 'medium' | 'high';
+    dependencies: string[]; dependentBy: string[];
+    avgResponseTime: number; errorRate: number;
+    degradationAlert: boolean; capacityWarning: boolean;
+  }> = [
+    { id: 'svc-001', name: 'SIEM Correlation Engine', category: 'Detection', uptimePercent: 99.97,
+      status: 'healthy', currentLoad: 67, maxCapacity: 100, slaTarget: 99.9, slaActual: 99.97,
+      lastIncident: '2026-03-28T08:15:00Z', incidentImpact: 'low',
+      dependencies: ['Log Ingestion Pipeline', 'Threat Intelligence Feed'],
+      dependentBy: ['Alert Triage System', 'SOC Analyst Dashboard'],
+      avgResponseTime: 45, errorRate: 0.02, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-002', name: 'EDR Agent Management', category: 'Endpoint', uptimePercent: 99.92,
+      status: 'healthy', currentLoad: 72, maxCapacity: 100, slaTarget: 99.5, slaActual: 99.92,
+      lastIncident: '2026-04-10T14:30:00Z', incidentImpact: 'medium',
+      dependencies: ['Certificate Authority', 'Update Distribution Server'],
+      dependentBy: ['Threat Detection Pipeline', 'Endpoint Compliance Engine'],
+      avgResponseTime: 120, errorRate: 0.05, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-003', name: 'Vulnerability Scanner', category: 'Assessment', uptimePercent: 99.85,
+      status: 'healthy', currentLoad: 45, maxCapacity: 100, slaTarget: 99.0, slaActual: 99.85,
+      lastIncident: '2026-04-05T06:00:00Z', incidentImpact: 'low',
+      dependencies: ['Asset Inventory Database', 'Plugin Update Service'],
+      dependentBy: ['Risk Scoring Engine', 'Patch Management System'],
+      avgResponseTime: 2500, errorRate: 0.12, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-004', name: 'Identity Provider (IdP)', category: 'Identity', uptimePercent: 99.99,
+      status: 'healthy', currentLoad: 58, maxCapacity: 100, slaTarget: 99.99, slaActual: 99.99,
+      lastIncident: '2026-02-14T10:00:00Z', incidentImpact: 'high',
+      dependencies: ['LDAP Directory', 'MFA Service', 'Certificate Authority'],
+      dependentBy: ['All Authenticated Services'],
+      avgResponseTime: 35, errorRate: 0.01, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-005', name: 'DLP Inspection Engine', category: 'Data Protection', uptimePercent: 99.88,
+      status: 'degraded', currentLoad: 91, maxCapacity: 100, slaTarget: 99.5, slaActual: 99.88,
+      lastIncident: '2026-04-22T20:45:00Z', incidentImpact: 'medium',
+      dependencies: ['Content Analysis Service', 'Policy Database'],
+      dependentBy: ['Email Gateway', 'Cloud Access Security Broker'],
+      avgResponseTime: 180, errorRate: 0.15, degradationAlert: true, capacityWarning: true },
+    { id: 'svc-006', name: 'Firewall Management Console', category: 'Network', uptimePercent: 99.95,
+      status: 'healthy', currentLoad: 38, maxCapacity: 100, slaTarget: 99.9, slaActual: 99.95,
+      lastIncident: '2026-03-15T11:20:00Z', incidentImpact: 'low',
+      dependencies: ['Rule Distribution Service', 'Log Aggregator'],
+      dependentBy: ['Network Security Monitor', 'Change Review Workflow'],
+      avgResponseTime: 85, errorRate: 0.03, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-007', name: 'Threat Intelligence Platform', category: 'Intelligence', uptimePercent: 99.91,
+      status: 'healthy', currentLoad: 55, maxCapacity: 100, slaTarget: 99.5, slaActual: 99.91,
+      lastIncident: '2026-04-01T03:30:00Z', incidentImpact: 'low',
+      dependencies: ['External Feed Aggregator', 'IoC Database'],
+      dependentBy: ['SIEM Correlation Engine', 'Hunting Workspace'],
+      avgResponseTime: 95, errorRate: 0.04, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-008', name: 'WAF Inspection Service', category: 'Network', uptimePercent: 99.98,
+      status: 'healthy', currentLoad: 63, maxCapacity: 100, slaTarget: 99.95, slaActual: 99.98,
+      lastIncident: '2026-03-22T16:00:00Z', incidentImpact: 'medium',
+      dependencies: ['Signature Update Service', 'GeoIP Database'],
+      dependentBy: ['Web Application Infrastructure'],
+      avgResponseTime: 8, errorRate: 0.005, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-009', name: 'Secrets Management Vault', category: 'Identity', uptimePercent: 99.99,
+      status: 'healthy', currentLoad: 42, maxCapacity: 100, slaTarget: 99.99, slaActual: 99.99,
+      lastIncident: '2025-12-05T09:00:00Z', incidentImpact: 'high',
+      dependencies: ['HSM Cluster', 'Backup Storage'],
+      dependentBy: ['CI/CD Pipeline', 'Application Runtime', 'Infrastructure Automation'],
+      avgResponseTime: 22, errorRate: 0.008, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-010', name: 'Log Ingestion Pipeline', category: 'Infrastructure', uptimePercent: 99.93,
+      status: 'healthy', currentLoad: 78, maxCapacity: 100, slaTarget: 99.5, slaActual: 99.93,
+      lastIncident: '2026-04-18T22:10:00Z', incidentImpact: 'medium',
+      dependencies: ['Kafka Cluster', 'Elasticsearch Cluster'],
+      dependentBy: ['SIEM Correlation Engine', 'Compliance Reporting', 'Forensics Platform'],
+      avgResponseTime: 150, errorRate: 0.06, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-011', name: 'Container Security Scanner', category: 'Cloud', uptimePercent: 99.87,
+      status: 'healthy', currentLoad: 51, maxCapacity: 100, slaTarget: 99.5, slaActual: 99.87,
+      lastIncident: '2026-04-12T07:00:00Z', incidentImpact: 'low',
+      dependencies: ['Container Registry', 'Advisory Database'],
+      dependentBy: ['CI/CD Pipeline', 'Kubernetes Admission Controller'],
+      avgResponseTime: 3200, errorRate: 0.09, degradationAlert: false, capacityWarning: false },
+    { id: 'svc-012', name: 'Security Awareness Platform', category: 'Training', uptimePercent: 99.99,
+      status: 'healthy', currentLoad: 25, maxCapacity: 100, slaTarget: 99.9, slaActual: 99.99,
+      lastIncident: '2026-01-08T13:00:00Z', incidentImpact: 'none',
+      dependencies: ['LMS Integration', 'Reporting Database'],
+      dependentBy: ['Compliance Dashboard', 'HR Training Portal'],
+      avgResponseTime: 200, errorRate: 0.01, degradationAlert: false, capacityWarning: false },
+  ];
+
+  private _getServiceHealthSection(): TemplateResult {
+    const healthyCount = this._securityServices.filter(s => s.status === 'healthy').length;
+    const degradedCount = this._securityServices.filter(s => s.status === 'degraded').length;
+    return html`
+      <div class="service-health-section">
+        <div class="section-header">
+          <h3>Security Service Health</h3>
+          <div class="service-summary">
+            <span class="svc-healthy">Healthy: ${healthyCount}/${this._securityServices.length}</span>
+            ${degradedCount > 0 ? html`<span class="svc-degraded alert-pulse">Degraded: ${degradedCount}</span>` : nothing}
+          </div>
+        </div>
+        <div class="services-grid">
+          ${this._securityServices.map(svc => html`
+            <div class="service-card svc-${svc.status}">
+              <div class="svc-header">
+                <span class="svc-name">${svc.name}</span>
+                <span class="svc-category">${svc.category}</span>
+                <span class="svc-status-badge status-${svc.status}">${svc.status}</span>
+              </div>
+              <div class="svc-uptime">Uptime: ${svc.uptimePercent}% (SLA: ${svc.slaTarget}%)</div>
+              <div class="svc-load-bar">
+                <span>Load:</span>
+                <div class="load-fill ${svc.capacityWarning ? 'load-warning' : ''}" style="width: ${svc.currentLoad}%">${svc.currentLoad}%</div>
+              </div>
+              <div class="svc-perf">Avg Response: ${svc.avgResponseTime}ms | Error Rate: ${svc.errorRate}%</div>
+              ${svc.degradationAlert ? html`<div class="svc-alert alert-pulse">Degradation Alert Active</div>` : nothing}
+              ${svc.capacityWarning ? html`<div class="svc-capacity-warning">Capacity Warning: ${svc.currentLoad}/${svc.maxCapacity}</div>` : nothing}
+              <details class="svc-dependencies">
+                <summary>Dependencies (${svc.dependencies.length} in, ${svc.dependentBy.length} out)</summary>
+                <div class="dep-list">
+                  <div class="dep-section"><strong>Depends On:</strong> ${svc.dependencies.join(', ')}</div>
+                  <div class="dep-section"><strong>Depended By:</strong> ${svc.dependentBy.join(', ')}</div>
+                </div>
+              </details>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── Security Data Classification Policy Manager (Round 47) ───
+  private _dataClassificationLevels: Array<{
+    id: string; name: string; color: string; description: string;
+    handlingProcedure: string; encryptionRequired: boolean;
+    retentionPeriod: string; accessRestriction: string;
+    labelingRequirement: 'mandatory' | 'recommended' | 'optional';
+    examples: string[]; policyVersion: string; lastUpdated: string;
+    auditScore: number; misclassificationCount: number;
+  }> = [
+    { id: 'cl-001', name: 'Top Secret', color: '#dc2626', description: 'Highest sensitivity data whose unauthorized disclosure would cause exceptionally grave damage to organizational security and viability',
+      handlingProcedure: 'Air-gapped storage only, dual-authorization access, no network transmission, physical access logs mandatory, quarterly review',
+      encryptionRequired: true, retentionPeriod: '5 years max then destruction', accessRestriction: 'Named individuals with CISO approval only',
+      labelingRequirement: 'mandatory', examples: ['Cryptographic key material', 'Active exploit payloads', 'Undercover operation details', 'Source code of classified systems'],
+      policyVersion: '3.2.1', lastUpdated: '2026-04-01', auditScore: 98.5, misclassificationCount: 0 },
+    { id: 'cl-002', name: 'Confidential', color: '#ea580c', description: 'Sensitive data whose unauthorized disclosure would cause serious damage to organizational operations, assets, or personnel',
+      handlingProcedure: 'Encrypted storage and transit, role-based access control, audit logging of all access, need-to-know verification',
+      encryptionRequired: true, retentionPeriod: '7 years', accessRestriction: 'Role-based with manager approval',
+      labelingRequirement: 'mandatory', examples: ['Financial forecasts', 'M&A documents', 'Employee PII beyond basic contact', 'Security incident details', 'Vendor contracts with NDA'],
+      policyVersion: '3.2.1', lastUpdated: '2026-04-01', auditScore: 94.2, misclassificationCount: 3 },
+    { id: 'cl-003', name: 'Internal', color: '#d97706', description: 'Data intended for internal use only that should not be shared externally without authorization',
+      handlingProcedure: 'Standard access controls, internal network storage, no public cloud without encryption, annual access review',
+      encryptionRequired: false, retentionPeriod: 'Per business need', accessRestriction: 'All employees with business need',
+      labelingRequirement: 'recommended', examples: ['Internal wiki content', 'Meeting notes', 'Org charts', 'Project status reports', 'Internal tool documentation'],
+      policyVersion: '3.2.0', lastUpdated: '2026-03-15', auditScore: 87.1, misclassificationCount: 12 },
+    { id: 'cl-004', name: 'Restricted', color: '#2563eb', description: 'Data with limited distribution requirements, shared with specific partners or teams under controlled conditions',
+      handlingProcedure: 'Access control lists, sharing requires data owner approval, external sharing via secure channels only',
+      encryptionRequired: false, retentionPeriod: 'Per agreement terms', accessRestriction: 'Named teams and approved partners',
+      labelingRequirement: 'optional', examples: ['Partner-shared threat intelligence', 'Beta product specs', 'Customer-specific configurations', 'Licensed third-party data'],
+      policyVersion: '3.1.0', lastUpdated: '2026-02-28', auditScore: 82.6, misclassificationCount: 8 },
+    { id: 'cl-005', name: 'Public', color: '#16a34a', description: 'Data approved for public disclosure with no restrictions on distribution',
+      handlingProcedure: 'Published through approved channels, no special handling required, periodic review for reclassification',
+      encryptionRequired: false, retentionPeriod: 'Indefinite', accessRestriction: 'None',
+      labelingRequirement: 'optional', examples: ['Marketing materials', 'Published security advisories', 'Public API documentation', 'Press releases', 'Open source contributions'],
+      policyVersion: '3.2.1', lastUpdated: '2026-04-01', auditScore: 99.1, misclassificationCount: 1 },
+  ];
+
+  private _classificationRules: Array<{
+    id: string; name: string; condition: string; targetLevel: string;
+    isActive: boolean; matchCount: number; falsePositiveRate: number;
+    lastTuned: string;
+  }> = [
+    { id: 'rule-001', name: 'PII Detection - SSN Pattern', condition: 'Regex match for SSN format with context validation',
+      targetLevel: 'Confidential', isActive: true, matchCount: 4521, falsePositiveRate: 0.8, lastTuned: '2026-04-15' },
+    { id: 'rule-002', name: 'Credit Card Number Detection', condition: 'Luhn algorithm validation with BIN range check',
+      targetLevel: 'Confidential', isActive: true, matchCount: 2890, falsePositiveRate: 0.3, lastTuned: '2026-04-10' },
+    { id: 'rule-003', name: 'Source Code Fingerprint', condition: 'File extension and content pattern matching for proprietary code markers',
+      targetLevel: 'Top Secret', isActive: true, matchCount: 156, falsePositiveRate: 0.1, lastTuned: '2026-03-28' },
+    { id: 'rule-004', name: 'Encryption Key Material Detection', condition: 'Entropy analysis and key format pattern matching (PEM, DER, OpenSSH)',
+      targetLevel: 'Top Secret', isActive: true, matchCount: 89, falsePositiveRate: 0.05, lastTuned: '2026-04-20' },
+    { id: 'rule-005', name: 'Internal Document Header Detection', condition: 'Metadata and header pattern matching for internal classification markings',
+      targetLevel: 'Internal', isActive: true, matchCount: 12340, falsePositiveRate: 2.1, lastTuned: '2026-04-18' },
+    { id: 'rule-006', name: 'Contract NDA Clause Detection', condition: 'NLP-based detection of confidentiality clauses and NDA references',
+      targetLevel: 'Restricted', isActive: true, matchCount: 567, falsePositiveRate: 1.5, lastTuned: '2026-04-12' },
+  ];
+
+  private _getDataClassificationSection(): TemplateResult {
+    const totalMisclass = this._dataClassificationLevels.reduce((s, l) => s + l.misclassificationCount, 0);
+    return html`
+      <div class="data-classification-section">
+        <div class="section-header">
+          <h3>Data Classification Policy Manager</h3>
+          <div class="classification-summary">
+            <span>Levels: ${this._dataClassificationLevels.length}</span>
+            <span>Active Rules: ${this._classificationRules.filter(r => r.isActive).length}</span>
+            <span class="misclass-alert">Misclassifications: ${totalMisclass}</span>
+          </div>
+        </div>
+        <div class="classification-levels">
+          ${this._dataClassificationLevels.map(level => html`
+            <div class="classification-card" style="border-left: 4px solid ${level.color}">
+              <div class="level-header">
+                <span class="level-name" style="color: ${level.color}">${level.name}</span>
+                <span class="level-version">v${level.policyVersion}</span>
+                <span class="level-audit">Audit: ${level.auditScore}%</span>
+              </div>
+              <p class="level-description">${level.description}</p>
+              <div class="level-requirements">
+                <span class="req-tag ${level.encryptionRequired ? 'req-yes' : 'req-no'}">Encryption: ${level.encryptionRequired ? 'Required' : 'Optional'}</span>
+                <span class="req-tag">Labeling: ${level.labelingRequirement}</span>
+                <span class="req-tag">Access: ${level.accessRestriction}</span>
+                <span class="req-tag">Retention: ${level.retentionPeriod}</span>
+              </div>
+              <div class="level-procedure">${level.handlingProcedure}</div>
+              ${level.misclassificationCount > 0 ? html`<div class="level-misclass alert-pulse">Misclassification Incidents: ${level.misclassificationCount}</div>` : nothing}
+              <div class="level-examples">
+                ${level.examples.map(ex => html`<span class="example-tag">${ex}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+        <div class="classification-rules">
+          <h4>Classification Rules</h4>
+          <div class="rules-list">
+            ${this._classificationRules.map(rule => html`
+              <div class="rule-card ${rule.isActive ? 'rule-active' : 'rule-inactive'}">
+                <div class="rule-header">
+                  <span class="rule-name">${rule.name}</span>
+                  <span class="rule-target" style="color: ${this._dataClassificationLevels.find(l => l.name === rule.targetLevel)?.color || '#666'}">${rule.targetLevel}</span>
+                  <span class="rule-status">${rule.isActive ? 'Active' : 'Inactive'}</span>
+                </div>
+                <div class="rule-condition">${rule.condition}</div>
+                <div class="rule-stats">Matches: ${rule.matchCount.toLocaleString()} | FP Rate: ${rule.falsePositiveRate}% | Last Tuned: ${rule.lastTuned}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
   render() {    if (this._sciRules.length === 0) { this._initSciRules(); this._initSciCvss(); this._runSciAnomalyDetection(); this._generateSciPredictions(); this._initSciApprovals(); this._initSciActivity(); this._initSciNotifications(); }
 
     const items = this._getFiltered();
