@@ -6527,6 +6527,228 @@ private _executionHistory: ExecutionRecord[] = [
     this.requestUpdate();
   }
 
+  // --- Security Incident Response Playbook Engine (Round 41) ---
+
+  private _irpbPlaybookSteps: Array<{step: number; name: string; description: string; owner: string; sla: string; decisionPoints: string[]; artifacts: string[]; escalationTriggers: string[]}> = [
+    { step: 1, name: 'Detection & Triage', description: 'Identify potential security incidents through monitoring alerts, user reports, and threat intelligence feeds. Classify severity and assign initial response team.', owner: 'SOC Tier 1', sla: '15 minutes', decisionPoints: ['Is this a true positive or false positive?', 'What is the initial severity classification?', 'Which systems or data are potentially affected?', 'Is this a known threat pattern?'], artifacts: ['Alert screenshot', 'Initial triage report', 'Severity assessment form', 'Affected system inventory'], escalationTriggers: ['Multiple alerts in short timeframe', 'Critical system affected', 'Data breach indicators', 'Active attacker presence'] },
+    { step: 2, name: 'Containment (Short-term)', description: 'Implement immediate containment measures to prevent further damage while preserving forensic evidence. Isolate affected systems without disrupting business operations more than necessary.', owner: 'SOC Tier 2', sla: '1 hour', decisionPoints: ['Can the threat be contained without system isolation?', 'Should network segments be isolated?', 'Are credentials potentially compromised?', 'Is evidence preservation at risk?'], artifacts: ['Containment action log', 'Network isolation records', 'Credential reset documentation', 'Evidence preservation checklist'], escalationTriggers: ['Containment failed', 'Lateral movement detected', 'Data exfiltration in progress', 'Critical business process at risk'] },
+    { step: 3, name: 'Investigation & Analysis', description: 'Perform detailed forensic analysis to determine the scope, root cause, attack vector, and impact of the incident. Identify all compromised systems, data, and accounts.', owner: 'Forensics Team', sla: '24-72 hours', decisionPoints: ['What was the initial access vector?', 'How far has the attacker pivoted?', 'What data was accessed or exfiltrated?', 'Are there persistent backdoors?'], artifacts: ['Forensic analysis report', 'Timeline of compromise', 'Attack chain reconstruction', 'IOCs extracted'], escalationTriggers: ['Nation-state actor suspected', 'Zero-day exploit identified', 'Scope significantly larger than initial assessment', 'Regulatory notification required'] },
+    { step: 4, name: 'Containment (Long-term)', description: 'Implement sustainable containment measures including patching vulnerabilities, removing attacker access, and hardening affected systems. Ensure threat cannot return through same vectors.', owner: 'Infrastructure Team', sla: '48-96 hours', decisionPoints: ['Are all known attack vectors patched?', 'Have all compromised credentials been rotated?', 'Are monitoring controls enhanced?', 'Is the environment safe for restoration?'], artifacts: ['Patching verification report', 'Credential rotation log', 'Hardening checklist completion', 'Enhanced monitoring configuration'], escalationTriggers: ['New attack vector discovered', 'Patching causes system instability', 'Additional compromised systems found', 'Attacker still has active access'] },
+    { step: 5, name: 'Recovery & Restoration', description: 'Restore affected systems and data from verified clean backups. Implement enhanced monitoring during recovery period. Gradually return systems to production with increased scrutiny.', owner: 'IT Operations', sla: '24-96 hours', decisionPoints: ['Are backups verified as uncompromised?', 'What is the recovery priority order?', 'Should systems return to production in stages?', 'What enhanced monitoring is needed post-recovery?'], artifacts: ['Backup integrity verification', 'Recovery sequence plan', 'System restoration log', 'Post-recovery validation tests'], escalationTriggers: ['Backup contamination detected', 'Recovery fails repeatedly', 'Restored system shows signs of compromise', 'Critical data loss during recovery'] },
+    { step: 6, name: 'Communication & Notification', description: 'Manage all internal and external communications including executive briefings, regulatory notifications, customer disclosures, and public statements per notification requirements.', owner: 'Legal & Communications', sla: 'Per regulation', decisionPoints: ['Is regulatory notification required?', 'What is the disclosure timeline per applicable laws?', 'Should customers be notified?', 'Is public disclosure necessary?'], artifacts: ['Executive briefing template', 'Regulatory notification form', 'Customer notification letter', 'Press statement draft'], escalationTriggers: ['Media inquiry received', 'Regulatory inquiry received', 'Customer data confirmed exposed', 'Third-party vendor involved'] },
+    { step: 7, name: 'Post-Incident Review', description: 'Conduct thorough post-incident review to identify lessons learned, process gaps, and improvement opportunities. Document findings and update playbooks and controls.', owner: 'CISO Office', sla: '5 business days', decisionPoints: ['Were response SLAs met?', 'What processes failed or were inadequate?', 'What additional controls are needed?', 'How should playbooks be updated?'], artifacts: ['Post-incident review report', 'Lessons learned document', 'Action items and owners', 'Playbook update recommendations'], escalationTriggers: ['Systemic process failures identified', 'Multiple SLA breaches', 'Financial impact exceeds threshold', 'Reputational damage significant'] },
+    { step: 8, name: 'Improvement Implementation', description: 'Implement all improvement actions identified during post-incident review. Track progress, verify effectiveness, and update security controls and documentation.', owner: 'Security Engineering', sla: '30-90 days', decisionPoints: ['Which improvements have highest priority?', 'Are additional resources required?', 'How will improvement effectiveness be measured?', 'When should follow-up assessment occur?'], artifacts: ['Improvement plan with timeline', 'Resource allocation request', 'Effectiveness metrics', 'Follow-up assessment schedule'], escalationTriggers: ['Budget approval required', 'Implementation blocked by dependencies', 'Risk acceptance required for delayed items', 'New threats emerge during implementation'] },
+  ];
+
+  private _irpbEscalationMatrix: Array<{from: string; to: string; trigger: string; timeframe: string; method: string}> = [
+    { from: 'SOC Tier 1', to: 'SOC Tier 2', trigger: 'Severity High or Critical confirmed', timeframe: 'Immediate', method: 'Phone + Ticket escalation' },
+    { from: 'SOC Tier 2', to: 'SOC Manager', trigger: 'Active intrusion with data exfiltration', timeframe: 'Within 15 minutes', method: 'Phone + WAR room activation' },
+    { from: 'SOC Manager', to: 'CISO', trigger: 'Severity Critical with business impact', timeframe: 'Within 30 minutes', method: 'Phone + Executive briefing' },
+    { from: 'CISO', to: 'CEO/Board', trigger: 'Material data breach or regulatory notification', timeframe: 'Within 2 hours', method: 'In-person + Written report' },
+    { from: 'Forensics Team', to: 'Legal Counsel', trigger: 'Evidence of criminal activity or litigation risk', timeframe: 'Within 1 hour', method: 'Secure channel + Legal hold initiation' },
+    { from: 'Incident Commander', to: 'External IR Retainer', trigger: 'Skills gap or capacity exceeded', timeframe: 'Within 2 hours', method: 'Contract activation + Secure comms' },
+    { from: 'Communications Lead', to: 'PR Agency', trigger: 'Media exposure or public disclosure', timeframe: 'Within 4 hours', method: 'Phone + Briefing document' },
+    { from: 'Legal Counsel', to: 'Regulators', trigger: 'Mandatory notification threshold met', timeframe: 'Per regulation (24-72h)', method: 'Official notification form' },
+  ];
+
+  private _irpbCommunicationTemplates: Array<{id: string; name: string; audience: string; channel: string; template: string; requiredFields: string[]}> = [
+    { id: 'CT-001', name: 'Executive Briefing', audience: 'C-Suite / Board', channel: 'Email + Meeting', template: 'Incident Summary: [INCIDENT_ID] - [SEVERITY] - Detected: [TIMESTAMP] - Status: [STATUS] - Impact: [IMPACT_SUMMARY] - Actions Taken: [ACTIONS] - Next Steps: [NEXT_STEPS] - Resource Requirements: [RESOURCES]', requiredFields: ['INCIDENT_ID', 'SEVERITY', 'TIMESTAMP', 'STATUS', 'IMPACT_SUMMARY', 'ACTIONS', 'NEXT_STEPS', 'RESOURCES'] },
+    { id: 'CT-002', name: 'Customer Notification', audience: 'Affected Customers', channel: 'Email + Portal', template: 'Dear [CUSTOMER_NAME], We are writing to inform you of a security incident that may have affected your [DATA_TYPE]. What happened: [INCIDENT_DESCRIPTION]. What we are doing: [RESPONSE_ACTIONS]. What you should do: [CUSTOMER_ACTIONS]. Contact: [SUPPORT_INFO].', requiredFields: ['CUSTOMER_NAME', 'DATA_TYPE', 'INCIDENT_DESCRIPTION', 'RESPONSE_ACTIONS', 'CUSTOMER_ACTIONS', 'SUPPORT_INFO'] },
+    { id: 'CT-003', name: 'Internal All-Hands Update', audience: 'All Employees', channel: 'Slack + Email', template: 'Security Incident Update: Our security team is responding to a [SEVERITY] incident. Status: [STATUS]. Employee Action Required: [EMPLOYEE_ACTIONS] if applicable. Please report any suspicious activity to [SECURITY_EMAIL]. FAQ: [FAQ_LINK].', requiredFields: ['SEVERITY', 'STATUS', 'EMPLOYEE_ACTIONS', 'SECURITY_EMAIL', 'FAQ_LINK'] },
+    { id: 'CT-004', name: 'Regulatory Notification', audience: 'Data Protection Authority', channel: 'Official Form', template: 'Incident Report per [REGULATION]: Organization: [ORG_NAME], DPO: [DPO_CONTACT], Incident Date: [DATE], Nature: [NATURE], Categories Affected: [CATEGORIES], Number Affected: [COUNT], Likely Consequences: [CONSEQUENCES], Measures Taken: [MEASURES].', requiredFields: ['ORG_NAME', 'DPO_CONTACT', 'DATE', 'NATURE', 'CATEGORIES', 'COUNT', 'CONSEQUENCES', 'MEASURES'] },
+    { id: 'CT-005', name: 'Press Statement', audience: 'Media / Public', channel: 'Press Release', template: '[COMPANY] Statement on Security Incident: On [DATE], [COMPANY] detected unauthorized access to [SYSTEMS]. We immediately [CONTAINMENT_ACTIONS]. An investigation is underway led by [LEAD_FIRM]. Affected individuals are being notified. For questions: [MEDIA_CONTACT].', requiredFields: ['COMPANY', 'DATE', 'SYSTEMS', 'CONTAINMENT_ACTIONS', 'LEAD_FIRM', 'MEDIA_CONTACT'] },
+    { id: 'CT-006', name: 'Law Enforcement Referral', audience: 'FBI / Local Law Enforcement', channel: 'Official Report', template: 'Cybercrime Referral: Reporting Organization: [ORG_NAME], Contact: [AGENT_NAME], Incident Date: [DATE], Attack Type: [ATTACK_TYPE], Financial Impact: [IMPACT], IOCs: [IOCS], Evidence Preserved: [EVIDENCE_LIST], Cooperation Offered: [COOPERATION].', requiredFields: ['ORG_NAME', 'AGENT_NAME', 'DATE', 'ATTACK_TYPE', 'IMPACT', 'IOCS', 'EVIDENCE_LIST', 'COOPERATION'] },
+  ];
+
+  private _irpbEvidenceChecklist: Array<{id: string; category: string; item: string; collectionMethod: string; preservation: string; chainOfCustody: string}> = [
+    { id: 'EV-001', category: 'System Logs', item: 'Windows Event Logs (Security, System, Application)', collectionMethod: 'WEVTUTIL export + hash verification', preservation: 'Write-once storage + tamper-evident seal', chainOfCustody: 'Collected by: [ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-002', category: 'System Logs', item: 'Linux Syslog and Auth Logs', collectionMethod: 'Secure copy + hash verification', preservation: 'Write-once storage + tamper-evident seal', chainOfCustody: 'Collected by: [ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-003', category: 'Network Data', item: 'Full PCAP from affected network segment', collectionMethod: 'SPAN/TAP capture + immediate archival', preservation: 'Compressed + encrypted storage on air-gapped system', chainOfCustody: 'Captured by: [ANALYST], Duration: [START]-[END], Hash: SHA256' },
+    { id: 'EV-004', category: 'Network Data', item: 'Firewall logs and rule snapshots', collectionMethod: 'Vendor API export + hash', preservation: 'Write-once storage', chainOfCustody: 'Exported by: [ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-005', category: 'Endpoint Data', item: 'Memory dump from compromised systems', collectionMethod: 'FTK Imager / WinPmem + hash', preservation: 'E01 format + encrypted storage', chainOfCustody: 'Captured by: [FORENSIC_ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-006', category: 'Endpoint Data', item: 'Full disk image of affected systems', collectionMethod: 'Forensic imaging (bit-for-bit) + hash', preservation: 'E01 format + air-gapped storage', chainOfCustody: 'Imaged by: [FORENSIC_ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-007', category: 'Malware Samples', item: 'Malicious binaries, scripts, and payloads', collectionMethod: 'Isolated collection + sandbox analysis', preservation: 'Password-protected encrypted archive', chainOfCustody: 'Collected by: [MALWARE_ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-008', category: 'Email Evidence', item: 'Phishing emails, malicious attachments', collectionMethod: 'Email gateway export + original headers', preservation: 'EML format + hash verification', chainOfCustody: 'Exported by: [ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-009', category: 'Cloud Evidence', item: 'Cloud provider audit logs and API call history', collectionMethod: 'Cloud provider API + S3 archival', preservation: 'Immutable cloud storage bucket', chainOfCustody: 'Exported by: [CLOUD_ANALYST], Timestamp: [TS], Hash: SHA256' },
+    { id: 'EV-010', category: 'Identity Evidence', item: 'IAM audit logs, authentication records', collectionMethod: 'IdP export + SAML/OIDC log archival', preservation: 'Write-once storage', chainOfCustody: 'Exported by: [IAM_ANALYST], Timestamp: [TS], Hash: SHA256' },
+  ];
+
+  private _irpbEffectivenessMetrics: Array<{metric: string; description: string; target: string; current: string; status: string; trend: number[]}> = [
+    { metric: 'Mean Time to Detect (MTTD)', description: 'Average time from incident occurrence to initial detection', target: '< 30 min', current: '22 min', status: 'meeting', trend: [45, 42, 38, 35, 32, 28, 25, 23, 22, 22, 22, 22] },
+    { metric: 'Mean Time to Contain (MTTC)', description: 'Average time from detection to initial containment', target: '< 2 hours', current: '1.8 hours', status: 'meeting', trend: [4.2, 3.8, 3.5, 3.2, 2.8, 2.5, 2.2, 2.0, 1.9, 1.8, 1.8, 1.8] },
+    { metric: 'Mean Time to Resolve (MTTR)', description: 'Average time from detection to full resolution', target: '< 72 hours', current: '58 hours', status: 'meeting', trend: [120, 110, 100, 95, 88, 82, 75, 68, 62, 60, 58, 58] },
+    { metric: 'Playbook Adherence Rate', description: 'Percentage of incidents following defined playbook steps', target: '> 90%', current: '87%', status: 'near-miss', trend: [72, 74, 76, 78, 80, 82, 83, 85, 86, 86, 87, 87] },
+    { metric: 'False Positive Rate', description: 'Percentage of escalated alerts that are false positives', target: '< 20%', current: '24%', status: 'missing', trend: [38, 35, 33, 30, 28, 27, 26, 25, 25, 24, 24, 24] },
+    { metric: 'Escalation Accuracy', description: 'Percentage of escalations to correct severity level', target: '> 85%', current: '89%', status: 'meeting', trend: [78, 80, 82, 83, 84, 85, 86, 87, 88, 88, 89, 89] },
+    { metric: 'Post-Incident Reviews Completed', description: 'Percentage of incidents with completed PIR within SLA', target: '> 95%', current: '92%', status: 'near-miss', trend: [80, 82, 84, 86, 87, 88, 89, 90, 91, 91, 92, 92] },
+    { metric: 'Lessons Learned Implemented', description: 'Percentage of PIR action items implemented on time', target: '> 80%', current: '76%', status: 'missing', trend: [55, 58, 62, 64, 67, 69, 71, 73, 74, 75, 76, 76] },
+  ];
+
+  private _irpbDecisionTrees: Array<{id: string; step: string; condition: string; ifTrue: string; ifFalse: string; ifUnknown: string}> = [
+    { id: 'DT-001', step: 'Detection & Triage', condition: 'Is the alert a confirmed true positive?', ifTrue: 'Proceed to severity assessment. Assign response team based on affected systems and data sensitivity.', ifFalse: 'Document as false positive. Update detection rule to reduce future false positives. Close ticket.', ifUnknown: 'Escalate to Tier 2 for manual investigation. Set 30-minute SLA for initial assessment.' },
+    { id: 'DT-002', step: 'Severity Assessment', condition: 'Does the incident involve critical data or systems?', ifTrue: 'Classify as Critical. Activate WAR room. Notify CISO within 30 minutes. Engage external IR retainer.', ifFalse: 'Assess if high severity criteria met. If yes, classify as High. If no, classify as Medium/Low based on impact.', ifUnknown: 'Default to High severity. Assign senior analyst for thorough investigation.' },
+    { id: 'DT-003', step: 'Short-term Containment', condition: 'Can the threat be contained without system isolation?', ifTrue: 'Implement targeted containment (kill process, block IP, revoke credential). Document all containment actions.', ifFalse: 'Isolate affected systems from network. Preserve memory and disk images before isolation. Notify system owners.', ifUnknown: 'Isolate affected network segment. Engage forensics team for evidence preservation before any containment action.' },
+    { id: 'DT-004', step: 'Investigation', condition: 'Is this a known threat actor or campaign?', ifTrue: 'Query threat intelligence database for known TTPs and IOCs. Apply known indicators to detect additional compromised systems.', ifFalse: 'Conduct full forensic analysis to determine attack vector and scope. Compare TTPs with MITRE ATT&CK framework.', ifUnknown: 'Assume novel threat actor. Apply maximum containment measures. Engage threat intelligence team for attribution support.' },
+    { id: 'DT-005', step: 'Communication', condition: 'Is regulatory notification required?', ifTrue: 'Activate legal counsel. Begin notification process within regulatory timeframe. Prepare notification content with legal review.', ifFalse: 'Document notification assessment rationale. Monitor for changes in scope that might trigger notification requirements.', ifUnknown: 'Consult legal counsel for notification obligation assessment. Prepare notification materials as precaution.' },
+    { id: 'DT-006', step: 'Recovery', condition: 'Are backups verified as uncompromised?', ifTrue: 'Proceed with restoration from clean backups. Validate system integrity post-restoration. Monitor for signs of re-compromise.', ifFalse: 'Assess data loss from uncompromised backup sets. Plan for manual data reconstruction. Engage data recovery specialists.', ifUnknown: 'Restore to isolated network segment. Conduct thorough security assessment before connecting to production.' },
+    { id: 'DT-007', step: 'Post-Incident Review', condition: 'Were all response SLAs met?', ifTrue: 'Document successful processes. Identify what enabled SLA compliance. Share best practices with team.', ifFalse: 'Document SLA breaches with root cause analysis. Create improvement action items with owners and deadlines.', ifUnknown: 'Review response timeline in detail. Identify bottlenecks and decision points that lacked clear procedures.' },
+    { id: 'DT-008', step: 'Improvement', condition: 'Can the same incident recur with current controls?', ifTrue: 'Escalate control gaps to security engineering. Request emergency improvement plan. Set aggressive remediation timeline.', ifFalse: 'Document control effectiveness. Schedule periodic validation testing. Update threat model.', ifUnknown: 'Conduct tabletop exercise simulating recurrence. Validate controls under realistic conditions.' },
+  ];
+
+  private _irpbWarRoomProcedures: Array<{id: string; phase: string; action: string; responsible: string; tools: string[]; duration: string}> = [
+    { id: 'WR-001', phase: 'Activation', action: 'Declare incident requiring WAR room activation based on severity assessment', responsible: 'SOC Manager', tools: ['Incident ticketing system', 'Communication platform (Slack)', 'Video conference bridge'], duration: '5 minutes' },
+    { id: 'WR-002', phase: 'Activation', action: 'Send WAR room activation notification to all incident response team members', responsible: 'SOC Manager', tools: ['Mass notification system', 'On-call scheduling tool', 'Mobile alert app'], duration: '10 minutes' },
+    { id: 'WR-003', phase: 'Setup', action: 'Create dedicated incident communication channel with restricted access', responsible: 'SOC Analyst', tools: ['Slack secure channel', 'Confluence incident page', 'Shared evidence repository'], duration: '5 minutes' },
+    { id: 'WR-004', phase: 'Setup', action: 'Establish incident commander role and assign functional leads', responsible: 'CISO', tools: ['Incident command template', 'Role assignment matrix', 'Escalation contact list'], duration: '15 minutes' },
+    { id: 'WR-005', phase: 'Operations', action: 'Conduct initial situation briefing with all team leads', responsible: 'Incident Commander', tools: ['Situation report template', 'Evidence timeline tool', 'Threat intelligence platform'], duration: '30 minutes' },
+    { id: 'WR-006', phase: 'Operations', action: 'Establish regular status update cadence (every 2 hours for critical incidents)', responsible: 'Incident Commander', tools: ['Status update template', 'Dashboard tool', 'Executive reporting system'], duration: 'Ongoing' },
+    { id: 'WR-007', phase: 'Operations', action: 'Maintain chronological incident log with all actions, decisions, and findings', responsible: 'SOC Scribe', tools: ['Incident log template', 'Evidence management system', 'Timeline reconstruction tool'], duration: 'Ongoing' },
+    { id: 'WR-008', phase: 'Deactivation', action: 'Conduct formal stand-down briefing with lessons learned capture', responsible: 'Incident Commander', tools: ['Stand-down checklist', 'Lessons learned template', 'Improvement tracking system'], duration: '60 minutes' },
+  ];
+
+  private _irpbResourceRequirements: Array<{role: string; count: number; skills: string[]; availability: string; backup: string; contactMethod: string}> = [
+    { role: 'Incident Commander', count: 1, skills: ['Security leadership', 'Decision making under pressure', 'Stakeholder communication', 'Regulatory knowledge'], availability: '24/7 on-call', backup: 'Deputy CISO', contactMethod: 'Mobile + PagerDuty' },
+    { role: 'SOC Tier 2 Analyst', count: 3, skills: ['Threat analysis', 'Forensic evidence handling', 'SIEM expertise', 'Malware analysis basics'], availability: '24/7 shift rotation', backup: 'Cross-trained Tier 1 analysts', contactMethod: 'Slack + Phone' },
+    { role: 'Forensic Investigator', count: 2, skills: ['Disk forensics', 'Memory forensics', 'Network forensics', 'Chain of custody', 'Evidence preservation'], availability: 'Business hours + on-call', backup: 'External IR retainer', contactMethod: 'Mobile + Email' },
+    { role: 'Malware Analyst', count: 1, skills: ['Reverse engineering', 'Sandbox analysis', 'Behavioral analysis', 'Exploit analysis'], availability: 'Business hours + on-call', backup: 'Threat intelligence team', contactMethod: 'Slack + Mobile' },
+    { role: 'Communications Lead', count: 1, skills: ['Crisis communication', 'Media relations', 'Regulatory notification', 'Stakeholder management'], availability: '24/7 on-call', backup: 'VP Communications', contactMethod: 'Mobile + PagerDuty' },
+    { role: 'Legal Counsel', count: 1, skills: ['Data breach law', 'Regulatory compliance', 'Litigation risk assessment', 'Contract review'], availability: 'Business hours + emergency', backup: 'External legal firm', contactMethod: 'Mobile + Email' },
+    { role: 'IT Operations Lead', count: 1, skills: ['System administration', 'Network operations', 'Backup/recovery', 'Change management'], availability: '24/7 on-call', backup: 'Senior sysadmin', contactMethod: 'Mobile + PagerDuty' },
+    { role: 'Scribe / Documentation', count: 1, skills: ['Technical writing', 'Incident documentation', 'Evidence cataloging', 'Timeline reconstruction'], availability: 'During active incidents', backup: 'Any available analyst', contactMethod: 'Slack' },
+  ];
+
+  private _irpbDrillScenarios: Array<{id: string; name: string; type: string; complexity: string; targetAudience: string; duration: string; objectives: string[]; injects: number}> = [
+    { id: 'DR-001', name: 'Ransomware Tabletop', type: 'Tabletop Exercise', complexity: 'advanced', targetAudience: 'Executive + IR Team', duration: '3 hours', objectives: ['Test executive decision-making during ransomware attack', 'Validate communication protocols', 'Practice negotiation and business continuity decisions'], injects: 12 },
+    { id: 'DR-002', name: 'Phishing Campaign Simulation', type: 'Live Simulation', complexity: 'intermediate', targetAudience: 'All Employees', duration: '2 weeks', objectives: ['Measure phishing susceptibility rate', 'Test reporting procedures', 'Validate security awareness training effectiveness'], injects: 5 },
+    { id: 'DR-003', name: 'Data Breach Response', type: 'Functional Exercise', complexity: 'advanced', targetAudience: 'IR Team + Legal + Communications', duration: '4 hours', objectives: ['Test breach notification procedures', 'Practice regulatory reporting', 'Validate legal counsel engagement process'], injects: 15 },
+    { id: 'DR-004', name: 'Supply Chain Compromise', type: 'Tabletop Exercise', complexity: 'advanced', targetAudience: 'IR Team + Vendor Management + Engineering', duration: '3 hours', objectives: ['Test vendor compromise response procedures', 'Validate software supply chain controls', 'Practice coordination with affected vendors'], injects: 10 },
+    { id: 'DR-005', name: 'Cloud Incident Response', type: 'Live Simulation', complexity: 'intermediate', targetAudience: 'Cloud Operations + SOC', duration: '2 hours', objectives: ['Test cloud-native incident response procedures', 'Validate cloud security tooling effectiveness', 'Practice cloud evidence collection and preservation'], injects: 8 },
+  ];
+
+  private _irpbPostIncidentChecklist: Array<{category: string; item: string; responsible: string; completed: boolean; notes: string}> = [
+    { category: 'Containment', item: 'Verify all attacker access paths have been closed', responsible: 'SOC Manager', completed: true, notes: 'All C2 channels blocked, credentials rotated' },
+    { category: 'Containment', item: 'Confirm no active malware on compromised systems', responsible: 'Malware Analyst', completed: true, notes: 'Full scan completed, no remnants found' },
+    { category: 'Containment', item: 'Verify firewall rules updated to block attacker IPs', responsible: 'Network Security', completed: true, notes: '42 attacker IPs blocked across all zones' },
+    { category: 'Recovery', item: 'All systems restored from clean backups verified', responsible: 'IT Operations', completed: true, notes: '15 systems restored, integrity validated' },
+    { category: 'Recovery', item: 'Enhanced monitoring deployed to previously compromised systems', responsible: 'Security Engineering', completed: true, notes: 'EDR sensors with enhanced telemetry' },
+    { category: 'Recovery', item: 'Business operations confirmed normal by system owners', responsible: 'IT Operations', completed: false, notes: 'Pending confirmation from finance team' },
+    { category: 'Communication', item: 'Executive briefing completed', responsible: 'CISO', completed: true, notes: 'Board-level briefing delivered' },
+    { category: 'Communication', item: 'Affected parties notified per regulatory requirements', responsible: 'Legal Counsel', completed: true, notes: 'GDPR notification submitted within 72 hours' },
+    { category: 'Communication', item: 'Customer notification completed if required', responsible: 'Communications Lead', completed: false, notes: 'Pending legal review of notification content' },
+    { category: 'Documentation', item: 'Incident timeline documented with full accuracy', responsible: 'SOC Scribe', completed: true, notes: 'Timeline verified against log evidence' },
+    { category: 'Documentation', item: 'All evidence properly preserved with chain of custody', responsible: 'Forensic Investigator', completed: true, notes: 'Evidence locked in write-once storage' },
+    { category: 'Documentation', item: 'Lessons learned document drafted', responsible: 'Incident Commander', completed: true, notes: 'Draft under review' },
+    { category: 'Improvement', item: 'Control gaps identified and improvement actions assigned', responsible: 'Security Engineering', completed: true, notes: '8 improvement actions created with owners' },
+    { category: 'Improvement', item: 'Detection rules updated based on observed TTPs', responsible: 'Detection Engineering', completed: true, notes: '12 new detection rules deployed' },
+    { category: 'Improvement', item: 'Playbook updated with lessons learned', responsible: 'IR Team Lead', completed: false, notes: 'Scheduled for next sprint' },
+  ];
+
+  private _irpbLessonsLearnedTemplate: Array<{question: string; category: string; responseType: string; example: string}> = [
+    { question: 'What was the initial indicator of compromise (IOC)?', category: 'Detection', responseType: 'text', example: 'Alert triggered by EDR on endpoint showing suspicious PowerShell execution' },
+    { question: 'How long between initial compromise and detection (dwell time)?', category: 'Detection', responseType: 'duration', example: 'Estimated 14 days based on forensic analysis of earliest attacker activity' },
+    { question: 'Were all response SLAs met during the incident?', category: 'Response', responseType: 'yes_no_detail', example: 'Detection SLA met (22 min vs 30 min target). Containment SLA missed (4.5h vs 2h target).' },
+    { question: 'What detection gaps allowed the attacker to go undetected?', category: 'Detection', responseType: 'text', example: 'Living-off-the-land techniques bypassed signature-based detection. Missing PowerShell logging on 15% of endpoints.' },
+    { question: 'What controls failed or were bypassed?', category: 'Controls', responseType: 'text', example: 'MFA bypass via push fatigue. VPN without device posture check allowed unmanaged device access.' },
+    { question: 'What communication challenges were encountered?', category: 'Communication', responseType: 'text', example: 'Initial severity under-assessment delayed executive notification by 90 minutes.' },
+    { question: 'What additional tools or capabilities would have helped?', category: 'Resources', responseType: 'text', example: 'SOAR platform would have automated initial containment actions. Cloud forensic tooling was insufficient.' },
+    { question: 'What should be done differently next time?', category: 'Improvement', responseType: 'text', example: 'Implement automated severity assessment. Deploy SOAR for containment automation. Enhance cloud forensic capabilities.' },
+  ];
+
+  private _irpbSeverityClassification: Array<{level: string; criteria: string; responseTime: string; requiredResources: string[]; examples: string[]; warRoom: boolean}> = [
+    { level: 'SEV-1 Critical', criteria: 'Active intrusion with confirmed data breach, ransomware deployment, or critical system compromise', responseTime: '15 minutes', requiredResources: ['Full IR team', 'Forensics team', 'Legal counsel', 'Communications lead', 'Executive leadership'], examples: ['Active ransomware encryption detected', 'Nation-state actor confirmed in network', 'Customer data exfiltration in progress', 'Critical infrastructure compromise'], warRoom: true },
+    { level: 'SEV-2 High', criteria: 'Confirmed intrusion attempt, successful privilege escalation, or high-value asset compromise', responseTime: '30 minutes', requiredResources: ['SOC Tier 2+', 'Forensics analyst', 'Affected system owners'], examples: ['Domain admin credential compromise', 'Successful lateral movement to data center', 'Web application exploitation with data access', 'Cloud resource unauthorized access'], warRoom: true },
+    { level: 'SEV-3 Medium', criteria: 'Confirmed suspicious activity, malware detection on endpoint, or policy violation', responseTime: '2 hours', requiredResources: ['SOC Tier 2', 'System owner'], examples: ['Malware detected and contained by EDR', 'Unauthorized access attempt blocked', 'Phishing campaign with confirmed clicks', 'Suspicious PowerShell execution detected'], warRoom: false },
+    { level: 'SEV-4 Low', criteria: 'Potential suspicious activity requiring investigation, informational alerts', responseTime: '24 hours', requiredResources: ['SOC Tier 1', 'Automated tools'], examples: ['Unusual login location', 'Failed authentication spike', 'Policy violation detected', 'Vulnerability scan from external IP'], warRoom: false },
+  ];
+
+  private _irpbCommunicationChannels: Array<{channel: string; purpose: string; participants: string[]; encryption: string; retention: string}> = [
+    { channel: 'Slack #incident-response', purpose: 'Real-time incident coordination and status updates', participants: ['IR team', 'SOC analysts', 'Security engineering', 'Management'], encryption: 'Enterprise Slack (TLS in transit, at-rest encryption)', retention: '90 days' },
+    { channel: 'Microsoft Teams - IR Bridge', purpose: 'Executive communication and legal discussions', participants: ['CISO', 'Legal counsel', 'VP Engineering', 'CEO'], encryption: 'Microsoft Teams E2E encryption', retention: '1 year' },
+    { channel: 'Signal Group', purpose: 'Urgent out-of-band communication for critical incidents', participants: ['CISO', 'SOC Manager', 'IR Lead', 'Legal'], encryption: 'Signal E2E encryption', retention: '30 days' },
+    { channel: 'Email Distribution List', purpose: 'Formal notifications and documentation sharing', participants: ['All incident stakeholders'], encryption: 'S/MIME encrypted', retention: '7 years (compliance)' },
+    { channel: 'Conference Bridge', purpose: 'War room voice communication for active incidents', participants: ['All IR team members'], encryption: 'PIN-protected dial-in', retention: 'Recorded and stored in evidence locker' },
+  ];
+
+  private _irpbTeamRoster: Array<{role: string; primary: string; backup: string; contact: string; availability: string}> = [
+    { role: 'Incident Commander', primary: 'J. Chen', backup: 'M. Rodriguez', contact: ' PagerDuty: @irc-commander', availability: '24/7' },
+    { role: 'Technical Lead', primary: 'R. Kim', backup: 'S. Patel', contact: ' PagerDuty: @ir-tech-lead', availability: '24/7' },
+    { role: 'Communications Lead', primary: 'K. Yamamoto', backup: 'A. Thompson', contact: ' PagerDuty: @ir-comms-lead', availability: 'Business hours + on-call' },
+    { role: 'Legal Counsel', primary: 'External Firm', backup: 'In-house Legal', contact: ' Email: ir-legal@company.com', availability: 'Business hours + emergency' },
+    { role: 'Forensics Lead', primary: 'S. Patel', backup: 'A. Thompson', contact: ' PagerDuty: @ir-forensics-lead', availability: 'Business hours + on-call' },
+    { role: 'Scribe', primary: 'Rotating Analyst', backup: 'Any available analyst', contact: ' Slack: #incident-response', availability: 'During active incidents' },
+  ];
+
+  private _renderIrpbPlaybookEngine(): ReturnType<typeof html> {
+    const stepCards = this._irpbPlaybookSteps.map(s => html`
+      <div class="irpb-step-card">
+        <div class="irpb-step-header">
+          <span class="irpb-step-num">Step ${s.step}</span>
+          <span class="irpb-step-name">${s.name}</span>
+          <span class="irpb-step-sla">SLA: ${s.sla}</span>
+        </div>
+        <div class="irpb-step-desc">${s.description}</div>
+        <div class="irpb-step-owner">Owner: ${s.owner}</div>
+        <div class="irpb-step-section"><strong>Decision Points:</strong><ul>${s.decisionPoints.map(d => html`<li>${d}</li>`)}</ul></div>
+        <div class="irpb-step-section"><strong>Required Artifacts:</strong><ul>${s.artifacts.map(a => html`<li>${a}</li>`)}</ul></div>
+        <div class="irpb-step-section"><strong>Escalation Triggers:</strong><ul>${s.escalationTriggers.map(e => html`<li style="color:#f97316">${e}</li>`)}</ul></div>
+      </div>
+    `);
+    const escRows = this._irpbEscalationMatrix.map(e => html`
+      <tr><td>${e.from}</td><td style="color:#ef4444;font-weight:700">&#x27A1; ${e.to}</td><td>${e.trigger}</td><td>${e.timeframe}</td><td>${e.method}</td></tr>
+    `);
+    const tmplCards = this._irpbCommunicationTemplates.map(t => html`
+      <div class="irpb-tmpl-card">
+        <div class="irpb-tmpl-header"><span class="irpb-tmpl-id">${t.id}</span> ${t.name}</div>
+        <div class="irpb-tmpl-meta">Audience: ${t.audience} | Channel: ${t.channel}</div>
+        <div class="irpb-tmpl-body"><pre>${t.template}</pre></div>
+        <div class="irpb-tmpl-fields"><strong>Required Fields:</strong> ${t.requiredFields.map(f => html`<span class="irpb-field-tag">${f}</span>`)}</div>
+      </div>
+    `);
+    const evRows = this._irpbEvidenceChecklist.map(e => html`
+      <tr><td>${e.id}</td><td>${e.category}</td><td>${e.item}</td><td>${e.collectionMethod}</td><td>${e.preservation}</td><td>${e.chainOfCustody}</td></tr>
+    `);
+    const metricCards = this._irpbEffectivenessMetrics.map(m => {
+      const statusColor = m.status === 'meeting' ? '#22c55e' : m.status === 'near-miss' ? '#eab308' : '#ef4444';
+      const statusIcon = m.status === 'meeting' ? '&#10003;' : m.status === 'near-miss' ? '&#9888;' : '&#10007;';
+      const direction = m.trend.length >= 2 ? (m.trend[m.trend.length - 1] <= m.trend[m.trend.length - 2] ? 'improving' : 'declining') : 'neutral';
+      const dirColor = direction === 'improving' ? '#22c55e' : direction === 'declining' ? '#ef4444' : '#94a3b8';
+      return html`
+        <div class="irpb-metric-card" style="border-left:3px solid ${statusColor}">
+          <div class="irpb-metric-name">${m.metric}</div>
+          <div class="irpb-metric-desc">${m.description}</div>
+          <div class="irpb-metric-values">
+            <span class="irpb-metric-target">Target: ${m.target}</span>
+            <span class="irpb-metric-current" style="color:${statusColor}">Current: ${m.current}</span>
+          </div>
+          <div class="irpb-metric-status" style="color:${statusColor}">${statusIcon} ${m.status.toUpperCase()}</div>
+          <div class="irpb-metric-trend" style="color:${dirColor}">Trend: ${direction}</div>
+        </div>
+      `;
+    });
+    return html`
+      <div class="irpb-engine-section">
+        <div class="irpb-section-title">&#x1F6E1; Incident Response Playbook Engine</div>
+        <div class="irpb-steps-grid">${stepCards}</div>
+        <div class="irpb-escalation-section">
+          <div class="irpb-sub-title">&#x1F4DE; Escalation Matrix</div>
+          <table class="irpb-table"><thead><tr><th>From</th><th>To</th><th>Trigger</th><th>Timeframe</th><th>Method</th></tr></thead><tbody>${escRows}</tbody></table>
+        </div>
+        <div class="irpb-templates-section">
+          <div class="irpb-sub-title">&#x1F4DD; Communication Template Library</div>
+          <div class="irpb-templates-grid">${tmplCards}</div>
+        </div>
+        <div class="irpb-evidence-section">
+          <div class="irpb-sub-title">&#x1F50D; Evidence Preservation Checklist</div>
+          <table class="irpb-table irpb-table-wide"><thead><tr><th>ID</th><th>Category</th><th>Item</th><th>Collection Method</th><th>Preservation</th><th>Chain of Custody</th></tr></thead><tbody>${evRows}</tbody></table>
+        </div>
+        <div class="irpb-metrics-section">
+          <div class="irpb-sub-title">&#x1F4C8; Playbook Effectiveness Metrics</div>
+          <div class="irpb-metrics-grid">${metricCards}</div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {    if (this._irpRules.length === 0) { this._initIrpRules(); this._initIrpCvss(); this._runIrpAnomalyDetection(); this._generateIrpPredictions(); this._initIrpApprovals(); this._initIrpActivity(); this._initIrpNotifications(); }
 
     const items = this._getFiltered();

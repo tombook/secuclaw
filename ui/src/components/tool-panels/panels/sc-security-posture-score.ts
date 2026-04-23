@@ -7241,6 +7241,270 @@ export class ScSecurityPostureScore extends LitElement {
     this.requestUpdate();
   }
 
+  // --- Security Posture Scoring Engine (Round 41) ---
+
+  private _spsDomainScores: Array<{domain: string; score: number; weight: number; trend: number[]; status: string}> = [
+    { domain: 'Network Security', score: 82, weight: 0.20, trend: [74, 76, 78, 79, 80, 81, 82, 82, 83, 82, 82, 82], status: 'improving' },
+    { domain: 'Endpoint Protection', score: 78, weight: 0.18, trend: [65, 68, 70, 72, 74, 75, 76, 77, 78, 78, 78, 78], status: 'improving' },
+    { domain: 'Identity & Access', score: 71, weight: 0.17, trend: [60, 62, 64, 65, 67, 68, 69, 70, 70, 71, 71, 71], status: 'stable' },
+    { domain: 'Data Protection', score: 85, weight: 0.18, trend: [80, 81, 82, 83, 84, 84, 85, 85, 85, 85, 85, 85], status: 'mature' },
+    { domain: 'Application Security', score: 64, weight: 0.15, trend: [55, 56, 58, 59, 60, 61, 62, 63, 63, 64, 64, 64], status: 'improving' },
+    { domain: 'Cloud Security', score: 58, weight: 0.12, trend: [40, 42, 45, 48, 50, 52, 54, 55, 56, 57, 58, 58], status: 'improving' },
+  ];
+
+  private _spsBusinessUnits: Array<{name: string; score: number; change: number; riskLevel: string}> = [
+    { name: 'Engineering', score: 76, change: 4, riskLevel: 'medium' },
+    { name: 'Finance', score: 89, change: 1, riskLevel: 'low' },
+    { name: 'Human Resources', score: 72, change: -3, riskLevel: 'medium' },
+    { name: 'Marketing', score: 65, change: 2, riskLevel: 'high' },
+    { name: 'Sales', score: 70, change: 0, riskLevel: 'medium' },
+    { name: 'Legal & Compliance', score: 91, change: 0, riskLevel: 'low' },
+    { name: 'Operations', score: 68, change: -1, riskLevel: 'medium' },
+    { name: 'Research & Dev', score: 62, change: 5, riskLevel: 'high' },
+  ];
+
+  private _spsDegradationAlerts: Array<{id: string; domain: string; severity: string; message: string; detected: string; action: string}> = [
+    { id: 'DA-001', domain: 'Identity & Access', severity: 'warning', message: 'MFA adoption rate dropped from 94% to 88% in Q4', detected: '2025-10-15', action: 'Deploy mandatory MFA for remaining legacy accounts' },
+    { id: 'DA-002', domain: 'Cloud Security', severity: 'critical', message: '3 S3 buckets found with public access in production', detected: '2025-11-02', action: 'Immediate remediation: remove public ACLs and apply bucket policies' },
+    { id: 'DA-003', domain: 'Endpoint Protection', severity: 'warning', message: 'EDR agent coverage dropped to 96.2% (threshold: 98%)', detected: '2025-11-10', action: 'Reconcile asset inventory and deploy agents to 38 missing endpoints' },
+    { id: 'DA-004', domain: 'Application Security', severity: 'info', message: 'DAST scan frequency reduced from weekly to bi-weekly', detected: '2025-11-18', action: 'Restore weekly schedule and add API scanning to pipeline' },
+    { id: 'DA-005', domain: 'Network Security', severity: 'critical', message: 'Firewall rule review backlog exceeds 120 days', detected: '2025-12-01', action: 'Emergency rule audit session with network team, target: clear 80% backlog' },
+  ];
+
+  private _spsImprovementActions: Array<{id: string; title: string; domain: string; impact: number; effort: string; status: string; owner: string; deadline: string; priority: number}> = [
+    { id: 'IA-001', title: 'Implement Zero Trust Network Architecture Phase 2', domain: 'Network Security', impact: 12, effort: 'high', status: 'in-progress', owner: 'Network Security Team', deadline: '2026-03-31', priority: 1 },
+    { id: 'IA-002', title: 'Deploy Cloud Security Posture Management (CSPM)', domain: 'Cloud Security', impact: 18, effort: 'medium', status: 'planned', owner: 'Cloud Operations', deadline: '2026-02-28', priority: 2 },
+    { id: 'IA-003', title: 'Roll out Phishing-Resistant MFA (FIDO2)', domain: 'Identity & Access', impact: 8, effort: 'medium', status: 'planned', owner: 'IAM Team', deadline: '2026-04-30', priority: 3 },
+    { id: 'IA-004', title: 'Implement SAST in CI/CD Pipeline for All Repos', domain: 'Application Security', impact: 15, effort: 'high', status: 'in-progress', owner: 'DevSecOps', deadline: '2026-03-15', priority: 4 },
+    { id: 'IA-005', title: 'Deploy Data Loss Prevention for Cloud Storage', domain: 'Data Protection', impact: 6, effort: 'low', status: 'completed', owner: 'Data Security', deadline: '2025-12-15', priority: 5 },
+    { id: 'IA-006', title: 'Implement Privileged Access Management (PAM)', domain: 'Identity & Access', impact: 10, effort: 'high', status: 'planned', owner: 'IAM Team', deadline: '2026-06-30', priority: 6 },
+    { id: 'IA-007', title: 'Container Image Scanning in Kubernetes Clusters', domain: 'Cloud Security', impact: 9, effort: 'medium', status: 'in-progress', owner: 'Platform Engineering', deadline: '2026-02-15', priority: 7 },
+    { id: 'IA-008', title: 'Implement Security Awareness Gamification Platform', domain: 'Data Protection', impact: 4, effort: 'low', status: 'completed', owner: 'Security Awareness', deadline: '2025-11-30', priority: 8 },
+  ];
+
+  private _spsHistoricalScores: Array<{month: string; overall: number; network: number; endpoint: number; identity: number; data: number; appsec: number; cloud: number}> = [
+    { month: 'Jan-25', overall: 69, network: 74, endpoint: 65, identity: 60, data: 80, appsec: 55, cloud: 40 },
+    { month: 'Feb-25', overall: 71, network: 76, endpoint: 68, identity: 62, data: 81, appsec: 56, cloud: 42 },
+    { month: 'Mar-25', overall: 72, network: 78, endpoint: 70, identity: 64, data: 82, appsec: 58, cloud: 45 },
+    { month: 'Apr-25', overall: 74, network: 79, endpoint: 72, identity: 65, data: 83, appsec: 59, cloud: 48 },
+    { month: 'May-25', overall: 75, network: 80, endpoint: 74, identity: 67, data: 84, appsec: 60, cloud: 50 },
+    { month: 'Jun-25', overall: 76, network: 81, endpoint: 75, identity: 68, data: 84, appsec: 61, cloud: 52 },
+    { month: 'Jul-25', overall: 77, network: 82, endpoint: 76, identity: 69, data: 85, appsec: 62, cloud: 54 },
+    { month: 'Aug-25', overall: 78, network: 82, endpoint: 77, identity: 70, data: 85, appsec: 63, cloud: 55 },
+    { month: 'Sep-25', overall: 79, network: 83, endpoint: 78, identity: 70, data: 85, appsec: 63, cloud: 56 },
+    { month: 'Oct-25', overall: 79, network: 82, endpoint: 78, identity: 71, data: 85, appsec: 64, cloud: 57 },
+    { month: 'Nov-25', overall: 80, network: 82, endpoint: 78, identity: 71, data: 85, appsec: 64, cloud: 58 },
+    { month: 'Dec-25', overall: 80, network: 82, endpoint: 78, identity: 71, data: 85, appsec: 64, cloud: 58 },
+  ];
+
+  private _spsMaturityModel: Array<{level: number; name: string; description: string; currentDomainScores: string[]; gapActions: string[]}> = [
+    { level: 1, name: 'Initial', description: 'Ad-hoc security processes, reactive posture, no formal metrics', currentDomainScores: [], gapActions: ['Establish baseline security policies', 'Deploy foundational security tools', 'Create asset inventory'] },
+    { level: 2, name: 'Managed', description: 'Basic security controls in place, some monitoring, informal risk management', currentDomainScores: ['Cloud Security'], gapActions: ['Implement SIEM for centralized logging', 'Establish vulnerability management program', 'Create incident response plan'] },
+    { level: 3, name: 'Defined', description: 'Formalized security processes, regular assessments, proactive monitoring', currentDomainScores: ['Application Security', 'Identity & Access'], gapActions: ['Implement security metrics dashboard', 'Conduct regular penetration testing', 'Establish security training program'] },
+    { level: 4, name: 'Quantitatively Managed', description: 'Security metrics drive decisions, continuous monitoring, automated responses', currentDomainScores: ['Network Security', 'Endpoint Protection'], gapActions: ['Implement automated threat detection', 'Deploy SOAR for incident automation', 'Establish KPI-based security reviews'] },
+    { level: 5, name: 'Optimizing', description: 'Continuous improvement, predictive analytics, security as business enabler', currentDomainScores: ['Data Protection'], gapActions: ['Implement AI-driven threat intelligence', 'Deploy predictive risk analytics', 'Integrate security into business strategy'] },
+  ];
+
+  private _spsComplianceAlignment: Array<{framework: string; requirement: string; domain: string; status: string; gapDescription: string; remediationPlan: string; estimatedEffort: string; dueDate: string}> = [
+    { framework: 'ISO 27001', requirement: 'A.12.4.1 Event Logging', domain: 'Network Security', status: 'partial', gapDescription: 'Log retention only 90 days, requirement is 12 months', remediationPlan: 'Deploy centralized log management with 12-month retention in SIEM', estimatedEffort: 'medium', dueDate: '2026-03-31' },
+    { framework: 'ISO 27001', requirement: 'A.9.4.2 Secure Log-On Procedures', domain: 'Identity & Access', status: 'partial', gapDescription: '12% of accounts still using password-only authentication', remediationPlan: 'Enforce MFA for all accounts, disable legacy authentication protocols', estimatedEffort: 'medium', dueDate: '2026-02-28' },
+    { framework: 'SOC 2', requirement: 'CC6.1 Logical and Physical Access Controls', domain: 'Identity & Access', status: 'compliant', gapDescription: 'No gap identified', remediationPlan: 'N/A', estimatedEffort: 'none', dueDate: 'N/A' },
+    { framework: 'SOC 2', requirement: 'CC7.1 Identification and Management of Vulnerabilities', domain: 'Application Security', status: 'partial', gapDescription: 'Only 68% of applications have SAST integrated in CI/CD', remediationPlan: 'Extend SAST coverage to all repositories with automated gating', estimatedEffort: 'high', dueDate: '2026-06-30' },
+    { framework: 'PCI DSS', requirement: 'Requirement 1: Network Segmentation', domain: 'Network Security', status: 'compliant', gapDescription: 'No gap identified', remediationPlan: 'N/A', estimatedEffort: 'none', dueDate: 'N/A' },
+    { framework: 'PCI DSS', requirement: 'Requirement 6: Secure Systems and Software', domain: 'Application Security', status: 'non-compliant', gapDescription: 'Critical vulnerabilities in payment processing application unfixed', remediationPlan: 'Emergency patch deployment for payment application CVE-2025-44228', estimatedEffort: 'high', dueDate: '2026-01-15' },
+    { framework: 'NIST CSF', requirement: 'PR.DS-1 Data-at-Rest Protection', domain: 'Data Protection', status: 'compliant', gapDescription: 'No gap identified', remediationPlan: 'N/A', estimatedEffort: 'none', dueDate: 'N/A' },
+    { framework: 'NIST CSF', requirement: 'DE.CM-1 Security Monitoring', domain: 'Cloud Security', status: 'partial', gapDescription: 'Cloud workloads have limited EDR coverage', remediationPlan: 'Deploy cloud-native security monitoring agents to all instances', estimatedEffort: 'medium', dueDate: '2026-04-30' },
+    { framework: 'GDPR', requirement: 'Article 32 Security of Processing', domain: 'Data Protection', status: 'partial', gapDescription: 'Encryption not applied to 15% of data stores containing PII', remediationPlan: 'Identify unencrypted PII stores and deploy encryption at rest', estimatedEffort: 'high', dueDate: '2026-05-31' },
+    { framework: 'GDPR', requirement: 'Article 33 Breach Notification', domain: 'Data Protection', status: 'compliant', gapDescription: 'No gap identified - breach notification process tested and validated', remediationPlan: 'N/A', estimatedEffort: 'none', dueDate: 'N/A' },
+  ];
+
+  private _spsRiskHeatmap: Array<{likelihood: string; impact: string; risks: string[]; count: number; color: string}> = [
+    { likelihood: 'Very High', impact: 'Critical', risks: ['Supply chain compromise', 'Zero-day exploitation of public-facing services'], count: 2, color: '#dc2626' },
+    { likelihood: 'High', impact: 'Critical', risks: ['Ransomware attack on critical infrastructure', 'Cloud misconfiguration leading to data exposure'], count: 2, color: '#ef4444' },
+    { likelihood: 'Medium', impact: 'Critical', risks: ['Insider threat with privileged access', 'Advanced persistent threat targeting IP'], count: 2, color: '#f97316' },
+    { likelihood: 'Very High', impact: 'High', risks: ['Phishing campaign compromising employee credentials', 'Unpatched endpoint exploitation'], count: 2, color: '#ef4444' },
+    { likelihood: 'High', impact: 'High', risks: ['Third-party vendor breach', 'Data exfiltration via encrypted channels'], count: 2, color: '#f97316' },
+    { likelihood: 'Medium', impact: 'High', risks: ['Malware delivered via document macros', 'Social engineering via executive impersonation'], count: 2, color: '#eab308' },
+    { likelihood: 'Very High', impact: 'Medium', risks: ['Unauthorized cloud resource provisioning', 'Shadow IT data sharing'], count: 2, color: '#eab308' },
+    { likelihood: 'High', impact: 'Medium', risks: ['Password reuse across services', 'Missing security patches on non-critical systems'], count: 2, color: '#facc15' },
+    { likelihood: 'Medium', impact: 'Medium', risks: ['Inadequate access reviews', 'Insufficient security awareness training'], count: 2, color: '#a3e635' },
+    { likelihood: 'Low', impact: 'Low', risks: ['Physical security breach at secondary office', 'Accidental data disclosure via email misconfiguration'], count: 2, color: '#86efac' },
+  ];
+
+  private _spsBenchmarkComparison: Array<{metric: string; ourScore: number; industryAvg: number; topQuartile: number; gap: number; percentile: number}> = [
+    { metric: 'Overall Security Posture', ourScore: 80, industryAvg: 68, topQuartile: 85, gap: -5, percentile: 72 },
+    { metric: 'Patch Management Speed', ourScore: 72, industryAvg: 55, topQuartile: 88, gap: -16, percentile: 65 },
+    { metric: 'Vulnerability Remediation', ourScore: 68, industryAvg: 52, topQuartile: 82, gap: -14, percentile: 62 },
+    { metric: 'Endpoint Detection Coverage', ourScore: 96, industryAvg: 82, topQuartile: 99, gap: -3, percentile: 78 },
+    { metric: 'Identity & Access Maturity', ourScore: 71, industryAvg: 58, topQuartile: 84, gap: -13, percentile: 64 },
+    { metric: 'Cloud Security Posture', ourScore: 58, industryAvg: 45, topQuartile: 78, gap: -20, percentile: 58 },
+    { metric: 'Incident Response Readiness', ourScore: 76, industryAvg: 60, topQuartile: 90, gap: -14, percentile: 66 },
+    { metric: 'Security Awareness Score', ourScore: 82, industryAvg: 65, topQuartile: 92, gap: -10, percentile: 70 },
+    { metric: 'Data Protection Maturity', ourScore: 85, industryAvg: 70, topQuartile: 93, gap: -8, percentile: 74 },
+    { metric: 'Third-Party Risk Management', ourScore: 64, industryAvg: 48, topQuartile: 80, gap: -16, percentile: 60 },
+  ];
+
+  private _spsExecutiveSummary: Array<{category: string; status: string; keyMessage: string; actionRequired: string; owner: string}> = [
+    { category: 'Overall Posture', status: 'adequate', keyMessage: 'Overall security posture score of 80/100 reflects steady improvement across most domains. Cloud security remains the weakest domain at 58/100.', actionRequired: 'Prioritize cloud security initiatives in Q1 2026 budget allocation', owner: 'CISO' },
+    { category: 'Critical Risks', status: 'attention', keyMessage: '5 active score degradation alerts, including 2 critical alerts requiring immediate remediation. Firewall rule backlog and cloud misconfigurations pose highest risk.', actionRequired: 'Schedule emergency remediation sprints for critical alerts within 2 weeks', owner: 'Security Operations' },
+    { category: 'Compliance Posture', status: 'adequate', keyMessage: 'All major frameworks in partial or full compliance. PCI DSS has one non-compliant finding requiring emergency patch deployment.', actionRequired: 'Complete PCI DSS emergency patching by Jan 15 deadline', owner: 'Compliance Team' },
+    { category: 'Improvement Trajectory', status: 'positive', keyMessage: 'Overall score improved from 69 to 80 over 12 months (+11 points). All domains showing upward trend except Identity & Access which plateaued.', actionRequired: 'Re-evaluate IAM improvement roadmap and increase investment', owner: 'IAM Team' },
+    { category: 'Industry Comparison', status: 'adequate', keyMessage: 'Performing above industry average in 9 of 10 benchmark categories. Largest gaps vs top quartile in cloud security (-20) and patch management (-16).', actionRequired: 'Focus improvement efforts on areas with largest benchmark gaps', owner: 'Security Engineering' },
+  ];
+
+  private _calculateOverallSpsScore(): number {
+    let total = 0;
+    for (const d of this._spsDomainScores) {
+      total += d.score * d.weight;
+    }
+    return Math.round(total * 100) / 100;
+  }
+
+  private _getSpsScoreColor(score: number): string {
+    if (score >= 80) return '#22c55e';
+    if (score >= 60) return '#eab308';
+    if (score >= 40) return '#f97316';
+    return '#ef4444';
+  }
+
+  private _getSpsScoreLabel(score: number): string {
+    if (score >= 90) return 'Excellent';
+    if (score >= 80) return 'Good';
+    if (score >= 70) return 'Adequate';
+    if (score >= 60) return 'Needs Improvement';
+    if (score >= 40) return 'Poor';
+    return 'Critical';
+  }
+
+  private _getSpsTrendDirection(trend: number[]): string {
+    if (trend.length < 3) return 'neutral';
+    const recent = trend.slice(-3);
+    const older = trend.slice(-6, -3);
+    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
+    if (recentAvg > olderAvg + 1) return 'improving';
+    if (recentAvg < olderAvg - 1) return 'declining';
+    return 'stable';
+  }
+
+  private _renderSpsDomainScoreBar(domain: string, score: number, maxScore: number, color: string): string {
+    const pct = Math.round((score / maxScore) * 100);
+    return `<div class="sps-domain-bar"><div class="sps-bar-label">${domain}</div><div class="sps-bar-track"><div class="sps-bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="sps-bar-value">${score}</div></div>`;
+  }
+
+  private _renderSpsTrendSparkline(trend: number[], color: string): string {
+    if (trend.length < 2) return '<span class="sps-trend-na">N/A</span>';
+    const max = Math.max(...trend);
+    const min = Math.min(...trend);
+    const range = max - min || 1;
+    const w = 120;
+    const h = 30;
+    const points = trend.map((v, i) => {
+      const x = (i / (trend.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x},${y}`;
+    }).join(' ');
+    const lastY = h - ((trend[trend.length - 1] - min) / range) * h;
+    return `<svg width="${w}" height="${h}" class="sps-sparkline"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="2"/><circle cx="${w}" cy="${lastY}" r="3" fill="${color}"/></svg>`;
+  }
+
+  private _renderSpsPostureEngine(): ReturnType<typeof html> {
+    const overall = this._calculateOverallSpsScore();
+    const overallColor = this._getSpsScoreColor(overall);
+    const overallLabel = this._getSpsScoreLabel(overall);
+    const domainBars = this._spsDomainScores.map(d => {
+      const c = this._getSpsScoreColor(d.score);
+      return this._renderSpsDomainScoreBar(d.domain, d.score, 100, c);
+    }).join('');
+    const trendSparklines = this._spsDomainScores.map(d => {
+      const c = this._getSpsScoreColor(d.score);
+      const sparkline = this._renderSpsTrendSparkline(d.trend, c);
+      const direction = this._getSpsTrendDirection(d.trend);
+      const dirIcon = direction === 'improving' ? '&#9650;' : direction === 'declining' ? '&#9660;' : '&#9654;';
+      const dirColor = direction === 'improving' ? '#22c55e' : direction === 'declining' ? '#ef4444' : '#94a3b8';
+      return `<div class="sps-trend-row"><span class="sps-domain-name">${d.domain}</span><span class="sps-sparkline-wrap">${sparkline}</span><span class="sps-trend-dir" style="color:${dirColor}">${dirIcon} ${direction}</span></div>`;
+    }).join('');
+    const buRows = this._spsBusinessUnits.map(b => {
+      const c = this._getSpsScoreColor(b.score);
+      const chg = b.change > 0 ? `<span style="color:#22c55e">+${b.change}</span>` : b.change < 0 ? `<span style="color:#ef4444">${b.change}</span>` : `<span style="color:#94a3b8">0</span>`;
+      return `<tr><td>${b.name}</td><td style="color:${c};font-weight:700">${b.score}</td><td>${chg}</td><td><span class="sps-risk-badge sps-risk-${b.riskLevel}">${b.riskLevel}</span></td></tr>`;
+    }).join('');
+    const alertRows = this._spsDegradationAlerts.map(a => {
+      const sevColor = a.severity === 'critical' ? '#ef4444' : a.severity === 'warning' ? '#f97316' : '#3b82f6';
+      return `<tr><td style="color:${sevColor};font-weight:700">${a.severity.toUpperCase()}</td><td>${a.domain}</td><td>${a.message}</td><td>${a.detected}</td><td>${a.action}</td></tr>`;
+    }).join('');
+    const actionRows = this._spsImprovementActions.map(a => {
+      const statusIcon = a.status === 'completed' ? '&#10003;' : a.status === 'in-progress' ? '&#9881;' : '&#9724;';
+      const statusColor = a.status === 'completed' ? '#22c55e' : a.status === 'in-progress' ? '#3b82f6' : '#94a3b8';
+      return `<tr><td>${a.priority}</td><td>${a.title}</td><td>${a.domain}</td><td style="color:${statusColor}">${statusIcon} ${a.status}</td><td>${a.impact}</td><td>${a.effort}</td><td>${a.owner}</td><td>${a.deadline}</td></tr>`;
+    }).join('');
+    const maturityLevels = this._spsMaturityModel.map(m => {
+      const domainList = m.currentDomainScores.length > 0 ? m.currentDomainScores.join(', ') : 'None';
+      return `<div class="sps-maturity-card"><div class="sps-maturity-level">Level ${m.level}: ${m.name}</div><div class="sps-maturity-desc">${m.description}</div><div class="sps-maturity-domains"><strong>Current domains:</strong> ${domainList}</div><div class="sps-maturity-gaps"><strong>Gap actions:</strong><ul>${m.gapActions.map(g => `<li>${g}</li>`).join('')}</ul></div></div>`;
+    }).join('');
+    return html`
+      <div class="sps-engine-section">
+        <div class="sps-section-title">&#x1F4CA; Security Posture Scoring Engine</div>
+        <div class="sps-overall-score">
+          <div class="sps-score-circle" style="border-color:${overallColor}">
+            <div class="sps-score-number" style="color:${overallColor}">${overall}</div>
+            <div class="sps-score-max">/ 100</div>
+          </div>
+          <div class="sps-score-meta">
+            <div class="sps-score-label" style="color:${overallColor}">${overallLabel}</div>
+            <div class="sps-score-domains">6 domains assessed</div>
+            <div class="sps-score-period">Last assessed: 2025-12-31</div>
+            <div class="sps-score-next">Next assessment: 2026-01-31</div>
+          </div>
+        </div>
+        <div class="sps-domain-scores">
+          <div class="sps-sub-title">Domain Scores (Weighted)</div>
+          ${this._spsDomainScores.map(d => html`
+            <div class="sps-domain-card">
+              <div class="sps-domain-header">
+                <span class="sps-domain-name">${d.domain}</span>
+                <span class="sps-domain-score" style="color:${this._getSpsScoreColor(d.score)}">${d.score}</span>
+                <span class="sps-domain-weight">Weight: ${(d.weight * 100).toFixed(0)}%</span>
+              </div>
+              <div class="sps-domain-bar-track"><div class="sps-domain-bar-fill" style="width:${d.score}%;background:${this._getSpsScoreColor(d.score)}"></div></div>
+            </div>
+          `)}
+        </div>
+        <div class="sps-trends-section">
+          <div class="sps-sub-title">12-Month Score Trends</div>
+          <div class="sps-trend-grid">
+            ${this._spsDomainScores.map(d => html`
+              <div class="sps-trend-card">
+                <div class="sps-trend-domain">${d.domain}</div>
+                <div class="sps-trend-sparkline">${this._renderSpsTrendSparkline(d.trend, this._getSpsScoreColor(d.score))}</div>
+                <div class="sps-trend-direction" style="color:${this._getSpsTrendDirection(d.trend) === 'improving' ? '#22c55e' : this._getSpsTrendDirection(d.trend) === 'declining' ? '#ef4444' : '#94a3b8'}">
+                  ${this._getSpsTrendDirection(d.trend) === 'improving' ? '&#9650;' : this._getSpsTrendDirection(d.trend) === 'declining' ? '&#9660;' : '&#9654;'} ${this._getSpsTrendDirection(d.trend)}
+                </div>
+                <div class="sps-trend-current">Current: ${d.score}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+        <div class="sps-bu-comparison">
+          <div class="sps-sub-title">Business Unit Comparison</div>
+          <table class="sps-table"><thead><tr><th>Business Unit</th><th>Score</th><th>Change</th><th>Risk Level</th></tr></thead><tbody>${[buRows]}</tbody></table>
+        </div>
+        <div class="sps-degradation-alerts">
+          <div class="sps-sub-title" style="color:#f97316">&#x26A0; Score Degradation Alerts</div>
+          <table class="sps-table"><thead><tr><th>Severity</th><th>Domain</th><th>Alert</th><th>Detected</th><th>Recommended Action</th></tr></thead><tbody>${[alertRows]}</tbody></table>
+        </div>
+        <div class="sps-improvement-actions">
+          <div class="sps-sub-title" style="color:#22c55e">&#x1F680; Improvement Action Prioritization</div>
+          <table class="sps-table sps-table-wide"><thead><tr><th>Priority</th><th>Action</th><th>Domain</th><th>Status</th><th>Impact</th><th>Effort</th><th>Owner</th><th>Deadline</th></tr></thead><tbody>${[actionRows]}</tbody></table>
+        </div>
+        <div class="sps-maturity-model">
+          <div class="sps-sub-title">&#x1F3AF; Security Maturity Model Assessment</div>
+          <div class="sps-maturity-grid">${[maturityLevels]}</div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     return html`${this.spRenderRound17()}
       <div class="panel">

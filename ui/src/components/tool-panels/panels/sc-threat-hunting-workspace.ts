@@ -7082,6 +7082,204 @@ export class ScThreatHuntingWorkspace extends LitElement {
     this.requestUpdate();
   }
 
+  // --- Security Threat Actor Profiler (Round 41) ---
+
+  private _tapActorProfiles: Array<{id: string; name: string; aliases: string[]; sophistication: string; origin: string; targetIndustries: string[]; primaryMotivation: string; firstSeen: string; lastActive: string; attributionConfidence: number; ttps: string[]; mitreGroups: string[]; campaignCount: number; notableCampaigns: string[]}> = [
+    { id: 'TA-001', name: 'APT29 (Cozy Bear)', aliases: ['The Dukes', 'Cozy Duke', 'YTTRIUM', 'Apt29', 'Iron Hemlock'], sophistication: 'advanced', origin: 'Russia (FSB)', targetIndustries: ['Government', 'Think Tanks', 'Technology', 'Healthcare', 'Defense'], primaryMotivation: 'Espionage', firstSeen: '2008', lastActive: '2025-12', attributionConfidence: 92, ttps: ['Spearphishing', 'Password Spraying', 'Living off the Land', 'Supply Chain Compromise', 'Cloud Service Abuse', 'Token Manipulation'], mitreGroups: ['G0016'], campaignCount: 47, notableCampaigns: ['SolarWinds Supply Chain', 'Hafnium Exchange Server', 'Microsoft Cloud Hijacking', ' diplomatic Cable Theft'] },
+    { id: 'TA-002', name: 'APT28 (Fancy Bear)', aliases: ['Sofacy', 'Strontium', 'Sednit', 'Pawn Storm', 'Fancy Bear'], sophistication: 'advanced', origin: 'Russia (GRU Unit 26165)', targetIndustries: ['Government', 'Military', 'Media', 'Energy', 'Sports Organizations'], primaryMotivation: 'Espionage / Disruption', firstSeen: '2007', lastActive: '2025-11', attributionConfidence: 95, ttps: ['Credential Harvesting', 'Zero-Day Exploitation', 'Spearphishing', 'Watering Hole', 'Custom Malware', 'Web Shell Deployment'], mitreGroups: ['G0007'], campaignCount: 63, notableCampaigns: ['NotPetya', 'DNC Hack 2016', 'Olympic Destroyer', 'French Election Interference'] },
+    { id: 'TA-003', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc', 'Diamond Sleet', 'Labyrinth Chollima'], sophistication: 'advanced', origin: 'North Korea (Lazarus Group)', targetIndustries: ['Financial Services', 'Cryptocurrency', 'Defense', 'Technology', 'Energy'], primaryMotivation: 'Financial Gain / Espionage', firstSeen: '2009', lastActive: '2025-12', attributionConfidence: 88, ttps: ['Supply Chain Compromise', 'Cryptocurrency Theft', 'Ransomware', 'Living off the Land', 'Social Engineering', 'Trojanized Software'], mitreGroups: ['G0032'], campaignCount: 52, notableCampaigns: ['WannaCry', 'Sony Pictures Hack', 'Bangladesh Bank Heist', '3CX Supply Chain'] },
+    { id: 'TA-004', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Group', 'Carbon Spider', 'G0046'], sophistication: 'advanced', origin: 'Eastern Europe (Ukraine/Russia)', targetIndustries: ['Financial Services', 'Retail', 'Hospitality', 'Restaurant', 'Healthcare'], primaryMotivation: 'Financial Gain', firstSeen: '2013', lastActive: '2025-12', attributionConfidence: 85, ttps: ['Spearphishing', 'Point-of-Sale Malware', 'Web Shell Deployment', 'Credential Theft', 'JavaScript-Based Payloads', 'Fileless Malware'], mitreGroups: ['G0046'], campaignCount: 38, notableCampaigns: ['Chipotle Breach', 'Sears/Kmart Breach', 'Arby\'s Breach', 'British Airways Breach'] },
+    { id: 'TA-005', name: 'APT41 (Double Dragon)', aliases: ['Winnti', 'BARIUM', 'Brass Typhoon', 'Wicked Panda'], sophistication: 'advanced', origin: 'China (MSS)', targetIndustries: ['Technology', 'Telecommunications', 'Healthcare', 'Video Games', 'Supply Chain'], primaryMotivation: 'Espionage / Financial Gain', firstSeen: '2012', lastActive: '2025-12', attributionConfidence: 90, ttps: ['Supply Chain Compromise', 'Zero-Day Exploitation', 'Custom Malware', 'Living off the Land', 'Spearphishing', 'Watering Hole'], mitreGroups: ['G0096'], campaignCount: 41, notableCampaigns: ['ManageEngine Supply Chain', 'US State Dept Hack', 'Video Game Industry Espionage', 'COVID-19 Research Theft'] },
+    { id: 'TA-006', name: 'Wizard Spider', aliases: ['UNC1878', 'DEV-0537', 'TrickBot Gang', 'Ryuk'], sophistication: 'advanced', origin: 'Russia/Eastern Europe', targetIndustries: ['Healthcare', 'Education', 'Government', 'Manufacturing', 'Legal'], primaryMotivation: 'Financial Gain (Ransomware)', firstSeen: '2018', lastActive: '2025-12', attributionConfidence: 82, ttps: ['Ransomware Deployment', 'Initial Access Brokerage', 'Lateral Movement', 'Data Exfiltration', 'Double Extortion', 'RDP Exploitation'], mitreGroups: ['G0120'], campaignCount: 29, notableCampaigns: ['Conti Ransomware', 'TrickBot Operations', 'Ryuk Hospital Attacks', 'LockBit 3.0 Operations'] },
+    { id: 'TA-007', name: 'MuddyWater', aliases: ['Mercury', 'TEMP.Zagros', 'Static Kitten', 'Mango Sandstorm'], sophistication: 'intermediate', origin: 'Iran (MOIS)', targetIndustries: ['Government', 'Defense', 'Telecommunications', 'Energy', 'Academia'], primaryMotivation: 'Espionage', firstSeen: '2017', lastActive: '2025-11', attributionConfidence: 80, ttps: ['Spearphishing', 'Custom Malware (PowGoop, PhonyC2)', 'Legitimate Tool Abuse', 'Remote Administration Tools', 'DNS Tunneling', 'Macro-Based Payloads'], mitreGroups: ['G0069'], campaignCount: 22, notableCampaigns: ['Middle East Government Espionage', 'European Telecom Surveillance', 'VPN Provider Compromise', 'Anti-Virus Vendor Targeting'] },
+    { id: 'TA-008', name: 'LAPSUS$', aliases: ['DEV-0537', 'Orange', 'Uma', 'White'], sophistication: 'intermediate', origin: 'United Kingdom / Brazil', targetIndustries: ['Technology', 'Telecommunications', 'Financial Services', 'Government', 'Gaming'], primaryMotivation: 'Financial Gain / Notoriety', firstSeen: '2021', lastActive: '2025-09', attributionConfidence: 78, ttps: ['SIM Swapping', 'Social Engineering', 'MFA Fatigue Attacks', 'Token Theft', 'Insider Recruitment', 'Cloud Account Takeover'], mitreGroups: ['G1008'], campaignCount: 14, notableCampaigns: ['Microsoft Source Code Theft', 'NVIDIA Breach', 'Okta Compromise', 'Uber Breach', 'T-Mobile Data Theft'] },
+  ];
+
+  private _tapActorCampaignTimeline: Array<{actor: string; year: string; campaign: string; description: string; impact: string; mitreTactics: string[]}> = [
+    { actor: 'APT29', year: '2020', campaign: 'SolarWinds Orion', description: 'Supply chain compromise of SolarWinds Orion platform affecting 18,000+ organizations', impact: 'Massive - US Government agencies, Fortune 500', mitreTactics: ['Initial Access', 'Persistence', 'Privilege Escalation', 'Defense Evasion'] },
+    { actor: 'APT29', year: '2023', campaign: 'Microsoft Midnight Blizzard', description: 'Corporate email system compromise via password spray attack targeting Microsoft corporate systems', impact: 'High - Source code access, executive email compromise', mitreTactics: ['Initial Access', 'Collection', 'Exfiltration'] },
+    { actor: 'APT28', year: '2017', campaign: 'NotPetya', description: 'Destructive malware disguised as ransomware causing $10B+ global damage', impact: 'Massive - Shipping, energy, government systems worldwide', mitreTactics: ['Initial Access', 'Execution', 'Impact'] },
+    { actor: 'Lazarus', year: '2017', campaign: 'WannaCry', description: 'Global ransomware campaign affecting 200,000+ systems across 150 countries', impact: 'Massive - Healthcare, transportation, government disruption', mitreTactics: ['Initial Access', 'Execution', 'Lateral Movement', 'Impact'] },
+    { actor: 'Lazarus', year: '2023', campaign: '3CX Supply Chain', description: 'Supply chain compromise of 3CX desktop app via trojanized installer', impact: 'High - 600,000+ customers potentially affected', mitreTactics: ['Supply Chain Compromise', 'Persistence', 'Defense Evasion'] },
+    { actor: 'FIN7', year: '2017', campaign: 'POS Campaign', description: 'Point-of-sale malware targeting restaurant and retail chains across North America', impact: 'High - Millions of payment cards compromised', mitreTactics: ['Initial Access', 'Execution', 'Collection'] },
+    { actor: 'APT41', year: '2020', campaign: 'ManageEngine', description: 'Supply chain compromise targeting ManageEngine products for initial access', impact: 'High - Government and enterprise networks compromised', mitreTactics: ['Supply Chain Compromise', 'Persistence', 'Privilege Escalation'] },
+    { actor: 'Wizard Spider', year: '2021', campaign: 'Conti Healthcare', description: 'Targeted ransomware attacks against 290+ healthcare organizations during pandemic', impact: 'Massive - Hospital operations disrupted, patient data exposed', mitreTactics: ['Initial Access', 'Lateral Movement', 'Impact', 'Exfiltration'] },
+    { actor: 'LAPSUS$', year: '2022', campaign: 'Tech Sector Blitz', description: 'Series of attacks against major tech companies using social engineering and MFA fatigue', impact: 'High - Source code, credentials, and proprietary data stolen', mitreTactics: ['Initial Access', 'Credential Access', 'Collection'] },
+    { actor: 'MuddyWater', year: '2022', campaign: 'Middle East Espionage', description: 'Spearphishing campaign targeting government and defense entities in Middle East and Central Asia', impact: 'Medium-High - Government communications intercepted', mitreTactics: ['Initial Access', 'Execution', 'Command and Control'] },
+  ];
+
+  private _tapBehaviorPatterns: Array<{actor: string; pattern: string; frequency: string; indicator: string; detectionMethod: string}> = [
+    { actor: 'APT29', pattern: 'Living off the Land using PowerShell and WMI for persistence', frequency: 'Very High', indicator: 'Suspicious PowerShell encoded commands, WMI event subscription creation', detectionMethod: 'PowerShell script block logging, WMI event monitoring' },
+    { actor: 'APT28', pattern: 'Credential harvesting via custom phishing pages mimicking O365 login', frequency: 'High', indicator: 'Lookalike domains, suspicious redirect chains, unusual authentication patterns', detectionMethod: 'URL categorization, certificate transparency monitoring, Azure AD sign-in logs' },
+    { actor: 'Lazarus', pattern: 'Initial access via trojanized open-source software packages', frequency: 'High', indicator: 'Modified package checksums, unexpected network connections from build servers', detectionMethod: 'Software composition analysis, package integrity verification, egress monitoring' },
+    { actor: 'FIN7', pattern: 'JavaScript-based payloads delivered via macro-enabled documents', frequency: 'Very High', indicator: 'Macro-enabled documents with obfuscated JS, DNS queries to DGA domains', detectionMethod: 'Office macro policies, DNS query analytics, AMSI monitoring' },
+    { actor: 'APT41', pattern: 'Custom backdoor deployment after initial access via supply chain compromise', frequency: 'High', indicator: 'Unknown binaries in trusted software paths, anomalous scheduled tasks', detectionMethod: 'File integrity monitoring, scheduled task auditing, behavioral analytics' },
+    { actor: 'Wizard Spider', pattern: 'Ransomware deployment after extensive network reconnaissance and data exfiltration', frequency: 'Very High', indicator: 'Large volume data transfers to cloud storage, enumeration of backup systems', detectionMethod: 'Network traffic analysis, DLP alerts, backup system monitoring' },
+    { actor: 'MuddyWater', pattern: 'Legitimate remote administration tool abuse for C2 communications', frequency: 'High', indicator: 'Unexpected remote tool installations, DNS tunneling traffic patterns', detectionMethod: 'Application whitelisting, DNS anomaly detection, remote tool inventory' },
+    { actor: 'LAPSUS$', pattern: 'Social engineering targeting IT helpdesk and customer support for MFA bypass', frequency: 'High', indicator: 'Unusual MFA reset requests, helpdesk ticket spikes, SMS/voice call anomalies', detectionMethod: 'Helpdesk process monitoring, MFA reset analytics, telecom fraud detection' },
+  ];
+
+  private _tapSophisticationLevels: Array<{level: number; name: string; description: string; criteria: string[]; actorsAtLevel: string[]}> = [
+    { level: 1, name: 'Novice', description: 'Opportunistic attackers using readily available tools with minimal customization', criteria: ['Uses public exploit code', 'No custom tooling', 'Basic evasion only', 'Short dwell time'], actorsAtLevel: ['Script Kiddies', 'Opportunistic Criminals'] },
+    { level: 2, name: 'Intermediate', description: 'Semi-professional threat actors with some custom tooling and moderate operational security', criteria: ['Some custom malware', 'Basic OPSEC practices', 'Targeted campaigns', 'Moderate dwell time'], actorsAtLevel: ['MuddyWater', 'LAPSUS$'] },
+    { level: 3, name: 'Advanced', description: 'Well-resourced groups with sophisticated custom tooling, supply chain capabilities, and strong OPSEC', criteria: ['Extensive custom tooling', 'Supply chain capabilities', 'Strong OPSEC', 'Multiple attack vectors', 'Long dwell time'], actorsAtLevel: ['APT29', 'APT28', 'Lazarus', 'FIN7', 'APT41', 'Wizard Spider'] },
+    { level: 4, name: 'Elite / Nation-State', description: 'Top-tier intelligence agencies with unlimited resources, zero-day access, and global reach', criteria: ['Zero-day stockpile', 'Global infrastructure', 'Advanced evasion', 'Multi-year campaigns', 'Cross-domain operations'], actorsAtLevel: ['Equation Group (NSA)', 'Stuxnet Authors (US/Israel)', 'Unit 8200 (Israel)'] },
+  ];
+
+  private _tapHypothesisTemplates: Array<{id: string; name: string; category: string; description: string; hypothesis: string; dataSources: string[]; analyticTechniques: string[]; expectedOutcome: string}> = [
+    { id: 'HT-001', name: 'Credential Dumping Detection', category: 'Credential Access', description: 'Hunt for evidence of credential dumping activity that may indicate post-exploitation', hypothesis: 'Adversaries are using LSASS memory dumping or Mimikatz to extract credentials from compromised systems', dataSources: ['Windows Security Log (Event 4656, 4663)', 'Sysmon Event ID 10 (Process Access)', 'EDR Telemetry', 'PowerShell Script Block Logging'], analyticTechniques: ['Process monitoring for LSASS access', 'CommandLine argument analysis', 'Named pipe monitoring', 'Memory forensic analysis'], expectedOutcome: 'Identify systems where credential dumping tools have been executed and accounts that may be compromised' },
+    { id: 'HT-002', name: 'Lateral Movement via WMI', category: 'Lateral Movement', description: 'Detect WMI-based lateral movement commonly used by advanced threat actors', hypothesis: 'Adversaries are using WMI event subscriptions for persistent lateral movement across the network', dataSources: ['WMI Repository', 'Sysmon Event ID 19/20/21', 'Windows Security Log', 'Network Traffic'], analyticTechniques: ['WMI event subscription enumeration', 'Remote WMI execution detection', 'Temporary event consumer monitoring', 'WMI provider host analysis'], expectedOutcome: 'Identify WMI persistence mechanisms and lateral movement paths used by the adversary' },
+    { id: 'HT-003', name: 'DNS Tunnel Detection', category: 'Command and Control', description: 'Detect covert command and control communications via DNS tunneling', hypothesis: 'Adversaries are using DNS tunneling to exfiltrate data and maintain C2 communications bypassing network controls', dataSources: ['DNS Query Logs', 'Firewall Logs', 'Proxy Logs', 'PCAP'], analyticTechniques: ['Entropy analysis on DNS queries', 'Subdomain length distribution analysis', 'DNS query volume anomalies', 'NXDOMAIN response ratio analysis'], expectedOutcome: 'Identify DNS tunneling infrastructure and associated compromised systems' },
+    { id: 'HT-004', name: 'Persistence via Scheduled Tasks', category: 'Persistence', description: 'Hunt for scheduled task persistence mechanisms used to maintain access', hypothesis: 'Adversaries have created scheduled tasks to maintain persistence on compromised systems', dataSources: ['Scheduled Task Repository', 'Windows Security Log (Event 4698)', 'Sysmon Event ID 1', 'PowerShell Logging'], analyticTechniques: ['Scheduled task enumeration and comparison', 'New scheduled task detection', 'Suspicious command-line analysis', 'Task trigger pattern analysis'], expectedOutcome: 'Identify unauthorized scheduled tasks and associated malicious payloads' },
+    { id: 'HT-005', name: 'Cloud IAM Anomaly Detection', category: 'Privilege Escalation', description: 'Detect anomalous IAM activity in cloud environments that may indicate compromise', hypothesis: 'Adversaries are exploiting misconfigured IAM policies to escalate privileges and access sensitive cloud resources', dataSources: ['AWS CloudTrail', 'Azure Activity Log', 'GCP Audit Log', 'Cloud IAM Policies'], analyticTechniques: ['IAM policy change analysis', 'Privilege escalation path mapping', 'Unusual API call detection', 'Cross-account access analysis'], expectedOutcome: 'Identify IAM misconfigurations and suspicious privilege escalation activity in cloud environments' },
+    { id: 'HT-006', name: 'Fileless Malware Detection', category: 'Defense Evasion', description: 'Detect fileless malware execution techniques that evade traditional antivirus', hypothesis: 'Adversaries are using fileless techniques such as PowerShell reflection, WMI, and COM hijacking to execute malicious code', dataSources: ['PowerShell Script Block Logging', 'AMSI Logs', 'Sysmon Event ID 7/8/9/10', 'ETW Providers'], analyticTechniques: ['PowerShell obfuscation detection', 'COM hijacking analysis', 'Reflective DLL injection detection', 'Memory-only execution identification'], expectedOutcome: 'Identify fileless malware execution and associated attack infrastructure' },
+  ];
+
+  private _tapThreatIntelFeeds: Array<{name: string; type: string; provider: string; updateFrequency: string; iocTypes: string[]; reliability: number; coverage: string}> = [
+    { name: 'MITRE ATT&CK', type: 'Knowledge Base', provider: 'MITRE Corporation', updateFrequency: 'Quarterly', iocTypes: ['TTPs', 'Software', 'Groups', 'Campaigns'], reliability: 95, coverage: 'Global' },
+    { name: 'AlienVault OTX', type: 'Open Threat Intelligence', provider: 'AlienVault', updateFrequency: 'Real-time', iocTypes: ['IPs', 'Domains', 'URLs', 'File Hashes', 'Emails'], reliability: 72, coverage: 'Global' },
+    { name: 'CrowdStrike Intel', type: 'Commercial Threat Intel', provider: 'CrowdStrike', updateFrequency: 'Daily', iocTypes: ['IOCs', 'Malware', 'TTPs', 'Actor Profiles'], reliability: 92, coverage: 'Global' },
+    { name: 'Mandiant Advantage', type: 'Commercial Threat Intel', provider: 'Google/Mandiant', updateFrequency: 'Daily', iocTypes: ['IOCs', 'Vulnerabilities', 'Threat Reports', 'Actor Profiles'], reliability: 94, coverage: 'Global' },
+    { name: 'Recorded Future', type: 'Threat Intelligence Platform', provider: 'Recorded Future', updateFrequency: 'Real-time', iocTypes: ['IOCs', 'Threat Context', 'Risk Scores', 'Vulnerability Intelligence'], reliability: 88, coverage: 'Global' },
+    { name: 'AbuseIPDB', type: 'IP Reputation', provider: 'AbuseIPDB', updateFrequency: 'Real-time', iocTypes: ['IP Addresses', 'Abuse Reports'], reliability: 75, coverage: 'Global' },
+    { name: 'Shodan', type: 'Attack Surface Intelligence', provider: 'Shodan', updateFrequency: 'Continuous', iocTypes: ['Exposed Services', 'Device Fingerprints', 'Vulnerabilities'], reliability: 85, coverage: 'Internet-facing' },
+    { name: 'VirusTotal', type: 'Malware Intelligence', provider: 'Google', updateFrequency: 'Real-time', iocTypes: ['File Hashes', 'URLs', 'Domains', 'IPs'], reliability: 82, coverage: 'Global' },
+  ];
+
+  private _tapHuntingCampaigns: Array<{id: string; name: string; hypothesis: string; status: string; startDate: string; leadAnalyst: string; findings: number; falsePositives: number; truePositives: number}> = [
+    { id: 'HC-001', name: 'Operation Silent Hunt', hypothesis: 'Active APT group using living-off-the-land techniques undetected in our environment', status: 'active', startDate: '2025-12-01', leadAnalyst: 'J. Chen', findings: 15, falsePositives: 12, truePositives: 3 },
+    { id: 'HC-002', name: 'Cloud Credential Sweep', hypothesis: 'Compromised cloud service accounts being used for unauthorized data access', status: 'active', startDate: '2025-12-10', leadAnalyst: 'R. Kim', findings: 8, falsePositives: 6, truePositives: 2 },
+    { id: 'HC-003', name: 'Insider Threat Detection', hypothesis: 'Employee performing unauthorized data access consistent with pre-exfiltration activity', status: 'completed', startDate: '2025-11-15', leadAnalyst: 'S. Patel', findings: 22, falsePositives: 19, truePositives: 3 },
+    { id: 'HC-004', name: 'Supply Chain Scan', hypothesis: 'Third-party software dependencies containing malicious or vulnerable components', status: 'completed', startDate: '2025-10-20', leadAnalyst: 'A. Thompson', findings: 34, falsePositives: 28, truePositives: 6 },
+    { id: 'HC-005', name: 'Domain Controller Hardening', hypothesis: 'Domain controllers have active persistence mechanisms from prior compromises', status: 'planned', startDate: '2026-01-15', leadAnalyst: 'M. Rodriguez', findings: 0, falsePositives: 0, truePositives: 0 },
+  ];
+
+  private _tapMitigationStatus: Array<{technique: string; mitreId: string; mitigation: string; status: string; coverage: number; gaps: string[]}> = [
+    { technique: 'Spearphishing Attachment', mitreId: 'T1566.001', mitigation: 'Email gateway filtering + user training', status: 'partial', coverage: 78, gaps: ['Macro-enabled documents not consistently blocked', 'Training completion rate below 90%'] },
+    { technique: 'Credential Dumping', mitreId: 'T1003', mitigation: 'Credential Guard + LSA Protection', status: 'partial', coverage: 65, gaps: ['Credential Guard not deployed to 35% of endpoints', 'Legacy systems unsupported'] },
+    { technique: 'Pass-the-Hash', mitreId: 'T1550.002', mitigation: 'SMB signing enforcement + restricted admin', status: 'partial', coverage: 72, gaps: ['SMBv1 still enabled on 12 legacy systems'] },
+    { technique: 'Remote Services: SMB', mitreId: 'T1021.002', mitigation: 'Network segmentation + SMB hardening', status: 'good', coverage: 88, gaps: ['DMZ to internal SMB access not fully restricted'] },
+    { technique: 'Scheduled Task', mitreId: 'T1053.005', mitigation: 'Scheduled task auditing + GPO restrictions', status: 'partial', coverage: 70, gaps: ['GPO restrictions not applied to server OU', 'Audit coverage incomplete'] },
+    { technique: 'PowerShell', mitreId: 'T1059.001', mitigation: 'Constrained language mode + AMSI + logging', status: 'good', coverage: 85, gaps: ['Constrained mode breaks 3 legacy applications', 'PowerShell v2 still installed'] },
+    { technique: 'Web Shell', mitreId: 'T1505.003', mitigation: 'WAF + file integrity monitoring', status: 'good', coverage: 82, gaps: ['Legacy IIS servers lack file integrity monitoring'] },
+    { technique: 'Valid Accounts', mitreId: 'T1078', mitigation: 'MFA + privileged access management', status: 'partial', coverage: 68, gaps: ['12% of accounts without MFA', 'Service account password rotation overdue'] },
+    { technique: 'DLL Search Order Hijacking', mitreId: 'T1574.002', mitigation: 'DLL allowlisting + application whitelisting', status: 'partial', coverage: 55, gaps: ['Application whitelisting only deployed to 45% of endpoints'] },
+    { technique: 'Obfuscated Files or Information', mitreId: 'T1027', mitigation: 'AMSI + script block logging + sandbox', status: 'good', coverage: 80, gaps: ['Custom encoding techniques may bypass AMSI', 'Sandbox analysis limited to 500 files/day'] },
+  ];
+
+  private _tapHuntingMetrics: Array<{metric: string; description: string; current: string; target: string; trend: string; period: string}> = [
+    { metric: 'Hypotheses Generated', description: 'Number of new hunting hypotheses created per quarter', current: '18', target: '20+', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'True Positive Rate', description: 'Percentage of hunting findings that are confirmed threats', current: '24%', target: '>30%', trend: 'stable', period: 'Q4 2025' },
+    { metric: 'Time to Discovery', description: 'Average time to discover a new threat through hunting', current: '4.2 days', target: '<3 days', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'Hunting Coverage', description: 'Percentage of MITRE ATT&CK techniques with active hunting hypotheses', current: '38%', target: '>50%', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'Automation Rate', description: 'Percentage of hunting queries that are automated', current: '45%', target: '>70%', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'False Positive Reduction', description: 'Year-over-year reduction in false positive hunting findings', current: '-15%', target: '-20%', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'Analyst Utilization', description: 'Percentage of analyst time spent on high-value hunting vs alert triage', current: '32%', target: '>50%', trend: 'stable', period: 'Q4 2025' },
+    { metric: 'Intelligence Sharing', description: 'Number of actionable intelligence reports shared with peer organizations', current: '8', target: '12+', trend: 'improving', period: 'Q4 2025' },
+  ];
+
+  private _tapDataSources: Array<{name: string; type: string; platform: string; volume: string; retention: string; status: string; ingestion: string}> = [
+    { name: 'EDR Telemetry', type: 'Endpoint', platform: 'CrowdStrike Falcon', volume: '500 GB/day', retention: '90 days', status: 'active', ingestion: 'real-time' },
+    { name: 'Windows Security Log', type: 'Authentication', platform: 'Windows Server', volume: '200 GB/day', retention: '180 days', status: 'active', ingestion: 'real-time' },
+    { name: 'DNS Query Logs', type: 'Network', platform: 'Infoblox DNS', volume: '50 GB/day', retention: '90 days', status: 'active', ingestion: 'real-time' },
+    { name: 'Firewall Logs', type: 'Network', platform: 'PaloAlto PA-5260', volume: '150 GB/day', retention: '90 days', status: 'active', ingestion: 'real-time' },
+    { name: 'AWS CloudTrail', type: 'Cloud', platform: 'AWS', volume: '80 GB/day', retention: '365 days', status: 'active', ingestion: 'near-real-time' },
+    { name: 'Azure AD Sign-in', type: 'Identity', platform: 'Azure AD', volume: '30 GB/day', retention: '180 days', status: 'active', ingestion: 'near-real-time' },
+    { name: 'Email Gateway', type: 'Email', platform: 'Proofpoint', volume: '100 GB/day', retention: '365 days', status: 'active', ingestion: 'real-time' },
+    { name: 'DLP Alerts', type: 'Data', platform: 'Symantec DLP', volume: '20 GB/day', retention: '180 days', status: 'active', ingestion: 'near-real-time' },
+    { name: 'Proxy Logs', type: 'Network', platform: 'Zscaler', volume: '300 GB/day', retention: '90 days', status: 'active', ingestion: 'real-time' },
+    { name: 'SIEM Events', type: 'Aggregated', platform: 'Splunk Enterprise', volume: '2 TB/day', retention: '365 days', status: 'active', ingestion: 'real-time' },
+    { name: 'Threat Intel Feeds', type: 'Intelligence', platform: 'MISP', volume: '5 GB/day', retention: '730 days', status: 'active', ingestion: 'hourly' },
+    { name: 'Vulnerability Scanner', type: 'Assessment', platform: 'Qualys', volume: '10 GB/day', retention: '365 days', status: 'active', ingestion: 'on-scan' },
+  ];
+
+  private _tapHuntingPlaybookStatus: Array<{playbook: string; mitreTechnique: string; status: string; lastExecuted: string; truePositives: number; falsePositives: number; executionTime: string; analyst: string}> = [
+    { playbook: 'Credential Dumping via LSASS', mitreTechnique: 'T1003.001', status: 'active', lastExecuted: '2025-12-28', truePositives: 1, falsePositives: 3, executionTime: '45 min', analyst: 'J. Chen' },
+    { playbook: 'Kerberoasting Detection', mitreTechnique: 'T1558.003', status: 'active', lastExecuted: '2025-12-27', truePositives: 0, falsePositives: 5, executionTime: '30 min', analyst: 'M. Rodriguez' },
+    { playbook: 'Scheduled Task Persistence', mitreTechnique: 'T1053.005', status: 'active', lastExecuted: '2025-12-26', truePositives: 2, falsePositives: 8, executionTime: '60 min', analyst: 'S. Patel' },
+    { playbook: 'WMI Persistence Detection', mitreTechnique: 'T1547.012', status: 'active', lastExecuted: '2025-12-25', truePositives: 0, falsePositives: 2, executionTime: '25 min', analyst: 'R. Kim' },
+    { playbook: 'DNS Tunnel Detection', mitreTechnique: 'T1071.004', status: 'active', lastExecuted: '2025-12-24', truePositives: 1, falsePositives: 12, executionTime: '90 min', analyst: 'J. Chen' },
+    { playbook: 'Cloud IAM Anomaly Detection', mitreTechnique: 'T1078.004', status: 'active', lastExecuted: '2025-12-28', truePositives: 1, falsePositives: 7, executionTime: '40 min', analyst: 'K. Yamamoto' },
+    { playbook: 'PowerShell Obfuscation Detection', mitreTechnique: 'T1059.001', status: 'active', lastExecuted: '2025-12-23', truePositives: 3, falsePositives: 15, executionTime: '50 min', analyst: 'A. Thompson' },
+    { playbook: 'RDP Lateral Movement Detection', mitreTechnique: 'T1021.001', status: 'active', lastExecuted: '2025-12-22', truePositives: 0, falsePositives: 4, executionTime: '35 min', analyst: 'M. Rodriguez' },
+  ];
+
+  private _renderTapActorProfiler(): ReturnType<typeof html> {
+    const actorCards = this._tapActorProfiles.map(a => {
+      const confColor = a.attributionConfidence >= 90 ? '#22c55e' : a.attributionConfidence >= 80 ? '#eab308' : '#f97316';
+      const ttpBadges = a.ttps.map(t => html`<span class="tap-ttp-badge">${t}</span>`);
+      const aliasList = a.aliases.map(al => html`<span class="tap-alias-tag">${al}</span>`);
+      return html`
+        <div class="tap-actor-card" style="border-top:3px solid ${confColor}">
+          <div class="tap-actor-header">
+            <span class="tap-actor-name">${a.name}</span>
+            <span class="tap-actor-sophistication">${a.sophistication.toUpperCase()}</span>
+          </div>
+          <div class="tap-actor-aliases">Aliases: ${aliasList}</div>
+          <div class="tap-actor-meta">
+            <span class="tap-meta-item">&#x1F310; ${a.origin}</span>
+            <span class="tap-meta-item">&#x1F3AF; ${a.primaryMotivation}</span>
+            <span class="tap-meta-item">&#x1F4C5; Active: ${a.firstSeen} - ${a.lastActive}</span>
+            <span class="tap-meta-item" style="color:${confColor}">&#x1F4CA; Attribution: ${a.attributionConfidence}%</span>
+          </div>
+          <div class="tap-actor-targets"><strong>Target Industries:</strong> ${a.targetIndustries.map(t => html`<span class="tap-target-tag">${t}</span>`)}</div>
+          <div class="tap-actor-ttps"><strong>TTPs:</strong> ${ttpBadges}</div>
+          <div class="tap-actor-campaigns"><strong>Campaigns (${a.campaignCount}):</strong> ${a.notableCampaigns.map(c => html`<span class="tap-campaign-tag">${c}</span>`)}</div>
+        </div>
+      `;
+    });
+    const timelineRows = this._tapActorCampaignTimeline.map(t => html`
+      <tr><td style="font-weight:700">${t.actor}</td><td>${t.year}</td><td style="font-weight:700">${t.campaign}</td><td>${t.description}</td><td>${t.impact}</td><td>${t.mitreTactics.map(m => html`<span class="tap-tactic-tag">${m}</span>`)}</td></tr>
+    `);
+    const behaviorRows = this._tapBehaviorPatterns.map(b => html`
+      <tr><td style="font-weight:700">${b.actor}</td><td>${b.pattern}</td><td>${b.frequency}</td><td>${b.indicator}</td><td>${b.detectionMethod}</td></tr>
+    `);
+    const sophisticationCards = this._tapSophisticationLevels.map(s => html`
+      <div class="tap-soph-card">
+        <div class="tap-soph-level">Level ${s.level}: ${s.name}</div>
+        <div class="tap-soph-desc">${s.description}</div>
+        <div class="tap-soph-criteria"><strong>Criteria:</strong><ul>${s.criteria.map(c => html`<li>${c}</li>`)}</ul></div>
+        <div class="tap-soph-actors"><strong>Examples:</strong> ${s.actorsAtLevel.map(a => html`<span class="tap-soph-actor">${a}</span>`)}</div>
+      </div>
+    `);
+    return html`
+      <div class="tap-engine-section">
+        <div class="tap-section-title">&#x1F575; Threat Actor Profiler</div>
+        <div class="tap-actors-grid">${actorCards}</div>
+        <div class="tap-timeline-section">
+          <div class="tap-sub-title">&#x1F4C5; Campaign History Timeline</div>
+          <table class="tap-table tap-table-wide"><thead><tr><th>Actor</th><th>Year</th><th>Campaign</th><th>Description</th><th>Impact</th><th>MITRE Tactics</th></tr></thead><tbody>${timelineRows}</tbody></table>
+        </div>
+        <div class="tap-behavior-section">
+          <div class="tap-sub-title">&#x1F50D; Behavior Pattern Analysis</div>
+          <table class="tap-table tap-table-wide"><thead><tr><th>Actor</th><th>Pattern</th><th>Frequency</th><th>Indicators</th><th>Detection Method</th></tr></thead><tbody>${behaviorRows}</tbody></table>
+        </div>
+        <div class="tap-sophistication-section">
+          <div class="tap-sub-title">&#x1F3AF; Sophistication Level Assessment</div>
+          <div class="tap-soph-grid">${sophisticationCards}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _tapReportingSchedule: Array<{report: string; frequency: string; audience: string; owner: string; lastGenerated: string; nextDue: string}> = [
+    { report: 'Weekly Hunting Summary', frequency: 'Weekly', audience: 'Security Team', owner: 'Hunting Lead', lastGenerated: '2025-12-27', nextDue: '2026-01-03' },
+    { report: 'Monthly Threat Landscape', frequency: 'Monthly', audience: 'CISO + Security Leadership', owner: 'Threat Intel Lead', lastGenerated: '2025-12-01', nextDue: '2026-01-01' },
+    { report: 'Quarterly Campaign Assessment', frequency: 'Quarterly', audience: 'Executive Leadership', owner: 'CISO', lastGenerated: '2025-10-01', nextDue: '2026-01-01' },
+    { report: 'MITRE ATT&CK Coverage Report', frequency: 'Monthly', audience: 'Security Engineering', owner: 'Detection Engineering Lead', lastGenerated: '2025-12-01', nextDue: '2026-01-01' },
+    { report: 'Peer Intelligence Sharing Report', frequency: 'Quarterly', audience: 'ISAC Members', owner: 'Threat Intel Lead', lastGenerated: '2025-10-01', nextDue: '2026-01-01' },
+  ];
+
+  private _tapAutomationStatus: Array<{query: string; tool: string; status: string; schedule: string; lastRun: string; resultsCount: number}> = [
+    { query: 'Kerberoasting Detection', tool: 'Splunk', status: 'automated', schedule: 'Every 4 hours', lastRun: '2025-12-28T12:00:00Z', resultsCount: 3 },
+    { query: 'Suspicious PowerShell', tool: 'Splunk', status: 'automated', schedule: 'Every 1 hour', lastRun: '2025-12-28T15:00:00Z', resultsCount: 12 },
+    { query: 'DNS Tunnel Detection', tool: 'Splunk', status: 'automated', schedule: 'Every 6 hours', lastRun: '2025-12-28T12:00:00Z', resultsCount: 1 },
+    { query: 'Scheduled Task Persistence', tool: 'Splunk', status: 'automated', schedule: 'Daily at 02:00', lastRun: '2025-12-28T02:00:00Z', resultsCount: 8 },
+    { query: 'Cloud IAM Anomaly', tool: 'AWS CloudTrail + Panther', status: 'automated', schedule: 'Every 2 hours', lastRun: '2025-12-28T14:00:00Z', resultsCount: 5 },
+    { query: 'New Service Account Creation', tool: 'Azure AD + Splunk', status: 'automated', schedule: 'Every 4 hours', lastRun: '2025-12-28T12:00:00Z', resultsCount: 2 },
+  ];
+
+
   render() {
     return html`${this.thRenderRound17()}
       <div class="panel">

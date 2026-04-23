@@ -6612,6 +6612,161 @@ private _executionHistory: ExecutionRecord[] = [
     this.requestUpdate();
   }
 
+  // --- Forensics Timeline Reconstruction Engine (Round 41) ---
+
+  private _fteTimelines: Array<{id: string; incident: string; startDate: string; endDate: string; totalEvents: number; evidenceSources: number; analysts: string[]; status: string; keyFindings: string[]}> = [
+    { id: 'FTL-001', incident: 'Ransomware Attack on Finance Department', startDate: '2025-12-10T02:15:00Z', endDate: '2025-12-10T18:45:00Z', totalEvents: 15432, evidenceSources: 8, analysts: ['J. Chen', 'M. Rodriguez', 'S. Patel'], status: 'completed', keyFindings: ['Initial access via phishing email at 02:15', 'Lateral movement to file server at 04:30', 'Data exfiltration detected at 06:45 (1.2GB)', 'Ransomware deployment at 08:12', 'Backup encryption at 08:45'] },
+    { id: 'FTL-002', incident: ' Insider Threat - Data Exfiltration', startDate: '2025-11-20T09:00:00Z', endDate: '2025-12-05T17:30:00Z', totalEvents: 28764, evidenceSources: 12, analysts: ['A. Thompson', 'K. Yamamoto'], status: 'completed', keyFindings: ['First unauthorized access to customer DB on Nov 20', 'Data staged to personal cloud storage over 2 weeks', 'USB copy detected on Nov 28', 'Total 4.7GB of customer PII exfiltrated', 'Employee terminated Dec 5'] },
+    { id: 'FTL-003', incident: 'Supply Chain Compromise via Vendor', startDate: '2025-12-01T14:00:00Z', endDate: '2025-12-15T23:59:00Z', totalEvents: 8921, evidenceSources: 6, analysts: ['J. Chen', 'R. Kim', 'L. Zhang'], status: 'in-progress', keyFindings: ['Vendor software update contained backdoor', 'C2 channel established to attacker infrastructure', '3 internal systems compromised', 'Scope still being determined'] },
+    { id: 'FTL-004', incident: 'Cloud Infrastructure Unauthorized Access', startDate: '2025-12-08T22:30:00Z', endDate: '2025-12-12T11:00:00Z', totalEvents: 6234, evidenceSources: 5, analysts: ['M. Rodriguez', 'D. Okafor'], status: 'in-progress', keyFindings: ['API key compromise led to initial cloud access', 'IAM role escalation via misconfigured policy', 'S3 bucket enumeration and data access', 'Cryptomining activity detected on EC2 instances'] },
+    { id: 'FTL-005', incident: 'Phishing Campaign Targeting Executives', startDate: '2025-12-12T08:00:00Z', endDate: '2025-12-20T16:00:00Z', totalEvents: 3456, evidenceSources: 7, analysts: ['S. Patel', 'A. Thompson'], status: 'active', keyFindings: ['Spearphishing emails sent to 15 executives', '2 executives clicked malicious link', 'Credential harvesting page detected', 'MFA bypass attempted via push fatigue', 'Active investigation ongoing'] },
+  ];
+
+  private _fteEventTypes: Array<{type: string; category: string; description: string; criticality: string; sources: string[]}> = [
+    { type: 'AUTH_EVENT', category: 'Authentication', description: 'Login attempts, MFA challenges, token creation, session establishment', criticality: 'high', sources: ['Windows Security Log', 'Linux Auth Log', 'Azure AD Sign-in', 'O365 Audit'] },
+    { type: 'PROCESS_EVENT', category: 'Execution', description: 'Process creation, command-line execution, script invocation, scheduled task execution', criticality: 'critical', sources: ['Sysmon EID 1', 'EDR Telemetry', 'PowerShell Logging', 'Bash History'] },
+    { type: 'NETWORK_EVENT', category: 'Network', description: 'Inbound/outbound connections, DNS queries, HTTP requests, port scans', criticality: 'high', sources: ['Firewall Logs', 'DNS Logs', 'Proxy Logs', 'PCAP', 'NetFlow'] },
+    { type: 'FILE_EVENT', category: 'File System', description: 'File creation, modification, deletion, encryption, permission changes', criticality: 'high', sources: ['Sysmon EID 11', 'File Integrity Monitor', 'EDR Telemetry', 'Auditd'] },
+    { type: 'REGISTRY_EVENT', category: 'Configuration', description: 'Registry key creation, modification, deletion (persistence indicators)', criticality: 'medium', sources: ['Sysmon EID 12/13', 'Windows Registry Audit', 'EDR Telemetry'] },
+    { type: 'EMAIL_EVENT', category: 'Communication', description: 'Email sent/received, attachment handling, URL clicks, phishing indicators', criticality: 'high', sources: ['Exchange Online Audit', 'Email Gateway', 'O365 Mail Items', 'Proofpoint'] },
+    { type: 'CLOUD_EVENT', category: 'Cloud', description: 'API calls, resource creation/modification, IAM changes, data access', criticality: 'critical', sources: ['AWS CloudTrail', 'Azure Activity Log', 'GCP Audit Log', 'Kubernetes Audit'] },
+    { type: 'PRIVILEGE_EVENT', category: 'Access Control', description: 'Privilege escalation, group membership changes, role assignments', criticality: 'critical', sources: ['Windows Security Log', 'Azure AD Audit', 'IAM Audit', 'Sudo Logs'] },
+    { type: 'MALWARE_EVENT', category: 'Threat Detection', description: 'Malware detection alerts, sandbox detonation results, IOC matches', criticality: 'critical', sources: ['EDR Alerts', 'AV Logs', 'Sandbox Reports', 'Threat Intel Feeds'] },
+    { type: 'DATA_EVENT', category: 'Data Access', description: 'Data access, export, sharing, DLP alerts, bulk data operations', criticality: 'high', sources: ['DLP System', 'Database Audit', 'SharePoint Audit', 'File Server Logs'] },
+  ];
+
+  private _fteAnalysisTemplates: Array<{id: string; name: string; description: string; steps: string[]; requiredTools: string[]; outputFormat: string}> = [
+    { id: 'TPL-001', name: 'Initial Access Analysis', description: 'Determine how the attacker first gained access to the environment', steps: ['Identify earliest suspicious authentication events', 'Analyze email logs for phishing indicators', 'Review VPN/remote access logs for anomalies', 'Check for zero-day or exploit activity', 'Correlate across all evidence sources'], requiredTools: ['Timeline analyzer', 'Log correlation engine', 'Threat intel lookup', 'Hash reputation check'], outputFormat: 'Initial access vector report with IOC list' },
+    { id: 'TPL-002', name: 'Lateral Movement Mapping', description: 'Trace attacker movement across the network from initial access point', steps: ['Map all authentication events from compromised accounts', 'Identify remote execution events (PsExec, WMI, RDP)', 'Track credential usage patterns', 'Build network connection graph', 'Identify privilege escalation chain'], requiredTools: ['Network mapper', 'AD analysis tools', 'Credential tracking', 'Graph visualization'], outputFormat: 'Lateral movement path diagram with timeline' },
+    { id: 'TPL-003', name: 'Data Exfiltration Analysis', description: 'Quantify and characterize all data accessed or stolen during the incident', steps: ['Identify all unusual data access patterns', 'Analyze network egress for large transfers', 'Check cloud storage for unauthorized uploads', 'Review DLP alerts and USB activity', 'Calculate total data volume exfiltrated'], requiredTools: ['DLP analytics', 'Network traffic analysis', 'Cloud audit review', 'File analysis tools'], outputFormat: 'Data exfiltration report with impact assessment' },
+    { id: 'TPL-004', name: 'Persistence Mechanism Identification', description: 'Identify all persistence mechanisms established by the attacker', steps: ['Review scheduled tasks and services', 'Check registry run keys and startup locations', 'Analyze WMI event subscriptions', 'Review browser extensions and plugins', 'Check cloud IAM roles and policies'], requiredTools: ['Persistence scanner', 'Registry analyzer', 'WMI explorer', 'Cloud configuration auditor'], outputFormat: 'Persistence mechanism catalog with remediation steps' },
+    { id: 'TPL-005', name: 'Attack Attribution Analysis', description: 'Analyze TTPs and IOCs to attribute the attack to known threat actors', steps: ['Extract all IOCs from forensic artifacts', 'Map TTPs to MITRE ATT&CK framework', 'Query threat intelligence databases', 'Compare with known actor profiles', 'Assess attribution confidence'], requiredTools: ['MITRE ATT&CK Navigator', 'Threat intel platforms', 'IOC matching engine', 'Actor profile database'], outputFormat: 'Attribution report with confidence scoring' },
+  ];
+
+  private _fteEvidenceChain: Array<{id: string; caseId: string; itemId: string; itemType: string; collectedBy: string; collectedAt: string; hashSha256: string; storageLocation: string; integrityVerified: boolean; lastVerified: string}> = [
+    { id: 'ECH-001', caseId: 'FTL-001', itemId: 'EVID-001', itemType: 'Memory Dump', collectedBy: 'J. Chen', collectedAt: '2025-12-10T04:30:00Z', hashSha256: 'a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1', storageLocation: 'Evidence Locker A, Slot 1', integrityVerified: true, lastVerified: '2025-12-20T10:00:00Z' },
+    { id: 'ECH-002', caseId: 'FTL-001', itemId: 'EVID-002', itemType: 'Disk Image', collectedBy: 'J. Chen', collectedAt: '2025-12-10T05:15:00Z', hashSha256: 'b4c9d3e2f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a1b2', storageLocation: 'Evidence Locker A, Slot 2', integrityVerified: true, lastVerified: '2025-12-20T10:00:00Z' },
+    { id: 'ECH-003', caseId: 'FTL-001', itemId: 'EVID-003', itemType: 'Network PCAP', collectedBy: 'M. Rodriguez', collectedAt: '2025-12-10T03:00:00Z', hashSha256: 'c5d0e4f3a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a1b2c3', storageLocation: 'Evidence Locker B, Slot 1', integrityVerified: true, lastVerified: '2025-12-20T10:00:00Z' },
+    { id: 'ECH-004', caseId: 'FTL-002', itemId: 'EVID-010', itemType: 'USB Image', collectedBy: 'A. Thompson', collectedAt: '2025-11-28T16:45:00Z', hashSha256: 'd6e1f5a4b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a1b2c3d4', storageLocation: 'Evidence Locker A, Slot 5', integrityVerified: true, lastVerified: '2025-12-15T09:00:00Z' },
+    { id: 'ECH-005', caseId: 'FTL-002', itemId: 'EVID-011', itemType: 'Cloud Audit Logs', collectedBy: 'K. Yamamoto', collectedAt: '2025-11-22T10:00:00Z', hashSha256: 'e7f2a6b5c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a1b2c3d4e5', storageLocation: 'Cloud Evidence Bucket (immutable)', integrityVerified: true, lastVerified: '2025-12-15T09:00:00Z' },
+    { id: 'ECH-006', caseId: 'FTL-003', itemId: 'EVID-020', itemType: 'Malware Sample', collectedBy: 'J. Chen', collectedAt: '2025-12-05T14:30:00Z', hashSha256: 'f8a3b7c6d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a1b2c3d4e5f6', storageLocation: 'Malware Analysis Sandbox (isolated)', integrityVerified: true, lastVerified: '2025-12-18T14:00:00Z' },
+    { id: 'ECH-007', caseId: 'FTL-003', itemId: 'EVID-021', itemType: 'Vendor Software Package', collectedBy: 'R. Kim', collectedAt: '2025-12-03T11:00:00Z', hashSha256: 'a9b4c8d7e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a1b2c3d4e5f6a7', storageLocation: 'Evidence Locker B, Slot 3', integrityVerified: true, lastVerified: '2025-12-18T14:00:00Z' },
+  ];
+
+  private _fteForensicTools: Array<{name: string; version: string; category: string; capabilities: string[]; license: string; platform: string; analyst: string}> = [
+    { name: 'Volatility 3', version: '2.8.0', category: 'Memory Forensics', capabilities: ['Process analysis', 'DLL inspection', 'Network connections', 'Registry recovery', 'Malware detection'], license: 'Open Source', platform: 'Linux/macOS/Windows', analyst: 'J. Chen' },
+    { name: 'Autopsy', version: '4.21.0', category: 'Disk Forensics', capabilities: ['Timeline analysis', 'Keyword search', 'File recovery', 'Hash filtering', 'Email parsing'], license: 'Open Source', platform: 'Windows/Linux', analyst: 'M. Rodriguez' },
+    { name: 'Wireshark', version: '4.4.2', category: 'Network Forensics', capabilities: ['Protocol analysis', 'Packet capture', 'Stream reconstruction', 'VoIP analysis', 'Expert info'], license: 'Open Source', platform: 'Cross-platform', analyst: 'S. Patel' },
+    { name: 'FTK Imager', version: '4.7.3', category: 'Disk Imaging', capabilities: ['Forensic imaging', 'Live response', 'RAM capture', 'PDE format', 'Hash verification'], license: 'Freeware', platform: 'Windows', analyst: 'A. Thompson' },
+    { name: 'AXIOM', version: '7.8', category: 'Endpoint Forensics', capabilities: ['Artifact analysis', 'Cloud acquisition', 'Timeline reconstruction', 'AI categorization', 'Report generation'], license: 'Commercial', platform: 'Windows', analyst: 'R. Kim' },
+    { name: 'YARA', version: '4.5.0', category: 'Malware Analysis', capabilities: ['Pattern matching', 'IOC scanning', 'Malware classification', 'Rule management'], license: 'Open Source', platform: 'Cross-platform', analyst: 'J. Chen' },
+    { name: 'CAPE Sandbox', version: '2.5', category: 'Malware Analysis', capabilities: ['Dynamic analysis', 'Behavioral monitoring', 'Network capture', 'Screenshot capture', 'Memory dump'], license: 'Open Source', platform: 'Linux', analyst: 'M. Rodriguez' },
+    { name: 'plaso / Timesketch', version: '20241215', category: 'Timeline Analysis', capabilities: ['Event log parsing', 'Timeline visualization', 'Correlation analysis', 'Filtering and search', 'Collaboration'], license: 'Open Source', platform: 'Cross-platform', analyst: 'S. Patel' },
+  ];
+
+  private _fteReportingStandards: Array<{id: string; standard: string; description: string; sections: string[]; audience: string}> = [
+    { id: 'RPT-FTE-001', standard: 'NIST SP 800-86', description: 'Guide to Integrating Forensic Techniques into Incident Response', sections: ['Case overview', 'Evidence handling', 'Forensic examination', 'Findings', 'Conclusions', 'Appendices'], audience: 'Legal + Technical' },
+    { id: 'RPT-FTE-002', standard: 'ISO 27037', description: 'Guidelines for Identification, Collection, Acquisition and Preservation of Digital Evidence', sections: ['Identification', 'Collection', 'Acquisition', 'Preservation', 'Chain of custody', 'Reporting'], audience: 'Legal + Compliance' },
+    { id: 'RPT-FTE-003', standard: 'ACPO Good Practice Guide', description: 'Good Practice Guide for Digital Evidence', sections: ['Principles', 'Examination', 'Analysis', 'Presentation', 'Storage', 'Audit trail'], audience: 'Law Enforcement + Legal' },
+    { id: 'RPT-FTE-004', standard: 'SANS DFIR Template', description: 'SANS Digital Forensics and Incident Response Reporting Template', sections: ['Executive summary', 'Scope', 'Methodology', 'Timeline', 'Technical findings', 'IOCs', 'Recommendations'], audience: 'Management + Technical' },
+  ];
+
+  private _fteIOCManagement: Array<{id: string; type: string; value: string; source: string; confidence: string; firstSeen: string; lastSeen: string; status: string; associatedCampaigns: string[]}> = [
+    { id: 'IOC-001', type: 'IP Address', value: '185.220.101.34', source: 'Network Forensics', confidence: 'high', firstSeen: '2025-12-10T02:15:00Z', lastSeen: '2025-12-10T08:45:00Z', status: 'blocked', associatedCampaigns: ['FTL-001'] },
+    { id: 'IOC-002', type: 'Domain', value: 'update-service[.]secure-cdn[.]com', source: 'DNS Logs', confidence: 'high', firstSeen: '2025-12-10T03:30:00Z', lastSeen: '2025-12-10T08:30:00Z', status: 'sinkholed', associatedCampaigns: ['FTL-001'] },
+    { id: 'IOC-003', type: 'File Hash (SHA256)', value: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', source: 'Malware Analysis', confidence: 'confirmed', firstSeen: '2025-12-10T04:00:00Z', lastSeen: '2025-12-10T04:00:00Z', status: 'quarantined', associatedCampaigns: ['FTL-001', 'FTL-003'] },
+    { id: 'IOC-004', type: 'Email Address', value: 'john.support@microsoft-secure[.]com', source: 'Email Gateway', confidence: 'medium', firstSeen: '2025-11-20T09:30:00Z', lastSeen: '2025-12-01T10:00:00Z', status: 'blocked', associatedCampaigns: ['FTL-002'] },
+    { id: 'IOC-005', type: 'URL', value: 'https://cdn-update[.]malicious-domain[.]xyz/payload[.]dll', source: 'Browser Forensics', confidence: 'high', firstSeen: '2025-12-10T05:15:00Z', lastSeen: '2025-12-10T05:15:00Z', status: 'blocked', associatedCampaigns: ['FTL-001'] },
+    { id: 'IOC-006', type: 'Mutex', value: 'Global\\{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}', source: 'Memory Forensics', confidence: 'confirmed', firstSeen: '2025-12-10T04:30:00Z', lastSeen: '2025-12-10T04:30:00Z', status: 'documented', associatedCampaigns: ['FTL-001'] },
+    { id: 'IOC-007', type: 'Registry Key', value: 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\WindowsUpdate', source: 'Disk Forensics', confidence: 'confirmed', firstSeen: '2025-12-10T04:45:00Z', lastSeen: '2025-12-10T04:45:00Z', status: 'documented', associatedCampaigns: ['FTL-001'] },
+    { id: 'IOC-008', type: 'Bitcoin Address', value: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', source: 'Blockchain Analysis', confidence: 'high', firstSeen: '2025-12-10T06:00:00Z', lastSeen: '2025-12-10T06:00:00Z', status: 'monitored', associatedCampaigns: ['FTL-001'] },
+  ];
+
+  private _fteDiskUsageAnalysis: Array<{evidenceId: string; diskImage: string; totalSize: string; deletedFiles: number; recoveredFiles: number; sensitiveFiles: number; analysisTime: string; analyst: string}> = [
+    { evidenceId: 'EVID-002', diskImage: 'DC-PROD-01.E01', totalSize: '500 GB', deletedFiles: 12450, recoveredFiles: 3420, sensitiveFiles: 15, analysisTime: '8 hours', analyst: 'J. Chen' },
+    { evidenceId: 'EVID-010', diskImage: 'USB-FORENSIC.E01', totalSize: '128 GB', deletedFiles: 2340, recoveredFiles: 890, sensitiveFiles: 45, analysisTime: '4 hours', analyst: 'A. Thompson' },
+    { evidenceId: 'EVID-021', diskImage: 'VENDOR-SOFTWARE.E01', totalSize: '45 GB', deletedFiles: 560, recoveredFiles: 120, sensitiveFiles: 3, analysisTime: '2 hours', analyst: 'R. Kim' },
+  ];
+
+  private _fteMemoryAnalysis: Array<{evidenceId: string; system: string; totalProcesses: number; suspiciousProcesses: number; injectedCode: number; networkConnections: number; cryptoKeys: number; analysisTime: string}> = [
+    { evidenceId: 'EVID-001', system: 'DC-PROD-01', totalProcesses: 342, suspiciousProcesses: 8, injectedCode: 3, networkConnections: 156, cryptoKeys: 12, analysisTime: '6 hours' },
+    { evidenceId: 'EVID-003', system: 'WEB-DMZ-01', totalProcesses: 198, suspiciousProcesses: 5, injectedCode: 1, networkConnections: 89, cryptoKeys: 4, analysisTime: '4 hours' },
+    { evidenceId: 'EVID-020', system: 'ANALYSIS-VM', totalProcesses: 245, suspiciousProcesses: 15, injectedCode: 6, networkConnections: 234, cryptoKeys: 28, analysisTime: '8 hours' },
+  ];
+
+  private _renderFteForensicsEngine(): ReturnType<typeof html> {
+    const tlCards = this._fteTimelines.map(t => {
+      const statusColor = t.status === 'completed' ? '#22c55e' : t.status === 'in-progress' ? '#3b82f6' : '#ef4444';
+      const findings = t.keyFindings.map(f => html`<li>${f}</li>`);
+      return html`
+        <div class="fte-tl-card" style="border-left:3px solid ${statusColor}">
+          <div class="fte-tl-header">
+            <span class="fte-tl-id">${t.id}</span>
+            <span class="fte-tl-incident">${t.incident}</span>
+            <span class="fte-tl-status" style="color:${statusColor}">${t.status.toUpperCase()}</span>
+          </div>
+          <div class="fte-tl-meta">
+            <span>Timeline: ${t.startDate} - ${t.endDate}</span>
+            <span>Events: <strong>${t.totalEvents.toLocaleString()}</strong></span>
+            <span>Sources: ${t.evidenceSources}</span>
+            <span>Analysts: ${t.analysts.join(', ')}</span>
+          </div>
+          <div class="fte-tl-findings"><strong>Key Findings:</strong><ol>${findings}</ol></div>
+        </div>
+      `;
+    });
+    const typeRows = this._fteEventTypes.map(e => {
+      const critColor = e.criticality === 'critical' ? '#ef4444' : e.criticality === 'high' ? '#f97316' : '#eab308';
+      return html`<tr><td style="color:${critColor};font-weight:700">${e.type}</td><td>${e.category}</td><td>${e.description}</td><td style="color:${critColor}">${e.criticality}</td><td>${e.sources.join(', ')}</td></tr>`;
+    });
+    const tmplCards = this._fteAnalysisTemplates.map(t => html`
+      <div class="fte-tmpl-card">
+        <div class="fte-tmpl-header"><span class="fte-tmpl-id">${t.id}</span> ${t.name}</div>
+        <div class="fte-tmpl-desc">${t.description}</div>
+        <div class="fte-tmpl-steps"><strong>Steps:</strong><ol>${t.steps.map(s => html`<li>${s}</li>`)}</ol></div>
+        <div class="fte-tmpl-tools"><strong>Required Tools:</strong> ${t.requiredTools.map(tool => html`<span class="fte-tool-tag">${tool}</span>`)}</div>
+        <div class="fte-tmpl-output"><strong>Output:</strong> ${t.outputFormat}</div>
+      </div>
+    `);
+    return html`
+      <div class="fte-engine-section">
+        <div class="fte-section-title">&#x1F193; Forensics Timeline Reconstruction Engine</div>
+        <div class="fte-timelines-grid">${tlCards}</div>
+        <div class="fte-events-section">
+          <div class="fte-sub-title">&#x1F4E6; Evidence Event Types</div>
+          <table class="fte-table fte-table-wide"><thead><tr><th>Type</th><th>Category</th><th>Description</th><th>Criticality</th><th>Sources</th></tr></thead><tbody>${typeRows}</tbody></table>
+        </div>
+        <div class="fte-templates-section">
+          <div class="fte-sub-title">&#x1F4CB; Analysis Templates</div>
+          <div class="fte-templates-grid">${tmplCards}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _fteLabEquipment: Array<{id: string; name: string; type: string; status: string; lastCalibrated: string; nextCalibration: string}> = [
+    { id: 'LAB-001', name: 'Forensic Workstation A', type: 'Analysis Workstation', status: 'operational', lastCalibrated: '2025-12-01', nextCalibrated: '2026-06-01' },
+    { id: 'LAB-002', name: 'Forensic Workstation B', type: 'Analysis Workstation', status: 'operational', lastCalibrated: '2025-11-15', nextCalibrated: '2026-05-15' },
+    { id: 'LAB-003', name: 'Evidence Locker A', type: 'Physical Storage', status: 'operational', lastCalibrated: '2025-12-15', nextCalibrated: '2026-06-15' },
+    { id: 'LAB-004', name: 'Evidence Locker B', type: 'Physical Storage', status: 'operational', lastCalibrated: '2025-12-15', nextCalibrated: '2026-06-15' },
+    { id: 'LAB-005', name: 'Malware Analysis Sandbox', type: 'Isolated Environment', status: 'operational', lastCalibrated: '2025-12-20', nextCalibrated: '2026-03-20' },
+    { id: 'LAB-006', name: 'Network Analysis Station', type: 'PCAP Analysis', status: 'operational', lastCalibrated: '2025-12-10', nextCalibrated: '2026-06-10' },
+    { id: 'LAB-007', name: 'Mobile Forensics Station', type: 'Mobile Device Analysis', status: 'operational', lastCalibrated: '2025-11-01', nextCalibrated: '2026-05-01' },
+    { id: 'LAB-008', name: 'Write-Once Storage Array', type: 'Evidence Preservation', status: 'operational', lastCalibrated: '2025-12-20', nextCalibrated: '2026-12-20' },
+  ];
+
+  private _fteCaseMetrics: Array<{metric: string; value: string; trend: string; period: string}> = [
+    { metric: 'Average Case Duration', value: '12.5 days', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'Cases Opened This Quarter', value: '5', trend: 'stable', period: 'Q4 2025' },
+    { metric: 'Cases Closed This Quarter', value: '3', trend: 'stable', period: 'Q4 2025' },
+    { metric: 'Average Evidence Items per Case', value: '24', trend: 'increasing', period: 'Q4 2025' },
+    { metric: 'Evidence Integrity Verification Rate', value: '100%', trend: 'stable', period: 'Q4 2025' },
+    { metric: 'Chain of Custody Compliance', value: '98%', trend: 'improving', period: 'Q4 2025' },
+    { metric: 'Forensic Report Delivery SLA Met', value: '85%', trend: 'stable', period: 'Q4 2025' },
+    { metric: 'Tool License Utilization', value: '72%', trend: 'stable', period: 'Q4 2025' },
+  ];
+
+
   render() {    if (this._ftRules.length === 0) { this._initFtRules(); this._initFtCvss(); this._runFtAnomalyDetection(); this._generateFtPredictions(); this._initFtApprovals(); this._initFtActivity(); this._initFtNotifications(); }
 
     const items = this._getFiltered();

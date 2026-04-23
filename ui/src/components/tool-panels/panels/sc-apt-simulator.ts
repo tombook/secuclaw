@@ -8080,6 +8080,165 @@ export class ScAptSimulator extends LitElement {
     this.requestUpdate();
   }
 
+  // --- APT Simulation Campaign Engine (Round 41) ---
+
+  private _apsCampaigns: Array<{id: string; name: string; scenario: string; actor: string; complexity: string; status: string; startDate: string; endDate: string; phases: number; completedPhases: number; score: number; maxScore: number}> = [
+    { id: 'SIM-001', name: 'Operation Cozy Bear Replay', scenario: 'Simulate APT29 SolarWinds-style supply chain attack with living-off-the-land techniques', actor: 'APT29', complexity: 'advanced', status: 'completed', startDate: '2025-10-01', endDate: '2025-10-15', phases: 8, completedPhases: 8, score: 72, maxScore: 100 },
+    { id: 'SIM-002', name: 'Fancy Bear Spear Phish', scenario: 'Simulate APT28 credential harvesting campaign against O365 users with custom phishing pages', actor: 'APT28', complexity: 'intermediate', status: 'in-progress', startDate: '2025-11-15', endDate: '2025-12-15', phases: 6, completedPhases: 4, score: 58, maxScore: 100 },
+    { id: 'SIM-003', name: 'Lazarus Supply Chain Strike', scenario: 'Simulate Lazarus Group trojanized software delivery through trusted vendor compromise', actor: 'Lazarus Group', complexity: 'advanced', status: 'planned', startDate: '2026-01-10', endDate: '2026-02-10', phases: 10, completedPhases: 0, score: 0, maxScore: 100 },
+    { id: 'SIM-004', name: 'FIN7 POS Malware Deploy', scenario: 'Simulate FIN7 JavaScript-based POS malware deployment and credit card exfiltration', actor: 'FIN7', complexity: 'intermediate', status: 'completed', startDate: '2025-08-20', endDate: '2025-09-05', phases: 7, completedPhases: 7, score: 81, maxScore: 100 },
+    { id: 'SIM-005', name: 'Ransomware Readiness Drill', scenario: 'Simulate Wizard Spider ransomware attack chain including data exfiltration and encryption', actor: 'Wizard Spider', complexity: 'advanced', status: 'in-progress', startDate: '2025-12-01', endDate: '2026-01-15', phases: 9, completedPhases: 5, score: 45, maxScore: 100 },
+    { id: 'SIM-006', name: 'Cloud IAM Escalation Path', scenario: 'Simulate cloud identity-based privilege escalation through misconfigured IAM policies', actor: 'APT41', complexity: 'intermediate', status: 'planned', startDate: '2026-02-01', endDate: '2026-02-28', phases: 6, completedPhases: 0, score: 0, maxScore: 100 },
+    { id: 'SIM-007', name: 'Social Engineering Blitz', scenario: 'Multi-vector social engineering campaign including phishing, vishing, and smishing', actor: 'LAPSUS$', complexity: 'basic', status: 'completed', startDate: '2025-09-15', endDate: '2025-09-30', phases: 5, completedPhases: 5, score: 64, maxScore: 100 },
+    { id: 'SIM-008', name: 'MuddyWater Reconnaissance', scenario: 'Simulate MuddyWater open-source intelligence gathering and waterhole attack preparation', actor: 'MuddyWater', complexity: 'intermediate', status: 'planned', startDate: '2026-03-01', endDate: '2026-03-31', phases: 7, completedPhases: 0, score: 0, maxScore: 100 },
+  ];
+
+  private _apsPhaseTemplates: Array<{phase: number; name: string; objectives: string[]; techniques: string[]; mitreTactics: string[]; detectionExpectations: string[]; successCriteria: string[]}> = [
+    { phase: 1, name: 'Initial Access', objectives: ['Gain initial foothold on target network', 'Establish persistence mechanism', 'Validate perimeter controls'], techniques: ['Spearphishing with malicious attachment', 'Supply chain compromise', 'Password spray attack', 'Exploitation of public-facing application'], mitreTactics: ['Initial Access'], detectionExpectations: ['Email gateway alert', 'Endpoint detection of malicious payload', 'Failed authentication alerts', 'Web application firewall alert'], successCriteria: ['Attacker gains shell access', 'Persistence established', 'C2 channel established'] },
+    { phase: 2, name: 'Reconnaissance', objectives: ['Map internal network topology', 'Identify high-value targets', 'Enumerate active directory structure'], techniques: ['Active directory enumeration', 'Network scanning', 'SMB enumeration', 'DNS reconnaissance'], mitreTactics: ['Discovery'], detectionExpectations: ['Network scanning detection', 'AD enumeration alerts', 'Unusual DNS query patterns', 'SMB connection anomalies'], successCriteria: ['Network map created', 'Domain admin candidates identified', 'Critical assets cataloged'] },
+    { phase: 3, name: 'Privilege Escalation', objectives: ['Escalate from standard user to admin', 'Obtain domain admin credentials', 'Compromise service accounts'], techniques: ['Kerberoasting', 'Pass-the-Hash', 'Token impersonation', 'DLL side-loading', 'Scheduled task abuse'], mitreTactics: ['Privilege Escalation', 'Credential Access'], detectionExpectations: ['Privilege escalation detection', 'Unusual Kerberos ticket requests', 'Token manipulation alerts', 'Scheduled task creation'], successCriteria: ['Domain admin obtained', 'Service account compromised', 'Local admin on critical servers'] },
+    { phase: 4, name: 'Lateral Movement', objectives: ['Move to high-value systems', 'Access sensitive data repositories', 'Compromise backup infrastructure'], techniques: ['PsExec / WMI execution', 'Pass-the-Hash', 'RDP hijacking', 'SSH key theft', 'WMI event subscription'], mitreTactics: ['Lateral Movement'], detectionExpectations: ['Remote execution alerts', 'Lateral movement detection', 'Anomalous RDP sessions', 'WMI event creation'], successCriteria: ['Data repositories accessed', 'Backup systems compromised', 'Critical servers controlled'] },
+    { phase: 5, name: 'Collection', objectives: ['Identify sensitive data locations', 'Stage data for exfiltration', 'Document data classification levels'], techniques: ['File system enumeration', 'Database querying', 'Email collection', 'Cloud storage access', 'Clipboard capture'], mitreTactics: ['Collection'], detectionExpectations: ['Data access pattern anomalies', 'Unusual database queries', 'Large file access alerts', 'DLP triggers'], successCriteria: ['Sensitive data identified', 'Collection staging complete', 'Data classification documented'] },
+    { phase: 6, name: 'Exfiltration', objectives: ['Extract sensitive data from network', 'Test DLP and egress controls', 'Validate data loss monitoring'], techniques: ['DNS tunneling', 'HTTPS exfiltration', 'Cloud storage upload', 'Encrypted archive transfer', 'ICMP tunneling'], mitreTactics: ['Exfiltration'], detectionExpectations: ['DLP alerts', 'Network egress anomalies', 'DNS tunnel detection', 'Cloud access alerts'], successCriteria: ['Data exfiltrated undetected', 'DLP bypass confirmed', 'Egress control gaps identified'] },
+    { phase: 7, name: 'Impact', objectives: ['Demonstrate potential business impact', 'Test backup recovery capabilities', 'Validate incident response readiness'], techniques: ['Data encryption (simulated)', 'Service disruption', 'Backup deletion (simulated)', 'Defacement (simulated)'], mitreTactics: ['Impact'], detectionExpectations: ['File system change alerts', 'Service availability monitoring', 'Backup integrity checks', 'SOC incident detection'], successCriteria: ['Impact demonstrated', 'IR response time measured', 'Recovery procedures validated'] },
+    { phase: 8, name: 'Persistence & Defense Evasion', objectives: ['Maintain long-term access', 'Evade security monitoring', 'Test blue team detection capabilities'], techniques: ['Registry run keys', 'Scheduled tasks', 'WMI persistence', 'Event log clearing', 'Process hollowing'], mitreTactics: ['Persistence', 'Defense Evasion'], detectionExpectations: ['Persistence mechanism detection', 'Event log tampering alerts', 'Process anomaly detection', 'Rootkit detection'], successCriteria: ['Persistence maintained 48h+', 'Security tools evaded', 'Blue team detection time measured'] },
+  ];
+
+  private _apsScorecard: Array<{category: string; metric: string; weight: number; score: number; maxScore: number; notes: string}> = [
+    { category: 'Detection', metric: 'Initial Access Detection Rate', weight: 15, score: 12, maxScore: 15, notes: '3 of 4 initial access attempts detected' },
+    { category: 'Detection', metric: 'Lateral Movement Detection Rate', weight: 12, score: 8, maxScore: 12, notes: 'Pass-the-Hash went undetected for 6 hours' },
+    { category: 'Detection', metric: 'Exfiltration Detection Rate', weight: 10, score: 7, maxScore: 10, notes: 'DNS tunnel exfiltration bypassed DLP controls' },
+    { category: 'Response', metric: 'Mean Time to Contain', weight: 10, score: 6, maxScore: 10, notes: 'Took 4.5 hours vs 2 hour SLA' },
+    { category: 'Response', metric: 'Escalation Accuracy', weight: 8, score: 7, maxScore: 8, notes: 'Correct severity assigned in 5 of 6 alerts' },
+    { category: 'Resilience', metric: 'Backup Recovery Success', weight: 8, score: 6, maxScore: 8, notes: '2 of 3 systems recovered within RTO' },
+    { category: 'Resilience', metric: 'Business Continuity', weight: 8, score: 5, maxScore: 8, notes: 'Critical service disruption lasted 90 minutes' },
+    { category: 'Controls', metric: 'Access Control Effectiveness', weight: 10, score: 8, maxScore: 10, notes: 'MFA blocked 3 credential theft attempts' },
+    { category: 'Controls', metric: 'Segmentation Effectiveness', weight: 9, score: 6, maxScore: 9, notes: 'Lateral movement crossed 2 of 5 segmentation boundaries' },
+    { category: 'Coverage', metric: 'Monitoring Coverage', weight: 10, score: 7, maxScore: 10, notes: '18% of attack paths had no monitoring coverage' },
+  ];
+
+  private _apsTTPMappings: Array<{mitreId: string; technique: string; tactic: string; platform: string; dataSource: string; detectionQuery: string; severity: string}> = [
+    { mitreId: 'T1566.001', technique: 'Spearphishing Attachment', tactic: 'Initial Access', platform: 'Windows', dataSource: 'Email Gateway Logs', detectionQuery: 'email_attachments WHERE file_extension IN ("exe","scr","js","vbs","ps1") AND sender_not_in_whitelist', severity: 'high' },
+    { mitreId: 'T1110.001', technique: 'Password Spraying', tactic: 'Credential Access', platform: 'Active Directory', dataSource: 'Windows Security Log 4625', detectionQuery: 'event_id=4625 WHERE failure_count>10 AND account_name NOT IN service_accounts GROUP BY source_ip HAVING unique_account_count>5', severity: 'high' },
+    { mitreId: 'T1059.001', technique: 'PowerShell', tactic: 'Execution', platform: 'Windows', dataSource: 'PowerShell Script Block Logging 4104', detectionQuery: 'event_id=4104 WHERE script_content MATCHES "(Invoke-Expression|IEX|DownloadString|FromBase64String|WebClient)" AND encoded_command=true', severity: 'medium' },
+    { mitreId: 'T1003.001', technique: 'LSASS Memory', tactic: 'Credential Access', platform: 'Windows', dataSource: 'Sysmon Event ID 10', detectionQuery: 'event_id=10 WHERE target_image LIKE "%lsass.exe%" AND NOT source_image IN ("csrss.exe","smss.exe","wininit.exe")', severity: 'critical' },
+    { mitreId: 'T1021.002', technique: 'SMB/Windows Admin Shares', tactic: 'Lateral Movement', platform: 'Windows', dataSource: 'Windows Security Log 5145', detectionQuery: 'event_id=5145 WHERE share_name LIKE "*ADMIN*" AND source_ip NOT IN trusted_ranges', severity: 'high' },
+    { mitreId: 'T1087.002', technique: 'Domain Account Discovery', tactic: 'Discovery', platform: 'Active Directory', dataSource: 'PowerShell Logging', detectionQuery: 'script_content MATCHES "(Get-ADUser|net user|LDAP query)" AND source NOT IN authorized_admin_tools', severity: 'medium' },
+    { mitreId: 'T1071.001', technique: 'Web Protocols', tactic: 'Command and Control', platform: 'Windows', dataSource: 'Proxy Logs', detectionQuery: 'http_request WHERE user_agent MATCHES "(curl|wget|python-requests|powershell)" AND destination NOT IN whitelist AND response_size > 0', severity: 'medium' },
+    { mitreId: 'T1486', technique: 'Data Encrypted for Impact', tactic: 'Impact', platform: 'Windows', dataSource: 'File System Monitoring', detectionQuery: 'file_event WHERE file_extension IN ("encrypted","locked","cry") AND mass_file_operation=true AND directory_depth>3', severity: 'critical' },
+    { mitreId: 'T1547.001', technique: 'Registry Run Keys', tactic: 'Persistence', platform: 'Windows', dataSource: 'Sysmon Event ID 13', detectionQuery: 'event_id=13 WHERE target_object LIKE "*\\Software\\Microsoft\\Windows\\CurrentVersion\\Run*" AND source NOT IN known_good', severity: 'high' },
+    { mitreId: 'T1562.001', technique: 'Disable Security Tools', tactic: 'Defense Evasion', platform: 'Windows', dataSource: 'Windows Security Log 4689', detectionQuery: 'process_name IN ("taskmgr.exe","msconfig.exe","net.exe") WHERE command_line MATCHES "(stop|disable)" AND target_service IN security_services', severity: 'critical' },
+    { mitreId: 'T1048.003', technique: 'DNS Tunneling', tactic: 'Exfiltration', platform: 'Network', dataSource: 'DNS Query Logs', detectionQuery: 'dns_query WHERE subdomain_length>30 AND unique_subdomains_per_source_ip>20 AND record_type="TXT" AND response_size>200', severity: 'high' },
+    { mitreId: 'T1078.004', technique: 'Cloud Account', tactic: 'Initial Access', platform: 'AWS', dataSource: 'AWS CloudTrail', detectionQuery: 'event_name="ConsoleLogin" WHERE source_ip NOT IN known_ranges AND mfa_used=false AND user_identity_type="IAMUser"', severity: 'high' },
+  ];
+
+  private _apsAfterActionReviews: Array<{campaignId: string; date: string; participants: string[]; strengths: string[]; weaknesses: string[]; actionItems: string[]; overallScore: number}> = [
+    { campaignId: 'SIM-001', date: '2025-10-20', participants: ['J. Chen', 'M. Rodriguez', 'S. Patel', 'CISO'], strengths: ['Initial access detection was fast (18 min)', 'MFA blocked 3 of 4 credential theft attempts', 'Communication protocols followed correctly', 'Evidence preservation was thorough'], weaknesses: ['Lateral movement detection delayed by 6 hours', 'Containment SLA exceeded by 45 minutes', 'Cloud monitoring gaps allowed C2 channel setup', 'No automated containment for common attack patterns'], actionItems: ['Deploy lateral movement detection rules', 'Create automated containment playbooks', 'Enhance cloud monitoring coverage', 'Implement network segmentation improvements'], overallScore: 72 },
+    { campaignId: 'SIM-004', date: '2025-09-10', participants: ['J. Chen', 'R. Kim', 'A. Thompson'], strengths: ['POS malware detection was immediate', 'DLP controls caught 2 of 3 exfiltration attempts', 'Good coordination between SOC and forensics teams', 'Posture assessment was comprehensive'], weaknesses: ['JavaScript-based payloads evaded 2 of 4 detection layers', 'Incident commander assignment delayed by 20 minutes', 'Executive notification took 90 minutes vs 30 min SLA', 'Communication template needed updates'], actionItems: ['Update JavaScript detection rules', 'Streamline incident commander activation', 'Pre-configure executive notification templates', 'Enhance web shell detection capabilities'], overallScore: 81 },
+  ];
+
+  private _apsRulesOfEngagement: Array<{id: string; category: string; rule: string; exception: string; approvalRequired: boolean}> = [
+    { id: 'ROE-001', category: 'Scope', rule: 'Testing is limited to defined IP ranges and approved targets', exception: 'None - scope violations must be reported immediately', approvalRequired: false },
+    { id: 'ROE-002', category: 'Safety', rule: 'No denial of service attacks against production systems', exception: 'Rate-limited connection testing is permitted', approvalRequired: false },
+    { id: 'ROE-003', category: 'Safety', rule: 'Do not attempt to access or modify production databases', exception: 'Read-only SQL injection testing with approved test data only', approvalRequired: true },
+    { id: 'ROE-004', category: 'Safety', rule: 'Do not modify or delete any data during testing', exception: 'Creating test files in designated test directories is permitted', approvalRequired: false },
+    { id: 'ROE-005', category: 'Safety', rule: 'All credentials obtained must be reported and rotated', exception: 'Service account passwords used for testing only', approvalRequired: false },
+    { id: 'ROE-006', category: 'Privacy', rule: 'Do not access or exfiltrate real customer or employee PII', exception: 'None - zero tolerance for PII access', approvalRequired: false },
+    { id: 'ROE-007', category: 'Operations', rule: 'Testing hours are limited to business hours unless otherwise approved', exception: 'After-hours testing requires CISO approval', approvalRequired: true },
+    { id: 'ROE-008', category: 'Operations', rule: 'All testing activities must be logged and timestamped', exception: 'None - comprehensive logging is mandatory', approvalRequired: false },
+    { id: 'ROE-009', category: 'Operations', rule: 'Stop testing immediately if any system instability is detected', exception: 'None - safety first', approvalRequired: false },
+    { id: 'ROE-010', category: 'Operations', rule: 'Do not install persistent backdoors or remote access tools', exception: 'Temporary test payloads that self-clean are permitted', approvalRequired: false },
+  ];
+
+  private _apsSimulatorConfig: Array<{parameter: string; type: string; defaultValue: string; description: string; range: string}> = [
+    { parameter: 'aggression_level', type: 'enum', defaultValue: 'moderate', description: 'How aggressively the simulator pursues attack paths', range: 'low|moderate|high|aggressive' },
+    { parameter: 'dwell_time_target', type: 'integer', defaultValue: '72', description: 'Target hours to maintain undetected access before escalation', range: '1-168' },
+    { parameter: 'lateral_movement_limit', type: 'integer', defaultValue: '5', description: 'Maximum number of systems to compromise during simulation', range: '1-20' },
+    { parameter: 'data_exfil_test', type: 'boolean', defaultValue: 'false', description: 'Whether to simulate actual data exfiltration (vs simulated only)', range: 'true|false' },
+    { parameter: 'mfa_bypass_attempts', type: 'boolean', defaultValue: 'true', description: 'Whether to attempt MFA bypass techniques (push fatigue, etc.)', range: 'true|false' },
+    { parameter: 'notification_frequency', type: 'enum', defaultValue: 'daily', description: 'How often to send status updates to stakeholders during simulation', range: 'realtime|hourly|daily|end-only' },
+    { parameter: 'auto_containment_test', type: 'boolean', defaultValue: 'true', description: 'Whether to test automated containment capabilities', range: 'true|false' },
+    { parameter: 'stealth_mode', type: 'boolean', defaultValue: 'true', description: 'Whether to use advanced evasion techniques to avoid detection', range: 'true|false' },
+  ];
+
+  private _renderApsSimulationEngine(): ReturnType<typeof html> {
+    const campaignCards = this._apsCampaigns.map(c => {
+      const statusColor = c.status === 'completed' ? '#22c55e' : c.status === 'in-progress' ? '#3b82f6' : '#94a3b8';
+      const progress = c.maxScore > 0 ? Math.round((c.completedPhases / c.phases) * 100) : 0;
+      const scoreColor = c.score >= 80 ? '#22c55e' : c.score >= 60 ? '#eab308' : c.score >= 40 ? '#f97316' : '#ef4444';
+      return html`
+        <div class="aps-campaign-card" style="border-left:3px solid ${statusColor}">
+          <div class="aps-campaign-header">
+            <span class="aps-campaign-id">${c.id}</span>
+            <span class="aps-campaign-name">${c.name}</span>
+            <span class="aps-campaign-status" style="color:${statusColor}">${c.status.toUpperCase()}</span>
+          </div>
+          <div class="aps-campaign-meta">
+            <span>Actor: <strong>${c.actor}</strong></span>
+            <span>Complexity: ${c.complexity}</span>
+            <span>Duration: ${c.startDate} - ${c.endDate}</span>
+          </div>
+          <div class="aps-campaign-progress">
+            <span>Phases: ${c.completedPhases}/${c.phases}</span>
+            <div class="aps-progress-bar"><div class="aps-progress-fill" style="width:${progress}%;background:${statusColor}"></div></div>
+          </div>
+          <div class="aps-campaign-score">Defense Score: <strong style="color:${scoreColor}">${c.score}/${c.maxScore}</strong></div>
+          <div class="aps-campaign-scenario">${c.scenario}</div>
+        </div>
+      `;
+    });
+    const phaseCards = this._apsPhaseTemplates.map(p => html`
+      <div class="aps-phase-card">
+        <div class="aps-phase-header">Phase ${p.phase}: ${p.name}</div>
+        <div class="aps-phase-objectives"><strong>Objectives:</strong><ul>${p.objectives.map(o => html`<li>${o}</li>`)}</ul></div>
+        <div class="aps-phase-techniques"><strong>Techniques:</strong><ul>${p.techniques.map(t => html`<li>${t}</li>`)}</ul></div>
+        <div class="aps-phase-mitre"><strong>MITRE Tactics:</strong> ${p.mitreTactics.map(m => html`<span class="aps-mitre-tag">${m}</span>`)}</div>
+        <div class="aps-phase-detection"><strong>Expected Detections:</strong><ul>${p.detectionExpectations.map(d => html`<li>${d}</li>`)}</ul></div>
+        <div class="aps-phase-success"><strong>Success Criteria:</strong><ul>${p.successCriteria.map(s => html`<li>${s}</li>`)}</ul></div>
+      </div>
+    `);
+    const scoreRows = this._apsScorecard.map(s => {
+      const pct = Math.round((s.score / s.maxScore) * 100);
+      const barColor = pct >= 80 ? '#22c55e' : pct >= 60 ? '#eab308' : pct >= 40 ? '#f97316' : '#ef4444';
+      return html`<tr><td>${s.category}</td><td>${s.metric}</td><td>${s.weight}%</td><td><div class="aps-score-bar"><div class="aps-score-fill" style="width:${pct}%;background:${barColor}"></div></div></td><td style="font-weight:700;color:${barColor}">${s.score}/${s.maxScore}</td><td>${s.notes}</td></tr>`;
+    });
+    return html`
+      <div class="aps-engine-section">
+        <div class="aps-section-title">&#x1F3AE; APT Simulation Campaign Engine</div>
+        <div class="aps-campaigns-grid">${campaignCards}</div>
+        <div class="aps-phases-section">
+          <div class="aps-sub-title">&#x1F4DD; Attack Phase Templates</div>
+          <div class="aps-phases-grid">${phaseCards}</div>
+        </div>
+        <div class="aps-scorecard-section">
+          <div class="aps-sub-title">&#x1F4CA; Defense Scorecard (Latest Campaign)</div>
+          <table class="aps-table aps-table-wide"><thead><tr><th>Category</th><th>Metric</th><th>Weight</th><th>Score</th><th>Result</th><th>Notes</th></tr></thead><tbody>${scoreRows}</tbody></table>
+        </div>
+      </div>
+    `;
+  }
+
+  private _apsDebriefQuestions: Array<{id: string; question: string; category: string; responseType: string}> = [
+    { id: 'DQ-001', question: 'What was the earliest point at which the blue team could have detected the intrusion?', category: 'Detection', responseType: 'text' },
+    { id: 'DQ-002', question: 'How effective were the existing detection rules against the techniques used?', category: 'Detection', responseType: 'rating_1_10' },
+    { id: 'DQ-003', question: 'What were the most significant gaps in monitoring coverage?', category: 'Visibility', responseType: 'text' },
+    { id: 'DQ-004', question: 'How well did the incident response team follow established procedures?', category: 'Response', responseType: 'rating_1_10' },
+    { id: 'DQ-005', question: 'Were all communication SLAs met during the simulation?', category: 'Communication', responseType: 'yes_no' },
+    { id: 'DQ-006', question: 'What tools or capabilities were missing that would have improved detection?', category: 'Tools', responseType: 'text' },
+    { id: 'DQ-007', question: 'How did the simulation compare to real-world threat actor behavior?', category: 'Realism', responseType: 'rating_1_10' },
+    { id: 'DQ-008', question: 'What is the single most important improvement the organization should make?', category: 'Priorities', responseType: 'text' },
+    { id: 'DQ-009', question: 'Were the rules of engagement followed throughout the simulation?', category: 'Compliance', responseType: 'yes_no' },
+    { id: 'DQ-010', question: 'How would you rate the overall defense posture on a scale of 1-100?', category: 'Overall', responseType: 'score_0_100' },
+  ];
+
+  private _apsToolValidation: Array<{tool: string; version: string; lastValidated: string; validator: string; result: string; notes: string}> = [
+    { tool: 'Cobalt Strike', version: '4.10', lastValidated: '2025-12-01', validator: 'Red Team Lead', result: 'validated', notes: 'All features functional, beacon configurations tested' },
+    { tool: 'BloodHound CE', version: '4.4', lastValidated: '2025-11-15', validator: 'AD Security Lead', result: 'validated', notes: 'Data collection scripts updated for latest AD schema' },
+    { tool: 'Metasploit Pro', version: '6.4', lastValidated: '2025-12-10', validator: 'Red Team Lead', result: 'validated', notes: 'Exploit database current, auxiliary modules verified' },
+    { tool: 'Hashcat', version: '6.2.6', lastValidated: '2025-12-15', validator: 'AD Security Lead', result: 'validated', notes: 'GPU acceleration verified, rule sets updated' },
+  ];
+
+
   render() {
     const profile = this._getAptProfile();
     const campaign = this._activeCampaign;

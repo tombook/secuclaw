@@ -6476,6 +6476,143 @@ export class ScDarkSimEngine extends LitElement {
     this.requestUpdate();
   }
 
+  // --- Dark Web Intelligence Simulation Engine (Round 41) ---
+
+  private _dseMarketplaces: Array<{id: string; name: string; type: string; status: string; listings: number; activeUsers: number; revenueEst: string; monitoredSince: string; threatsFound: number; topCategories: string[]}> = [
+    { id: 'DW-001', name: 'AlphaBay Reloaded', type: 'Multi-vendor marketplace', status: 'active', listings: 234000, activeUsers: 18500, revenueEst: '$12.5M/month', monitoredSince: '2024-06', threatsFound: 847, topCategories: ['Drugs', 'Counterfeit', 'Data Leaks', 'Exploits'] },
+    { id: 'DW-002', name: 'DarkMarket Forums', type: 'Forum + marketplace', status: 'active', listings: 156000, activeUsers: 32000, revenueEst: '$8.2M/month', monitoredSince: '2024-03', threatsFound: 1234, topCategories: ['Stolen Data', 'Malware', 'Fraud', 'Hacking Tools'] },
+    { id: 'DW-003', name: 'Genesis Market', type: 'Credential marketplace', status: 'active', listings: 89000, activeUsers: 8200, revenueEst: '$5.8M/month', monitoredSince: '2024-01', threatsFound: 2156, topCategories: ['Browser Fingerprints', 'Credentials', 'Cookies', 'Session Tokens'] },
+    { id: 'DW-004', name: 'Russian Market', type: 'Data marketplace', status: 'active', listings: 312000, activeUsers: 28000, revenueEst: '$15.1M/month', monitoredSince: '2024-08', threatsFound: 1876, topCategories: ['Corporate Data', 'Financial Data', 'Medical Records', 'PII Bundles'] },
+    { id: 'DW-005', name: 'Exploit[.]in', type: 'Exploit marketplace', status: 'active', listings: 45000, activeUsers: 12000, revenueEst: '$3.4M/month', monitoredSince: '2024-09', threatsFound: 923, topCategories: ['Zero-Day Exploits', 'Ransomware', 'Botnet Access', 'VPN Credentials'] },
+    { id: 'DW-006', name: 'Breached[.]to', type: 'Data breach forum', status: 'active', listings: 198000, activeUsers: 45000, revenueEst: '$6.7M/month', monitoredSince: '2024-05', threatsFound: 3241, topCategories: ['Database Dumps', 'Corporate Leaks', 'Government Data', 'Email Lists'] },
+  ];
+
+  private _dseThreatIntel: Array<{id: string; source: string; type: string; severity: string; title: string; description: string; affectedAssets: string[]; iocType: string; iocCount: number; discovered: string; confidence: number}> = [
+    { id: 'TI-001', source: 'AlphaBay Reloaded', type: 'credential_sale', severity: 'critical', title: 'Corporate O365 credentials for sale - Fortune 500 targets', description: 'Bundle of 2,500 corporate O365 credentials listed for $15,000. Includes credentials from 47 Fortune 500 companies.', affectedAssets: ['O365', 'Azure AD', 'SharePoint'], iocType: 'Email:Password', iocCount: 2500, discovered: '2025-12-15', confidence: 95 },
+    { id: 'TI-002', source: 'Russian Market', type: 'data_dump', severity: 'critical', title: 'Healthcare patient records database dump', description: 'Full database of 1.2M patient records from US healthcare provider. Includes SSN, medical history, and insurance data.', affectedAssets: ['EHR System', 'Patient Database', 'Insurance Portal'], iocType: 'PII Records', iocCount: 1200000, discovered: '2025-12-12', confidence: 92 },
+    { id: 'TI-003', source: 'Exploit[.]in', type: 'exploit_sale', severity: 'critical', title: 'Zero-day exploit for Cisco ASA firewall', description: 'Remote code execution exploit targeting Cisco ASA VPN concentrators. Seller claims affects versions 9.16+, asking $500,000.', affectedAssets: ['VPN Gateway', 'Firewall', 'Network Perimeter'], iocType: 'Exploit Code', iocCount: 1, discovered: '2025-12-18', confidence: 78 },
+    { id: 'TI-004', source: 'Genesis Market', type: 'credential_sale', severity: 'high', title: 'Banking session tokens for major US banks', description: 'Valid browser session tokens for 800+ active banking sessions at top 10 US retail banks. Includes anti-fraud bypass tokens.', affectedAssets: ['Online Banking', 'Mobile Banking', 'Payment Gateway'], iocType: 'Session Tokens', iocCount: 800, discovered: '2025-12-10', confidence: 88 },
+    { id: 'TI-005', source: 'Breached[.]to', type: 'ransomware_group', severity: 'critical', title: 'New ransomware group "DarkVault" announces operations', description: 'New ransomware-as-a-service operation recruiting affiliates. Claims double-extortion capability and healthcare sector focus.', affectedAssets: ['All endpoints', 'File servers', 'Backup systems'], iocType: 'Ransomware Infrastructure', iocCount: 15, discovered: '2025-12-20', confidence: 82 },
+    { id: 'TI-006', source: 'DarkMarket Forums', type: 'malware_sale', severity: 'high', title: 'Advanced infostealer with anti-VM and anti-analysis', description: 'New infostealer variant targeting cryptocurrency wallets, browser credentials, and 2FA tokens. $200/month subscription model.', affectedAssets: ['Endpoints', 'Cryptocurrency Wallets', 'Browser Data'], iocType: 'Malware Samples', iocCount: 3, discovered: '2025-12-08', confidence: 85 },
+    { id: 'TI-007', source: 'Russian Market', type: 'data_dump', severity: 'high', title: 'Employee HR database from defense contractor', description: 'HR database dump including 45,000 employee records with SSN, salary, clearance levels, and home addresses from major defense contractor.', affectedAssets: ['HR System', 'Employee Records', 'Clearance Database'], iocType: 'PII Records', iocCount: 45000, discovered: '2025-12-05', confidence: 90 },
+    { id: 'TI-008', source: 'AlphaBay Reloaded', type: 'vulnerability_intel', severity: 'medium', title: 'VPN provider customer database leaked', description: 'Customer database from mid-tier VPN provider including connection logs, payment data, and account credentials for 2.3M users.', affectedAssets: ['VPN Service', 'Customer Data', 'Payment Processing'], iocType: 'Database Dump', iocCount: 2300000, discovered: '2025-11-28', confidence: 91 },
+  ];
+
+  private _dseExposureTracker: Array<{category: string; keyword: string; marketplace: string; price: string; currency: string; firstSeen: string; lastSeen: string; status: string; remediation: string}> = [
+    { category: 'Credential', keyword: 'company.com + password', marketplace: 'Genesis Market', price: '12.00', currency: 'USD', firstSeen: '2025-11-15', lastSeen: '2025-12-20', status: 'active', remediation: 'Password rotation + MFA enforcement' },
+    { category: 'Credential', keyword: 'company.com + API key', marketplace: 'Russian Market', price: '45.00', currency: 'USD', firstSeen: '2025-10-22', lastSeen: '2025-12-18', status: 'active', remediation: 'API key rotation + access audit' },
+    { category: 'Data', keyword: 'company employee list', marketplace: 'Breached[.]to', price: '150.00', currency: 'USD', firstSeen: '2025-09-30', lastSeen: '2025-12-15', status: 'active', remediation: 'Data access review + DLP enhancement' },
+    { category: 'Infrastructure', keyword: 'company VPN config', marketplace: 'DarkMarket Forums', price: '200.00', currency: 'USD', firstSeen: '2025-08-14', lastSeen: '2025-11-30', status: 'remediated', remediation: 'VPN configuration hardened + certificate rotation' },
+    { category: 'Source Code', keyword: 'company internal tooling', marketplace: 'Breached[.]to', price: '500.00', currency: 'USD', firstSeen: '2025-07-20', lastSeen: '2025-12-01', status: 'active', remediation: 'Code repository access audit + token rotation' },
+    { category: 'Financial', keyword: 'company credit card', marketplace: 'AlphaBay Reloaded', price: '25.00', currency: 'USD', firstSeen: '2025-06-10', lastSeen: '2025-09-15', status: 'remediated', remediation: 'Card cancellation + procurement process review' },
+  ];
+
+  private _dseCryptocurrencyTraces: Array<{id: string; wallet: string; blockchain: string; firstSeen: string; totalReceived: string; transactions: number; linkedTo: string; riskLevel: string}> = [
+    { id: 'CR-001', wallet: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', blockchain: 'Bitcoin', firstSeen: '2025-11-15', totalReceived: '12.5 BTC', transactions: 47, linkedTo: 'Ransomware payment (Sim-005)', riskLevel: 'critical' },
+    { id: 'CR-002', wallet: '0x742d35Cc6634C0532925a3b844Bc9e7595f5bA16', blockchain: 'Ethereum', firstSeen: '2025-10-20', totalReceived: '45.2 ETH', transactions: 128, linkedTo: 'Stolen cryptocurrency (Internal case)', riskLevel: 'high' },
+    { id: 'CR-003', wallet: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5', blockchain: 'Bitcoin', firstSeen: '2025-09-05', totalReceived: '3.8 BTC', transactions: 15, linkedTo: 'Data breach extortion payment', riskLevel: 'high' },
+    { id: 'CR-004', wallet: 't1XnVknmLsJPaMCxFoYYcPqRtDBwMh2fJ3Z', blockchain: 'Zcash', firstSeen: '2025-12-01', totalReceived: '850 ZEC', transactions: 23, linkedTo: 'Unknown - potential money laundering', riskLevel: 'medium' },
+    { id: 'CR-005', wallet: 'bnb1grpf0955h0ykzq3ar5nmfvfu8l0aerfhgk7qg0', blockchain: 'BNB Chain', firstSeen: '2025-11-28', totalReceived: '12000 BNB', transactions: 89, linkedTo: 'Darknet marketplace vendor', riskLevel: 'high' },
+    { id: 'CR-006', wallet: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4', blockchain: 'Bitcoin', firstSeen: '2025-12-10', totalReceived: '28.1 BTC', transactions: 156, linkedTo: 'Multiple ransomware operations', riskLevel: 'critical' },
+  ];
+
+  private _dseForumAnalysis: Array<{forum: string; postsMonitored: number; newThreats: number; activeThreads: number; keyTopics: string[]; sentiment: string}> = [
+    { forum: 'BreachForums', postsMonitored: 45000, newThreats: 156, activeThreads: 2340, keyTopics: ['Data dumps', 'RaaS recruitment', 'Initial access brokers', 'Zero-day sales'], sentiment: 'aggressive' },
+    { forum: 'Exploit.in', postsMonitored: 28000, newThreats: 89, activeThreads: 1560, keyTopics: ['Exploit development', 'Vulnerability research', 'Malware sales', 'Botnet access'], sentiment: 'technical' },
+    { forum: 'XSS.is', postsMonitored: 18000, newThreats: 67, activeThreads: 890, keyTopics: ['Account takeovers', 'Database leaks', 'Fraud tutorials', 'Social engineering'], sentiment: 'criminal' },
+    { forum: 'RAMP Forums', postsMonitored: 12000, newThreats: 45, activeThreads: 560, keyTopics: ['Drug trafficking logistics', 'Money laundering', 'Vendor reviews', 'Security opsec'], sentiment: 'cautious' },
+    { forum: 'DarkNetMarkets', postsMonitored: 35000, newThreats: 112, activeThreads: 1890, keyTopics: ['Marketplace reviews', 'Vendor disputes', 'Product quality', 'Law enforcement activity'], sentiment: 'paranoid' },
+    { forum: 'Torum (Russian)', postsMonitored: 22000, newThreats: 78, activeThreads: 1120, keyTopics: ['Russian cybercrime', 'Government targeting', 'Financial fraud', 'Carding'], sentiment: 'sophisticated' },
+  ];
+
+  private _dseAlertRules: Array<{id: string; name: string; source: string; condition: string; severity: string; enabled: boolean; lastTriggered: string; falsePositiveRate: number}> = [
+    { id: 'DAR-001', name: 'Company Credential Sale', source: 'All Marketplaces', condition: 'keyword_match("company.com") AND category="credential"', severity: 'critical', enabled: true, lastTriggered: '2025-12-18', falsePositiveRate: 5 },
+    { id: 'DAR-002', name: 'Company Data Dump', source: 'BreachForums', condition: 'keyword_match("company") AND category="database"', severity: 'critical', enabled: true, lastTriggered: '2025-11-28', falsePositiveRate: 8 },
+    { id: 'DAR-003', name: 'Exploit Targeting Our Stack', source: 'Exploit.in', condition: 'product_match(["Windows Server","Apache","Nginx","Exchange"]) AND exploit_type="RCE"', severity: 'high', enabled: true, lastTriggered: '2025-12-15', falsePositiveRate: 15 },
+    { id: 'DAR-004', name: 'Ransomware Group Activity', source: 'All Forums', condition: 'actor_match(["Conti","LockBit","BlackCat","ALPHV"]) AND activity="recruitment"', severity: 'high', enabled: true, lastTriggered: '2025-12-20', falsePositiveRate: 12 },
+    { id: 'DAR-005', name: 'Zero-Day for Our Products', source: 'All Marketplaces', condition: 'product_match(our_product_list) AND exploit_type="zero-day"', severity: 'critical', enabled: true, lastTriggered: '2025-10-05', falsePositiveRate: 3 },
+    { id: 'DAR-006', name: 'Insider Threat Indicators', source: 'BreachForums', condition: 'keyword_match("company") AND category="internal" AND post_type="selling"', severity: 'critical', enabled: true, lastTriggered: '2025-09-30', falsePositiveRate: 20 },
+    { id: 'DAR-007', name: 'Phishing Kit Targeting Our Brand', source: 'All Forums', condition: 'keyword_match("company") AND category="phishing_kit"', severity: 'high', enabled: true, lastTriggered: '2025-12-12', falsePositiveRate: 10 },
+    { id: 'DAR-008', name: 'Cryptocurrency Wallet Monitoring', source: 'Blockchain Analysis', condition: 'wallet_match(known_threat_wallets) AND transaction_type="receive"', severity: 'medium', enabled: true, lastTriggered: '2025-12-19', falsePositiveRate: 25 },
+  ];
+
+  private _dseDataLeakScenarios: Array<{id: string; scenario: string; likelihood: string; impact: string; dataTypes: string[]; vector: string; indicators: string[]}> = [
+    { id: 'DLS-001', scenario: 'Employee sells customer database on Breached[.]to', likelihood: 'medium', impact: 'critical', dataTypes: ['Customer PII', 'Payment Data', 'Account Credentials'], vector: 'Insider threat - authorized access with malicious intent', indicators: ['Unusual data access patterns', 'Large database exports', 'Personal cloud storage uploads', 'After-hours data queries'] },
+    { id: 'DLS-002', scenario: 'Contractor leaks source code to dark web forum', likelihood: 'low', impact: 'high', dataTypes: ['Source Code', 'API Keys', 'Architecture Documents'], vector: 'Trusted insider with development access', indicators: ['Excessive code downloads', 'Access to unrelated repositories', 'USB device connections', 'Communication with known threat actors'] },
+    { id: 'DLS-003', scenario: 'Ransomware group publishes stolen data on leak site', likelihood: 'high', impact: 'critical', dataTypes: ['All accessible data', 'Internal communications', 'Financial documents'], vector: 'External attack leading to data exfiltration before encryption', indicators: ['Unusual outbound data transfers', 'Encrypted archive creation', 'Cloud storage uploads', 'Steganography in outbound traffic'] },
+    { id: 'DLS-004', scenario: 'Third-party vendor breach exposes our shared data', likelihood: 'medium', impact: 'high', dataTypes: ['Shared business data', 'Integration credentials', 'API access logs'], vector: 'Supply chain compromise through trusted vendor', indicators: ['Vendor security incident reports', 'Unusual API activity from vendor systems', 'Data appearing on dark web not from our direct environment'] },
+    { id: 'DLS-005', scenario: 'Misconfigured cloud storage exposes data publicly', likelihood: 'medium', impact: 'high', dataTypes: ['Cloud-stored documents', 'Backups', 'Analytics data'], vector: 'Human error in cloud configuration', indicators: ['Public access configuration changes', 'Unusual geographic access patterns', 'Dark web marketplace listings mentioning our data'] },
+    { id: 'DLS-006', scenario: 'Disgruntled employee posts internal documents on extremist forum', likelihood: 'low', impact: 'medium', dataTypes: ['Internal emails', 'Strategy documents', 'Employee data'], vector: 'Insider threat motivated by ideology or grievance', indicators: ['Access to sensitive documents by non-need-to-know employees', 'Document downloads to personal devices', 'Communication with extremist forums'] },
+  ];
+
+  private _dseTakedownProcedures: Array<{step: number; action: string; responsible: string; timeline: string; legalBasis: string; documentation: string}> = [
+    { step: 1, action: 'Document all evidence of stolen data on dark web marketplace', responsible: 'Dark Web Intelligence Team', timeline: 'Immediate', legalBasis: 'DMCA / Copyright / Trade Secret', documentation: 'Screenshot with metadata, URL, marketplace listing details' },
+    { step: 2, action: 'Engage legal counsel for takedown request preparation', responsible: 'Legal Department', timeline: 'Within 4 hours', legalBasis: 'Platform terms of service + applicable law', documentation: 'Legal demand letter template' },
+    { step: 3, action: 'Submit takedown request to marketplace administrator', responsible: 'Legal Department', timeline: 'Within 24 hours', legalBasis: 'DMCA takedown notice / GDPR Article 17', documentation: 'Takedown request with evidence and legal citations' },
+    { step: 4, action: 'Submit abuse report to hosting provider', responsible: 'Security Operations', timeline: 'Within 24 hours', legalBasis: 'Hosting provider AUP', documentation: 'Abuse report with IP, hosting details, evidence' },
+    { step: 5, action: 'Report to law enforcement (FBI IC3 / local authorities)', responsible: 'Legal Department', timeline: 'Within 48 hours', legalBasis: 'Computer Fraud and Abuse Act / applicable local law', documentation: 'Incident report with all evidence and timeline' },
+    { step: 6, action: 'Notify affected individuals per regulatory requirements', responsible: 'Privacy Team', timeline: 'Per regulation (24-72h)', legalBasis: 'GDPR Article 33/34 / State breach notification laws', documentation: 'Notification letter with required disclosures' },
+    { step: 7, action: 'Monitor for re-posting or additional data exposure', responsible: 'Dark Web Intelligence Team', timeline: 'Ongoing (90 days minimum)', legalBasis: 'Ongoing monitoring authority', documentation: 'Monitoring logs and alert records' },
+  ];
+
+  private _renderDseDarkWebEngine(): ReturnType<typeof html> {
+    const mpCards = this._dseMarketplaces.map(m => {
+      const statusColor = m.status === 'active' ? '#ef4444' : '#94a3b8';
+      return html`
+        <div class="dse-mp-card" style="border-top:3px solid ${statusColor}">
+          <div class="dse-mp-header"><span class="dse-mp-name">${m.name}</span><span class="dse-mp-status" style="color:${statusColor}">${m.status.toUpperCase()}</span></div>
+          <div class="dse-mp-type">${m.type}</div>
+          <div class="dse-mp-stats">
+            <span>Listings: <strong>${m.listings.toLocaleString()}</strong></span>
+            <span>Users: <strong>${m.activeUsers.toLocaleString()}</strong></span>
+            <span>Revenue: <strong>${m.revenueEst}</strong></span>
+          </div>
+          <div class="dse-mp-meta">Monitored since: ${m.monitoredSince} | Threats found: <strong style="color:#f97316">${m.threatsFound}</strong></div>
+          <div class="dse-mp-categories">${m.topCategories.map(c => html`<span class="dse-cat-tag">${c}</span>`)}</div>
+        </div>
+      `;
+    });
+    const tiRows = this._dseThreatIntel.map(t => {
+      const sevColor = t.severity === 'critical' ? '#ef4444' : t.severity === 'high' ? '#f97316' : '#eab308';
+      return html`<tr><td style="color:${sevColor};font-weight:700">${t.severity.toUpperCase()}</td><td>${t.id}</td><td>${t.source}</td><td>${t.type}</td><td>${t.title}</td><td>${t.iocCount.toLocaleString()}</td><td>${t.confidence}%</td><td>${t.discovered}</td></tr>`;
+    });
+    const expRows = this._dseExposureTracker.map(e => {
+      const statusColor = e.status === 'active' ? '#ef4444' : '#22c55e';
+      return html`<tr><td>${e.category}</td><td><code>${e.keyword}</code></td><td>${e.marketplace}</td><td>$${e.price}</td><td>${e.firstSeen}</td><td>${e.lastSeen}</td><td style="color:${statusColor};font-weight:700">${e.status.toUpperCase()}</td><td>${e.remediation}</td></tr>`;
+    });
+    return html`
+      <div class="dse-engine-section">
+        <div class="dse-section-title">&#x1F311; Dark Web Intelligence Simulation Engine</div>
+        <div class="dse-marketplaces-grid">${mpCards}</div>
+        <div class="dse-threatintel-section">
+          <div class="dse-sub-title">&#x26A0; Threat Intelligence Findings (${this._dseThreatIntel.length})</div>
+          <table class="dse-table dse-table-wide"><thead><tr><th>Severity</th><th>ID</th><th>Source</th><th>Type</th><th>Title</th><th>IOCs</th><th>Conf.</th><th>Discovered</th></tr></thead><tbody>${tiRows}</tbody></table>
+        </div>
+        <div class="dse-exposure-section">
+          <div class="dse-sub-title">&#x1F50D; Organization Exposure Tracker</div>
+          <table class="dse-table dse-table-wide"><thead><tr><th>Category</th><th>Keyword</th><th>Marketplace</th><th>Price</th><th>First Seen</th><th>Last Seen</th><th>Status</th><th>Remediation</th></tr></thead><tbody>${expRows}</tbody></table>
+        </div>
+      </div>
+    `;
+  }
+
+  private _dseSubscriptionStatus: Array<{service: string; type: string; provider: string; status: string; lastCheck: string; itemsMonitored: number}> = [
+    { service: 'BreachedForums Monitoring', type: 'Automated', provider: 'Flashpoint', status: 'active', lastCheck: '2025-12-28T15:00:00Z', itemsMonitored: 45000 },
+    { service: 'Ransomware Leak Site Monitor', type: 'Automated', provider: 'Recorded Future', status: 'active', lastCheck: '2025-12-28T14:00:00Z', itemsMonitored: 120 },
+    { service: 'Credential Monitoring', type: 'Automated', provider: 'SpyCloud', status: 'active', lastCheck: '2025-12-28T13:00:00Z', itemsMonitored: 5000000 },
+    { service: 'Blockchain Monitoring', type: 'Automated', provider: 'Chainalysis', status: 'active', lastCheck: '2025-12-28T12:00:00Z', itemsMonitored: 850 },
+    { service: 'Threat Intelligence Feed', type: 'Automated', provider: 'CrowdStrike', status: 'active', lastCheck: '2025-12-28T11:00:00Z', itemsMonitored: 12000 },
+    { service: 'Domain Monitoring', type: 'Automated', provider: 'ZeroFox', status: 'active', lastCheck: '2025-12-28T10:00:00Z', itemsMonitored: 15000 },
+  ];
+
+  private _dseIntelligenceSharing: Array<{partner: string; type: string; dataShared: string; dataReceived: string; frequency: string; agreementExpiry: string}> = [
+    { partner: 'FS-ISAC', type: 'Industry ISAC', dataShared: 'Threat IOCs, TTPs', dataReceived: 'Sector-specific threat intelligence', frequency: 'Real-time', agreementExpiry: '2026-12-31' },
+    { partner: 'FBI IC3', type: 'Law Enforcement', dataShared: 'Criminal referrals, evidence packages', dataReceived: 'Law enforcement alerts, takedown notices', frequency: 'As needed', agreementExpiry: 'N/A' },
+    { partner: 'CISA', type: 'Government', dataShared: 'Vulnerability reports, incident data', dataReceived: 'Binding operational directives, alerts', frequency: 'As needed', agreementExpiry: 'N/A' },
+    { partner: 'Peer Organizations', type: 'Private Sector', dataShared: 'Anonymized threat intelligence', dataReceived: 'Sector threat reports, IOCs', frequency: 'Monthly', agreementExpiry: '2026-06-30' },
+  ];
+
+
   render() {
     return html`
       <div class="sim-engine">

@@ -6682,6 +6682,183 @@ private _executionHistory: ExecutionRecord[] = [
     this.requestUpdate();
   }
 
+  // --- Network Topology Security Analyzer (Round 41) ---
+
+  private _ntaZones: Array<{id: string; name: string; type: string; criticality: string; subnet: string; devices: number; exposedServices: number; complianceLevel: number; riskScore: number; controls: string[]}> = [
+    { id: 'Z-001', name: 'Internet DMZ', type: 'perimeter', criticality: 'critical', subnet: '10.0.0.0/24', devices: 24, exposedServices: 12, complianceLevel: 88, riskScore: 72, controls: ['Next-Gen Firewall', 'WAF', 'IPS', 'DDoS Protection', 'TLS Inspection'] },
+    { id: 'Z-002', name: 'Corporate LAN', type: 'internal', criticality: 'high', subnet: '10.1.0.0/16', devices: 2450, exposedServices: 156, complianceLevel: 82, riskScore: 65, controls: ['Network Segmentation', '802.1X', 'NAC', 'DNS Security', 'Endpoint Detection'] },
+    { id: 'Z-003', name: 'Data Center - Production', type: 'restricted', criticality: 'critical', subnet: '10.10.0.0/16', devices: 386, exposedServices: 89, complianceLevel: 91, riskScore: 58, controls: ['Microsegmentation', 'Zero Trust', 'Database Firewall', 'File Integrity Monitoring', 'SIEM Integration'] },
+    { id: 'Z-004', name: 'Data Center - Staging', type: 'restricted', criticality: 'medium', subnet: '10.11.0.0/16', devices: 124, exposedServices: 45, complianceLevel: 75, riskScore: 71, controls: ['Network Isolation', 'Jump Server Access', 'Change Control', 'Vulnerability Scanning'] },
+    { id: 'Z-005', name: 'Cloud VPC - Production', type: 'cloud', criticality: 'critical', subnet: '172.16.0.0/16', devices: 520, exposedServices: 234, complianceLevel: 78, riskScore: 68, controls: ['Security Groups', 'NACLs', 'CSPM', 'Cloud IDS', 'WAF', 'API Gateway'] },
+    { id: 'Z-006', name: 'Cloud VPC - Development', type: 'cloud', criticality: 'low', subnet: '172.20.0.0/16', devices: 312, exposedServices: 178, complianceLevel: 62, riskScore: 82, controls: ['Basic Security Groups', 'VPC Peering', 'IAM Policies', 'CloudTrail'] },
+    { id: 'Z-007', name: 'OT / ICS Network', type: 'operational', criticality: 'critical', subnet: '192.168.0.0/16', devices: 89, exposedServices: 23, complianceLevel: 55, riskScore: 85, controls: ['Industrial Firewall', 'Purdue Model Segmentation', 'OT-Specific IDS', 'Safety PLC Isolation'] },
+    { id: 'Z-008', name: 'Guest / Contractor WiFi', type: 'wireless', criticality: 'medium', subnet: '10.50.0.0/24', devices: 180, exposedServices: 8, complianceLevel: 70, riskScore: 78, controls: ['Wireless IPS', 'Captive Portal', 'Client Isolation', 'Bandwidth Limiting'] },
+    { id: 'Z-009', name: 'Management Network', type: 'management', criticality: 'critical', subnet: '10.99.0.0/24', devices: 45, exposedServices: 34, complianceLevel: 85, riskScore: 62, controls: ['Out-of-Band Management', 'MFA Required', 'Session Recording', 'Privileged Access Workstation', 'Jump Servers'] },
+    { id: 'Z-010', name: 'Backup / DR Network', type: 'restricted', criticality: 'high', subnet: '10.98.0.0/24', devices: 28, exposedServices: 15, complianceLevel: 80, riskScore: 55, controls: ['Air-Gapped Backup', 'Immutable Storage', 'Encryption at Rest', 'Access Logging', 'Replication Monitoring'] },
+  ];
+
+  private _ntaConnections: Array<{from: string; to: string; protocol: string; port: string; allowed: boolean; encrypted: boolean; monitored: boolean; trafficVolume: string; lastActivity: string}> = [
+    { from: 'Z-001', to: 'Z-003', protocol: 'HTTPS', port: '443', allowed: true, encrypted: true, monitored: true, trafficVolume: '2.4 TB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-001', to: 'Z-005', protocol: 'HTTPS', port: '443', allowed: true, encrypted: true, monitored: true, trafficVolume: '1.8 TB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-002', to: 'Z-003', protocol: 'RDP', port: '3389', allowed: true, encrypted: false, monitored: true, trafficVolume: '450 GB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-002', to: 'Z-005', protocol: 'HTTPS', port: '443', allowed: true, encrypted: true, monitored: true, trafficVolume: '890 GB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-003', to: 'Z-010', protocol: 'Rsync', port: '873', allowed: true, encrypted: true, monitored: true, trafficVolume: '3.2 TB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-005', to: 'Z-010', protocol: 'HTTPS', port: '443', allowed: true, encrypted: true, monitored: true, trafficVolume: '1.1 TB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-006', to: 'Z-005', protocol: 'SSH', port: '22', allowed: true, encrypted: true, monitored: false, trafficVolume: '120 GB/day', lastActivity: '2025-12-27' },
+    { from: 'Z-008', to: 'Z-001', protocol: 'HTTPS', port: '443', allowed: true, encrypted: true, monitored: true, trafficVolume: '85 GB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-009', to: 'Z-003', protocol: 'SSH', port: '22', allowed: true, encrypted: true, monitored: true, trafficVolume: '45 GB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-009', to: 'Z-005', protocol: 'HTTPS', port: '443', allowed: true, encrypted: true, monitored: true, trafficVolume: '38 GB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-007', to: 'Z-003', protocol: 'Modbus', port: '502', allowed: true, encrypted: false, monitored: true, trafficVolume: '12 GB/day', lastActivity: '2025-12-28' },
+    { from: 'Z-002', to: 'Z-007', protocol: 'ANY', port: '*', allowed: false, encrypted: false, monitored: true, trafficVolume: '0 B/day', lastActivity: 'Never' },
+  ];
+
+  private _ntaSecurityGaps: Array<{id: string; zone: string; gap: string; severity: string; recommendation: string; remediationEffort: string; affectedDevices: number}> = [
+    { id: 'SG-001', zone: 'Z-002 Corporate LAN', gap: 'Flat network subnet allows unrestricted east-west traffic', severity: 'critical', recommendation: 'Implement microsegmentation with zero-trust policies', remediationEffort: 'high', affectedDevices: 2450 },
+    { id: 'SG-002', zone: 'Z-006 Cloud Dev', gap: 'Development environment has direct peering to production VPC', severity: 'critical', recommendation: 'Remove VPC peering and implement change promotion pipeline', remediationEffort: 'medium', affectedDevices: 312 },
+    { id: 'SG-003', zone: 'Z-004 Data Center Staging', gap: 'Jump server shared credentials with no MFA', severity: 'high', recommendation: 'Implement individual accounts with MFA and session recording', remediationEffort: 'medium', affectedDevices: 124 },
+    { id: 'SG-004', zone: 'Z-007 OT Network', gap: 'Legacy PLCs running unsupported firmware with known vulnerabilities', severity: 'high', recommendation: 'Implement compensating controls: network isolation and OT-specific monitoring', remediationEffort: 'high', affectedDevices: 89 },
+    { id: 'SG-005', zone: 'Z-002 Corporate LAN', gap: '802.1X coverage only 72% of endpoints', severity: 'high', recommendation: 'Deploy 802.1X to remaining 686 endpoints', remediationEffort: 'medium', affectedDevices: 686 },
+    { id: 'SG-006', zone: 'Z-005 Cloud Production', gap: 'Security groups allow SSH from 0.0.0.0/0 on 12 instances', severity: 'critical', recommendation: 'Restrict SSH to bastion host IP only', remediationEffort: 'low', affectedDevices: 12 },
+    { id: 'SG-007', zone: 'Z-003 Data Center Production', gap: 'Database ports (3306, 5432, 1433) accessible from corporate LAN', severity: 'high', recommendation: 'Restrict database access to application servers only', remediationEffort: 'medium', affectedDevices: 45 },
+    { id: 'SG-008', zone: 'Z-008 Guest WiFi', gap: 'No captive portal or client isolation on guest network', severity: 'medium', recommendation: 'Deploy captive portal with AUP acceptance and enable client isolation', remediationEffort: 'low', affectedDevices: 180 },
+  ];
+
+  private _ntaDeviceInventory: Array<{id: string; hostname: string; zone: string; type: string; os: string; criticality: string; lastScan: string; vulnerabilities: number; compliance: string}> = [
+    { id: 'DEV-001', hostname: 'dc-prod-01', zone: 'Z-003', type: 'Server', os: 'Windows Server 2022', criticality: 'critical', lastScan: '2025-12-28', vulnerabilities: 3, compliance: 'compliant' },
+    { id: 'DEV-002', hostname: 'web-dmz-01', zone: 'Z-001', type: 'Server', os: 'Ubuntu 22.04 LTS', criticality: 'high', lastScan: '2025-12-28', vulnerabilities: 5, compliance: 'partial' },
+    { id: 'DEV-003', hostname: 'db-prod-01', zone: 'Z-003', type: 'Server', os: 'RHEL 9.2', criticality: 'critical', lastScan: '2025-12-27', vulnerabilities: 2, compliance: 'compliant' },
+    { id: 'DEV-004', hostname: 'fw-perimeter-01', zone: 'Z-001', type: 'Firewall', os: 'PaloAlto PAN-OS 11.1', criticality: 'critical', lastScan: '2025-12-28', vulnerabilities: 1, compliance: 'compliant' },
+    { id: 'DEV-005', hostname: 'k8s-master-01', zone: 'Z-005', type: 'Server', os: 'Ubuntu 22.04 LTS', criticality: 'critical', lastScan: '2025-12-26', vulnerabilities: 4, compliance: 'partial' },
+    { id: 'DEV-006', hostname: 'ot-plc-01', zone: 'Z-007', type: 'PLC', os: 'Siemens S7-1500 FW 2.9', criticality: 'critical', lastScan: '2025-12-20', vulnerabilities: 8, compliance: 'non-compliant' },
+    { id: 'DEV-007', hostname: 'jump-mgmt-01', zone: 'Z-009', type: 'Server', os: 'Windows Server 2022', criticality: 'high', lastScan: '2025-12-28', vulnerabilities: 0, compliance: 'compliant' },
+    { id: 'DEV-008', hostname: 'backup-nas-01', zone: 'Z-010', type: 'NAS', os: 'Synology DSM 7.2', criticality: 'high', lastScan: '2025-12-25', vulnerabilities: 2, compliance: 'compliant' },
+    { id: 'DEV-009', hostname: 'vpn-gateway-01', zone: 'Z-001', type: 'VPN', os: 'FortiGate FG-200F v7.4', criticality: 'critical', lastScan: '2025-12-28', vulnerabilities: 1, compliance: 'compliant' },
+    { id: 'DEV-010', hostname: 'wifi-guest-ctrl', zone: 'Z-008', type: 'WLC', os: 'Cisco C9800 v17.9', criticality: 'medium', lastScan: '2025-12-22', vulnerabilities: 3, compliance: 'partial' },
+  ];
+
+  private _ntaTrafficAnalysis: Array<{zone: string; totalTraffic: string; inboundPct: number; outboundPct: number; internalPct: number; encryptedPct: number; anomalousFlows: number; topProtocols: string[]}> = [
+    { zone: 'Z-001 Internet DMZ', totalTraffic: '3.2 TB/day', inboundPct: 72, outboundPct: 18, internalPct: 10, encryptedPct: 92, anomalousFlows: 15, topProtocols: ['HTTPS (68%)', 'HTTP (12%)', 'DNS (8%)', 'SSH (5%)', 'FTP (3%)'] },
+    { zone: 'Z-002 Corporate LAN', totalTraffic: '8.5 TB/day', inboundPct: 15, outboundPct: 25, internalPct: 60, encryptedPct: 78, anomalousFlows: 42, topProtocols: ['SMB (22%)', 'HTTPS (18%)', 'DNS (15%)', 'RDP (10%)', 'LDAP (8%)'] },
+    { zone: 'Z-003 Data Center', totalTraffic: '12.1 TB/day', inboundPct: 8, outboundPct: 12, internalPct: 80, encryptedPct: 85, anomalousFlows: 8, topProtocols: ['SQL (25%)', 'HTTPS (20%)', 'iSCSI (15%)', 'SSH (8%)', 'NFS (6%)'] },
+    { zone: 'Z-005 Cloud VPC', totalTraffic: '4.8 TB/day', inboundPct: 35, outboundPct: 30, internalPct: 35, encryptedPct: 95, anomalousFlows: 22, topProtocols: ['HTTPS (55%)', 'gRPC (15%)', 'MySQL (10%)', 'Redis (8%)', 'MQTT (5%)'] },
+    { zone: 'Z-007 OT Network', totalTraffic: '0.8 TB/day', inboundPct: 5, outboundPct: 2, internalPct: 93, encryptedPct: 12, anomalousFlows: 3, topProtocols: ['Modbus TCP (45%)', 'DNP3 (20%)', 'OPC UA (15%)', 'Ethernet/IP (10%)', 'ICMP (5%)'] },
+    { zone: 'Z-009 Management', totalTraffic: '0.4 TB/day', inboundPct: 20, outboundPct: 15, internalPct: 65, encryptedPct: 98, anomalousFlows: 2, topProtocols: ['SSH (40%)', 'HTTPS (30%)', 'RDP (15%)', 'WinRM (10%)'] },
+  ];
+
+  private _ntaChangeLog: Array<{date: string; type: string; description: string; zone: string; approvedBy: string; riskAssessment: string}> = [
+    { date: '2025-12-28', type: 'Firewall Rule', description: 'Blocked outbound connections to known C2 infrastructure IPs (42 IPs added to block list)', zone: 'Z-001', approvedBy: 'SOC Manager', riskAssessment: 'low' },
+    { date: '2025-12-27', type: 'Security Group', description: 'Removed SSH access from 0.0.0.0/0 on 12 EC2 instances, restricted to bastion host', zone: 'Z-005', approvedBy: 'Cloud Security Lead', riskAssessment: 'medium' },
+    { date: '2025-12-26', type: 'Network Segment', description: 'Created isolated VLAN for compromised server forensic analysis', zone: 'Z-004', approvedBy: 'SOC Manager', riskAssessment: 'low' },
+    { date: '2025-12-25', type: 'Access Control', description: 'Restricted database port access from corporate LAN to application server subnet only', zone: 'Z-003', approvedBy: 'DBA Lead', riskAssessment: 'medium' },
+    { date: '2025-12-23', type: 'Monitoring', description: 'Deployed additional network flow sensors on DMZ segment for enhanced visibility', zone: 'Z-001', approvedBy: 'Network Security Lead', riskAssessment: 'low' },
+    { date: '2025-12-20', type: 'Configuration', description: 'Enabled 802.1X port security on 150 additional access switches', zone: 'Z-002', approvedBy: 'Network Operations', riskAssessment: 'medium' },
+    { date: '2025-12-18', type: 'Firewall Rule', description: 'Added rate limiting rules for DNS queries to prevent DNS tunneling', zone: 'Z-001', approvedBy: 'Network Security Lead', riskAssessment: 'low' },
+  ];
+
+  private _ntaNetworkPolicies: Array<{id: string; name: string; type: string; zone: string; description: string; status: string; enforcement: string; exceptions: number}> = [
+    { id: 'NP-001', name: 'Zero Trust Network Access', type: 'access', zone: 'All', description: 'All access requires identity verification and device posture check', status: 'partial', enforcement: 'enforced', exceptions: 45 },
+    { id: 'NP-002', name: 'Microsegmentation', type: 'segmentation', zone: 'Z-003', description: 'East-west traffic restricted between application tiers', status: 'partial', enforcement: 'enforced', exceptions: 23 },
+    { id: 'NP-003', name: 'Internet Egress Filtering', type: 'egress', zone: 'All Internal', description: 'Outbound traffic restricted to approved destinations and protocols', status: 'active', enforcement: 'enforced', exceptions: 156 },
+    { id: 'NP-004', name: 'DNS Security Policy', type: 'dns', zone: 'All', description: 'DNS queries restricted to approved resolvers with threat intelligence filtering', status: 'active', enforcement: 'enforced', exceptions: 12 },
+    { id: 'NP-005', name: 'Encryption Requirement', type: 'encryption', zone: 'All', description: 'All network traffic must be encrypted (TLS 1.2+ or equivalent)', status: 'partial', enforcement: 'monitored', exceptions: 89 },
+    { id: 'NP-006', name: 'Guest Network Isolation', type: 'segmentation', zone: 'Z-008', description: 'Guest WiFi completely isolated from corporate network', status: 'partial', enforcement: 'enforced', exceptions: 5 },
+    { id: 'NP-007', name: 'OT Network Air Gap', type: 'isolation', zone: 'Z-007', description: 'OT network isolated from IT network with data diode for monitoring', status: 'partial', enforcement: 'enforced', exceptions: 8 },
+    { id: 'NP-008', name: 'Cloud VPC Peering Restrictions', type: 'access', zone: 'Z-005', description: 'VPC peering only allowed between approved VPC pairs', status: 'active', enforcement: 'enforced', exceptions: 3 },
+  ];
+
+  private _ntaComplianceRequirements: Array<{framework: string; requirement: string; control: string; zone: string; status: string; evidence: string; lastAudit: string}> = [
+    { framework: 'PCI DSS', requirement: 'Req 1.3.6', control: 'Network segmentation between cardholder data environment and rest of network', zone: 'Z-003', status: 'compliant', evidence: 'Firewall rule audit, penetration test results', lastAudit: '2025-10-15' },
+    { framework: 'PCI DSS', requirement: 'Req 2.2.2', control: 'Enable only necessary services and protocols on all system components', zone: 'All', status: 'partial', evidence: 'Service audit scan, vulnerability assessment', lastAudit: '2025-10-15' },
+    { framework: 'ISO 27001', requirement: 'A.13.1', control: 'Network security controls including segmentation and access control', zone: 'All', status: 'compliant', evidence: 'Network architecture diagram, access control matrix', lastAudit: '2025-09-30' },
+    { framework: 'NIST CSF', requirement: 'PR.AC-5', control: 'Network integrity through network integrity verification', zone: 'All', status: 'compliant', evidence: 'Network monitoring logs, integrity check results', lastAudit: '2025-11-15' },
+    { framework: 'SOC 2', requirement: 'CC6.1', control: 'Logical access security measures over information assets', zone: 'All', status: 'compliant', evidence: 'Access control review, MFA coverage report', lastAudit: '2025-12-01' },
+    { framework: 'HIPAA', requirement: '164.312(e)(1)', control: 'Transmission security via encryption mechanisms', zone: 'All', status: 'partial', evidence: 'TLS certificate inventory, encryption audit', lastAudit: '2025-08-20' },
+  ];
+
+  private _ntaIncidentNetworkTimeline: Array<{timestamp: string; event: string; zone: string; source: string; destination: string; protocol: string; action: string}> = [
+    { timestamp: '2025-12-10T02:15:00Z', event: 'Phishing email delivered', zone: 'Z-002', source: 'External', destination: '10.1.5.23', protocol: 'SMTP', action: 'delivered' },
+    { timestamp: '2025-12-10T02:18:00Z', event: 'Malicious link clicked', zone: 'Z-002', source: '10.1.5.23', destination: '185.220.101.34', protocol: 'HTTPS', action: 'allowed' },
+    { timestamp: '2025-12-10T02:20:00Z', event: 'Payload downloaded', zone: 'Z-002', source: '185.220.101.34', destination: '10.1.5.23', protocol: 'HTTPS', action: 'allowed' },
+    { timestamp: '2025-12-10T02:22:00Z', event: 'C2 channel established', zone: 'Z-002', source: '10.1.5.23', destination: 'update-service[.]secure-cdn[.]com', protocol: 'HTTPS', action: 'allowed' },
+    { timestamp: '2025-12-10T03:30:00Z', event: 'Lateral movement attempt (SMB)', zone: 'Z-002', source: '10.1.5.23', destination: '10.10.1.50', protocol: 'SMB', action: 'blocked' },
+    { timestamp: '2025-12-10T04:15:00Z', event: 'Lateral movement attempt (WMI)', zone: 'Z-002', source: '10.1.5.23', destination: '10.10.1.50', protocol: 'WMI', action: 'allowed' },
+    { timestamp: '2025-12-10T04:30:00Z', event: 'Data exfiltration started', zone: 'Z-003', source: '10.10.1.50', destination: '185.220.101.35', protocol: 'HTTPS', action: 'allowed' },
+    { timestamp: '2025-12-10T06:45:00Z', event: 'Data exfiltration detected (1.2GB)', zone: 'Z-001', source: '10.10.1.50', destination: '185.220.101.35', protocol: 'HTTPS', action: 'detected' },
+    { timestamp: '2025-12-10T07:00:00Z', event: 'C2 IPs blocked by firewall', zone: 'Z-001', source: 'External', destination: 'Internal', protocol: 'ALL', action: 'blocked' },
+    { timestamp: '2025-12-10T08:12:00Z', event: 'Ransomware deployment detected', zone: 'Z-002', source: '10.1.5.23', destination: 'Local', protocol: 'SMB', action: 'detected' },
+  ];
+
+  private _renderNtaTopologyAnalyzer(): ReturnType<typeof html> {
+    const zoneCards = this._ntaZones.map(z => {
+      const critColor = z.criticality === 'critical' ? '#ef4444' : z.criticality === 'high' ? '#f97316' : z.criticality === 'medium' ? '#eab308' : '#22c55e';
+      const compColor = z.complianceLevel >= 85 ? '#22c55e' : z.complianceLevel >= 70 ? '#eab308' : '#ef4444';
+      const riskColor = z.riskScore >= 80 ? '#ef4444' : z.riskScore >= 60 ? '#f97316' : '#22c55e';
+      return html`
+        <div class="nta-zone-card" style="border-top:3px solid ${critColor}">
+          <div class="nta-zone-header">
+            <span class="nta-zone-id">${z.id}</span>
+            <span class="nta-zone-name">${z.name}</span>
+            <span class="nta-zone-type">${z.type}</span>
+          </div>
+          <div class="nta-zone-meta">
+            <span>Subnet: <code>${z.subnet}</code></span>
+            <span>Devices: <strong>${z.devices}</strong></span>
+            <span>Services: <strong>${z.exposedServices}</strong></span>
+          </div>
+          <div class="nta-zone-metrics">
+            <span style="color:${critColor}">Criticality: ${z.criticality.toUpperCase()}</span>
+            <span style="color:${compColor}">Compliance: ${z.complianceLevel}%</span>
+            <span style="color:${riskColor}">Risk: ${z.riskScore}</span>
+          </div>
+          <div class="nta-zone-controls">${z.controls.map(c => html`<span class="nta-control-tag">${c}</span>`)}</div>
+        </div>
+      `;
+    });
+    const connRows = this._ntaConnections.map(c => {
+      const fromZone = this._ntaZones.find(z => z.id === c.from);
+      const toZone = this._ntaZones.find(z => z.id === c.to);
+      const encColor = c.encrypted ? '#22c55e' : '#ef4444';
+      const monColor = c.monitored ? '#22c55e' : '#f97316';
+      return html`<tr><td>${fromZone?.name || c.from}</td><td style="font-weight:700">${c.allowed ? '&#x2705;' : '&#x274C;'}</td><td>${toZone?.name || c.to}</td><td>${c.protocol}</td><td>${c.port}</td><td style="color:${encColor}">${c.encrypted ? 'Encrypted' : 'Unencrypted'}</td><td style="color:${monColor}">${c.monitored ? 'Monitored' : 'Unmonitored'}</td><td>${c.trafficVolume}</td></tr>`;
+    });
+    const gapRows = this._ntaSecurityGaps.map(g => {
+      const sevColor = g.severity === 'critical' ? '#ef4444' : g.severity === 'high' ? '#f97316' : '#eab308';
+      return html`<tr><td style="color:${sevColor};font-weight:700">${g.severity.toUpperCase()}</td><td>${g.zone}</td><td>${g.gap}</td><td>${g.recommendation}</td><td>${g.remediationEffort}</td><td>${g.affectedDevices}</td></tr>`;
+    });
+    return html`
+      <div class="nta-engine-section">
+        <div class="nta-section-title">&#x1F310; Network Topology Security Analyzer</div>
+        <div class="nta-zones-grid">${zoneCards}</div>
+        <div class="nta-connections-section">
+          <div class="nta-sub-title">&#x1F517; Network Zone Connections (${this._ntaConnections.length})</div>
+          <table class="nta-table nta-table-wide"><thead><tr><th>From Zone</th><th>Allowed</th><th>To Zone</th><th>Protocol</th><th>Port</th><th>Encryption</th><th>Monitoring</th><th>Traffic</th></tr></thead><tbody>${connRows}</tbody></table>
+        </div>
+        <div class="nta-gaps-section">
+          <div class="nta-sub-title" style="color:#f97316">&#x26A0; Security Gaps (${this._ntaSecurityGaps.length})</div>
+          <table class="nta-table nta-table-wide"><thead><tr><th>Severity</th><th>Zone</th><th>Gap</th><th>Recommendation</th><th>Effort</th><th>Devices</th></tr></thead><tbody>${gapRows}</tbody></table>
+        </div>
+      </div>
+    `;
+  }
+
+  private _ntaVendorAssessment: Array<{vendor: string; product: string; category: string; riskScore: number; lastAssessed: string; findings: number}> = [
+    { vendor: 'Palo Alto Networks', product: 'PA-5260 Firewall', category: 'Perimeter Firewall', riskScore: 15, lastAssessed: '2025-12-15', findings: 2 },
+    { vendor: 'Fortinet', product: 'FG-200F Firewall', category: 'VPN Gateway', riskScore: 18, lastAssessed: '2025-12-10', findings: 3 },
+    { vendor: 'Cisco', product: 'C9800 WLC', category: 'Wireless Controller', riskScore: 22, lastAssessed: '2025-11-20', findings: 4 },
+    { vendor: 'Infoblox', product: 'BloxOne DDI', category: 'DNS/DHCP/IPAM', riskScore: 12, lastAssessed: '2025-12-05', findings: 1 },
+    { vendor: 'Zscaler', product: 'Internet Access', category: 'Secure Web Gateway', riskScore: 14, lastAssessed: '2025-12-12', findings: 2 },
+    { vendor: 'Aruba', product: 'AP-535 Access Points', category: 'Wireless Access', riskScore: 20, lastAssessed: '2025-11-25', findings: 3 },
+  ];
+
+  private _ntaFutureRoadmap: Array<{initiative: string; priority: string; status: string; targetDate: string; budget: string; description: string}> = [
+    { initiative: 'SASE Implementation', priority: 'high', status: 'planning', targetDate: '2026-Q3', budget: '$350K', description: 'Replace perimeter firewall + VPN with cloud-native SASE architecture' },
+    { initiative: 'Network Detection and Response', priority: 'high', status: 'evaluation', targetDate: '2026-Q2', budget: '$180K', description: 'Deploy NDR platform for encrypted traffic analysis and lateral movement detection' },
+    { initiative: 'Zero Trust Network Access', priority: 'medium', status: 'pilot', targetDate: '2026-Q4', budget: '$250K', description: 'Extend ZTNA from VPN replacement to all application access' },
+    { initiative: 'Network Automation', priority: 'medium', status: 'planning', targetDate: '2026-Q3', budget: '$120K', description: 'Implement network-as-code for automated provisioning and compliance checks' },
+    { initiative: '5G Private Network', priority: 'low', status: 'research', targetDate: '2027-Q1', budget: '$500K', description: 'Deploy private 5G network for OT/warehouse connectivity' },
+  ];
+
+
   render() {    if (this._ntRules.length === 0) { this._initNtRules(); this._initNtCvss(); this._runNtAnomalyDetection(); this._generateNtPredictions(); this._initNtApprovals(); this._initNtActivity(); this._initNtNotifications(); }
 
     const items = this._getFiltered();
