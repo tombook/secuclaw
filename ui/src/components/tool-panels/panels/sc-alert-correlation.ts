@@ -396,6 +396,21 @@ export class ScAlertCorrelation extends LitElement {
     .pb-severity.Critical { color: #ef4444; }
     .pb-severity.High { color: #f59e0b; }
     .pb-severity.Medium { color: #3b82f6; }
+    /* ─── Design Enhancement: Glass & Hover ─── */
+    .glass-card { background: rgba(31, 41, 55, 0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; transition: all 0.2s ease; }
+    .glass-card:hover { background: rgba(31, 41, 55, 0.7); border-color: rgba(245, 158, 11, 0.25); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .severity-glow-critical { box-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+    .severity-glow-high { box-shadow: 0 0 8px rgba(249, 115, 22, 0.3); }
+    .severity-glow-medium { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+    .badge-glow { animation: badgeGlow 2s ease-in-out infinite; }
+    @keyframes badgeGlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .item-enhanced { background: rgba(31, 41, 55, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.2s ease; }
+    .item-enhanced:hover { border-color: rgba(245, 158, 11, 0.3); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); transform: translateY(-1px); }
+    .item-enhanced.expanded { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.15); }
+    .score-card-enhanced { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 8px; padding: 12px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.06); transition: all 0.2s ease; }
+    .score-card-enhanced:hover { border-color: rgba(0, 212, 255, 0.2); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); }
 `;
 
   @state() private _searchQuery = '';

@@ -57,8 +57,10 @@ export class ScToolPanel extends LitElement {
       position: absolute;
       inset: 0;
       background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       opacity: 0;
-      transition: opacity 200ms ease;
+      transition: opacity 300ms ease;
     }
 
     :host([open]) .backdrop {
@@ -75,10 +77,11 @@ export class ScToolPanel extends LitElement {
       background: var(--bg-primary);
       border-left: 1px solid var(--border-color);
       transform: translateX(100%);
-      transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
     }
 
     :host([open]) .panel-slide {
@@ -100,7 +103,8 @@ export class ScToolPanel extends LitElement {
       flex-direction: column;
       overflow: hidden;
       opacity: 0;
-      transition: all 200ms ease;
+      transition: all 280ms cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
     }
 
     :host([open]) .panel-modal {
@@ -121,8 +125,8 @@ export class ScToolPanel extends LitElement {
       flex-direction: column;
       overflow: hidden;
       opacity: 0;
-      transform: translateY(8px);
-      transition: all 200ms ease;
+      transform: translateY(12px);
+      transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     :host([open]) .panel-fullscreen {
@@ -135,9 +139,12 @@ export class ScToolPanel extends LitElement {
       display: flex;
       align-items: center;
       padding: 14px 18px;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
       gap: 10px;
       flex-shrink: 0;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, transparent 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .panel-header .panel-icon {

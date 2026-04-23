@@ -396,6 +396,17 @@ export class ScCloudPosture extends LitElement {
     .pb-severity.Critical { color: #ef4444; }
     .pb-severity.High { color: #f59e0b; }
     .pb-severity.Medium { color: #3b82f6; }
+    /* ─── Design Enhancement: Hover & Density ─── */
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .hover-glow { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+    .hover-glow:hover { box-shadow: 0 0 12px rgba(0, 212, 255, 0.2); border-color: rgba(0, 212, 255, 0.25); }
+    .compact-row { padding: 6px 10px; font-size: 11px; line-height: 1.3; }
+    .compact-row:hover { background: rgba(31, 41, 55, 0.5); }
+    .glass-item { background: rgba(31, 41, 55, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 6px; transition: all 0.2s ease; }
+    .glass-item:hover { background: rgba(31, 41, 55, 0.6); border-color: rgba(0, 212, 255, 0.2); }
+    .score-card-glow { background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 12px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.06); transition: all 0.2s ease; }
+    .score-card-glow:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 0 16px rgba(59, 130, 246, 0.1); }
 `;
 
   @state() private _searchQuery = '';

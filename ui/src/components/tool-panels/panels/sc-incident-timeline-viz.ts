@@ -286,6 +286,17 @@ export class ScIncidentTimelineViz extends LitElement {
     .pb-severity.Critical { color: #ef4444; }
     .pb-severity.High { color: #f59e0b; }
     .pb-severity.Medium { color: #3b82f6; }
+    /* ─── Design Enhancement: Sparklines & Micro-interactions ─── */
+    .event-card-enhanced { background: rgba(31, 41, 55, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 12px; margin-left: 10px; transition: all 0.2s ease; }
+    .event-card-enhanced:hover { border-color: rgba(245, 158, 11, 0.25); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); transform: translateX(2px); }
+    .event-dot-glow { filter: drop-shadow(0 0 4px currentColor); transition: filter 0.2s ease; }
+    .event:hover .event-dot-glow { filter: drop-shadow(0 0 8px currentColor); }
+    .timeline-enhanced::before { background: linear-gradient(180deg, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.4)); }
+    .dwell-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; transition: all 0.2s ease; }
+    .dwell-card:hover { border-color: rgba(245, 158, 11, 0.2); }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .incident-header-glow { background: linear-gradient(135deg, rgba(31, 41, 55, 0.8), rgba(15, 23, 42, 0.8)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
 `;
 
   @state() private _selectedIncident = 'inc1';

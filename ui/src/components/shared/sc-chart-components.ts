@@ -70,4 +70,204 @@ export class LiveClock extends LitElement {
   render() { return html`<span class="clock">${this.time}</span>`; }
 }
 
-declare global { interface HTMLElementTagNameMap { 'severity-badge': SeverityBadge; 'progress-ring': ProgressRing; 'status-indicator': StatusIndicator; 'live-clock': LiveClock; } }
+declare global { interface HTMLElementTagNameMap { 'severity-badge': SeverityBadge; 'progress-ring': ProgressRing; 'status-indicator': StatusIndicator; 'live-clock': LiveClock; 'svg-gauge': SvgGauge; 'sparkline-chart': SparklineChart; 'mini-bar-chart': MiniBarChart; 'status-dot': StatusDot; } }
+
+/**
+ * SVG Gauge Component - Half-circle arc gauge with value display
+ */
+@customElement('svg-gauge')
+export class SvgGauge extends LitElement {
+  static styles = css`
+    :host { display: inline-block; }
+    .gauge-wrap { position: relative; display: inline-flex; flex-direction: column; align-items: center; }
+    .gauge-svg { overflow: visible; }
+    .gauge-bg { fill: none; stroke: #1f2937; stroke-linecap: round; }
+    .gauge-fill { fill: none; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease-out; }
+    .gauge-center { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; }
+    .gauge-value { font-size: 20px; font-weight: 700; color: #f9fafb; font-family: 'Inter', system-ui, sans-serif; }
+    .gauge-label { font-size: 10px; color: #6b7280; margin-top: 2px; font-family: 'Inter', system-ui, sans-serif; }
+  `;
+  @property({ type: Number }) value = 0;
+  @property({ type: Number }) max = 100;
+  @property({ type: Number }) size = 120;
+  @property({ type: Number }) strokeWidth = 10;
+  @property({ type: String }) label = '';
+  @property({ type: String }) color = '';
+
+  private getColor(): string {
+    if (this.color) return this.color;
+    const pct = (this.value / this.max) * 100;
+    if (pct >= 80) return '#22c55e';
+    if (pct >= 60) return '#3b82f6';
+    if (pct >= 40) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  render() {
+    const r = this.size / 2 - this.strokeWidth;
+    const cx = this.size / 2;
+    const cy = this.size / 2;
+    const circumference = Math.PI * r;
+    const pct = Math.min(this.value / this.max, 1);
+    const filled = circumference * pct;
+    const col = this.getColor();
+
+    return html`
+      <div class="gauge-wrap" style="width:${this.size}px;height:${this.size / 2 + 10}px;">
+        <svg class="gauge-svg" width="${this.size}" height="${this.size / 2}" viewBox="0 0 ${this.size} ${this.size / 2}">
+          <circle class="gauge-bg" cx="${cx}" cy="${cy}" r="${r}" stroke-width="${this.strokeWidth}"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}"
+            transform="rotate(180 ${cx} ${cy})" />
+          <circle class="gauge-fill" cx="${cx}" cy="${cy}" r="${r}" stroke-width="${this.strokeWidth}"
+            stroke="${col}" stroke-dasharray="${circumference}" stroke-dashoffset="${circumference - filled}"
+            transform="rotate(180 ${cx} ${cy})" />
+        </svg>
+        <div class="gauge-center">
+          <span class="gauge-value">${this.value}</span>
+          ${this.label ? html`<span class="gauge-label">${this.label}</span>` : nothing}
+        </div>
+      </div>`;
+  }
+}
+
+/**
+ * Sparkline Chart - Minimal inline line chart from data points
+ */
+@customElement('sparkline-chart')
+export class SparklineChart extends LitElement {
+  static styles = css`
+    :host { display: inline-block; }
+    .sparkline-wrap { display: inline-flex; align-items: flex-end; gap: 0; }
+    svg { overflow: visible; }
+    .spark-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .spark-area { opacity: 0.15; }
+    .spark-dot { transition: r 0.15s ease; }
+  `;
+  @property({ type: Array }) data: number[] = [];
+  @property({ type: Number }) width = 120;
+  @property({ type: Number }) height = 32;
+  @property({ type: String }) color = '#00d4ff';
+  @property({ type: Boolean }) showArea = true;
+  @property({ type: Boolean }) showDots = false;
+
+  render() {
+    if (this.data.length < 2) return nothing;
+    const min = Math.min(...this.data);
+    const max = Math.max(...this.data);
+    const range = max - min || 1;
+    const stepX = this.width / (this.data.length - 1);
+    const pad = 2;
+
+    const points = this.data.map((v, i) => {
+      const x = i * stepX;
+      const y = pad + (1 - (v - min) / range) * (this.height - pad * 2);
+      return `${x},${y}`;
+    });
+
+    const linePath = 'M' + points.join(' L');
+    const areaPath = linePath + ` L${this.width},${this.height} L0,${this.height} Z`;
+
+    return html`
+      <svg width="${this.width}" height="${this.height}" viewBox="0 0 ${this.width} ${this.height}">
+        ${this.showArea ? html`<path class="spark-area" d="${areaPath}" fill="${this.color}" />` : nothing}
+        <path class="spark-line" d="${linePath}" stroke="${this.color}" />
+        ${this.showDots ? this.data.map((v, i) => {
+          const x = i * stepX;
+          const y = pad + (1 - (v - min) / range) * (this.height - pad * 2);
+          return html`<circle class="spark-dot" cx="${x}" cy="${y}" r="2.5" fill="${this.color}" />`;
+        }) : nothing}
+      </svg>`;
+  }
+}
+
+/**
+ * Mini Bar Chart - Compact horizontal or vertical bar chart
+ */
+@customElement('mini-bar-chart')
+export class MiniBarChart extends LitElement {
+  static styles = css`
+    :host { display: inline-block; }
+    .bar-chart { display: flex; gap: 3px; align-items: flex-end; }
+    .bar-chart.vertical { flex-direction: row; align-items: flex-end; height: var(--chart-height, 40px); }
+    .bar-chart.horizontal { flex-direction: column; align-items: flex-start; width: var(--chart-width, 100px); gap: 2px; }
+    .bar { border-radius: 2px; transition: height 0.4s ease-out, width 0.4s ease-out; min-height: 2px; min-width: 2px; }
+    .bar-chart.vertical .bar { width: var(--bar-width, 6px); }
+    .bar-chart.horizontal .bar { height: var(--bar-height, 6px); }
+  `;
+  @property({ type: Array }) data: number[] = [];
+  @property({ type: Array }) colors: string[] = [];
+  @property({ type: String }) direction: 'vertical' | 'horizontal' = 'vertical';
+  @property({ type: Number }) chartHeight = 40;
+  @property({ type: Number }) chartWidth = 100;
+  @property({ type: Number }) barSize = 6;
+
+  render() {
+    if (this.data.length === 0) return nothing;
+    const max = Math.max(...this.data) || 1;
+    const defaultColors = ['#00d4ff', '#3b82f6', '#7c3aed', '#f59e0b', '#ef4444', '#22c55e'];
+    const style = this.direction === 'vertical'
+      ? `--chart-height:${this.chartHeight}px;--bar-width:${this.barSize}px`
+      : `--chart-width:${this.chartWidth}px;--bar-height:${this.barSize}px`;
+
+    return html`
+      <div class="bar-chart ${this.direction}" style="${style}">
+        ${this.data.map((v, i) => {
+          const pct = (v / max) * 100;
+          const col = (this.colors && this.colors[i]) || defaultColors[i % defaultColors.length];
+          const dimStyle = this.direction === 'vertical'
+            ? `height:${pct}%;background:${col}`
+            : `width:${pct}%;background:${col}`;
+          return html`<div class="bar" style="${dimStyle}"></div>`;
+        })}
+      </div>`;
+  }
+}
+
+/**
+ * Status Dot - Enhanced status indicator with pulse ring animation
+ */
+@customElement('status-dot')
+export class StatusDot extends LitElement {
+  static styles = css`
+    :host { display: inline-flex; align-items: center; }
+    .dot-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .dot { border-radius: 50%; position: relative; z-index: 1; }
+    .dot-sm { width: 8px; height: 8px; }
+    .dot-md { width: 12px; height: 12px; }
+    .dot-lg { width: 16px; height: 16px; }
+    .dot-online { background: #22c55e; }
+    .dot-warning { background: #f59e0b; }
+    .dot-error { background: #ef4444; }
+    .dot-offline { background: #6b7280; }
+    .dot-info { background: #3b82f6; }
+    .pulse-ring {
+      position: absolute; border-radius: 50%; opacity: 0;
+      animation: statusPulse 2s ease-out infinite;
+    }
+    .dot-sm .pulse-ring { width: 16px; height: 16px; }
+    .dot-md .pulse-ring { width: 22px; height: 22px; }
+    .dot-lg .pulse-ring { width: 28px; height: 28px; }
+    .dot-online .pulse-ring { border: 2px solid #22c55e; }
+    .dot-warning .pulse-ring { border: 2px solid #f59e0b; }
+    .dot-error .pulse-ring { border: 2px solid #ef4444; }
+    .dot-info .pulse-ring { border: 2px solid #3b82f6; }
+    @keyframes statusPulse {
+      0% { transform: scale(0.5); opacity: 0.8; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+    .label { font-size: 12px; color: #9ca3af; margin-left: 6px; }
+  `;
+  @property({ type: String }) status: 'online' | 'warning' | 'error' | 'offline' | 'info' = 'offline';
+  @property({ type: String }) size: 'sm' | 'md' | 'lg' = 'sm';
+  @property({ type: Boolean }) pulse = false;
+  @property({ type: String }) label = '';
+
+  render() {
+    return html`
+      <div class="dot-wrap">
+        ${this.pulse ? html`<span class="pulse-ring"></span>` : nothing}
+        <span class="dot dot-${this.size} dot-${this.status}"></span>
+      </div>
+      ${this.label ? html`<span class="label">${this.label}</span>` : nothing}`;
+  }
+}

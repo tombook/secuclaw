@@ -557,6 +557,19 @@ export class ScComplianceMap extends LitElement {
     .pb-severity.Critical { color: #ef4444; }
     .pb-severity.High { color: #f59e0b; }
     .pb-severity.Medium { color: #3b82f6; }
+    /* ─── Design Enhancement: Status Animations ─── */
+    .status-animated { position: relative; }
+    .status-animated::after { content: ''; position: absolute; inset: -2px; border-radius: inherit; border: 2px solid transparent; animation: statusBorderGlow 2.5s ease-in-out infinite; }
+    .status-animated.compliant::after { border-color: rgba(34, 197, 94, 0.4); }
+    .status-animated.non-compliant::after { border-color: rgba(239, 68, 68, 0.4); }
+    .status-animated.partial::after { border-color: rgba(245, 158, 11, 0.4); }
+    @keyframes statusBorderGlow { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+    .glass-section { background: rgba(31, 41, 55, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; transition: all 0.2s ease; }
+    .glass-section:hover { border-color: rgba(245, 158, 11, 0.2); }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .compliance-pulse { animation: compPulse 2s ease-in-out infinite; }
+    @keyframes compPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 `;
 
   @state() private _searchQuery = '';

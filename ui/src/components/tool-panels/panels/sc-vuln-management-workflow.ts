@@ -372,6 +372,18 @@ export class ScVulnManagementWorkflow extends LitElement {
     .hz-zone { font-weight: 700; }
     .hz-range { color: #94a3b8; }
     .hz-count { color: #64748b; }
+    /* ─── Design Enhancement: Progress & Timeline ─── */
+    .progress-ring-enhanced { filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.2)); transition: filter 0.3s ease; }
+    .progress-ring-enhanced:hover { filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.35)); }
+    .workflow-stage { position: relative; padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.2s ease; }
+    .workflow-stage:hover { border-color: rgba(0, 212, 255, 0.2); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+    .workflow-stage.active-stage { border-color: rgba(0, 212, 255, 0.4); background: rgba(0, 212, 255, 0.05); }
+    .workflow-stage.completed-stage { border-color: rgba(34, 197, 94, 0.3); }
+    .stage-connector { height: 2px; background: linear-gradient(90deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.1)); margin: 0 12px; }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .glass-card { background: rgba(31, 41, 55, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; transition: all 0.2s ease; }
+    .glass-card:hover { border-color: rgba(0, 212, 255, 0.2); }
 `;
 
   @state() private _tab: 'all' | 'critical' | 'high' | 'sla' | 'scanners' = 'all';
