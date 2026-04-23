@@ -2635,6 +2635,240 @@ export class ScVulnPriority extends LitElement {
   private vpRenderRound17() {
     return html`${this.vpRenderRiskQuant()}${this.vpRenderSecProgram()}${this.vpRenderThirdParty()}${this.vpRenderDLP()}${this.vpRenderAutomation()}`;
   }
+
+  // === Threat Intelligence Correlation Engine Module ===
+  private _threatIntelFeeds: Array<{feedId: string; name: string; source: string; type: string; freshness: string; iocCount: number; confidence: number; lastSync: string; status: string}> = [];
+  private _correlatedThreats: Array<{id: string; name: string; sources: string[]; confidence: number; severity: string; iocs: string[]; actor: string; campaign: string; firstSeen: string; lastSeen: string; description: string}> = [];
+  private _threatActors: Array<{actorId: string; name: string; alias: string; country: string; motivation: string; sophistication: string; campaigns: number; activeIocs: number; lastActivity: string; ttps: string[]}> = [];
+  private _iocStalenessData: Array<{ioc: string; type: string; firstSeen: string; lastSeen: string; feedCount: number; confidence: number; isStale: boolean; ageDays: number}> = [];
+  private _threatLandscapeRadar: Array<{category: string; threatLevel: number; trend: string; topActor: string; keyIndicators: string[]; recentIncidents: number}> = [];
+  private _threatBriefs: Array<{id: string; title: string; generatedAt: string; scope: string; summary: string; keyFindings: string[]; iocHighlights: string[]; recommendedActions: string[]}> = [];
+
+  private _initThreatIntelEngine(): void {
+    this._threatIntelFeeds = [
+      {feedId: 'feed-001', name: 'MISP Community', source: 'MISP', type: 'Open Source', freshness: '1h', iocCount: 284756, confidence: 0.72, lastSync: '2024-12-16T08:00:00Z', status: 'active'},
+      {feedId: 'feed-002', name: 'AlienVault OTX', source: 'AlienVault', type: 'Open Source', freshness: '30m', iocCount: 456123, confidence: 0.68, lastSync: '2024-12-16T08:30:00Z', status: 'active'},
+      {feedId: 'feed-003', name: 'CrowdStrike Intel', source: 'CrowdStrike', type: 'Commercial', freshness: '15m', iocCount: 89234, confidence: 0.91, lastSync: '2024-12-16T08:45:00Z', status: 'active'},
+      {feedId: 'feed-004', name: 'Mandiant Threat Intel', source: 'Mandiant', type: 'Commercial', freshness: '1h', iocCount: 67891, confidence: 0.93, lastSync: '2024-12-16T08:00:00Z', status: 'active'},
+      {feedId: 'feed-005', name: 'Recorded Future', source: 'Recorded Future', type: 'Commercial', freshness: '5m', iocCount: 1245678, confidence: 0.87, lastSync: '2024-12-16T08:55:00Z', status: 'active'},
+    ];
+    this._correlatedThreats = [
+      {id: 'corr-001', name: 'Cobalt Strike Beacon Variant', sources: ['CrowdStrike', 'Mandiant'], confidence: 0.95, severity: 'critical', iocs: ['C2: evil-c2[.]example[.]com', 'Hash: a1b2c3d4e5f6', 'Mutex: Global\\CS_Mutex_0x41'], actor: 'APT29', campaign: 'Operation Midnight Eclipse', firstSeen: '2024-12-10', lastSeen: '2024-12-16', description: 'New Cobalt Strike variant with enhanced evasion capabilities targeting financial sector'},
+      {id: 'corr-002', name: 'Supply Chain Backdoor', sources: ['Recorded Future', 'Mandiant'], confidence: 0.88, severity: 'critical', iocs: ['Domain: update-service[.]cdn[.]net', 'IP: 198.51.100.23', 'Cert: CN=UpdateService'], actor: 'APT41', campaign: 'Soft Supply', firstSeen: '2024-12-08', lastSeen: '2024-12-15', description: 'Software supply chain compromise via trojanized update mechanism'},
+      {id: 'corr-003', name: 'Phishing Kit Evolution', sources: ['AlienVault', 'MISP'], confidence: 0.76, severity: 'high', iocs: ['URL: login-secure[.]cloud[.]auth', 'Email: noreply@secure-verify[.]com'], actor: 'UNC2452', campaign: 'Credential Harvest Q4', firstSeen: '2024-12-05', lastSeen: '2024-12-16', description: 'Advanced phishing kit with real-time MFA bypass using adversary-in-the-middle proxy'},
+      {id: 'corr-004', name: 'Ransomware-as-a-Service', sources: ['CrowdStrike', 'Recorded Future'], confidence: 0.82, severity: 'high', iocs: ['Hash: f7e8d9c0b1a2', 'Extension: .encrypted', 'Note: README_DECRYPT.txt'], actor: 'LockBit 4.0', campaign: 'Winter Storm', firstSeen: '2024-11-28', lastSeen: '2024-12-16', description: 'New LockBit variant targeting healthcare and education sectors with double extortion'},
+      {id: 'corr-005', name: 'Zero-Day Exploit Chain', sources: ['Mandiant', 'CrowdStrike'], confidence: 0.91, severity: 'critical', iocs: ['CVE-2024-XXXX (Chrome)', 'CVE-2024-YYYY (Windows)', 'Payload: shellcode.bin'], actor: 'APT0', campaign: 'Chain Reaction', firstSeen: '2024-12-12', lastSeen: '2024-12-16', description: 'Chained zero-day exploits targeting browser and OS kernel for initial access'},
+    ];
+    this._threatActors = [
+      {actorId: 'ta-001', name: 'APT29', alias: 'Cozy Bear, The Dukes', country: 'Russia', motivation: 'Espionage', sophistication: 'advanced', campaigns: 23, activeIocs: 1847, lastActivity: '2024-12-16', ttps: ['T1059.001', 'T1003', 'T1071.001', 'T1566.001']},
+      {actorId: 'ta-002', name: 'APT41', alias: 'Double Dragon, Winnti', country: 'China', motivation: 'Financial/Espionage', sophistication: 'advanced', campaigns: 18, activeIocs: 2341, lastActivity: '2024-12-15', ttps: ['T1059.003', 'T1027', 'T1105', 'T1566.002']},
+      {actorId: 'ta-003', name: 'LockBit', alias: 'LockBitSupp', country: 'Unknown', motivation: 'Financial', sophistication: 'high', campaigns: 45, activeIocs: 5623, lastActivity: '2024-12-16', ttps: ['T1486', 'T1490', 'T1059.003', 'T1027']},
+      {actorId: 'ta-004', name: 'UNC2452', alias: 'Nobelium', country: 'Russia', motivation: 'Espionage', sophistication: 'advanced', campaigns: 12, activeIocs: 987, lastActivity: '2024-12-14', ttps: ['T1078', 'T1098', 'T1550.001', 'T1053.005']},
+      {actorId: 'ta-005', name: 'Scattered Spider', alias: 'UNC3944, 0ktapus', country: 'USA/UK', motivation: 'Financial', sophistication: 'moderate', campaigns: 31, activeIocs: 3456, lastActivity: '2024-12-16', ttps: ['T1566.001', 'T1078.004', 'T1111', 'T1078.002']},
+    ];
+    this._iocStalenessData = [
+      {ioc: '192.168.1.100', type: 'IPv4', firstSeen: '2024-06-01', lastSeen: '2024-12-15', feedCount: 5, confidence: 0.92, isStale: false, ageDays: 198},
+      {ioc: 'evil-domain[.]com', type: 'Domain', firstSeen: '2024-03-15', lastSeen: '2024-08-20', feedCount: 3, confidence: 0.45, isStale: true, ageDays: 276},
+      {ioc: 'a1b2c3d4e5f6', type: 'Hash', firstSeen: '2024-09-01', lastSeen: '2024-12-16', feedCount: 7, confidence: 0.88, isStale: false, ageDays: 107},
+      {ioc: 'phish-login[.]secure[.]xyz', type: 'URL', firstSeen: '2024-01-10', lastSeen: '2024-04-05', feedCount: 2, confidence: 0.21, isStale: true, ageDays: 341},
+      {ioc: ' trojan@malware[.]exe', type: 'File', firstSeen: '2024-11-01', lastSeen: '2024-12-14', feedCount: 4, confidence: 0.79, isStale: false, ageDays: 46},
+      {ioc: '10.0.0.55', type: 'IPv4', firstSeen: '2024-05-20', lastSeen: '2024-07-15', feedCount: 1, confidence: 0.15, isStale: true, ageDays: 210},
+    ];
+    this._threatLandscapeRadar = [
+      {category: 'Ransomware', threatLevel: 9, trend: 'increasing', topActor: 'LockBit 4.0', keyIndicators: ['Double extortion', 'RaaS expansion', 'Healthcare targeting'], recentIncidents: 47},
+      {category: 'Supply Chain', threatLevel: 8, trend: 'increasing', topActor: 'APT41', keyIndicators: ['Dependency confusion', 'Trojanized packages', 'CI/CD compromise'], recentIncidents: 12},
+      {category: 'Phishing', threatLevel: 7, trend: 'stable', topActor: 'Scattered Spider', keyIndicators: ['AiTM proxy', 'Vishing campaigns', 'Deepfake audio'], recentIncidents: 156},
+      {category: 'Zero-Day', threatLevel: 8, trend: 'increasing', topActor: 'APT0', keyIndicators: ['Browser exploits', 'Mobile zero-days', 'IoT vulnerabilities'], recentIncidents: 8},
+      {category: 'Insider Threat', threatLevel: 5, trend: 'stable', topActor: 'Various', keyIndicators: ['Data exfiltration', 'Credential abuse', 'Privilege escalation'], recentIncidents: 23},
+      {category: 'Cloud Attacks', threatLevel: 7, trend: 'increasing', topActor: 'APT29', keyIndicators: ['Identity abuse', 'SaaS compromise', 'Container escape'], recentIncidents: 34},
+    ];
+    this._threatBriefs = [
+      {id: 'brief-001', title: 'Daily Threat Intelligence Brief', generatedAt: '2024-12-16T09:00:00Z', scope: 'daily', summary: 'Critical: New Cobalt Strike variant detected targeting financial sector. High: LockBit 4.0 campaign expansion observed. 5 new zero-days reported in Chrome and Windows.', keyFindings: ['APT29 using new C2 infrastructure', 'LockBit 4.0 targeting healthcare', 'Supply chain compromise in npm packages'], iocHighlights: ['47 new malicious domains', '12 new C2 IPs', '3 new malware hashes'], recommendedActions: ['Update Chrome immediately', 'Block identified IoCs', 'Review supply chain dependencies']},
+      {id: 'brief-002', title: 'Weekly Threat Landscape Report', generatedAt: '2024-12-15T18:00:00Z', scope: 'weekly', summary: 'This week saw a 23% increase in ransomware attacks globally. Supply chain attacks remain elevated. Phishing campaigns leveraging AI-generated content increased by 45%.', keyFindings: ['Ransomware attacks up 23%', 'AI-generated phishing up 45%', '3 major supply chain incidents', '2 zero-days exploited in wild'], iocHighlights: ['156 new malicious IPs', '89 new phishing domains', '34 new malware hashes', '12 new C2 certificates'], recommendedActions: ['Patch all critical CVEs', 'Enhance email filtering rules', 'Review third-party access', 'Update endpoint detection signatures']},
+    ];
+  }
+
+  private _renderThreatIntelFeeds(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-feeds-section">
+        <div class="section-header">
+          <h4>Intelligence Feed Status</h4>
+        </div>
+        <div class="feeds-grid">
+          ${this._threatIntelFeeds.map(f => html`
+            <div class="feed-card status-${f.status}">
+              <div class="feed-header">
+                <span class="feed-name">${f.name}</span>
+                <span class="feed-type">${f.type}</span>
+              </div>
+              <div class="feed-stats">
+                <span>IOCs: ${f.iocCount.toLocaleString()}</span>
+                <span>Confidence: ${(f.confidence * 100).toFixed(0)}%</span>
+                <span>Freshness: ${f.freshness}</span>
+              </div>
+              <div class="feed-sync">Last sync: ${f.lastSync}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderCorrelatedThreats(): ReturnType<typeof html> {
+    return html`
+      <div class="correlated-threats-section">
+        <div class="section-header">
+          <h4>Multi-Source Correlated Threats</h4>
+        </div>
+        <div class="threats-list">
+          ${this._correlatedThreats.map(t => html`
+            <div class="threat-card severity-${t.severity}">
+              <div class="threat-header">
+                <span class="threat-name">${t.name}</span>
+                <span class="confidence-badge">${(t.confidence * 100).toFixed(0)}%</span>
+                <span class="severity-badge ${t.severity}">${t.severity}</span>
+              </div>
+              <p class="threat-desc">${t.description}</p>
+              <div class="threat-meta">
+                <span>Actor: ${t.actor}</span>
+                <span>Campaign: ${t.campaign}</span>
+                <span>Sources: ${t.sources.join(', ')}</span>
+              </div>
+              <div class="threat-iocs">
+                ${t.iocs.map(ioc => html`<span class="ioc-tag">${ioc}</span>`)}
+              </div>
+              <div class="threat-timeline">
+                <span>First: ${t.firstSeen}</span>
+                <span>Last: ${t.lastSeen}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatActors(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-actors-section">
+        <div class="section-header">
+          <h4>Threat Actor Campaign Tracking</h4>
+        </div>
+        <div class="actors-grid">
+          ${this._threatActors.map(a => html`
+            <div class="actor-card sophistication-${a.sophistication}">
+              <div class="actor-header">
+                <span class="actor-name">${a.name}</span>
+                <span class="actor-country">${a.country}</span>
+                <span class="actor-motivation">${a.motivation}</span>
+              </div>
+              <div class="actor-alias">${a.alias}</div>
+              <div class="actor-stats">
+                <span>Campaigns: ${a.campaigns}</span>
+                <span>Active IOCs: ${a.activeIocs}</span>
+                <span>Last Activity: ${a.lastActivity}</span>
+              </div>
+              <div class="actor-ttps">
+                ${a.ttps.map(t => html`<span class="ttp-tag">${t}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderIocStaleness(): ReturnType<typeof html> {
+    const stale = this._iocStalenessData.filter(i => i.isStale);
+    const fresh = this._iocStalenessData.filter(i => !i.isStale);
+    return html`
+      <div class="ioc-staleness-section">
+        <div class="section-header">
+          <h4>IOC Staleness Detection</h4>
+          <span class="badge warning">${stale.length} Stale</span>
+          <span class="badge success">${fresh.length} Fresh</span>
+        </div>
+        <div class="ioc-list">
+          ${this._iocStalenessData.map(i => html`
+            <div class="ioc-item ${i.isStale ? 'stale' : 'fresh'}">
+              <div class="ioc-header">
+                <span class="ioc-value">${i.ioc}</span>
+                <span class="ioc-type">${i.type}</span>
+                <span class="ioc-status ${i.isStale ? 'stale' : 'fresh'}">${i.isStale ? 'STALE' : 'FRESH'}</span>
+              </div>
+              <div class="ioc-meta">
+                <span>Age: ${i.ageDays} days</span>
+                <span>Feeds: ${i.feedCount}</span>
+                <span>Confidence: ${(i.confidence * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatRadar(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-radar-section">
+        <div class="section-header">
+          <h4>Threat Landscape Radar</h4>
+        </div>
+        <div class="radar-grid">
+          ${this._threatLandscapeRadar.map(r => html`
+            <div class="radar-card threat-${r.threatLevel >= 8 ? 'critical' : r.threatLevel >= 6 ? 'high' : 'medium'}">
+              <div class="radar-header">
+                <span class="radar-category">${r.category}</span>
+                <span class="radar-level">${r.threatLevel}/10</span>
+                <span class="radar-trend ${r.trend}">${r.trend === 'increasing' ? '\u2191' : r.trend === 'stable' ? '\u2192' : '\u2193'}</span>
+              </div>
+              <div class="radar-details">
+                <span>Top Actor: ${r.topActor}</span>
+                <span>Recent Incidents: ${r.recentIncidents}</span>
+              </div>
+              <div class="radar-indicators">
+                ${r.keyIndicators.map(ind => html`<span class="indicator-tag">${ind}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatBriefs(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-briefs-section">
+        <div class="section-header">
+          <h4>Automated Threat Briefs</h4>
+        </div>
+        <div class="briefs-list">
+          ${this._threatBriefs.map(b => html`
+            <div class="brief-card">
+              <div class="brief-header">
+                <span class="brief-title">${b.title}</span>
+                <span class="brief-scope">${b.scope}</span>
+                <span class="brief-time">${b.generatedAt}</span>
+              </div>
+              <p class="brief-summary">${b.summary}</p>
+              <div class="brief-findings">
+                <h5>Key Findings</h5>
+                <ul>${b.keyFindings.map(f => html`<li>${f}</li>`)}</ul>
+              </div>
+              <div class="brief-iocs">
+                <h5>IOC Highlights</h5>
+                ${b.iocHighlights.map(i => html`<span class="ioc-tag">${i}</span>`)}
+              </div>
+              <div class="brief-actions">
+                <h5>Recommended Actions</h5>
+                <ul>${b.recommendedActions.map(a => html`<li>${a}</li>`)}</ul>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
   render() {    if (this._vpRules.length === 0) { this._initVpRules(); this._initVpCvss(); this._runVpAnomalyDetection(); this._generateVpPredictions(); this._initVpApprovals(); this._initVpActivity(); this._initVpNotifications(); }
 
     const items = this._getFiltered();

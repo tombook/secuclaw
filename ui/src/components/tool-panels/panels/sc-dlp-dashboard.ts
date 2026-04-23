@@ -2006,6 +2006,515 @@ private _executionHistory: ExecutionRecord[] = [
     };
   }
 
+  // === Security Metrics Auto-Reporting Module ===
+  private _reportSchedules: Array<{id: string; name: string; frequency: string; recipients: string[]; lastRun: string; nextRun: string; status: string; template: string; format: string}> = [];
+  private _executiveSummaries: Array<{id: string; title: string; period: string; generatedAt: string; riskScore: number; keyMetrics: Array<{label: string; value: string; trend: string}>; highlights: string[]; concerns: string[]}> = [];
+  private _trendAnalysis: Array<{metric: string; current: number; previous: number; delta: number; direction: string; period: string}> = [];
+  private _reportTemplates: Array<{id: string; name: string; sections: string[]; isDefault: boolean; lastModified: string}> = [];
+  private _deliveryTracking: Array<{reportId: string; reportName: string; sentAt: string; recipients: number; delivered: number; failed: number; opened: number}> = [];
+
+  private _initMetricsReporting(): void {
+    this._reportSchedules = [
+      {id: 'sched-001', name: 'Daily Security Digest', frequency: 'daily', recipients: ['soc-team@company.com', 'ciso@company.com'], lastRun: '2024-12-16T08:00:00Z', nextRun: '2024-12-17T08:00:00Z', status: 'active', template: 'daily-digest', format: 'pdf'},
+      {id: 'sched-002', name: 'Weekly Threat Landscape', frequency: 'weekly', recipients: ['security-team@company.com', 'exec-team@company.com'], lastRun: '2024-12-15T09:00:00Z', nextRun: '2024-12-22T09:00:00Z', status: 'active', template: 'weekly-threat', format: 'html'},
+      {id: 'sched-003', name: 'Monthly Executive Report', frequency: 'monthly', recipients: ['board@company.com', 'ciso@company.com', 'cto@company.com'], lastRun: '2024-12-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'executive-summary', format: 'pdf'},
+      {id: 'sched-004', name: 'Quarterly Compliance Report', frequency: 'quarterly', recipients: ['compliance@company.com', 'legal@company.com', 'board@company.com'], lastRun: '2024-10-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'compliance-report', format: 'pdf'},
+      {id: 'sched-005', name: 'Incident Post-Mortem', frequency: 'on-demand', recipients: ['ir-team@company.com'], lastRun: '2024-12-14T14:00:00Z', nextRun: 'N/A', status: 'on-demand', template: 'post-mortem', format: 'docx'},
+    ];
+    this._executiveSummaries = [
+      {id: 'exec-001', title: 'December 2024 Security Posture', period: '2024-12', generatedAt: '2024-12-16T10:00:00Z', riskScore: 72,
+        keyMetrics: [
+          {label: 'MTTR', value: '24 min', trend: 'down'},
+          {label: 'MTTD', value: '3.2 min', trend: 'down'},
+          {label: 'False Positive Rate', value: '4.2%', trend: 'down'},
+          {label: 'Patch Compliance', value: '94%', trend: 'up'},
+          {label: 'Critical Vulns Open', value: '3', trend: 'down'},
+          {label: 'Phishing Click Rate', value: '2.1%', trend: 'down'},
+        ],
+        highlights: ['SOC achieved 99.7% uptime', 'Zero critical data breaches', 'Automated triage reduced analyst workload by 30%', 'Completed 15 penetration tests'],
+        concerns: ['3 critical vulnerabilities past SLA', 'Night shift understaffed', 'Supply chain attack surface increasing', 'Zero-day response time needs improvement'],
+      },
+      {id: 'exec-002', title: 'Q4 2024 Security Quarterly', period: '2024-Q4', generatedAt: '2024-12-15T10:00:00Z', riskScore: 68,
+        keyMetrics: [
+          {label: 'Total Incidents', value: '847', trend: 'up'},
+          {label: 'Critical Incidents', value: '12', trend: 'down'},
+          {label: 'Mean Time to Contain', value: '4.2 hrs', trend: 'down'},
+          {label: 'Vulnerability Backlog', value: '23', trend: 'down'},
+          {label: 'Security Awareness Score', value: '87%', trend: 'up'},
+          {label: 'Compliance Score', value: '96%', trend: 'up'},
+        ],
+        highlights: ['Reduced critical incidents by 25% QoQ', 'Deployed zero-trust architecture phase 2', 'Security awareness training completion: 95%', 'SOC maturity level improved to 3'],
+        concerns: ['Cloud misconfiguration incidents increased 15%', 'Third-party vendor risk score elevated', 'Insider threat indicators detected in 3 cases'],
+      },
+    ];
+    this._trendAnalysis = [
+      {metric: 'Total Alerts', current: 12456, previous: 11234, delta: 10.9, direction: 'up', period: 'monthly'},
+      {metric: 'False Positives', current: 523, previous: 612, delta: -14.5, direction: 'down', period: 'monthly'},
+      {metric: 'Mean Resolution Time', current: 24, previous: 31, delta: -22.6, direction: 'down', period: 'monthly'},
+      {metric: 'Escalation Rate', current: 8.5, previous: 11.2, delta: -24.1, direction: 'down', period: 'monthly'},
+      {metric: 'Phishing Susceptibility', current: 2.1, previous: 3.8, delta: -44.7, direction: 'down', period: 'monthly'},
+      {metric: 'Patch Compliance', current: 94, previous: 89, delta: 5.6, direction: 'up', period: 'monthly'},
+      {metric: 'Endpoint Coverage', current: 98.2, previous: 97.1, delta: 1.1, direction: 'up', period: 'monthly'},
+      {metric: 'MFA Adoption', current: 96, previous: 91, delta: 5.5, direction: 'up', period: 'monthly'},
+    ];
+    this._reportTemplates = [
+      {id: 'tmpl-001', name: 'Daily Digest', sections: ['Alert Summary', 'Top Threats', 'Incident Status', 'Quick Stats'], isDefault: true, lastModified: '2024-11-01'},
+      {id: 'tmpl-002', name: 'Weekly Threat', sections: ['Threat Landscape', 'New IOCs', 'Campaign Updates', 'Risk Assessment', 'Recommendations'], isDefault: true, lastModified: '2024-10-15'},
+      {id: 'tmpl-003', name: 'Executive Summary', sections: ['Risk Score', 'KPI Dashboard', 'Trend Analysis', 'Budget Summary', 'Strategic Recommendations'], isDefault: true, lastModified: '2024-09-20'},
+      {id: 'tmpl-004', name: 'Compliance Report', sections: ['Framework Status', 'Control Mapping', 'Gap Analysis', 'Remediation Progress', 'Audit Readiness'], isDefault: false, lastModified: '2024-12-01'},
+    ];
+    this._deliveryTracking = [
+      {reportId: 'del-001', reportName: 'Daily Security Digest', sentAt: '2024-12-16T08:00:00Z', recipients: 12, delivered: 12, failed: 0, opened: 9},
+      {reportId: 'del-002', reportName: 'Weekly Threat Landscape', sentAt: '2024-12-15T09:00:00Z', recipients: 25, delivered: 24, failed: 1, opened: 18},
+      {reportId: 'del-003', reportName: 'Monthly Executive Report', sentAt: '2024-12-01T10:00:00Z', recipients: 8, delivered: 8, failed: 0, opened: 7},
+      {reportId: 'del-004', reportName: 'Incident Post-Mortem INC-2840', sentAt: '2024-12-14T14:00:00Z', recipients: 6, delivered: 6, failed: 0, opened: 5},
+    ];
+  }
+
+  private _renderReportSchedules(): ReturnType<typeof html> {
+    return html`
+      <div class="report-schedules-section">
+        <div class="section-header">
+          <h4>Report Schedules</h4>
+        </div>
+        <div class="schedules-list">
+          ${this._reportSchedules.map(s => html`
+            <div class="schedule-card status-${s.status}">
+              <div class="schedule-header">
+                <span class="schedule-name">${s.name}</span>
+                <span class="schedule-freq">${s.frequency}</span>
+              </div>
+              <div class="schedule-details">
+                <span>Template: ${s.template}</span>
+                <span>Format: ${s.format}</span>
+                <span>Recipients: ${s.recipients.length}</span>
+              </div>
+              <div class="schedule-timing">
+                <span>Last: ${s.lastRun}</span>
+                <span>Next: ${s.nextRun}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderExecutiveSummary(): ReturnType<typeof html> {
+    return html`
+      <div class="exec-summary-section">
+        <div class="section-header">
+          <h4>Executive Summary Auto-Generation</h4>
+        </div>
+        ${this._executiveSummaries.map(e => html`
+          <div class="exec-card">
+            <div class="exec-header">
+              <span class="exec-title">${e.title}</span>
+              <span class="exec-period">${e.period}</span>
+              <span class="risk-score ${e.riskScore >= 80 ? 'critical' : e.riskScore >= 60 ? 'high' : 'medium'}">${e.riskScore}/100</span>
+            </div>
+            <div class="exec-metrics">
+              ${e.keyMetrics.map(m => html`
+                <div class="exec-metric">
+                  <span class="metric-label">${m.label}</span>
+                  <span class="metric-value">${m.value}</span>
+                  <span class="metric-trend ${m.trend}">${m.trend === 'up' ? '\u2191' : '\u2193'}</span>
+                </div>
+              `)}
+            </div>
+            <div class="exec-highlights">
+              <h5>Highlights</h5>
+              <ul>${e.highlights.map(h => html`<li class="positive">${h}</li>`)}</ul>
+            </div>
+            <div class="exec-concerns">
+              <h5>Concerns</h5>
+              <ul>${e.concerns.map(c => html`<li class="negative">${c}</li>`)}</ul>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _renderTrendAnalysis(): ReturnType<typeof html> {
+    return html`
+      <div class="trend-analysis-section">
+        <div class="section-header">
+          <h4>Trend Analysis with Deltas</h4>
+        </div>
+        <div class="trend-grid">
+          ${this._trendAnalysis.map(t => html`
+            <div class="trend-card ${t.direction}">
+              <div class="trend-label">${t.metric}</div>
+              <div class="trend-current">${typeof t.current === 'number' && t.current > 100 ? t.current.toLocaleString() : t.current}${typeof t.current === 'number' && t.current <= 100 && t.metric.includes('Rate') ? '%' : t.metric.includes('Coverage') || t.metric.includes('Adoption') || t.metric.includes('Compliance') || t.metric.includes('Score') ? '%' : ''}</div>
+              <div class="trend-delta ${t.direction}">
+                ${t.direction === 'up' ? '\u2191' : '\u2193'} ${Math.abs(t.delta).toFixed(1)}%
+              </div>
+              <div class="trend-period">${t.period}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderReportTemplates(): ReturnType<typeof html> {
+    return html`
+      <div class="report-templates-section">
+        <div class="section-header">
+          <h4>Report Templates</h4>
+        </div>
+        <div class="templates-grid">
+          ${this._reportTemplates.map(t => html`
+            <div class="template-card ${t.isDefault ? 'default' : 'custom'}">
+              <div class="template-header">
+                <span class="template-name">${t.name}</span>
+                ${t.isDefault ? html`<span class="default-badge">Default</span>` : ''}
+              </div>
+              <div class="template-sections">
+                ${t.sections.map(s => html`<span class="section-tag">${s}</span>`)}
+              </div>
+              <div class="template-meta">Last modified: ${t.lastModified}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderDeliveryTracking(): ReturnType<typeof html> {
+    return html`
+      <div class="delivery-tracking-section">
+        <div class="section-header">
+          <h4>Report Delivery Tracking</h4>
+        </div>
+        <div class="delivery-list">
+          ${this._deliveryTracking.map(d => html`
+            <div class="delivery-card ${d.failed > 0 ? 'has-failures' : 'all-delivered'}">
+              <div class="delivery-header">
+                <span class="delivery-name">${d.reportName}</span>
+                <span class="delivery-time">${d.sentAt}</span>
+              </div>
+              <div class="delivery-stats">
+                <span>Recipients: ${d.recipients}</span>
+                <span class="delivered">Delivered: ${d.delivered}</span>
+                ${d.failed > 0 ? html`<span class="failed">Failed: ${d.failed}</span>` : ''}
+                <span>Opened: ${d.opened}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Operations Center Analytics Module ===
+  private _socShiftHandoffItems: Array<{id: string; category: string; description: string; status: string; assignedTo: string; priority: string; notes: string}> = [];
+  private _socAnalystMetrics: Array<{analystId: string; name: string; ticketsResolved: number; avgResolutionMin: number; escalationRate: number; accuracy: number; shift: string; streak: number}> = [];
+  private _socAlertVolumeHeatmap: Array<{hour: number; shift: string; critical: number; high: number; medium: number; low: number; total: number}> = [];
+  private _socCapacityPlan: {analystsNeeded: number; analystsAvailable: number; coveragePercent: number; gapAnalysis: string[]; recommendedActions: string[]} = {analystsNeeded: 0, analystsAvailable: 0, coveragePercent: 0, gapAnalysis: [], recommendedActions: []};
+  private _socEscalationPaths: Array<{level: number; name: string; criteria: string; contact: string; avgResponseMin: number; escalationRate: number}> = [];
+  private _socShiftCalendar: Array<{date: string; shift: string; primaryAnalyst: string; secondaryAnalyst: string; backupAnalyst: string; status: string; notes: string}> = [];
+  private _socIncidentBacklog: Array<{id: string; ageHours: number; severity: string; category: string; assignedTo: string; slaRemaining: number}> = [];
+  private _socKpiTargets: {mttrTarget: number; mttdTarget: number; falsePositiveRate: number; escalationRate: number; coverageTarget: number} = {mttrTarget: 30, mttdTarget: 5, falsePositiveRate: 0.05, escalationRate: 0.1, coverageTarget: 0.95};
+
+  private _initSocAnalytics(): void {
+    this._socShiftHandoffItems = [
+      {id: 'soh-001', category: 'Active Incident', description: 'APT lateral movement detected in finance subnet - investigation ongoing', status: 'in-progress', assignedTo: 'analyst-03', priority: 'critical', notes: 'Requires forensics team coordination by EOD'},
+      {id: 'soh-002', category: 'Pending Escalation', description: 'Phishing campaign targeting executive staff - 12 payloads identified', status: 'pending', assignedTo: 'analyst-01', priority: 'high', notes: 'Block IoC set deployed, user notification pending'},
+      {id: 'soh-003', category: 'Watch Item', description: 'Unusual DNS tunneling pattern from workstation WS-2847', status: 'monitoring', assignedTo: 'analyst-02', priority: 'medium', notes: 'Pattern consistent with data exfiltration tool - monitoring'},
+      {id: 'soh-004', category: 'System Note', description: 'SIEM correlation rule update deployed - new detection for living-off-the-land', status: 'completed', assignedTo: 'analyst-04', priority: 'low', notes: 'Tune false positive rate over next 48 hours'},
+      {id: 'soh-005', category: 'Active Incident', description: 'Ransomware encryption attempt blocked on file server FS-PROD-01', status: 'in-progress', assignedTo: 'analyst-05', priority: 'critical', notes: 'Isolated host, malware sample quarantined for analysis'},
+      {id: 'soh-006', category: 'Pending Review', description: 'Vulnerability scan identified 3 critical CVEs in web application cluster', status: 'pending', assignedTo: 'analyst-01', priority: 'high', notes: 'CVE-2024-XXXX, CVE-2024-YYYY, CVE-2024-ZZZZ'},
+      {id: 'soh-007', category: 'Compliance', description: 'Quarterly access review deadline in 5 business days', status: 'pending', assignedTo: 'analyst-03', priority: 'medium', notes: '42% complete, need to accelerate reviews'},
+      {id: 'soh-008', category: 'Tooling', description: 'EDR agent upgrade scheduled for graveyard shift', status: 'scheduled', assignedTo: 'analyst-04', priority: 'low', notes: 'Coordinate with IT ops for maintenance window'},
+    ];
+    this._socAnalystMetrics = [
+      {analystId: 'analyst-01', name: 'Sarah Chen', ticketsResolved: 47, avgResolutionMin: 22, escalationRate: 0.08, accuracy: 0.96, shift: 'Day', streak: 14},
+      {analystId: 'analyst-02', name: 'Marcus Johnson', ticketsResolved: 39, avgResolutionMin: 28, escalationRate: 0.12, accuracy: 0.93, shift: 'Day', streak: 9},
+      {analystId: 'analyst-03', name: 'Aisha Patel', ticketsResolved: 52, avgResolutionMin: 18, escalationRate: 0.06, accuracy: 0.98, shift: 'Swing', streak: 21},
+      {analystId: 'analyst-04', name: 'Dmitri Volkov', ticketsResolved: 41, avgResolutionMin: 25, escalationRate: 0.10, accuracy: 0.94, shift: 'Swing', streak: 7},
+      {analystId: 'analyst-05', name: 'Lisa Wong', ticketsResolved: 55, avgResolutionMin: 15, escalationRate: 0.04, accuracy: 0.99, shift: 'Night', streak: 18},
+      {analystId: 'analyst-06', name: 'James Rodriguez', ticketsResolved: 33, avgResolutionMin: 32, escalationRate: 0.15, accuracy: 0.91, shift: 'Night', streak: 5},
+    ];
+    const shifts = ['Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing'];
+    this._socAlertVolumeHeatmap = shifts.map((shift, hour) => {
+      const base = shift === 'Day' ? 45 : shift === 'Swing' ? 32 : 18;
+      const variance = Math.floor(Math.random() * 15) - 7;
+      const total = Math.max(5, base + variance);
+      return {
+        hour: hour,
+        shift: shift,
+        critical: Math.floor(total * 0.08),
+        high: Math.floor(total * 0.22),
+        medium: Math.floor(total * 0.40),
+        low: Math.floor(total * 0.30),
+        total: total,
+      };
+    });
+    this._socCapacityPlan = {
+      analystsNeeded: 8,
+      analystsAvailable: 6,
+      coveragePercent: 75.0,
+      gapAnalysis: ['Night shift under-staffed by 1 analyst', 'No backup for forensics specialization', 'Weekend coverage requires 2 additional analysts'],
+      recommendedActions: ['Hire 2 Tier-2 analysts with forensics experience', 'Cross-train 3 existing analysts on IR procedures', 'Implement auto-triage to reduce analyst workload by 30%'],
+    };
+    this._socEscalationPaths = [
+      {level: 1, name: 'Tier 1 Triage', criteria: 'All incoming alerts', contact: 'SOC Team Lead', avgResponseMin: 5, escalationRate: 0.35},
+      {level: 2, name: 'Tier 2 Analysis', criteria: 'Confirmed threats, complex incidents', contact: 'Senior Analyst', avgResponseMin: 15, escalationRate: 0.12},
+      {level: 3, name: 'IR Commander', criteria: 'Active breaches, data exfiltration', contact: 'CISO Office', avgResponseMin: 30, escalationRate: 0.03},
+      {level: 4, name: 'Executive Notification', criteria: 'Critical incidents affecting operations', contact: 'CTO / CEO', avgResponseMin: 60, escalationRate: 0.005},
+    ];
+    this._socShiftCalendar = [
+      {date: '2024-12-16', shift: 'Day', primaryAnalyst: 'Sarah Chen', secondaryAnalyst: 'Marcus Johnson', backupAnalyst: 'Aisha Patel', status: 'confirmed', notes: ''},
+      {date: '2024-12-16', shift: 'Swing', primaryAnalyst: 'Aisha Patel', secondaryAnalyst: 'Dmitri Volkov', backupAnalyst: 'Lisa Wong', status: 'confirmed', notes: ''},
+      {date: '2024-12-16', shift: 'Night', primaryAnalyst: 'Lisa Wong', secondaryAnalyst: 'James Rodriguez', backupAnalyst: 'Sarah Chen', status: 'confirmed', notes: 'James on probation - extra review'},
+      {date: '2024-12-17', shift: 'Day', primaryAnalyst: 'Marcus Johnson', secondaryAnalyst: 'Sarah Chen', backupAnalyst: 'Dmitri Volkov', status: 'confirmed', notes: ''},
+      {date: '2024-12-17', shift: 'Swing', primaryAnalyst: 'Dmitri Volkov', secondaryAnalyst: 'Lisa Wong', backupAnalyst: 'James Rodriguez', status: 'tentative', notes: 'Dmitri requested PTO - pending approval'},
+      {date: '2024-12-17', shift: 'Night', primaryAnalyst: 'James Rodriguez', secondaryAnalyst: 'Aisha Patel', backupAnalyst: 'Marcus Johnson', status: 'confirmed', notes: ''},
+    ];
+    this._socIncidentBacklog = [
+      {id: 'INC-2847', ageHours: 2, severity: 'critical', category: 'malware', assignedTo: 'analyst-05', slaRemaining: 58},
+      {id: 'INC-2846', ageHours: 5, severity: 'high', category: 'phishing', assignedTo: 'analyst-01', slaRemaining: 115},
+      {id: 'INC-2843', ageHours: 12, severity: 'medium', category: 'policy-violation', assignedTo: 'analyst-02', slaRemaining: 228},
+      {id: 'INC-2840', ageHours: 18, severity: 'low', category: 'configuration', assignedTo: 'analyst-04', slaRemaining: 342},
+      {id: 'INC-2838', ageHours: 24, severity: 'high', category: 'network', assignedTo: 'analyst-03', slaRemaining: 96},
+    ];
+  }
+
+  private _renderSocShiftHandoff(): ReturnType<typeof html> {
+    const pending = this._socShiftHandoffItems.filter(i => i.status !== 'completed');
+    const critical = pending.filter(i => i.priority === 'critical');
+    return html`
+      <div class="soc-handoff-section">
+        <div class="section-header">
+          <h4>SOC Shift Handoff Checklist</h4>
+          <span class="badge critical">${critical.length} Critical</span>
+          <span class="badge info">${pending.length} Pending</span>
+        </div>
+        <div class="handoff-grid">
+          ${pending.map(item => html`
+            <div class="handoff-card priority-${item.priority}">
+              <div class="handoff-header">
+                <span class="handoff-id">${item.id}</span>
+                <span class="handoff-category">${item.category}</span>
+                <span class="priority-badge ${item.priority}">${item.priority}</span>
+              </div>
+              <p class="handoff-desc">${item.description}</p>
+              <div class="handoff-meta">
+                <span>Assigned: ${item.assignedTo}</span>
+                <span>Status: ${item.status}</span>
+              </div>
+              ${item.notes ? html`<p class="handoff-notes">${item.notes}</p>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocAnalystMetrics(): ReturnType<typeof html> {
+    const sorted = [...this._socAnalystMetrics].sort((a, b) => b.ticketsResolved - a.ticketsResolved);
+    return html`
+      <div class="soc-metrics-section">
+        <div class="section-header">
+          <h4>Analyst Performance Metrics</h4>
+        </div>
+        <div class="metrics-grid">
+          ${sorted.map(a => html`
+            <div class="analyst-card">
+              <div class="analyst-header">
+                <span class="analyst-name">${a.name}</span>
+                <span class="analyst-shift">${a.shift} Shift</span>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Resolved</div>
+                <div class="metric-value">${a.ticketsResolved}</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Avg Resolution</div>
+                <div class="metric-value">${a.avgResolutionMin} min</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Escalation Rate</div>
+                <div class="metric-value">${(a.escalationRate * 100).toFixed(1)}%</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-value">${(a.accuracy * 100).toFixed(1)}%</div>
+              </div>
+              <div class="analyst-streak">${a.streak} day streak</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocAlertHeatmap(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-heatmap-section">
+        <div class="section-header">
+          <h4>Alert Volume by Hour/Shift</h4>
+        </div>
+        <div class="heatmap-grid">
+          ${this._socAlertVolumeHeatmap.map(h => html`
+            <div class="heatmap-cell shift-${h.shift.toLowerCase()}" style="--intensity: ${h.total / 60}" title="Hour ${h.hour}: ${h.total} alerts (C:${h.critical} H:${h.high} M:${h.medium} L:${h.low})">
+              <span class="heatmap-hour">${String(h.hour).padStart(2, '0')}</span>
+              <span class="heatmap-total">${h.total}</span>
+            </div>
+          `)}
+        </div>
+        <div class="heatmap-legend">
+          <span class="legend-item night">Night (22-06)</span>
+          <span class="legend-item day">Day (06-14)</span>
+          <span class="legend-item swing">Swing (14-22)</span>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocCapacity(): ReturnType<typeof html> {
+    const gap = this._socCapacityPlan.analystsNeeded - this._socCapacityPlan.analystsAvailable;
+    return html`
+      <div class="soc-capacity-section">
+        <div class="section-header">
+          <h4>SOC Capacity Planning</h4>
+          <span class="badge ${gap > 0 ? 'warning' : 'success'}">${gap > 0 ? gap + ' Short' : 'Fully Staffed'}</span>
+        </div>
+        <div class="capacity-overview">
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.analystsAvailable}</span>
+            <span class="stat-label">Available</span>
+          </div>
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.analystsNeeded}</span>
+            <span class="stat-label">Needed</span>
+          </div>
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.coveragePercent}%</span>
+            <span class="stat-label">Coverage</span>
+          </div>
+        </div>
+        <div class="capacity-gaps">
+          <h5>Gap Analysis</h5>
+          <ul>${this._socCapacityPlan.gapAnalysis.map(g => html`<li>${g}</li>`)}</ul>
+        </div>
+        <div class="capacity-actions">
+          <h5>Recommended Actions</h5>
+          <ul>${this._socCapacityPlan.recommendedActions.map(a => html`<li>${a}</li>`)}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocEscalation(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-escalation-section">
+        <div class="section-header">
+          <h4>Escalation Path Visualization</h4>
+        </div>
+        <div class="escalation-chain">
+          ${this._socEscalationPaths.map((ep, i) => html`
+            <div class="escalation-level level-${ep.level}">
+              <div class="level-header">
+                <span class="level-number">L${ep.level}</span>
+                <span class="level-name">${ep.name}</span>
+              </div>
+              <div class="level-details">
+                <p><strong>Criteria:</strong> ${ep.criteria}</p>
+                <p><strong>Contact:</strong> ${ep.contact}</p>
+                <p><strong>Avg Response:</strong> ${ep.avgResponseMin} min</p>
+                <p><strong>Escalation Rate:</strong> ${(ep.escalationRate * 100).toFixed(1)}%</p>
+              </div>
+              ${i < this._socEscalationPaths.length - 1 ? html`<div class="escalation-arrow">\u2193</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocShiftCalendar(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-calendar-section">
+        <div class="section-header">
+          <h4>Shift Coverage Calendar</h4>
+        </div>
+        <div class="calendar-grid">
+          ${this._socShiftCalendar.map(s => html`
+            <div class="calendar-entry status-${s.status}">
+              <div class="cal-date">${s.date}</div>
+              <div class="cal-shift">${s.shift}</div>
+              <div class="cal-primary">${s.primaryAnalyst}</div>
+              <div class="cal-secondary">+${s.secondaryAnalyst}</div>
+              ${s.notes ? html`<div class="cal-notes">${s.notes}</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocIncidentBacklog(): ReturnType<typeof html> {
+    const sorted = [...this._socIncidentBacklog].sort((a, b) => a.slaRemaining - b.slaRemaining);
+    return html`
+      <div class="soc-backlog-section">
+        <div class="section-header">
+          <h4>Incident Backlog</h4>
+        </div>
+        <div class="backlog-list">
+          ${sorted.map(inc => html`
+            <div class="backlog-item severity-${inc.severity}">
+              <span class="backlog-id">${inc.id}</span>
+              <span class="backlog-age">${inc.ageHours}h old</span>
+              <span class="backlog-category">${inc.category}</span>
+              <span class="backlog-analyst">${inc.assignedTo}</span>
+              <span class="backlog-sla ${inc.slaRemaining < 60 ? 'warning' : ''}">${inc.slaRemaining}m SLA</span>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocKpiTargets(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-kpi-section">
+        <div class="section-header">
+          <h4>SOC KPI Targets vs Actual</h4>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">MTTR Target</div>
+            <div class="kpi-value">${this._socKpiTargets.mttrTarget} min</div>
+            <div class="kpi-actual">Actual: 24 min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">MTTD Target</div>
+            <div class="kpi-value">${this._socKpiTargets.mttdTarget} min</div>
+            <div class="kpi-actual">Actual: 3.2 min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">False Positive Rate</div>
+            <div class="kpi-value">${(this._socKpiTargets.falsePositiveRate * 100).toFixed(1)}%</div>
+            <div class="kpi-actual">Actual: 4.2%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Escalation Rate</div>
+            <div class="kpi-value">${(this._socKpiTargets.escalationRate * 100).toFixed(1)}%</div>
+            <div class="kpi-actual">Actual: 8.5%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Coverage Target</div>
+            <div class="kpi-value">${(this._socKpiTargets.coverageTarget * 100).toFixed(0)}%</div>
+            <div class="kpi-actual">Actual: 87%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

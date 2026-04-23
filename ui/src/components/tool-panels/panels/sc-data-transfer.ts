@@ -2006,6 +2006,477 @@ private _executionHistory: ExecutionRecord[] = [
   }
 @state() private _spmAssetGroup4 = { id: "AST-004", name: "Asset Group 4", type: "infrastructure", criticality: "medium", assetCount: 40, complianceScore: 88, riskScore: 72, lastAssessment: "2026-01-09" } as any;
 
+  // === Identity & Access Intelligence Module ===
+  private _privilegedAccessInventory: Array<{id: string; identity: string; accountType: string; system: string; privilegeLevel: string; lastUsed: string; usageFrequency: string; riskScore: number; certificationStatus: string; sessionCount: number; avgSessionDuration: string}> = [];
+  private _accessCertCampaigns: Array<{id: string; name: string; scope: string; totalReviews: number; completed: number; pending: number; overdue: number; deadline: string; owner: string; status: string}> = [];
+  private _roleMiningSuggestions: Array<{suggestionId: string; roleName: string; description: string; memberCount: number; permissionCount: number; similarity: number; recommendation: string}> = [];
+  private _sodViolations: Array<{violationId: string; user: string; conflictingRoles: string[]; system: string; riskLevel: string; detectedAt: string; status: string; remediation: string}> = [];
+  private _accessAnomalies: Array<{anomalyId: string; user: string; behavior: string; baseline: string; observed: string; deviation: string; riskScore: number; timestamp: string; investigated: boolean}> = [];
+  private _identityRiskScores: Array<{userId: string; name: string; department: string; riskScore: number; factors: string[]; lastAssessment: string; trend: string}> = [];
+
+  private _initIdentityAccessIntel(): void {
+    this._privilegedAccessInventory = [
+      {id: 'pa-001', identity: 'admin-john', accountType: 'domain-admin', system: 'Active Directory', privilegeLevel: 'full', lastUsed: '2024-12-16T07:30:00Z', usageFrequency: 'daily', riskScore: 9.2, certificationStatus: 'current', sessionCount: 156, avgSessionDuration: '2.3 hrs'},
+      {id: 'pa-002', identity: 'svc-deploy-bot', accountType: 'service-account', system: 'Kubernetes', privilegeLevel: 'cluster-admin', lastUsed: '2024-12-16T06:15:00Z', usageFrequency: 'hourly', riskScore: 8.7, certificationStatus: 'expired', sessionCount: 8923, avgSessionDuration: '0.1 hrs'},
+      {id: 'pa-003', identity: 'dba-sarah', accountType: 'database-admin', system: 'Oracle RAC', privilegeLevel: 'sysdba', lastUsed: '2024-12-15T22:00:00Z', usageFrequency: 'weekly', riskScore: 7.8, certificationStatus: 'current', sessionCount: 45, avgSessionDuration: '1.5 hrs'},
+      {id: 'pa-004', identity: 'root-prod-web', accountType: 'shared-root', system: 'Linux (prod)', privilegeLevel: 'root', lastUsed: '2024-12-14T03:00:00Z', usageFrequency: 'monthly', riskScore: 9.5, certificationStatus: 'overdue', sessionCount: 12, avgSessionDuration: '0.5 hrs'},
+      {id: 'pa-005', identity: 'api-gateway-key', accountType: 'api-key', system: 'API Gateway', privilegeLevel: 'admin', lastUsed: '2024-12-16T08:00:00Z', usageFrequency: 'continuous', riskScore: 6.3, certificationStatus: 'current', sessionCount: 45000, avgSessionDuration: 'N/A'},
+      {id: 'pa-006', identity: 'cloud-admin-alice', accountType: 'cloud-admin', system: 'AWS', privilegeLevel: 'full', lastUsed: '2024-12-16T09:00:00Z', usageFrequency: 'daily', riskScore: 8.9, certificationStatus: 'current', sessionCount: 234, avgSessionDuration: '3.1 hrs'},
+    ];
+    this._accessCertCampaigns = [
+      {id: 'cert-001', name: 'Q4 2024 Privileged Access Review', scope: 'All Domain Admins', totalReviews: 24, completed: 15, pending: 7, overdue: 2, deadline: '2024-12-20', owner: 'IAM Team', status: 'in-progress'},
+      {id: 'cert-002', name: 'Annual Service Account Cleanup', scope: 'All Service Accounts', totalReviews: 156, completed: 89, pending: 45, overdue: 22, deadline: '2024-12-31', owner: 'Platform Team', status: 'in-progress'},
+      {id: 'cert-003', name: 'Cloud IAM Permissions Audit', scope: 'AWS/Azure/GCP Admins', totalReviews: 42, completed: 42, pending: 0, overdue: 0, deadline: '2024-12-15', owner: 'Cloud Security', status: 'completed'},
+      {id: 'cert-004', name: 'Database Admin Access Review', scope: 'All DBA Accounts', totalReviews: 18, completed: 12, pending: 4, overdue: 2, deadline: '2024-12-18', owner: 'DBA Team', status: 'in-progress'},
+    ];
+    this._roleMiningSuggestions = [
+      {suggestionId: 'rm-001', roleName: 'Junior Developer', description: 'Users with identical read-only access to dev repos and staging environments', memberCount: 15, permissionCount: 8, similarity: 0.94, recommendation: 'Create formal role to reduce permission sprawl'},
+      {suggestionId: 'rm-002', roleName: 'Finance Read-Only', description: 'Finance team members with identical read access to financial systems', memberCount: 22, permissionCount: 12, similarity: 0.91, recommendation: 'Consolidate into single role with MFA requirement'},
+      {suggestionId: 'rm-003', roleName: 'Contractor Limited', description: 'Contractors with similar restricted access patterns', memberCount: 8, permissionCount: 5, similarity: 0.88, recommendation: 'Create time-limited role with auto-expiration'},
+      {suggestionId: 'rm-004', roleName: 'Incident Responder', description: 'Security team members with overlapping IR tool access', memberCount: 6, permissionCount: 15, similarity: 0.85, recommendation: 'Formalize IR role with just-in-time elevation'},
+    ];
+    this._sodViolations = [
+      {violationId: 'sod-001', user: 'john.smith', conflictingRoles: ['procurement-approver', 'vendor-admin'], system: 'ERP', riskLevel: 'high', detectedAt: '2024-12-10T14:00:00Z', status: 'remediation-in-progress', remediation: 'Remove vendor-admin role, assign to separate user'},
+      {violationId: 'sod-002', user: 'jane.doe', conflictingRoles: ['code-reviewer', 'deploy-approver'], system: 'CI/CD', riskLevel: 'medium', detectedAt: '2024-12-08T09:30:00Z', status: 'accepted-risk', remediation: 'Documented exception - team size constraint'},
+      {violationId: 'sod-003', user: 'bob.wilson', conflictingRoles: ['auditor', 'sysadmin'], system: 'Active Directory', riskLevel: 'critical', detectedAt: '2024-12-05T11:00:00Z', status: 'remediated', remediation: 'Removed sysadmin role, assigned to IT ops'},
+    ];
+    this._accessAnomalies = [
+      {anomalyId: 'anom-001', user: 'alice.johnson', behavior: 'Off-hours VPN access from unusual location', baseline: 'Business hours, office IP', observed: '03:00 AM, foreign IP (Russia)', deviation: 'High', riskScore: 8.9, timestamp: '2024-12-16T03:00:00Z', investigated: false},
+      {anomalyId: 'anom-002', user: 'charlie.brown', behavior: 'Mass file download from SharePoint', baseline: '50 files/day avg', observed: '2,340 files in 1 hour', deviation: 'Extreme', riskScore: 9.5, timestamp: '2024-12-15T14:30:00Z', investigated: true},
+      {anomalyId: 'anom-003', user: 'diana.ross', behavior: 'Privilege escalation attempt on production DB', baseline: 'Read-only queries', observed: 'GRANT statement execution', deviation: 'Critical', riskScore: 10.0, timestamp: '2024-12-15T16:00:00Z', investigated: true},
+      {anomalyId: 'anom-004', user: 'eve.davis', behavior: 'Multiple failed MFA attempts followed by success', baseline: '<3 failures/month', observed: '12 failures then success', deviation: 'High', riskScore: 7.8, timestamp: '2024-12-14T22:15:00Z', investigated: false},
+      {anomalyId: 'anom-005', user: 'frank.miller', behavior: 'Access to sensitive folder never accessed before', baseline: 'No access in 2 years', observed: 'Full folder browse + download', deviation: 'Medium', riskScore: 6.5, timestamp: '2024-12-14T10:00:00Z', investigated: false},
+    ];
+    this._identityRiskScores = [
+      {userId: 'usr-001', name: 'Alice Johnson', department: 'Engineering', riskScore: 8.9, factors: ['Off-hours access', 'Unusual location', 'New device'], lastAssessment: '2024-12-16', trend: 'increasing'},
+      {userId: 'usr-002', name: 'Charlie Brown', department: 'Marketing', riskScore: 9.5, factors: ['Mass download', 'Data exfiltration indicator', 'Policy violation'], lastAssessment: '2024-12-15', trend: 'increasing'},
+      {userId: 'usr-003', name: 'Diana Ross', department: 'DBA Team', riskScore: 10.0, factors: ['Privilege escalation', 'Unauthorized access attempt', 'Critical system'], lastAssessment: '2024-12-15', trend: 'critical'},
+      {userId: 'usr-004', name: 'Bob Wilson', department: 'IT Ops', riskScore: 3.2, factors: ['SOD violation (remediated)'], lastAssessment: '2024-12-05', trend: 'stable'},
+      {userId: 'usr-005', name: 'Eve Davis', department: 'Sales', riskScore: 7.8, factors: ['MFA fatigue attack indicator', 'Credential stuffing pattern'], lastAssessment: '2024-12-14', trend: 'increasing'},
+      {userId: 'usr-006', name: 'Frank Miller', department: 'HR', riskScore: 6.5, factors: ['Access to sensitive data', 'First-time access pattern'], lastAssessment: '2024-12-14', trend: 'stable'},
+    ];
+  }
+
+  private _renderPrivilegedAccess(): ReturnType<typeof html> {
+    return html`
+      <div class="privileged-access-section">
+        <div class="section-header">
+          <h4>Privileged Access Inventory</h4>
+          <span class="badge warning">${this._privilegedAccessInventory.filter(p => p.certificationStatus !== 'current').length} Need Review</span>
+        </div>
+        <div class="pa-grid">
+          ${this._privilegedAccessInventory.sort((a, b) => b.riskScore - a.riskScore).map(p => html`
+            <div class="pa-card cert-${p.certificationStatus}">
+              <div class="pa-header">
+                <span class="pa-identity">${p.identity}</span>
+                <span class="pa-risk">${p.riskScore.toFixed(1)}</span>
+              </div>
+              <div class="pa-details">
+                <span>Type: ${p.accountType}</span>
+                <span>System: ${p.system}</span>
+                <span>Level: ${p.privilegeLevel}</span>
+              </div>
+              <div class="pa-usage">
+                <span>Last: ${p.lastUsed}</span>
+                <span>Freq: ${p.usageFrequency}</span>
+                <span>Sessions: ${p.sessionCount}</span>
+              </div>
+              <div class="pa-cert">
+                <span class="cert-status ${p.certificationStatus}">${p.certificationStatus}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderCertCampaigns(): ReturnType<typeof html> {
+    return html`
+      <div class="cert-campaigns-section">
+        <div class="section-header">
+          <h4>Access Certification Campaigns</h4>
+        </div>
+        <div class="campaigns-list">
+          ${this._accessCertCampaigns.map(c => html`
+            <div class="campaign-card status-${c.status}">
+              <div class="campaign-header">
+                <span class="campaign-name">${c.name}</span>
+                <span class="campaign-status">${c.status}</span>
+              </div>
+              <div class="campaign-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width: ${(c.completed / c.totalReviews * 100).toFixed(0)}%"></div></div>
+                <span class="progress-text">${c.completed}/${c.totalReviews} reviews</span>
+              </div>
+              <div class="campaign-details">
+                <span>Scope: ${c.scope}</span>
+                <span>Pending: ${c.pending}</span>
+                <span>Overdue: ${c.overdue}</span>
+                <span>Deadline: ${c.deadline}</span>
+                <span>Owner: ${c.owner}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderRoleMining(): ReturnType<typeof html> {
+    return html`
+      <div class="role-mining-section">
+        <div class="section-header">
+          <h4>Role Mining Suggestions</h4>
+        </div>
+        <div class="mining-grid">
+          ${this._roleMiningSuggestions.sort((a, b) => b.similarity - a.similarity).map(r => html`
+            <div class="mining-card">
+              <div class="mining-header">
+                <span class="mining-role">${r.roleName}</span>
+                <span class="mining-similarity">${(r.similarity * 100).toFixed(0)}% match</span>
+              </div>
+              <p class="mining-desc">${r.description}</p>
+              <div class="mining-stats">
+                <span>Members: ${r.memberCount}</span>
+                <span>Permissions: ${r.permissionCount}</span>
+              </div>
+              <div class="mining-recommendation">${r.recommendation}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSodViolations(): ReturnType<typeof html> {
+    return html`
+      <div class="sod-violations-section">
+        <div class="section-header">
+          <h4>Separation of Duties Violations</h4>
+        </div>
+        <div class="sod-list">
+          ${this._sodViolations.sort((a, b) => {
+            const order = {critical: 0, high: 1, medium: 2};
+            return (order[a.riskLevel] ?? 3) - (order[b.riskLevel] ?? 3);
+          }).map(v => html`
+            <div class="sod-card risk-${v.riskLevel}">
+              <div class="sod-header">
+                <span class="sod-user">${v.user}</span>
+                <span class="sod-risk">${v.riskLevel}</span>
+                <span class="sod-status">${v.status}</span>
+              </div>
+              <div class="sod-details">
+                <span>System: ${v.system}</span>
+                <span>Conflicting: ${v.conflictingRoles.join(' + ')}</span>
+                <span>Detected: ${v.detectedAt}</span>
+              </div>
+              <div class="sod-remediation">${v.remediation}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderAccessAnomalies(): ReturnType<typeof html> {
+    return html`
+      <div class="access-anomalies-section">
+        <div class="section-header">
+          <h4>Access Pattern Anomalies</h4>
+          <span class="badge warning">${this._accessAnomalies.filter(a => !a.investigated).length} Uninvestigated</span>
+        </div>
+        <div class="anomaly-list">
+          ${this._accessAnomalies.sort((a, b) => b.riskScore - a.riskScore).map(a => html`
+            <div class="anomaly-card ${a.investigated ? 'investigated' : 'pending'}">
+              <div class="anomaly-header">
+                <span class="anomaly-user">${a.user}</span>
+                <span class="anomaly-risk">${a.riskScore.toFixed(1)}</span>
+                <span class="anomaly-status">${a.investigated ? 'Investigated' : 'Pending'}</span>
+              </div>
+              <p class="anomaly-behavior">${a.behavior}</p>
+              <div class="anomaly-comparison">
+                <span>Baseline: ${a.baseline}</span>
+                <span>Observed: ${a.observed}</span>
+                <span>Deviation: ${a.deviation}</span>
+              </div>
+              <div class="anomaly-time">${a.timestamp}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderIdentityRiskScores(): ReturnType<typeof html> {
+    return html`
+      <div class="identity-risk-section">
+        <div class="section-header">
+          <h4>Identity Risk Scoring</h4>
+        </div>
+        <div class="risk-grid">
+          ${this._identityRiskScores.sort((a, b) => b.riskScore - a.riskScore).map(u => html`
+            <div class="risk-card trend-${u.trend}">
+              <div class="risk-header">
+                <span class="risk-name">${u.name}</span>
+                <span class="risk-score">${u.riskScore.toFixed(1)}</span>
+                <span class="risk-trend ${u.trend}">${u.trend === 'increasing' ? '\u2191' : u.trend === 'critical' ? '\u26A0' : '\u2192'}</span>
+              </div>
+              <div class="risk-details">
+                <span>Department: ${u.department}</span>
+                <span>Last Assessment: ${u.lastAssessment}</span>
+              </div>
+              <div class="risk-factors">
+                ${u.factors.map(f => html`<span class="factor-tag">${f}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Compliance Automation Module ===
+  private _complianceAutoChecks: Array<{checkId: string; framework: string; control: string; status: string; lastRun: string; nextRun: string; result: string; severity: string; autoRemediated: boolean; remediationAction: string}> = [];
+  private _policyViolationTracker: Array<{violationId: string; policy: string; resource: string; severity: string; detectedAt: string; owner: string; status: string; remediationDeadline: string; autoFixAvailable: boolean}> = [];
+  private _auditTrailAnalyzer: Array<{eventId: string; timestamp: string; user: string; action: string; resource: string; outcome: string; riskFlag: boolean; category: string; sessionId: string}> = [];
+  private _complianceDriftDetector: Array<{driftId: string; baseline: string; currentState: string; driftType: string; severity: string; detectedAt: string; autoCorrected: boolean; approvalRequired: boolean}> = [];
+  private _regulatoryDeadlineTracker: Array<{deadlineId: string; regulation: string; requirement: string; dueDate: string; status: string; progress: number; owner: string; riskIfMissed: string; dependencies: string[]}> = [];
+  private _complianceScorecard: Array<{category: string; score: number; maxScore: number; trend: string; lastAssessment: string; gaps: number; remediationPlan: string}> = [];
+
+  private _initComplianceAutomation(): void {
+    this._complianceAutoChecks = [
+      {checkId: 'chk-001', framework: 'SOC2', control: 'CC6.1', status: 'passed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-17T06:00:00Z', result: 'All MFA policies enforced', severity: 'high', autoRemediated: false, remediationAction: ''},
+      {checkId: 'chk-002', framework: 'PCI-DSS', control: 'REQ-8', status: 'failed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-16T12:00:00Z', result: '3 accounts without MFA', severity: 'critical', autoRemediated: true, remediationAction: 'MFA enforced on 3 accounts'},
+      {checkId: 'chk-003', framework: 'ISO27001', control: 'A.9.2', status: 'passed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-17T06:00:00Z', result: 'Access reviews current', severity: 'medium', autoRemediated: false, remediationAction: ''},
+      {checkId: 'chk-004', framework: 'GDPR', control: 'Art.32', status: 'warning', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-16T18:00:00Z', result: 'Encryption key rotation overdue by 5 days', severity: 'high', autoRemediated: true, remediationAction: 'Key rotation scheduled'},
+      {checkId: 'chk-005', framework: 'HIPAA', control: '164.312', status: 'passed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-17T06:00:00Z', result: 'PHI access logging active', severity: 'critical', autoRemediated: false, remediationAction: ''},
+      {checkId: 'chk-006', framework: 'NIST CSF', control: 'PR.AC-1', status: 'failed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-16T12:00:00Z', result: '12 dormant accounts found', severity: 'medium', autoRemediated: true, remediationAction: 'Disabled 12 dormant accounts'},
+    ];
+    this._policyViolationTracker = [
+      {violationId: 'viol-001', policy: 'Password Policy', resource: 'AD Domain', severity: 'high', detectedAt: '2024-12-15T10:00:00Z', owner: 'IAM Team', status: 'remediated', remediationDeadline: '2024-12-20', autoFixAvailable: true},
+      {violationId: 'viol-002', policy: 'Network Segmentation', resource: 'Prod VLAN 100', severity: 'critical', detectedAt: '2024-12-14T15:30:00Z', owner: 'Network Team', status: 'in-progress', remediationDeadline: '2024-12-18', autoFixAvailable: false},
+      {violationId: 'viol-003', policy: 'Data Classification', resource: 'SharePoint Site HR', severity: 'medium', detectedAt: '2024-12-13T09:00:00Z', owner: 'Data Governance', status: 'pending-review', remediationDeadline: '2024-12-25', autoFixAvailable: true},
+      {violationId: 'viol-004', policy: 'Encryption Standard', resource: 'S3 Bucket logs-raw', severity: 'critical', detectedAt: '2024-12-12T14:00:00Z', owner: 'Cloud Team', status: 'remediated', remediationDeadline: '2024-12-16', autoFixAvailable: true},
+      {violationId: 'viol-005', policy: 'Access Control', resource: 'K8s Cluster Prod', severity: 'high', detectedAt: '2024-12-11T11:00:00Z', owner: 'Platform Team', status: 'in-progress', remediationDeadline: '2024-12-22', autoFixAvailable: false},
+    ];
+    this._auditTrailAnalyzer = [
+      {eventId: 'evt-001', timestamp: '2024-12-16T08:30:00Z', user: 'admin@company.com', action: 'Privilege Escalation', resource: 'AD Domain Admin', outcome: 'success', riskFlag: true, category: 'privileged-access', sessionId: 'sess-a1b2'},
+      {eventId: 'evt-002', timestamp: '2024-12-16T08:25:00Z', user: 'svc-deploy@company.com', action: 'Secret Access', resource: 'Vault/Prod/DB', outcome: 'success', riskFlag: false, category: 'automation', sessionId: 'sess-c3d4'},
+      {eventId: 'evt-003', timestamp: '2024-12-16T08:20:00Z', user: 'unknown@external.com', action: 'Login Attempt', resource: 'VPN Gateway', outcome: 'denied', riskFlag: true, category: 'authentication', sessionId: 'sess-e5f6'},
+      {eventId: 'evt-004', timestamp: '2024-12-16T08:15:00Z', user: 'bob@company.com', action: 'Mass Download', resource: 'SharePoint/Finance', outcome: 'success', riskFlag: true, category: 'data-access', sessionId: 'sess-g7h8'},
+      {eventId: 'evt-005', timestamp: '2024-12-16T08:10:00Z', user: 'alice@company.com', action: 'Config Change', resource: 'Firewall Rule 42', outcome: 'success', riskFlag: false, category: 'configuration', sessionId: 'sess-i9j0'},
+      {eventId: 'evt-006', timestamp: '2024-12-16T08:05:00Z', user: 'system', action: 'Auto-Remediation', resource: 'IAM Policy Violation', outcome: 'success', riskFlag: false, category: 'automation', sessionId: 'auto-k1l2'},
+    ];
+    this._complianceDriftDetector = [
+      {driftId: 'drift-001', baseline: 'SOC2 CC6.1 (MFA Required)', currentState: '3 accounts without MFA', driftType: 'configuration', severity: 'critical', detectedAt: '2024-12-16T06:00:00Z', autoCorrected: true, approvalRequired: false},
+      {driftId: 'drift-002', baseline: 'NIST AC-2 (Account Management)', currentState: '12 dormant accounts active', driftType: 'access', severity: 'high', detectedAt: '2024-12-16T06:00:00Z', autoCorrected: true, approvalRequired: false},
+      {driftId: 'drift-003', baseline: 'PCI-DSS REQ-1 (Firewall Rules)', currentState: 'Rule 42 modified without review', driftType: 'configuration', severity: 'high', detectedAt: '2024-12-16T07:00:00Z', autoCorrected: false, approvalRequired: true},
+      {driftId: 'drift-004', baseline: 'ISO27001 A.12.4 (Logging)', currentState: 'Log forwarding paused on 2 hosts', driftType: 'operational', severity: 'medium', detectedAt: '2024-12-16T05:00:00Z', autoCorrected: true, approvalRequired: false},
+      {driftId: 'drift-005', baseline: 'GDPR Art.25 (Data Protection by Design)', currentState: 'New form collects SSN without consent', driftType: 'privacy', severity: 'critical', detectedAt: '2024-12-15T16:00:00Z', autoCorrected: false, approvalRequired: true},
+    ];
+    this._regulatoryDeadlineTracker = [
+      {deadlineId: 'reg-001', regulation: 'GDPR', requirement: 'Annual DPA Review', dueDate: '2025-01-15', status: 'on-track', progress: 75, owner: 'Legal', riskIfMissed: 'Regulatory fine up to 4% global revenue', dependencies: ['Vendor DPA responses', 'Internal review']},
+      {deadlineId: 'reg-002', regulation: 'SOC2', requirement: 'Type II Audit Evidence Collection', dueDate: '2024-12-31', status: 'at-risk', progress: 60, owner: 'GRC Team', riskIfMissed: 'Audit qualification failure', dependencies: ['Control testing', 'Evidence gathering']},
+      {deadlineId: 'reg-003', regulation: 'PCI-DSS', requirement: 'Quarterly ASV Scan', dueDate: '2024-12-20', status: 'on-track', progress: 90, owner: 'Security Ops', riskIfMissed: 'PCI compliance lapse', dependencies: ['Scan scheduling']},
+      {deadlineId: 'reg-004', regulation: 'HIPAA', requirement: 'BAA Review with Vendors', dueDate: '2025-02-28', status: 'on-track', progress: 40, owner: 'Compliance', riskIfMissed: 'OCR enforcement action', dependencies: ['Vendor responses', 'Legal review']},
+      {deadlineId: 'reg-005', regulation: 'SOX', requirement: 'IT General Controls Testing', dueDate: '2025-01-31', status: 'at-risk', progress: 35, owner: 'Internal Audit', riskIfMissed: 'Material weakness disclosure', dependencies: ['Control inventory', 'Test plan']},
+    ];
+    this._complianceScorecard = [
+      {category: 'Access Control', score: 87, maxScore: 100, trend: 'up', lastAssessment: '2024-12-16', gaps: 3, remediationPlan: 'Remediate 3 MFA gaps by Dec 20'},
+      {category: 'Data Protection', score: 92, maxScore: 100, trend: 'stable', lastAssessment: '2024-12-16', gaps: 1, remediationPlan: 'Fix encryption key rotation'},
+      {category: 'Network Security', score: 78, maxScore: 100, trend: 'down', lastAssessment: '2024-12-15', gaps: 5, remediationPlan: 'Review and fix 5 firewall rule violations'},
+      {category: 'Endpoint Security', score: 95, maxScore: 100, trend: 'up', lastAssessment: '2024-12-16', gaps: 1, remediationPlan: 'Update 1 outdated EDR agent'},
+      {category: 'Incident Response', score: 85, maxScore: 100, trend: 'up', lastAssessment: '2024-12-14', gaps: 2, remediationPlan: 'Complete IR tabletop exercise'},
+      {category: 'Vendor Management', score: 71, maxScore: 100, trend: 'down', lastAssessment: '2024-12-13', gaps: 7, remediationPlan: 'Complete 7 overdue vendor assessments'},
+    ];
+  }
+
+  private _renderComplianceAutoChecks(): ReturnType<typeof html> {
+    const failed = this._complianceAutoChecks.filter(c => c.status === 'failed');
+    const autoRemediated = this._complianceAutoChecks.filter(c => c.autoRemediated);
+    return html`
+      <div class="compliance-auto-section">
+        <div class="section-header">
+          <h4>Automated Compliance Checks</h4>
+          <span class="badge critical">${failed.length} Failed</span>
+          <span class="badge success">${autoRemediated.length} Auto-Fixed</span>
+        </div>
+        <div class="checks-grid">
+          ${this._complianceAutoChecks.map(c => html`
+            <div class="check-card status-${c.status}">
+              <div class="check-header">
+                <span class="check-framework">${c.framework}</span>
+                <span class="check-control">${c.control}</span>
+                <span class="check-status ${c.status}">${c.status}</span>
+              </div>
+              <div class="check-result">${c.result}</div>
+              <div class="check-meta">
+                <span>Severity: ${c.severity}</span>
+                <span>Last: ${c.lastRun}</span>
+                <span>Next: ${c.nextRun}</span>
+              </div>
+              ${c.autoRemediated ? html`<div class="auto-remediation">Auto-remediated: ${c.remediationAction}</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderPolicyViolations(): ReturnType<typeof html> {
+    return html`
+      <div class="policy-violations-section">
+        <div class="section-header">
+          <h4>Policy Violation Tracker</h4>
+        </div>
+        <div class="violations-list">
+          ${this._policyViolationTracker.sort((a, b) => {
+            const order = {critical: 0, high: 1, medium: 2};
+            return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+          }).map(v => html`
+            <div class="violation-card severity-${v.severity}">
+              <div class="violation-header">
+                <span class="violation-policy">${v.policy}</span>
+                <span class="violation-resource">${v.resource}</span>
+                <span class="violation-status ${v.status}">${v.status}</span>
+                ${v.autoFixAvailable ? html`<span class="auto-fix-badge">Auto-Fix Available</span>` : ''}
+              </div>
+              <div class="violation-meta">
+                <span>Owner: ${v.owner}</span>
+                <span>Detected: ${v.detectedAt}</span>
+                <span>Deadline: ${v.remediationDeadline}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderAuditTrailAnalysis(): ReturnType<typeof html> {
+    const flagged = this._auditTrailAnalyzer.filter(e => e.riskFlag);
+    return html`
+      <div class="audit-trail-section">
+        <div class="section-header">
+          <h4>Audit Trail Analysis</h4>
+          <span class="badge warning">${flagged.length} Risk Flags</span>
+        </div>
+        <div class="audit-list">
+          ${this._auditTrailAnalyzer.map(e => html`
+            <div class="audit-card ${e.riskFlag ? 'flagged' : 'normal'}">
+              <div class="audit-header">
+                <span class="audit-timestamp">${e.timestamp}</span>
+                <span class="audit-user">${e.user}</span>
+                <span class="audit-action">${e.action}</span>
+                ${e.riskFlag ? html`<span class="risk-flag">RISK</span>` : ''}
+              </div>
+              <div class="audit-details">
+                <span>Resource: ${e.resource}</span>
+                <span>Outcome: ${e.outcome}</span>
+                <span>Category: ${e.category}</span>
+                <span>Session: ${e.sessionId}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderComplianceDrift(): ReturnType<typeof html> {
+    return html`
+      <div class="drift-section">
+        <div class="section-header">
+          <h4>Compliance Drift Detection</h4>
+          <span class="badge warning">${this._complianceDriftDetector.filter(d => !d.autoCorrected).length} Manual Fix Required</span>
+        </div>
+        <div class="drift-list">
+          ${this._complianceDriftDetector.sort((a, b) => {
+            const order = {critical: 0, high: 1, medium: 2};
+            return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+          }).map(d => html`
+            <div class="drift-card severity-${d.severity}">
+              <div class="drift-header">
+                <span class="drift-type">${d.driftType}</span>
+                <span class="drift-severity">${d.severity}</span>
+                <span class="drift-corrected ${d.autoCorrected}">${d.autoCorrected ? 'Auto-Corrected' : 'Manual Fix'}</span>
+              </div>
+              <div class="drift-baseline">Baseline: ${d.baseline}</div>
+              <div class="drift-current">Current: ${d.currentState}</div>
+              <div class="drift-meta">
+                <span>Detected: ${d.detectedAt}</span>
+                ${d.approvalRequired ? html`<span class="approval-needed">Approval Required</span>` : ''}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderRegulatoryDeadlines(): ReturnType<typeof html> {
+    return html`
+      <div class="deadlines-section">
+        <div class="section-header">
+          <h4>Regulatory Deadline Tracker</h4>
+        </div>
+        <div class="deadlines-list">
+          ${this._regulatoryDeadlineTracker.sort((a, b) => {
+            const order = {critical: 0, 'at-risk': 1, 'on-track': 2};
+            return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+          }).map(d => html`
+            <div class="deadline-card status-${d.status}">
+              <div class="deadline-header">
+                <span class="deadline-reg">${d.regulation}</span>
+                <span class="deadline-req">${d.requirement}</span>
+                <span class="deadline-status">${d.status}</span>
+              </div>
+              <div class="deadline-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width: ${d.progress}%"></div></div>
+                <span class="progress-text">${d.progress}%</span>
+              </div>
+              <div class="deadline-meta">
+                <span>Due: ${d.dueDate}</span>
+                <span>Owner: ${d.owner}</span>
+              </div>
+              <div class="deadline-risk">${d.riskIfMissed}</div>
+              <div class="deadline-deps">
+                ${d.dependencies.map(dep => html`<span class="dep-tag">${dep}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderComplianceScorecard(): ReturnType<typeof html> {
+    return html`
+      <div class="scorecard-section">
+        <div class="section-header">
+          <h4>Compliance Scorecard</h4>
+        </div>
+        <div class="scorecard-grid">
+          ${this._complianceScorecard.sort((a, b) => a.score - b.score).map(s => html`
+            <div class="score-card trend-${s.trend}">
+              <div class="score-header">
+                <span class="score-category">${s.category}</span>
+                <span class="score-value">${s.score}/${s.maxScore}</span>
+                <span class="score-trend">${s.trend === 'up' ? '\u2191' : s.trend === 'down' ? '\u2193' : '\u2192'}</span>
+              </div>
+              <div class="score-bar"><div class="score-fill" style="width: ${s.score}%"></div></div>
+              <div class="score-meta">
+                <span>Gaps: ${s.gaps}</span>
+                <span>Assessed: ${s.lastAssessment}</span>
+              </div>
+              <div class="score-plan">${s.remediationPlan}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

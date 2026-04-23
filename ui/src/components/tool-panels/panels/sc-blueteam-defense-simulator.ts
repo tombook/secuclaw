@@ -1798,6 +1798,435 @@ export class ScBlueteamDefenseSimulator extends LitElement {
     };
   }
 
+  // === Vulnerability Prioritization Engine Module ===
+  private _vulnEpssScores: Array<{vulnId: string; cve: string; cvss: number; epss: number; combinedScore: number; assetCriticality: number; exposure: number; businessWeight: number; exploitAvailable: boolean; exploitPrediction: number}> = [];
+  private _vulnPatchSchedule: Array<{patchId: string; cve: string; component: string; version: string; patchVersion: string; scheduledDate: string; window: string; riskIfUnpatched: string; status: string}> = [];
+  private _vulnAgingAlerts: Array<{vulnId: string; cve: string; ageDays: number; severity: string; slaDays: number; overdueDays: number; owner: string; reason: string}> = [];
+  private _zeroDayWorkflows: Array<{workflowId: string; cve: string; description: string; status: string; detectedAt: string; vendorNotified: boolean; patchAvailable: boolean; workaround: string; riskScore: number; nextAction: string; nextActionDate: string}> = [];
+  private _vulnBusinessContext: Array<{assetId: string; assetName: string; businessUnit: string; dataClassification: string; internetFacing: boolean; regulatoryImpact: string[]; criticalityScore: number; vulnCount: number; topVuln: string}> = [];
+
+  private _initVulnPriorityEngine(): void {
+    this._vulnEpssScores = [
+      {vulnId: 'vuln-001', cve: 'CVE-2024-XXXX', cvss: 9.8, epss: 0.974, combinedScore: 96.8, assetCriticality: 10, exposure: 9, businessWeight: 1.5, exploitAvailable: true, exploitPrediction: 0.98},
+      {vulnId: 'vuln-002', cve: 'CVE-2024-YYYY', cvss: 8.6, epss: 0.891, combinedScore: 85.2, assetCriticality: 8, exposure: 7, businessWeight: 1.3, exploitAvailable: true, exploitPrediction: 0.92},
+      {vulnId: 'vuln-003', cve: 'CVE-2024-ZZZZ', cvss: 7.5, epss: 0.654, combinedScore: 68.1, assetCriticality: 6, exposure: 5, businessWeight: 1.1, exploitAvailable: false, exploitPrediction: 0.71},
+      {vulnId: 'vuln-004', cve: 'CVE-2024-AAAA', cvss: 9.1, epss: 0.823, combinedScore: 82.7, assetCriticality: 9, exposure: 8, businessWeight: 1.4, exploitAvailable: true, exploitPrediction: 0.88},
+      {vulnId: 'vuln-005', cve: 'CVE-2024-BBBB', cvss: 6.5, epss: 0.412, combinedScore: 45.3, assetCriticality: 4, exposure: 3, businessWeight: 1.0, exploitAvailable: false, exploitPrediction: 0.48},
+      {vulnId: 'vuln-006', cve: 'CVE-2024-CCCC', cvss: 8.2, epss: 0.756, combinedScore: 73.9, assetCriticality: 7, exposure: 6, businessWeight: 1.2, exploitAvailable: true, exploitPrediction: 0.81},
+    ];
+    this._vulnPatchSchedule = [
+      {patchId: 'patch-001', cve: 'CVE-2024-XXXX', component: 'Apache Log4j', version: '2.14.1', patchVersion: '2.17.1', scheduledDate: '2024-12-17', window: '02:00-04:00 UTC', riskIfUnpatched: 'Critical - RCE', status: 'approved'},
+      {patchId: 'patch-002', cve: 'CVE-2024-YYYY', component: 'OpenSSL', version: '1.1.1k', patchVersion: '1.1.1w', scheduledDate: '2024-12-18', window: '03:00-05:00 UTC', riskIfUnpatched: 'High - Data Leak', status: 'scheduled'},
+      {patchId: 'patch-003', cve: 'CVE-2024-ZZZZ', component: 'Microsoft Exchange', version: '2016 CU23', patchVersion: 'CU24', scheduledDate: '2024-12-20', window: 'Saturday 01:00-06:00 UTC', riskIfUnpatched: 'High - Privilege Escalation', status: 'pending-approval'},
+      {patchId: 'patch-004', cve: 'CVE-2024-AAAA', component: 'Linux Kernel', version: '5.15.0-88', patchVersion: '5.15.0-91', scheduledDate: '2024-12-19', window: 'Sunday 02:00-04:00 UTC', riskIfUnpatched: 'Critical - LPE', status: 'testing'},
+      {patchId: 'patch-005', cve: 'CVE-2024-CCCC', component: 'Chrome Browser', version: '119.0.6045.159', patchVersion: '120.0.6099.62', scheduledDate: '2024-12-16', window: 'Automatic', riskIfUnpatched: 'High - Sandbox Escape', status: 'deploying'},
+    ];
+    this._vulnAgingAlerts = [
+      {vulnId: 'aging-001', cve: 'CVE-2023-44487', ageDays: 95, severity: 'critical', slaDays: 7, overdueDays: 88, owner: 'platform-team', reason: 'Dependency conflict with legacy system'},
+      {vulnId: 'aging-002', cve: 'CVE-2023-38545', ageDays: 72, severity: 'high', slaDays: 14, overdueDays: 58, owner: 'security-team', reason: 'Patch testing blocked by Q4 release freeze'},
+      {vulnId: 'aging-003', cve: 'CVE-2023-46604', ageDays: 45, severity: 'critical', slaDays: 7, overdueDays: 38, owner: 'middleware-team', reason: 'Requires architecture change for permanent fix'},
+      {vulnId: 'aging-004', cve: 'CVE-2023-22515', ageDays: 60, severity: 'critical', slaDays: 7, overdueDays: 53, owner: 'atlassian-team', reason: 'Vendor patch introduced regression - awaiting hotfix'},
+      {vulnId: 'aging-005', cve: 'CVE-2023-20198', ageDays: 38, severity: 'high', slaDays: 14, overdueDays: 24, owner: 'network-team', reason: 'Hardware replacement needed - procurement delayed'},
+    ];
+    this._zeroDayWorkflows = [
+      {workflowId: 'zd-001', cve: 'CVE-2024-XXXX-ZD', description: 'Chrome V8 type confusion leading to RCE', status: 'active-investigation', detectedAt: '2024-12-15T14:30:00Z', vendorNotified: true, patchAvailable: false, workaround: 'Disable JavaScript in Chrome until patched', riskScore: 9.5, nextAction: 'Apply vendor workaround', nextActionDate: '2024-12-16'},
+      {workflowId: 'zd-002', cve: 'CVE-2024-YYYY-ZD', description: 'Windows Kernel memory corruption via malformed USB device descriptor', status: 'mitigation-applied', detectedAt: '2024-12-10T09:15:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Block USB mass storage devices via GPO', riskScore: 8.7, nextAction: 'Schedule patch deployment', nextActionDate: '2024-12-17'},
+      {workflowId: 'zd-003', cve: 'CVE-2024-ZZZZ-ZD', description: 'Cisco IOS XE web UI implant active exploitation', status: 'patch-deployed', detectedAt: '2024-12-08T16:45:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Disable web UI on affected devices', riskScore: 9.8, nextAction: 'Verify patch deployment completion', nextActionDate: '2024-12-16'},
+    ];
+    this._vulnBusinessContext = [
+      {assetId: 'asset-001', assetName: 'Core Banking Platform', businessUnit: 'Finance', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['PCI-DSS', 'SOX', 'GDPR'], criticalityScore: 10, vulnCount: 12, topVuln: 'CVE-2024-XXXX'},
+      {assetId: 'asset-002', assetName: 'Customer Portal', businessUnit: 'Sales', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['CCPA', 'GDPR'], criticalityScore: 8, vulnCount: 8, topVuln: 'CVE-2024-YYYY'},
+      {assetId: 'asset-003', assetName: 'HR Management System', businessUnit: 'Human Resources', dataClassification: 'confidential', internetFacing: false, regulatoryImpact: ['GDPR', 'HIPAA'], criticalityScore: 7, vulnCount: 5, topVuln: 'CVE-2024-ZZZZ'},
+      {assetId: 'asset-004', assetName: 'Dev CI/CD Pipeline', businessUnit: 'Engineering', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['SOC2'], criticalityScore: 6, vulnCount: 15, topVuln: 'CVE-2024-CCCC'},
+      {assetId: 'asset-005', assetName: 'Executive Email Gateway', businessUnit: 'IT', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['SOX', 'GDPR'], criticalityScore: 9, vulnCount: 3, topVuln: 'CVE-2024-AAAA'},
+    ];
+  }
+
+  private _renderVulnEpssScoring(): ReturnType<typeof html> {
+    const sorted = [...this._vulnEpssScores].sort((a, b) => b.combinedScore - a.combinedScore);
+    return html`
+      <div class="epss-scoring-section">
+        <div class="section-header">
+          <h4>EPSS + CVSS Combined Scoring</h4>
+        </div>
+        <div class="epss-grid">
+          ${sorted.map(v => html`
+            <div class="epss-card score-${v.combinedScore >= 80 ? 'critical' : v.combinedScore >= 60 ? 'high' : 'medium'}">
+              <div class="epss-header">
+                <span class="epss-cve">${v.cve}</span>
+                <span class="epss-combined">${v.combinedScore.toFixed(1)}</span>
+              </div>
+              <div class="epss-breakdown">
+                <div class="score-row"><span>CVSS</span><div class="score-bar"><div class="score-fill" style="width: ${v.cvss * 10}%"></div></div><span>${v.cvss}</span></div>
+                <div class="score-row"><span>EPSS</span><div class="score-bar"><div class="score-fill epss" style="width: ${v.epss * 100}%"></div></div><span>${(v.epss * 100).toFixed(1)}%</span></div>
+                <div class="score-row"><span>Exploit Pred.</span><div class="score-bar"><div class="score-fill prediction" style="width: ${v.exploitPrediction * 100}%"></div></div><span>${(v.exploitPrediction * 100).toFixed(0)}%</span></div>
+                <div class="score-row"><span>Business Wt.</span><span class="weight-badge">x${v.businessWeight}</span></div>
+              </div>
+              <div class="epss-meta">
+                <span>Asset Criticality: ${v.assetCriticality}/10</span>
+                <span>Exposure: ${v.exposure}/10</span>
+                <span>Exploit: ${v.exploitAvailable ? 'YES' : 'No'}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnPatchSchedule(): ReturnType<typeof html> {
+    return html`
+      <div class="patch-schedule-section">
+        <div class="section-header">
+          <h4>Patch Deployment Schedule</h4>
+        </div>
+        <div class="patch-list">
+          ${this._vulnPatchSchedule.map(p => html`
+            <div class="patch-card status-${p.status}">
+              <div class="patch-header">
+                <span class="patch-cve">${p.cve}</span>
+                <span class="patch-status">${p.status}</span>
+              </div>
+              <div class="patch-details">
+                <span>${p.component} ${p.version} -> ${p.patchVersion}</span>
+                <span>Scheduled: ${p.scheduledDate} (${p.window})</span>
+                <span>Risk: ${p.riskIfUnpatched}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnAgingAlerts(): ReturnType<typeof html> {
+    return html`
+      <div class="aging-alerts-section">
+        <div class="section-header">
+          <h4>Vulnerability Aging Alerts</h4>
+          <span class="badge critical">${this._vulnAgingAlerts.filter(a => a.overdueDays > 60).length} Critical Overdue</span>
+        </div>
+        <div class="aging-list">
+          ${this._vulnAgingAlerts.sort((a, b) => b.overdueDays - a.overdueDays).map(a => html`
+            <div class="aging-card severity-${a.severity}">
+              <div class="aging-header">
+                <span class="aging-cve">${a.cve}</span>
+                <span class="aging-days overdue">${a.overdueDays}d overdue</span>
+              </div>
+              <div class="aging-details">
+                <span>Age: ${a.ageDays} days (SLA: ${a.slaDays}d)</span>
+                <span>Owner: ${a.owner}</span>
+                <span>Reason: ${a.reason}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderZeroDayWorkflows(): ReturnType<typeof html> {
+    return html`
+      <div class="zeroday-section">
+        <div class="section-header">
+          <h4>Zero-Day Response Workflows</h4>
+        </div>
+        <div class="zeroday-list">
+          ${this._zeroDayWorkflows.map(zd => html`
+            <div class="zeroday-card status-${zd.status}">
+              <div class="zd-header">
+                <span class="zd-cve">${zd.cve}</span>
+                <span class="zd-status">${zd.status}</span>
+                <span class="zd-risk">Risk: ${zd.riskScore}/10</span>
+              </div>
+              <p class="zd-desc">${zd.description}</p>
+              <div class="zd-details">
+                <span>Detected: ${zd.detectedAt}</span>
+                <span>Vendor Notified: ${zd.vendorNotified ? 'Yes' : 'No'}</span>
+                <span>Patch: ${zd.patchAvailable ? 'Available' : 'Pending'}</span>
+              </div>
+              ${zd.workaround ? html`<div class="zd-workaround"><strong>Workaround:</strong> ${zd.workaround}</div>` : ''}
+              <div class="zd-next-action">
+                <strong>Next:</strong> ${zd.nextAction} (by ${zd.nextActionDate})
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnBusinessContext(): ReturnType<typeof html> {
+    return html`
+      <div class="vuln-biz-section">
+        <div class="section-header">
+          <h4>Business Context Weighting</h4>
+        </div>
+        <div class="biz-grid">
+          ${this._vulnBusinessContext.sort((a, b) => b.criticalityScore - a.criticalityScore).map(b => html`
+            <div class="biz-card">
+              <div class="biz-header">
+                <span class="biz-asset">${b.assetName}</span>
+                <span class="biz-criticality">${b.criticalityScore}/10</span>
+              </div>
+              <div class="biz-details">
+                <span>BU: ${b.businessUnit}</span>
+                <span>Data: ${b.dataClassification}</span>
+                <span>Internet: ${b.internetFacing ? 'Yes' : 'No'}</span>
+                <span>Vulns: ${b.vulnCount}</span>
+              </div>
+              <div class="biz-regulatory">
+                ${b.regulatoryImpact.map(r => html`<span class="reg-tag">${r}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Compliance Automation Module ===
+  private _complianceAutoChecks: Array<{checkId: string; framework: string; control: string; status: string; lastRun: string; nextRun: string; result: string; severity: string; autoRemediated: boolean; remediationAction: string}> = [];
+  private _policyViolationTracker: Array<{violationId: string; policy: string; resource: string; severity: string; detectedAt: string; owner: string; status: string; remediationDeadline: string; autoFixAvailable: boolean}> = [];
+  private _auditTrailAnalyzer: Array<{eventId: string; timestamp: string; user: string; action: string; resource: string; outcome: string; riskFlag: boolean; category: string; sessionId: string}> = [];
+  private _complianceDriftDetector: Array<{driftId: string; baseline: string; currentState: string; driftType: string; severity: string; detectedAt: string; autoCorrected: boolean; approvalRequired: boolean}> = [];
+  private _regulatoryDeadlineTracker: Array<{deadlineId: string; regulation: string; requirement: string; dueDate: string; status: string; progress: number; owner: string; riskIfMissed: string; dependencies: string[]}> = [];
+  private _complianceScorecard: Array<{category: string; score: number; maxScore: number; trend: string; lastAssessment: string; gaps: number; remediationPlan: string}> = [];
+
+  private _initComplianceAutomation(): void {
+    this._complianceAutoChecks = [
+      {checkId: 'chk-001', framework: 'SOC2', control: 'CC6.1', status: 'passed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-17T06:00:00Z', result: 'All MFA policies enforced', severity: 'high', autoRemediated: false, remediationAction: ''},
+      {checkId: 'chk-002', framework: 'PCI-DSS', control: 'REQ-8', status: 'failed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-16T12:00:00Z', result: '3 accounts without MFA', severity: 'critical', autoRemediated: true, remediationAction: 'MFA enforced on 3 accounts'},
+      {checkId: 'chk-003', framework: 'ISO27001', control: 'A.9.2', status: 'passed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-17T06:00:00Z', result: 'Access reviews current', severity: 'medium', autoRemediated: false, remediationAction: ''},
+      {checkId: 'chk-004', framework: 'GDPR', control: 'Art.32', status: 'warning', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-16T18:00:00Z', result: 'Encryption key rotation overdue by 5 days', severity: 'high', autoRemediated: true, remediationAction: 'Key rotation scheduled'},
+      {checkId: 'chk-005', framework: 'HIPAA', control: '164.312', status: 'passed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-17T06:00:00Z', result: 'PHI access logging active', severity: 'critical', autoRemediated: false, remediationAction: ''},
+      {checkId: 'chk-006', framework: 'NIST CSF', control: 'PR.AC-1', status: 'failed', lastRun: '2024-12-16T06:00:00Z', nextRun: '2024-12-16T12:00:00Z', result: '12 dormant accounts found', severity: 'medium', autoRemediated: true, remediationAction: 'Disabled 12 dormant accounts'},
+    ];
+    this._policyViolationTracker = [
+      {violationId: 'viol-001', policy: 'Password Policy', resource: 'AD Domain', severity: 'high', detectedAt: '2024-12-15T10:00:00Z', owner: 'IAM Team', status: 'remediated', remediationDeadline: '2024-12-20', autoFixAvailable: true},
+      {violationId: 'viol-002', policy: 'Network Segmentation', resource: 'Prod VLAN 100', severity: 'critical', detectedAt: '2024-12-14T15:30:00Z', owner: 'Network Team', status: 'in-progress', remediationDeadline: '2024-12-18', autoFixAvailable: false},
+      {violationId: 'viol-003', policy: 'Data Classification', resource: 'SharePoint Site HR', severity: 'medium', detectedAt: '2024-12-13T09:00:00Z', owner: 'Data Governance', status: 'pending-review', remediationDeadline: '2024-12-25', autoFixAvailable: true},
+      {violationId: 'viol-004', policy: 'Encryption Standard', resource: 'S3 Bucket logs-raw', severity: 'critical', detectedAt: '2024-12-12T14:00:00Z', owner: 'Cloud Team', status: 'remediated', remediationDeadline: '2024-12-16', autoFixAvailable: true},
+      {violationId: 'viol-005', policy: 'Access Control', resource: 'K8s Cluster Prod', severity: 'high', detectedAt: '2024-12-11T11:00:00Z', owner: 'Platform Team', status: 'in-progress', remediationDeadline: '2024-12-22', autoFixAvailable: false},
+    ];
+    this._auditTrailAnalyzer = [
+      {eventId: 'evt-001', timestamp: '2024-12-16T08:30:00Z', user: 'admin@company.com', action: 'Privilege Escalation', resource: 'AD Domain Admin', outcome: 'success', riskFlag: true, category: 'privileged-access', sessionId: 'sess-a1b2'},
+      {eventId: 'evt-002', timestamp: '2024-12-16T08:25:00Z', user: 'svc-deploy@company.com', action: 'Secret Access', resource: 'Vault/Prod/DB', outcome: 'success', riskFlag: false, category: 'automation', sessionId: 'sess-c3d4'},
+      {eventId: 'evt-003', timestamp: '2024-12-16T08:20:00Z', user: 'unknown@external.com', action: 'Login Attempt', resource: 'VPN Gateway', outcome: 'denied', riskFlag: true, category: 'authentication', sessionId: 'sess-e5f6'},
+      {eventId: 'evt-004', timestamp: '2024-12-16T08:15:00Z', user: 'bob@company.com', action: 'Mass Download', resource: 'SharePoint/Finance', outcome: 'success', riskFlag: true, category: 'data-access', sessionId: 'sess-g7h8'},
+      {eventId: 'evt-005', timestamp: '2024-12-16T08:10:00Z', user: 'alice@company.com', action: 'Config Change', resource: 'Firewall Rule 42', outcome: 'success', riskFlag: false, category: 'configuration', sessionId: 'sess-i9j0'},
+      {eventId: 'evt-006', timestamp: '2024-12-16T08:05:00Z', user: 'system', action: 'Auto-Remediation', resource: 'IAM Policy Violation', outcome: 'success', riskFlag: false, category: 'automation', sessionId: 'auto-k1l2'},
+    ];
+    this._complianceDriftDetector = [
+      {driftId: 'drift-001', baseline: 'SOC2 CC6.1 (MFA Required)', currentState: '3 accounts without MFA', driftType: 'configuration', severity: 'critical', detectedAt: '2024-12-16T06:00:00Z', autoCorrected: true, approvalRequired: false},
+      {driftId: 'drift-002', baseline: 'NIST AC-2 (Account Management)', currentState: '12 dormant accounts active', driftType: 'access', severity: 'high', detectedAt: '2024-12-16T06:00:00Z', autoCorrected: true, approvalRequired: false},
+      {driftId: 'drift-003', baseline: 'PCI-DSS REQ-1 (Firewall Rules)', currentState: 'Rule 42 modified without review', driftType: 'configuration', severity: 'high', detectedAt: '2024-12-16T07:00:00Z', autoCorrected: false, approvalRequired: true},
+      {driftId: 'drift-004', baseline: 'ISO27001 A.12.4 (Logging)', currentState: 'Log forwarding paused on 2 hosts', driftType: 'operational', severity: 'medium', detectedAt: '2024-12-16T05:00:00Z', autoCorrected: true, approvalRequired: false},
+      {driftId: 'drift-005', baseline: 'GDPR Art.25 (Data Protection by Design)', currentState: 'New form collects SSN without consent', driftType: 'privacy', severity: 'critical', detectedAt: '2024-12-15T16:00:00Z', autoCorrected: false, approvalRequired: true},
+    ];
+    this._regulatoryDeadlineTracker = [
+      {deadlineId: 'reg-001', regulation: 'GDPR', requirement: 'Annual DPA Review', dueDate: '2025-01-15', status: 'on-track', progress: 75, owner: 'Legal', riskIfMissed: 'Regulatory fine up to 4% global revenue', dependencies: ['Vendor DPA responses', 'Internal review']},
+      {deadlineId: 'reg-002', regulation: 'SOC2', requirement: 'Type II Audit Evidence Collection', dueDate: '2024-12-31', status: 'at-risk', progress: 60, owner: 'GRC Team', riskIfMissed: 'Audit qualification failure', dependencies: ['Control testing', 'Evidence gathering']},
+      {deadlineId: 'reg-003', regulation: 'PCI-DSS', requirement: 'Quarterly ASV Scan', dueDate: '2024-12-20', status: 'on-track', progress: 90, owner: 'Security Ops', riskIfMissed: 'PCI compliance lapse', dependencies: ['Scan scheduling']},
+      {deadlineId: 'reg-004', regulation: 'HIPAA', requirement: 'BAA Review with Vendors', dueDate: '2025-02-28', status: 'on-track', progress: 40, owner: 'Compliance', riskIfMissed: 'OCR enforcement action', dependencies: ['Vendor responses', 'Legal review']},
+      {deadlineId: 'reg-005', regulation: 'SOX', requirement: 'IT General Controls Testing', dueDate: '2025-01-31', status: 'at-risk', progress: 35, owner: 'Internal Audit', riskIfMissed: 'Material weakness disclosure', dependencies: ['Control inventory', 'Test plan']},
+    ];
+    this._complianceScorecard = [
+      {category: 'Access Control', score: 87, maxScore: 100, trend: 'up', lastAssessment: '2024-12-16', gaps: 3, remediationPlan: 'Remediate 3 MFA gaps by Dec 20'},
+      {category: 'Data Protection', score: 92, maxScore: 100, trend: 'stable', lastAssessment: '2024-12-16', gaps: 1, remediationPlan: 'Fix encryption key rotation'},
+      {category: 'Network Security', score: 78, maxScore: 100, trend: 'down', lastAssessment: '2024-12-15', gaps: 5, remediationPlan: 'Review and fix 5 firewall rule violations'},
+      {category: 'Endpoint Security', score: 95, maxScore: 100, trend: 'up', lastAssessment: '2024-12-16', gaps: 1, remediationPlan: 'Update 1 outdated EDR agent'},
+      {category: 'Incident Response', score: 85, maxScore: 100, trend: 'up', lastAssessment: '2024-12-14', gaps: 2, remediationPlan: 'Complete IR tabletop exercise'},
+      {category: 'Vendor Management', score: 71, maxScore: 100, trend: 'down', lastAssessment: '2024-12-13', gaps: 7, remediationPlan: 'Complete 7 overdue vendor assessments'},
+    ];
+  }
+
+  private _renderComplianceAutoChecks(): ReturnType<typeof html> {
+    const failed = this._complianceAutoChecks.filter(c => c.status === 'failed');
+    const autoRemediated = this._complianceAutoChecks.filter(c => c.autoRemediated);
+    return html`
+      <div class="compliance-auto-section">
+        <div class="section-header">
+          <h4>Automated Compliance Checks</h4>
+          <span class="badge critical">${failed.length} Failed</span>
+          <span class="badge success">${autoRemediated.length} Auto-Fixed</span>
+        </div>
+        <div class="checks-grid">
+          ${this._complianceAutoChecks.map(c => html`
+            <div class="check-card status-${c.status}">
+              <div class="check-header">
+                <span class="check-framework">${c.framework}</span>
+                <span class="check-control">${c.control}</span>
+                <span class="check-status ${c.status}">${c.status}</span>
+              </div>
+              <div class="check-result">${c.result}</div>
+              <div class="check-meta">
+                <span>Severity: ${c.severity}</span>
+                <span>Last: ${c.lastRun}</span>
+                <span>Next: ${c.nextRun}</span>
+              </div>
+              ${c.autoRemediated ? html`<div class="auto-remediation">Auto-remediated: ${c.remediationAction}</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderPolicyViolations(): ReturnType<typeof html> {
+    return html`
+      <div class="policy-violations-section">
+        <div class="section-header">
+          <h4>Policy Violation Tracker</h4>
+        </div>
+        <div class="violations-list">
+          ${this._policyViolationTracker.sort((a, b) => {
+            const order = {critical: 0, high: 1, medium: 2};
+            return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+          }).map(v => html`
+            <div class="violation-card severity-${v.severity}">
+              <div class="violation-header">
+                <span class="violation-policy">${v.policy}</span>
+                <span class="violation-resource">${v.resource}</span>
+                <span class="violation-status ${v.status}">${v.status}</span>
+                ${v.autoFixAvailable ? html`<span class="auto-fix-badge">Auto-Fix Available</span>` : ''}
+              </div>
+              <div class="violation-meta">
+                <span>Owner: ${v.owner}</span>
+                <span>Detected: ${v.detectedAt}</span>
+                <span>Deadline: ${v.remediationDeadline}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderAuditTrailAnalysis(): ReturnType<typeof html> {
+    const flagged = this._auditTrailAnalyzer.filter(e => e.riskFlag);
+    return html`
+      <div class="audit-trail-section">
+        <div class="section-header">
+          <h4>Audit Trail Analysis</h4>
+          <span class="badge warning">${flagged.length} Risk Flags</span>
+        </div>
+        <div class="audit-list">
+          ${this._auditTrailAnalyzer.map(e => html`
+            <div class="audit-card ${e.riskFlag ? 'flagged' : 'normal'}">
+              <div class="audit-header">
+                <span class="audit-timestamp">${e.timestamp}</span>
+                <span class="audit-user">${e.user}</span>
+                <span class="audit-action">${e.action}</span>
+                ${e.riskFlag ? html`<span class="risk-flag">RISK</span>` : ''}
+              </div>
+              <div class="audit-details">
+                <span>Resource: ${e.resource}</span>
+                <span>Outcome: ${e.outcome}</span>
+                <span>Category: ${e.category}</span>
+                <span>Session: ${e.sessionId}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderComplianceDrift(): ReturnType<typeof html> {
+    return html`
+      <div class="drift-section">
+        <div class="section-header">
+          <h4>Compliance Drift Detection</h4>
+          <span class="badge warning">${this._complianceDriftDetector.filter(d => !d.autoCorrected).length} Manual Fix Required</span>
+        </div>
+        <div class="drift-list">
+          ${this._complianceDriftDetector.sort((a, b) => {
+            const order = {critical: 0, high: 1, medium: 2};
+            return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+          }).map(d => html`
+            <div class="drift-card severity-${d.severity}">
+              <div class="drift-header">
+                <span class="drift-type">${d.driftType}</span>
+                <span class="drift-severity">${d.severity}</span>
+                <span class="drift-corrected ${d.autoCorrected}">${d.autoCorrected ? 'Auto-Corrected' : 'Manual Fix'}</span>
+              </div>
+              <div class="drift-baseline">Baseline: ${d.baseline}</div>
+              <div class="drift-current">Current: ${d.currentState}</div>
+              <div class="drift-meta">
+                <span>Detected: ${d.detectedAt}</span>
+                ${d.approvalRequired ? html`<span class="approval-needed">Approval Required</span>` : ''}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderRegulatoryDeadlines(): ReturnType<typeof html> {
+    return html`
+      <div class="deadlines-section">
+        <div class="section-header">
+          <h4>Regulatory Deadline Tracker</h4>
+        </div>
+        <div class="deadlines-list">
+          ${this._regulatoryDeadlineTracker.sort((a, b) => {
+            const order = {critical: 0, 'at-risk': 1, 'on-track': 2};
+            return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+          }).map(d => html`
+            <div class="deadline-card status-${d.status}">
+              <div class="deadline-header">
+                <span class="deadline-reg">${d.regulation}</span>
+                <span class="deadline-req">${d.requirement}</span>
+                <span class="deadline-status">${d.status}</span>
+              </div>
+              <div class="deadline-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width: ${d.progress}%"></div></div>
+                <span class="progress-text">${d.progress}%</span>
+              </div>
+              <div class="deadline-meta">
+                <span>Due: ${d.dueDate}</span>
+                <span>Owner: ${d.owner}</span>
+              </div>
+              <div class="deadline-risk">${d.riskIfMissed}</div>
+              <div class="deadline-deps">
+                ${d.dependencies.map(dep => html`<span class="dep-tag">${dep}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderComplianceScorecard(): ReturnType<typeof html> {
+    return html`
+      <div class="scorecard-section">
+        <div class="section-header">
+          <h4>Compliance Scorecard</h4>
+        </div>
+        <div class="scorecard-grid">
+          ${this._complianceScorecard.sort((a, b) => a.score - b.score).map(s => html`
+            <div class="score-card trend-${s.trend}">
+              <div class="score-header">
+                <span class="score-category">${s.category}</span>
+                <span class="score-value">${s.score}/${s.maxScore}</span>
+                <span class="score-trend">${s.trend === 'up' ? '\u2191' : s.trend === 'down' ? '\u2193' : '\u2192'}</span>
+              </div>
+              <div class="score-bar"><div class="score-fill" style="width: ${s.score}%"></div></div>
+              <div class="score-meta">
+                <span>Gaps: ${s.gaps}</span>
+                <span>Assessed: ${s.lastAssessment}</span>
+              </div>
+              <div class="score-plan">${s.remediationPlan}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

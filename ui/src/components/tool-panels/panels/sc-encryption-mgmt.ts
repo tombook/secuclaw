@@ -2000,6 +2000,437 @@ private _executionHistory: ExecutionRecord[] = [
     };
   }
 
+  // === Security Metrics Auto-Reporting Module ===
+  private _reportSchedules: Array<{id: string; name: string; frequency: string; recipients: string[]; lastRun: string; nextRun: string; status: string; template: string; format: string}> = [];
+  private _executiveSummaries: Array<{id: string; title: string; period: string; generatedAt: string; riskScore: number; keyMetrics: Array<{label: string; value: string; trend: string}>; highlights: string[]; concerns: string[]}> = [];
+  private _trendAnalysis: Array<{metric: string; current: number; previous: number; delta: number; direction: string; period: string}> = [];
+  private _reportTemplates: Array<{id: string; name: string; sections: string[]; isDefault: boolean; lastModified: string}> = [];
+  private _deliveryTracking: Array<{reportId: string; reportName: string; sentAt: string; recipients: number; delivered: number; failed: number; opened: number}> = [];
+
+  private _initMetricsReporting(): void {
+    this._reportSchedules = [
+      {id: 'sched-001', name: 'Daily Security Digest', frequency: 'daily', recipients: ['soc-team@company.com', 'ciso@company.com'], lastRun: '2024-12-16T08:00:00Z', nextRun: '2024-12-17T08:00:00Z', status: 'active', template: 'daily-digest', format: 'pdf'},
+      {id: 'sched-002', name: 'Weekly Threat Landscape', frequency: 'weekly', recipients: ['security-team@company.com', 'exec-team@company.com'], lastRun: '2024-12-15T09:00:00Z', nextRun: '2024-12-22T09:00:00Z', status: 'active', template: 'weekly-threat', format: 'html'},
+      {id: 'sched-003', name: 'Monthly Executive Report', frequency: 'monthly', recipients: ['board@company.com', 'ciso@company.com', 'cto@company.com'], lastRun: '2024-12-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'executive-summary', format: 'pdf'},
+      {id: 'sched-004', name: 'Quarterly Compliance Report', frequency: 'quarterly', recipients: ['compliance@company.com', 'legal@company.com', 'board@company.com'], lastRun: '2024-10-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'compliance-report', format: 'pdf'},
+      {id: 'sched-005', name: 'Incident Post-Mortem', frequency: 'on-demand', recipients: ['ir-team@company.com'], lastRun: '2024-12-14T14:00:00Z', nextRun: 'N/A', status: 'on-demand', template: 'post-mortem', format: 'docx'},
+    ];
+    this._executiveSummaries = [
+      {id: 'exec-001', title: 'December 2024 Security Posture', period: '2024-12', generatedAt: '2024-12-16T10:00:00Z', riskScore: 72,
+        keyMetrics: [
+          {label: 'MTTR', value: '24 min', trend: 'down'},
+          {label: 'MTTD', value: '3.2 min', trend: 'down'},
+          {label: 'False Positive Rate', value: '4.2%', trend: 'down'},
+          {label: 'Patch Compliance', value: '94%', trend: 'up'},
+          {label: 'Critical Vulns Open', value: '3', trend: 'down'},
+          {label: 'Phishing Click Rate', value: '2.1%', trend: 'down'},
+        ],
+        highlights: ['SOC achieved 99.7% uptime', 'Zero critical data breaches', 'Automated triage reduced analyst workload by 30%', 'Completed 15 penetration tests'],
+        concerns: ['3 critical vulnerabilities past SLA', 'Night shift understaffed', 'Supply chain attack surface increasing', 'Zero-day response time needs improvement'],
+      },
+      {id: 'exec-002', title: 'Q4 2024 Security Quarterly', period: '2024-Q4', generatedAt: '2024-12-15T10:00:00Z', riskScore: 68,
+        keyMetrics: [
+          {label: 'Total Incidents', value: '847', trend: 'up'},
+          {label: 'Critical Incidents', value: '12', trend: 'down'},
+          {label: 'Mean Time to Contain', value: '4.2 hrs', trend: 'down'},
+          {label: 'Vulnerability Backlog', value: '23', trend: 'down'},
+          {label: 'Security Awareness Score', value: '87%', trend: 'up'},
+          {label: 'Compliance Score', value: '96%', trend: 'up'},
+        ],
+        highlights: ['Reduced critical incidents by 25% QoQ', 'Deployed zero-trust architecture phase 2', 'Security awareness training completion: 95%', 'SOC maturity level improved to 3'],
+        concerns: ['Cloud misconfiguration incidents increased 15%', 'Third-party vendor risk score elevated', 'Insider threat indicators detected in 3 cases'],
+      },
+    ];
+    this._trendAnalysis = [
+      {metric: 'Total Alerts', current: 12456, previous: 11234, delta: 10.9, direction: 'up', period: 'monthly'},
+      {metric: 'False Positives', current: 523, previous: 612, delta: -14.5, direction: 'down', period: 'monthly'},
+      {metric: 'Mean Resolution Time', current: 24, previous: 31, delta: -22.6, direction: 'down', period: 'monthly'},
+      {metric: 'Escalation Rate', current: 8.5, previous: 11.2, delta: -24.1, direction: 'down', period: 'monthly'},
+      {metric: 'Phishing Susceptibility', current: 2.1, previous: 3.8, delta: -44.7, direction: 'down', period: 'monthly'},
+      {metric: 'Patch Compliance', current: 94, previous: 89, delta: 5.6, direction: 'up', period: 'monthly'},
+      {metric: 'Endpoint Coverage', current: 98.2, previous: 97.1, delta: 1.1, direction: 'up', period: 'monthly'},
+      {metric: 'MFA Adoption', current: 96, previous: 91, delta: 5.5, direction: 'up', period: 'monthly'},
+    ];
+    this._reportTemplates = [
+      {id: 'tmpl-001', name: 'Daily Digest', sections: ['Alert Summary', 'Top Threats', 'Incident Status', 'Quick Stats'], isDefault: true, lastModified: '2024-11-01'},
+      {id: 'tmpl-002', name: 'Weekly Threat', sections: ['Threat Landscape', 'New IOCs', 'Campaign Updates', 'Risk Assessment', 'Recommendations'], isDefault: true, lastModified: '2024-10-15'},
+      {id: 'tmpl-003', name: 'Executive Summary', sections: ['Risk Score', 'KPI Dashboard', 'Trend Analysis', 'Budget Summary', 'Strategic Recommendations'], isDefault: true, lastModified: '2024-09-20'},
+      {id: 'tmpl-004', name: 'Compliance Report', sections: ['Framework Status', 'Control Mapping', 'Gap Analysis', 'Remediation Progress', 'Audit Readiness'], isDefault: false, lastModified: '2024-12-01'},
+    ];
+    this._deliveryTracking = [
+      {reportId: 'del-001', reportName: 'Daily Security Digest', sentAt: '2024-12-16T08:00:00Z', recipients: 12, delivered: 12, failed: 0, opened: 9},
+      {reportId: 'del-002', reportName: 'Weekly Threat Landscape', sentAt: '2024-12-15T09:00:00Z', recipients: 25, delivered: 24, failed: 1, opened: 18},
+      {reportId: 'del-003', reportName: 'Monthly Executive Report', sentAt: '2024-12-01T10:00:00Z', recipients: 8, delivered: 8, failed: 0, opened: 7},
+      {reportId: 'del-004', reportName: 'Incident Post-Mortem INC-2840', sentAt: '2024-12-14T14:00:00Z', recipients: 6, delivered: 6, failed: 0, opened: 5},
+    ];
+  }
+
+  private _renderReportSchedules(): ReturnType<typeof html> {
+    return html`
+      <div class="report-schedules-section">
+        <div class="section-header">
+          <h4>Report Schedules</h4>
+        </div>
+        <div class="schedules-list">
+          ${this._reportSchedules.map(s => html`
+            <div class="schedule-card status-${s.status}">
+              <div class="schedule-header">
+                <span class="schedule-name">${s.name}</span>
+                <span class="schedule-freq">${s.frequency}</span>
+              </div>
+              <div class="schedule-details">
+                <span>Template: ${s.template}</span>
+                <span>Format: ${s.format}</span>
+                <span>Recipients: ${s.recipients.length}</span>
+              </div>
+              <div class="schedule-timing">
+                <span>Last: ${s.lastRun}</span>
+                <span>Next: ${s.nextRun}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderExecutiveSummary(): ReturnType<typeof html> {
+    return html`
+      <div class="exec-summary-section">
+        <div class="section-header">
+          <h4>Executive Summary Auto-Generation</h4>
+        </div>
+        ${this._executiveSummaries.map(e => html`
+          <div class="exec-card">
+            <div class="exec-header">
+              <span class="exec-title">${e.title}</span>
+              <span class="exec-period">${e.period}</span>
+              <span class="risk-score ${e.riskScore >= 80 ? 'critical' : e.riskScore >= 60 ? 'high' : 'medium'}">${e.riskScore}/100</span>
+            </div>
+            <div class="exec-metrics">
+              ${e.keyMetrics.map(m => html`
+                <div class="exec-metric">
+                  <span class="metric-label">${m.label}</span>
+                  <span class="metric-value">${m.value}</span>
+                  <span class="metric-trend ${m.trend}">${m.trend === 'up' ? '\u2191' : '\u2193'}</span>
+                </div>
+              `)}
+            </div>
+            <div class="exec-highlights">
+              <h5>Highlights</h5>
+              <ul>${e.highlights.map(h => html`<li class="positive">${h}</li>`)}</ul>
+            </div>
+            <div class="exec-concerns">
+              <h5>Concerns</h5>
+              <ul>${e.concerns.map(c => html`<li class="negative">${c}</li>`)}</ul>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _renderTrendAnalysis(): ReturnType<typeof html> {
+    return html`
+      <div class="trend-analysis-section">
+        <div class="section-header">
+          <h4>Trend Analysis with Deltas</h4>
+        </div>
+        <div class="trend-grid">
+          ${this._trendAnalysis.map(t => html`
+            <div class="trend-card ${t.direction}">
+              <div class="trend-label">${t.metric}</div>
+              <div class="trend-current">${typeof t.current === 'number' && t.current > 100 ? t.current.toLocaleString() : t.current}${typeof t.current === 'number' && t.current <= 100 && t.metric.includes('Rate') ? '%' : t.metric.includes('Coverage') || t.metric.includes('Adoption') || t.metric.includes('Compliance') || t.metric.includes('Score') ? '%' : ''}</div>
+              <div class="trend-delta ${t.direction}">
+                ${t.direction === 'up' ? '\u2191' : '\u2193'} ${Math.abs(t.delta).toFixed(1)}%
+              </div>
+              <div class="trend-period">${t.period}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderReportTemplates(): ReturnType<typeof html> {
+    return html`
+      <div class="report-templates-section">
+        <div class="section-header">
+          <h4>Report Templates</h4>
+        </div>
+        <div class="templates-grid">
+          ${this._reportTemplates.map(t => html`
+            <div class="template-card ${t.isDefault ? 'default' : 'custom'}">
+              <div class="template-header">
+                <span class="template-name">${t.name}</span>
+                ${t.isDefault ? html`<span class="default-badge">Default</span>` : ''}
+              </div>
+              <div class="template-sections">
+                ${t.sections.map(s => html`<span class="section-tag">${s}</span>`)}
+              </div>
+              <div class="template-meta">Last modified: ${t.lastModified}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderDeliveryTracking(): ReturnType<typeof html> {
+    return html`
+      <div class="delivery-tracking-section">
+        <div class="section-header">
+          <h4>Report Delivery Tracking</h4>
+        </div>
+        <div class="delivery-list">
+          ${this._deliveryTracking.map(d => html`
+            <div class="delivery-card ${d.failed > 0 ? 'has-failures' : 'all-delivered'}">
+              <div class="delivery-header">
+                <span class="delivery-name">${d.reportName}</span>
+                <span class="delivery-time">${d.sentAt}</span>
+              </div>
+              <div class="delivery-stats">
+                <span>Recipients: ${d.recipients}</span>
+                <span class="delivered">Delivered: ${d.delivered}</span>
+                ${d.failed > 0 ? html`<span class="failed">Failed: ${d.failed}</span>` : ''}
+                <span>Opened: ${d.opened}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Identity & Access Intelligence Module ===
+  private _privilegedAccessInventory: Array<{id: string; identity: string; accountType: string; system: string; privilegeLevel: string; lastUsed: string; usageFrequency: string; riskScore: number; certificationStatus: string; sessionCount: number; avgSessionDuration: string}> = [];
+  private _accessCertCampaigns: Array<{id: string; name: string; scope: string; totalReviews: number; completed: number; pending: number; overdue: number; deadline: string; owner: string; status: string}> = [];
+  private _roleMiningSuggestions: Array<{suggestionId: string; roleName: string; description: string; memberCount: number; permissionCount: number; similarity: number; recommendation: string}> = [];
+  private _sodViolations: Array<{violationId: string; user: string; conflictingRoles: string[]; system: string; riskLevel: string; detectedAt: string; status: string; remediation: string}> = [];
+  private _accessAnomalies: Array<{anomalyId: string; user: string; behavior: string; baseline: string; observed: string; deviation: string; riskScore: number; timestamp: string; investigated: boolean}> = [];
+  private _identityRiskScores: Array<{userId: string; name: string; department: string; riskScore: number; factors: string[]; lastAssessment: string; trend: string}> = [];
+
+  private _initIdentityAccessIntel(): void {
+    this._privilegedAccessInventory = [
+      {id: 'pa-001', identity: 'admin-john', accountType: 'domain-admin', system: 'Active Directory', privilegeLevel: 'full', lastUsed: '2024-12-16T07:30:00Z', usageFrequency: 'daily', riskScore: 9.2, certificationStatus: 'current', sessionCount: 156, avgSessionDuration: '2.3 hrs'},
+      {id: 'pa-002', identity: 'svc-deploy-bot', accountType: 'service-account', system: 'Kubernetes', privilegeLevel: 'cluster-admin', lastUsed: '2024-12-16T06:15:00Z', usageFrequency: 'hourly', riskScore: 8.7, certificationStatus: 'expired', sessionCount: 8923, avgSessionDuration: '0.1 hrs'},
+      {id: 'pa-003', identity: 'dba-sarah', accountType: 'database-admin', system: 'Oracle RAC', privilegeLevel: 'sysdba', lastUsed: '2024-12-15T22:00:00Z', usageFrequency: 'weekly', riskScore: 7.8, certificationStatus: 'current', sessionCount: 45, avgSessionDuration: '1.5 hrs'},
+      {id: 'pa-004', identity: 'root-prod-web', accountType: 'shared-root', system: 'Linux (prod)', privilegeLevel: 'root', lastUsed: '2024-12-14T03:00:00Z', usageFrequency: 'monthly', riskScore: 9.5, certificationStatus: 'overdue', sessionCount: 12, avgSessionDuration: '0.5 hrs'},
+      {id: 'pa-005', identity: 'api-gateway-key', accountType: 'api-key', system: 'API Gateway', privilegeLevel: 'admin', lastUsed: '2024-12-16T08:00:00Z', usageFrequency: 'continuous', riskScore: 6.3, certificationStatus: 'current', sessionCount: 45000, avgSessionDuration: 'N/A'},
+      {id: 'pa-006', identity: 'cloud-admin-alice', accountType: 'cloud-admin', system: 'AWS', privilegeLevel: 'full', lastUsed: '2024-12-16T09:00:00Z', usageFrequency: 'daily', riskScore: 8.9, certificationStatus: 'current', sessionCount: 234, avgSessionDuration: '3.1 hrs'},
+    ];
+    this._accessCertCampaigns = [
+      {id: 'cert-001', name: 'Q4 2024 Privileged Access Review', scope: 'All Domain Admins', totalReviews: 24, completed: 15, pending: 7, overdue: 2, deadline: '2024-12-20', owner: 'IAM Team', status: 'in-progress'},
+      {id: 'cert-002', name: 'Annual Service Account Cleanup', scope: 'All Service Accounts', totalReviews: 156, completed: 89, pending: 45, overdue: 22, deadline: '2024-12-31', owner: 'Platform Team', status: 'in-progress'},
+      {id: 'cert-003', name: 'Cloud IAM Permissions Audit', scope: 'AWS/Azure/GCP Admins', totalReviews: 42, completed: 42, pending: 0, overdue: 0, deadline: '2024-12-15', owner: 'Cloud Security', status: 'completed'},
+      {id: 'cert-004', name: 'Database Admin Access Review', scope: 'All DBA Accounts', totalReviews: 18, completed: 12, pending: 4, overdue: 2, deadline: '2024-12-18', owner: 'DBA Team', status: 'in-progress'},
+    ];
+    this._roleMiningSuggestions = [
+      {suggestionId: 'rm-001', roleName: 'Junior Developer', description: 'Users with identical read-only access to dev repos and staging environments', memberCount: 15, permissionCount: 8, similarity: 0.94, recommendation: 'Create formal role to reduce permission sprawl'},
+      {suggestionId: 'rm-002', roleName: 'Finance Read-Only', description: 'Finance team members with identical read access to financial systems', memberCount: 22, permissionCount: 12, similarity: 0.91, recommendation: 'Consolidate into single role with MFA requirement'},
+      {suggestionId: 'rm-003', roleName: 'Contractor Limited', description: 'Contractors with similar restricted access patterns', memberCount: 8, permissionCount: 5, similarity: 0.88, recommendation: 'Create time-limited role with auto-expiration'},
+      {suggestionId: 'rm-004', roleName: 'Incident Responder', description: 'Security team members with overlapping IR tool access', memberCount: 6, permissionCount: 15, similarity: 0.85, recommendation: 'Formalize IR role with just-in-time elevation'},
+    ];
+    this._sodViolations = [
+      {violationId: 'sod-001', user: 'john.smith', conflictingRoles: ['procurement-approver', 'vendor-admin'], system: 'ERP', riskLevel: 'high', detectedAt: '2024-12-10T14:00:00Z', status: 'remediation-in-progress', remediation: 'Remove vendor-admin role, assign to separate user'},
+      {violationId: 'sod-002', user: 'jane.doe', conflictingRoles: ['code-reviewer', 'deploy-approver'], system: 'CI/CD', riskLevel: 'medium', detectedAt: '2024-12-08T09:30:00Z', status: 'accepted-risk', remediation: 'Documented exception - team size constraint'},
+      {violationId: 'sod-003', user: 'bob.wilson', conflictingRoles: ['auditor', 'sysadmin'], system: 'Active Directory', riskLevel: 'critical', detectedAt: '2024-12-05T11:00:00Z', status: 'remediated', remediation: 'Removed sysadmin role, assigned to IT ops'},
+    ];
+    this._accessAnomalies = [
+      {anomalyId: 'anom-001', user: 'alice.johnson', behavior: 'Off-hours VPN access from unusual location', baseline: 'Business hours, office IP', observed: '03:00 AM, foreign IP (Russia)', deviation: 'High', riskScore: 8.9, timestamp: '2024-12-16T03:00:00Z', investigated: false},
+      {anomalyId: 'anom-002', user: 'charlie.brown', behavior: 'Mass file download from SharePoint', baseline: '50 files/day avg', observed: '2,340 files in 1 hour', deviation: 'Extreme', riskScore: 9.5, timestamp: '2024-12-15T14:30:00Z', investigated: true},
+      {anomalyId: 'anom-003', user: 'diana.ross', behavior: 'Privilege escalation attempt on production DB', baseline: 'Read-only queries', observed: 'GRANT statement execution', deviation: 'Critical', riskScore: 10.0, timestamp: '2024-12-15T16:00:00Z', investigated: true},
+      {anomalyId: 'anom-004', user: 'eve.davis', behavior: 'Multiple failed MFA attempts followed by success', baseline: '<3 failures/month', observed: '12 failures then success', deviation: 'High', riskScore: 7.8, timestamp: '2024-12-14T22:15:00Z', investigated: false},
+      {anomalyId: 'anom-005', user: 'frank.miller', behavior: 'Access to sensitive folder never accessed before', baseline: 'No access in 2 years', observed: 'Full folder browse + download', deviation: 'Medium', riskScore: 6.5, timestamp: '2024-12-14T10:00:00Z', investigated: false},
+    ];
+    this._identityRiskScores = [
+      {userId: 'usr-001', name: 'Alice Johnson', department: 'Engineering', riskScore: 8.9, factors: ['Off-hours access', 'Unusual location', 'New device'], lastAssessment: '2024-12-16', trend: 'increasing'},
+      {userId: 'usr-002', name: 'Charlie Brown', department: 'Marketing', riskScore: 9.5, factors: ['Mass download', 'Data exfiltration indicator', 'Policy violation'], lastAssessment: '2024-12-15', trend: 'increasing'},
+      {userId: 'usr-003', name: 'Diana Ross', department: 'DBA Team', riskScore: 10.0, factors: ['Privilege escalation', 'Unauthorized access attempt', 'Critical system'], lastAssessment: '2024-12-15', trend: 'critical'},
+      {userId: 'usr-004', name: 'Bob Wilson', department: 'IT Ops', riskScore: 3.2, factors: ['SOD violation (remediated)'], lastAssessment: '2024-12-05', trend: 'stable'},
+      {userId: 'usr-005', name: 'Eve Davis', department: 'Sales', riskScore: 7.8, factors: ['MFA fatigue attack indicator', 'Credential stuffing pattern'], lastAssessment: '2024-12-14', trend: 'increasing'},
+      {userId: 'usr-006', name: 'Frank Miller', department: 'HR', riskScore: 6.5, factors: ['Access to sensitive data', 'First-time access pattern'], lastAssessment: '2024-12-14', trend: 'stable'},
+    ];
+  }
+
+  private _renderPrivilegedAccess(): ReturnType<typeof html> {
+    return html`
+      <div class="privileged-access-section">
+        <div class="section-header">
+          <h4>Privileged Access Inventory</h4>
+          <span class="badge warning">${this._privilegedAccessInventory.filter(p => p.certificationStatus !== 'current').length} Need Review</span>
+        </div>
+        <div class="pa-grid">
+          ${this._privilegedAccessInventory.sort((a, b) => b.riskScore - a.riskScore).map(p => html`
+            <div class="pa-card cert-${p.certificationStatus}">
+              <div class="pa-header">
+                <span class="pa-identity">${p.identity}</span>
+                <span class="pa-risk">${p.riskScore.toFixed(1)}</span>
+              </div>
+              <div class="pa-details">
+                <span>Type: ${p.accountType}</span>
+                <span>System: ${p.system}</span>
+                <span>Level: ${p.privilegeLevel}</span>
+              </div>
+              <div class="pa-usage">
+                <span>Last: ${p.lastUsed}</span>
+                <span>Freq: ${p.usageFrequency}</span>
+                <span>Sessions: ${p.sessionCount}</span>
+              </div>
+              <div class="pa-cert">
+                <span class="cert-status ${p.certificationStatus}">${p.certificationStatus}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderCertCampaigns(): ReturnType<typeof html> {
+    return html`
+      <div class="cert-campaigns-section">
+        <div class="section-header">
+          <h4>Access Certification Campaigns</h4>
+        </div>
+        <div class="campaigns-list">
+          ${this._accessCertCampaigns.map(c => html`
+            <div class="campaign-card status-${c.status}">
+              <div class="campaign-header">
+                <span class="campaign-name">${c.name}</span>
+                <span class="campaign-status">${c.status}</span>
+              </div>
+              <div class="campaign-progress">
+                <div class="progress-bar"><div class="progress-fill" style="width: ${(c.completed / c.totalReviews * 100).toFixed(0)}%"></div></div>
+                <span class="progress-text">${c.completed}/${c.totalReviews} reviews</span>
+              </div>
+              <div class="campaign-details">
+                <span>Scope: ${c.scope}</span>
+                <span>Pending: ${c.pending}</span>
+                <span>Overdue: ${c.overdue}</span>
+                <span>Deadline: ${c.deadline}</span>
+                <span>Owner: ${c.owner}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderRoleMining(): ReturnType<typeof html> {
+    return html`
+      <div class="role-mining-section">
+        <div class="section-header">
+          <h4>Role Mining Suggestions</h4>
+        </div>
+        <div class="mining-grid">
+          ${this._roleMiningSuggestions.sort((a, b) => b.similarity - a.similarity).map(r => html`
+            <div class="mining-card">
+              <div class="mining-header">
+                <span class="mining-role">${r.roleName}</span>
+                <span class="mining-similarity">${(r.similarity * 100).toFixed(0)}% match</span>
+              </div>
+              <p class="mining-desc">${r.description}</p>
+              <div class="mining-stats">
+                <span>Members: ${r.memberCount}</span>
+                <span>Permissions: ${r.permissionCount}</span>
+              </div>
+              <div class="mining-recommendation">${r.recommendation}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSodViolations(): ReturnType<typeof html> {
+    return html`
+      <div class="sod-violations-section">
+        <div class="section-header">
+          <h4>Separation of Duties Violations</h4>
+        </div>
+        <div class="sod-list">
+          ${this._sodViolations.sort((a, b) => {
+            const order = {critical: 0, high: 1, medium: 2};
+            return (order[a.riskLevel] ?? 3) - (order[b.riskLevel] ?? 3);
+          }).map(v => html`
+            <div class="sod-card risk-${v.riskLevel}">
+              <div class="sod-header">
+                <span class="sod-user">${v.user}</span>
+                <span class="sod-risk">${v.riskLevel}</span>
+                <span class="sod-status">${v.status}</span>
+              </div>
+              <div class="sod-details">
+                <span>System: ${v.system}</span>
+                <span>Conflicting: ${v.conflictingRoles.join(' + ')}</span>
+                <span>Detected: ${v.detectedAt}</span>
+              </div>
+              <div class="sod-remediation">${v.remediation}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderAccessAnomalies(): ReturnType<typeof html> {
+    return html`
+      <div class="access-anomalies-section">
+        <div class="section-header">
+          <h4>Access Pattern Anomalies</h4>
+          <span class="badge warning">${this._accessAnomalies.filter(a => !a.investigated).length} Uninvestigated</span>
+        </div>
+        <div class="anomaly-list">
+          ${this._accessAnomalies.sort((a, b) => b.riskScore - a.riskScore).map(a => html`
+            <div class="anomaly-card ${a.investigated ? 'investigated' : 'pending'}">
+              <div class="anomaly-header">
+                <span class="anomaly-user">${a.user}</span>
+                <span class="anomaly-risk">${a.riskScore.toFixed(1)}</span>
+                <span class="anomaly-status">${a.investigated ? 'Investigated' : 'Pending'}</span>
+              </div>
+              <p class="anomaly-behavior">${a.behavior}</p>
+              <div class="anomaly-comparison">
+                <span>Baseline: ${a.baseline}</span>
+                <span>Observed: ${a.observed}</span>
+                <span>Deviation: ${a.deviation}</span>
+              </div>
+              <div class="anomaly-time">${a.timestamp}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderIdentityRiskScores(): ReturnType<typeof html> {
+    return html`
+      <div class="identity-risk-section">
+        <div class="section-header">
+          <h4>Identity Risk Scoring</h4>
+        </div>
+        <div class="risk-grid">
+          ${this._identityRiskScores.sort((a, b) => b.riskScore - a.riskScore).map(u => html`
+            <div class="risk-card trend-${u.trend}">
+              <div class="risk-header">
+                <span class="risk-name">${u.name}</span>
+                <span class="risk-score">${u.riskScore.toFixed(1)}</span>
+                <span class="risk-trend ${u.trend}">${u.trend === 'increasing' ? '\u2191' : u.trend === 'critical' ? '\u26A0' : '\u2192'}</span>
+              </div>
+              <div class="risk-details">
+                <span>Department: ${u.department}</span>
+                <span>Last Assessment: ${u.lastAssessment}</span>
+              </div>
+              <div class="risk-factors">
+                ${u.factors.map(f => html`<span class="factor-tag">${f}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

@@ -1998,6 +1998,395 @@ private _executionHistory: ExecutionRecord[] = [
     return { valid: issues.length === 0, issues };
   }
 
+  // === Vulnerability Prioritization Engine Module ===
+  private _vulnEpssScores: Array<{vulnId: string; cve: string; cvss: number; epss: number; combinedScore: number; assetCriticality: number; exposure: number; businessWeight: number; exploitAvailable: boolean; exploitPrediction: number}> = [];
+  private _vulnPatchSchedule: Array<{patchId: string; cve: string; component: string; version: string; patchVersion: string; scheduledDate: string; window: string; riskIfUnpatched: string; status: string}> = [];
+  private _vulnAgingAlerts: Array<{vulnId: string; cve: string; ageDays: number; severity: string; slaDays: number; overdueDays: number; owner: string; reason: string}> = [];
+  private _zeroDayWorkflows: Array<{workflowId: string; cve: string; description: string; status: string; detectedAt: string; vendorNotified: boolean; patchAvailable: boolean; workaround: string; riskScore: number; nextAction: string; nextActionDate: string}> = [];
+  private _vulnBusinessContext: Array<{assetId: string; assetName: string; businessUnit: string; dataClassification: string; internetFacing: boolean; regulatoryImpact: string[]; criticalityScore: number; vulnCount: number; topVuln: string}> = [];
+
+  private _initVulnPriorityEngine(): void {
+    this._vulnEpssScores = [
+      {vulnId: 'vuln-001', cve: 'CVE-2024-XXXX', cvss: 9.8, epss: 0.974, combinedScore: 96.8, assetCriticality: 10, exposure: 9, businessWeight: 1.5, exploitAvailable: true, exploitPrediction: 0.98},
+      {vulnId: 'vuln-002', cve: 'CVE-2024-YYYY', cvss: 8.6, epss: 0.891, combinedScore: 85.2, assetCriticality: 8, exposure: 7, businessWeight: 1.3, exploitAvailable: true, exploitPrediction: 0.92},
+      {vulnId: 'vuln-003', cve: 'CVE-2024-ZZZZ', cvss: 7.5, epss: 0.654, combinedScore: 68.1, assetCriticality: 6, exposure: 5, businessWeight: 1.1, exploitAvailable: false, exploitPrediction: 0.71},
+      {vulnId: 'vuln-004', cve: 'CVE-2024-AAAA', cvss: 9.1, epss: 0.823, combinedScore: 82.7, assetCriticality: 9, exposure: 8, businessWeight: 1.4, exploitAvailable: true, exploitPrediction: 0.88},
+      {vulnId: 'vuln-005', cve: 'CVE-2024-BBBB', cvss: 6.5, epss: 0.412, combinedScore: 45.3, assetCriticality: 4, exposure: 3, businessWeight: 1.0, exploitAvailable: false, exploitPrediction: 0.48},
+      {vulnId: 'vuln-006', cve: 'CVE-2024-CCCC', cvss: 8.2, epss: 0.756, combinedScore: 73.9, assetCriticality: 7, exposure: 6, businessWeight: 1.2, exploitAvailable: true, exploitPrediction: 0.81},
+    ];
+    this._vulnPatchSchedule = [
+      {patchId: 'patch-001', cve: 'CVE-2024-XXXX', component: 'Apache Log4j', version: '2.14.1', patchVersion: '2.17.1', scheduledDate: '2024-12-17', window: '02:00-04:00 UTC', riskIfUnpatched: 'Critical - RCE', status: 'approved'},
+      {patchId: 'patch-002', cve: 'CVE-2024-YYYY', component: 'OpenSSL', version: '1.1.1k', patchVersion: '1.1.1w', scheduledDate: '2024-12-18', window: '03:00-05:00 UTC', riskIfUnpatched: 'High - Data Leak', status: 'scheduled'},
+      {patchId: 'patch-003', cve: 'CVE-2024-ZZZZ', component: 'Microsoft Exchange', version: '2016 CU23', patchVersion: 'CU24', scheduledDate: '2024-12-20', window: 'Saturday 01:00-06:00 UTC', riskIfUnpatched: 'High - Privilege Escalation', status: 'pending-approval'},
+      {patchId: 'patch-004', cve: 'CVE-2024-AAAA', component: 'Linux Kernel', version: '5.15.0-88', patchVersion: '5.15.0-91', scheduledDate: '2024-12-19', window: 'Sunday 02:00-04:00 UTC', riskIfUnpatched: 'Critical - LPE', status: 'testing'},
+      {patchId: 'patch-005', cve: 'CVE-2024-CCCC', component: 'Chrome Browser', version: '119.0.6045.159', patchVersion: '120.0.6099.62', scheduledDate: '2024-12-16', window: 'Automatic', riskIfUnpatched: 'High - Sandbox Escape', status: 'deploying'},
+    ];
+    this._vulnAgingAlerts = [
+      {vulnId: 'aging-001', cve: 'CVE-2023-44487', ageDays: 95, severity: 'critical', slaDays: 7, overdueDays: 88, owner: 'platform-team', reason: 'Dependency conflict with legacy system'},
+      {vulnId: 'aging-002', cve: 'CVE-2023-38545', ageDays: 72, severity: 'high', slaDays: 14, overdueDays: 58, owner: 'security-team', reason: 'Patch testing blocked by Q4 release freeze'},
+      {vulnId: 'aging-003', cve: 'CVE-2023-46604', ageDays: 45, severity: 'critical', slaDays: 7, overdueDays: 38, owner: 'middleware-team', reason: 'Requires architecture change for permanent fix'},
+      {vulnId: 'aging-004', cve: 'CVE-2023-22515', ageDays: 60, severity: 'critical', slaDays: 7, overdueDays: 53, owner: 'atlassian-team', reason: 'Vendor patch introduced regression - awaiting hotfix'},
+      {vulnId: 'aging-005', cve: 'CVE-2023-20198', ageDays: 38, severity: 'high', slaDays: 14, overdueDays: 24, owner: 'network-team', reason: 'Hardware replacement needed - procurement delayed'},
+    ];
+    this._zeroDayWorkflows = [
+      {workflowId: 'zd-001', cve: 'CVE-2024-XXXX-ZD', description: 'Chrome V8 type confusion leading to RCE', status: 'active-investigation', detectedAt: '2024-12-15T14:30:00Z', vendorNotified: true, patchAvailable: false, workaround: 'Disable JavaScript in Chrome until patched', riskScore: 9.5, nextAction: 'Apply vendor workaround', nextActionDate: '2024-12-16'},
+      {workflowId: 'zd-002', cve: 'CVE-2024-YYYY-ZD', description: 'Windows Kernel memory corruption via malformed USB device descriptor', status: 'mitigation-applied', detectedAt: '2024-12-10T09:15:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Block USB mass storage devices via GPO', riskScore: 8.7, nextAction: 'Schedule patch deployment', nextActionDate: '2024-12-17'},
+      {workflowId: 'zd-003', cve: 'CVE-2024-ZZZZ-ZD', description: 'Cisco IOS XE web UI implant active exploitation', status: 'patch-deployed', detectedAt: '2024-12-08T16:45:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Disable web UI on affected devices', riskScore: 9.8, nextAction: 'Verify patch deployment completion', nextActionDate: '2024-12-16'},
+    ];
+    this._vulnBusinessContext = [
+      {assetId: 'asset-001', assetName: 'Core Banking Platform', businessUnit: 'Finance', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['PCI-DSS', 'SOX', 'GDPR'], criticalityScore: 10, vulnCount: 12, topVuln: 'CVE-2024-XXXX'},
+      {assetId: 'asset-002', assetName: 'Customer Portal', businessUnit: 'Sales', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['CCPA', 'GDPR'], criticalityScore: 8, vulnCount: 8, topVuln: 'CVE-2024-YYYY'},
+      {assetId: 'asset-003', assetName: 'HR Management System', businessUnit: 'Human Resources', dataClassification: 'confidential', internetFacing: false, regulatoryImpact: ['GDPR', 'HIPAA'], criticalityScore: 7, vulnCount: 5, topVuln: 'CVE-2024-ZZZZ'},
+      {assetId: 'asset-004', assetName: 'Dev CI/CD Pipeline', businessUnit: 'Engineering', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['SOC2'], criticalityScore: 6, vulnCount: 15, topVuln: 'CVE-2024-CCCC'},
+      {assetId: 'asset-005', assetName: 'Executive Email Gateway', businessUnit: 'IT', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['SOX', 'GDPR'], criticalityScore: 9, vulnCount: 3, topVuln: 'CVE-2024-AAAA'},
+    ];
+  }
+
+  private _renderVulnEpssScoring(): ReturnType<typeof html> {
+    const sorted = [...this._vulnEpssScores].sort((a, b) => b.combinedScore - a.combinedScore);
+    return html`
+      <div class="epss-scoring-section">
+        <div class="section-header">
+          <h4>EPSS + CVSS Combined Scoring</h4>
+        </div>
+        <div class="epss-grid">
+          ${sorted.map(v => html`
+            <div class="epss-card score-${v.combinedScore >= 80 ? 'critical' : v.combinedScore >= 60 ? 'high' : 'medium'}">
+              <div class="epss-header">
+                <span class="epss-cve">${v.cve}</span>
+                <span class="epss-combined">${v.combinedScore.toFixed(1)}</span>
+              </div>
+              <div class="epss-breakdown">
+                <div class="score-row"><span>CVSS</span><div class="score-bar"><div class="score-fill" style="width: ${v.cvss * 10}%"></div></div><span>${v.cvss}</span></div>
+                <div class="score-row"><span>EPSS</span><div class="score-bar"><div class="score-fill epss" style="width: ${v.epss * 100}%"></div></div><span>${(v.epss * 100).toFixed(1)}%</span></div>
+                <div class="score-row"><span>Exploit Pred.</span><div class="score-bar"><div class="score-fill prediction" style="width: ${v.exploitPrediction * 100}%"></div></div><span>${(v.exploitPrediction * 100).toFixed(0)}%</span></div>
+                <div class="score-row"><span>Business Wt.</span><span class="weight-badge">x${v.businessWeight}</span></div>
+              </div>
+              <div class="epss-meta">
+                <span>Asset Criticality: ${v.assetCriticality}/10</span>
+                <span>Exposure: ${v.exposure}/10</span>
+                <span>Exploit: ${v.exploitAvailable ? 'YES' : 'No'}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnPatchSchedule(): ReturnType<typeof html> {
+    return html`
+      <div class="patch-schedule-section">
+        <div class="section-header">
+          <h4>Patch Deployment Schedule</h4>
+        </div>
+        <div class="patch-list">
+          ${this._vulnPatchSchedule.map(p => html`
+            <div class="patch-card status-${p.status}">
+              <div class="patch-header">
+                <span class="patch-cve">${p.cve}</span>
+                <span class="patch-status">${p.status}</span>
+              </div>
+              <div class="patch-details">
+                <span>${p.component} ${p.version} -> ${p.patchVersion}</span>
+                <span>Scheduled: ${p.scheduledDate} (${p.window})</span>
+                <span>Risk: ${p.riskIfUnpatched}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnAgingAlerts(): ReturnType<typeof html> {
+    return html`
+      <div class="aging-alerts-section">
+        <div class="section-header">
+          <h4>Vulnerability Aging Alerts</h4>
+          <span class="badge critical">${this._vulnAgingAlerts.filter(a => a.overdueDays > 60).length} Critical Overdue</span>
+        </div>
+        <div class="aging-list">
+          ${this._vulnAgingAlerts.sort((a, b) => b.overdueDays - a.overdueDays).map(a => html`
+            <div class="aging-card severity-${a.severity}">
+              <div class="aging-header">
+                <span class="aging-cve">${a.cve}</span>
+                <span class="aging-days overdue">${a.overdueDays}d overdue</span>
+              </div>
+              <div class="aging-details">
+                <span>Age: ${a.ageDays} days (SLA: ${a.slaDays}d)</span>
+                <span>Owner: ${a.owner}</span>
+                <span>Reason: ${a.reason}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderZeroDayWorkflows(): ReturnType<typeof html> {
+    return html`
+      <div class="zeroday-section">
+        <div class="section-header">
+          <h4>Zero-Day Response Workflows</h4>
+        </div>
+        <div class="zeroday-list">
+          ${this._zeroDayWorkflows.map(zd => html`
+            <div class="zeroday-card status-${zd.status}">
+              <div class="zd-header">
+                <span class="zd-cve">${zd.cve}</span>
+                <span class="zd-status">${zd.status}</span>
+                <span class="zd-risk">Risk: ${zd.riskScore}/10</span>
+              </div>
+              <p class="zd-desc">${zd.description}</p>
+              <div class="zd-details">
+                <span>Detected: ${zd.detectedAt}</span>
+                <span>Vendor Notified: ${zd.vendorNotified ? 'Yes' : 'No'}</span>
+                <span>Patch: ${zd.patchAvailable ? 'Available' : 'Pending'}</span>
+              </div>
+              ${zd.workaround ? html`<div class="zd-workaround"><strong>Workaround:</strong> ${zd.workaround}</div>` : ''}
+              <div class="zd-next-action">
+                <strong>Next:</strong> ${zd.nextAction} (by ${zd.nextActionDate})
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnBusinessContext(): ReturnType<typeof html> {
+    return html`
+      <div class="vuln-biz-section">
+        <div class="section-header">
+          <h4>Business Context Weighting</h4>
+        </div>
+        <div class="biz-grid">
+          ${this._vulnBusinessContext.sort((a, b) => b.criticalityScore - a.criticalityScore).map(b => html`
+            <div class="biz-card">
+              <div class="biz-header">
+                <span class="biz-asset">${b.assetName}</span>
+                <span class="biz-criticality">${b.criticalityScore}/10</span>
+              </div>
+              <div class="biz-details">
+                <span>BU: ${b.businessUnit}</span>
+                <span>Data: ${b.dataClassification}</span>
+                <span>Internet: ${b.internetFacing ? 'Yes' : 'No'}</span>
+                <span>Vulns: ${b.vulnCount}</span>
+              </div>
+              <div class="biz-regulatory">
+                ${b.regulatoryImpact.map(r => html`<span class="reg-tag">${r}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Metrics Auto-Reporting Module ===
+  private _reportSchedules: Array<{id: string; name: string; frequency: string; recipients: string[]; lastRun: string; nextRun: string; status: string; template: string; format: string}> = [];
+  private _executiveSummaries: Array<{id: string; title: string; period: string; generatedAt: string; riskScore: number; keyMetrics: Array<{label: string; value: string; trend: string}>; highlights: string[]; concerns: string[]}> = [];
+  private _trendAnalysis: Array<{metric: string; current: number; previous: number; delta: number; direction: string; period: string}> = [];
+  private _reportTemplates: Array<{id: string; name: string; sections: string[]; isDefault: boolean; lastModified: string}> = [];
+  private _deliveryTracking: Array<{reportId: string; reportName: string; sentAt: string; recipients: number; delivered: number; failed: number; opened: number}> = [];
+
+  private _initMetricsReporting(): void {
+    this._reportSchedules = [
+      {id: 'sched-001', name: 'Daily Security Digest', frequency: 'daily', recipients: ['soc-team@company.com', 'ciso@company.com'], lastRun: '2024-12-16T08:00:00Z', nextRun: '2024-12-17T08:00:00Z', status: 'active', template: 'daily-digest', format: 'pdf'},
+      {id: 'sched-002', name: 'Weekly Threat Landscape', frequency: 'weekly', recipients: ['security-team@company.com', 'exec-team@company.com'], lastRun: '2024-12-15T09:00:00Z', nextRun: '2024-12-22T09:00:00Z', status: 'active', template: 'weekly-threat', format: 'html'},
+      {id: 'sched-003', name: 'Monthly Executive Report', frequency: 'monthly', recipients: ['board@company.com', 'ciso@company.com', 'cto@company.com'], lastRun: '2024-12-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'executive-summary', format: 'pdf'},
+      {id: 'sched-004', name: 'Quarterly Compliance Report', frequency: 'quarterly', recipients: ['compliance@company.com', 'legal@company.com', 'board@company.com'], lastRun: '2024-10-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'compliance-report', format: 'pdf'},
+      {id: 'sched-005', name: 'Incident Post-Mortem', frequency: 'on-demand', recipients: ['ir-team@company.com'], lastRun: '2024-12-14T14:00:00Z', nextRun: 'N/A', status: 'on-demand', template: 'post-mortem', format: 'docx'},
+    ];
+    this._executiveSummaries = [
+      {id: 'exec-001', title: 'December 2024 Security Posture', period: '2024-12', generatedAt: '2024-12-16T10:00:00Z', riskScore: 72,
+        keyMetrics: [
+          {label: 'MTTR', value: '24 min', trend: 'down'},
+          {label: 'MTTD', value: '3.2 min', trend: 'down'},
+          {label: 'False Positive Rate', value: '4.2%', trend: 'down'},
+          {label: 'Patch Compliance', value: '94%', trend: 'up'},
+          {label: 'Critical Vulns Open', value: '3', trend: 'down'},
+          {label: 'Phishing Click Rate', value: '2.1%', trend: 'down'},
+        ],
+        highlights: ['SOC achieved 99.7% uptime', 'Zero critical data breaches', 'Automated triage reduced analyst workload by 30%', 'Completed 15 penetration tests'],
+        concerns: ['3 critical vulnerabilities past SLA', 'Night shift understaffed', 'Supply chain attack surface increasing', 'Zero-day response time needs improvement'],
+      },
+      {id: 'exec-002', title: 'Q4 2024 Security Quarterly', period: '2024-Q4', generatedAt: '2024-12-15T10:00:00Z', riskScore: 68,
+        keyMetrics: [
+          {label: 'Total Incidents', value: '847', trend: 'up'},
+          {label: 'Critical Incidents', value: '12', trend: 'down'},
+          {label: 'Mean Time to Contain', value: '4.2 hrs', trend: 'down'},
+          {label: 'Vulnerability Backlog', value: '23', trend: 'down'},
+          {label: 'Security Awareness Score', value: '87%', trend: 'up'},
+          {label: 'Compliance Score', value: '96%', trend: 'up'},
+        ],
+        highlights: ['Reduced critical incidents by 25% QoQ', 'Deployed zero-trust architecture phase 2', 'Security awareness training completion: 95%', 'SOC maturity level improved to 3'],
+        concerns: ['Cloud misconfiguration incidents increased 15%', 'Third-party vendor risk score elevated', 'Insider threat indicators detected in 3 cases'],
+      },
+    ];
+    this._trendAnalysis = [
+      {metric: 'Total Alerts', current: 12456, previous: 11234, delta: 10.9, direction: 'up', period: 'monthly'},
+      {metric: 'False Positives', current: 523, previous: 612, delta: -14.5, direction: 'down', period: 'monthly'},
+      {metric: 'Mean Resolution Time', current: 24, previous: 31, delta: -22.6, direction: 'down', period: 'monthly'},
+      {metric: 'Escalation Rate', current: 8.5, previous: 11.2, delta: -24.1, direction: 'down', period: 'monthly'},
+      {metric: 'Phishing Susceptibility', current: 2.1, previous: 3.8, delta: -44.7, direction: 'down', period: 'monthly'},
+      {metric: 'Patch Compliance', current: 94, previous: 89, delta: 5.6, direction: 'up', period: 'monthly'},
+      {metric: 'Endpoint Coverage', current: 98.2, previous: 97.1, delta: 1.1, direction: 'up', period: 'monthly'},
+      {metric: 'MFA Adoption', current: 96, previous: 91, delta: 5.5, direction: 'up', period: 'monthly'},
+    ];
+    this._reportTemplates = [
+      {id: 'tmpl-001', name: 'Daily Digest', sections: ['Alert Summary', 'Top Threats', 'Incident Status', 'Quick Stats'], isDefault: true, lastModified: '2024-11-01'},
+      {id: 'tmpl-002', name: 'Weekly Threat', sections: ['Threat Landscape', 'New IOCs', 'Campaign Updates', 'Risk Assessment', 'Recommendations'], isDefault: true, lastModified: '2024-10-15'},
+      {id: 'tmpl-003', name: 'Executive Summary', sections: ['Risk Score', 'KPI Dashboard', 'Trend Analysis', 'Budget Summary', 'Strategic Recommendations'], isDefault: true, lastModified: '2024-09-20'},
+      {id: 'tmpl-004', name: 'Compliance Report', sections: ['Framework Status', 'Control Mapping', 'Gap Analysis', 'Remediation Progress', 'Audit Readiness'], isDefault: false, lastModified: '2024-12-01'},
+    ];
+    this._deliveryTracking = [
+      {reportId: 'del-001', reportName: 'Daily Security Digest', sentAt: '2024-12-16T08:00:00Z', recipients: 12, delivered: 12, failed: 0, opened: 9},
+      {reportId: 'del-002', reportName: 'Weekly Threat Landscape', sentAt: '2024-12-15T09:00:00Z', recipients: 25, delivered: 24, failed: 1, opened: 18},
+      {reportId: 'del-003', reportName: 'Monthly Executive Report', sentAt: '2024-12-01T10:00:00Z', recipients: 8, delivered: 8, failed: 0, opened: 7},
+      {reportId: 'del-004', reportName: 'Incident Post-Mortem INC-2840', sentAt: '2024-12-14T14:00:00Z', recipients: 6, delivered: 6, failed: 0, opened: 5},
+    ];
+  }
+
+  private _renderReportSchedules(): ReturnType<typeof html> {
+    return html`
+      <div class="report-schedules-section">
+        <div class="section-header">
+          <h4>Report Schedules</h4>
+        </div>
+        <div class="schedules-list">
+          ${this._reportSchedules.map(s => html`
+            <div class="schedule-card status-${s.status}">
+              <div class="schedule-header">
+                <span class="schedule-name">${s.name}</span>
+                <span class="schedule-freq">${s.frequency}</span>
+              </div>
+              <div class="schedule-details">
+                <span>Template: ${s.template}</span>
+                <span>Format: ${s.format}</span>
+                <span>Recipients: ${s.recipients.length}</span>
+              </div>
+              <div class="schedule-timing">
+                <span>Last: ${s.lastRun}</span>
+                <span>Next: ${s.nextRun}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderExecutiveSummary(): ReturnType<typeof html> {
+    return html`
+      <div class="exec-summary-section">
+        <div class="section-header">
+          <h4>Executive Summary Auto-Generation</h4>
+        </div>
+        ${this._executiveSummaries.map(e => html`
+          <div class="exec-card">
+            <div class="exec-header">
+              <span class="exec-title">${e.title}</span>
+              <span class="exec-period">${e.period}</span>
+              <span class="risk-score ${e.riskScore >= 80 ? 'critical' : e.riskScore >= 60 ? 'high' : 'medium'}">${e.riskScore}/100</span>
+            </div>
+            <div class="exec-metrics">
+              ${e.keyMetrics.map(m => html`
+                <div class="exec-metric">
+                  <span class="metric-label">${m.label}</span>
+                  <span class="metric-value">${m.value}</span>
+                  <span class="metric-trend ${m.trend}">${m.trend === 'up' ? '\u2191' : '\u2193'}</span>
+                </div>
+              `)}
+            </div>
+            <div class="exec-highlights">
+              <h5>Highlights</h5>
+              <ul>${e.highlights.map(h => html`<li class="positive">${h}</li>`)}</ul>
+            </div>
+            <div class="exec-concerns">
+              <h5>Concerns</h5>
+              <ul>${e.concerns.map(c => html`<li class="negative">${c}</li>`)}</ul>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _renderTrendAnalysis(): ReturnType<typeof html> {
+    return html`
+      <div class="trend-analysis-section">
+        <div class="section-header">
+          <h4>Trend Analysis with Deltas</h4>
+        </div>
+        <div class="trend-grid">
+          ${this._trendAnalysis.map(t => html`
+            <div class="trend-card ${t.direction}">
+              <div class="trend-label">${t.metric}</div>
+              <div class="trend-current">${typeof t.current === 'number' && t.current > 100 ? t.current.toLocaleString() : t.current}${typeof t.current === 'number' && t.current <= 100 && t.metric.includes('Rate') ? '%' : t.metric.includes('Coverage') || t.metric.includes('Adoption') || t.metric.includes('Compliance') || t.metric.includes('Score') ? '%' : ''}</div>
+              <div class="trend-delta ${t.direction}">
+                ${t.direction === 'up' ? '\u2191' : '\u2193'} ${Math.abs(t.delta).toFixed(1)}%
+              </div>
+              <div class="trend-period">${t.period}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderReportTemplates(): ReturnType<typeof html> {
+    return html`
+      <div class="report-templates-section">
+        <div class="section-header">
+          <h4>Report Templates</h4>
+        </div>
+        <div class="templates-grid">
+          ${this._reportTemplates.map(t => html`
+            <div class="template-card ${t.isDefault ? 'default' : 'custom'}">
+              <div class="template-header">
+                <span class="template-name">${t.name}</span>
+                ${t.isDefault ? html`<span class="default-badge">Default</span>` : ''}
+              </div>
+              <div class="template-sections">
+                ${t.sections.map(s => html`<span class="section-tag">${s}</span>`)}
+              </div>
+              <div class="template-meta">Last modified: ${t.lastModified}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderDeliveryTracking(): ReturnType<typeof html> {
+    return html`
+      <div class="delivery-tracking-section">
+        <div class="section-header">
+          <h4>Report Delivery Tracking</h4>
+        </div>
+        <div class="delivery-list">
+          ${this._deliveryTracking.map(d => html`
+            <div class="delivery-card ${d.failed > 0 ? 'has-failures' : 'all-delivered'}">
+              <div class="delivery-header">
+                <span class="delivery-name">${d.reportName}</span>
+                <span class="delivery-time">${d.sentAt}</span>
+              </div>
+              <div class="delivery-stats">
+                <span>Recipients: ${d.recipients}</span>
+                <span class="delivered">Delivered: ${d.delivered}</span>
+                ${d.failed > 0 ? html`<span class="failed">Failed: ${d.failed}</span>` : ''}
+                <span>Opened: ${d.opened}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

@@ -2076,6 +2076,500 @@ private _executionHistory: ExecutionRecord[] = [
     };
   }
 
+  // === Vulnerability Prioritization Engine Module ===
+  private _vulnEpssScores: Array<{vulnId: string; cve: string; cvss: number; epss: number; combinedScore: number; assetCriticality: number; exposure: number; businessWeight: number; exploitAvailable: boolean; exploitPrediction: number}> = [];
+  private _vulnPatchSchedule: Array<{patchId: string; cve: string; component: string; version: string; patchVersion: string; scheduledDate: string; window: string; riskIfUnpatched: string; status: string}> = [];
+  private _vulnAgingAlerts: Array<{vulnId: string; cve: string; ageDays: number; severity: string; slaDays: number; overdueDays: number; owner: string; reason: string}> = [];
+  private _zeroDayWorkflows: Array<{workflowId: string; cve: string; description: string; status: string; detectedAt: string; vendorNotified: boolean; patchAvailable: boolean; workaround: string; riskScore: number; nextAction: string; nextActionDate: string}> = [];
+  private _vulnBusinessContext: Array<{assetId: string; assetName: string; businessUnit: string; dataClassification: string; internetFacing: boolean; regulatoryImpact: string[]; criticalityScore: number; vulnCount: number; topVuln: string}> = [];
+
+  private _initVulnPriorityEngine(): void {
+    this._vulnEpssScores = [
+      {vulnId: 'vuln-001', cve: 'CVE-2024-XXXX', cvss: 9.8, epss: 0.974, combinedScore: 96.8, assetCriticality: 10, exposure: 9, businessWeight: 1.5, exploitAvailable: true, exploitPrediction: 0.98},
+      {vulnId: 'vuln-002', cve: 'CVE-2024-YYYY', cvss: 8.6, epss: 0.891, combinedScore: 85.2, assetCriticality: 8, exposure: 7, businessWeight: 1.3, exploitAvailable: true, exploitPrediction: 0.92},
+      {vulnId: 'vuln-003', cve: 'CVE-2024-ZZZZ', cvss: 7.5, epss: 0.654, combinedScore: 68.1, assetCriticality: 6, exposure: 5, businessWeight: 1.1, exploitAvailable: false, exploitPrediction: 0.71},
+      {vulnId: 'vuln-004', cve: 'CVE-2024-AAAA', cvss: 9.1, epss: 0.823, combinedScore: 82.7, assetCriticality: 9, exposure: 8, businessWeight: 1.4, exploitAvailable: true, exploitPrediction: 0.88},
+      {vulnId: 'vuln-005', cve: 'CVE-2024-BBBB', cvss: 6.5, epss: 0.412, combinedScore: 45.3, assetCriticality: 4, exposure: 3, businessWeight: 1.0, exploitAvailable: false, exploitPrediction: 0.48},
+      {vulnId: 'vuln-006', cve: 'CVE-2024-CCCC', cvss: 8.2, epss: 0.756, combinedScore: 73.9, assetCriticality: 7, exposure: 6, businessWeight: 1.2, exploitAvailable: true, exploitPrediction: 0.81},
+    ];
+    this._vulnPatchSchedule = [
+      {patchId: 'patch-001', cve: 'CVE-2024-XXXX', component: 'Apache Log4j', version: '2.14.1', patchVersion: '2.17.1', scheduledDate: '2024-12-17', window: '02:00-04:00 UTC', riskIfUnpatched: 'Critical - RCE', status: 'approved'},
+      {patchId: 'patch-002', cve: 'CVE-2024-YYYY', component: 'OpenSSL', version: '1.1.1k', patchVersion: '1.1.1w', scheduledDate: '2024-12-18', window: '03:00-05:00 UTC', riskIfUnpatched: 'High - Data Leak', status: 'scheduled'},
+      {patchId: 'patch-003', cve: 'CVE-2024-ZZZZ', component: 'Microsoft Exchange', version: '2016 CU23', patchVersion: 'CU24', scheduledDate: '2024-12-20', window: 'Saturday 01:00-06:00 UTC', riskIfUnpatched: 'High - Privilege Escalation', status: 'pending-approval'},
+      {patchId: 'patch-004', cve: 'CVE-2024-AAAA', component: 'Linux Kernel', version: '5.15.0-88', patchVersion: '5.15.0-91', scheduledDate: '2024-12-19', window: 'Sunday 02:00-04:00 UTC', riskIfUnpatched: 'Critical - LPE', status: 'testing'},
+      {patchId: 'patch-005', cve: 'CVE-2024-CCCC', component: 'Chrome Browser', version: '119.0.6045.159', patchVersion: '120.0.6099.62', scheduledDate: '2024-12-16', window: 'Automatic', riskIfUnpatched: 'High - Sandbox Escape', status: 'deploying'},
+    ];
+    this._vulnAgingAlerts = [
+      {vulnId: 'aging-001', cve: 'CVE-2023-44487', ageDays: 95, severity: 'critical', slaDays: 7, overdueDays: 88, owner: 'platform-team', reason: 'Dependency conflict with legacy system'},
+      {vulnId: 'aging-002', cve: 'CVE-2023-38545', ageDays: 72, severity: 'high', slaDays: 14, overdueDays: 58, owner: 'security-team', reason: 'Patch testing blocked by Q4 release freeze'},
+      {vulnId: 'aging-003', cve: 'CVE-2023-46604', ageDays: 45, severity: 'critical', slaDays: 7, overdueDays: 38, owner: 'middleware-team', reason: 'Requires architecture change for permanent fix'},
+      {vulnId: 'aging-004', cve: 'CVE-2023-22515', ageDays: 60, severity: 'critical', slaDays: 7, overdueDays: 53, owner: 'atlassian-team', reason: 'Vendor patch introduced regression - awaiting hotfix'},
+      {vulnId: 'aging-005', cve: 'CVE-2023-20198', ageDays: 38, severity: 'high', slaDays: 14, overdueDays: 24, owner: 'network-team', reason: 'Hardware replacement needed - procurement delayed'},
+    ];
+    this._zeroDayWorkflows = [
+      {workflowId: 'zd-001', cve: 'CVE-2024-XXXX-ZD', description: 'Chrome V8 type confusion leading to RCE', status: 'active-investigation', detectedAt: '2024-12-15T14:30:00Z', vendorNotified: true, patchAvailable: false, workaround: 'Disable JavaScript in Chrome until patched', riskScore: 9.5, nextAction: 'Apply vendor workaround', nextActionDate: '2024-12-16'},
+      {workflowId: 'zd-002', cve: 'CVE-2024-YYYY-ZD', description: 'Windows Kernel memory corruption via malformed USB device descriptor', status: 'mitigation-applied', detectedAt: '2024-12-10T09:15:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Block USB mass storage devices via GPO', riskScore: 8.7, nextAction: 'Schedule patch deployment', nextActionDate: '2024-12-17'},
+      {workflowId: 'zd-003', cve: 'CVE-2024-ZZZZ-ZD', description: 'Cisco IOS XE web UI implant active exploitation', status: 'patch-deployed', detectedAt: '2024-12-08T16:45:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Disable web UI on affected devices', riskScore: 9.8, nextAction: 'Verify patch deployment completion', nextActionDate: '2024-12-16'},
+    ];
+    this._vulnBusinessContext = [
+      {assetId: 'asset-001', assetName: 'Core Banking Platform', businessUnit: 'Finance', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['PCI-DSS', 'SOX', 'GDPR'], criticalityScore: 10, vulnCount: 12, topVuln: 'CVE-2024-XXXX'},
+      {assetId: 'asset-002', assetName: 'Customer Portal', businessUnit: 'Sales', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['CCPA', 'GDPR'], criticalityScore: 8, vulnCount: 8, topVuln: 'CVE-2024-YYYY'},
+      {assetId: 'asset-003', assetName: 'HR Management System', businessUnit: 'Human Resources', dataClassification: 'confidential', internetFacing: false, regulatoryImpact: ['GDPR', 'HIPAA'], criticalityScore: 7, vulnCount: 5, topVuln: 'CVE-2024-ZZZZ'},
+      {assetId: 'asset-004', assetName: 'Dev CI/CD Pipeline', businessUnit: 'Engineering', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['SOC2'], criticalityScore: 6, vulnCount: 15, topVuln: 'CVE-2024-CCCC'},
+      {assetId: 'asset-005', assetName: 'Executive Email Gateway', businessUnit: 'IT', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['SOX', 'GDPR'], criticalityScore: 9, vulnCount: 3, topVuln: 'CVE-2024-AAAA'},
+    ];
+  }
+
+  private _renderVulnEpssScoring(): ReturnType<typeof html> {
+    const sorted = [...this._vulnEpssScores].sort((a, b) => b.combinedScore - a.combinedScore);
+    return html`
+      <div class="epss-scoring-section">
+        <div class="section-header">
+          <h4>EPSS + CVSS Combined Scoring</h4>
+        </div>
+        <div class="epss-grid">
+          ${sorted.map(v => html`
+            <div class="epss-card score-${v.combinedScore >= 80 ? 'critical' : v.combinedScore >= 60 ? 'high' : 'medium'}">
+              <div class="epss-header">
+                <span class="epss-cve">${v.cve}</span>
+                <span class="epss-combined">${v.combinedScore.toFixed(1)}</span>
+              </div>
+              <div class="epss-breakdown">
+                <div class="score-row"><span>CVSS</span><div class="score-bar"><div class="score-fill" style="width: ${v.cvss * 10}%"></div></div><span>${v.cvss}</span></div>
+                <div class="score-row"><span>EPSS</span><div class="score-bar"><div class="score-fill epss" style="width: ${v.epss * 100}%"></div></div><span>${(v.epss * 100).toFixed(1)}%</span></div>
+                <div class="score-row"><span>Exploit Pred.</span><div class="score-bar"><div class="score-fill prediction" style="width: ${v.exploitPrediction * 100}%"></div></div><span>${(v.exploitPrediction * 100).toFixed(0)}%</span></div>
+                <div class="score-row"><span>Business Wt.</span><span class="weight-badge">x${v.businessWeight}</span></div>
+              </div>
+              <div class="epss-meta">
+                <span>Asset Criticality: ${v.assetCriticality}/10</span>
+                <span>Exposure: ${v.exposure}/10</span>
+                <span>Exploit: ${v.exploitAvailable ? 'YES' : 'No'}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnPatchSchedule(): ReturnType<typeof html> {
+    return html`
+      <div class="patch-schedule-section">
+        <div class="section-header">
+          <h4>Patch Deployment Schedule</h4>
+        </div>
+        <div class="patch-list">
+          ${this._vulnPatchSchedule.map(p => html`
+            <div class="patch-card status-${p.status}">
+              <div class="patch-header">
+                <span class="patch-cve">${p.cve}</span>
+                <span class="patch-status">${p.status}</span>
+              </div>
+              <div class="patch-details">
+                <span>${p.component} ${p.version} -> ${p.patchVersion}</span>
+                <span>Scheduled: ${p.scheduledDate} (${p.window})</span>
+                <span>Risk: ${p.riskIfUnpatched}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnAgingAlerts(): ReturnType<typeof html> {
+    return html`
+      <div class="aging-alerts-section">
+        <div class="section-header">
+          <h4>Vulnerability Aging Alerts</h4>
+          <span class="badge critical">${this._vulnAgingAlerts.filter(a => a.overdueDays > 60).length} Critical Overdue</span>
+        </div>
+        <div class="aging-list">
+          ${this._vulnAgingAlerts.sort((a, b) => b.overdueDays - a.overdueDays).map(a => html`
+            <div class="aging-card severity-${a.severity}">
+              <div class="aging-header">
+                <span class="aging-cve">${a.cve}</span>
+                <span class="aging-days overdue">${a.overdueDays}d overdue</span>
+              </div>
+              <div class="aging-details">
+                <span>Age: ${a.ageDays} days (SLA: ${a.slaDays}d)</span>
+                <span>Owner: ${a.owner}</span>
+                <span>Reason: ${a.reason}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderZeroDayWorkflows(): ReturnType<typeof html> {
+    return html`
+      <div class="zeroday-section">
+        <div class="section-header">
+          <h4>Zero-Day Response Workflows</h4>
+        </div>
+        <div class="zeroday-list">
+          ${this._zeroDayWorkflows.map(zd => html`
+            <div class="zeroday-card status-${zd.status}">
+              <div class="zd-header">
+                <span class="zd-cve">${zd.cve}</span>
+                <span class="zd-status">${zd.status}</span>
+                <span class="zd-risk">Risk: ${zd.riskScore}/10</span>
+              </div>
+              <p class="zd-desc">${zd.description}</p>
+              <div class="zd-details">
+                <span>Detected: ${zd.detectedAt}</span>
+                <span>Vendor Notified: ${zd.vendorNotified ? 'Yes' : 'No'}</span>
+                <span>Patch: ${zd.patchAvailable ? 'Available' : 'Pending'}</span>
+              </div>
+              ${zd.workaround ? html`<div class="zd-workaround"><strong>Workaround:</strong> ${zd.workaround}</div>` : ''}
+              <div class="zd-next-action">
+                <strong>Next:</strong> ${zd.nextAction} (by ${zd.nextActionDate})
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnBusinessContext(): ReturnType<typeof html> {
+    return html`
+      <div class="vuln-biz-section">
+        <div class="section-header">
+          <h4>Business Context Weighting</h4>
+        </div>
+        <div class="biz-grid">
+          ${this._vulnBusinessContext.sort((a, b) => b.criticalityScore - a.criticalityScore).map(b => html`
+            <div class="biz-card">
+              <div class="biz-header">
+                <span class="biz-asset">${b.assetName}</span>
+                <span class="biz-criticality">${b.criticalityScore}/10</span>
+              </div>
+              <div class="biz-details">
+                <span>BU: ${b.businessUnit}</span>
+                <span>Data: ${b.dataClassification}</span>
+                <span>Internet: ${b.internetFacing ? 'Yes' : 'No'}</span>
+                <span>Vulns: ${b.vulnCount}</span>
+              </div>
+              <div class="biz-regulatory">
+                ${b.regulatoryImpact.map(r => html`<span class="reg-tag">${r}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Operations Center Analytics Module ===
+  private _socShiftHandoffItems: Array<{id: string; category: string; description: string; status: string; assignedTo: string; priority: string; notes: string}> = [];
+  private _socAnalystMetrics: Array<{analystId: string; name: string; ticketsResolved: number; avgResolutionMin: number; escalationRate: number; accuracy: number; shift: string; streak: number}> = [];
+  private _socAlertVolumeHeatmap: Array<{hour: number; shift: string; critical: number; high: number; medium: number; low: number; total: number}> = [];
+  private _socCapacityPlan: {analystsNeeded: number; analystsAvailable: number; coveragePercent: number; gapAnalysis: string[]; recommendedActions: string[]} = {analystsNeeded: 0, analystsAvailable: 0, coveragePercent: 0, gapAnalysis: [], recommendedActions: []};
+  private _socEscalationPaths: Array<{level: number; name: string; criteria: string; contact: string; avgResponseMin: number; escalationRate: number}> = [];
+  private _socShiftCalendar: Array<{date: string; shift: string; primaryAnalyst: string; secondaryAnalyst: string; backupAnalyst: string; status: string; notes: string}> = [];
+  private _socIncidentBacklog: Array<{id: string; ageHours: number; severity: string; category: string; assignedTo: string; slaRemaining: number}> = [];
+  private _socKpiTargets: {mttrTarget: number; mttdTarget: number; falsePositiveRate: number; escalationRate: number; coverageTarget: number} = {mttrTarget: 30, mttdTarget: 5, falsePositiveRate: 0.05, escalationRate: 0.1, coverageTarget: 0.95};
+
+  private _initSocAnalytics(): void {
+    this._socShiftHandoffItems = [
+      {id: 'soh-001', category: 'Active Incident', description: 'APT lateral movement detected in finance subnet - investigation ongoing', status: 'in-progress', assignedTo: 'analyst-03', priority: 'critical', notes: 'Requires forensics team coordination by EOD'},
+      {id: 'soh-002', category: 'Pending Escalation', description: 'Phishing campaign targeting executive staff - 12 payloads identified', status: 'pending', assignedTo: 'analyst-01', priority: 'high', notes: 'Block IoC set deployed, user notification pending'},
+      {id: 'soh-003', category: 'Watch Item', description: 'Unusual DNS tunneling pattern from workstation WS-2847', status: 'monitoring', assignedTo: 'analyst-02', priority: 'medium', notes: 'Pattern consistent with data exfiltration tool - monitoring'},
+      {id: 'soh-004', category: 'System Note', description: 'SIEM correlation rule update deployed - new detection for living-off-the-land', status: 'completed', assignedTo: 'analyst-04', priority: 'low', notes: 'Tune false positive rate over next 48 hours'},
+      {id: 'soh-005', category: 'Active Incident', description: 'Ransomware encryption attempt blocked on file server FS-PROD-01', status: 'in-progress', assignedTo: 'analyst-05', priority: 'critical', notes: 'Isolated host, malware sample quarantined for analysis'},
+      {id: 'soh-006', category: 'Pending Review', description: 'Vulnerability scan identified 3 critical CVEs in web application cluster', status: 'pending', assignedTo: 'analyst-01', priority: 'high', notes: 'CVE-2024-XXXX, CVE-2024-YYYY, CVE-2024-ZZZZ'},
+      {id: 'soh-007', category: 'Compliance', description: 'Quarterly access review deadline in 5 business days', status: 'pending', assignedTo: 'analyst-03', priority: 'medium', notes: '42% complete, need to accelerate reviews'},
+      {id: 'soh-008', category: 'Tooling', description: 'EDR agent upgrade scheduled for graveyard shift', status: 'scheduled', assignedTo: 'analyst-04', priority: 'low', notes: 'Coordinate with IT ops for maintenance window'},
+    ];
+    this._socAnalystMetrics = [
+      {analystId: 'analyst-01', name: 'Sarah Chen', ticketsResolved: 47, avgResolutionMin: 22, escalationRate: 0.08, accuracy: 0.96, shift: 'Day', streak: 14},
+      {analystId: 'analyst-02', name: 'Marcus Johnson', ticketsResolved: 39, avgResolutionMin: 28, escalationRate: 0.12, accuracy: 0.93, shift: 'Day', streak: 9},
+      {analystId: 'analyst-03', name: 'Aisha Patel', ticketsResolved: 52, avgResolutionMin: 18, escalationRate: 0.06, accuracy: 0.98, shift: 'Swing', streak: 21},
+      {analystId: 'analyst-04', name: 'Dmitri Volkov', ticketsResolved: 41, avgResolutionMin: 25, escalationRate: 0.10, accuracy: 0.94, shift: 'Swing', streak: 7},
+      {analystId: 'analyst-05', name: 'Lisa Wong', ticketsResolved: 55, avgResolutionMin: 15, escalationRate: 0.04, accuracy: 0.99, shift: 'Night', streak: 18},
+      {analystId: 'analyst-06', name: 'James Rodriguez', ticketsResolved: 33, avgResolutionMin: 32, escalationRate: 0.15, accuracy: 0.91, shift: 'Night', streak: 5},
+    ];
+    const shifts = ['Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing'];
+    this._socAlertVolumeHeatmap = shifts.map((shift, hour) => {
+      const base = shift === 'Day' ? 45 : shift === 'Swing' ? 32 : 18;
+      const variance = Math.floor(Math.random() * 15) - 7;
+      const total = Math.max(5, base + variance);
+      return {
+        hour: hour,
+        shift: shift,
+        critical: Math.floor(total * 0.08),
+        high: Math.floor(total * 0.22),
+        medium: Math.floor(total * 0.40),
+        low: Math.floor(total * 0.30),
+        total: total,
+      };
+    });
+    this._socCapacityPlan = {
+      analystsNeeded: 8,
+      analystsAvailable: 6,
+      coveragePercent: 75.0,
+      gapAnalysis: ['Night shift under-staffed by 1 analyst', 'No backup for forensics specialization', 'Weekend coverage requires 2 additional analysts'],
+      recommendedActions: ['Hire 2 Tier-2 analysts with forensics experience', 'Cross-train 3 existing analysts on IR procedures', 'Implement auto-triage to reduce analyst workload by 30%'],
+    };
+    this._socEscalationPaths = [
+      {level: 1, name: 'Tier 1 Triage', criteria: 'All incoming alerts', contact: 'SOC Team Lead', avgResponseMin: 5, escalationRate: 0.35},
+      {level: 2, name: 'Tier 2 Analysis', criteria: 'Confirmed threats, complex incidents', contact: 'Senior Analyst', avgResponseMin: 15, escalationRate: 0.12},
+      {level: 3, name: 'IR Commander', criteria: 'Active breaches, data exfiltration', contact: 'CISO Office', avgResponseMin: 30, escalationRate: 0.03},
+      {level: 4, name: 'Executive Notification', criteria: 'Critical incidents affecting operations', contact: 'CTO / CEO', avgResponseMin: 60, escalationRate: 0.005},
+    ];
+    this._socShiftCalendar = [
+      {date: '2024-12-16', shift: 'Day', primaryAnalyst: 'Sarah Chen', secondaryAnalyst: 'Marcus Johnson', backupAnalyst: 'Aisha Patel', status: 'confirmed', notes: ''},
+      {date: '2024-12-16', shift: 'Swing', primaryAnalyst: 'Aisha Patel', secondaryAnalyst: 'Dmitri Volkov', backupAnalyst: 'Lisa Wong', status: 'confirmed', notes: ''},
+      {date: '2024-12-16', shift: 'Night', primaryAnalyst: 'Lisa Wong', secondaryAnalyst: 'James Rodriguez', backupAnalyst: 'Sarah Chen', status: 'confirmed', notes: 'James on probation - extra review'},
+      {date: '2024-12-17', shift: 'Day', primaryAnalyst: 'Marcus Johnson', secondaryAnalyst: 'Sarah Chen', backupAnalyst: 'Dmitri Volkov', status: 'confirmed', notes: ''},
+      {date: '2024-12-17', shift: 'Swing', primaryAnalyst: 'Dmitri Volkov', secondaryAnalyst: 'Lisa Wong', backupAnalyst: 'James Rodriguez', status: 'tentative', notes: 'Dmitri requested PTO - pending approval'},
+      {date: '2024-12-17', shift: 'Night', primaryAnalyst: 'James Rodriguez', secondaryAnalyst: 'Aisha Patel', backupAnalyst: 'Marcus Johnson', status: 'confirmed', notes: ''},
+    ];
+    this._socIncidentBacklog = [
+      {id: 'INC-2847', ageHours: 2, severity: 'critical', category: 'malware', assignedTo: 'analyst-05', slaRemaining: 58},
+      {id: 'INC-2846', ageHours: 5, severity: 'high', category: 'phishing', assignedTo: 'analyst-01', slaRemaining: 115},
+      {id: 'INC-2843', ageHours: 12, severity: 'medium', category: 'policy-violation', assignedTo: 'analyst-02', slaRemaining: 228},
+      {id: 'INC-2840', ageHours: 18, severity: 'low', category: 'configuration', assignedTo: 'analyst-04', slaRemaining: 342},
+      {id: 'INC-2838', ageHours: 24, severity: 'high', category: 'network', assignedTo: 'analyst-03', slaRemaining: 96},
+    ];
+  }
+
+  private _renderSocShiftHandoff(): ReturnType<typeof html> {
+    const pending = this._socShiftHandoffItems.filter(i => i.status !== 'completed');
+    const critical = pending.filter(i => i.priority === 'critical');
+    return html`
+      <div class="soc-handoff-section">
+        <div class="section-header">
+          <h4>SOC Shift Handoff Checklist</h4>
+          <span class="badge critical">${critical.length} Critical</span>
+          <span class="badge info">${pending.length} Pending</span>
+        </div>
+        <div class="handoff-grid">
+          ${pending.map(item => html`
+            <div class="handoff-card priority-${item.priority}">
+              <div class="handoff-header">
+                <span class="handoff-id">${item.id}</span>
+                <span class="handoff-category">${item.category}</span>
+                <span class="priority-badge ${item.priority}">${item.priority}</span>
+              </div>
+              <p class="handoff-desc">${item.description}</p>
+              <div class="handoff-meta">
+                <span>Assigned: ${item.assignedTo}</span>
+                <span>Status: ${item.status}</span>
+              </div>
+              ${item.notes ? html`<p class="handoff-notes">${item.notes}</p>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocAnalystMetrics(): ReturnType<typeof html> {
+    const sorted = [...this._socAnalystMetrics].sort((a, b) => b.ticketsResolved - a.ticketsResolved);
+    return html`
+      <div class="soc-metrics-section">
+        <div class="section-header">
+          <h4>Analyst Performance Metrics</h4>
+        </div>
+        <div class="metrics-grid">
+          ${sorted.map(a => html`
+            <div class="analyst-card">
+              <div class="analyst-header">
+                <span class="analyst-name">${a.name}</span>
+                <span class="analyst-shift">${a.shift} Shift</span>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Resolved</div>
+                <div class="metric-value">${a.ticketsResolved}</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Avg Resolution</div>
+                <div class="metric-value">${a.avgResolutionMin} min</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Escalation Rate</div>
+                <div class="metric-value">${(a.escalationRate * 100).toFixed(1)}%</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-value">${(a.accuracy * 100).toFixed(1)}%</div>
+              </div>
+              <div class="analyst-streak">${a.streak} day streak</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocAlertHeatmap(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-heatmap-section">
+        <div class="section-header">
+          <h4>Alert Volume by Hour/Shift</h4>
+        </div>
+        <div class="heatmap-grid">
+          ${this._socAlertVolumeHeatmap.map(h => html`
+            <div class="heatmap-cell shift-${h.shift.toLowerCase()}" style="--intensity: ${h.total / 60}" title="Hour ${h.hour}: ${h.total} alerts (C:${h.critical} H:${h.high} M:${h.medium} L:${h.low})">
+              <span class="heatmap-hour">${String(h.hour).padStart(2, '0')}</span>
+              <span class="heatmap-total">${h.total}</span>
+            </div>
+          `)}
+        </div>
+        <div class="heatmap-legend">
+          <span class="legend-item night">Night (22-06)</span>
+          <span class="legend-item day">Day (06-14)</span>
+          <span class="legend-item swing">Swing (14-22)</span>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocCapacity(): ReturnType<typeof html> {
+    const gap = this._socCapacityPlan.analystsNeeded - this._socCapacityPlan.analystsAvailable;
+    return html`
+      <div class="soc-capacity-section">
+        <div class="section-header">
+          <h4>SOC Capacity Planning</h4>
+          <span class="badge ${gap > 0 ? 'warning' : 'success'}">${gap > 0 ? gap + ' Short' : 'Fully Staffed'}</span>
+        </div>
+        <div class="capacity-overview">
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.analystsAvailable}</span>
+            <span class="stat-label">Available</span>
+          </div>
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.analystsNeeded}</span>
+            <span class="stat-label">Needed</span>
+          </div>
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.coveragePercent}%</span>
+            <span class="stat-label">Coverage</span>
+          </div>
+        </div>
+        <div class="capacity-gaps">
+          <h5>Gap Analysis</h5>
+          <ul>${this._socCapacityPlan.gapAnalysis.map(g => html`<li>${g}</li>`)}</ul>
+        </div>
+        <div class="capacity-actions">
+          <h5>Recommended Actions</h5>
+          <ul>${this._socCapacityPlan.recommendedActions.map(a => html`<li>${a}</li>`)}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocEscalation(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-escalation-section">
+        <div class="section-header">
+          <h4>Escalation Path Visualization</h4>
+        </div>
+        <div class="escalation-chain">
+          ${this._socEscalationPaths.map((ep, i) => html`
+            <div class="escalation-level level-${ep.level}">
+              <div class="level-header">
+                <span class="level-number">L${ep.level}</span>
+                <span class="level-name">${ep.name}</span>
+              </div>
+              <div class="level-details">
+                <p><strong>Criteria:</strong> ${ep.criteria}</p>
+                <p><strong>Contact:</strong> ${ep.contact}</p>
+                <p><strong>Avg Response:</strong> ${ep.avgResponseMin} min</p>
+                <p><strong>Escalation Rate:</strong> ${(ep.escalationRate * 100).toFixed(1)}%</p>
+              </div>
+              ${i < this._socEscalationPaths.length - 1 ? html`<div class="escalation-arrow">\u2193</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocShiftCalendar(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-calendar-section">
+        <div class="section-header">
+          <h4>Shift Coverage Calendar</h4>
+        </div>
+        <div class="calendar-grid">
+          ${this._socShiftCalendar.map(s => html`
+            <div class="calendar-entry status-${s.status}">
+              <div class="cal-date">${s.date}</div>
+              <div class="cal-shift">${s.shift}</div>
+              <div class="cal-primary">${s.primaryAnalyst}</div>
+              <div class="cal-secondary">+${s.secondaryAnalyst}</div>
+              ${s.notes ? html`<div class="cal-notes">${s.notes}</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocIncidentBacklog(): ReturnType<typeof html> {
+    const sorted = [...this._socIncidentBacklog].sort((a, b) => a.slaRemaining - b.slaRemaining);
+    return html`
+      <div class="soc-backlog-section">
+        <div class="section-header">
+          <h4>Incident Backlog</h4>
+        </div>
+        <div class="backlog-list">
+          ${sorted.map(inc => html`
+            <div class="backlog-item severity-${inc.severity}">
+              <span class="backlog-id">${inc.id}</span>
+              <span class="backlog-age">${inc.ageHours}h old</span>
+              <span class="backlog-category">${inc.category}</span>
+              <span class="backlog-analyst">${inc.assignedTo}</span>
+              <span class="backlog-sla ${inc.slaRemaining < 60 ? 'warning' : ''}">${inc.slaRemaining}m SLA</span>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocKpiTargets(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-kpi-section">
+        <div class="section-header">
+          <h4>SOC KPI Targets vs Actual</h4>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">MTTR Target</div>
+            <div class="kpi-value">${this._socKpiTargets.mttrTarget} min</div>
+            <div class="kpi-actual">Actual: 24 min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">MTTD Target</div>
+            <div class="kpi-value">${this._socKpiTargets.mttdTarget} min</div>
+            <div class="kpi-actual">Actual: 3.2 min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">False Positive Rate</div>
+            <div class="kpi-value">${(this._socKpiTargets.falsePositiveRate * 100).toFixed(1)}%</div>
+            <div class="kpi-actual">Actual: 4.2%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Escalation Rate</div>
+            <div class="kpi-value">${(this._socKpiTargets.escalationRate * 100).toFixed(1)}%</div>
+            <div class="kpi-actual">Actual: 8.5%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Coverage Target</div>
+            <div class="kpi-value">${(this._socKpiTargets.coverageTarget * 100).toFixed(0)}%</div>
+            <div class="kpi-actual">Actual: 87%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

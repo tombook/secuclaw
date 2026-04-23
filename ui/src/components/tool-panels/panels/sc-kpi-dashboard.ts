@@ -2635,6 +2635,193 @@ export class ScKpiDashboard extends LitElement {
   private kdRenderRound17() {
     return html`${this.kdRenderRiskQuant()}${this.kdRenderSecProgram()}${this.kdRenderThirdParty()}${this.kdRenderDLP()}${this.kdRenderAutomation()}`;
   }
+
+  // === Vulnerability Prioritization Engine Module ===
+  private _vulnEpssScores: Array<{vulnId: string; cve: string; cvss: number; epss: number; combinedScore: number; assetCriticality: number; exposure: number; businessWeight: number; exploitAvailable: boolean; exploitPrediction: number}> = [];
+  private _vulnPatchSchedule: Array<{patchId: string; cve: string; component: string; version: string; patchVersion: string; scheduledDate: string; window: string; riskIfUnpatched: string; status: string}> = [];
+  private _vulnAgingAlerts: Array<{vulnId: string; cve: string; ageDays: number; severity: string; slaDays: number; overdueDays: number; owner: string; reason: string}> = [];
+  private _zeroDayWorkflows: Array<{workflowId: string; cve: string; description: string; status: string; detectedAt: string; vendorNotified: boolean; patchAvailable: boolean; workaround: string; riskScore: number; nextAction: string; nextActionDate: string}> = [];
+  private _vulnBusinessContext: Array<{assetId: string; assetName: string; businessUnit: string; dataClassification: string; internetFacing: boolean; regulatoryImpact: string[]; criticalityScore: number; vulnCount: number; topVuln: string}> = [];
+
+  private _initVulnPriorityEngine(): void {
+    this._vulnEpssScores = [
+      {vulnId: 'vuln-001', cve: 'CVE-2024-XXXX', cvss: 9.8, epss: 0.974, combinedScore: 96.8, assetCriticality: 10, exposure: 9, businessWeight: 1.5, exploitAvailable: true, exploitPrediction: 0.98},
+      {vulnId: 'vuln-002', cve: 'CVE-2024-YYYY', cvss: 8.6, epss: 0.891, combinedScore: 85.2, assetCriticality: 8, exposure: 7, businessWeight: 1.3, exploitAvailable: true, exploitPrediction: 0.92},
+      {vulnId: 'vuln-003', cve: 'CVE-2024-ZZZZ', cvss: 7.5, epss: 0.654, combinedScore: 68.1, assetCriticality: 6, exposure: 5, businessWeight: 1.1, exploitAvailable: false, exploitPrediction: 0.71},
+      {vulnId: 'vuln-004', cve: 'CVE-2024-AAAA', cvss: 9.1, epss: 0.823, combinedScore: 82.7, assetCriticality: 9, exposure: 8, businessWeight: 1.4, exploitAvailable: true, exploitPrediction: 0.88},
+      {vulnId: 'vuln-005', cve: 'CVE-2024-BBBB', cvss: 6.5, epss: 0.412, combinedScore: 45.3, assetCriticality: 4, exposure: 3, businessWeight: 1.0, exploitAvailable: false, exploitPrediction: 0.48},
+      {vulnId: 'vuln-006', cve: 'CVE-2024-CCCC', cvss: 8.2, epss: 0.756, combinedScore: 73.9, assetCriticality: 7, exposure: 6, businessWeight: 1.2, exploitAvailable: true, exploitPrediction: 0.81},
+    ];
+    this._vulnPatchSchedule = [
+      {patchId: 'patch-001', cve: 'CVE-2024-XXXX', component: 'Apache Log4j', version: '2.14.1', patchVersion: '2.17.1', scheduledDate: '2024-12-17', window: '02:00-04:00 UTC', riskIfUnpatched: 'Critical - RCE', status: 'approved'},
+      {patchId: 'patch-002', cve: 'CVE-2024-YYYY', component: 'OpenSSL', version: '1.1.1k', patchVersion: '1.1.1w', scheduledDate: '2024-12-18', window: '03:00-05:00 UTC', riskIfUnpatched: 'High - Data Leak', status: 'scheduled'},
+      {patchId: 'patch-003', cve: 'CVE-2024-ZZZZ', component: 'Microsoft Exchange', version: '2016 CU23', patchVersion: 'CU24', scheduledDate: '2024-12-20', window: 'Saturday 01:00-06:00 UTC', riskIfUnpatched: 'High - Privilege Escalation', status: 'pending-approval'},
+      {patchId: 'patch-004', cve: 'CVE-2024-AAAA', component: 'Linux Kernel', version: '5.15.0-88', patchVersion: '5.15.0-91', scheduledDate: '2024-12-19', window: 'Sunday 02:00-04:00 UTC', riskIfUnpatched: 'Critical - LPE', status: 'testing'},
+      {patchId: 'patch-005', cve: 'CVE-2024-CCCC', component: 'Chrome Browser', version: '119.0.6045.159', patchVersion: '120.0.6099.62', scheduledDate: '2024-12-16', window: 'Automatic', riskIfUnpatched: 'High - Sandbox Escape', status: 'deploying'},
+    ];
+    this._vulnAgingAlerts = [
+      {vulnId: 'aging-001', cve: 'CVE-2023-44487', ageDays: 95, severity: 'critical', slaDays: 7, overdueDays: 88, owner: 'platform-team', reason: 'Dependency conflict with legacy system'},
+      {vulnId: 'aging-002', cve: 'CVE-2023-38545', ageDays: 72, severity: 'high', slaDays: 14, overdueDays: 58, owner: 'security-team', reason: 'Patch testing blocked by Q4 release freeze'},
+      {vulnId: 'aging-003', cve: 'CVE-2023-46604', ageDays: 45, severity: 'critical', slaDays: 7, overdueDays: 38, owner: 'middleware-team', reason: 'Requires architecture change for permanent fix'},
+      {vulnId: 'aging-004', cve: 'CVE-2023-22515', ageDays: 60, severity: 'critical', slaDays: 7, overdueDays: 53, owner: 'atlassian-team', reason: 'Vendor patch introduced regression - awaiting hotfix'},
+      {vulnId: 'aging-005', cve: 'CVE-2023-20198', ageDays: 38, severity: 'high', slaDays: 14, overdueDays: 24, owner: 'network-team', reason: 'Hardware replacement needed - procurement delayed'},
+    ];
+    this._zeroDayWorkflows = [
+      {workflowId: 'zd-001', cve: 'CVE-2024-XXXX-ZD', description: 'Chrome V8 type confusion leading to RCE', status: 'active-investigation', detectedAt: '2024-12-15T14:30:00Z', vendorNotified: true, patchAvailable: false, workaround: 'Disable JavaScript in Chrome until patched', riskScore: 9.5, nextAction: 'Apply vendor workaround', nextActionDate: '2024-12-16'},
+      {workflowId: 'zd-002', cve: 'CVE-2024-YYYY-ZD', description: 'Windows Kernel memory corruption via malformed USB device descriptor', status: 'mitigation-applied', detectedAt: '2024-12-10T09:15:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Block USB mass storage devices via GPO', riskScore: 8.7, nextAction: 'Schedule patch deployment', nextActionDate: '2024-12-17'},
+      {workflowId: 'zd-003', cve: 'CVE-2024-ZZZZ-ZD', description: 'Cisco IOS XE web UI implant active exploitation', status: 'patch-deployed', detectedAt: '2024-12-08T16:45:00Z', vendorNotified: true, patchAvailable: true, workaround: 'Disable web UI on affected devices', riskScore: 9.8, nextAction: 'Verify patch deployment completion', nextActionDate: '2024-12-16'},
+    ];
+    this._vulnBusinessContext = [
+      {assetId: 'asset-001', assetName: 'Core Banking Platform', businessUnit: 'Finance', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['PCI-DSS', 'SOX', 'GDPR'], criticalityScore: 10, vulnCount: 12, topVuln: 'CVE-2024-XXXX'},
+      {assetId: 'asset-002', assetName: 'Customer Portal', businessUnit: 'Sales', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['CCPA', 'GDPR'], criticalityScore: 8, vulnCount: 8, topVuln: 'CVE-2024-YYYY'},
+      {assetId: 'asset-003', assetName: 'HR Management System', businessUnit: 'Human Resources', dataClassification: 'confidential', internetFacing: false, regulatoryImpact: ['GDPR', 'HIPAA'], criticalityScore: 7, vulnCount: 5, topVuln: 'CVE-2024-ZZZZ'},
+      {assetId: 'asset-004', assetName: 'Dev CI/CD Pipeline', businessUnit: 'Engineering', dataClassification: 'internal', internetFacing: true, regulatoryImpact: ['SOC2'], criticalityScore: 6, vulnCount: 15, topVuln: 'CVE-2024-CCCC'},
+      {assetId: 'asset-005', assetName: 'Executive Email Gateway', businessUnit: 'IT', dataClassification: 'confidential', internetFacing: true, regulatoryImpact: ['SOX', 'GDPR'], criticalityScore: 9, vulnCount: 3, topVuln: 'CVE-2024-AAAA'},
+    ];
+  }
+
+  private _renderVulnEpssScoring(): ReturnType<typeof html> {
+    const sorted = [...this._vulnEpssScores].sort((a, b) => b.combinedScore - a.combinedScore);
+    return html`
+      <div class="epss-scoring-section">
+        <div class="section-header">
+          <h4>EPSS + CVSS Combined Scoring</h4>
+        </div>
+        <div class="epss-grid">
+          ${sorted.map(v => html`
+            <div class="epss-card score-${v.combinedScore >= 80 ? 'critical' : v.combinedScore >= 60 ? 'high' : 'medium'}">
+              <div class="epss-header">
+                <span class="epss-cve">${v.cve}</span>
+                <span class="epss-combined">${v.combinedScore.toFixed(1)}</span>
+              </div>
+              <div class="epss-breakdown">
+                <div class="score-row"><span>CVSS</span><div class="score-bar"><div class="score-fill" style="width: ${v.cvss * 10}%"></div></div><span>${v.cvss}</span></div>
+                <div class="score-row"><span>EPSS</span><div class="score-bar"><div class="score-fill epss" style="width: ${v.epss * 100}%"></div></div><span>${(v.epss * 100).toFixed(1)}%</span></div>
+                <div class="score-row"><span>Exploit Pred.</span><div class="score-bar"><div class="score-fill prediction" style="width: ${v.exploitPrediction * 100}%"></div></div><span>${(v.exploitPrediction * 100).toFixed(0)}%</span></div>
+                <div class="score-row"><span>Business Wt.</span><span class="weight-badge">x${v.businessWeight}</span></div>
+              </div>
+              <div class="epss-meta">
+                <span>Asset Criticality: ${v.assetCriticality}/10</span>
+                <span>Exposure: ${v.exposure}/10</span>
+                <span>Exploit: ${v.exploitAvailable ? 'YES' : 'No'}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnPatchSchedule(): ReturnType<typeof html> {
+    return html`
+      <div class="patch-schedule-section">
+        <div class="section-header">
+          <h4>Patch Deployment Schedule</h4>
+        </div>
+        <div class="patch-list">
+          ${this._vulnPatchSchedule.map(p => html`
+            <div class="patch-card status-${p.status}">
+              <div class="patch-header">
+                <span class="patch-cve">${p.cve}</span>
+                <span class="patch-status">${p.status}</span>
+              </div>
+              <div class="patch-details">
+                <span>${p.component} ${p.version} -> ${p.patchVersion}</span>
+                <span>Scheduled: ${p.scheduledDate} (${p.window})</span>
+                <span>Risk: ${p.riskIfUnpatched}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnAgingAlerts(): ReturnType<typeof html> {
+    return html`
+      <div class="aging-alerts-section">
+        <div class="section-header">
+          <h4>Vulnerability Aging Alerts</h4>
+          <span class="badge critical">${this._vulnAgingAlerts.filter(a => a.overdueDays > 60).length} Critical Overdue</span>
+        </div>
+        <div class="aging-list">
+          ${this._vulnAgingAlerts.sort((a, b) => b.overdueDays - a.overdueDays).map(a => html`
+            <div class="aging-card severity-${a.severity}">
+              <div class="aging-header">
+                <span class="aging-cve">${a.cve}</span>
+                <span class="aging-days overdue">${a.overdueDays}d overdue</span>
+              </div>
+              <div class="aging-details">
+                <span>Age: ${a.ageDays} days (SLA: ${a.slaDays}d)</span>
+                <span>Owner: ${a.owner}</span>
+                <span>Reason: ${a.reason}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderZeroDayWorkflows(): ReturnType<typeof html> {
+    return html`
+      <div class="zeroday-section">
+        <div class="section-header">
+          <h4>Zero-Day Response Workflows</h4>
+        </div>
+        <div class="zeroday-list">
+          ${this._zeroDayWorkflows.map(zd => html`
+            <div class="zeroday-card status-${zd.status}">
+              <div class="zd-header">
+                <span class="zd-cve">${zd.cve}</span>
+                <span class="zd-status">${zd.status}</span>
+                <span class="zd-risk">Risk: ${zd.riskScore}/10</span>
+              </div>
+              <p class="zd-desc">${zd.description}</p>
+              <div class="zd-details">
+                <span>Detected: ${zd.detectedAt}</span>
+                <span>Vendor Notified: ${zd.vendorNotified ? 'Yes' : 'No'}</span>
+                <span>Patch: ${zd.patchAvailable ? 'Available' : 'Pending'}</span>
+              </div>
+              ${zd.workaround ? html`<div class="zd-workaround"><strong>Workaround:</strong> ${zd.workaround}</div>` : ''}
+              <div class="zd-next-action">
+                <strong>Next:</strong> ${zd.nextAction} (by ${zd.nextActionDate})
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderVulnBusinessContext(): ReturnType<typeof html> {
+    return html`
+      <div class="vuln-biz-section">
+        <div class="section-header">
+          <h4>Business Context Weighting</h4>
+        </div>
+        <div class="biz-grid">
+          ${this._vulnBusinessContext.sort((a, b) => b.criticalityScore - a.criticalityScore).map(b => html`
+            <div class="biz-card">
+              <div class="biz-header">
+                <span class="biz-asset">${b.assetName}</span>
+                <span class="biz-criticality">${b.criticalityScore}/10</span>
+              </div>
+              <div class="biz-details">
+                <span>BU: ${b.businessUnit}</span>
+                <span>Data: ${b.dataClassification}</span>
+                <span>Internet: ${b.internetFacing ? 'Yes' : 'No'}</span>
+                <span>Vulns: ${b.vulnCount}</span>
+              </div>
+              <div class="biz-regulatory">
+                ${b.regulatoryImpact.map(r => html`<span class="reg-tag">${r}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
   render() {    if (this._kpiRules.length === 0) { this._initKpiRules(); this._initKpiCvss(); this._runKpiAnomalyDetection(); this._generateKpiPredictions(); this._initKpiApprovals(); this._initKpiActivity(); this._initKpiNotifications(); }
 
     const items = this._getFiltered();

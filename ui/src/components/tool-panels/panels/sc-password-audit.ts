@@ -2002,6 +2002,547 @@ private _executionHistory: ExecutionRecord[] = [
     return { valid: issues.length === 0, issues };
   }
 
+  // === Threat Intelligence Correlation Engine Module ===
+  private _threatIntelFeeds: Array<{feedId: string; name: string; source: string; type: string; freshness: string; iocCount: number; confidence: number; lastSync: string; status: string}> = [];
+  private _correlatedThreats: Array<{id: string; name: string; sources: string[]; confidence: number; severity: string; iocs: string[]; actor: string; campaign: string; firstSeen: string; lastSeen: string; description: string}> = [];
+  private _threatActors: Array<{actorId: string; name: string; alias: string; country: string; motivation: string; sophistication: string; campaigns: number; activeIocs: number; lastActivity: string; ttps: string[]}> = [];
+  private _iocStalenessData: Array<{ioc: string; type: string; firstSeen: string; lastSeen: string; feedCount: number; confidence: number; isStale: boolean; ageDays: number}> = [];
+  private _threatLandscapeRadar: Array<{category: string; threatLevel: number; trend: string; topActor: string; keyIndicators: string[]; recentIncidents: number}> = [];
+  private _threatBriefs: Array<{id: string; title: string; generatedAt: string; scope: string; summary: string; keyFindings: string[]; iocHighlights: string[]; recommendedActions: string[]}> = [];
+
+  private _initThreatIntelEngine(): void {
+    this._threatIntelFeeds = [
+      {feedId: 'feed-001', name: 'MISP Community', source: 'MISP', type: 'Open Source', freshness: '1h', iocCount: 284756, confidence: 0.72, lastSync: '2024-12-16T08:00:00Z', status: 'active'},
+      {feedId: 'feed-002', name: 'AlienVault OTX', source: 'AlienVault', type: 'Open Source', freshness: '30m', iocCount: 456123, confidence: 0.68, lastSync: '2024-12-16T08:30:00Z', status: 'active'},
+      {feedId: 'feed-003', name: 'CrowdStrike Intel', source: 'CrowdStrike', type: 'Commercial', freshness: '15m', iocCount: 89234, confidence: 0.91, lastSync: '2024-12-16T08:45:00Z', status: 'active'},
+      {feedId: 'feed-004', name: 'Mandiant Threat Intel', source: 'Mandiant', type: 'Commercial', freshness: '1h', iocCount: 67891, confidence: 0.93, lastSync: '2024-12-16T08:00:00Z', status: 'active'},
+      {feedId: 'feed-005', name: 'Recorded Future', source: 'Recorded Future', type: 'Commercial', freshness: '5m', iocCount: 1245678, confidence: 0.87, lastSync: '2024-12-16T08:55:00Z', status: 'active'},
+    ];
+    this._correlatedThreats = [
+      {id: 'corr-001', name: 'Cobalt Strike Beacon Variant', sources: ['CrowdStrike', 'Mandiant'], confidence: 0.95, severity: 'critical', iocs: ['C2: evil-c2[.]example[.]com', 'Hash: a1b2c3d4e5f6', 'Mutex: Global\\CS_Mutex_0x41'], actor: 'APT29', campaign: 'Operation Midnight Eclipse', firstSeen: '2024-12-10', lastSeen: '2024-12-16', description: 'New Cobalt Strike variant with enhanced evasion capabilities targeting financial sector'},
+      {id: 'corr-002', name: 'Supply Chain Backdoor', sources: ['Recorded Future', 'Mandiant'], confidence: 0.88, severity: 'critical', iocs: ['Domain: update-service[.]cdn[.]net', 'IP: 198.51.100.23', 'Cert: CN=UpdateService'], actor: 'APT41', campaign: 'Soft Supply', firstSeen: '2024-12-08', lastSeen: '2024-12-15', description: 'Software supply chain compromise via trojanized update mechanism'},
+      {id: 'corr-003', name: 'Phishing Kit Evolution', sources: ['AlienVault', 'MISP'], confidence: 0.76, severity: 'high', iocs: ['URL: login-secure[.]cloud[.]auth', 'Email: noreply@secure-verify[.]com'], actor: 'UNC2452', campaign: 'Credential Harvest Q4', firstSeen: '2024-12-05', lastSeen: '2024-12-16', description: 'Advanced phishing kit with real-time MFA bypass using adversary-in-the-middle proxy'},
+      {id: 'corr-004', name: 'Ransomware-as-a-Service', sources: ['CrowdStrike', 'Recorded Future'], confidence: 0.82, severity: 'high', iocs: ['Hash: f7e8d9c0b1a2', 'Extension: .encrypted', 'Note: README_DECRYPT.txt'], actor: 'LockBit 4.0', campaign: 'Winter Storm', firstSeen: '2024-11-28', lastSeen: '2024-12-16', description: 'New LockBit variant targeting healthcare and education sectors with double extortion'},
+      {id: 'corr-005', name: 'Zero-Day Exploit Chain', sources: ['Mandiant', 'CrowdStrike'], confidence: 0.91, severity: 'critical', iocs: ['CVE-2024-XXXX (Chrome)', 'CVE-2024-YYYY (Windows)', 'Payload: shellcode.bin'], actor: 'APT0', campaign: 'Chain Reaction', firstSeen: '2024-12-12', lastSeen: '2024-12-16', description: 'Chained zero-day exploits targeting browser and OS kernel for initial access'},
+    ];
+    this._threatActors = [
+      {actorId: 'ta-001', name: 'APT29', alias: 'Cozy Bear, The Dukes', country: 'Russia', motivation: 'Espionage', sophistication: 'advanced', campaigns: 23, activeIocs: 1847, lastActivity: '2024-12-16', ttps: ['T1059.001', 'T1003', 'T1071.001', 'T1566.001']},
+      {actorId: 'ta-002', name: 'APT41', alias: 'Double Dragon, Winnti', country: 'China', motivation: 'Financial/Espionage', sophistication: 'advanced', campaigns: 18, activeIocs: 2341, lastActivity: '2024-12-15', ttps: ['T1059.003', 'T1027', 'T1105', 'T1566.002']},
+      {actorId: 'ta-003', name: 'LockBit', alias: 'LockBitSupp', country: 'Unknown', motivation: 'Financial', sophistication: 'high', campaigns: 45, activeIocs: 5623, lastActivity: '2024-12-16', ttps: ['T1486', 'T1490', 'T1059.003', 'T1027']},
+      {actorId: 'ta-004', name: 'UNC2452', alias: 'Nobelium', country: 'Russia', motivation: 'Espionage', sophistication: 'advanced', campaigns: 12, activeIocs: 987, lastActivity: '2024-12-14', ttps: ['T1078', 'T1098', 'T1550.001', 'T1053.005']},
+      {actorId: 'ta-005', name: 'Scattered Spider', alias: 'UNC3944, 0ktapus', country: 'USA/UK', motivation: 'Financial', sophistication: 'moderate', campaigns: 31, activeIocs: 3456, lastActivity: '2024-12-16', ttps: ['T1566.001', 'T1078.004', 'T1111', 'T1078.002']},
+    ];
+    this._iocStalenessData = [
+      {ioc: '192.168.1.100', type: 'IPv4', firstSeen: '2024-06-01', lastSeen: '2024-12-15', feedCount: 5, confidence: 0.92, isStale: false, ageDays: 198},
+      {ioc: 'evil-domain[.]com', type: 'Domain', firstSeen: '2024-03-15', lastSeen: '2024-08-20', feedCount: 3, confidence: 0.45, isStale: true, ageDays: 276},
+      {ioc: 'a1b2c3d4e5f6', type: 'Hash', firstSeen: '2024-09-01', lastSeen: '2024-12-16', feedCount: 7, confidence: 0.88, isStale: false, ageDays: 107},
+      {ioc: 'phish-login[.]secure[.]xyz', type: 'URL', firstSeen: '2024-01-10', lastSeen: '2024-04-05', feedCount: 2, confidence: 0.21, isStale: true, ageDays: 341},
+      {ioc: ' trojan@malware[.]exe', type: 'File', firstSeen: '2024-11-01', lastSeen: '2024-12-14', feedCount: 4, confidence: 0.79, isStale: false, ageDays: 46},
+      {ioc: '10.0.0.55', type: 'IPv4', firstSeen: '2024-05-20', lastSeen: '2024-07-15', feedCount: 1, confidence: 0.15, isStale: true, ageDays: 210},
+    ];
+    this._threatLandscapeRadar = [
+      {category: 'Ransomware', threatLevel: 9, trend: 'increasing', topActor: 'LockBit 4.0', keyIndicators: ['Double extortion', 'RaaS expansion', 'Healthcare targeting'], recentIncidents: 47},
+      {category: 'Supply Chain', threatLevel: 8, trend: 'increasing', topActor: 'APT41', keyIndicators: ['Dependency confusion', 'Trojanized packages', 'CI/CD compromise'], recentIncidents: 12},
+      {category: 'Phishing', threatLevel: 7, trend: 'stable', topActor: 'Scattered Spider', keyIndicators: ['AiTM proxy', 'Vishing campaigns', 'Deepfake audio'], recentIncidents: 156},
+      {category: 'Zero-Day', threatLevel: 8, trend: 'increasing', topActor: 'APT0', keyIndicators: ['Browser exploits', 'Mobile zero-days', 'IoT vulnerabilities'], recentIncidents: 8},
+      {category: 'Insider Threat', threatLevel: 5, trend: 'stable', topActor: 'Various', keyIndicators: ['Data exfiltration', 'Credential abuse', 'Privilege escalation'], recentIncidents: 23},
+      {category: 'Cloud Attacks', threatLevel: 7, trend: 'increasing', topActor: 'APT29', keyIndicators: ['Identity abuse', 'SaaS compromise', 'Container escape'], recentIncidents: 34},
+    ];
+    this._threatBriefs = [
+      {id: 'brief-001', title: 'Daily Threat Intelligence Brief', generatedAt: '2024-12-16T09:00:00Z', scope: 'daily', summary: 'Critical: New Cobalt Strike variant detected targeting financial sector. High: LockBit 4.0 campaign expansion observed. 5 new zero-days reported in Chrome and Windows.', keyFindings: ['APT29 using new C2 infrastructure', 'LockBit 4.0 targeting healthcare', 'Supply chain compromise in npm packages'], iocHighlights: ['47 new malicious domains', '12 new C2 IPs', '3 new malware hashes'], recommendedActions: ['Update Chrome immediately', 'Block identified IoCs', 'Review supply chain dependencies']},
+      {id: 'brief-002', title: 'Weekly Threat Landscape Report', generatedAt: '2024-12-15T18:00:00Z', scope: 'weekly', summary: 'This week saw a 23% increase in ransomware attacks globally. Supply chain attacks remain elevated. Phishing campaigns leveraging AI-generated content increased by 45%.', keyFindings: ['Ransomware attacks up 23%', 'AI-generated phishing up 45%', '3 major supply chain incidents', '2 zero-days exploited in wild'], iocHighlights: ['156 new malicious IPs', '89 new phishing domains', '34 new malware hashes', '12 new C2 certificates'], recommendedActions: ['Patch all critical CVEs', 'Enhance email filtering rules', 'Review third-party access', 'Update endpoint detection signatures']},
+    ];
+  }
+
+  private _renderThreatIntelFeeds(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-feeds-section">
+        <div class="section-header">
+          <h4>Intelligence Feed Status</h4>
+        </div>
+        <div class="feeds-grid">
+          ${this._threatIntelFeeds.map(f => html`
+            <div class="feed-card status-${f.status}">
+              <div class="feed-header">
+                <span class="feed-name">${f.name}</span>
+                <span class="feed-type">${f.type}</span>
+              </div>
+              <div class="feed-stats">
+                <span>IOCs: ${f.iocCount.toLocaleString()}</span>
+                <span>Confidence: ${(f.confidence * 100).toFixed(0)}%</span>
+                <span>Freshness: ${f.freshness}</span>
+              </div>
+              <div class="feed-sync">Last sync: ${f.lastSync}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderCorrelatedThreats(): ReturnType<typeof html> {
+    return html`
+      <div class="correlated-threats-section">
+        <div class="section-header">
+          <h4>Multi-Source Correlated Threats</h4>
+        </div>
+        <div class="threats-list">
+          ${this._correlatedThreats.map(t => html`
+            <div class="threat-card severity-${t.severity}">
+              <div class="threat-header">
+                <span class="threat-name">${t.name}</span>
+                <span class="confidence-badge">${(t.confidence * 100).toFixed(0)}%</span>
+                <span class="severity-badge ${t.severity}">${t.severity}</span>
+              </div>
+              <p class="threat-desc">${t.description}</p>
+              <div class="threat-meta">
+                <span>Actor: ${t.actor}</span>
+                <span>Campaign: ${t.campaign}</span>
+                <span>Sources: ${t.sources.join(', ')}</span>
+              </div>
+              <div class="threat-iocs">
+                ${t.iocs.map(ioc => html`<span class="ioc-tag">${ioc}</span>`)}
+              </div>
+              <div class="threat-timeline">
+                <span>First: ${t.firstSeen}</span>
+                <span>Last: ${t.lastSeen}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatActors(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-actors-section">
+        <div class="section-header">
+          <h4>Threat Actor Campaign Tracking</h4>
+        </div>
+        <div class="actors-grid">
+          ${this._threatActors.map(a => html`
+            <div class="actor-card sophistication-${a.sophistication}">
+              <div class="actor-header">
+                <span class="actor-name">${a.name}</span>
+                <span class="actor-country">${a.country}</span>
+                <span class="actor-motivation">${a.motivation}</span>
+              </div>
+              <div class="actor-alias">${a.alias}</div>
+              <div class="actor-stats">
+                <span>Campaigns: ${a.campaigns}</span>
+                <span>Active IOCs: ${a.activeIocs}</span>
+                <span>Last Activity: ${a.lastActivity}</span>
+              </div>
+              <div class="actor-ttps">
+                ${a.ttps.map(t => html`<span class="ttp-tag">${t}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderIocStaleness(): ReturnType<typeof html> {
+    const stale = this._iocStalenessData.filter(i => i.isStale);
+    const fresh = this._iocStalenessData.filter(i => !i.isStale);
+    return html`
+      <div class="ioc-staleness-section">
+        <div class="section-header">
+          <h4>IOC Staleness Detection</h4>
+          <span class="badge warning">${stale.length} Stale</span>
+          <span class="badge success">${fresh.length} Fresh</span>
+        </div>
+        <div class="ioc-list">
+          ${this._iocStalenessData.map(i => html`
+            <div class="ioc-item ${i.isStale ? 'stale' : 'fresh'}">
+              <div class="ioc-header">
+                <span class="ioc-value">${i.ioc}</span>
+                <span class="ioc-type">${i.type}</span>
+                <span class="ioc-status ${i.isStale ? 'stale' : 'fresh'}">${i.isStale ? 'STALE' : 'FRESH'}</span>
+              </div>
+              <div class="ioc-meta">
+                <span>Age: ${i.ageDays} days</span>
+                <span>Feeds: ${i.feedCount}</span>
+                <span>Confidence: ${(i.confidence * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatRadar(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-radar-section">
+        <div class="section-header">
+          <h4>Threat Landscape Radar</h4>
+        </div>
+        <div class="radar-grid">
+          ${this._threatLandscapeRadar.map(r => html`
+            <div class="radar-card threat-${r.threatLevel >= 8 ? 'critical' : r.threatLevel >= 6 ? 'high' : 'medium'}">
+              <div class="radar-header">
+                <span class="radar-category">${r.category}</span>
+                <span class="radar-level">${r.threatLevel}/10</span>
+                <span class="radar-trend ${r.trend}">${r.trend === 'increasing' ? '\u2191' : r.trend === 'stable' ? '\u2192' : '\u2193'}</span>
+              </div>
+              <div class="radar-details">
+                <span>Top Actor: ${r.topActor}</span>
+                <span>Recent Incidents: ${r.recentIncidents}</span>
+              </div>
+              <div class="radar-indicators">
+                ${r.keyIndicators.map(ind => html`<span class="indicator-tag">${ind}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatBriefs(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-briefs-section">
+        <div class="section-header">
+          <h4>Automated Threat Briefs</h4>
+        </div>
+        <div class="briefs-list">
+          ${this._threatBriefs.map(b => html`
+            <div class="brief-card">
+              <div class="brief-header">
+                <span class="brief-title">${b.title}</span>
+                <span class="brief-scope">${b.scope}</span>
+                <span class="brief-time">${b.generatedAt}</span>
+              </div>
+              <p class="brief-summary">${b.summary}</p>
+              <div class="brief-findings">
+                <h5>Key Findings</h5>
+                <ul>${b.keyFindings.map(f => html`<li>${f}</li>`)}</ul>
+              </div>
+              <div class="brief-iocs">
+                <h5>IOC Highlights</h5>
+                ${b.iocHighlights.map(i => html`<span class="ioc-tag">${i}</span>`)}
+              </div>
+              <div class="brief-actions">
+                <h5>Recommended Actions</h5>
+                <ul>${b.recommendedActions.map(a => html`<li>${a}</li>`)}</ul>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Security Operations Center Analytics Module ===
+  private _socShiftHandoffItems: Array<{id: string; category: string; description: string; status: string; assignedTo: string; priority: string; notes: string}> = [];
+  private _socAnalystMetrics: Array<{analystId: string; name: string; ticketsResolved: number; avgResolutionMin: number; escalationRate: number; accuracy: number; shift: string; streak: number}> = [];
+  private _socAlertVolumeHeatmap: Array<{hour: number; shift: string; critical: number; high: number; medium: number; low: number; total: number}> = [];
+  private _socCapacityPlan: {analystsNeeded: number; analystsAvailable: number; coveragePercent: number; gapAnalysis: string[]; recommendedActions: string[]} = {analystsNeeded: 0, analystsAvailable: 0, coveragePercent: 0, gapAnalysis: [], recommendedActions: []};
+  private _socEscalationPaths: Array<{level: number; name: string; criteria: string; contact: string; avgResponseMin: number; escalationRate: number}> = [];
+  private _socShiftCalendar: Array<{date: string; shift: string; primaryAnalyst: string; secondaryAnalyst: string; backupAnalyst: string; status: string; notes: string}> = [];
+  private _socIncidentBacklog: Array<{id: string; ageHours: number; severity: string; category: string; assignedTo: string; slaRemaining: number}> = [];
+  private _socKpiTargets: {mttrTarget: number; mttdTarget: number; falsePositiveRate: number; escalationRate: number; coverageTarget: number} = {mttrTarget: 30, mttdTarget: 5, falsePositiveRate: 0.05, escalationRate: 0.1, coverageTarget: 0.95};
+
+  private _initSocAnalytics(): void {
+    this._socShiftHandoffItems = [
+      {id: 'soh-001', category: 'Active Incident', description: 'APT lateral movement detected in finance subnet - investigation ongoing', status: 'in-progress', assignedTo: 'analyst-03', priority: 'critical', notes: 'Requires forensics team coordination by EOD'},
+      {id: 'soh-002', category: 'Pending Escalation', description: 'Phishing campaign targeting executive staff - 12 payloads identified', status: 'pending', assignedTo: 'analyst-01', priority: 'high', notes: 'Block IoC set deployed, user notification pending'},
+      {id: 'soh-003', category: 'Watch Item', description: 'Unusual DNS tunneling pattern from workstation WS-2847', status: 'monitoring', assignedTo: 'analyst-02', priority: 'medium', notes: 'Pattern consistent with data exfiltration tool - monitoring'},
+      {id: 'soh-004', category: 'System Note', description: 'SIEM correlation rule update deployed - new detection for living-off-the-land', status: 'completed', assignedTo: 'analyst-04', priority: 'low', notes: 'Tune false positive rate over next 48 hours'},
+      {id: 'soh-005', category: 'Active Incident', description: 'Ransomware encryption attempt blocked on file server FS-PROD-01', status: 'in-progress', assignedTo: 'analyst-05', priority: 'critical', notes: 'Isolated host, malware sample quarantined for analysis'},
+      {id: 'soh-006', category: 'Pending Review', description: 'Vulnerability scan identified 3 critical CVEs in web application cluster', status: 'pending', assignedTo: 'analyst-01', priority: 'high', notes: 'CVE-2024-XXXX, CVE-2024-YYYY, CVE-2024-ZZZZ'},
+      {id: 'soh-007', category: 'Compliance', description: 'Quarterly access review deadline in 5 business days', status: 'pending', assignedTo: 'analyst-03', priority: 'medium', notes: '42% complete, need to accelerate reviews'},
+      {id: 'soh-008', category: 'Tooling', description: 'EDR agent upgrade scheduled for graveyard shift', status: 'scheduled', assignedTo: 'analyst-04', priority: 'low', notes: 'Coordinate with IT ops for maintenance window'},
+    ];
+    this._socAnalystMetrics = [
+      {analystId: 'analyst-01', name: 'Sarah Chen', ticketsResolved: 47, avgResolutionMin: 22, escalationRate: 0.08, accuracy: 0.96, shift: 'Day', streak: 14},
+      {analystId: 'analyst-02', name: 'Marcus Johnson', ticketsResolved: 39, avgResolutionMin: 28, escalationRate: 0.12, accuracy: 0.93, shift: 'Day', streak: 9},
+      {analystId: 'analyst-03', name: 'Aisha Patel', ticketsResolved: 52, avgResolutionMin: 18, escalationRate: 0.06, accuracy: 0.98, shift: 'Swing', streak: 21},
+      {analystId: 'analyst-04', name: 'Dmitri Volkov', ticketsResolved: 41, avgResolutionMin: 25, escalationRate: 0.10, accuracy: 0.94, shift: 'Swing', streak: 7},
+      {analystId: 'analyst-05', name: 'Lisa Wong', ticketsResolved: 55, avgResolutionMin: 15, escalationRate: 0.04, accuracy: 0.99, shift: 'Night', streak: 18},
+      {analystId: 'analyst-06', name: 'James Rodriguez', ticketsResolved: 33, avgResolutionMin: 32, escalationRate: 0.15, accuracy: 0.91, shift: 'Night', streak: 5},
+    ];
+    const shifts = ['Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Night', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Day', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing', 'Swing'];
+    this._socAlertVolumeHeatmap = shifts.map((shift, hour) => {
+      const base = shift === 'Day' ? 45 : shift === 'Swing' ? 32 : 18;
+      const variance = Math.floor(Math.random() * 15) - 7;
+      const total = Math.max(5, base + variance);
+      return {
+        hour: hour,
+        shift: shift,
+        critical: Math.floor(total * 0.08),
+        high: Math.floor(total * 0.22),
+        medium: Math.floor(total * 0.40),
+        low: Math.floor(total * 0.30),
+        total: total,
+      };
+    });
+    this._socCapacityPlan = {
+      analystsNeeded: 8,
+      analystsAvailable: 6,
+      coveragePercent: 75.0,
+      gapAnalysis: ['Night shift under-staffed by 1 analyst', 'No backup for forensics specialization', 'Weekend coverage requires 2 additional analysts'],
+      recommendedActions: ['Hire 2 Tier-2 analysts with forensics experience', 'Cross-train 3 existing analysts on IR procedures', 'Implement auto-triage to reduce analyst workload by 30%'],
+    };
+    this._socEscalationPaths = [
+      {level: 1, name: 'Tier 1 Triage', criteria: 'All incoming alerts', contact: 'SOC Team Lead', avgResponseMin: 5, escalationRate: 0.35},
+      {level: 2, name: 'Tier 2 Analysis', criteria: 'Confirmed threats, complex incidents', contact: 'Senior Analyst', avgResponseMin: 15, escalationRate: 0.12},
+      {level: 3, name: 'IR Commander', criteria: 'Active breaches, data exfiltration', contact: 'CISO Office', avgResponseMin: 30, escalationRate: 0.03},
+      {level: 4, name: 'Executive Notification', criteria: 'Critical incidents affecting operations', contact: 'CTO / CEO', avgResponseMin: 60, escalationRate: 0.005},
+    ];
+    this._socShiftCalendar = [
+      {date: '2024-12-16', shift: 'Day', primaryAnalyst: 'Sarah Chen', secondaryAnalyst: 'Marcus Johnson', backupAnalyst: 'Aisha Patel', status: 'confirmed', notes: ''},
+      {date: '2024-12-16', shift: 'Swing', primaryAnalyst: 'Aisha Patel', secondaryAnalyst: 'Dmitri Volkov', backupAnalyst: 'Lisa Wong', status: 'confirmed', notes: ''},
+      {date: '2024-12-16', shift: 'Night', primaryAnalyst: 'Lisa Wong', secondaryAnalyst: 'James Rodriguez', backupAnalyst: 'Sarah Chen', status: 'confirmed', notes: 'James on probation - extra review'},
+      {date: '2024-12-17', shift: 'Day', primaryAnalyst: 'Marcus Johnson', secondaryAnalyst: 'Sarah Chen', backupAnalyst: 'Dmitri Volkov', status: 'confirmed', notes: ''},
+      {date: '2024-12-17', shift: 'Swing', primaryAnalyst: 'Dmitri Volkov', secondaryAnalyst: 'Lisa Wong', backupAnalyst: 'James Rodriguez', status: 'tentative', notes: 'Dmitri requested PTO - pending approval'},
+      {date: '2024-12-17', shift: 'Night', primaryAnalyst: 'James Rodriguez', secondaryAnalyst: 'Aisha Patel', backupAnalyst: 'Marcus Johnson', status: 'confirmed', notes: ''},
+    ];
+    this._socIncidentBacklog = [
+      {id: 'INC-2847', ageHours: 2, severity: 'critical', category: 'malware', assignedTo: 'analyst-05', slaRemaining: 58},
+      {id: 'INC-2846', ageHours: 5, severity: 'high', category: 'phishing', assignedTo: 'analyst-01', slaRemaining: 115},
+      {id: 'INC-2843', ageHours: 12, severity: 'medium', category: 'policy-violation', assignedTo: 'analyst-02', slaRemaining: 228},
+      {id: 'INC-2840', ageHours: 18, severity: 'low', category: 'configuration', assignedTo: 'analyst-04', slaRemaining: 342},
+      {id: 'INC-2838', ageHours: 24, severity: 'high', category: 'network', assignedTo: 'analyst-03', slaRemaining: 96},
+    ];
+  }
+
+  private _renderSocShiftHandoff(): ReturnType<typeof html> {
+    const pending = this._socShiftHandoffItems.filter(i => i.status !== 'completed');
+    const critical = pending.filter(i => i.priority === 'critical');
+    return html`
+      <div class="soc-handoff-section">
+        <div class="section-header">
+          <h4>SOC Shift Handoff Checklist</h4>
+          <span class="badge critical">${critical.length} Critical</span>
+          <span class="badge info">${pending.length} Pending</span>
+        </div>
+        <div class="handoff-grid">
+          ${pending.map(item => html`
+            <div class="handoff-card priority-${item.priority}">
+              <div class="handoff-header">
+                <span class="handoff-id">${item.id}</span>
+                <span class="handoff-category">${item.category}</span>
+                <span class="priority-badge ${item.priority}">${item.priority}</span>
+              </div>
+              <p class="handoff-desc">${item.description}</p>
+              <div class="handoff-meta">
+                <span>Assigned: ${item.assignedTo}</span>
+                <span>Status: ${item.status}</span>
+              </div>
+              ${item.notes ? html`<p class="handoff-notes">${item.notes}</p>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocAnalystMetrics(): ReturnType<typeof html> {
+    const sorted = [...this._socAnalystMetrics].sort((a, b) => b.ticketsResolved - a.ticketsResolved);
+    return html`
+      <div class="soc-metrics-section">
+        <div class="section-header">
+          <h4>Analyst Performance Metrics</h4>
+        </div>
+        <div class="metrics-grid">
+          ${sorted.map(a => html`
+            <div class="analyst-card">
+              <div class="analyst-header">
+                <span class="analyst-name">${a.name}</span>
+                <span class="analyst-shift">${a.shift} Shift</span>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Resolved</div>
+                <div class="metric-value">${a.ticketsResolved}</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Avg Resolution</div>
+                <div class="metric-value">${a.avgResolutionMin} min</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Escalation Rate</div>
+                <div class="metric-value">${(a.escalationRate * 100).toFixed(1)}%</div>
+              </div>
+              <div class="metric-bar">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-value">${(a.accuracy * 100).toFixed(1)}%</div>
+              </div>
+              <div class="analyst-streak">${a.streak} day streak</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocAlertHeatmap(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-heatmap-section">
+        <div class="section-header">
+          <h4>Alert Volume by Hour/Shift</h4>
+        </div>
+        <div class="heatmap-grid">
+          ${this._socAlertVolumeHeatmap.map(h => html`
+            <div class="heatmap-cell shift-${h.shift.toLowerCase()}" style="--intensity: ${h.total / 60}" title="Hour ${h.hour}: ${h.total} alerts (C:${h.critical} H:${h.high} M:${h.medium} L:${h.low})">
+              <span class="heatmap-hour">${String(h.hour).padStart(2, '0')}</span>
+              <span class="heatmap-total">${h.total}</span>
+            </div>
+          `)}
+        </div>
+        <div class="heatmap-legend">
+          <span class="legend-item night">Night (22-06)</span>
+          <span class="legend-item day">Day (06-14)</span>
+          <span class="legend-item swing">Swing (14-22)</span>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocCapacity(): ReturnType<typeof html> {
+    const gap = this._socCapacityPlan.analystsNeeded - this._socCapacityPlan.analystsAvailable;
+    return html`
+      <div class="soc-capacity-section">
+        <div class="section-header">
+          <h4>SOC Capacity Planning</h4>
+          <span class="badge ${gap > 0 ? 'warning' : 'success'}">${gap > 0 ? gap + ' Short' : 'Fully Staffed'}</span>
+        </div>
+        <div class="capacity-overview">
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.analystsAvailable}</span>
+            <span class="stat-label">Available</span>
+          </div>
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.analystsNeeded}</span>
+            <span class="stat-label">Needed</span>
+          </div>
+          <div class="capacity-stat">
+            <span class="stat-value">${this._socCapacityPlan.coveragePercent}%</span>
+            <span class="stat-label">Coverage</span>
+          </div>
+        </div>
+        <div class="capacity-gaps">
+          <h5>Gap Analysis</h5>
+          <ul>${this._socCapacityPlan.gapAnalysis.map(g => html`<li>${g}</li>`)}</ul>
+        </div>
+        <div class="capacity-actions">
+          <h5>Recommended Actions</h5>
+          <ul>${this._socCapacityPlan.recommendedActions.map(a => html`<li>${a}</li>`)}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocEscalation(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-escalation-section">
+        <div class="section-header">
+          <h4>Escalation Path Visualization</h4>
+        </div>
+        <div class="escalation-chain">
+          ${this._socEscalationPaths.map((ep, i) => html`
+            <div class="escalation-level level-${ep.level}">
+              <div class="level-header">
+                <span class="level-number">L${ep.level}</span>
+                <span class="level-name">${ep.name}</span>
+              </div>
+              <div class="level-details">
+                <p><strong>Criteria:</strong> ${ep.criteria}</p>
+                <p><strong>Contact:</strong> ${ep.contact}</p>
+                <p><strong>Avg Response:</strong> ${ep.avgResponseMin} min</p>
+                <p><strong>Escalation Rate:</strong> ${(ep.escalationRate * 100).toFixed(1)}%</p>
+              </div>
+              ${i < this._socEscalationPaths.length - 1 ? html`<div class="escalation-arrow">\u2193</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocShiftCalendar(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-calendar-section">
+        <div class="section-header">
+          <h4>Shift Coverage Calendar</h4>
+        </div>
+        <div class="calendar-grid">
+          ${this._socShiftCalendar.map(s => html`
+            <div class="calendar-entry status-${s.status}">
+              <div class="cal-date">${s.date}</div>
+              <div class="cal-shift">${s.shift}</div>
+              <div class="cal-primary">${s.primaryAnalyst}</div>
+              <div class="cal-secondary">+${s.secondaryAnalyst}</div>
+              ${s.notes ? html`<div class="cal-notes">${s.notes}</div>` : ''}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocIncidentBacklog(): ReturnType<typeof html> {
+    const sorted = [...this._socIncidentBacklog].sort((a, b) => a.slaRemaining - b.slaRemaining);
+    return html`
+      <div class="soc-backlog-section">
+        <div class="section-header">
+          <h4>Incident Backlog</h4>
+        </div>
+        <div class="backlog-list">
+          ${sorted.map(inc => html`
+            <div class="backlog-item severity-${inc.severity}">
+              <span class="backlog-id">${inc.id}</span>
+              <span class="backlog-age">${inc.ageHours}h old</span>
+              <span class="backlog-category">${inc.category}</span>
+              <span class="backlog-analyst">${inc.assignedTo}</span>
+              <span class="backlog-sla ${inc.slaRemaining < 60 ? 'warning' : ''}">${inc.slaRemaining}m SLA</span>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSocKpiTargets(): ReturnType<typeof html> {
+    return html`
+      <div class="soc-kpi-section">
+        <div class="section-header">
+          <h4>SOC KPI Targets vs Actual</h4>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">MTTR Target</div>
+            <div class="kpi-value">${this._socKpiTargets.mttrTarget} min</div>
+            <div class="kpi-actual">Actual: 24 min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">MTTD Target</div>
+            <div class="kpi-value">${this._socKpiTargets.mttdTarget} min</div>
+            <div class="kpi-actual">Actual: 3.2 min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">False Positive Rate</div>
+            <div class="kpi-value">${(this._socKpiTargets.falsePositiveRate * 100).toFixed(1)}%</div>
+            <div class="kpi-actual">Actual: 4.2%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Escalation Rate</div>
+            <div class="kpi-value">${(this._socKpiTargets.escalationRate * 100).toFixed(1)}%</div>
+            <div class="kpi-actual">Actual: 8.5%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Coverage Target</div>
+            <div class="kpi-value">${(this._socKpiTargets.coverageTarget * 100).toFixed(0)}%</div>
+            <div class="kpi-actual">Actual: 87%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
 
 
 

@@ -2733,6 +2733,208 @@ export class ScThreatHuntingWorkspace extends LitElement {
   private thRenderRound17() {
     return html`${this.thRenderRiskQuant()}${this.thRenderSecProgram()}${this.thRenderThirdParty()}${this.thRenderDLP()}${this.thRenderAutomation()}`;
   }
+
+  // === Security Metrics Auto-Reporting Module ===
+  private _reportSchedules: Array<{id: string; name: string; frequency: string; recipients: string[]; lastRun: string; nextRun: string; status: string; template: string; format: string}> = [];
+  private _executiveSummaries: Array<{id: string; title: string; period: string; generatedAt: string; riskScore: number; keyMetrics: Array<{label: string; value: string; trend: string}>; highlights: string[]; concerns: string[]}> = [];
+  private _trendAnalysis: Array<{metric: string; current: number; previous: number; delta: number; direction: string; period: string}> = [];
+  private _reportTemplates: Array<{id: string; name: string; sections: string[]; isDefault: boolean; lastModified: string}> = [];
+  private _deliveryTracking: Array<{reportId: string; reportName: string; sentAt: string; recipients: number; delivered: number; failed: number; opened: number}> = [];
+
+  private _initMetricsReporting(): void {
+    this._reportSchedules = [
+      {id: 'sched-001', name: 'Daily Security Digest', frequency: 'daily', recipients: ['soc-team@company.com', 'ciso@company.com'], lastRun: '2024-12-16T08:00:00Z', nextRun: '2024-12-17T08:00:00Z', status: 'active', template: 'daily-digest', format: 'pdf'},
+      {id: 'sched-002', name: 'Weekly Threat Landscape', frequency: 'weekly', recipients: ['security-team@company.com', 'exec-team@company.com'], lastRun: '2024-12-15T09:00:00Z', nextRun: '2024-12-22T09:00:00Z', status: 'active', template: 'weekly-threat', format: 'html'},
+      {id: 'sched-003', name: 'Monthly Executive Report', frequency: 'monthly', recipients: ['board@company.com', 'ciso@company.com', 'cto@company.com'], lastRun: '2024-12-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'executive-summary', format: 'pdf'},
+      {id: 'sched-004', name: 'Quarterly Compliance Report', frequency: 'quarterly', recipients: ['compliance@company.com', 'legal@company.com', 'board@company.com'], lastRun: '2024-10-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'compliance-report', format: 'pdf'},
+      {id: 'sched-005', name: 'Incident Post-Mortem', frequency: 'on-demand', recipients: ['ir-team@company.com'], lastRun: '2024-12-14T14:00:00Z', nextRun: 'N/A', status: 'on-demand', template: 'post-mortem', format: 'docx'},
+    ];
+    this._executiveSummaries = [
+      {id: 'exec-001', title: 'December 2024 Security Posture', period: '2024-12', generatedAt: '2024-12-16T10:00:00Z', riskScore: 72,
+        keyMetrics: [
+          {label: 'MTTR', value: '24 min', trend: 'down'},
+          {label: 'MTTD', value: '3.2 min', trend: 'down'},
+          {label: 'False Positive Rate', value: '4.2%', trend: 'down'},
+          {label: 'Patch Compliance', value: '94%', trend: 'up'},
+          {label: 'Critical Vulns Open', value: '3', trend: 'down'},
+          {label: 'Phishing Click Rate', value: '2.1%', trend: 'down'},
+        ],
+        highlights: ['SOC achieved 99.7% uptime', 'Zero critical data breaches', 'Automated triage reduced analyst workload by 30%', 'Completed 15 penetration tests'],
+        concerns: ['3 critical vulnerabilities past SLA', 'Night shift understaffed', 'Supply chain attack surface increasing', 'Zero-day response time needs improvement'],
+      },
+      {id: 'exec-002', title: 'Q4 2024 Security Quarterly', period: '2024-Q4', generatedAt: '2024-12-15T10:00:00Z', riskScore: 68,
+        keyMetrics: [
+          {label: 'Total Incidents', value: '847', trend: 'up'},
+          {label: 'Critical Incidents', value: '12', trend: 'down'},
+          {label: 'Mean Time to Contain', value: '4.2 hrs', trend: 'down'},
+          {label: 'Vulnerability Backlog', value: '23', trend: 'down'},
+          {label: 'Security Awareness Score', value: '87%', trend: 'up'},
+          {label: 'Compliance Score', value: '96%', trend: 'up'},
+        ],
+        highlights: ['Reduced critical incidents by 25% QoQ', 'Deployed zero-trust architecture phase 2', 'Security awareness training completion: 95%', 'SOC maturity level improved to 3'],
+        concerns: ['Cloud misconfiguration incidents increased 15%', 'Third-party vendor risk score elevated', 'Insider threat indicators detected in 3 cases'],
+      },
+    ];
+    this._trendAnalysis = [
+      {metric: 'Total Alerts', current: 12456, previous: 11234, delta: 10.9, direction: 'up', period: 'monthly'},
+      {metric: 'False Positives', current: 523, previous: 612, delta: -14.5, direction: 'down', period: 'monthly'},
+      {metric: 'Mean Resolution Time', current: 24, previous: 31, delta: -22.6, direction: 'down', period: 'monthly'},
+      {metric: 'Escalation Rate', current: 8.5, previous: 11.2, delta: -24.1, direction: 'down', period: 'monthly'},
+      {metric: 'Phishing Susceptibility', current: 2.1, previous: 3.8, delta: -44.7, direction: 'down', period: 'monthly'},
+      {metric: 'Patch Compliance', current: 94, previous: 89, delta: 5.6, direction: 'up', period: 'monthly'},
+      {metric: 'Endpoint Coverage', current: 98.2, previous: 97.1, delta: 1.1, direction: 'up', period: 'monthly'},
+      {metric: 'MFA Adoption', current: 96, previous: 91, delta: 5.5, direction: 'up', period: 'monthly'},
+    ];
+    this._reportTemplates = [
+      {id: 'tmpl-001', name: 'Daily Digest', sections: ['Alert Summary', 'Top Threats', 'Incident Status', 'Quick Stats'], isDefault: true, lastModified: '2024-11-01'},
+      {id: 'tmpl-002', name: 'Weekly Threat', sections: ['Threat Landscape', 'New IOCs', 'Campaign Updates', 'Risk Assessment', 'Recommendations'], isDefault: true, lastModified: '2024-10-15'},
+      {id: 'tmpl-003', name: 'Executive Summary', sections: ['Risk Score', 'KPI Dashboard', 'Trend Analysis', 'Budget Summary', 'Strategic Recommendations'], isDefault: true, lastModified: '2024-09-20'},
+      {id: 'tmpl-004', name: 'Compliance Report', sections: ['Framework Status', 'Control Mapping', 'Gap Analysis', 'Remediation Progress', 'Audit Readiness'], isDefault: false, lastModified: '2024-12-01'},
+    ];
+    this._deliveryTracking = [
+      {reportId: 'del-001', reportName: 'Daily Security Digest', sentAt: '2024-12-16T08:00:00Z', recipients: 12, delivered: 12, failed: 0, opened: 9},
+      {reportId: 'del-002', reportName: 'Weekly Threat Landscape', sentAt: '2024-12-15T09:00:00Z', recipients: 25, delivered: 24, failed: 1, opened: 18},
+      {reportId: 'del-003', reportName: 'Monthly Executive Report', sentAt: '2024-12-01T10:00:00Z', recipients: 8, delivered: 8, failed: 0, opened: 7},
+      {reportId: 'del-004', reportName: 'Incident Post-Mortem INC-2840', sentAt: '2024-12-14T14:00:00Z', recipients: 6, delivered: 6, failed: 0, opened: 5},
+    ];
+  }
+
+  private _renderReportSchedules(): ReturnType<typeof html> {
+    return html`
+      <div class="report-schedules-section">
+        <div class="section-header">
+          <h4>Report Schedules</h4>
+        </div>
+        <div class="schedules-list">
+          ${this._reportSchedules.map(s => html`
+            <div class="schedule-card status-${s.status}">
+              <div class="schedule-header">
+                <span class="schedule-name">${s.name}</span>
+                <span class="schedule-freq">${s.frequency}</span>
+              </div>
+              <div class="schedule-details">
+                <span>Template: ${s.template}</span>
+                <span>Format: ${s.format}</span>
+                <span>Recipients: ${s.recipients.length}</span>
+              </div>
+              <div class="schedule-timing">
+                <span>Last: ${s.lastRun}</span>
+                <span>Next: ${s.nextRun}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderExecutiveSummary(): ReturnType<typeof html> {
+    return html`
+      <div class="exec-summary-section">
+        <div class="section-header">
+          <h4>Executive Summary Auto-Generation</h4>
+        </div>
+        ${this._executiveSummaries.map(e => html`
+          <div class="exec-card">
+            <div class="exec-header">
+              <span class="exec-title">${e.title}</span>
+              <span class="exec-period">${e.period}</span>
+              <span class="risk-score ${e.riskScore >= 80 ? 'critical' : e.riskScore >= 60 ? 'high' : 'medium'}">${e.riskScore}/100</span>
+            </div>
+            <div class="exec-metrics">
+              ${e.keyMetrics.map(m => html`
+                <div class="exec-metric">
+                  <span class="metric-label">${m.label}</span>
+                  <span class="metric-value">${m.value}</span>
+                  <span class="metric-trend ${m.trend}">${m.trend === 'up' ? '\u2191' : '\u2193'}</span>
+                </div>
+              `)}
+            </div>
+            <div class="exec-highlights">
+              <h5>Highlights</h5>
+              <ul>${e.highlights.map(h => html`<li class="positive">${h}</li>`)}</ul>
+            </div>
+            <div class="exec-concerns">
+              <h5>Concerns</h5>
+              <ul>${e.concerns.map(c => html`<li class="negative">${c}</li>`)}</ul>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _renderTrendAnalysis(): ReturnType<typeof html> {
+    return html`
+      <div class="trend-analysis-section">
+        <div class="section-header">
+          <h4>Trend Analysis with Deltas</h4>
+        </div>
+        <div class="trend-grid">
+          ${this._trendAnalysis.map(t => html`
+            <div class="trend-card ${t.direction}">
+              <div class="trend-label">${t.metric}</div>
+              <div class="trend-current">${typeof t.current === 'number' && t.current > 100 ? t.current.toLocaleString() : t.current}${typeof t.current === 'number' && t.current <= 100 && t.metric.includes('Rate') ? '%' : t.metric.includes('Coverage') || t.metric.includes('Adoption') || t.metric.includes('Compliance') || t.metric.includes('Score') ? '%' : ''}</div>
+              <div class="trend-delta ${t.direction}">
+                ${t.direction === 'up' ? '\u2191' : '\u2193'} ${Math.abs(t.delta).toFixed(1)}%
+              </div>
+              <div class="trend-period">${t.period}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderReportTemplates(): ReturnType<typeof html> {
+    return html`
+      <div class="report-templates-section">
+        <div class="section-header">
+          <h4>Report Templates</h4>
+        </div>
+        <div class="templates-grid">
+          ${this._reportTemplates.map(t => html`
+            <div class="template-card ${t.isDefault ? 'default' : 'custom'}">
+              <div class="template-header">
+                <span class="template-name">${t.name}</span>
+                ${t.isDefault ? html`<span class="default-badge">Default</span>` : ''}
+              </div>
+              <div class="template-sections">
+                ${t.sections.map(s => html`<span class="section-tag">${s}</span>`)}
+              </div>
+              <div class="template-meta">Last modified: ${t.lastModified}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderDeliveryTracking(): ReturnType<typeof html> {
+    return html`
+      <div class="delivery-tracking-section">
+        <div class="section-header">
+          <h4>Report Delivery Tracking</h4>
+        </div>
+        <div class="delivery-list">
+          ${this._deliveryTracking.map(d => html`
+            <div class="delivery-card ${d.failed > 0 ? 'has-failures' : 'all-delivered'}">
+              <div class="delivery-header">
+                <span class="delivery-name">${d.reportName}</span>
+                <span class="delivery-time">${d.sentAt}</span>
+              </div>
+              <div class="delivery-stats">
+                <span>Recipients: ${d.recipients}</span>
+                <span class="delivered">Delivered: ${d.delivered}</span>
+                ${d.failed > 0 ? html`<span class="failed">Failed: ${d.failed}</span>` : ''}
+                <span>Opened: ${d.opened}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
   render() {
     return html`${this.thRenderRound17()}
       <div class="panel">

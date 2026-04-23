@@ -1992,6 +1992,442 @@ private _executionHistory: ExecutionRecord[] = [
     };
   }
 
+  // === Security Metrics Auto-Reporting Module ===
+  private _reportSchedules: Array<{id: string; name: string; frequency: string; recipients: string[]; lastRun: string; nextRun: string; status: string; template: string; format: string}> = [];
+  private _executiveSummaries: Array<{id: string; title: string; period: string; generatedAt: string; riskScore: number; keyMetrics: Array<{label: string; value: string; trend: string}>; highlights: string[]; concerns: string[]}> = [];
+  private _trendAnalysis: Array<{metric: string; current: number; previous: number; delta: number; direction: string; period: string}> = [];
+  private _reportTemplates: Array<{id: string; name: string; sections: string[]; isDefault: boolean; lastModified: string}> = [];
+  private _deliveryTracking: Array<{reportId: string; reportName: string; sentAt: string; recipients: number; delivered: number; failed: number; opened: number}> = [];
+
+  private _initMetricsReporting(): void {
+    this._reportSchedules = [
+      {id: 'sched-001', name: 'Daily Security Digest', frequency: 'daily', recipients: ['soc-team@company.com', 'ciso@company.com'], lastRun: '2024-12-16T08:00:00Z', nextRun: '2024-12-17T08:00:00Z', status: 'active', template: 'daily-digest', format: 'pdf'},
+      {id: 'sched-002', name: 'Weekly Threat Landscape', frequency: 'weekly', recipients: ['security-team@company.com', 'exec-team@company.com'], lastRun: '2024-12-15T09:00:00Z', nextRun: '2024-12-22T09:00:00Z', status: 'active', template: 'weekly-threat', format: 'html'},
+      {id: 'sched-003', name: 'Monthly Executive Report', frequency: 'monthly', recipients: ['board@company.com', 'ciso@company.com', 'cto@company.com'], lastRun: '2024-12-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'executive-summary', format: 'pdf'},
+      {id: 'sched-004', name: 'Quarterly Compliance Report', frequency: 'quarterly', recipients: ['compliance@company.com', 'legal@company.com', 'board@company.com'], lastRun: '2024-10-01T10:00:00Z', nextRun: '2025-01-01T10:00:00Z', status: 'active', template: 'compliance-report', format: 'pdf'},
+      {id: 'sched-005', name: 'Incident Post-Mortem', frequency: 'on-demand', recipients: ['ir-team@company.com'], lastRun: '2024-12-14T14:00:00Z', nextRun: 'N/A', status: 'on-demand', template: 'post-mortem', format: 'docx'},
+    ];
+    this._executiveSummaries = [
+      {id: 'exec-001', title: 'December 2024 Security Posture', period: '2024-12', generatedAt: '2024-12-16T10:00:00Z', riskScore: 72,
+        keyMetrics: [
+          {label: 'MTTR', value: '24 min', trend: 'down'},
+          {label: 'MTTD', value: '3.2 min', trend: 'down'},
+          {label: 'False Positive Rate', value: '4.2%', trend: 'down'},
+          {label: 'Patch Compliance', value: '94%', trend: 'up'},
+          {label: 'Critical Vulns Open', value: '3', trend: 'down'},
+          {label: 'Phishing Click Rate', value: '2.1%', trend: 'down'},
+        ],
+        highlights: ['SOC achieved 99.7% uptime', 'Zero critical data breaches', 'Automated triage reduced analyst workload by 30%', 'Completed 15 penetration tests'],
+        concerns: ['3 critical vulnerabilities past SLA', 'Night shift understaffed', 'Supply chain attack surface increasing', 'Zero-day response time needs improvement'],
+      },
+      {id: 'exec-002', title: 'Q4 2024 Security Quarterly', period: '2024-Q4', generatedAt: '2024-12-15T10:00:00Z', riskScore: 68,
+        keyMetrics: [
+          {label: 'Total Incidents', value: '847', trend: 'up'},
+          {label: 'Critical Incidents', value: '12', trend: 'down'},
+          {label: 'Mean Time to Contain', value: '4.2 hrs', trend: 'down'},
+          {label: 'Vulnerability Backlog', value: '23', trend: 'down'},
+          {label: 'Security Awareness Score', value: '87%', trend: 'up'},
+          {label: 'Compliance Score', value: '96%', trend: 'up'},
+        ],
+        highlights: ['Reduced critical incidents by 25% QoQ', 'Deployed zero-trust architecture phase 2', 'Security awareness training completion: 95%', 'SOC maturity level improved to 3'],
+        concerns: ['Cloud misconfiguration incidents increased 15%', 'Third-party vendor risk score elevated', 'Insider threat indicators detected in 3 cases'],
+      },
+    ];
+    this._trendAnalysis = [
+      {metric: 'Total Alerts', current: 12456, previous: 11234, delta: 10.9, direction: 'up', period: 'monthly'},
+      {metric: 'False Positives', current: 523, previous: 612, delta: -14.5, direction: 'down', period: 'monthly'},
+      {metric: 'Mean Resolution Time', current: 24, previous: 31, delta: -22.6, direction: 'down', period: 'monthly'},
+      {metric: 'Escalation Rate', current: 8.5, previous: 11.2, delta: -24.1, direction: 'down', period: 'monthly'},
+      {metric: 'Phishing Susceptibility', current: 2.1, previous: 3.8, delta: -44.7, direction: 'down', period: 'monthly'},
+      {metric: 'Patch Compliance', current: 94, previous: 89, delta: 5.6, direction: 'up', period: 'monthly'},
+      {metric: 'Endpoint Coverage', current: 98.2, previous: 97.1, delta: 1.1, direction: 'up', period: 'monthly'},
+      {metric: 'MFA Adoption', current: 96, previous: 91, delta: 5.5, direction: 'up', period: 'monthly'},
+    ];
+    this._reportTemplates = [
+      {id: 'tmpl-001', name: 'Daily Digest', sections: ['Alert Summary', 'Top Threats', 'Incident Status', 'Quick Stats'], isDefault: true, lastModified: '2024-11-01'},
+      {id: 'tmpl-002', name: 'Weekly Threat', sections: ['Threat Landscape', 'New IOCs', 'Campaign Updates', 'Risk Assessment', 'Recommendations'], isDefault: true, lastModified: '2024-10-15'},
+      {id: 'tmpl-003', name: 'Executive Summary', sections: ['Risk Score', 'KPI Dashboard', 'Trend Analysis', 'Budget Summary', 'Strategic Recommendations'], isDefault: true, lastModified: '2024-09-20'},
+      {id: 'tmpl-004', name: 'Compliance Report', sections: ['Framework Status', 'Control Mapping', 'Gap Analysis', 'Remediation Progress', 'Audit Readiness'], isDefault: false, lastModified: '2024-12-01'},
+    ];
+    this._deliveryTracking = [
+      {reportId: 'del-001', reportName: 'Daily Security Digest', sentAt: '2024-12-16T08:00:00Z', recipients: 12, delivered: 12, failed: 0, opened: 9},
+      {reportId: 'del-002', reportName: 'Weekly Threat Landscape', sentAt: '2024-12-15T09:00:00Z', recipients: 25, delivered: 24, failed: 1, opened: 18},
+      {reportId: 'del-003', reportName: 'Monthly Executive Report', sentAt: '2024-12-01T10:00:00Z', recipients: 8, delivered: 8, failed: 0, opened: 7},
+      {reportId: 'del-004', reportName: 'Incident Post-Mortem INC-2840', sentAt: '2024-12-14T14:00:00Z', recipients: 6, delivered: 6, failed: 0, opened: 5},
+    ];
+  }
+
+  private _renderReportSchedules(): ReturnType<typeof html> {
+    return html`
+      <div class="report-schedules-section">
+        <div class="section-header">
+          <h4>Report Schedules</h4>
+        </div>
+        <div class="schedules-list">
+          ${this._reportSchedules.map(s => html`
+            <div class="schedule-card status-${s.status}">
+              <div class="schedule-header">
+                <span class="schedule-name">${s.name}</span>
+                <span class="schedule-freq">${s.frequency}</span>
+              </div>
+              <div class="schedule-details">
+                <span>Template: ${s.template}</span>
+                <span>Format: ${s.format}</span>
+                <span>Recipients: ${s.recipients.length}</span>
+              </div>
+              <div class="schedule-timing">
+                <span>Last: ${s.lastRun}</span>
+                <span>Next: ${s.nextRun}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderExecutiveSummary(): ReturnType<typeof html> {
+    return html`
+      <div class="exec-summary-section">
+        <div class="section-header">
+          <h4>Executive Summary Auto-Generation</h4>
+        </div>
+        ${this._executiveSummaries.map(e => html`
+          <div class="exec-card">
+            <div class="exec-header">
+              <span class="exec-title">${e.title}</span>
+              <span class="exec-period">${e.period}</span>
+              <span class="risk-score ${e.riskScore >= 80 ? 'critical' : e.riskScore >= 60 ? 'high' : 'medium'}">${e.riskScore}/100</span>
+            </div>
+            <div class="exec-metrics">
+              ${e.keyMetrics.map(m => html`
+                <div class="exec-metric">
+                  <span class="metric-label">${m.label}</span>
+                  <span class="metric-value">${m.value}</span>
+                  <span class="metric-trend ${m.trend}">${m.trend === 'up' ? '\u2191' : '\u2193'}</span>
+                </div>
+              `)}
+            </div>
+            <div class="exec-highlights">
+              <h5>Highlights</h5>
+              <ul>${e.highlights.map(h => html`<li class="positive">${h}</li>`)}</ul>
+            </div>
+            <div class="exec-concerns">
+              <h5>Concerns</h5>
+              <ul>${e.concerns.map(c => html`<li class="negative">${c}</li>`)}</ul>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _renderTrendAnalysis(): ReturnType<typeof html> {
+    return html`
+      <div class="trend-analysis-section">
+        <div class="section-header">
+          <h4>Trend Analysis with Deltas</h4>
+        </div>
+        <div class="trend-grid">
+          ${this._trendAnalysis.map(t => html`
+            <div class="trend-card ${t.direction}">
+              <div class="trend-label">${t.metric}</div>
+              <div class="trend-current">${typeof t.current === 'number' && t.current > 100 ? t.current.toLocaleString() : t.current}${typeof t.current === 'number' && t.current <= 100 && t.metric.includes('Rate') ? '%' : t.metric.includes('Coverage') || t.metric.includes('Adoption') || t.metric.includes('Compliance') || t.metric.includes('Score') ? '%' : ''}</div>
+              <div class="trend-delta ${t.direction}">
+                ${t.direction === 'up' ? '\u2191' : '\u2193'} ${Math.abs(t.delta).toFixed(1)}%
+              </div>
+              <div class="trend-period">${t.period}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderReportTemplates(): ReturnType<typeof html> {
+    return html`
+      <div class="report-templates-section">
+        <div class="section-header">
+          <h4>Report Templates</h4>
+        </div>
+        <div class="templates-grid">
+          ${this._reportTemplates.map(t => html`
+            <div class="template-card ${t.isDefault ? 'default' : 'custom'}">
+              <div class="template-header">
+                <span class="template-name">${t.name}</span>
+                ${t.isDefault ? html`<span class="default-badge">Default</span>` : ''}
+              </div>
+              <div class="template-sections">
+                ${t.sections.map(s => html`<span class="section-tag">${s}</span>`)}
+              </div>
+              <div class="template-meta">Last modified: ${t.lastModified}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderDeliveryTracking(): ReturnType<typeof html> {
+    return html`
+      <div class="delivery-tracking-section">
+        <div class="section-header">
+          <h4>Report Delivery Tracking</h4>
+        </div>
+        <div class="delivery-list">
+          ${this._deliveryTracking.map(d => html`
+            <div class="delivery-card ${d.failed > 0 ? 'has-failures' : 'all-delivered'}">
+              <div class="delivery-header">
+                <span class="delivery-name">${d.reportName}</span>
+                <span class="delivery-time">${d.sentAt}</span>
+              </div>
+              <div class="delivery-stats">
+                <span>Recipients: ${d.recipients}</span>
+                <span class="delivered">Delivered: ${d.delivered}</span>
+                ${d.failed > 0 ? html`<span class="failed">Failed: ${d.failed}</span>` : ''}
+                <span>Opened: ${d.opened}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === Threat Intelligence Correlation Engine Module ===
+  private _threatIntelFeeds: Array<{feedId: string; name: string; source: string; type: string; freshness: string; iocCount: number; confidence: number; lastSync: string; status: string}> = [];
+  private _correlatedThreats: Array<{id: string; name: string; sources: string[]; confidence: number; severity: string; iocs: string[]; actor: string; campaign: string; firstSeen: string; lastSeen: string; description: string}> = [];
+  private _threatActors: Array<{actorId: string; name: string; alias: string; country: string; motivation: string; sophistication: string; campaigns: number; activeIocs: number; lastActivity: string; ttps: string[]}> = [];
+  private _iocStalenessData: Array<{ioc: string; type: string; firstSeen: string; lastSeen: string; feedCount: number; confidence: number; isStale: boolean; ageDays: number}> = [];
+  private _threatLandscapeRadar: Array<{category: string; threatLevel: number; trend: string; topActor: string; keyIndicators: string[]; recentIncidents: number}> = [];
+  private _threatBriefs: Array<{id: string; title: string; generatedAt: string; scope: string; summary: string; keyFindings: string[]; iocHighlights: string[]; recommendedActions: string[]}> = [];
+
+  private _initThreatIntelEngine(): void {
+    this._threatIntelFeeds = [
+      {feedId: 'feed-001', name: 'MISP Community', source: 'MISP', type: 'Open Source', freshness: '1h', iocCount: 284756, confidence: 0.72, lastSync: '2024-12-16T08:00:00Z', status: 'active'},
+      {feedId: 'feed-002', name: 'AlienVault OTX', source: 'AlienVault', type: 'Open Source', freshness: '30m', iocCount: 456123, confidence: 0.68, lastSync: '2024-12-16T08:30:00Z', status: 'active'},
+      {feedId: 'feed-003', name: 'CrowdStrike Intel', source: 'CrowdStrike', type: 'Commercial', freshness: '15m', iocCount: 89234, confidence: 0.91, lastSync: '2024-12-16T08:45:00Z', status: 'active'},
+      {feedId: 'feed-004', name: 'Mandiant Threat Intel', source: 'Mandiant', type: 'Commercial', freshness: '1h', iocCount: 67891, confidence: 0.93, lastSync: '2024-12-16T08:00:00Z', status: 'active'},
+      {feedId: 'feed-005', name: 'Recorded Future', source: 'Recorded Future', type: 'Commercial', freshness: '5m', iocCount: 1245678, confidence: 0.87, lastSync: '2024-12-16T08:55:00Z', status: 'active'},
+    ];
+    this._correlatedThreats = [
+      {id: 'corr-001', name: 'Cobalt Strike Beacon Variant', sources: ['CrowdStrike', 'Mandiant'], confidence: 0.95, severity: 'critical', iocs: ['C2: evil-c2[.]example[.]com', 'Hash: a1b2c3d4e5f6', 'Mutex: Global\\CS_Mutex_0x41'], actor: 'APT29', campaign: 'Operation Midnight Eclipse', firstSeen: '2024-12-10', lastSeen: '2024-12-16', description: 'New Cobalt Strike variant with enhanced evasion capabilities targeting financial sector'},
+      {id: 'corr-002', name: 'Supply Chain Backdoor', sources: ['Recorded Future', 'Mandiant'], confidence: 0.88, severity: 'critical', iocs: ['Domain: update-service[.]cdn[.]net', 'IP: 198.51.100.23', 'Cert: CN=UpdateService'], actor: 'APT41', campaign: 'Soft Supply', firstSeen: '2024-12-08', lastSeen: '2024-12-15', description: 'Software supply chain compromise via trojanized update mechanism'},
+      {id: 'corr-003', name: 'Phishing Kit Evolution', sources: ['AlienVault', 'MISP'], confidence: 0.76, severity: 'high', iocs: ['URL: login-secure[.]cloud[.]auth', 'Email: noreply@secure-verify[.]com'], actor: 'UNC2452', campaign: 'Credential Harvest Q4', firstSeen: '2024-12-05', lastSeen: '2024-12-16', description: 'Advanced phishing kit with real-time MFA bypass using adversary-in-the-middle proxy'},
+      {id: 'corr-004', name: 'Ransomware-as-a-Service', sources: ['CrowdStrike', 'Recorded Future'], confidence: 0.82, severity: 'high', iocs: ['Hash: f7e8d9c0b1a2', 'Extension: .encrypted', 'Note: README_DECRYPT.txt'], actor: 'LockBit 4.0', campaign: 'Winter Storm', firstSeen: '2024-11-28', lastSeen: '2024-12-16', description: 'New LockBit variant targeting healthcare and education sectors with double extortion'},
+      {id: 'corr-005', name: 'Zero-Day Exploit Chain', sources: ['Mandiant', 'CrowdStrike'], confidence: 0.91, severity: 'critical', iocs: ['CVE-2024-XXXX (Chrome)', 'CVE-2024-YYYY (Windows)', 'Payload: shellcode.bin'], actor: 'APT0', campaign: 'Chain Reaction', firstSeen: '2024-12-12', lastSeen: '2024-12-16', description: 'Chained zero-day exploits targeting browser and OS kernel for initial access'},
+    ];
+    this._threatActors = [
+      {actorId: 'ta-001', name: 'APT29', alias: 'Cozy Bear, The Dukes', country: 'Russia', motivation: 'Espionage', sophistication: 'advanced', campaigns: 23, activeIocs: 1847, lastActivity: '2024-12-16', ttps: ['T1059.001', 'T1003', 'T1071.001', 'T1566.001']},
+      {actorId: 'ta-002', name: 'APT41', alias: 'Double Dragon, Winnti', country: 'China', motivation: 'Financial/Espionage', sophistication: 'advanced', campaigns: 18, activeIocs: 2341, lastActivity: '2024-12-15', ttps: ['T1059.003', 'T1027', 'T1105', 'T1566.002']},
+      {actorId: 'ta-003', name: 'LockBit', alias: 'LockBitSupp', country: 'Unknown', motivation: 'Financial', sophistication: 'high', campaigns: 45, activeIocs: 5623, lastActivity: '2024-12-16', ttps: ['T1486', 'T1490', 'T1059.003', 'T1027']},
+      {actorId: 'ta-004', name: 'UNC2452', alias: 'Nobelium', country: 'Russia', motivation: 'Espionage', sophistication: 'advanced', campaigns: 12, activeIocs: 987, lastActivity: '2024-12-14', ttps: ['T1078', 'T1098', 'T1550.001', 'T1053.005']},
+      {actorId: 'ta-005', name: 'Scattered Spider', alias: 'UNC3944, 0ktapus', country: 'USA/UK', motivation: 'Financial', sophistication: 'moderate', campaigns: 31, activeIocs: 3456, lastActivity: '2024-12-16', ttps: ['T1566.001', 'T1078.004', 'T1111', 'T1078.002']},
+    ];
+    this._iocStalenessData = [
+      {ioc: '192.168.1.100', type: 'IPv4', firstSeen: '2024-06-01', lastSeen: '2024-12-15', feedCount: 5, confidence: 0.92, isStale: false, ageDays: 198},
+      {ioc: 'evil-domain[.]com', type: 'Domain', firstSeen: '2024-03-15', lastSeen: '2024-08-20', feedCount: 3, confidence: 0.45, isStale: true, ageDays: 276},
+      {ioc: 'a1b2c3d4e5f6', type: 'Hash', firstSeen: '2024-09-01', lastSeen: '2024-12-16', feedCount: 7, confidence: 0.88, isStale: false, ageDays: 107},
+      {ioc: 'phish-login[.]secure[.]xyz', type: 'URL', firstSeen: '2024-01-10', lastSeen: '2024-04-05', feedCount: 2, confidence: 0.21, isStale: true, ageDays: 341},
+      {ioc: ' trojan@malware[.]exe', type: 'File', firstSeen: '2024-11-01', lastSeen: '2024-12-14', feedCount: 4, confidence: 0.79, isStale: false, ageDays: 46},
+      {ioc: '10.0.0.55', type: 'IPv4', firstSeen: '2024-05-20', lastSeen: '2024-07-15', feedCount: 1, confidence: 0.15, isStale: true, ageDays: 210},
+    ];
+    this._threatLandscapeRadar = [
+      {category: 'Ransomware', threatLevel: 9, trend: 'increasing', topActor: 'LockBit 4.0', keyIndicators: ['Double extortion', 'RaaS expansion', 'Healthcare targeting'], recentIncidents: 47},
+      {category: 'Supply Chain', threatLevel: 8, trend: 'increasing', topActor: 'APT41', keyIndicators: ['Dependency confusion', 'Trojanized packages', 'CI/CD compromise'], recentIncidents: 12},
+      {category: 'Phishing', threatLevel: 7, trend: 'stable', topActor: 'Scattered Spider', keyIndicators: ['AiTM proxy', 'Vishing campaigns', 'Deepfake audio'], recentIncidents: 156},
+      {category: 'Zero-Day', threatLevel: 8, trend: 'increasing', topActor: 'APT0', keyIndicators: ['Browser exploits', 'Mobile zero-days', 'IoT vulnerabilities'], recentIncidents: 8},
+      {category: 'Insider Threat', threatLevel: 5, trend: 'stable', topActor: 'Various', keyIndicators: ['Data exfiltration', 'Credential abuse', 'Privilege escalation'], recentIncidents: 23},
+      {category: 'Cloud Attacks', threatLevel: 7, trend: 'increasing', topActor: 'APT29', keyIndicators: ['Identity abuse', 'SaaS compromise', 'Container escape'], recentIncidents: 34},
+    ];
+    this._threatBriefs = [
+      {id: 'brief-001', title: 'Daily Threat Intelligence Brief', generatedAt: '2024-12-16T09:00:00Z', scope: 'daily', summary: 'Critical: New Cobalt Strike variant detected targeting financial sector. High: LockBit 4.0 campaign expansion observed. 5 new zero-days reported in Chrome and Windows.', keyFindings: ['APT29 using new C2 infrastructure', 'LockBit 4.0 targeting healthcare', 'Supply chain compromise in npm packages'], iocHighlights: ['47 new malicious domains', '12 new C2 IPs', '3 new malware hashes'], recommendedActions: ['Update Chrome immediately', 'Block identified IoCs', 'Review supply chain dependencies']},
+      {id: 'brief-002', title: 'Weekly Threat Landscape Report', generatedAt: '2024-12-15T18:00:00Z', scope: 'weekly', summary: 'This week saw a 23% increase in ransomware attacks globally. Supply chain attacks remain elevated. Phishing campaigns leveraging AI-generated content increased by 45%.', keyFindings: ['Ransomware attacks up 23%', 'AI-generated phishing up 45%', '3 major supply chain incidents', '2 zero-days exploited in wild'], iocHighlights: ['156 new malicious IPs', '89 new phishing domains', '34 new malware hashes', '12 new C2 certificates'], recommendedActions: ['Patch all critical CVEs', 'Enhance email filtering rules', 'Review third-party access', 'Update endpoint detection signatures']},
+    ];
+  }
+
+  private _renderThreatIntelFeeds(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-feeds-section">
+        <div class="section-header">
+          <h4>Intelligence Feed Status</h4>
+        </div>
+        <div class="feeds-grid">
+          ${this._threatIntelFeeds.map(f => html`
+            <div class="feed-card status-${f.status}">
+              <div class="feed-header">
+                <span class="feed-name">${f.name}</span>
+                <span class="feed-type">${f.type}</span>
+              </div>
+              <div class="feed-stats">
+                <span>IOCs: ${f.iocCount.toLocaleString()}</span>
+                <span>Confidence: ${(f.confidence * 100).toFixed(0)}%</span>
+                <span>Freshness: ${f.freshness}</span>
+              </div>
+              <div class="feed-sync">Last sync: ${f.lastSync}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderCorrelatedThreats(): ReturnType<typeof html> {
+    return html`
+      <div class="correlated-threats-section">
+        <div class="section-header">
+          <h4>Multi-Source Correlated Threats</h4>
+        </div>
+        <div class="threats-list">
+          ${this._correlatedThreats.map(t => html`
+            <div class="threat-card severity-${t.severity}">
+              <div class="threat-header">
+                <span class="threat-name">${t.name}</span>
+                <span class="confidence-badge">${(t.confidence * 100).toFixed(0)}%</span>
+                <span class="severity-badge ${t.severity}">${t.severity}</span>
+              </div>
+              <p class="threat-desc">${t.description}</p>
+              <div class="threat-meta">
+                <span>Actor: ${t.actor}</span>
+                <span>Campaign: ${t.campaign}</span>
+                <span>Sources: ${t.sources.join(', ')}</span>
+              </div>
+              <div class="threat-iocs">
+                ${t.iocs.map(ioc => html`<span class="ioc-tag">${ioc}</span>`)}
+              </div>
+              <div class="threat-timeline">
+                <span>First: ${t.firstSeen}</span>
+                <span>Last: ${t.lastSeen}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatActors(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-actors-section">
+        <div class="section-header">
+          <h4>Threat Actor Campaign Tracking</h4>
+        </div>
+        <div class="actors-grid">
+          ${this._threatActors.map(a => html`
+            <div class="actor-card sophistication-${a.sophistication}">
+              <div class="actor-header">
+                <span class="actor-name">${a.name}</span>
+                <span class="actor-country">${a.country}</span>
+                <span class="actor-motivation">${a.motivation}</span>
+              </div>
+              <div class="actor-alias">${a.alias}</div>
+              <div class="actor-stats">
+                <span>Campaigns: ${a.campaigns}</span>
+                <span>Active IOCs: ${a.activeIocs}</span>
+                <span>Last Activity: ${a.lastActivity}</span>
+              </div>
+              <div class="actor-ttps">
+                ${a.ttps.map(t => html`<span class="ttp-tag">${t}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderIocStaleness(): ReturnType<typeof html> {
+    const stale = this._iocStalenessData.filter(i => i.isStale);
+    const fresh = this._iocStalenessData.filter(i => !i.isStale);
+    return html`
+      <div class="ioc-staleness-section">
+        <div class="section-header">
+          <h4>IOC Staleness Detection</h4>
+          <span class="badge warning">${stale.length} Stale</span>
+          <span class="badge success">${fresh.length} Fresh</span>
+        </div>
+        <div class="ioc-list">
+          ${this._iocStalenessData.map(i => html`
+            <div class="ioc-item ${i.isStale ? 'stale' : 'fresh'}">
+              <div class="ioc-header">
+                <span class="ioc-value">${i.ioc}</span>
+                <span class="ioc-type">${i.type}</span>
+                <span class="ioc-status ${i.isStale ? 'stale' : 'fresh'}">${i.isStale ? 'STALE' : 'FRESH'}</span>
+              </div>
+              <div class="ioc-meta">
+                <span>Age: ${i.ageDays} days</span>
+                <span>Feeds: ${i.feedCount}</span>
+                <span>Confidence: ${(i.confidence * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatRadar(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-radar-section">
+        <div class="section-header">
+          <h4>Threat Landscape Radar</h4>
+        </div>
+        <div class="radar-grid">
+          ${this._threatLandscapeRadar.map(r => html`
+            <div class="radar-card threat-${r.threatLevel >= 8 ? 'critical' : r.threatLevel >= 6 ? 'high' : 'medium'}">
+              <div class="radar-header">
+                <span class="radar-category">${r.category}</span>
+                <span class="radar-level">${r.threatLevel}/10</span>
+                <span class="radar-trend ${r.trend}">${r.trend === 'increasing' ? '\u2191' : r.trend === 'stable' ? '\u2192' : '\u2193'}</span>
+              </div>
+              <div class="radar-details">
+                <span>Top Actor: ${r.topActor}</span>
+                <span>Recent Incidents: ${r.recentIncidents}</span>
+              </div>
+              <div class="radar-indicators">
+                ${r.keyIndicators.map(ind => html`<span class="indicator-tag">${ind}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderThreatBriefs(): ReturnType<typeof html> {
+    return html`
+      <div class="threat-briefs-section">
+        <div class="section-header">
+          <h4>Automated Threat Briefs</h4>
+        </div>
+        <div class="briefs-list">
+          ${this._threatBriefs.map(b => html`
+            <div class="brief-card">
+              <div class="brief-header">
+                <span class="brief-title">${b.title}</span>
+                <span class="brief-scope">${b.scope}</span>
+                <span class="brief-time">${b.generatedAt}</span>
+              </div>
+              <p class="brief-summary">${b.summary}</p>
+              <div class="brief-findings">
+                <h5>Key Findings</h5>
+                <ul>${b.keyFindings.map(f => html`<li>${f}</li>`)}</ul>
+              </div>
+              <div class="brief-iocs">
+                <h5>IOC Highlights</h5>
+                ${b.iocHighlights.map(i => html`<span class="ioc-tag">${i}</span>`)}
+              </div>
+              <div class="brief-actions">
+                <h5>Recommended Actions</h5>
+                <ul>${b.recommendedActions.map(a => html`<li>${a}</li>`)}</ul>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
 
 
 
