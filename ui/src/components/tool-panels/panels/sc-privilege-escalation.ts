@@ -3306,6 +3306,299 @@ export class ScPrivilegeEscalation extends LitElement {
     return html;
   }
 
+  // --- Security Scenario Planning Methods (PRES) ---
+  private _initPresScenarios(): void {
+    const worstCaseScenarios = [
+      { id: "pres-sc-01", name: "Ransomware Attack on Critical Infrastructure", category: "Malware", impact: 9500000, probability: 0.12, recoveryDays: 21, affectedSystems: 47, dataLossGb: 320, businessImpact: "critical" },
+      { id: "pres-sc-02", name: "Insider Data Exfiltration via Authorized Channels", category: "Insider Threat", impact: 7200000, probability: 0.18, recoveryDays: 14, affectedSystems: 12, dataLossGb: 85, businessImpact: "high" },
+      { id: "pres-sc-03", name: "Supply Chain Compromise via Third-Party Library", category: "Supply Chain", impact: 6800000, probability: 0.09, recoveryDays: 30, affectedSystems: 63, dataLossGb: 0, businessImpact: "critical" },
+      { id: "pres-sc-04", name: "Cloud Misconfiguration Leading to Public Exposure", category: "Cloud", impact: 4100000, probability: 0.22, recoveryDays: 7, affectedSystems: 8, dataLossGb: 450, businessImpact: "high" },
+      { id: "pres-sc-05", name: "Zero-Day Exploit in Core Application Framework", category: "Vulnerability", impact: 8900000, probability: 0.05, recoveryDays: 45, affectedSystems: 120, dataLossGb: 0, businessImpact: "critical" },
+      { id: "pres-sc-06", name: "Distributed Denial of Service on Customer-Facing Services", category: "Availability", impact: 3400000, probability: 0.25, recoveryDays: 3, affectedSystems: 15, dataLossGb: 0, businessImpact: "medium" },
+      { id: "pres-sc-07", name: "Credential Stuffing and Account Takeover Wave", category: "Identity", impact: 2800000, probability: 0.30, recoveryDays: 5, affectedSystems: 6, dataLossGb: 12, businessImpact: "medium" },
+      { id: "pres-sc-08", name: "Physical Security Breach at Data Center Facility", category: "Physical", impact: 12000000, probability: 0.02, recoveryDays: 60, affectedSystems: 200, dataLossGb: 5000, businessImpact: "critical" },
+    ];
+    this._presScenarios = worstCaseScenarios.map(s => ({ ...s, mitigationCost: Math.round(s.impact * 0.08), drillScheduled: false, lastDrillDate: null, drillScore: null, controlGaps: Math.floor(Math.random() * 5) + 1 }));
+  }
+
+  private _calculatePresScenarioRisk(): void {
+    this._presScenarios.forEach(s => {
+      const riskScore = s.impact * s.probability;
+      s.riskScore = Math.round(riskScore);
+      s.riskLevel = riskScore > 1000000 ? "extreme" : riskScore > 500000 ? "high" : riskScore > 200000 ? "medium" : "low";
+      s.mitigationPriority = s.riskScore > 500000 ? "immediate" : s.riskScore > 200000 ? "planned" : "monitor";
+      s.residualRisk = Math.round(s.riskScore * (1 - (s.controlGaps * 0.12)));
+      s.bciScore = Math.round((s.recoveryDays * 0.3 + s.affectedSystems * 0.4 + (s.dataLossGb > 0 ? 0.3 : 0)) * 100);
+    });
+  }
+
+  private _schedulePresDrills(): void {
+    const drillCadence = { quarterly: ["Q1", "Q2", "Q3", "Q4"], semiAnnual: ["H1", "H2"], annual: ["FY"] };
+    this._presScenarios.forEach(s => {
+      if (s.probability > 0.15 && s.businessImpact === "critical") s.drillCadence = "quarterly";
+      else if (s.probability > 0.10 || s.businessImpact === "high") s.drillCadence = "semiAnnual";
+      else s.drillCadence = "annual";
+      const periods = drillCadence[s.drillCadence as keyof typeof drillCadence];
+      s.nextDrillDate = periods[Math.floor(Math.random() * periods.length)] + "-2026";
+    });
+  }
+
+  private _presScenarioComparison(): Record<string, unknown>[] {
+    return this._presScenarios.map(s => ({
+      scenario: s.name, impact: s.impact, probability: s.probability, risk: s.riskScore,
+      level: s.riskLevel, recovery: s.recoveryDays + "d", priority: s.mitigationPriority,
+      residual: s.residualRisk, bci: s.bciScore, gaps: s.controlGaps
+    }));
+  }
+
+  // --- Security Control Effectiveness Analytics (PRES) ---
+  private _initPresControls(): void {
+    const controls = [
+      { id: "pres-ct-01", name: "Network Segmentation", type: "preventive", maturity: "defined", score: 82, target: 90, failures: 3, lastTest: "2026-03-15" },
+      { id: "pres-ct-02", name: "Endpoint Detection and Response", type: "detective", maturity: "managed", score: 88, target: 92, failures: 1, lastTest: "2026-04-01" },
+      { id: "pres-ct-03", name: "Data Loss Prevention", type: "preventive", maturity: "repeatable", score: 71, target: 85, failures: 7, lastTest: "2026-03-22" },
+      { id: "pres-ct-04", name: "Security Information and Event Management", type: "detective", maturity: "managed", score: 85, target: 90, failures: 2, lastTest: "2026-04-05" },
+      { id: "pres-ct-05", name: "Identity and Access Management", type: "preventive", maturity: "defined", score: 76, target: 88, failures: 5, lastTest: "2026-03-28" },
+      { id: "pres-ct-06", name: "Vulnerability Management", type: "corrective", maturity: "managed", score: 80, target: 90, failures: 4, lastTest: "2026-04-02" },
+      { id: "pres-ct-07", name: "Email Security Gateway", type: "preventive", maturity: "managed", score: 90, target: 95, failures: 1, lastTest: "2026-04-08" },
+      { id: "pres-ct-08", name: "Web Application Firewall", type: "preventive", maturity: "managed", score: 87, target: 92, failures: 2, lastTest: "2026-03-30" },
+      { id: "pres-ct-09", name: "Patch Management", type: "corrective", maturity: "defined", score: 68, target: 85, failures: 9, lastTest: "2026-03-18" },
+      { id: "pres-ct-10", name: "Encryption at Rest", type: "preventive", maturity: "managed", score: 93, target: 95, failures: 0, lastTest: "2026-04-10" },
+      { id: "pres-ct-11", name: "Encryption in Transit", type: "preventive", maturity: "optimized", score: 96, target: 98, failures: 0, lastTest: "2026-04-12" },
+      { id: "pres-ct-12", name: "Privileged Access Management", type: "preventive", maturity: "defined", score: 74, target: 88, failures: 6, lastTest: "2026-03-25" },
+      { id: "pres-ct-13", name: "Security Awareness Training", type: "preventive", maturity: "repeatable", score: 65, target: 80, failures: 11, lastTest: "2026-03-20" },
+      { id: "pres-ct-14", name: "Incident Response Plan", type: "corrective", maturity: "managed", score: 78, target: 88, failures: 4, lastTest: "2026-04-03" },
+      { id: "pres-ct-15", name: "Backup and Recovery", type: "corrective", maturity: "managed", score: 84, target: 92, failures: 3, lastTest: "2026-04-06" },
+      { id: "pres-ct-16", name: "Multi-Factor Authentication", type: "preventive", maturity: "managed", score: 91, target: 95, failures: 1, lastTest: "2026-04-09" },
+      { id: "pres-ct-17", name: "Network Traffic Analysis", type: "detective", maturity: "defined", score: 72, target: 85, failures: 5, lastTest: "2026-03-27" },
+      { id: "pres-ct-18", name: "Cloud Security Posture Management", type: "detective", maturity: "repeatable", score: 69, target: 82, failures: 8, lastTest: "2026-03-24" },
+      { id: "pres-ct-19", name: "Container Security Scanning", type: "preventive", maturity: "defined", score: 75, target: 85, failures: 5, lastTest: "2026-04-04" },
+      { id: "pres-ct-20", name: "API Security Gateway", type: "preventive", maturity: "repeatable", score: 70, target: 82, failures: 7, lastTest: "2026-03-29" },
+      { id: "pres-ct-21", name: "Threat Intelligence Platform", type: "detective", maturity: "managed", score: 83, target: 90, failures: 2, lastTest: "2026-04-07" },
+      { id: "pres-ct-22", name: "Database Activity Monitoring", type: "detective", maturity: "defined", score: 67, target: 80, failures: 8, lastTest: "2026-03-21" },
+      { id: "pres-ct-23", name: "Deception Technology", type: "detective", maturity: "initial", score: 55, target: 75, failures: 12, lastTest: "2026-03-16" },
+      { id: "pres-ct-24", name: "Security Orchestration Automation", type: "corrective", maturity: "repeatable", score: 73, target: 85, failures: 6, lastTest: "2026-04-01" },
+      { id: "pres-ct-25", name: "Third-Party Risk Assessment", type: "preventive", maturity: "defined", score: 64, target: 78, failures: 9, lastTest: "2026-03-19" },
+    ];
+    this._presControls = controls;
+  }
+
+  private _analyzePresControlEffectiveness(): void {
+    const typeBreakdown: Record<string, { total: number; avgScore: number; avgFailures: number }> = {};
+    this._presControls.forEach(c => {
+      if (!typeBreakdown[c.type]) typeBreakdown[c.type] = { total: 0, avgScore: 0, avgFailures: 0 };
+      typeBreakdown[c.type].total++;
+      typeBreakdown[c.type].avgScore += c.score;
+      typeBreakdown[c.type].avgFailures += c.failures;
+    });
+    Object.keys(typeBreakdown).forEach(t => {
+      typeBreakdown[t].avgScore = Math.round(typeBreakdown[t].avgScore / typeBreakdown[t].total);
+      typeBreakdown[t].avgFailures = Math.round(typeBreakdown[t].avgFailures / typeBreakdown[t].total * 10) / 10;
+    });
+    this._presControlTypeBreakdown = typeBreakdown;
+  }
+
+  private _presControlOptimization(): Record<string, unknown>[] {
+    return this._presControls.filter(c => c.score < c.target).map(c => ({
+      control: c.name, current: c.score, target: c.target, gap: c.target - c.score,
+      failures: c.failures, maturity: c.maturity, recommendation:
+        c.score < 70 ? "Critical: Immediate improvement required" :
+        c.score < 80 ? "Significant: Plan improvement sprint" :
+        "Moderate: Fine-tune and optimize"
+    })).sort((a: any, b: any) => (b.gap as number) - (a.gap as number));
+  }
+
+  // --- Security Data Pipeline Health (PRES) ---
+  private _initPresPipelines(): void {
+    const pipelines = [
+      { id: "pres-pl-01", name: "SIEM Log Ingestion", status: "healthy", healthScore: 94, latencyMs: 120, freshnessMin: 2, errorRate: 0.02, throughputMbps: 450, recordsPerSec: 12000, backPressure: 0.05, uptime: 99.97 },
+      { id: "pres-pl-02", name: "Threat Feed Aggregation", status: "healthy", healthScore: 91, latencyMs: 300, freshnessMin: 15, errorRate: 0.05, throughputMbps: 85, recordsPerSec: 3200, backPressure: 0.08, uptime: 99.92 },
+      { id: "pres-pl-03", name: "Vulnerability Scan Results", status: "degraded", healthScore: 72, latencyMs: 2500, freshnessMin: 60, errorRate: 0.15, throughputMbps: 25, recordsPerSec: 800, backPressure: 0.35, uptime: 98.50 },
+      { id: "pres-pl-04", name: "Endpoint Telemetry Stream", status: "healthy", healthScore: 88, latencyMs: 450, freshnessMin: 5, errorRate: 0.08, throughputMbps: 280, recordsPerSec: 8500, backPressure: 0.12, uptime: 99.85 },
+      { id: "pres-pl-05", name: "Cloud Audit Log Pipeline", status: "healthy", healthScore: 86, latencyMs: 600, freshnessMin: 10, errorRate: 0.06, throughputMbps: 150, recordsPerSec: 4500, backPressure: 0.10, uptime: 99.80 },
+      { id: "pres-pl-06", name: "Identity Event Stream", status: "warning", healthScore: 78, latencyMs: 1200, freshnessMin: 20, errorRate: 0.12, throughputMbps: 45, recordsPerSec: 1500, backPressure: 0.22, uptime: 99.40 },
+      { id: "pres-pl-07", name: "Network Flow Collection", status: "healthy", healthScore: 82, latencyMs: 800, freshnessMin: 8, errorRate: 0.09, throughputMbps: 650, recordsPerSec: 18000, backPressure: 0.15, uptime: 99.70 },
+      { id: "pres-pl-08", name: "DLP Incident Pipeline", status: "degraded", healthScore: 68, latencyMs: 3500, freshnessMin: 45, errorRate: 0.20, throughputMbps: 18, recordsPerSec: 500, backPressure: 0.42, uptime: 97.80 },
+    ];
+    this._presPipelines = pipelines.map(p => ({ ...p, dependencies: [], slaBreached: p.healthScore < 75, alertThreshold: p.errorRate > 0.15 }));
+    this._presPipelines[0].dependencies = ["pres-pl-04", "pres-pl-07"];
+    this._presPipelines[4].dependencies = ["pres-pl-01"];
+    this._presPipelines[5].dependencies = ["pres-pl-02"];
+    this._presPipelines[7].dependencies = ["pres-pl-04", "pres-pl-05"];
+  }
+
+  private _presPipelineTrend(): Record<string, unknown>[] {
+    const hours = Array.from({ length: 24 }, (_, i) => `H${String(i).padStart(2, "0")}`);
+    return this._presPipelines.map(p => ({
+      pipeline: p.name, status: p.status, health: p.healthScore,
+      latency: p.latencyMs, freshness: p.freshnessMin, errors: p.errorRate,
+      throughput: p.throughputMbps, recordsSec: p.recordsPerSec, slaOk: !p.slaBreached,
+      hourlyHealth: hours.map(h => Math.max(50, p.healthScore + Math.floor(Math.random() * 20) - 10))
+    }));
+  }
+
+  // --- Security Stakeholder Report Generator (PRES) ---
+  private _initPresReportTemplates(): void {
+    this._presReportTemplates = [
+      { id: "pres-rp-01", name: "Board Security Report", audience: "board", frequency: "quarterly", sections: 6, autoGenerate: true, lastGenerated: "2026-03-31", pages: 12 },
+      { id: "pres-rp-02", name: "Executive Risk Summary", audience: "executive", frequency: "monthly", sections: 8, autoGenerate: true, lastGenerated: "2026-04-01", pages: 8 },
+      { id: "pres-rp-03", name: "Technical Security Review", audience: "technical", frequency: "weekly", sections: 12, autoGenerate: true, lastGenerated: "2026-04-21", pages: 25 },
+      { id: "pres-rp-04", name: "Audit Compliance Report", audience: "audit", frequency: "quarterly", sections: 10, autoGenerate: false, lastGenerated: "2026-03-15", pages: 35 },
+      { id: "pres-rp-05", name: "Regulatory Filing Package", audience: "regulatory", frequency: "annual", sections: 15, autoGenerate: false, lastGenerated: "2025-12-31", pages: 48 },
+    ];
+  }
+
+  private _generatePresExecSummary(): string {
+    const totalRisk = this._presScenarios.reduce((sum: number, s: any) => sum + s.riskScore, 0);
+    const avgControl = Math.round(this._presControls.reduce((sum: number, c: any) => sum + c.score, 0) / this._presControls.length);
+    const degradedPipes = this._presPipelines.filter((p: any) => p.status !== "healthy").length;
+    return `Overall risk exposure: ${(totalRisk / 1000000).toFixed(1)}M. Average control effectiveness: {avgControl}%. {degradedPipes} pipeline(s) need attention. {this._presScenarios.filter((s: any) => s.mitigationPriority === "immediate").length} scenarios require immediate action.`;
+  }
+
+  // --- Security Technology Radar (PRES) ---
+  private _initPresTechRadar(): void {
+    this._presTechRadar = [
+      { id: "pres-tr-01", name: "AI-Powered Threat Detection", ring: "adopt", category: "Detection", maturity: 4, trend: "up", investment: "high", roi: 3.2, vendorCount: 8 },
+      { id: "pres-tr-02", name: "Zero Trust Architecture", ring: "adopt", category: "Architecture", maturity: 4, trend: "up", investment: "high", roi: 2.8, vendorCount: 12 },
+      { id: "pres-tr-03", name: "SASE/SSE Platform", ring: "trial", category: "Network", maturity: 3, trend: "up", investment: "medium", roi: 2.4, vendorCount: 10 },
+      { id: "pres-tr-04", name: "CNAPP Cloud Security", ring: "trial", category: "Cloud", maturity: 3, trend: "up", investment: "medium", roi: 2.1, vendorCount: 7 },
+      { id: "pres-tr-05", name: "Extended Detection and Response", ring: "adopt", category: "Detection", maturity: 4, trend: "stable", investment: "high", roi: 2.9, vendorCount: 9 },
+      { id: "pres-tr-06", name: "Quantum-Safe Cryptography", ring: "assess", category: "Crypto", maturity: 2, trend: "up", investment: "low", roi: 0.8, vendorCount: 4 },
+      { id: "pres-tr-07", name: "Security Service Edge", ring: "trial", category: "Network", maturity: 3, trend: "up", investment: "medium", roi: 2.0, vendorCount: 6 },
+      { id: "pres-tr-08", name: "SOAR 2.0 Autonomous SOC", ring: "assess", category: "Operations", maturity: 2, trend: "up", investment: "low", roi: 1.2, vendorCount: 5 },
+      { id: "pres-tr-09", name: "Software Supply Chain Security", ring: "trial", category: "DevSecOps", maturity: 3, trend: "up", investment: "medium", roi: 2.3, vendorCount: 8 },
+      { id: "pres-tr-10", name: "Identity Threat Detection", ring: "adopt", category: "Identity", maturity: 3, trend: "up", investment: "high", roi: 2.7, vendorCount: 7 },
+      { id: "pres-tr-11", name: "Data Security Posture Management", ring: "trial", category: "Data", maturity: 3, trend: "up", investment: "medium", roi: 2.2, vendorCount: 9 },
+      { id: "pres-tr-12", name: "Decentralized Identity Standards", ring: "hold", category: "Identity", maturity: 1, trend: "stable", investment: "low", roi: 0.5, vendorCount: 3 },
+    ];
+  }
+
+  private _presRadarSummary(): Record<string, unknown> {
+    const rings: Record<string, number> = { adopt: 0, trial: 0, assess: 0, hold: 0 };
+    this._presTechRadar.forEach(t => { if (rings[t.ring as keyof typeof rings] !== undefined) rings[t.ring as keyof typeof rings]++; });
+    return { adopt: rings.adopt, trial: rings.trial, assess: rings.assess, hold: rings.hold, total: this._presTechRadar.length, avgMaturity: 2.8, topInvestment: this._presTechRadar.filter(t => t.investment === "high").map(t => t.name) };
+  }
+
+  // --- PRES Security Compliance Mapping Matrix ---
+  private _initPresComplianceMatrix(): void {
+    const frameworks = ["ISO 27001", "SOC 2 Type II", "PCI DSS 4.0", "NIST CSF 2.0", "GDPR", "HIPAA", "FedRAMP", "CIS Controls v8"];
+    const domains = ["Access Control", "Data Protection", "Network Security", "Endpoint Security", "Incident Response", "Risk Management", "Asset Management", "Compliance Monitoring"];
+    this._presComplianceMatrix = frameworks.map(fw => ({
+      framework: fw, totalControls: Math.floor(Math.random() * 60) + 80, implemented: Math.floor(Math.random() * 40) + 50,
+      partial: Math.floor(Math.random() * 20) + 10, gaps: Math.floor(Math.random() * 15) + 3,
+      lastAudit: "2026-" + String(Math.floor(Math.random() * 4) + 1).padStart(2, "0") + "-" + String(Math.floor(Math.random() * 28) + 1).padStart(2, "0"),
+      nextAudit: "2027-" + String(Math.floor(Math.random() * 6) + 1).padStart(2, "0") + "-" + String(Math.floor(Math.random() * 28) + 1).padStart(2, "0"),
+      score: Math.floor(Math.random() * 20) + 72, status: Math.random() > 0.3 ? "compliant" : "partial",
+      domains: domains.map(d => ({ domain: d, controls: Math.floor(Math.random() * 10) + 5, passed: Math.floor(Math.random() * 8) + 2 }))
+    }));
+  }
+
+  private _presComplianceTrend(): Record<string, unknown>[] {
+    const quarters = ["Q1-2025", "Q2-2025", "Q3-2025", "Q4-2025", "Q1-2026", "Q2-2026"];
+    return this._presComplianceMatrix.map(fw => ({
+      framework: fw, score: fw.score, status: fw.status,
+      trend: quarters.map(q => Math.min(100, fw.score - 15 + Math.floor(Math.random() * 20))),
+      gaps: fw.gaps, implemented: fw.implemented, total: fw.totalControls,
+      coverage: Math.round((fw.implemented / fw.totalControls) * 100)
+    }));
+  }
+
+  // --- PRES Threat Intelligence Correlation Engine ---
+  private _initPresThreatIntel(): void {
+    const threatActors = ["APT29", "APT41", "Lazarus Group", "FIN7", "Conti", "Sandworm", "Fancy Bear", "Tick Group"];
+    const techniques = ["T1059.001", "T1190", "T1566.001", "T1078", "T1055", "T1486", "T1021.001", "T1071.001"];
+    const sectors = ["Finance", "Healthcare", "Technology", "Government", "Energy", "Manufacturing", "Retail", "Telecom"];
+    this._presThreatIntel = threatActors.map((actor, i) => ({
+      actor, sophistication: ["advanced", "advanced", "moderate", "advanced", "moderate", "advanced", "advanced", "moderate"][i],
+      targeting: sectors.slice(0, Math.floor(Math.random() * 4) + 2),
+      primaryTechniques: techniques.slice(Math.floor(Math.random() * 3), Math.floor(Math.random() * 3) + 4),
+      confidence: Math.floor(Math.random() * 30) + 65, lastObserved: "2026-04-" + String(Math.floor(Math.random() * 22) + 1).padStart(2, "0"),
+      iocCount: Math.floor(Math.random() * 200) + 50, attributedCampaigns: Math.floor(Math.random() * 8) + 1,
+      mitreTactics: ["Initial Access", "Execution", "Persistence", "Privilege Escalation", "Defense Evasion"].slice(0, Math.floor(Math.random() * 3) + 2),
+      riskScore: Math.floor(Math.random() * 40) + 55, alertsTriggered: Math.floor(Math.random() * 30) + 5
+    }));
+  }
+
+  private _presThreatCorrelation(): Record<string, unknown>[] {
+    return this._presThreatIntel.filter(t => t.riskScore > 70).map(t => ({
+      actor: t.actor, risk: t.riskScore, confidence: t.confidence,
+      techniques: t.primaryTechniques, targeting: t.targeting,
+      lastSeen: t.lastObserved, iocs: t.iocCount, campaigns: t.attributedCampaigns,
+      recommendation: t.riskScore > 85 ? "Immediate defensive action required" : t.riskScore > 75 ? "Enhanced monitoring recommended" : "Standard monitoring sufficient"
+    })).sort((a: any, b: any) => (b.risk as number) - (a.risk as number));
+  }
+
+  // --- PRES Security Metrics Deep Dive ---
+  private _initPresMetricsDeep(): void {
+    const metricCategories = ["Detection Coverage", "Response Efficiency", "Prevention Effectiveness", "Recovery Speed", "Compliance Adherence"];
+    this._presMetricsDeep = metricCategories.map(cat => ({
+      category: cat, metrics: Array.from({ length: 6 }, (_, i) => ({
+        name: `${cat} Metric ${i + 1}`, value: Math.floor(Math.random() * 40) + 55,
+        target: Math.floor(Math.random() * 15) + 82, unit: ["%", "ms", "count", "score"][Math.floor(Math.random() * 4)],
+        trend: Math.random() > 0.4 ? "improving" : "stable", period: "30d",
+        baseline: Math.floor(Math.random() * 20) + 50, benchmark: Math.floor(Math.random() * 10) + 80
+      })),
+      overallScore: Math.floor(Math.random() * 20) + 70, maturity: ["initial", "developing", "defined", "managed", "optimized"][Math.floor(Math.random() * 5)]
+    }));
+  }
+
+  private _presMetricsHeatmap(): number[][] {
+    return this._presMetricsDeep.map(cat =>
+      cat.metrics.map(m => Math.round((m.value / m.target) * 100))
+    );
+  }
+
+  // --- PRES Incident Cost Modeling ---
+  private _initPresCostModel(): void {
+    const incidentTypes = ["Data Breach", "Ransomware", "DDoS", "Insider Threat", "Phishing", "Supply Chain", "Cloud Misconfig", "Zero-Day"];
+    this._presCostModel = incidentTypes.map(inc => ({
+      incident: inc, avgCost: Math.floor(Math.random() * 8000000) + 1000000,
+      maxCost: Math.floor(Math.random() * 20000000) + 5000000, minCost: Math.floor(Math.random() * 500000) + 100000,
+      detectionTimeHrs: Math.floor(Math.random() * 200) + 10, containmentTimeHrs: Math.floor(Math.random() * 150) + 5,
+      recoveryTimeHrs: Math.floor(Math.random() * 500) + 50, recordsAffected: Math.floor(Math.random() * 500000) + 10000,
+      regulatoryFine: Math.floor(Math.random() * 3000000) + 200000, reputationCost: Math.floor(Math.random() * 2000000) + 500000,
+      legalCost: Math.floor(Math.random() * 1500000) + 100000, notificationCost: Math.floor(Math.random() * 800000) + 50000,
+      forensicsCost: Math.floor(Math.random() * 400000) + 50000, totalAnnualExposure: 0, frequency: Math.floor(Math.random() * 5) + 1
+    }));
+    this._presCostModel.forEach(m => { m.totalAnnualExposure = m.avgCost * m.frequency; });
+  }
+
+  private _presCostProjection(): Record<string, unknown>[] {
+    return this._presCostModel.map(m => ({
+      incident: m.incident, avgCost: m.avgCost, annualExposure: m.totalAnnualExposure,
+      frequency: m.frequency, detectionHrs: m.detectionTimeHrs, recoveryHrs: m.recoveryTimeHrs,
+      records: m.recordsAffected, regulatory: m.regulatoryFine,
+      roiOfInvestment: Math.round(m.avgCost * 0.15 / 100000), priority: m.totalAnnualExposure > 10000000 ? "critical" : m.totalAnnualExposure > 5000000 ? "high" : "medium"
+    })).sort((a: any, b: any) => (b.annualExposure as number) - (a.annualExposure as number));
+  }
+
+  // --- PRES Security Architecture Pattern Library ---
+  private _initPresArchPatterns(): void {
+    const patterns = ["Defense in Depth", "Zero Trust Network", "Microsegmentation", "Layered Encryption", "Blast Radius Minimization", "Fail Secure Design", "Least Privilege Access", "Secure-by-Default"];
+    this._presArchPatterns = patterns.map((p, i) => ({
+      pattern: p, category: ["network", "identity", "network", "data", "architecture", "design", "identity", "development"][i],
+      maturity: ["optimized", "managed", "defined", "managed", "repeatable", "defined", "managed", "repeatable"][i],
+      implementation: Math.floor(Math.random() * 40) + 55, coverage: Math.floor(Math.random() * 30) + 60,
+      components: Math.floor(Math.random() * 15) + 5, integrationPoints: Math.floor(Math.random() * 20) + 3,
+      riskReduction: Math.floor(Math.random() * 25) + 60, costComplexity: ["low", "high", "medium", "medium", "high", "low", "medium", "medium"][i],
+      dependencies: patterns.slice(0, Math.floor(Math.random() * 3)).filter(x => x !== p),
+      lastReview: "2026-0" + String(Math.floor(Math.random() * 4) + 1) + "-" + String(Math.floor(Math.random() * 28) + 1).padStart(2, "0")
+    }));
+  }
+
+  private _presArchPatternAnalysis(): Record<string, unknown> {
+    const implemented = this._presArchPatterns.filter(p => p.implementation > 75).length;
+    const avgCoverage = Math.round(this._presArchPatterns.reduce((s: number, p: any) => s + p.coverage, 0) / this._presArchPatterns.length);
+    return {
+      totalPatterns: this._presArchPatterns.length, fullyImplemented: implemented, avgCoverage,
+      avgRiskReduction: Math.round(this._presArchPatterns.reduce((s: number, p: any) => s + p.riskReduction, 0) / this._presArchPatterns.length),
+      gaps: this._presArchPatterns.filter(p => p.implementation < 60).map(p => p.pattern),
+      recommendations: this._presArchPatterns.filter(p => p.implementation < 70).map(p => ({ pattern: p.pattern, current: p.implementation, target: 85, effort: p.costComplexity }))
+    };
+  }
+
+
+
   render() {
     return html`
       <div class="panel">
