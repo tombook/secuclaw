@@ -307,6 +307,103 @@ export class ScRedteamOperations extends LitElement {
     .mb-tpl-name { font-weight: 600; font-size: 0.8rem; color: #e2e8f0; }
     .mb-tpl-meta { display: flex; gap: 0.5rem; font-size: 0.65rem; color: #94a3b8; }
     .mb-tpl-shared { font-size: 0.65rem; color: #64748b; margin-top: 0.2rem; }
+
+    .score-overview { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .score-circle { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .score-label { font-size: 14px; color: #94a3b8; font-weight: 500; }
+    .domain-scores { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .domain-row { display: grid; grid-template-columns: 160px 1fr 40px 30px; align-items: center; gap: 8px; }
+    .domain-name { font-size: 13px; color: #cbd5e1; }
+    .score-bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; }
+    .score-value { font-size: 13px; font-weight: 600; color: #e2e8f0; text-align: right; }
+    .trend-up { color: #10b981; font-weight: 700; }
+    .trend-down { color: #ef4444; font-weight: 700; }
+    .trend-stable { color: #f59e0b; font-weight: 700; }
+    .monthly-trend { display: flex; align-items: flex-end; gap: 4px; height: 100px; margin-bottom: 16px; padding: 8px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
+    .trend-bar { flex: 1; background: linear-gradient(180deg, #6366f1, #4f46e5); border-radius: 3px 3px 0 0; min-height: 4px; transition: height 0.3s; }
+    .bu-comparison { display: flex; flex-direction: column; gap: 6px; }
+    .bu-row { display: grid; grid-template-columns: 120px 1fr 40px; align-items: center; gap: 8px; }
+    .bu-bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #06b6d4, #0891b2); }
+    .actor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .actor-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.5); border-radius: 8px; padding: 14px; transition: border-color 0.2s; }
+    .actor-card:hover { border-color: #6366f1; }
+    .actor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .actor-header strong { color: #f1f5f9; font-size: 14px; }
+    .sophistication { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+    .sophistication.advanced { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+    .sophistication.moderate { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+    .actor-details { display: flex; flex-direction: column; gap: 4px; }
+    .actor-details p { margin: 0; font-size: 12px; color: #94a3b8; }
+    .test-summary { display: flex; gap: 24px; margin-bottom: 16px; }
+    .summary-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .summary-value { font-size: 24px; font-weight: 700; color: #e2e8f0; }
+    .summary-label { font-size: 12px; color: #64748b; }
+    .test-list { display: flex; flex-direction: column; gap: 6px; }
+    .test-row { display: grid; grid-template-columns: 180px 80px 90px 70px 100px; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.4); font-size: 12px; }
+    .test-row.status-passed { border-left: 3px solid #10b981; }
+    .test-row.status-failed { border-left: 3px solid #ef4444; }
+    .test-row.status-warning { border-left: 3px solid #f59e0b; }
+    .test-type { color: #cbd5e1; font-weight: 500; }
+    .test-status { font-weight: 700; font-size: 11px; }
+    .test-row.status-passed .test-status { color: #10b981; }
+    .test-row.status-failed .test-status { color: #ef4444; }
+    .test-row.status-warning .test-status { color: #f59e0b; }
+    .test-findings { color: #94a3b8; }
+    .test-coverage { color: #64748b; }
+    .test-date { color: #475569; }
+    .vuln-correlation-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .vuln-row { display: grid; grid-template-columns: 140px 120px 100px 100px 50px 70px; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.4); font-size: 12px; }
+    .vuln-row.priority-critical { border-left: 3px solid #ef4444; }
+    .vuln-row.priority-high { border-left: 3px solid #f59e0b; }
+    .vuln-row.priority-medium { border-left: 3px solid #3b82f6; }
+    .vuln-row.priority-low { border-left: 3px solid #6b7280; }
+    .vuln-id { color: #f1f5f9; font-weight: 600; font-family: monospace; font-size: 11px; }
+    .vuln-source { color: #94a3b8; }
+    .exploit-status { font-weight: 700; font-size: 11px; }
+    .vuln-row.priority-critical .exploit-status { color: #ef4444; }
+    .vuln-age { color: #64748b; }
+    .vuln-priority { font-weight: 600; }
+    .cluster-list { display: flex; flex-direction: column; gap: 6px; }
+    .cluster-row { display: grid; grid-template-columns: 180px 80px 80px 80px; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.4); font-size: 12px; color: #cbd5e1; }
+    .cluster-risk { font-weight: 700; }
+    .cluster-risk.Critical { color: #ef4444; }
+    .cluster-risk.High { color: #f59e0b; }
+    .cluster-risk.Medium { color: #3b82f6; }
+    .ir-steps { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .ir-step { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: rgba(15, 23, 42, 0.4); border-radius: 8px; }
+    .step-number { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .step-info { display: flex; flex-direction: column; gap: 2px; }
+    .step-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    .step-sla { font-size: 11px; color: #f59e0b; }
+    .step-owner { font-size: 11px; color: #64748b; }
+    .playbook-list { display: flex; flex-direction: column; gap: 6px; }
+    .playbook-row { display: grid; grid-template-columns: 180px 80px 100px 100px; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.4); font-size: 12px; color: #cbd5e1; }
+    .pb-severity { font-weight: 700; font-size: 11px; }
+    .pb-severity.Critical { color: #ef4444; }
+    .pb-severity.High { color: #f59e0b; }
+    .pb-severity.Medium { color: #3b82f6; }
+
+    .risk-quant-summary { display: flex; gap: 24px; margin-bottom: 16px; }
+    .rq-metric { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .rq-value { font-size: 28px; font-weight: 700; color: #e2e8f0; }
+    .rq-delta { color: #ef4444; }
+    .rq-label { font-size: 12px; color: #64748b; }
+    .risk-factors { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .rf-row { display: grid; grid-template-columns: 140px 50px 1fr 40px 40px 80px; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(15, 23, 42, 0.4); border-radius: 6px; font-size: 12px; }
+    .rf-name { color: #cbd5e1; font-weight: 500; }
+    .rf-weight { color: #64748b; }
+    .rf-bar-current { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+    .rf-current { color: #e2e8f0; font-weight: 600; }
+    .rf-baseline { color: #64748b; }
+    .rf-trend { font-size: 11px; font-weight: 600; }
+    .rf-trend.increasing { color: #ef4444; }
+    .rf-trend.stable { color: #f59e0b; }
+    .rf-trend.improving { color: #10b981; }
+    .heat-zones { display: flex; flex-direction: column; gap: 4px; }
+    .hz-row { display: grid; grid-template-columns: 100px 120px 80px; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(15, 23, 42, 0.3); border-radius: 4px; font-size: 12px; }
+    .hz-zone { font-weight: 700; }
+    .hz-range { color: #94a3b8; }
+    .hz-count { color: #64748b; }
 `;
 
   @state() private _selectedMission: Mission | null = null;
@@ -5703,6 +5800,244 @@ export class ScRedteamOperations extends LitElement {
   private _setKgEntityType(t: string) {
     this._kgSelectedEntityType = t;
     this.requestUpdate();
+  }
+
+
+  private _renderSecurityPostureScoring(): TemplateResult {
+    const domains = [
+      { name: 'Network Security', score: 82, trend: 'up', weight: 20 },
+      { name: 'Endpoint Protection', score: 75, trend: 'stable', weight: 15 },
+      { name: 'Identity & Access', score: 88, trend: 'up', weight: 20 },
+      { name: 'Data Protection', score: 71, trend: 'down', weight: 15 },
+      { name: 'Application Security', score: 79, trend: 'up', weight: 15 },
+      { name: 'Cloud Security', score: 85, trend: 'stable', weight: 15 },
+    ];
+    const overallScore = Math.round(domains.reduce((s, d) => s + d.score * d.weight / 100, 0));
+    const monthlyScores = [68, 72, 70, 74, 73, 76, 78, 77, 80, 79, 81, overallScore];
+    const buScores = [
+      { unit: 'Engineering', score: 84 }, { unit: 'Finance', score: 72 },
+      { unit: 'HR', score: 68 }, { unit: 'Legal', score: 78 },
+      { unit: 'Sales', score: 65 }, { unit: 'Operations', score: 81 },
+    ];
+    return html`<section class="section-card">
+      <h3>Security Posture Scoring Engine</h3>
+      <div class="score-overview">
+        <div class="score-circle">${overallScore}</div>
+        <span class="score-label">Overall Posture Score</span>
+      </div>
+      <div class="domain-scores">${domains.map(d => html`
+        <div class="domain-row">
+          <span class="domain-name">${d.name}</span>
+          <div class="score-bar" style="width:${d.score}%"></div>
+          <span class="score-value">${d.score}</span>
+          <span class="trend-${d.trend}">${d.trend === 'up' ? '↑' : d.trend === 'down' ? '↓' : '→'}</span>
+        </div>
+      `)}</div>
+      <div class="monthly-trend">${monthlyScores.map((s, i) => html`
+        <div class="trend-bar" style="height:${s}%" title="Month ${i + 1}: ${s}"></div>
+      `)}</div>
+      <div class="bu-comparison">${buScores.map(bu => html`
+        <div class="bu-row">
+          <span>${bu.unit}</span>
+          <div class="bu-bar" style="width:${bu.score}%"></div>
+          <span>${bu.score}</span>
+        </div>
+      `)}</div>
+    </section>`;
+  }
+
+  private _renderThreatActorProfiler(): TemplateResult {
+    const actors = [
+      { name: 'APT-29', sophistication: 'Advanced', targets: 'Government, Think Tanks', campaigns: 12, confidence: 92, pattern: 'Supply Chain' },
+      { name: 'Lazarus Group', sophistication: 'Advanced', targets: 'Finance, Crypto', campaigns: 18, confidence: 95, pattern: 'Financial Theft' },
+      { name: 'FIN7', sophistication: 'Advanced', targets: 'Retail, Hospitality', campaigns: 15, confidence: 88, pattern: 'POS Malware' },
+      { name: 'DarkSide', sophistication: 'Moderate', targets: 'Critical Infrastructure', campaigns: 8, confidence: 78, pattern: 'Ransomware' },
+      { name: 'APT-41', sophistication: 'Advanced', targets: 'Healthcare, Telecom', campaigns: 10, confidence: 85, pattern: 'Espionage' },
+      { name: 'Conti', sophistication: 'Moderate', targets: 'Enterprise, Government', campaigns: 20, confidence: 90, pattern: 'Ransomware' },
+      { name: 'Fancy Bear', sophistication: 'Advanced', targets: 'Government, Military', campaigns: 14, confidence: 91, pattern: 'Phishing' },
+      { name: 'Sandworm', sophistication: 'Advanced', targets: 'Energy, Telecom', campaigns: 9, confidence: 87, pattern: 'Destructive' },
+    ];
+    return html`<section class="section-card">
+      <h3>Threat Actor Profiler</h3>
+      <div class="actor-grid">${actors.map(a => html`
+        <div class="actor-card">
+          <div class="actor-header">
+            <strong>${a.name}</strong>
+            <span class="sophistication ${a.sophistication.toLowerCase()}">${a.sophistication}</span>
+          </div>
+          <div class="actor-details">
+            <p>Targets: ${a.targets}</p>
+            <p>Campaigns: ${a.campaigns}</p>
+            <p>Confidence: ${a.confidence}%</p>
+            <p>Pattern: ${a.pattern}</p>
+          </div>
+        </div>
+      `)}</div>
+    </section>`;
+  }
+
+  private _renderControlTestingFramework(): TemplateResult {
+    const tests = [
+      { type: 'Access Control Review', status: 'passed', lastRun: '2026-04-15', findings: 0, coverage: 95 },
+      { type: 'Firewall Rule Audit', status: 'passed', lastRun: '2026-04-10', findings: 2, coverage: 88 },
+      { type: 'Encryption Verification', status: 'passed', lastRun: '2026-04-12', findings: 0, coverage: 100 },
+      { type: 'Penetration Test', status: 'failed', lastRun: '2026-04-08', findings: 5, coverage: 72 },
+      { type: 'Vulnerability Scan', status: 'warning', lastRun: '2026-04-14', findings: 12, coverage: 85 },
+      { type: 'Configuration Audit', status: 'passed', lastRun: '2026-04-11', findings: 1, coverage: 91 },
+      { type: 'Identity Review', status: 'passed', lastRun: '2026-04-09', findings: 3, coverage: 78 },
+      { type: 'Data Classification', status: 'warning', lastRun: '2026-04-13', findings: 8, coverage: 65 },
+      { type: 'Incident Response Drill', status: 'passed', lastRun: '2026-04-07', findings: 1, coverage: 90 },
+      { type: 'Compliance Audit', status: 'passed', lastRun: '2026-04-06', findings: 0, coverage: 96 },
+      { type: 'Log Review', status: 'passed', lastRun: '2026-04-14', findings: 2, coverage: 82 },
+      { type: 'Physical Security', status: 'passed', lastRun: '2026-04-05', findings: 0, coverage: 100 },
+    ];
+    const totalFindings = tests.reduce((s, t) => s + t.findings, 0);
+    const avgCoverage = Math.round(tests.reduce((s, t) => s + t.coverage, 0) / tests.length);
+    return html`<section class="section-card">
+      <h3>Control Testing Framework</h3>
+      <div class="test-summary">
+        <div class="summary-item"><span class="summary-value">${tests.length}</span><span class="summary-label">Test Types</span></div>
+        <div class="summary-item"><span class="summary-value">${totalFindings}</span><span class="summary-label">Findings</span></div>
+        <div class="summary-item"><span class="summary-value">${avgCoverage}%</span><span class="summary-label">Avg Coverage</span></div>
+      </div>
+      <div class="test-list">${tests.map(t => html`
+        <div class="test-row status-${t.status}">
+          <span class="test-type">${t.type}</span>
+          <span class="test-status">${t.status.toUpperCase()}</span>
+          <span class="test-findings">${t.findings} findings</span>
+          <span class="test-coverage">${t.coverage}%</span>
+          <span class="test-date">${t.lastRun}</span>
+        </div>
+      `)}</div>
+    </section>`;
+  }
+
+  private _renderVulnCorrelationEngine(): TemplateResult {
+    const correlations = [
+      { vuln: 'CVE-2024-1234', source: 'NVD', exploitAvailable: true, exploitKit: 'Metasploit', age: 45, priority: 'Critical' },
+      { vuln: 'CVE-2024-2345', source: 'GitHub Advisory', exploitAvailable: true, exploitKit: 'ExploitDB', age: 30, priority: 'High' },
+      { vuln: 'CVE-2024-3456', source: 'NVD', exploitAvailable: false, exploitKit: 'N/A', age: 90, priority: 'Medium' },
+      { vuln: 'CVE-2024-4567', source: 'Vendor', exploitAvailable: true, exploitKit: 'POC Available', age: 15, priority: 'Critical' },
+      { vuln: 'CVE-2024-5678', source: 'OSS Index', exploitAvailable: false, exploitKit: 'N/A', age: 120, priority: 'Low' },
+      { vuln: 'CVE-2024-6789', source: 'NVD', exploitAvailable: true, exploitKit: 'Dark Web', age: 7, priority: 'Critical' },
+    ];
+    const clusters = [
+      { name: 'Authentication Bypass', vulns: 8, risk: 'High', affected: 23 },
+      { name: 'XSS Family', vulns: 15, risk: 'Medium', affected: 45 },
+      { name: 'Injection Cluster', vulns: 6, risk: 'High', affected: 18 },
+      { name: 'Deserialization', vulns: 4, risk: 'Critical', affected: 12 },
+    ];
+    return html`<section class="section-card">
+      <h3>Vulnerability Correlation Engine</h3>
+      <div class="vuln-correlation-list">${correlations.map(c => html`
+        <div class="vuln-row priority-${c.priority.toLowerCase()}">
+          <span class="vuln-id">${c.vuln}</span>
+          <span class="vuln-source">${c.source}</span>
+          <span class="exploit-status">${c.exploitAvailable ? 'EXPLOITABLE' : 'No Exploit'}</span>
+          <span class="exploit-kit">${c.exploitKit}</span>
+          <span class="vuln-age">${c.age}d</span>
+          <span class="vuln-priority">${c.priority}</span>
+        </div>
+      `)}</div>
+      <h4>Vulnerability Clusters</h4>
+      <div class="cluster-list">${clusters.map(c => html`
+        <div class="cluster-row">
+          <span>${c.name}</span>
+          <span>${c.vulns} vulns</span>
+          <span class="cluster-risk">${c.risk}</span>
+          <span>${c.affected} assets</span>
+        </div>
+      `)}</div>
+    </section>`;
+  }
+
+  private _renderIRPlaybook(): TemplateResult {
+    const steps = [
+      { step: 1, name: 'Detection & Alerting', sla: '15 min', owner: 'SOC L1', status: 'ready' },
+      { step: 2, name: 'Initial Triage', sla: '30 min', owner: 'SOC L2', status: 'ready' },
+      { step: 3, name: 'Containment', sla: '2 hours', owner: 'IR Lead', status: 'ready' },
+      { step: 4, name: 'Investigation', sla: '24 hours', owner: 'Forensics', status: 'ready' },
+      { step: 5, name: 'Eradication', sla: '48 hours', owner: 'IR Lead', status: 'ready' },
+      { step: 6, name: 'Recovery', sla: '72 hours', owner: 'IT Ops', status: 'ready' },
+      { step: 7, name: 'Communication', sla: 'Ongoing', owner: 'CISO', status: 'ready' },
+      { step: 8, name: 'Post-Incident Review', sla: '5 days', owner: 'IR Lead', status: 'ready' },
+    ];
+    const playbooks = [
+      { name: 'Ransomware Response', severity: 'Critical', lastUsed: '2026-03-15', effectiveness: 92 },
+      { name: 'Data Breach Response', severity: 'Critical', lastUsed: '2026-02-28', effectiveness: 88 },
+      { name: 'Phishing Attack', severity: 'High', lastUsed: '2026-04-01', effectiveness: 95 },
+      { name: 'Insider Threat', severity: 'High', lastUsed: '2026-01-20', effectiveness: 82 },
+      { name: 'DDoS Mitigation', severity: 'Medium', lastUsed: '2026-03-05', effectiveness: 90 },
+      { name: 'Supply Chain Compromise', severity: 'Critical', lastUsed: '2026-04-10', effectiveness: 78 },
+    ];
+    return html`<section class="section-card">
+      <h3>Incident Response Playbook</h3>
+      <div class="ir-steps">${steps.map(s => html`
+        <div class="ir-step">
+          <div class="step-number">${s.step}</div>
+          <div class="step-info">
+            <span class="step-name">${s.name}</span>
+            <span class="step-sla">SLA: ${s.sla}</span>
+            <span class="step-owner">${s.owner}</span>
+          </div>
+        </div>
+      `)}</div>
+      <h4>Playbook Library</h4>
+      <div class="playbook-list">${playbooks.map(p => html`
+        <div class="playbook-row">
+          <span>${p.name}</span>
+          <span class="pb-severity">${p.severity}</span>
+          <span>Last: ${p.lastUsed}</span>
+          <span>Effectiveness: ${p.effectiveness}%</span>
+        </div>
+      `)}</div>
+    </section>`;
+  }
+
+
+  private _renderRiskQuantificationMatrix(): TemplateResult {
+    const riskFactors = [
+      { factor: 'Likelihood', weight: 0.3, current: 7.2, baseline: 6.8, trend: 'increasing' },
+      { factor: 'Impact Severity', weight: 0.25, current: 8.1, baseline: 7.5, trend: 'increasing' },
+      { factor: 'Velocity', weight: 0.15, current: 5.4, baseline: 5.0, trend: 'stable' },
+      { factor: 'Detection Difficulty', weight: 0.15, current: 6.8, baseline: 7.2, trend: 'improving' },
+      { factor: 'Blast Radius', weight: 0.15, current: 7.5, baseline: 6.9, trend: 'increasing' },
+    ];
+    const compositeRisk = riskFactors.reduce((s, f) => s + f.current * f.weight, 0).toFixed(1);
+    const baselineRisk = riskFactors.reduce((s, f) => s + f.baseline * f.weight, 0).toFixed(1);
+    const riskDelta = (compositeRisk - baselineRisk).toFixed(1);
+    const heatZones = [
+      { zone: 'Critical', range: '9.0 - 10.0', count: 3, color: '#ef4444' },
+      { zone: 'High', range: '7.0 - 8.9', count: 12, color: '#f59e0b' },
+      { zone: 'Medium', range: '5.0 - 6.9', count: 28, color: '#3b82f6' },
+      { zone: 'Low', range: '3.0 - 4.9', count: 45, color: '#10b981' },
+      { zone: 'Minimal', range: '0.0 - 2.9', count: 67, color: '#6b7280' },
+    ];
+    return html`<section class="section-card">
+      <h3>Risk Quantification Matrix</h3>
+      <div class="risk-quant-summary">
+        <div class="rq-metric"><span class="rq-value">${compositeRisk}</span><span class="rq-label">Composite Risk</span></div>
+        <div class="rq-metric"><span class="rq-value">${baselineRisk}</span><span class="rq-label">Baseline</span></div>
+        <div class="rq-metric"><span class="rq-value rq-delta">${riskDelta}</span><span class="rq-label">Delta</span></div>
+      </div>
+      <div class="risk-factors">${riskFactors.map(f => html`
+        <div class="rf-row">
+          <span class="rf-name">${f.factor}</span>
+          <span class="rf-weight">${(f.weight * 100).toFixed(0)}%</span>
+          <div class="rf-bar-current" style="width:${f.current * 10}%"></div>
+          <span class="rf-current">${f.current}</span>
+          <span class="rf-baseline">${f.baseline}</span>
+          <span class="rf-trend ${f.trend}">${f.trend}</span>
+        </div>
+      `)}</div>
+      <div class="heat-zones">${heatZones.map(z => html`
+        <div class="hz-row">
+          <span class="hz-zone" style="color:${z.color}">${z.zone}</span>
+          <span class="hz-range">${z.range}</span>
+          <span class="hz-count">${z.count} risks</span>
+        </div>
+      `)}</div>
+    </section>`;
   }
 
   render() {
