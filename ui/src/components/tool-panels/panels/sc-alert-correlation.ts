@@ -5913,5 +5913,303 @@ private _executionHistory: ExecutionRecord[] = [
     }
     return overlaps.sort((a, b) => b.overlap - a.overlap);
   }
+
+  // --- Regulatory Compliance Tracker ---
+  private _renderRegulatoryComplianceTracker(): TemplateResult {
+    const regulations = [
+      { name: 'GDPR', status: 'partial', score: 78, controls: 93, compliant: 72, partial: 15, nonCompliant: 6, lastAudit: '2026-01-15', nextAudit: '2026-07-15', owner: 'DPO Team' },
+      { name: 'HIPAA', status: 'compliant', score: 92, controls: 78, compliant: 72, partial: 4, nonCompliant: 2, lastAudit: '2026-02-20', nextAudit: '2026-08-20', owner: 'Compliance' },
+      { name: 'SOX', status: 'compliant', score: 88, controls: 64, compliant: 56, partial: 6, nonCompliant: 2, lastAudit: '2025-12-01', nextAudit: '2026-06-01', owner: 'Finance Sec' },
+      { name: 'PCI-DSS', status: 'partial', score: 71, controls: 85, compliant: 60, partial: 18, nonCompliant: 7, lastAudit: '2026-03-10', nextAudit: '2026-09-10', owner: 'Payment Sec' },
+      { name: 'ISO 27001', status: 'compliant', score: 85, controls: 114, compliant: 97, partial: 12, nonCompliant: 5, lastAudit: '2026-01-30', nextAudit: '2027-01-30', owner: 'ISMS Team' },
+      { name: 'NIST CSF', status: 'partial', score: 74, controls: 108, compliant: 80, partial: 16, nonCompliant: 12, lastAudit: '2026-02-28', nextAudit: '2026-08-28', owner: 'CISO Office' },
+    ];
+    const controlMapping = [
+      { domain: 'Access Control', gdpr: 'Art.25,32', hipaa: '164.312', sox: '404', pci: 'Req.7-8', iso: 'A.9', nist: 'PR.AC' },
+      { domain: 'Data Protection', gdpr: 'Art.5,25,32', hipaa: '164.312(e)', sox: '302,404', pci: 'Req.3-4', iso: 'A.8,A.18', nist: 'PR.DS' },
+      { domain: 'Incident Response', gdpr: 'Art.33,34', hipaa: '164.308(a)(6)', sox: 'N/A', pci: 'Req.12.10', iso: 'A.16', nist: 'RS.RP' },
+      { domain: 'Risk Assessment', gdpr: 'Art.35', hipaa: '164.308(a)(1)', sox: '404', pci: 'Req.12.2', iso: 'A.6', nist: 'ID.RA' },
+      { domain: 'Logging', gdpr: 'Art.30', hipaa: '164.312(b)', sox: '404', pci: 'Req.10', iso: 'A.12.4', nist: 'DE.CM' },
+      { domain: 'Encryption', gdpr: 'Art.32', hipaa: '164.312(a)(2)(iv)', sox: 'N/A', pci: 'Req.3-4', iso: 'A.10', nist: 'PR.DS' },
+      { domain: 'Third Party', gdpr: 'Art.28', hipaa: '164.308(b)', sox: '404', pci: 'Req.12.8', iso: 'A.15', nist: 'ID.SC' },
+      { domain: 'Business Continuity', gdpr: 'Art.32', hipaa: '164.308(a)(7)', sox: 'N/A', pci: 'Req.12.10.1', iso: 'A.17', nist: 'PR.IP' },
+    ];
+    const evidenceProgress = [
+      { regulation: 'GDPR', collected: 156, total: 186, pct: 84 },
+      { regulation: 'HIPAA', collected: 72, total: 78, pct: 92 },
+      { regulation: 'SOX', collected: 54, total: 64, pct: 84 },
+      { regulation: 'PCI-DSS', collected: 58, total: 85, pct: 68 },
+      { regulation: 'ISO 27001', collected: 98, total: 114, pct: 86 },
+      { regulation: 'NIST CSF', collected: 76, total: 108, pct: 70 },
+    ];
+    const auditReadiness = regulations.map(r => ({
+      name: r.name,
+      score: Math.min(100, Math.round((r.compliant / r.controls) * 100 + (evidenceProgress.find(e => e.regulation === r.name)?.pct || 0) * 0.3)),
+    }));
+    const regChanges = [
+      { regulation: 'GDPR', change: 'AI Act Alignment', impact: 'high', deadline: '2026-08-01', status: 'in-progress' },
+      { regulation: 'PCI-DSS', change: 'v5.0 Requirements', impact: 'high', deadline: '2026-03-31', status: 'overdue' },
+      { regulation: 'NIST CSF', change: 'CSF 2.0 Adoption', impact: 'medium', deadline: '2026-12-31', status: 'planning' },
+      { regulation: 'ISO 27001', change: '2025 Amendment', impact: 'low', deadline: '2027-01-30', status: 'review' },
+    ];
+    return html`
+      <div class="compliance-tracker">
+        <h4>Regulatory Compliance Dashboard</h4>
+        <div class="compliance-grid">
+          <div class="comp-card full-width">
+            <h5>Compliance Status by Regulation</h5>
+            <div class="reg-status-grid">
+              ${regulations.map(r => html`
+                <div class="reg-status-item status-${r.status}">
+                  <div class="reg-header">
+                    <span class="reg-name">${r.name}</span>
+                    <span class="reg-score">${r.score}%</span>
+                  </div>
+                  <div class="reg-progress-bar">
+                    <div class="reg-fill compliant" style="width:${(r.compliant/r.controls)*100}%"></div>
+                    <div class="reg-fill partial" style="width:${(r.partial/r.controls)*100}%"></div>
+                    <div class="reg-fill non-compliant" style="width:${(r.nonCompliant/r.controls)*100}%"></div>
+                  </div>
+                  <div class="reg-details">
+                    <span>${r.compliant} Compliant</span>
+                    <span>${r.partial} Partial</span>
+                    <span>${r.nonCompliant} Non-Compliant</span>
+                    <span>Owner: ${r.owner}</span>
+                  </div>
+                  <div class="reg-audit-dates">
+                    <span>Last: ${r.lastAudit}</span>
+                    <span>Next: ${r.nextAudit}</span>
+                  </div>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="comp-card">
+            <h5>Control Mapping Matrix</h5>
+            <div class="mapping-table-wrap">
+              <table class="mapping-table">
+                <thead><tr><th>Domain</th><th>GDPR</th><th>HIPAA</th><th>SOX</th><th>PCI</th><th>ISO</th><th>NIST</th></tr></thead>
+                <tbody>
+                  ${controlMapping.map(c => html`<tr>
+                    <td>${c.domain}</td><td>${c.gdpr}</td><td>${c.hipaa}</td>
+                    <td>${c.sox}</td><td>${c.pci}</td><td>${c.iso}</td><td>${c.nist}</td>
+                  </tr>`)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="comp-card">
+            <h5>Evidence Collection Progress</h5>
+            <div class="evidence-list">
+              ${evidenceProgress.map(e => html`
+                <div class="evidence-row">
+                  <span class="ev-reg">${e.regulation}</span>
+                  <div class="ev-bar-wrap">
+                    <div class="ev-bar" style="width:${e.pct}%"></div>
+                  </div>
+                  <span class="ev-count">${e.collected}/${e.total} (${e.pct}%)</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="comp-card">
+            <h5>Audit Readiness Score</h5>
+            <div class="readiness-gauges">
+              ${auditReadiness.map(a => html`
+                <div class="readiness-item">
+                  <span class="rdy-name">${a.name}</span>
+                  <div class="rdy-gauge">
+                    <div class="rdy-fill" style="width:${a.score}%; background:${a.score >= 85 ? '#22c55e' : a.score >= 70 ? '#f59e0b' : '#ef4444'}"></div>
+                    <span class="rdy-val">${a.score}%</span>
+                  </div>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="comp-card full-width">
+            <h5>Regulatory Change Impact Assessment</h5>
+            <div class="change-table">
+              ${regChanges.map(c => html`
+                <div class="change-row impact-${c.impact}">
+                  <span class="ch-reg">${c.regulation}</span>
+                  <span class="ch-desc">${c.change}</span>
+                  <span class="ch-impact impact-badge-${c.impact}">${c.impact}</span>
+                  <span class="ch-deadline">${c.deadline}</span>
+                  <span class="ch-status status-${c.status}">${c.status}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _getComplianceGaps(regulation: string): string[] {
+    const gaps: Record<string, string[]> = {
+      GDPR: ['Data Processing Records incomplete', 'DPIA for new ML models pending', 'Cross-border transfer mechanisms need update'],
+      HIPAA: ['Business Associate agreements renewal', 'PHI access logging gaps'],
+      SOX: ['IT General Controls testing schedule', 'Segregation of duties review'],
+      'PCI-DSS': ['Tokenization implementation', 'Network segmentation validation', 'Quarterly scan schedule gap'],
+      'ISO 27001': ['Asset register completeness', 'Supplier security assessment'],
+      'NIST CSF': ['Supply chain risk management', 'Recovery planning improvements'],
+    };
+    return gaps[regulation] || [];
+  }
+
+  private _calculateAuditReadinessScore(reg: string): number {
+    const scores: Record<string, number> = { GDPR: 78, HIPAA: 92, SOX: 88, 'PCI-DSS': 71, 'ISO 27001': 85, 'NIST CSF': 74 };
+    return scores[reg] || 50;
+  }
+
+
+  // --- Regulatory Compliance Tracker ---
+  private _renderRegulatoryComplianceTracker(): TemplateResult {
+    const regulations = [
+      { name: 'GDPR', status: 'partial', score: 78, controls: 93, compliant: 72, partial: 15, nonCompliant: 6, lastAudit: '2026-01-15', nextAudit: '2026-07-15', owner: 'DPO Team' },
+      { name: 'HIPAA', status: 'compliant', score: 92, controls: 78, compliant: 72, partial: 4, nonCompliant: 2, lastAudit: '2026-02-20', nextAudit: '2026-08-20', owner: 'Compliance' },
+      { name: 'SOX', status: 'compliant', score: 88, controls: 64, compliant: 56, partial: 6, nonCompliant: 2, lastAudit: '2025-12-01', nextAudit: '2026-06-01', owner: 'Finance Sec' },
+      { name: 'PCI-DSS', status: 'partial', score: 71, controls: 85, compliant: 60, partial: 18, nonCompliant: 7, lastAudit: '2026-03-10', nextAudit: '2026-09-10', owner: 'Payment Sec' },
+      { name: 'ISO 27001', status: 'compliant', score: 85, controls: 114, compliant: 97, partial: 12, nonCompliant: 5, lastAudit: '2026-01-30', nextAudit: '2027-01-30', owner: 'ISMS Team' },
+      { name: 'NIST CSF', status: 'partial', score: 74, controls: 108, compliant: 80, partial: 16, nonCompliant: 12, lastAudit: '2026-02-28', nextAudit: '2026-08-28', owner: 'CISO Office' },
+    ];
+    const controlMapping = [
+      { domain: 'Access Control', gdpr: 'Art.25,32', hipaa: '164.312', sox: '404', pci: 'Req.7-8', iso: 'A.9', nist: 'PR.AC' },
+      { domain: 'Data Protection', gdpr: 'Art.5,25,32', hipaa: '164.312(e)', sox: '302,404', pci: 'Req.3-4', iso: 'A.8,A.18', nist: 'PR.DS' },
+      { domain: 'Incident Response', gdpr: 'Art.33,34', hipaa: '164.308(a)(6)', sox: 'N/A', pci: 'Req.12.10', iso: 'A.16', nist: 'RS.RP' },
+      { domain: 'Risk Assessment', gdpr: 'Art.35', hipaa: '164.308(a)(1)', sox: '404', pci: 'Req.12.2', iso: 'A.6', nist: 'ID.RA' },
+      { domain: 'Logging', gdpr: 'Art.30', hipaa: '164.312(b)', sox: '404', pci: 'Req.10', iso: 'A.12.4', nist: 'DE.CM' },
+      { domain: 'Encryption', gdpr: 'Art.32', hipaa: '164.312(a)(2)(iv)', sox: 'N/A', pci: 'Req.3-4', iso: 'A.10', nist: 'PR.DS' },
+      { domain: 'Third Party', gdpr: 'Art.28', hipaa: '164.308(b)', sox: '404', pci: 'Req.12.8', iso: 'A.15', nist: 'ID.SC' },
+      { domain: 'Business Continuity', gdpr: 'Art.32', hipaa: '164.308(a)(7)', sox: 'N/A', pci: 'Req.12.10.1', iso: 'A.17', nist: 'PR.IP' },
+    ];
+    const evidenceProgress = [
+      { regulation: 'GDPR', collected: 156, total: 186, pct: 84 },
+      { regulation: 'HIPAA', collected: 72, total: 78, pct: 92 },
+      { regulation: 'SOX', collected: 54, total: 64, pct: 84 },
+      { regulation: 'PCI-DSS', collected: 58, total: 85, pct: 68 },
+      { regulation: 'ISO 27001', collected: 98, total: 114, pct: 86 },
+      { regulation: 'NIST CSF', collected: 76, total: 108, pct: 70 },
+    ];
+    const auditReadiness = regulations.map(r => ({
+      name: r.name,
+      score: Math.min(100, Math.round((r.compliant / r.controls) * 100 + (evidenceProgress.find(e => e.regulation === r.name)?.pct || 0) * 0.3)),
+    }));
+    const regChanges = [
+      { regulation: 'GDPR', change: 'AI Act Alignment', impact: 'high', deadline: '2026-08-01', status: 'in-progress' },
+      { regulation: 'PCI-DSS', change: 'v5.0 Requirements', impact: 'high', deadline: '2026-03-31', status: 'overdue' },
+      { regulation: 'NIST CSF', change: 'CSF 2.0 Adoption', impact: 'medium', deadline: '2026-12-31', status: 'planning' },
+      { regulation: 'ISO 27001', change: '2025 Amendment', impact: 'low', deadline: '2027-01-30', status: 'review' },
+    ];
+    return html`
+      <div class="compliance-tracker">
+        <h4>Regulatory Compliance Dashboard</h4>
+        <div class="compliance-grid">
+          <div class="comp-card full-width">
+            <h5>Compliance Status by Regulation</h5>
+            <div class="reg-status-grid">
+              ${regulations.map(r => html`
+                <div class="reg-status-item status-${r.status}">
+                  <div class="reg-header">
+                    <span class="reg-name">${r.name}</span>
+                    <span class="reg-score">${r.score}%</span>
+                  </div>
+                  <div class="reg-progress-bar">
+                    <div class="reg-fill compliant" style="width:${(r.compliant/r.controls)*100}%"></div>
+                    <div class="reg-fill partial" style="width:${(r.partial/r.controls)*100}%"></div>
+                    <div class="reg-fill non-compliant" style="width:${(r.nonCompliant/r.controls)*100}%"></div>
+                  </div>
+                  <div class="reg-details">
+                    <span>${r.compliant} Compliant</span>
+                    <span>${r.partial} Partial</span>
+                    <span>${r.nonCompliant} Non-Compliant</span>
+                    <span>Owner: ${r.owner}</span>
+                  </div>
+                  <div class="reg-audit-dates">
+                    <span>Last: ${r.lastAudit}</span>
+                    <span>Next: ${r.nextAudit}</span>
+                  </div>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="comp-card">
+            <h5>Control Mapping Matrix</h5>
+            <div class="mapping-table-wrap">
+              <table class="mapping-table">
+                <thead><tr><th>Domain</th><th>GDPR</th><th>HIPAA</th><th>SOX</th><th>PCI</th><th>ISO</th><th>NIST</th></tr></thead>
+                <tbody>
+                  ${controlMapping.map(c => html`<tr>
+                    <td>${c.domain}</td><td>${c.gdpr}</td><td>${c.hipaa}</td>
+                    <td>${c.sox}</td><td>${c.pci}</td><td>${c.iso}</td><td>${c.nist}</td>
+                  </tr>`)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="comp-card">
+            <h5>Evidence Collection Progress</h5>
+            <div class="evidence-list">
+              ${evidenceProgress.map(e => html`
+                <div class="evidence-row">
+                  <span class="ev-reg">${e.regulation}</span>
+                  <div class="ev-bar-wrap">
+                    <div class="ev-bar" style="width:${e.pct}%"></div>
+                  </div>
+                  <span class="ev-count">${e.collected}/${e.total} (${e.pct}%)</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="comp-card">
+            <h5>Audit Readiness Score</h5>
+            <div class="readiness-gauges">
+              ${auditReadiness.map(a => html`
+                <div class="readiness-item">
+                  <span class="rdy-name">${a.name}</span>
+                  <div class="rdy-gauge">
+                    <div class="rdy-fill" style="width:${a.score}%; background:${a.score >= 85 ? '#22c55e' : a.score >= 70 ? '#f59e0b' : '#ef4444'}"></div>
+                    <span class="rdy-val">${a.score}%</span>
+                  </div>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="comp-card full-width">
+            <h5>Regulatory Change Impact Assessment</h5>
+            <div class="change-table">
+              ${regChanges.map(c => html`
+                <div class="change-row impact-${c.impact}">
+                  <span class="ch-reg">${c.regulation}</span>
+                  <span class="ch-desc">${c.change}</span>
+                  <span class="ch-impact impact-badge-${c.impact}">${c.impact}</span>
+                  <span class="ch-deadline">${c.deadline}</span>
+                  <span class="ch-status status-${c.status}">${c.status}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _getComplianceGaps(regulation: string): string[] {
+    const gaps: Record<string, string[]> = {
+      GDPR: ['Data Processing Records incomplete', 'DPIA for new ML models pending', 'Cross-border transfer mechanisms need update'],
+      HIPAA: ['Business Associate agreements renewal', 'PHI access logging gaps'],
+      SOX: ['IT General Controls testing schedule', 'Segregation of duties review'],
+      'PCI-DSS': ['Tokenization implementation', 'Network segmentation validation', 'Quarterly scan schedule gap'],
+      'ISO 27001': ['Asset register completeness', 'Supplier security assessment'],
+      'NIST CSF': ['Supply chain risk management', 'Recovery planning improvements'],
+    };
+    return gaps[regulation] || [];
+  }
+
+  private _calculateAuditReadinessScore(reg: string): number {
+    const scores: Record<string, number> = { GDPR: 78, HIPAA: 92, SOX: 88, 'PCI-DSS': 71, 'ISO 27001': 85, 'NIST CSF': 74 };
+    return scores[reg] || 50;
+  }
+
 }
 declare global { interface HTMLElementTagNameMap { 'sc-alert-correlation': ScAlertCorrelation; } }

@@ -5937,5 +5937,299 @@ export class ScAttackSurfaceDashboard extends LitElement {
       </div>
     `;
   }
+
+  // --- Attack Surface Analysis ---
+  private _renderAttackSurfaceAnalysis(): TemplateResult {
+    const externalAssets = [
+      { type: 'Web Application', count: 47, exposed: 38, critical: 5, high: 12, medium: 18, low: 3 },
+      { type: 'API Endpoint', count: 156, exposed: 142, critical: 3, high: 22, medium: 67, low: 50 },
+      { type: 'DNS Records', count: 234, exposed: 234, critical: 1, high: 8, medium: 45, low: 180 },
+      { type: 'IP Addresses', count: 89, exposed: 89, critical: 2, high: 11, medium: 34, low: 42 },
+      { type: 'Cloud Storage', count: 23, exposed: 19, critical: 4, high: 6, medium: 7, low: 2 },
+      { type: 'Email Servers', count: 8, exposed: 8, critical: 1, high: 2, medium: 3, low: 2 },
+      { type: 'VPN Gateways', count: 5, exposed: 5, critical: 0, high: 1, medium: 2, low: 2 },
+      { type: 'IoT Devices', count: 34, exposed: 28, critical: 3, high: 8, medium: 12, low: 5 },
+    ];
+    const exposureFactors = [
+      { factor: 'Internet Exposure', weight: 15, score: 82, desc: 'Percentage of assets directly internet-facing' },
+      { factor: 'Open Ports', weight: 12, score: 65, desc: 'Number of open ports across external IPs' },
+      { factor: 'Unpatched Services', weight: 15, score: 71, desc: 'Services with known CVEs unpatched' },
+      { factor: 'Weak Encryption', weight: 10, score: 38, desc: 'Use of deprecated TLS/SSL versions' },
+      { factor: 'Default Credentials', weight: 12, score: 22, desc: 'Devices with factory/default credentials' },
+      { factor: 'Shadow IT', weight: 10, score: 45, desc: 'Unmanaged cloud services and SaaS apps' },
+      { factor: 'Data Exposure', weight: 13, score: 58, desc: 'Sensitive data accessible without auth' },
+      { factor: 'Third-Party Risk', weight: 8, score: 62, desc: 'Vendor-supplied components with vulnerabilities' },
+      { factor: 'Misconfigurations', weight: 5, score: 48, desc: 'Cloud and infrastructure misconfigurations' },
+    ];
+    const totalExposure = Math.round(exposureFactors.reduce((s, f) => s + f.score * f.weight, 0) / exposureFactors.reduce((s, f) => s + f.weight, 0));
+    const attackVectors = [
+      { vector: 'SQL Injection', assets: 12, severity: 'critical', trend: 'decreasing', count: 3 },
+      { vector: 'XSS', assets: 28, severity: 'high', trend: 'stable', count: 8 },
+      { vector: 'CSRF', assets: 15, severity: 'medium', trend: 'decreasing', count: 4 },
+      { vector: 'Broken Auth', assets: 8, severity: 'critical', trend: 'stable', count: 5 },
+      { vector: 'SSRF', assets: 6, severity: 'high', trend: 'increasing', count: 7 },
+      { vector: 'API Abuse', assets: 22, severity: 'high', trend: 'increasing', count: 14 },
+      { vector: 'Phishing Entry', assets: 3, severity: 'high', trend: 'stable', count: 9 },
+      { vector: 'RCE', assets: 4, severity: 'critical', trend: 'decreasing', count: 1 },
+    ];
+    const shadowIT = [
+      { app: 'Trello Boards', users: 45, risk: 'medium', data: 'Project plans' },
+      { app: 'Google Drive Shared', users: 128, risk: 'high', data: 'Documents, spreadsheets' },
+      { app: 'Slack External Channels', users: 89, risk: 'low', data: 'Communication' },
+      { app: 'Notion Workspaces', users: 34, risk: 'medium', data: 'Technical docs' },
+      { app: 'Dropbox Personal', users: 22, risk: 'high', data: 'Mixed content' },
+      { app: 'GitHub Private Repos', users: 67, risk: 'medium', data: 'Source code' },
+    ];
+    const reductionTracking = [
+      { month: 'Jan', surface: 582, reduction: 0, target: 580 },
+      { month: 'Feb', surface: 564, reduction: 18, target: 560 },
+      { month: 'Mar', surface: 548, reduction: 34, target: 540 },
+      { month: 'Apr', surface: 531, reduction: 51, target: 520 },
+      { month: 'May', surface: 519, reduction: 63, target: 500 },
+      { month: 'Jun', surface: 508, reduction: 74, target: 480 },
+    ];
+    return html`
+      <div class="attack-surface-analysis">
+        <h4>External Attack Surface Analysis</h4>
+        <div class="as-grid">
+          <div class="as-card">
+            <h5>Exposure Score: ${totalExposure}/100</h5>
+            <div class="exposure-factors">
+              ${exposureFactors.map(f => html`
+                <div class="factor-row">
+                  <span class="factor-name">${f.factor}</span>
+                  <div class="factor-bar-wrap">
+                    <div class="factor-bar" style="width:${f.score}%; background:${f.score > 70 ? '#ef4444' : f.score > 50 ? '#f59e0b' : '#22c55e'}"></div>
+                  </div>
+                  <span class="factor-score">${f.score}</span>
+                  <span class="factor-weight">(w:${f.weight})</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="as-card">
+            <h5>External Asset Inventory</h5>
+            <table class="asset-table">
+              <thead><tr><th>Type</th><th>Total</th><th>Exposed</th><th>Crit</th><th>High</th><th>Med</th><th>Low</th></tr></thead>
+              <tbody>
+                ${externalAssets.map(a => html`<tr>
+                  <td>${a.type}</td><td>${a.count}</td><td>${a.exposed}</td>
+                  <td class="sev-critical">${a.critical}</td><td class="sev-high">${a.high}</td>
+                  <td class="sev-medium">${a.medium}</td><td class="sev-low">${a.low}</td>
+                </tr>`)}
+              </tbody>
+            </table>
+          </div>
+          <div class="as-card">
+            <h5>Attack Vector Mapping</h5>
+            <div class="vector-list">
+              ${attackVectors.map(v => html`
+                <div class="vector-item sev-${v.severity}">
+                  <span class="vec-name">${v.vector}</span>
+                  <span class="vec-assets">${v.assets} assets</span>
+                  <span class="vec-trend trend-${v.trend}">${v.trend}</span>
+                  <span class="vec-count">${v.count} findings</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="as-card">
+            <h5>Shadow IT Detection Alerts</h5>
+            <div class="shadow-list">
+              ${shadowIT.map(s => html`
+                <div class="shadow-item risk-${s.risk}">
+                  <span class="sh-app">${s.app}</span>
+                  <span class="sh-users">${s.users} users</span>
+                  <span class="sh-risk risk-badge-${s.risk}">${s.risk}</span>
+                  <span class="sh-data">${s.data}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="as-card full-width">
+            <h5>Attack Surface Reduction Tracking</h5>
+            <div class="reduction-chart">
+              ${reductionTracking.map(r => html`
+                <div class="red-bar-group">
+                  <div class="red-bar actual" style="height:${r.surface * 0.15}px">
+                    <span>${r.surface}</span>
+                  </div>
+                  <div class="red-bar target" style="height:${r.target * 0.15}px">
+                    <span>${r.target}</span>
+                  </div>
+                  <span class="red-label">${r.month}</span>
+                </div>
+              `)}
+            </div>
+            <div class="reduction-summary">
+              <span>Total reduction: ${reductionTracking[reductionTracking.length - 1].reduction} assets</span>
+              <span>Avg monthly reduction: ${Math.round(74 / 6)} assets</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _calculateExposureScore(factors: { weight: number; score: number }[]): number {
+    const totalWeight = factors.reduce((s, f) => s + f.weight, 0);
+    const weightedSum = factors.reduce((s, f) => s + f.score * f.weight, 0);
+    return Math.round(weightedSum / totalWeight);
+  }
+
+  private _getShadowITAlerts(): { app: string; users: number; risk: string }[] {
+    return [
+      { app: 'Unregistered SaaS', users: 12, risk: 'high' },
+      { app: 'Personal Cloud Storage', users: 8, risk: 'medium' },
+    ];
+  }
+
+
+  // --- Attack Surface Analysis ---
+  private _renderAttackSurfaceAnalysis(): TemplateResult {
+    const externalAssets = [
+      { type: 'Web Application', count: 47, exposed: 38, critical: 5, high: 12, medium: 18, low: 3 },
+      { type: 'API Endpoint', count: 156, exposed: 142, critical: 3, high: 22, medium: 67, low: 50 },
+      { type: 'DNS Records', count: 234, exposed: 234, critical: 1, high: 8, medium: 45, low: 180 },
+      { type: 'IP Addresses', count: 89, exposed: 89, critical: 2, high: 11, medium: 34, low: 42 },
+      { type: 'Cloud Storage', count: 23, exposed: 19, critical: 4, high: 6, medium: 7, low: 2 },
+      { type: 'Email Servers', count: 8, exposed: 8, critical: 1, high: 2, medium: 3, low: 2 },
+      { type: 'VPN Gateways', count: 5, exposed: 5, critical: 0, high: 1, medium: 2, low: 2 },
+      { type: 'IoT Devices', count: 34, exposed: 28, critical: 3, high: 8, medium: 12, low: 5 },
+    ];
+    const exposureFactors = [
+      { factor: 'Internet Exposure', weight: 15, score: 82, desc: 'Percentage of assets directly internet-facing' },
+      { factor: 'Open Ports', weight: 12, score: 65, desc: 'Number of open ports across external IPs' },
+      { factor: 'Unpatched Services', weight: 15, score: 71, desc: 'Services with known CVEs unpatched' },
+      { factor: 'Weak Encryption', weight: 10, score: 38, desc: 'Use of deprecated TLS/SSL versions' },
+      { factor: 'Default Credentials', weight: 12, score: 22, desc: 'Devices with factory/default credentials' },
+      { factor: 'Shadow IT', weight: 10, score: 45, desc: 'Unmanaged cloud services and SaaS apps' },
+      { factor: 'Data Exposure', weight: 13, score: 58, desc: 'Sensitive data accessible without auth' },
+      { factor: 'Third-Party Risk', weight: 8, score: 62, desc: 'Vendor-supplied components with vulnerabilities' },
+      { factor: 'Misconfigurations', weight: 5, score: 48, desc: 'Cloud and infrastructure misconfigurations' },
+    ];
+    const totalExposure = Math.round(exposureFactors.reduce((s, f) => s + f.score * f.weight, 0) / exposureFactors.reduce((s, f) => s + f.weight, 0));
+    const attackVectors = [
+      { vector: 'SQL Injection', assets: 12, severity: 'critical', trend: 'decreasing', count: 3 },
+      { vector: 'XSS', assets: 28, severity: 'high', trend: 'stable', count: 8 },
+      { vector: 'CSRF', assets: 15, severity: 'medium', trend: 'decreasing', count: 4 },
+      { vector: 'Broken Auth', assets: 8, severity: 'critical', trend: 'stable', count: 5 },
+      { vector: 'SSRF', assets: 6, severity: 'high', trend: 'increasing', count: 7 },
+      { vector: 'API Abuse', assets: 22, severity: 'high', trend: 'increasing', count: 14 },
+      { vector: 'Phishing Entry', assets: 3, severity: 'high', trend: 'stable', count: 9 },
+      { vector: 'RCE', assets: 4, severity: 'critical', trend: 'decreasing', count: 1 },
+    ];
+    const shadowIT = [
+      { app: 'Trello Boards', users: 45, risk: 'medium', data: 'Project plans' },
+      { app: 'Google Drive Shared', users: 128, risk: 'high', data: 'Documents, spreadsheets' },
+      { app: 'Slack External Channels', users: 89, risk: 'low', data: 'Communication' },
+      { app: 'Notion Workspaces', users: 34, risk: 'medium', data: 'Technical docs' },
+      { app: 'Dropbox Personal', users: 22, risk: 'high', data: 'Mixed content' },
+      { app: 'GitHub Private Repos', users: 67, risk: 'medium', data: 'Source code' },
+    ];
+    const reductionTracking = [
+      { month: 'Jan', surface: 582, reduction: 0, target: 580 },
+      { month: 'Feb', surface: 564, reduction: 18, target: 560 },
+      { month: 'Mar', surface: 548, reduction: 34, target: 540 },
+      { month: 'Apr', surface: 531, reduction: 51, target: 520 },
+      { month: 'May', surface: 519, reduction: 63, target: 500 },
+      { month: 'Jun', surface: 508, reduction: 74, target: 480 },
+    ];
+    return html`
+      <div class="attack-surface-analysis">
+        <h4>External Attack Surface Analysis</h4>
+        <div class="as-grid">
+          <div class="as-card">
+            <h5>Exposure Score: ${totalExposure}/100</h5>
+            <div class="exposure-factors">
+              ${exposureFactors.map(f => html`
+                <div class="factor-row">
+                  <span class="factor-name">${f.factor}</span>
+                  <div class="factor-bar-wrap">
+                    <div class="factor-bar" style="width:${f.score}%; background:${f.score > 70 ? '#ef4444' : f.score > 50 ? '#f59e0b' : '#22c55e'}"></div>
+                  </div>
+                  <span class="factor-score">${f.score}</span>
+                  <span class="factor-weight">(w:${f.weight})</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="as-card">
+            <h5>External Asset Inventory</h5>
+            <table class="asset-table">
+              <thead><tr><th>Type</th><th>Total</th><th>Exposed</th><th>Crit</th><th>High</th><th>Med</th><th>Low</th></tr></thead>
+              <tbody>
+                ${externalAssets.map(a => html`<tr>
+                  <td>${a.type}</td><td>${a.count}</td><td>${a.exposed}</td>
+                  <td class="sev-critical">${a.critical}</td><td class="sev-high">${a.high}</td>
+                  <td class="sev-medium">${a.medium}</td><td class="sev-low">${a.low}</td>
+                </tr>`)}
+              </tbody>
+            </table>
+          </div>
+          <div class="as-card">
+            <h5>Attack Vector Mapping</h5>
+            <div class="vector-list">
+              ${attackVectors.map(v => html`
+                <div class="vector-item sev-${v.severity}">
+                  <span class="vec-name">${v.vector}</span>
+                  <span class="vec-assets">${v.assets} assets</span>
+                  <span class="vec-trend trend-${v.trend}">${v.trend}</span>
+                  <span class="vec-count">${v.count} findings</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="as-card">
+            <h5>Shadow IT Detection Alerts</h5>
+            <div class="shadow-list">
+              ${shadowIT.map(s => html`
+                <div class="shadow-item risk-${s.risk}">
+                  <span class="sh-app">${s.app}</span>
+                  <span class="sh-users">${s.users} users</span>
+                  <span class="sh-risk risk-badge-${s.risk}">${s.risk}</span>
+                  <span class="sh-data">${s.data}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="as-card full-width">
+            <h5>Attack Surface Reduction Tracking</h5>
+            <div class="reduction-chart">
+              ${reductionTracking.map(r => html`
+                <div class="red-bar-group">
+                  <div class="red-bar actual" style="height:${r.surface * 0.15}px">
+                    <span>${r.surface}</span>
+                  </div>
+                  <div class="red-bar target" style="height:${r.target * 0.15}px">
+                    <span>${r.target}</span>
+                  </div>
+                  <span class="red-label">${r.month}</span>
+                </div>
+              `)}
+            </div>
+            <div class="reduction-summary">
+              <span>Total reduction: ${reductionTracking[reductionTracking.length - 1].reduction} assets</span>
+              <span>Avg monthly reduction: ${Math.round(74 / 6)} assets</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _calculateExposureScore(factors: { weight: number; score: number }[]): number {
+    const totalWeight = factors.reduce((s, f) => s + f.weight, 0);
+    const weightedSum = factors.reduce((s, f) => s + f.score * f.weight, 0);
+    return Math.round(weightedSum / totalWeight);
+  }
+
+  private _getShadowITAlerts(): { app: string; users: number; risk: string }[] {
+    return [
+      { app: 'Unregistered SaaS', users: 12, risk: 'high' },
+      { app: 'Personal Cloud Storage', users: 8, risk: 'medium' },
+    ];
+  }
+
 }
 declare global { interface HTMLElementTagNameMap { 'sc-attack-surface-dashboard': ScAttackSurfaceDashboard; } }

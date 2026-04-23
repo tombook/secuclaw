@@ -5942,5 +5942,183 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // --- Security Metrics Deep Dive ---
+  private _renderSecurityMetricsDeepDive(): TemplateResult {
+    const mttrData = [
+      { month: 'Jan', detect: 12, triage: 8, contain: 24, eradicate: 18, recover: 6 },
+      { month: 'Feb', detect: 10, triage: 7, contain: 20, eradicate: 15, recover: 5 },
+      { month: 'Mar', detect: 8, triage: 6, contain: 18, eradicate: 14, recover: 4 },
+      { month: 'Apr', detect: 7, triage: 5, contain: 15, eradicate: 12, recover: 3 },
+      { month: 'May', detect: 6, triage: 5, contain: 14, eradicate: 11, recover: 3 },
+      { month: 'Jun', detect: 5, triage: 4, contain: 12, eradicate: 10, recover: 2 },
+    ];
+    const alertFunnel = [
+      { stage: 'Raw Events', count: 1250000, pct: 100 },
+      { stage: 'Deduplicated', count: 450000, pct: 36 },
+      { stage: 'Correlated', count: 85000, pct: 6.8 },
+      { stage: 'Alerts Generated', count: 32000, pct: 2.6 },
+      { stage: 'Investigated', count: 8200, pct: 0.66 },
+      { stage: 'Incidents Created', count: 1450, pct: 0.12 },
+    ];
+    const severityMetrics = [
+      { severity: 'Critical', mttd: 4.2, mttr: 2.1, mttc: 6.3, count: 12 },
+      { severity: 'High', mttd: 8.5, mttr: 4.3, mttc: 12.8, count: 45 },
+      { severity: 'Medium', mttd: 18.3, mttr: 8.7, mttc: 27.0, count: 128 },
+      { severity: 'Low', mttd: 36.1, mttr: 12.4, mttc: 48.5, count: 340 },
+      { severity: 'Informational', mttd: 48.0, mttr: 6.2, mttc: 54.2, count: 890 },
+    ];
+    const heatmapData = Array.from({ length: 7 }, (_, day) =>
+      Array.from({ length: 24 }, (_, hour) => ({
+        day, hour,
+        events: Math.floor(Math.random() * 50) + (hour >= 9 && hour <= 17 ? 20 : 5),
+      }))
+    );
+    const totalEvents = heatmapData.flat().reduce((s, c) => s + c.events, 0);
+    const peakHour = heatmapData.flat().sort((a, b) => b.events - a.events)[0];
+    const efficiencyScore = 78.4;
+    const capacityUtil = 67.2;
+    const projectedLoad = [67, 72, 78, 85, 92, 98, 95];
+    return html`
+      <div class="metrics-deep-dive">
+        <h4>Security Operations Metrics Deep Dive</h4>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <h5>MTTR/MTTD/MTTC Waterfall (Hours)</h5>
+            <div class="waterfall-chart">
+              ${mttrData.map(m => html`
+                <div class="waterfall-bar-group">
+                  <span class="bar-label">${m.month}</span>
+                  <div class="waterfall-stacked">
+                    <div class="wf-segment detect" style="width:${m.detect * 2}px" title="Detect: ${m.detect}h"></div>
+                    <div class="wf-segment triage" style="width:${m.triage * 2}px" title="Triage: ${m.triage}h"></div>
+                    <div class="wf-segment contain" style="width:${m.contain * 1.5}px" title="Contain: ${m.contain}h"></div>
+                    <div class="wf-segment eradicate" style="width:${m.eradicate * 1.5}px" title="Eradicate: ${m.eradicate}h"></div>
+                    <div class="wf-segment recover" style="width:${m.recover * 3}px" title="Recover: ${m.recover}h"></div>
+                  </div>
+                  <span class="bar-total">${m.detect + m.triage + m.contain + m.eradicate + m.recover}h</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="metric-card">
+            <h5>Alert-to-Incident Conversion Funnel</h5>
+            <div class="funnel-chart">
+              ${alertFunnel.map((f, i) => html`
+                <div class="funnel-row" style="width:${20 + (1 - i / alertFunnel.length) * 80}%">
+                  <span class="funnel-stage">${f.stage}</span>
+                  <span class="funnel-count">${f.count.toLocaleString()}</span>
+                  <span class="funnel-pct">${f.pct}%</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="metric-card">
+            <h5>Mean Time Metrics by Severity</h5>
+            <table class="metrics-table">
+              <thead><tr><th>Severity</th><th>MTTD (h)</th><th>MTTR (h)</th><th>MTTC (h)</th><th>Count</th></tr></thead>
+              <tbody>
+                ${severityMetrics.map(s => html`
+                  <tr class="sev-${s.severity.toLowerCase()}">
+                    <td>${s.severity}</td>
+                    <td>${s.mttd}</td>
+                    <td>${s.mttr}</td>
+                    <td>${s.mttc}</td>
+                    <td>${s.count}</td>
+                  </tr>
+                `)}
+              </tbody>
+            </table>
+          </div>
+          <div class="metric-card">
+            <h5>Analyst Productivity Heatmap (Events/Hour)</h5>
+            <div class="heatmap-container">
+              <div class="heatmap-legend">
+                <span>Low</span>
+                <div class="legend-gradient"></div>
+                <span>High</span>
+              </div>
+              <div class="heatmap-grid">
+                ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d, di) => html`
+                  <div class="heatmap-row">
+                    <span class="day-label">${d}</span>
+                    ${heatmapData[di].map(cell => html`
+                      <div class="heatmap-cell" style="background:rgba(59,130,246,${cell.events / 70})"
+                        title="${d} ${cell.hour}:00 - ${cell.events} events"></div>
+                    `)}
+                  </div>
+                `)}
+                <div class="hour-labels">
+                  ${Array.from({length:24}, (_, i) => html`<span>${i}h</span>`)}
+                </div>
+              </div>
+              <div class="heatmap-stats">
+                <span>Total events: ${totalEvents.toLocaleString()}</span>
+                <span>Peak: ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][peakHour.day]} ${peakHour.hour}:00 (${peakHour.events} events)</span>
+              </div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <h5>Security Operations Efficiency Score</h5>
+            <div class="efficiency-gauge">
+              <div class="gauge-arc" style="--score:${efficiencyScore}"></div>
+              <span class="gauge-value">${efficiencyScore}%</span>
+            </div>
+            <div class="efficiency-breakdown">
+              <div class="eff-row"><span>Alert Triage Rate</span><div class="eff-bar" style="width:82%"></div><span>82%</span></div>
+              <div class="eff-row"><span>False Positive Rate</span><div class="eff-bar warn" style="width:34%"></div><span>34%</span></div>
+              <div class="eff-row"><span>Mean Triage Time</span><div class="eff-bar" style="width:71%"></div><span>71%</span></div>
+              <div class="eff-row"><span>Automation Coverage</span><div class="eff-bar" style="width:65%"></div><span>65%</span></div>
+              <div class="eff-row"><span>Capacity Utilization</span><div class="eff-bar" style="width:${capacityUtil}%"></div><span>${capacityUtil}%</span></div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <h5>Capacity Planning Projection (6 Months)</h5>
+            <div class="capacity-chart">
+              ${projectedLoad.map((val, i) => html`
+                <div class="cap-bar-container">
+                  <div class="cap-bar" style="height:${val * 2}px">
+                    <span class="cap-val">${val}%</span>
+                  </div>
+                  <span class="cap-label">M+${i + 1}</span>
+                </div>
+              `)}
+              <div class="capacity-threshold" style="bottom:180px">
+                <span>85% Threshold</span>
+              </div>
+            </div>
+            <div class="capacity-note">
+              <span class="note-warn">Warning: Capacity expected to exceed 85% by M+5</span>
+              <span>Recommendation: Add 2 FTE analysts by Q3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _getSecurityMetricsTrend(period: string): number[] {
+    const trends: Record<string, number[]> = {
+      daily: Array.from({ length: 30 }, (_, i) => 60 + Math.sin(i * 0.3) * 15 + Math.random() * 10),
+      weekly: Array.from({ length: 12 }, (_, i) => 55 + Math.sin(i * 0.5) * 20 + Math.random() * 8),
+      monthly: Array.from({ length: 6 }, (_, i) => 50 + i * 5 + Math.random() * 10),
+    };
+    return trends[period] || trends.daily;
+  }
+
+  private _calculateEfficiencyComponents(): { alertTri: number; fpRate: number; mtt: number; autoCov: number; capUtil: number } {
+    return { alertTri: 82, fpRate: 34, mtt: 71, autoCov: 65, capUtil: 67 };
+  }
+
+  private _generateCapacityForecast(months: number): { month: string; projected: number; min: number; max: number }[] {
+    const base = 67;
+    return Array.from({ length: months }, (_, i) => ({
+      month: 'M+' + (i + 1),
+      projected: base + i * 5.2 + Math.random() * 3,
+      min: base + i * 4.5 - 5,
+      max: base + i * 6.0 + 5,
+    }));
+  }
+
 }
 declare global { interface HTMLElementTagNameMap { 'sc-sso-config': ScSsoConfig; } }

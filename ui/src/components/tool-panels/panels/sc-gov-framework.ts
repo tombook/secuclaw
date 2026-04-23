@@ -5925,5 +5925,323 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // --- Security Alert Analytics ---
+  private _renderAlertAnalytics(): TemplateResult {
+    const hourlyVolume = Array.from({ length: 24 }, (_, h) => ({
+      hour: h,
+      volume: h >= 8 && h <= 18 ? Math.floor(80 + Math.random() * 120) : Math.floor(10 + Math.random() * 30),
+    }));
+    const classification = [
+      { type: 'Malware Detection', count: 8420, pct: 26.3 },
+      { type: 'Network Intrusion', count: 6210, pct: 19.4 },
+      { type: 'Unauthorized Access', count: 5340, pct: 16.7 },
+      { type: 'Data Exfiltration', count: 4120, pct: 12.9 },
+      { type: 'Policy Violation', count: 3890, pct: 12.1 },
+      { type: 'Phishing', count: 2340, pct: 7.3 },
+      { type: 'DDoS Attempt', count: 1680, pct: 5.3 },
+    ];
+    const topSources = [
+      { source: 'IDS/IPS (Snort)', count: 12450, trend: 'up' },
+      { source: 'SIEM Correlation', count: 8320, trend: 'stable' },
+      { source: 'EDR Platform', count: 6780, trend: 'up' },
+      { source: 'WAF Rules', count: 4560, trend: 'down' },
+      { source: 'DLP Engine', count: 3210, trend: 'stable' },
+      { source: 'Email Gateway', count: 2890, trend: 'up' },
+      { source: 'Cloud CSPM', count: 2340, trend: 'up' },
+      { source: 'Threat Intel Feed', count: 1890, trend: 'down' },
+    ];
+    const responseTimes = [
+      { range: '< 5 min', count: 4200, pct: 35.2 },
+      { range: '5-15 min', count: 3100, pct: 26.0 },
+      { range: '15-30 min', count: 2400, pct: 20.1 },
+      { range: '30-60 min', count: 1300, pct: 10.9 },
+      { range: '1-4 hours', count: 650, pct: 5.4 },
+      { range: '> 4 hours', count: 280, pct: 2.4 },
+    ];
+    const agingAlerts = [
+      { age: '< 1 day', count: 890, color: '#22c55e' },
+      { age: '1-3 days', count: 456, color: '#22c55e' },
+      { age: '3-7 days', count: 234, color: '#f59e0b' },
+      { age: '7-14 days', count: 128, color: '#f59e0b' },
+      { age: '14-30 days', count: 67, color: '#ef4444' },
+      { age: '> 30 days', count: 23, color: '#ef4444' },
+    ];
+    const qualityTrend = [
+      { week: 'W1', score: 62, tp: 3120, fp: 1890 },
+      { week: 'W2', score: 65, tp: 3340, fp: 1780 },
+      { week: 'W3', score: 68, tp: 3560, fp: 1670 },
+      { week: 'W4', score: 72, tp: 3890, fp: 1510 },
+      { week: 'W5', score: 74, tp: 4020, fp: 1410 },
+      { week: 'W6', score: 78, tp: 4280, fp: 1200 },
+    ];
+    return html`
+      <div class="alert-analytics">
+        <h4>Security Alert Analytics</h4>
+        <div class="analytics-grid">
+          <div class="aa-card">
+            <h5>Alert Volume Trend (Hourly)</h5>
+            <div class="hourly-chart">
+              ${hourlyVolume.map(h => html`
+                <div class="hour-bar" style="height:${h.volume * 1.5}px" title="${h.hour}:00 - ${h.volume} alerts">
+                  <span class="hv-val">${h.volume}</span>
+                </div>
+              `)}
+            </div>
+            <div class="hour-labels">
+              ${Array.from({length:24}, (_, i) => html`<span>${i}h</span>`)}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Classification Distribution</h5>
+            <div class="classification-chart">
+              ${classification.map((c, i) => {
+                const colors = ['#ef4444','#f97316','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#06b6d4'];
+                return html`
+                  <div class="class-row">
+                    <span class="class-color" style="background:${colors[i]}"></span>
+                    <span class="class-type">${c.type}</span>
+                    <div class="class-bar-wrap">
+                      <div class="class-bar" style="width:${c.pct * 3}px; background:${colors[i]}"></div>
+                    </div>
+                    <span class="class-count">${c.count.toLocaleString()}</span>
+                    <span class="class-pct">${c.pct}%</span>
+                  </div>
+                `;
+              })}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Top Alert Sources</h5>
+            <div class="source-rank">
+              ${topSources.map((s, i) => html`
+                <div class="source-row">
+                  <span class="src-rank">#${i + 1}</span>
+                  <span class="src-name">${s.source}</span>
+                  <div class="src-bar-wrap">
+                    <div class="src-bar" style="width:${(s.count / topSources[0].count) * 100}%"></div>
+                  </div>
+                  <span class="src-count">${s.count.toLocaleString()}</span>
+                  <span class="src-trend trend-${s.trend}">${s.trend === 'up' ? 'up' : s.trend === 'down' ? 'down' : 'stable'}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Response Time Distribution</h5>
+            <div class="response-dist">
+              ${responseTimes.map(r => html`
+                <div class="resp-row">
+                  <span class="resp-range">${r.range}</span>
+                  <div class="resp-bar-wrap">
+                    <div class="resp-bar" style="width:${r.pct * 2.5}px"></div>
+                  </div>
+                  <span class="resp-count">${r.count.toLocaleString()}</span>
+                  <span class="resp-pct">${r.pct}%</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Aging Analysis (Unresolved)</h5>
+            <div class="aging-chart">
+              ${agingAlerts.map(a => html`
+                <div class="aging-row">
+                  <span class="age-label">${a.age}</span>
+                  <div class="age-bar" style="width:${a.count * 0.6}px; background:${a.color}"></div>
+                  <span class="age-count">${a.count}</span>
+                </div>
+              `)}
+            </div>
+            <div class="aging-total">Total unresolved: ${agingAlerts.reduce((s, a) => s + a.count, 0)}</div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Quality Score Trend</h5>
+            <div class="quality-chart">
+              ${qualityTrend.map(q => html`
+                <div class="quality-point">
+                  <div class="qp-bar" style="height:${q.score * 1.8}px">
+                    <span>${q.score}</span>
+                  </div>
+                  <span class="qp-label">${q.week}</span>
+                  <span class="qp-detail">TP:${q.tp} FP:${q.fp}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _getAlertVolumeByPeriod(period: string): { label: string; volume: number }[] {
+    if (period === 'hourly') return Array.from({ length: 24 }, (_, i) => ({ label: i + 'h', volume: Math.floor(20 + Math.random() * 100) }));
+    if (period === 'daily') return Array.from({ length: 30 }, (_, i) => ({ label: 'D' + (i + 1), volume: Math.floor(500 + Math.random() * 800) }));
+    return Array.from({ length: 12 }, (_, i) => ({ label: 'W' + (i + 1), volume: Math.floor(3500 + Math.random() * 5000) }));
+  }
+
+  private _calculateAlertQualityScore(tp: number, fp: number): number {
+    return Math.round((tp / (tp + fp)) * 100);
+  }
+
+
+  // --- Security Alert Analytics ---
+  private _renderAlertAnalytics(): TemplateResult {
+    const hourlyVolume = Array.from({ length: 24 }, (_, h) => ({
+      hour: h,
+      volume: h >= 8 && h <= 18 ? Math.floor(80 + Math.random() * 120) : Math.floor(10 + Math.random() * 30),
+    }));
+    const classification = [
+      { type: 'Malware Detection', count: 8420, pct: 26.3 },
+      { type: 'Network Intrusion', count: 6210, pct: 19.4 },
+      { type: 'Unauthorized Access', count: 5340, pct: 16.7 },
+      { type: 'Data Exfiltration', count: 4120, pct: 12.9 },
+      { type: 'Policy Violation', count: 3890, pct: 12.1 },
+      { type: 'Phishing', count: 2340, pct: 7.3 },
+      { type: 'DDoS Attempt', count: 1680, pct: 5.3 },
+    ];
+    const topSources = [
+      { source: 'IDS/IPS (Snort)', count: 12450, trend: 'up' },
+      { source: 'SIEM Correlation', count: 8320, trend: 'stable' },
+      { source: 'EDR Platform', count: 6780, trend: 'up' },
+      { source: 'WAF Rules', count: 4560, trend: 'down' },
+      { source: 'DLP Engine', count: 3210, trend: 'stable' },
+      { source: 'Email Gateway', count: 2890, trend: 'up' },
+      { source: 'Cloud CSPM', count: 2340, trend: 'up' },
+      { source: 'Threat Intel Feed', count: 1890, trend: 'down' },
+    ];
+    const responseTimes = [
+      { range: '< 5 min', count: 4200, pct: 35.2 },
+      { range: '5-15 min', count: 3100, pct: 26.0 },
+      { range: '15-30 min', count: 2400, pct: 20.1 },
+      { range: '30-60 min', count: 1300, pct: 10.9 },
+      { range: '1-4 hours', count: 650, pct: 5.4 },
+      { range: '> 4 hours', count: 280, pct: 2.4 },
+    ];
+    const agingAlerts = [
+      { age: '< 1 day', count: 890, color: '#22c55e' },
+      { age: '1-3 days', count: 456, color: '#22c55e' },
+      { age: '3-7 days', count: 234, color: '#f59e0b' },
+      { age: '7-14 days', count: 128, color: '#f59e0b' },
+      { age: '14-30 days', count: 67, color: '#ef4444' },
+      { age: '> 30 days', count: 23, color: '#ef4444' },
+    ];
+    const qualityTrend = [
+      { week: 'W1', score: 62, tp: 3120, fp: 1890 },
+      { week: 'W2', score: 65, tp: 3340, fp: 1780 },
+      { week: 'W3', score: 68, tp: 3560, fp: 1670 },
+      { week: 'W4', score: 72, tp: 3890, fp: 1510 },
+      { week: 'W5', score: 74, tp: 4020, fp: 1410 },
+      { week: 'W6', score: 78, tp: 4280, fp: 1200 },
+    ];
+    return html`
+      <div class="alert-analytics">
+        <h4>Security Alert Analytics</h4>
+        <div class="analytics-grid">
+          <div class="aa-card">
+            <h5>Alert Volume Trend (Hourly)</h5>
+            <div class="hourly-chart">
+              ${hourlyVolume.map(h => html`
+                <div class="hour-bar" style="height:${h.volume * 1.5}px" title="${h.hour}:00 - ${h.volume} alerts">
+                  <span class="hv-val">${h.volume}</span>
+                </div>
+              `)}
+            </div>
+            <div class="hour-labels">
+              ${Array.from({length:24}, (_, i) => html`<span>${i}h</span>`)}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Classification Distribution</h5>
+            <div class="classification-chart">
+              ${classification.map((c, i) => {
+                const colors = ['#ef4444','#f97316','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#06b6d4'];
+                return html`
+                  <div class="class-row">
+                    <span class="class-color" style="background:${colors[i]}"></span>
+                    <span class="class-type">${c.type}</span>
+                    <div class="class-bar-wrap">
+                      <div class="class-bar" style="width:${c.pct * 3}px; background:${colors[i]}"></div>
+                    </div>
+                    <span class="class-count">${c.count.toLocaleString()}</span>
+                    <span class="class-pct">${c.pct}%</span>
+                  </div>
+                `;
+              })}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Top Alert Sources</h5>
+            <div class="source-rank">
+              ${topSources.map((s, i) => html`
+                <div class="source-row">
+                  <span class="src-rank">#${i + 1}</span>
+                  <span class="src-name">${s.source}</span>
+                  <div class="src-bar-wrap">
+                    <div class="src-bar" style="width:${(s.count / topSources[0].count) * 100}%"></div>
+                  </div>
+                  <span class="src-count">${s.count.toLocaleString()}</span>
+                  <span class="src-trend trend-${s.trend}">${s.trend === 'up' ? 'up' : s.trend === 'down' ? 'down' : 'stable'}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Response Time Distribution</h5>
+            <div class="response-dist">
+              ${responseTimes.map(r => html`
+                <div class="resp-row">
+                  <span class="resp-range">${r.range}</span>
+                  <div class="resp-bar-wrap">
+                    <div class="resp-bar" style="width:${r.pct * 2.5}px"></div>
+                  </div>
+                  <span class="resp-count">${r.count.toLocaleString()}</span>
+                  <span class="resp-pct">${r.pct}%</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Aging Analysis (Unresolved)</h5>
+            <div class="aging-chart">
+              ${agingAlerts.map(a => html`
+                <div class="aging-row">
+                  <span class="age-label">${a.age}</span>
+                  <div class="age-bar" style="width:${a.count * 0.6}px; background:${a.color}"></div>
+                  <span class="age-count">${a.count}</span>
+                </div>
+              `)}
+            </div>
+            <div class="aging-total">Total unresolved: ${agingAlerts.reduce((s, a) => s + a.count, 0)}</div>
+          </div>
+          <div class="aa-card">
+            <h5>Alert Quality Score Trend</h5>
+            <div class="quality-chart">
+              ${qualityTrend.map(q => html`
+                <div class="quality-point">
+                  <div class="qp-bar" style="height:${q.score * 1.8}px">
+                    <span>${q.score}</span>
+                  </div>
+                  <span class="qp-label">${q.week}</span>
+                  <span class="qp-detail">TP:${q.tp} FP:${q.fp}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _getAlertVolumeByPeriod(period: string): { label: string; volume: number }[] {
+    if (period === 'hourly') return Array.from({ length: 24 }, (_, i) => ({ label: i + 'h', volume: Math.floor(20 + Math.random() * 100) }));
+    if (period === 'daily') return Array.from({ length: 30 }, (_, i) => ({ label: 'D' + (i + 1), volume: Math.floor(500 + Math.random() * 800) }));
+    return Array.from({ length: 12 }, (_, i) => ({ label: 'W' + (i + 1), volume: Math.floor(3500 + Math.random() * 5000) }));
+  }
+
+  private _calculateAlertQualityScore(tp: number, fp: number): number {
+    return Math.round((tp / (tp + fp)) * 100);
+  }
+
 }
 declare global { interface HTMLElementTagNameMap { 'sc-gov-framework': ScGovFramework; } }
