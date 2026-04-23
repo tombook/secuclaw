@@ -5630,6 +5630,291 @@ private _executionHistory: ExecutionRecord[] = [
     ];
   }
 
+  // ===== ROUND 39: Security Cloud Cost Optimizer =====
+  private _cloudCostProviders: Array<{name:string;provider:string;monthlySpend:number;reservedSpend:number;ondemandSpend:number;savingsPercent:number;tools:Array<{name:string;cost:number;usage:number;suggestion:string}>}> = [];
+  private _costOptimizationRecommendations: Array<{id:string;title:string;provider:string;monthlySaving:number;implementationEffort:string;risk:string;description:string}> = [];
+  private _costForecastData: Array<{month:string;projected:number;actual:number;variance:number;confidence:number}> = [];
+  private _unusedResources: Array<{resourceId:string;type:string;provider:string;monthlyCost:number;lastUsed:string;recommendation:string}> = [];
+
+  private _initCloudCostOptimizer(): void {
+    const providers = ['AWS','Azure','GCP','Alibaba Cloud','Oracle Cloud','IBM Cloud'];
+    const toolNames = ['WAF','DDoS Protection','Cloud Firewall','IDS/IPS','SIEM','Secrets Manager','KMS','IAM','GuardDuty','Security Hub','Cloud Trail','Config Rules','Inspector','Macie','Shield Advanced','Firewall Manager','VPC Flow Logs','DNS Security','Certificate Manager','Container Security'];
+    const suggestions = ['Right-size to smaller tier','Switch to reserved pricing','Consolidate overlapping tools','Remove unused instances','Migrate to shared service','Enable auto-scaling','Switch to spot/preemptible','Negotiate enterprise discount'];
+    const efforts = ['low','medium','high'];
+    const risks = ['none','low','medium'];
+    this._cloudCostProviders = providers.map(provider => {
+      const monthlySpend = Math.floor(Math.random() * 80000) + 20000;
+      const reservedPercent = Math.random() * 0.4 + 0.2;
+      const reservedSpend = Math.floor(monthlySpend * reservedPercent);
+      const ondemandSpend = monthlySpend - reservedSpend;
+      const toolCount = Math.floor(Math.random() * 6) + 4;
+      const tools = Array.from({length: toolCount}, () => {
+        const cost = Math.floor(Math.random() * 10000) + 500;
+        return {
+          name: toolNames[Math.floor(Math.random() * toolNames.length)],
+          cost,
+          usage: Math.floor(Math.random() * 100),
+          suggestion: suggestions[Math.floor(Math.random() * suggestions.length)]
+        };
+      });
+      return {name: provider + ' Security Stack', provider, monthlySpend, reservedSpend, ondemandSpend, savingsPercent: Math.round(reservedPercent * 100), tools};
+    });
+    this._costOptimizationRecommendations = Array.from({length: 25}, (_, i) => ({
+      id: 'COST-OPT-' + String(i + 1).padStart(3, '0'),
+      title: 'Optimize ' + providers[Math.floor(Math.random() * providers.length)] + ' ' + toolNames[Math.floor(Math.random() * toolNames.length)] + ' spend',
+      provider: providers[Math.floor(Math.random() * providers.length)],
+      monthlySaving: Math.floor(Math.random() * 5000) + 200,
+      implementationEffort: efforts[Math.floor(Math.random() * efforts.length)],
+      risk: risks[Math.floor(Math.random() * risks.length)],
+      description: 'Analysis of usage patterns indicates opportunity to reduce security tool spend by transitioning pricing model'
+    }));
+    this._costForecastData = Array.from({length: 12}, (_, i) => {
+      const month = '2026-' + String(i + 1).padStart(2, '0');
+      const projected = Math.floor(Math.random() * 50000) + 300000;
+      const variance = Math.round((Math.random() * 20 - 5) * 100) / 100;
+      return {month, projected, actual: Math.floor(projected * (1 + variance / 100)), variance, confidence: Math.round((85 + Math.random() * 15) * 10) / 10};
+    });
+    this._unusedResources = Array.from({length: 20}, (_, i) => ({
+      resourceId: 'RES-' + String(i + 1).padStart(4, '0'),
+      type: toolNames[Math.floor(Math.random() * toolNames.length)],
+      provider: providers[Math.floor(Math.random() * providers.length)],
+      monthlyCost: Math.floor(Math.random() * 3000) + 100,
+      lastUsed: '2026-0' + String(Math.floor(Math.random() * 3) + 1) + '-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'),
+      recommendation: 'Resource shows zero utilization in past 30 days. Consider decommissioning to save costs.'
+    }));
+  }
+
+  private _getTotalCloudSecuritySpend(): number {
+    return this._cloudCostProviders.reduce((s, p) => s + p.monthlySpend, 0);
+  }
+
+  private _getCostSavingsPotential(): number {
+    return this._costOptimizationRecommendations.reduce((s, r) => s + r.monthlySaving, 0);
+  }
+
+  private _getRightSizingSuggestions(): Array<{tool:string;provider:string;currentTier:string;recommendedTier:string;estimatedSaving:number;confidence:number}> {
+    const tiers = ['Small','Medium','Large','Enterprise'];
+    return Array.from({length: 15}, () => ({
+      tool: 'Security Tool Instance',
+      provider: this._cloudCostProviders[Math.floor(Math.random() * this._cloudCostProviders.length)].provider,
+      currentTier: tiers[Math.floor(Math.random() * 2) + 1],
+      recommendedTier: tiers[Math.floor(Math.random() * 2)],
+      estimatedSaving: Math.floor(Math.random() * 2000) + 100,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10
+    }));
+  }
+
+  private _getReservedVsOnDemandBreakdown(): {reservedPercent:number;ondemandPercent:number;savingsFromReserved:number;recommendations:Array<{provider:string;currentMix:string;suggestedMix:string;projectedSaving:number}>} {
+    const reservedPercent = Math.round(this._cloudCostProviders.reduce((s,p) => s + p.reservedSpend, 0) / this.getTotalCloudSecuritySpend() * 100);
+    return {
+      reservedPercent,
+      ondemandPercent: 100 - reservedPercent,
+      savingsFromReserved: Math.floor(Math.random() * 15000) + 5000,
+      recommendations: this._cloudCostProviders.map(p => ({
+        provider: p.provider,
+        currentMix: p.savingsPercent + '% reserved',
+        suggestedMix: Math.min(95, p.savingsPercent + 15) + '% reserved',
+        projectedSaving: Math.floor(p.ondemandSpend * 0.3)
+      }))
+    };
+  }
+
+  private _getCostTrendDirection(): string {
+    const last3 = this._costForecastData.slice(-3);
+    if (last3.length < 3) return 'stable';
+    const avg = last3.reduce((s, d) => s + d.variance, 0) / 3;
+    if (avg < -3) return 'decreasing';
+    if (avg > 3) return 'increasing';
+    return 'stable';
+  }
+
+  private _getUnusedResourceTotalCost(): number {
+    return this._unusedResources.reduce((s, r) => s + r.monthlyCost, 0);
+  }
+
+  private _getCostByCategory(): Array<{category:string;amount:number;percent:number;trend:string}> {
+    const categories = ['Network Security','Endpoint Protection','Cloud Native Security','Identity & Access','Data Protection','Compliance & Audit','Monitoring & Detection','Incident Response'];
+    const total = Math.floor(Math.random() * 100000) + 200000;
+    let remaining = total;
+    return categories.map((cat, i) => {
+      const isLast = i === categories.length - 1;
+      const amount = isLast ? remaining : Math.floor(remaining * (Math.random() * 0.3 + 0.05));
+      remaining -= amount;
+      return {category: cat, amount, percent: Math.round(amount / total * 1000) / 10, trend: Math.random() > 0.5 ? 'up' : 'down'};
+    });
+  }
+
+
+
+  private _automatedComplianceChecks: Array<{checkId:string;name:string;framework:string;frequency:string;lastRun:string;result:string;duration:number;exceptions:number;nextRun:string}> = [];
+  private _complianceTrainingStatus: Array<{department:string;totalEmployees:number;completedTraining:number;compliancePercent:number;overdueCount:number;avgScore:number;nextTrainingDue:string}> = [];
+  private _regulatoryChangeTracker: Array<{regulation:string;jurisdiction:string;changeDescription:string;effectiveDate:string;impactLevel:string;affectedControls:number;readinessPercent:number;owner:string;status:string}> = [];
+  private _thirdPartyComplianceAttestations: Array<{vendor:string;framework:string;attestationDate:string;expiryDate:string;status:string;score:number;findings:number;nextReview:string}> = [];
+
+  private _initRound39ExtraCompliance(): void {
+    const frameworks = ['ISO 27001','SOC 2','NIST 800-53','PCI DSS','HIPAA','GDPR','CIS Controls','NIST CSF','FedRAMP','SOX'];
+    const frequencies = ['Daily','Weekly','Monthly','Quarterly','Annually'];
+    const results = ['pass','fail','warning','error','skipped'];
+    const departments = ['Engineering','Finance','HR','Legal','Marketing','Operations','Sales','Executive'];
+    const jurisdictions = ['US','EU','UK','APAC','Global'];
+    this._automatedComplianceChecks = Array.from({length: 30}, (_, i) => ({
+      checkId: 'CHK-' + String(i + 1).padStart(4, '0'),
+      name: 'Automated compliance validation check ' + (i + 1),
+      framework: frameworks[Math.floor(Math.random() * frameworks.length)],
+      frequency: frequencies[Math.floor(Math.random() * frequencies.length)],
+      lastRun: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T06:00:00Z',
+      result: results[Math.floor(Math.random() * results.length)],
+      duration: Math.floor(Math.random() * 300) + 10,
+      exceptions: Math.floor(Math.random() * 5),
+      nextRun: '2026-04-' + String(Math.floor(Math.random() * 10) + 24).padStart(2, '0') + 'T06:00:00Z'
+    }));
+    this._complianceTrainingStatus = departments.map(dept => {
+      const total = Math.floor(Math.random() * 100) + 20;
+      const completed = Math.floor(total * (0.6 + Math.random() * 0.35));
+      return {
+        department: dept, totalEmployees: total, completedTraining: completed,
+        compliancePercent: Math.round(completed / total * 1000) / 10,
+        overdueCount: Math.floor((total - completed) * 0.3),
+        avgScore: Math.round((65 + Math.random() * 30) * 10) / 10,
+        nextTrainingDue: '2026-05-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')
+      };
+    });
+    this._regulatoryChangeTracker = Array.from({length: 15}, (_, i) => ({
+      regulation: frameworks[Math.floor(Math.random() * frameworks.length)],
+      jurisdiction: jurisdictions[Math.floor(Math.random() * jurisdictions.length)],
+      changeDescription: 'Regulatory update requiring security control modifications',
+      effectiveDate: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01',
+      impactLevel: ['critical','high','medium','low'][Math.floor(Math.random() * 4)],
+      affectedControls: Math.floor(Math.random() * 15) + 1,
+      readinessPercent: Math.floor(Math.random() * 80) + 10,
+      owner: departments[Math.floor(Math.random() * departments.length)] + ' Compliance Lead',
+      status: ['preparing','in-progress','ready','implemented'][Math.floor(Math.random() * 4)]
+    }));
+    this._thirdPartyComplianceAttestations = Array.from({length: 12}, (_, i) => ({
+      vendor: 'Third Party Vendor ' + (i + 1),
+      framework: frameworks[Math.floor(Math.random() * frameworks.length)],
+      attestationDate: '2025-' + String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + '-01',
+      expiryDate: '2026-' + String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + '-01',
+      status: ['valid','expiring','expired','pending'][Math.floor(Math.random() * 4)],
+      score: Math.round((60 + Math.random() * 35) * 10) / 10,
+      findings: Math.floor(Math.random() * 10),
+      nextReview: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01'
+    }));
+  }
+
+  private _getComplianceCheckPassRate(): number {
+    if (this._automatedComplianceChecks.length === 0) return 0;
+    const passed = this._automatedComplianceChecks.filter(c => c.result === 'pass').length;
+    return Math.round(passed / this._automatedComplianceChecks.length * 1000) / 10;
+  }
+
+  private _getTrainingComplianceScore(): number {
+    if (this._complianceTrainingStatus.length === 0) return 0;
+    return Math.round(this._complianceTrainingStatus.reduce((s, d) => s + d.compliancePercent, 0) / this._complianceTrainingStatus.length * 10) / 10;
+  }
+
+  private _getRegulatoryReadinessScore(): number {
+    if (this._regulatoryChangeTracker.length === 0) return 0;
+    return Math.round(this._regulatoryChangeTracker.reduce((s, r) => s + r.readinessPercent, 0) / this._regulatoryChangeTracker.length * 10) / 10;
+  }
+
+  private _getExpiringAttestations(): number {
+    return this._thirdPartyComplianceAttestations.filter(a => a.status === 'expiring' || a.status === 'expired').length;
+  }
+
+  private _getHighImpactChanges(): number {
+    return this._regulatoryChangeTracker.filter(r => r.impactLevel === 'critical' || r.impactLevel === 'high').length;
+  }
+
+
+  private _securityTrendForecaster: Array<{metric:string;currentValue:number;projected30d:number;projected90d:number;confidence:number;model:string;lastUpdated:string;dataPoints:number}> = [];
+  private _securityBenchmarkComparison: Array<{metric:string;ourValue:number;industryAvg:number;topQuartile:number;bottomQuartile:number;percentileRank:number;gapToTop:string}> = [];
+  private _securityAlertSuppressionRules: Array<{ruleId:string;name:string;source:string;condition:string;suppressedCount:number;lastTriggered:string;expiresAt:string;createdBy:string;active:boolean}> = [];
+  private _securityWorkflowAutomations: Array<{workflowId:string;name:string;trigger:string;actions:number;avgExecutionTime:number;successRate:number;lastExecuted:string;enabled:boolean}> = [];
+  private _securityDataQualityMetrics: Array<{dataSource:string;completeness:number;accuracy:number;timeliness:number;consistency:number;freshness:number;overallScore:number;issues:number}> = [];
+
+  private _initRound39ExtraTrends(): void {
+    const metrics = ['MTTD','MTTR','Vulnerability Backlog','Patch Compliance','Phishing Click Rate','MFA Adoption','Encryption Coverage','Access Review Compliance','Incident Frequency','False Positive Rate','Mean Time to Contain','Recovery Time'];
+    this._securityTrendForecaster = metrics.map(metric => ({
+      metric, currentValue: Math.floor(Math.random() * 100) + 10,
+      projected30d: Math.floor(Math.random() * 100) + 10,
+      projected90d: Math.floor(Math.random() * 100) + 10,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10,
+      model: ['ARIMA','Prophet','Linear Regression','Exponential Smoothing','LSTM Neural Network'][Math.floor(Math.random() * 5)],
+      lastUpdated: '2026-04-22T08:00:00Z',
+      dataPoints: Math.floor(Math.random() * 300) + 30
+    }));
+    this._securityBenchmarkComparison = metrics.slice(0, 8).map(metric => ({
+      metric, ourValue: Math.floor(Math.random() * 100),
+      industryAvg: Math.floor(Math.random() * 60) + 20,
+      topQuartile: Math.floor(Math.random() * 30) + 70,
+      bottomQuartile: Math.floor(Math.random() * 20) + 5,
+      percentileRank: Math.floor(Math.random() * 100),
+      gapToTop: Math.floor(Math.random() * 40) + 5 + ' points'
+    }));
+    this._securityAlertSuppressionRules = Array.from({length: 15}, (_, i) => ({
+      ruleId: 'SUP-' + String(i + 1).padStart(4, '0'),
+      name: 'Alert suppression rule ' + (i + 1),
+      source: ['SIEM','EDR','WAF','Cloud','IDS'][Math.floor(Math.random() * 5)],
+      condition: 'Pattern match on known benign alert signature',
+      suppressedCount: Math.floor(Math.random() * 5000) + 100,
+      lastTriggered: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      expiresAt: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01',
+      createdBy: 'SOC Analyst',
+      active: Math.random() > 0.2
+    }));
+    this._securityWorkflowAutomations = Array.from({length: 12}, (_, i) => ({
+      workflowId: 'WF-' + String(i + 1).padStart(4, '0'),
+      name: 'Automated security workflow ' + (i + 1),
+      trigger: 'Alert triggered matching predefined correlation pattern',
+      actions: Math.floor(Math.random() * 8) + 2,
+      avgExecutionTime: Math.floor(Math.random() * 120) + 5,
+      successRate: Math.round((80 + Math.random() * 20) * 10) / 10,
+      lastExecuted: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      enabled: Math.random() > 0.15
+    }));
+    this._securityDataQualityMetrics = ['Vulnerability Scanner','SIEM Logs','Asset Inventory','Threat Intelligence','Compliance Database','Identity Store','Network Flows','Cloud Audit Logs'].map(dataSource => ({
+      dataSource, completeness: Math.round((70 + Math.random() * 30) * 10) / 10,
+      accuracy: Math.round((75 + Math.random() * 25) * 10) / 10,
+      timeliness: Math.round((60 + Math.random() * 35) * 10) / 10,
+      consistency: Math.round((80 + Math.random() * 20) * 10) / 10,
+      freshness: Math.round((65 + Math.random() * 30) * 10) / 10,
+      overallScore: 0, issues: Math.floor(Math.random() * 15)
+    }));
+    this._securityDataQualityMetrics.forEach(m => { m.overallScore = Math.round((m.completeness + m.accuracy + m.timeliness + m.consistency + m.freshness) / 5 * 10) / 10; });
+  }
+
+  private _getForecastAccuracy(): number {
+    if (this._securityTrendForecaster.length === 0) return 0;
+    return Math.round(this._securityTrendForecaster.reduce((s, f) => s + f.confidence, 0) / this._securityTrendForecaster.length * 10) / 10;
+  }
+
+  private _getBenchmarkPercentile(): number {
+    if (this._securityBenchmarkComparison.length === 0) return 0;
+    return Math.round(this._securityBenchmarkComparison.reduce((s, b) => s + b.percentileRank, 0) / this._securityBenchmarkComparison.length);
+  }
+
+  private _getActiveSuppressions(): number {
+    return this._securityAlertSuppressionRules.filter(r => r.active).length;
+  }
+
+  private _getTotalSuppressedAlerts(): number {
+    return this._securityAlertSuppressionRules.reduce((s, r) => s + r.suppressedCount, 0);
+  }
+
+  private _getActiveWorkflows(): number {
+    return this._securityWorkflowAutomations.filter(w => w.enabled).length;
+  }
+
+  private _getAverageDataQuality(): number {
+    if (this._securityDataQualityMetrics.length === 0) return 0;
+    return Math.round(this._securityDataQualityMetrics.reduce((s, m) => s + m.overallScore, 0) / this._securityDataQualityMetrics.length * 10) / 10;
+  }
+
+  private _getLowQualityDataSources(): number {
+    return this._securityDataQualityMetrics.filter(m => m.overallScore < 80).length;
+  }
+
   render() {    if (this._smRules.length === 0) { this._initSmRules(); this._initSmCvss(); this._runSmAnomalyDetection(); this._generateSmPredictions(); this._initSmApprovals(); this._initSmActivity(); this._initSmNotifications(); }
 
     const items = this._getFiltered();

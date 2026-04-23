@@ -5609,6 +5609,308 @@ private _executionHistory: ExecutionRecord[] = [
     ];
   }
 
+  // ===== ROUND 39: Security Identity Analytics =====
+  private _identityAnalyticsUsers: Array<{id:string;name:string;department:string;riskScore:number;loginCount30d:number;anomalousLogins:number;lastLogin:string;privileged:boolean;accessPatterns: Array<{resource:string;frequency:number;deviation:number}>;lifecycleEvents: Array<{event:string;date:string;details:string}>}> = [];
+  private _identityRiskThreshold = 75;
+  private _identityAlertList: Array<{userId:string;alertType:string;severity:string;timestamp:string;details:string}> = [];
+
+  private _initIdentityAnalytics(): void {
+    const departments = ['Engineering','Finance','HR','Legal','Marketing','Operations','Sales','Security'];
+    const names = ['Alice Chen','Bob Martinez','Carol Smith','David Kim','Eva Johnson','Frank Lee','Grace Wang','Henry Taylor','Iris Patel','Jack Brown','Karen Davis','Leo Wilson','Mia Anderson','Noah Thomas','Olivia Garcia','Paul Jackson','Quinn White','Rachel Harris','Sam Clark','Tina Lewis'];
+    const lifecycleEvents = ['Account Created','Password Changed','Role Modified','MFA Enabled','MFA Disabled','Privilege Escalated','Privilege De-escalated','Account Locked','Account Unlocked','Department Transfer','Onboarding Complete','Offboarding Initiated','Session Timeout Policy Changed','API Key Rotated','Certificate Renewed'];
+    const alertTypes = ['Impossible Travel','Brute Force Attempt','Unusual Access Time','Geographic Anomaly','Device Fingerprint Mismatch','Privilege Escalation Anomaly','Failed MFA Bypass','Concurrent Session Alert','Data Access Spike','Resource Access Pattern Deviation'];
+    const severities = ['critical','high','medium','low','info'];
+    this._identityAnalyticsUsers = names.map((name, i) => ({
+      id: 'USR-' + String(i + 1).padStart(4, '0'),
+      name,
+      department: departments[i % departments.length],
+      riskScore: Math.floor(Math.random() * 100),
+      loginCount30d: Math.floor(Math.random() * 90) + 5,
+      anomalousLogins: Math.floor(Math.random() * 8),
+      lastLogin: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T' + String(Math.floor(Math.random() * 14) + 8).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00Z',
+      privileged: Math.random() > 0.7,
+      accessPatterns: Array.from({length: 5}, () => ({
+        resource: ['CRM Database','HR System','Finance Portal','Code Repository','Admin Console','Cloud Dashboard','Email Archive','Log Server'][Math.floor(Math.random() * 8)],
+        frequency: Math.floor(Math.random() * 100) + 1,
+        deviation: Math.round((Math.random() * 50 - 10) * 10) / 10
+      })),
+      lifecycleEvents: Array.from({length: Math.floor(Math.random() * 5) + 2}, () => ({
+        event: lifecycleEvents[Math.floor(Math.random() * lifecycleEvents.length)],
+        date: '2026-0' + String(Math.floor(Math.random() * 4) + 1) + '-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'),
+        details: 'Processed by automated identity governance pipeline'
+      }))
+    }));
+    this._identityAlertList = Array.from({length: 30}, (_, i) => ({
+      userId: 'USR-' + String(Math.floor(Math.random() * 20) + 1).padStart(4, '0'),
+      alertType: alertTypes[Math.floor(Math.random() * alertTypes.length)],
+      severity: severities[Math.floor(Math.random() * severities.length)],
+      timestamp: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T' + String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00Z',
+      details: 'Identity risk engine detected behavioral deviation from established baseline pattern'
+    }));
+  }
+
+  private _getIdentityRiskLevel(score: number): string {
+    if (score >= 90) return 'critical';
+    if (score >= 75) return 'high';
+    if (score >= 50) return 'medium';
+    if (score >= 25) return 'low';
+    return 'minimal';
+  }
+
+  private _getIdentityRiskColor(level: string): string {
+    const map: Record<string,string> = {critical:'#ff4444',high:'#ff8800',medium:'#ffcc00',low:'#44cc44',minimal:'#4488ff'};
+    return map[level] || '#888888';
+  }
+
+  private _getPrivilegedAccountSummary(): {total:number;active:number;atRisk:number;dormant:number} {
+    const priv = this._identityAnalyticsUsers.filter(u => u.privileged);
+    return {
+      total: priv.length,
+      active: priv.filter(u => u.loginCount30d > 10).length,
+      atRisk: priv.filter(u => u.riskScore >= 75).length,
+      dormant: priv.filter(u => u.loginCount30d <= 2).length
+    };
+  }
+
+  private _getLoginPatternStats(): {avgDailyLogins:number;peakHour:string;offHoursLogins:number;weekendLogins:number;geoAnomalies:number} {
+    const users = this._identityAnalyticsUsers;
+    const totalLogins = users.reduce((s, u) => s + u.loginCount30d, 0);
+    return {
+      avgDailyLogins: Math.round(totalLogins / 30),
+      peakHour: '09:00-10:00',
+      offHoursLogins: Math.floor(Math.random() * 50) + 10,
+      weekendLogins: Math.floor(Math.random() * 30) + 5,
+      geoAnomalies: users.reduce((s, u) => s + u.anomalousLogins, 0)
+    };
+  }
+
+  private _getAccessDeviationReport(): Array<{resource:string;usersAffected:number;avgDeviation:number;maxDeviation:number;trend:string}> {
+    const resourceMap: Record<string,Array<number>> = {};
+    this._identityAnalyticsUsers.forEach(u => {
+      u.accessPatterns.forEach(p => {
+        if (!resourceMap[p.resource]) resourceMap[p.resource] = [];
+        resourceMap[p.resource].push(Math.abs(p.deviation));
+      });
+    });
+    return Object.entries(resourceMap).map(([resource, deviations]) => ({
+      resource,
+      usersAffected: deviations.length,
+      avgDeviation: Math.round(deviations.reduce((a,b) => a+b, 0) / deviations.length * 10) / 10,
+      maxDeviation: Math.round(Math.max(...deviations) * 10) / 10,
+      trend: Math.random() > 0.5 ? 'increasing' : 'stable'
+    }));
+  }
+
+  private _getRiskyLoginHistory(userId: string): Array<{timestamp:string;sourceIp:string;location:string;device:string;result:string;riskFactors:string[]}> {
+    const locations = ['New York, US','London, UK','Tokyo, JP','Singapore, SG','Sydney, AU','Berlin, DE','Toronto, CA','Mumbai, IN'];
+    const devices = ['Windows Desktop','MacBook Pro','iPhone 15','Android Tablet','Linux Workstation','Chromebook','iPad Air'];
+    const results = ['success','failed','blocked','mfa_challenge'];
+    const factors = ['New device','New location','Unusual time','VPN not detected','Known bad IP','Privilege escalation','Multiple failed attempts','Rapid succession'];
+    return Array.from({length: 10}, () => ({
+      timestamp: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T' + String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + ':00Z',
+      sourceIp: '10.' + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255),
+      location: locations[Math.floor(Math.random() * locations.length)],
+      device: devices[Math.floor(Math.random() * devices.length)],
+      result: results[Math.floor(Math.random() * results.length)],
+      riskFactors: Array.from({length: Math.floor(Math.random() * 3) + 1}, () => factors[Math.floor(Math.random() * factors.length)])
+    }));
+  }
+
+  private _getIdentityLifecycleTimeline(userId: string): Array<{date:string;event:string;actor:string;details:string;riskImpact:string}> {
+    const actors = ['System','Admin','HR System','Security Team','IT Support','Self-Service','SSO Provider'];
+    const impacts = ['none','low','medium','high'];
+    return Array.from({length: 8}, () => ({
+      date: '2026-0' + String(Math.floor(Math.random() * 4) + 1) + '-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'),
+      event: 'Identity lifecycle event processed by governance engine',
+      actor: actors[Math.floor(Math.random() * actors.length)],
+      details: 'Automated compliance check passed with no exceptions detected',
+      riskImpact: impacts[Math.floor(Math.random() * impacts.length)]
+    }));
+  }
+
+
+
+  private _securityBaselineDriftAnalysis: Array<{area:string;baselineValue:number;currentValue:number;driftPercent:number;trend:string;lastAssessed:string;confidence:number;recommendation:string}> = [];
+  private _threatLandscapeShifts: Array<{category:string;currentLevel:string;previousLevel:string;changeDirection:string;keyIndicators:Array<{indicator:string;value:number;trend:string}>;forecast:string}> = [];
+  private _securityPostureAnomalies: Array<{id:string;type:string;severity:string;detectedAt:string;description:string;affectedAssets:number;status:string;rootCause:string;mitigationSteps:Array<string>;resolvedAt:string}> = [];
+  private _crossDomainCorrelationMatrix: Record<string,Record<string,number>> = {};
+  private _securityMaturityRadar: Array<{dimension:string;currentScore:number;targetScore:number;gap:number;initiatives:Array<{name:string;status:string;progress:number;impact:string}> }> = [];
+
+  private _initRound39ExtraAnalytics(): void {
+    const areas = ['Network Security','Endpoint Protection','Identity & Access','Data Protection','Cloud Security','Application Security','Physical Security','Governance & Compliance','Incident Response','Threat Intelligence','Vulnerability Management','Security Awareness'];
+    const levels = ['critical','high','medium','low','minimal'];
+    const statuses = ['active','investigating','mitigated','resolved','accepted'];
+    this._securityBaselineDriftAnalysis = areas.map(area => {
+      const baseline = Math.floor(Math.random() * 40) + 60;
+      const current = Math.floor(baseline * (0.85 + Math.random() * 0.3));
+      return {
+        area, baselineValue: baseline, currentValue: current,
+        driftPercent: Math.round((current - baseline) / baseline * 1000) / 10,
+        trend: current > baseline ? 'degrading' : 'improving',
+        lastAssessed: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+        confidence: Math.round((70 + Math.random() * 25) * 10) / 10,
+        recommendation: current < baseline ? 'Immediate review and remediation recommended' : 'Continue current security controls'
+      };
+    });
+    this._threatLandscapeShifts = ['Ransomware','Supply Chain','Nation State','Insider Threat','DDoS','Zero-Day Exploits','Credential Theft','Cloud Misconfiguration','IoT Vulnerabilities','AI-Powered Attacks'].map(category => ({
+      category,
+      currentLevel: levels[Math.floor(Math.random() * 3)],
+      previousLevel: levels[Math.floor(Math.random() * 3)],
+      changeDirection: Math.random() > 0.5 ? 'increasing' : 'decreasing',
+      keyIndicators: Array.from({length: 3}, () => ({
+        indicator: 'Threat activity metric tracked by intelligence platform',
+        value: Math.floor(Math.random() * 100),
+        trend: Math.random() > 0.5 ? 'up' : 'down'
+      })),
+      forecast: 'Threat level expected to ' + (Math.random() > 0.5 ? 'increase' : 'remain stable') + ' over next 30 days'
+    }));
+    this._securityPostureAnomalies = Array.from({length: 20}, (_, i) => ({
+      id: 'ANOMALY-' + String(i + 1).padStart(4, '0'),
+      type: ['Configuration Drift','Access Anomaly','Behavioral Deviation','Performance Anomaly','Compliance Deviation'][Math.floor(Math.random() * 5)],
+      severity: levels[Math.floor(Math.random() * 4)],
+      detectedAt: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T' + String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':00Z',
+      description: 'Anomalous security posture change detected by continuous monitoring engine',
+      affectedAssets: Math.floor(Math.random() * 20) + 1,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      rootCause: 'Investigation in progress by security operations team',
+      mitigationSteps: ['Isolate affected assets','Review recent changes','Update baseline configuration','Monitor for recurrence'],
+      resolvedAt: Math.random() > 0.5 ? '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') : ''
+    }));
+    const domains = ['Network','Endpoint','Identity','Data','Cloud','App'];
+    domains.forEach(d1 => {
+      this._crossDomainCorrelationMatrix[d1] = {};
+      domains.forEach(d2 => {
+        this._crossDomainCorrelationMatrix[d1][d2] = d1 === d2 ? 1.0 : Math.round(Math.random() * 80) / 100;
+      });
+    });
+    this._securityMaturityRadar = areas.slice(0, 8).map(dimension => ({
+      dimension,
+      currentScore: Math.floor(Math.random() * 40) + 30,
+      targetScore: Math.floor(Math.random() * 20) + 75,
+      gap: 0,
+      initiatives: Array.from({length: 3}, () => ({
+        name: 'Security improvement initiative',
+        status: ['planned','in-progress','completed'][Math.floor(Math.random() * 3)],
+        progress: Math.floor(Math.random() * 100),
+        impact: 'Medium to high impact on security posture'
+      }))
+    }));
+    this._securityMaturityRadar.forEach(m => { m.gap = m.targetScore - m.currentScore; });
+  }
+
+  private _getOverallDriftScore(): number {
+    if (this._securityBaselineDriftAnalysis.length === 0) return 0;
+    return Math.round(this._securityBaselineDriftAnalysis.reduce((s, d) => s + Math.abs(d.driftPercent), 0) / this._securityBaselineDriftAnalysis.length * 10) / 10;
+  }
+
+  private _getActiveAnomalyCount(): number {
+    return this._securityPostureAnomalies.filter(a => a.status === 'active' || a.status === 'investigating').length;
+  }
+
+  private _getCriticalThreatShifts(): number {
+    return this._threatLandscapeShifts.filter(t => t.changeDirection === 'increasing' && (t.currentLevel === 'critical' || t.currentLevel === 'high')).length;
+  }
+
+  private _getMaturityGapSummary(): {avgGap:number;dimensionsBelowTarget:number;improvementPotential:number;topDimension:string} {
+    const gaps = this._securityMaturityRadar.map(m => m.gap);
+    const avgGap = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length * 10) / 10;
+    return {
+      avgGap,
+      dimensionsBelowTarget: gaps.filter(g => g > 0).length,
+      improvementPotential: Math.round(avgGap * 1.5),
+      topDimension: this._securityMaturityRadar.reduce((a, b) => a.gap > b.gap ? a : b).dimension
+    };
+  }
+
+
+  private _securityTrendForecaster: Array<{metric:string;currentValue:number;projected30d:number;projected90d:number;confidence:number;model:string;lastUpdated:string;dataPoints:number}> = [];
+  private _securityBenchmarkComparison: Array<{metric:string;ourValue:number;industryAvg:number;topQuartile:number;bottomQuartile:number;percentileRank:number;gapToTop:string}> = [];
+  private _securityAlertSuppressionRules: Array<{ruleId:string;name:string;source:string;condition:string;suppressedCount:number;lastTriggered:string;expiresAt:string;createdBy:string;active:boolean}> = [];
+  private _securityWorkflowAutomations: Array<{workflowId:string;name:string;trigger:string;actions:number;avgExecutionTime:number;successRate:number;lastExecuted:string;enabled:boolean}> = [];
+  private _securityDataQualityMetrics: Array<{dataSource:string;completeness:number;accuracy:number;timeliness:number;consistency:number;freshness:number;overallScore:number;issues:number}> = [];
+
+  private _initRound39ExtraTrends(): void {
+    const metrics = ['MTTD','MTTR','Vulnerability Backlog','Patch Compliance','Phishing Click Rate','MFA Adoption','Encryption Coverage','Access Review Compliance','Incident Frequency','False Positive Rate','Mean Time to Contain','Recovery Time'];
+    this._securityTrendForecaster = metrics.map(metric => ({
+      metric, currentValue: Math.floor(Math.random() * 100) + 10,
+      projected30d: Math.floor(Math.random() * 100) + 10,
+      projected90d: Math.floor(Math.random() * 100) + 10,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10,
+      model: ['ARIMA','Prophet','Linear Regression','Exponential Smoothing','LSTM Neural Network'][Math.floor(Math.random() * 5)],
+      lastUpdated: '2026-04-22T08:00:00Z',
+      dataPoints: Math.floor(Math.random() * 300) + 30
+    }));
+    this._securityBenchmarkComparison = metrics.slice(0, 8).map(metric => ({
+      metric, ourValue: Math.floor(Math.random() * 100),
+      industryAvg: Math.floor(Math.random() * 60) + 20,
+      topQuartile: Math.floor(Math.random() * 30) + 70,
+      bottomQuartile: Math.floor(Math.random() * 20) + 5,
+      percentileRank: Math.floor(Math.random() * 100),
+      gapToTop: Math.floor(Math.random() * 40) + 5 + ' points'
+    }));
+    this._securityAlertSuppressionRules = Array.from({length: 15}, (_, i) => ({
+      ruleId: 'SUP-' + String(i + 1).padStart(4, '0'),
+      name: 'Alert suppression rule ' + (i + 1),
+      source: ['SIEM','EDR','WAF','Cloud','IDS'][Math.floor(Math.random() * 5)],
+      condition: 'Pattern match on known benign alert signature',
+      suppressedCount: Math.floor(Math.random() * 5000) + 100,
+      lastTriggered: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      expiresAt: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01',
+      createdBy: 'SOC Analyst',
+      active: Math.random() > 0.2
+    }));
+    this._securityWorkflowAutomations = Array.from({length: 12}, (_, i) => ({
+      workflowId: 'WF-' + String(i + 1).padStart(4, '0'),
+      name: 'Automated security workflow ' + (i + 1),
+      trigger: 'Alert triggered matching predefined correlation pattern',
+      actions: Math.floor(Math.random() * 8) + 2,
+      avgExecutionTime: Math.floor(Math.random() * 120) + 5,
+      successRate: Math.round((80 + Math.random() * 20) * 10) / 10,
+      lastExecuted: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      enabled: Math.random() > 0.15
+    }));
+    this._securityDataQualityMetrics = ['Vulnerability Scanner','SIEM Logs','Asset Inventory','Threat Intelligence','Compliance Database','Identity Store','Network Flows','Cloud Audit Logs'].map(dataSource => ({
+      dataSource, completeness: Math.round((70 + Math.random() * 30) * 10) / 10,
+      accuracy: Math.round((75 + Math.random() * 25) * 10) / 10,
+      timeliness: Math.round((60 + Math.random() * 35) * 10) / 10,
+      consistency: Math.round((80 + Math.random() * 20) * 10) / 10,
+      freshness: Math.round((65 + Math.random() * 30) * 10) / 10,
+      overallScore: 0, issues: Math.floor(Math.random() * 15)
+    }));
+    this._securityDataQualityMetrics.forEach(m => { m.overallScore = Math.round((m.completeness + m.accuracy + m.timeliness + m.consistency + m.freshness) / 5 * 10) / 10; });
+  }
+
+  private _getForecastAccuracy(): number {
+    if (this._securityTrendForecaster.length === 0) return 0;
+    return Math.round(this._securityTrendForecaster.reduce((s, f) => s + f.confidence, 0) / this._securityTrendForecaster.length * 10) / 10;
+  }
+
+  private _getBenchmarkPercentile(): number {
+    if (this._securityBenchmarkComparison.length === 0) return 0;
+    return Math.round(this._securityBenchmarkComparison.reduce((s, b) => s + b.percentileRank, 0) / this._securityBenchmarkComparison.length);
+  }
+
+  private _getActiveSuppressions(): number {
+    return this._securityAlertSuppressionRules.filter(r => r.active).length;
+  }
+
+  private _getTotalSuppressedAlerts(): number {
+    return this._securityAlertSuppressionRules.reduce((s, r) => s + r.suppressedCount, 0);
+  }
+
+  private _getActiveWorkflows(): number {
+    return this._securityWorkflowAutomations.filter(w => w.enabled).length;
+  }
+
+  private _getAverageDataQuality(): number {
+    if (this._securityDataQualityMetrics.length === 0) return 0;
+    return Math.round(this._securityDataQualityMetrics.reduce((s, m) => s + m.overallScore, 0) / this._securityDataQualityMetrics.length * 10) / 10;
+  }
+
+  private _getLowQualityDataSources(): number {
+    return this._securityDataQualityMetrics.filter(m => m.overallScore < 80).length;
+  }
+
   render() {    if (this._wsRules.length === 0) { this._initWsRules(); this._initWsCvss(); this._runWsAnomalyDetection(); this._generateWsPredictions(); this._initWsApprovals(); this._initWsActivity(); this._initWsNotifications(); }
 
     const items = this._getFiltered();

@@ -5578,6 +5578,297 @@ private _executionHistory: ExecutionRecord[] = [
     ];
   }
 
+  // ===== ROUND 39: Security Compliance Evidence Collector =====
+  private _complianceFrameworks: Array<{id:string;name:string;version:string;controlsTotal:number;controlsMapped:number;evidenceCollected:number;evidenceQuality:number;lastAssessment:string;status:string}> = [];
+  private _evidenceCollectionStatus: Array<{controlId:string;controlName:string;framework:string;evidenceType:string;status:string;lastCollected:string;qualityScore:number;collector:string;notes:string}> = [];
+  private _evidenceGapAnalysis: Array<{framework:string;controlArea:string;gapType:string;severity:string;affectedControls:number;remediationPlan:string;targetDate:string}> = [];
+
+  private _initComplianceEvidenceCollector(): void {
+    const frameworks = [
+      {id:'ISO27001',name:'ISO 27001',version:'2022',controlsTotal:93},
+      {id:'SOC2',name:'SOC 2 Type II',version:'2017',controlsTotal:64},
+      {id:'NIST80053',name:'NIST SP 800-53 Rev5',version:'5.1',controlsTotal:1082},
+      {id:'PCI-DSS',name:'PCI DSS v4.0',version:'4.0',controlsTotal:78},
+      {id:'HIPAA',name:'HIPAA Security Rule',version:'2013',controlsTotal:78},
+      {id:'GDPR',name:'GDPR',version:'2016',controlsTotal:45},
+      {id:'CSA-STAR',name:'CSA STAR',version:'2.0',controlsTotal:197},
+      {id:'CIS-Benchmark',name:'CIS Controls v8',version:'8.1',controlsTotal:56},
+      {id:'NIST-CSF',name:'NIST CSF 2.0',version:'2.0',controlsTotal:106},
+      {id:'FedRAMP',name:'FedRAMP High',version:'Rev 5',controlsTotal:425}
+    ];
+    const evidenceTypes = ['Automated Scan','Manual Review','Policy Document','Configuration Snapshot','Interview Record','Screen Capture','Log Export','Assessment Report','Vendor Attestation','Penetration Test Report'];
+    const statuses = ['collected','partial','missing','expired','pending_review','approved'];
+    const collectors = ['Automated Scanner','GRC Platform','Manual Auditor','API Integration','Third-Party Tool'];
+    const controlAreas = ['Access Control','Encryption','Network Security','Logging & Monitoring','Incident Response','Data Protection','Identity Management','Physical Security','Change Management','Vendor Management'];
+    const gapTypes = ['Missing Evidence','Insufficient Evidence Quality','Expired Evidence','Incomplete Coverage','Manual Process Gap','Tool Integration Gap'];
+    this._complianceFrameworks = frameworks.map(fw => {
+      const mapped = Math.floor(fw.controlsTotal * (0.6 + Math.random() * 0.35));
+      const collected = Math.floor(mapped * (0.5 + Math.random() * 0.45));
+      return {
+        ...fw,
+        controlsMapped: mapped,
+        evidenceCollected: collected,
+        evidenceQuality: Math.round((60 + Math.random() * 35) * 10) / 10,
+        lastAssessment: '2026-04-' + String(Math.floor(Math.random() * 20) + 1).padStart(2, '0'),
+        status: collected / mapped > 0.8 ? 'compliant' : collected / mapped > 0.5 ? 'partial' : 'non-compliant'
+      };
+    });
+    this._evidenceCollectionStatus = Array.from({length: 50}, (_, i) => ({
+      controlId: controlAreas[i % controlAreas.length].substring(0,3).toUpperCase() + '-' + String(i + 1).padStart(3, '0'),
+      controlName: controlAreas[i % controlAreas.length] + ' Control ' + (i + 1),
+      framework: frameworks[Math.floor(Math.random() * frameworks.length)].name,
+      evidenceType: evidenceTypes[Math.floor(Math.random() * evidenceTypes.length)],
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      lastCollected: '2026-04-' + String(Math.floor(Math.random() * 20) + 1).padStart(2, '0'),
+      qualityScore: Math.round((40 + Math.random() * 60) * 10) / 10,
+      collector: collectors[Math.floor(Math.random() * collectors.length)],
+      notes: 'Evidence artifact collected via automated compliance pipeline'
+    }));
+    this._evidenceGapAnalysis = Array.from({length: 25}, () => ({
+      framework: frameworks[Math.floor(Math.random() * frameworks.length)].name,
+      controlArea: controlAreas[Math.floor(Math.random() * controlAreas.length)],
+      gapType: gapTypes[Math.floor(Math.random() * gapTypes.length)],
+      severity: ['critical','high','medium','low'][Math.floor(Math.random() * 4)],
+      affectedControls: Math.floor(Math.random() * 10) + 1,
+      remediationPlan: 'Implement automated evidence collection and quality validation pipeline',
+      targetDate: '2026-' + String(Math.floor(Math.random() * 6) + 5).padStart(2, '0') + '-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')
+    }));
+  }
+
+  private _getOverallComplianceScore(): number {
+    if (this._complianceFrameworks.length === 0) return 0;
+    const scores = this._complianceFrameworks.map(fw => fw.evidenceCollected / fw.controlsMapped * fw.evidenceQuality / 100);
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100);
+  }
+
+  private _getEvidenceQualityBreakdown(): {excellent:number;good:number;fair:number;poor:number} {
+    const items = this._evidenceCollectionStatus;
+    return {
+      excellent: items.filter(e => e.qualityScore >= 85).length,
+      good: items.filter(e => e.qualityScore >= 70 && e.qualityScore < 85).length,
+      fair: items.filter(e => e.qualityScore >= 50 && e.qualityScore < 70).length,
+      poor: items.filter(e => e.qualityScore < 50).length
+    };
+  }
+
+  private _getAuditReadinessScore(): number {
+    const total = this._evidenceCollectionStatus.length;
+    if (total === 0) return 0;
+    const approved = this._evidenceCollectionStatus.filter(e => e.status === 'approved' || e.status === 'collected').length;
+    return Math.round(approved / total * 100);
+  }
+
+  private _generateEvidencePackage(frameworkId: string): Array<{controlId:string;evidenceCount:number;artifacts:Array<{name:string;type:string;size:number;hash:string}>;status:string}> {
+    return Array.from({length: 10}, (_, i) => ({
+      controlId: 'CTL-' + String(i + 1).padStart(3, '0'),
+      evidenceCount: Math.floor(Math.random() * 5) + 1,
+      artifacts: Array.from({length: Math.floor(Math.random() * 3) + 1}, () => ({
+        name: 'evidence_artifact_' + (i + 1) + '_' + Math.floor(Math.random() * 100) + '.pdf',
+        type: 'document',
+        size: Math.floor(Math.random() * 5000) + 100,
+        hash: 'sha256:' + Math.random().toString(36).substring(2, 18)
+      })),
+      status: 'ready'
+    }));
+  }
+
+  private _getCriticalGaps(): Array<typeof this._evidenceGapAnalysis[0]> {
+    return this._evidenceGapAnalysis.filter(g => g.severity === 'critical' || g.severity === 'high');
+  }
+
+  private _getEvidenceCollectionTrend(): Array<{week:string;collected:number;approved:number;rejected:number;pending:number}> {
+    return Array.from({length: 8}, (_, i) => ({
+      week: '2026-W' + String(14 + i).padStart(2, '0'),
+      collected: Math.floor(Math.random() * 50) + 20,
+      approved: Math.floor(Math.random() * 40) + 10,
+      rejected: Math.floor(Math.random() * 10),
+      pending: Math.floor(Math.random() * 15) + 5
+    }));
+  }
+
+
+
+  private _securityBaselineDriftAnalysis: Array<{area:string;baselineValue:number;currentValue:number;driftPercent:number;trend:string;lastAssessed:string;confidence:number;recommendation:string}> = [];
+  private _threatLandscapeShifts: Array<{category:string;currentLevel:string;previousLevel:string;changeDirection:string;keyIndicators:Array<{indicator:string;value:number;trend:string}>;forecast:string}> = [];
+  private _securityPostureAnomalies: Array<{id:string;type:string;severity:string;detectedAt:string;description:string;affectedAssets:number;status:string;rootCause:string;mitigationSteps:Array<string>;resolvedAt:string}> = [];
+  private _crossDomainCorrelationMatrix: Record<string,Record<string,number>> = {};
+  private _securityMaturityRadar: Array<{dimension:string;currentScore:number;targetScore:number;gap:number;initiatives:Array<{name:string;status:string;progress:number;impact:string}> }> = [];
+
+  private _initRound39ExtraAnalytics(): void {
+    const areas = ['Network Security','Endpoint Protection','Identity & Access','Data Protection','Cloud Security','Application Security','Physical Security','Governance & Compliance','Incident Response','Threat Intelligence','Vulnerability Management','Security Awareness'];
+    const levels = ['critical','high','medium','low','minimal'];
+    const statuses = ['active','investigating','mitigated','resolved','accepted'];
+    this._securityBaselineDriftAnalysis = areas.map(area => {
+      const baseline = Math.floor(Math.random() * 40) + 60;
+      const current = Math.floor(baseline * (0.85 + Math.random() * 0.3));
+      return {
+        area, baselineValue: baseline, currentValue: current,
+        driftPercent: Math.round((current - baseline) / baseline * 1000) / 10,
+        trend: current > baseline ? 'degrading' : 'improving',
+        lastAssessed: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+        confidence: Math.round((70 + Math.random() * 25) * 10) / 10,
+        recommendation: current < baseline ? 'Immediate review and remediation recommended' : 'Continue current security controls'
+      };
+    });
+    this._threatLandscapeShifts = ['Ransomware','Supply Chain','Nation State','Insider Threat','DDoS','Zero-Day Exploits','Credential Theft','Cloud Misconfiguration','IoT Vulnerabilities','AI-Powered Attacks'].map(category => ({
+      category,
+      currentLevel: levels[Math.floor(Math.random() * 3)],
+      previousLevel: levels[Math.floor(Math.random() * 3)],
+      changeDirection: Math.random() > 0.5 ? 'increasing' : 'decreasing',
+      keyIndicators: Array.from({length: 3}, () => ({
+        indicator: 'Threat activity metric tracked by intelligence platform',
+        value: Math.floor(Math.random() * 100),
+        trend: Math.random() > 0.5 ? 'up' : 'down'
+      })),
+      forecast: 'Threat level expected to ' + (Math.random() > 0.5 ? 'increase' : 'remain stable') + ' over next 30 days'
+    }));
+    this._securityPostureAnomalies = Array.from({length: 20}, (_, i) => ({
+      id: 'ANOMALY-' + String(i + 1).padStart(4, '0'),
+      type: ['Configuration Drift','Access Anomaly','Behavioral Deviation','Performance Anomaly','Compliance Deviation'][Math.floor(Math.random() * 5)],
+      severity: levels[Math.floor(Math.random() * 4)],
+      detectedAt: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T' + String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':00Z',
+      description: 'Anomalous security posture change detected by continuous monitoring engine',
+      affectedAssets: Math.floor(Math.random() * 20) + 1,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      rootCause: 'Investigation in progress by security operations team',
+      mitigationSteps: ['Isolate affected assets','Review recent changes','Update baseline configuration','Monitor for recurrence'],
+      resolvedAt: Math.random() > 0.5 ? '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') : ''
+    }));
+    const domains = ['Network','Endpoint','Identity','Data','Cloud','App'];
+    domains.forEach(d1 => {
+      this._crossDomainCorrelationMatrix[d1] = {};
+      domains.forEach(d2 => {
+        this._crossDomainCorrelationMatrix[d1][d2] = d1 === d2 ? 1.0 : Math.round(Math.random() * 80) / 100;
+      });
+    });
+    this._securityMaturityRadar = areas.slice(0, 8).map(dimension => ({
+      dimension,
+      currentScore: Math.floor(Math.random() * 40) + 30,
+      targetScore: Math.floor(Math.random() * 20) + 75,
+      gap: 0,
+      initiatives: Array.from({length: 3}, () => ({
+        name: 'Security improvement initiative',
+        status: ['planned','in-progress','completed'][Math.floor(Math.random() * 3)],
+        progress: Math.floor(Math.random() * 100),
+        impact: 'Medium to high impact on security posture'
+      }))
+    }));
+    this._securityMaturityRadar.forEach(m => { m.gap = m.targetScore - m.currentScore; });
+  }
+
+  private _getOverallDriftScore(): number {
+    if (this._securityBaselineDriftAnalysis.length === 0) return 0;
+    return Math.round(this._securityBaselineDriftAnalysis.reduce((s, d) => s + Math.abs(d.driftPercent), 0) / this._securityBaselineDriftAnalysis.length * 10) / 10;
+  }
+
+  private _getActiveAnomalyCount(): number {
+    return this._securityPostureAnomalies.filter(a => a.status === 'active' || a.status === 'investigating').length;
+  }
+
+  private _getCriticalThreatShifts(): number {
+    return this._threatLandscapeShifts.filter(t => t.changeDirection === 'increasing' && (t.currentLevel === 'critical' || t.currentLevel === 'high')).length;
+  }
+
+  private _getMaturityGapSummary(): {avgGap:number;dimensionsBelowTarget:number;improvementPotential:number;topDimension:string} {
+    const gaps = this._securityMaturityRadar.map(m => m.gap);
+    const avgGap = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length * 10) / 10;
+    return {
+      avgGap,
+      dimensionsBelowTarget: gaps.filter(g => g > 0).length,
+      improvementPotential: Math.round(avgGap * 1.5),
+      topDimension: this._securityMaturityRadar.reduce((a, b) => a.gap > b.gap ? a : b).dimension
+    };
+  }
+
+
+  private _securityTrendForecaster: Array<{metric:string;currentValue:number;projected30d:number;projected90d:number;confidence:number;model:string;lastUpdated:string;dataPoints:number}> = [];
+  private _securityBenchmarkComparison: Array<{metric:string;ourValue:number;industryAvg:number;topQuartile:number;bottomQuartile:number;percentileRank:number;gapToTop:string}> = [];
+  private _securityAlertSuppressionRules: Array<{ruleId:string;name:string;source:string;condition:string;suppressedCount:number;lastTriggered:string;expiresAt:string;createdBy:string;active:boolean}> = [];
+  private _securityWorkflowAutomations: Array<{workflowId:string;name:string;trigger:string;actions:number;avgExecutionTime:number;successRate:number;lastExecuted:string;enabled:boolean}> = [];
+  private _securityDataQualityMetrics: Array<{dataSource:string;completeness:number;accuracy:number;timeliness:number;consistency:number;freshness:number;overallScore:number;issues:number}> = [];
+
+  private _initRound39ExtraTrends(): void {
+    const metrics = ['MTTD','MTTR','Vulnerability Backlog','Patch Compliance','Phishing Click Rate','MFA Adoption','Encryption Coverage','Access Review Compliance','Incident Frequency','False Positive Rate','Mean Time to Contain','Recovery Time'];
+    this._securityTrendForecaster = metrics.map(metric => ({
+      metric, currentValue: Math.floor(Math.random() * 100) + 10,
+      projected30d: Math.floor(Math.random() * 100) + 10,
+      projected90d: Math.floor(Math.random() * 100) + 10,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10,
+      model: ['ARIMA','Prophet','Linear Regression','Exponential Smoothing','LSTM Neural Network'][Math.floor(Math.random() * 5)],
+      lastUpdated: '2026-04-22T08:00:00Z',
+      dataPoints: Math.floor(Math.random() * 300) + 30
+    }));
+    this._securityBenchmarkComparison = metrics.slice(0, 8).map(metric => ({
+      metric, ourValue: Math.floor(Math.random() * 100),
+      industryAvg: Math.floor(Math.random() * 60) + 20,
+      topQuartile: Math.floor(Math.random() * 30) + 70,
+      bottomQuartile: Math.floor(Math.random() * 20) + 5,
+      percentileRank: Math.floor(Math.random() * 100),
+      gapToTop: Math.floor(Math.random() * 40) + 5 + ' points'
+    }));
+    this._securityAlertSuppressionRules = Array.from({length: 15}, (_, i) => ({
+      ruleId: 'SUP-' + String(i + 1).padStart(4, '0'),
+      name: 'Alert suppression rule ' + (i + 1),
+      source: ['SIEM','EDR','WAF','Cloud','IDS'][Math.floor(Math.random() * 5)],
+      condition: 'Pattern match on known benign alert signature',
+      suppressedCount: Math.floor(Math.random() * 5000) + 100,
+      lastTriggered: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      expiresAt: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01',
+      createdBy: 'SOC Analyst',
+      active: Math.random() > 0.2
+    }));
+    this._securityWorkflowAutomations = Array.from({length: 12}, (_, i) => ({
+      workflowId: 'WF-' + String(i + 1).padStart(4, '0'),
+      name: 'Automated security workflow ' + (i + 1),
+      trigger: 'Alert triggered matching predefined correlation pattern',
+      actions: Math.floor(Math.random() * 8) + 2,
+      avgExecutionTime: Math.floor(Math.random() * 120) + 5,
+      successRate: Math.round((80 + Math.random() * 20) * 10) / 10,
+      lastExecuted: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      enabled: Math.random() > 0.15
+    }));
+    this._securityDataQualityMetrics = ['Vulnerability Scanner','SIEM Logs','Asset Inventory','Threat Intelligence','Compliance Database','Identity Store','Network Flows','Cloud Audit Logs'].map(dataSource => ({
+      dataSource, completeness: Math.round((70 + Math.random() * 30) * 10) / 10,
+      accuracy: Math.round((75 + Math.random() * 25) * 10) / 10,
+      timeliness: Math.round((60 + Math.random() * 35) * 10) / 10,
+      consistency: Math.round((80 + Math.random() * 20) * 10) / 10,
+      freshness: Math.round((65 + Math.random() * 30) * 10) / 10,
+      overallScore: 0, issues: Math.floor(Math.random() * 15)
+    }));
+    this._securityDataQualityMetrics.forEach(m => { m.overallScore = Math.round((m.completeness + m.accuracy + m.timeliness + m.consistency + m.freshness) / 5 * 10) / 10; });
+  }
+
+  private _getForecastAccuracy(): number {
+    if (this._securityTrendForecaster.length === 0) return 0;
+    return Math.round(this._securityTrendForecaster.reduce((s, f) => s + f.confidence, 0) / this._securityTrendForecaster.length * 10) / 10;
+  }
+
+  private _getBenchmarkPercentile(): number {
+    if (this._securityBenchmarkComparison.length === 0) return 0;
+    return Math.round(this._securityBenchmarkComparison.reduce((s, b) => s + b.percentileRank, 0) / this._securityBenchmarkComparison.length);
+  }
+
+  private _getActiveSuppressions(): number {
+    return this._securityAlertSuppressionRules.filter(r => r.active).length;
+  }
+
+  private _getTotalSuppressedAlerts(): number {
+    return this._securityAlertSuppressionRules.reduce((s, r) => s + r.suppressedCount, 0);
+  }
+
+  private _getActiveWorkflows(): number {
+    return this._securityWorkflowAutomations.filter(w => w.enabled).length;
+  }
+
+  private _getAverageDataQuality(): number {
+    if (this._securityDataQualityMetrics.length === 0) return 0;
+    return Math.round(this._securityDataQualityMetrics.reduce((s, m) => s + m.overallScore, 0) / this._securityDataQualityMetrics.length * 10) / 10;
+  }
+
+  private _getLowQualityDataSources(): number {
+    return this._securityDataQualityMetrics.filter(m => m.overallScore < 80).length;
+  }
+
   render() {    if (this._gdprRules.length === 0) { this._initGdprRules(); this._initGdprCvss(); this._runGdprAnomalyDetection(); this._generateGdprPredictions(); this._initGdprApprovals(); this._initGdprActivity(); this._initGdprNotifications(); }
 
     const items = this._getFiltered();

@@ -5617,6 +5617,296 @@ private _executionHistory: ExecutionRecord[] = [
     ];
   }
 
+  // ===== ROUND 39: Security Cloud Cost Optimizer =====
+  private _cloudCostProviders: Array<{name:string;provider:string;monthlySpend:number;reservedSpend:number;ondemandSpend:number;savingsPercent:number;tools:Array<{name:string;cost:number;usage:number;suggestion:string}>}> = [];
+  private _costOptimizationRecommendations: Array<{id:string;title:string;provider:string;monthlySaving:number;implementationEffort:string;risk:string;description:string}> = [];
+  private _costForecastData: Array<{month:string;projected:number;actual:number;variance:number;confidence:number}> = [];
+  private _unusedResources: Array<{resourceId:string;type:string;provider:string;monthlyCost:number;lastUsed:string;recommendation:string}> = [];
+
+  private _initCloudCostOptimizer(): void {
+    const providers = ['AWS','Azure','GCP','Alibaba Cloud','Oracle Cloud','IBM Cloud'];
+    const toolNames = ['WAF','DDoS Protection','Cloud Firewall','IDS/IPS','SIEM','Secrets Manager','KMS','IAM','GuardDuty','Security Hub','Cloud Trail','Config Rules','Inspector','Macie','Shield Advanced','Firewall Manager','VPC Flow Logs','DNS Security','Certificate Manager','Container Security'];
+    const suggestions = ['Right-size to smaller tier','Switch to reserved pricing','Consolidate overlapping tools','Remove unused instances','Migrate to shared service','Enable auto-scaling','Switch to spot/preemptible','Negotiate enterprise discount'];
+    const efforts = ['low','medium','high'];
+    const risks = ['none','low','medium'];
+    this._cloudCostProviders = providers.map(provider => {
+      const monthlySpend = Math.floor(Math.random() * 80000) + 20000;
+      const reservedPercent = Math.random() * 0.4 + 0.2;
+      const reservedSpend = Math.floor(monthlySpend * reservedPercent);
+      const ondemandSpend = monthlySpend - reservedSpend;
+      const toolCount = Math.floor(Math.random() * 6) + 4;
+      const tools = Array.from({length: toolCount}, () => {
+        const cost = Math.floor(Math.random() * 10000) + 500;
+        return {
+          name: toolNames[Math.floor(Math.random() * toolNames.length)],
+          cost,
+          usage: Math.floor(Math.random() * 100),
+          suggestion: suggestions[Math.floor(Math.random() * suggestions.length)]
+        };
+      });
+      return {name: provider + ' Security Stack', provider, monthlySpend, reservedSpend, ondemandSpend, savingsPercent: Math.round(reservedPercent * 100), tools};
+    });
+    this._costOptimizationRecommendations = Array.from({length: 25}, (_, i) => ({
+      id: 'COST-OPT-' + String(i + 1).padStart(3, '0'),
+      title: 'Optimize ' + providers[Math.floor(Math.random() * providers.length)] + ' ' + toolNames[Math.floor(Math.random() * toolNames.length)] + ' spend',
+      provider: providers[Math.floor(Math.random() * providers.length)],
+      monthlySaving: Math.floor(Math.random() * 5000) + 200,
+      implementationEffort: efforts[Math.floor(Math.random() * efforts.length)],
+      risk: risks[Math.floor(Math.random() * risks.length)],
+      description: 'Analysis of usage patterns indicates opportunity to reduce security tool spend by transitioning pricing model'
+    }));
+    this._costForecastData = Array.from({length: 12}, (_, i) => {
+      const month = '2026-' + String(i + 1).padStart(2, '0');
+      const projected = Math.floor(Math.random() * 50000) + 300000;
+      const variance = Math.round((Math.random() * 20 - 5) * 100) / 100;
+      return {month, projected, actual: Math.floor(projected * (1 + variance / 100)), variance, confidence: Math.round((85 + Math.random() * 15) * 10) / 10};
+    });
+    this._unusedResources = Array.from({length: 20}, (_, i) => ({
+      resourceId: 'RES-' + String(i + 1).padStart(4, '0'),
+      type: toolNames[Math.floor(Math.random() * toolNames.length)],
+      provider: providers[Math.floor(Math.random() * providers.length)],
+      monthlyCost: Math.floor(Math.random() * 3000) + 100,
+      lastUsed: '2026-0' + String(Math.floor(Math.random() * 3) + 1) + '-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0'),
+      recommendation: 'Resource shows zero utilization in past 30 days. Consider decommissioning to save costs.'
+    }));
+  }
+
+  private _getTotalCloudSecuritySpend(): number {
+    return this._cloudCostProviders.reduce((s, p) => s + p.monthlySpend, 0);
+  }
+
+  private _getCostSavingsPotential(): number {
+    return this._costOptimizationRecommendations.reduce((s, r) => s + r.monthlySaving, 0);
+  }
+
+  private _getRightSizingSuggestions(): Array<{tool:string;provider:string;currentTier:string;recommendedTier:string;estimatedSaving:number;confidence:number}> {
+    const tiers = ['Small','Medium','Large','Enterprise'];
+    return Array.from({length: 15}, () => ({
+      tool: 'Security Tool Instance',
+      provider: this._cloudCostProviders[Math.floor(Math.random() * this._cloudCostProviders.length)].provider,
+      currentTier: tiers[Math.floor(Math.random() * 2) + 1],
+      recommendedTier: tiers[Math.floor(Math.random() * 2)],
+      estimatedSaving: Math.floor(Math.random() * 2000) + 100,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10
+    }));
+  }
+
+  private _getReservedVsOnDemandBreakdown(): {reservedPercent:number;ondemandPercent:number;savingsFromReserved:number;recommendations:Array<{provider:string;currentMix:string;suggestedMix:string;projectedSaving:number}>} {
+    const reservedPercent = Math.round(this._cloudCostProviders.reduce((s,p) => s + p.reservedSpend, 0) / this.getTotalCloudSecuritySpend() * 100);
+    return {
+      reservedPercent,
+      ondemandPercent: 100 - reservedPercent,
+      savingsFromReserved: Math.floor(Math.random() * 15000) + 5000,
+      recommendations: this._cloudCostProviders.map(p => ({
+        provider: p.provider,
+        currentMix: p.savingsPercent + '% reserved',
+        suggestedMix: Math.min(95, p.savingsPercent + 15) + '% reserved',
+        projectedSaving: Math.floor(p.ondemandSpend * 0.3)
+      }))
+    };
+  }
+
+  private _getCostTrendDirection(): string {
+    const last3 = this._costForecastData.slice(-3);
+    if (last3.length < 3) return 'stable';
+    const avg = last3.reduce((s, d) => s + d.variance, 0) / 3;
+    if (avg < -3) return 'decreasing';
+    if (avg > 3) return 'increasing';
+    return 'stable';
+  }
+
+  private _getUnusedResourceTotalCost(): number {
+    return this._unusedResources.reduce((s, r) => s + r.monthlyCost, 0);
+  }
+
+  private _getCostByCategory(): Array<{category:string;amount:number;percent:number;trend:string}> {
+    const categories = ['Network Security','Endpoint Protection','Cloud Native Security','Identity & Access','Data Protection','Compliance & Audit','Monitoring & Detection','Incident Response'];
+    const total = Math.floor(Math.random() * 100000) + 200000;
+    let remaining = total;
+    return categories.map((cat, i) => {
+      const isLast = i === categories.length - 1;
+      const amount = isLast ? remaining : Math.floor(remaining * (Math.random() * 0.3 + 0.05));
+      remaining -= amount;
+      return {category: cat, amount, percent: Math.round(amount / total * 1000) / 10, trend: Math.random() > 0.5 ? 'up' : 'down'};
+    });
+  }
+
+
+
+  private _securityResourceUtilization: Array<{resource:string;provider:string;type:string;allocatedCapacity:number;usedCapacity:number;utilizationPercent:number;costPerUnit:number;totalCost:number;trend:string;recommendation:string}> = [];
+  private _securityBudgetVariance: Array<{category:string;budgeted:number;actual:number;variance:number;variancePercent:number;forecastRemaining:number;risk:string}> = [];
+  private _licenseOptimizationData: Array<{product:string;vendor:string;totalLicenses:number;usedLicenses:number;unusedLicenses:number;costPerLicense:number;totalAnnualCost:number;renewalDate:string;recommendation:string}> = [];
+  private _roiTrackingData: Array<{initiative:string;investedAmount:number;estimatedSaving:number;actualSaving:number;roiPercent:number;paybackMonths:number;status:string;startDate:string}> = [];
+
+  private _initRound39ExtraResources(): void {
+    const resources = ['WAF Instance','IDS/IPS Sensor','SIEM License','EDR Agent','DLP Endpoint','Cloud Firewall Rule','VPN Gateway','Certificate Manager','Secrets Vault','Container Scanner','API Gateway','DNS Security','Email Gateway','KMS Key','IAM Role'];
+    const providers = ['AWS','Azure','GCP','On-Premise','Hybrid'];
+    const types = ['compute','storage','network','license','service'];
+    const categories = ['Network Security','Endpoint Protection','Cloud Security','Identity & Access','Data Protection','Compliance','Monitoring','Incident Response'];
+    this._securityResourceUtilization = resources.map(resource => ({
+      resource,
+      provider: providers[Math.floor(Math.random() * providers.length)],
+      type: types[Math.floor(Math.random() * types.length)],
+      allocatedCapacity: Math.floor(Math.random() * 5000) + 1000,
+      usedCapacity: Math.floor(Math.random() * 4000) + 500,
+      utilizationPercent: Math.round((Math.random() * 60 + 20) * 10) / 10,
+      costPerUnit: Math.round((Math.random() * 50 + 5) * 100) / 100,
+      totalCost: Math.floor(Math.random() * 20000) + 1000,
+      trend: Math.random() > 0.5 ? 'increasing' : 'stable',
+      recommendation: 'Review utilization and adjust allocation based on actual usage patterns'
+    }));
+    this._securityBudgetVariance = categories.map(category => {
+      const budgeted = Math.floor(Math.random() * 100000) + 20000;
+      const actual = Math.floor(budgeted * (0.7 + Math.random() * 0.6));
+      return {
+        category, budgeted, actual,
+        variance: actual - budgeted,
+        variancePercent: Math.round((actual - budgeted) / budgeted * 1000) / 10,
+        forecastRemaining: Math.floor(budgeted * (0.3 + Math.random() * 0.5)),
+        risk: Math.abs(actual - budgeted) / budgeted > 0.2 ? 'high' : Math.abs(actual - budgeted) / budgeted > 0.1 ? 'medium' : 'low'
+      };
+    });
+    this._licenseOptimizationData = Array.from({length: 12}, (_, i) => {
+      const total = Math.floor(Math.random() * 500) + 50;
+      const used = Math.floor(total * (0.4 + Math.random() * 0.5));
+      return {
+        product: 'Security Product ' + (i + 1),
+        vendor: ['CrowdStrike','Palo Alto','Splunk','Fortinet','Check Point','Microsoft','Cisco','Trellix','Rapid7','Qualys','Tenable','Zscaler'][i],
+        totalLicenses: total, usedLicenses: used, unusedLicenses: total - used,
+        costPerLicense: Math.floor(Math.random() * 200) + 20,
+        totalAnnualCost: Math.floor(Math.random() * 100000) + 10000,
+        renewalDate: '2026-' + String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + '-01',
+        recommendation: total - used > total * 0.3 ? 'Consider reducing license count to match actual usage' : 'Current allocation is optimal'
+      };
+    });
+    this._roiTrackingData = Array.from({length: 10}, (_, i) => ({
+      initiative: 'Security Initiative ' + (i + 1),
+      investedAmount: Math.floor(Math.random() * 200000) + 10000,
+      estimatedSaving: Math.floor(Math.random() * 300000) + 50000,
+      actualSaving: Math.floor(Math.random() * 250000) + 20000,
+      roiPercent: Math.round((Math.random() * 200 - 50) * 10) / 10,
+      paybackMonths: Math.floor(Math.random() * 24) + 3,
+      status: ['on-track','ahead','behind','completed'][Math.floor(Math.random() * 4)],
+      startDate: '2025-' + String(Math.floor(Math.random() * 12) + 1).padStart(2, '0') + '-01'
+    }));
+  }
+
+  private _getTotalResourceCost(): number {
+    return this._securityResourceUtilization.reduce((s, r) => s + r.totalCost, 0);
+  }
+
+  private _getUnderutilizedResources(): number {
+    return this._securityResourceUtilization.filter(r => r.utilizationPercent < 40).length;
+  }
+
+  private _getTotalLicenseWaste(): number {
+    return this._licenseOptimizationData.reduce((s, l) => s + l.unusedLicenses * l.costPerLicense, 0);
+  }
+
+  private _getBudgetHealthScore(): number {
+    const variances = this._securityBudgetVariance.map(b => Math.abs(b.variancePercent));
+    const avgVariance = variances.reduce((a, b) => a + b, 0) / variances.length;
+    return Math.round(Math.max(0, 100 - avgVariance));
+  }
+
+  private _getTopROIInitiative(): string {
+    if (this._roiTrackingData.length === 0) return 'N/A';
+    return this._roiTrackingData.reduce((a, b) => a.roiPercent > b.roiPercent ? a : b).initiative;
+  }
+
+  private _getCostAnomalyCount(): number {
+    return this._securityBudgetVariance.filter(b => b.risk === 'high').length;
+  }
+
+
+  private _securityTrendForecaster: Array<{metric:string;currentValue:number;projected30d:number;projected90d:number;confidence:number;model:string;lastUpdated:string;dataPoints:number}> = [];
+  private _securityBenchmarkComparison: Array<{metric:string;ourValue:number;industryAvg:number;topQuartile:number;bottomQuartile:number;percentileRank:number;gapToTop:string}> = [];
+  private _securityAlertSuppressionRules: Array<{ruleId:string;name:string;source:string;condition:string;suppressedCount:number;lastTriggered:string;expiresAt:string;createdBy:string;active:boolean}> = [];
+  private _securityWorkflowAutomations: Array<{workflowId:string;name:string;trigger:string;actions:number;avgExecutionTime:number;successRate:number;lastExecuted:string;enabled:boolean}> = [];
+  private _securityDataQualityMetrics: Array<{dataSource:string;completeness:number;accuracy:number;timeliness:number;consistency:number;freshness:number;overallScore:number;issues:number}> = [];
+
+  private _initRound39ExtraTrends(): void {
+    const metrics = ['MTTD','MTTR','Vulnerability Backlog','Patch Compliance','Phishing Click Rate','MFA Adoption','Encryption Coverage','Access Review Compliance','Incident Frequency','False Positive Rate','Mean Time to Contain','Recovery Time'];
+    this._securityTrendForecaster = metrics.map(metric => ({
+      metric, currentValue: Math.floor(Math.random() * 100) + 10,
+      projected30d: Math.floor(Math.random() * 100) + 10,
+      projected90d: Math.floor(Math.random() * 100) + 10,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10,
+      model: ['ARIMA','Prophet','Linear Regression','Exponential Smoothing','LSTM Neural Network'][Math.floor(Math.random() * 5)],
+      lastUpdated: '2026-04-22T08:00:00Z',
+      dataPoints: Math.floor(Math.random() * 300) + 30
+    }));
+    this._securityBenchmarkComparison = metrics.slice(0, 8).map(metric => ({
+      metric, ourValue: Math.floor(Math.random() * 100),
+      industryAvg: Math.floor(Math.random() * 60) + 20,
+      topQuartile: Math.floor(Math.random() * 30) + 70,
+      bottomQuartile: Math.floor(Math.random() * 20) + 5,
+      percentileRank: Math.floor(Math.random() * 100),
+      gapToTop: Math.floor(Math.random() * 40) + 5 + ' points'
+    }));
+    this._securityAlertSuppressionRules = Array.from({length: 15}, (_, i) => ({
+      ruleId: 'SUP-' + String(i + 1).padStart(4, '0'),
+      name: 'Alert suppression rule ' + (i + 1),
+      source: ['SIEM','EDR','WAF','Cloud','IDS'][Math.floor(Math.random() * 5)],
+      condition: 'Pattern match on known benign alert signature',
+      suppressedCount: Math.floor(Math.random() * 5000) + 100,
+      lastTriggered: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      expiresAt: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01',
+      createdBy: 'SOC Analyst',
+      active: Math.random() > 0.2
+    }));
+    this._securityWorkflowAutomations = Array.from({length: 12}, (_, i) => ({
+      workflowId: 'WF-' + String(i + 1).padStart(4, '0'),
+      name: 'Automated security workflow ' + (i + 1),
+      trigger: 'Alert triggered matching predefined correlation pattern',
+      actions: Math.floor(Math.random() * 8) + 2,
+      avgExecutionTime: Math.floor(Math.random() * 120) + 5,
+      successRate: Math.round((80 + Math.random() * 20) * 10) / 10,
+      lastExecuted: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      enabled: Math.random() > 0.15
+    }));
+    this._securityDataQualityMetrics = ['Vulnerability Scanner','SIEM Logs','Asset Inventory','Threat Intelligence','Compliance Database','Identity Store','Network Flows','Cloud Audit Logs'].map(dataSource => ({
+      dataSource, completeness: Math.round((70 + Math.random() * 30) * 10) / 10,
+      accuracy: Math.round((75 + Math.random() * 25) * 10) / 10,
+      timeliness: Math.round((60 + Math.random() * 35) * 10) / 10,
+      consistency: Math.round((80 + Math.random() * 20) * 10) / 10,
+      freshness: Math.round((65 + Math.random() * 30) * 10) / 10,
+      overallScore: 0, issues: Math.floor(Math.random() * 15)
+    }));
+    this._securityDataQualityMetrics.forEach(m => { m.overallScore = Math.round((m.completeness + m.accuracy + m.timeliness + m.consistency + m.freshness) / 5 * 10) / 10; });
+  }
+
+  private _getForecastAccuracy(): number {
+    if (this._securityTrendForecaster.length === 0) return 0;
+    return Math.round(this._securityTrendForecaster.reduce((s, f) => s + f.confidence, 0) / this._securityTrendForecaster.length * 10) / 10;
+  }
+
+  private _getBenchmarkPercentile(): number {
+    if (this._securityBenchmarkComparison.length === 0) return 0;
+    return Math.round(this._securityBenchmarkComparison.reduce((s, b) => s + b.percentileRank, 0) / this._securityBenchmarkComparison.length);
+  }
+
+  private _getActiveSuppressions(): number {
+    return this._securityAlertSuppressionRules.filter(r => r.active).length;
+  }
+
+  private _getTotalSuppressedAlerts(): number {
+    return this._securityAlertSuppressionRules.reduce((s, r) => s + r.suppressedCount, 0);
+  }
+
+  private _getActiveWorkflows(): number {
+    return this._securityWorkflowAutomations.filter(w => w.enabled).length;
+  }
+
+  private _getAverageDataQuality(): number {
+    if (this._securityDataQualityMetrics.length === 0) return 0;
+    return Math.round(this._securityDataQualityMetrics.reduce((s, m) => s + m.overallScore, 0) / this._securityDataQualityMetrics.length * 10) / 10;
+  }
+
+  private _getLowQualityDataSources(): number {
+    return this._securityDataQualityMetrics.filter(m => m.overallScore < 80).length;
+  }
+
   render() {    if (this._sqRules.length === 0) { this._initSqRules(); this._initSqCvss(); this._runSqAnomalyDetection(); this._generateSqPredictions(); this._initSqApprovals(); this._initSqActivity(); this._initSqNotifications(); }
 
     const items = this._getFiltered();

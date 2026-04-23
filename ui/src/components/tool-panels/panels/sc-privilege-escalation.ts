@@ -5003,6 +5003,357 @@ export class ScPrivilegeEscalation extends LitElement {
     ];
   }
 
+  // ===== ROUND 39: Security Attack Graph Visualization =====
+  private _attackGraphNodes: Array<{id:string;label:string;type:string;riskLevel:string;compromised:boolean;defenses:number;description:string}> = [];
+  private _attackGraphEdges: Array<{source:string;target:string;exploitability:number;technique:string;mitigation:string;active:boolean}> = [];
+  private _attackGraphMetrics: {shortestPath:number;avgPathLength:number;criticalPaths:number;totalNodes:number;totalEdges:number;compromisedNodes:number;defendedNodes:number} = {shortestPath:0,avgPathLength:0,criticalPaths:0,totalNodes:0,totalEdges:0,compromisedNodes:0,defendedNodes:0};
+  private _defensePlacementOptions: Array<{position:string;impact:number;cost:number;coverageIncrease:number;affectedEdges:number}> = [];
+
+  private _initAttackGraphViz(): void {
+    const nodeTypes = ['network','host','application','data','identity','cloud','iot','external'];
+    const riskLevels = ['critical','high','medium','low'];
+    const nodeLabels = ['Internet Gateway','DMZ Firewall','Web Server Farm','App Server Cluster','Database Tier','Admin Console','Identity Provider','Cloud API Gateway','Internal Network Switch','Employee Workstations','IoT Device Hub','Backup Server','Log Aggregator','CI/CD Pipeline','Third-Party API','Mobile Gateway'];
+    const techniques = ['Spear Phishing','SQL Injection','Privilege Escalation','Lateral Movement','Credential Stuffing','DNS Tunneling','API Abuse','Supply Chain Compromise','Session Hijacking','Deserialization Attack'];
+    const mitigations = ['Network Segmentation','Input Validation','Principle of Least Privilege','Zero Trust Architecture','MFA Enforcement','Encryption at Rest','WAF Rules','API Rate Limiting','Behavioral Analytics','Threat Intelligence Feed'];
+    this._attackGraphNodes = nodeLabels.map((label, i) => ({
+      id: 'NODE-' + String(i).padStart(3, '0'),
+      label,
+      type: nodeTypes[i % nodeTypes.length],
+      riskLevel: riskLevels[Math.floor(Math.random() * riskLevels.length)],
+      compromised: Math.random() > 0.8,
+      defenses: Math.floor(Math.random() * 5),
+      description: 'Security asset node in attack graph topology'
+    }));
+    const edges: Array<{source:string;target:string;exploitability:number;technique:string;mitigation:string;active:boolean}> = [];
+    for (let i = 0; i < this._attackGraphNodes.length - 1; i++) {
+      const edgeCount = Math.floor(Math.random() * 2) + 1;
+      for (let j = 0; j < edgeCount; j++) {
+        const target = Math.min(i + Math.floor(Math.random() * 3) + 1, this._attackGraphNodes.length - 1);
+        if (i !== target) {
+          edges.push({
+            source: this._attackGraphNodes[i].id,
+            target: this._attackGraphNodes[target].id,
+            exploitability: Math.round((Math.random() * 10) * 10) / 10,
+            technique: techniques[Math.floor(Math.random() * techniques.length)],
+            mitigation: mitigations[Math.floor(Math.random() * mitigations.length)],
+            active: Math.random() > 0.3
+          });
+        }
+      }
+    }
+    this._attackGraphEdges = edges;
+    const compromisedNodes = this._attackGraphNodes.filter(n => n.compromised).length;
+    const defendedNodes = this._attackGraphNodes.filter(n => n.defenses > 2).length;
+    this._attackGraphMetrics = {
+      shortestPath: Math.floor(Math.random() * 4) + 2,
+      avgPathLength: Math.round((Math.random() * 3 + 3) * 10) / 10,
+      criticalPaths: Math.floor(Math.random() * 5) + 1,
+      totalNodes: this._attackGraphNodes.length,
+      totalEdges: this._attackGraphEdges.length,
+      compromisedNodes,
+      defendedNodes
+    };
+    this._defensePlacementOptions = Array.from({length: 10}, () => ({
+      position: this._attackGraphNodes[Math.floor(Math.random() * this._attackGraphNodes.length)].label,
+      impact: Math.round((Math.random() * 50 + 20) * 10) / 10,
+      cost: Math.floor(Math.random() * 50000) + 5000,
+      coverageIncrease: Math.round((Math.random() * 30 + 5) * 10) / 10,
+      affectedEdges: Math.floor(Math.random() * 8) + 2
+    }));
+  }
+
+  private _getCriticalAttackPaths(): Array<{path:string[];riskScore:number;techniques:string[];mitigations:string[]}> {
+    const paths: Array<{path:string[];riskScore:number;techniques:string[];mitigations:string[]}> = [];
+    const activeEdges = this._attackGraphEdges.filter(e => e.active);
+    for (let i = 0; i < 3; i++) {
+      const startNode = this._attackGraphNodes[0];
+      const pathNodes = [startNode.id];
+      let current = startNode.id;
+      for (let step = 0; step < 4; step++) {
+        const outgoing = activeEdges.filter(e => e.source === current);
+        if (outgoing.length === 0) break;
+        const next = outgoing[Math.floor(Math.random() * outgoing.length)].target;
+        pathNodes.push(next);
+        current = next;
+      }
+      const pathEdges = activeEdges.filter(e => pathNodes.includes(e.source) && pathNodes.includes(e.target));
+      paths.push({
+        path: pathNodes,
+        riskScore: Math.round(pathEdges.reduce((s, e) => s + e.exploitability, 0) / pathEdges.length * 10) / 10,
+        techniques: pathEdges.map(e => e.technique),
+        mitigations: pathEdges.map(e => e.mitigation)
+      });
+    }
+    return paths;
+  }
+
+  private _getExploitabilityHeatmap(): Array<{nodeId:string;inboundRisk:number;outboundRisk:number;compositeRisk:number}> {
+    return this._attackGraphNodes.map(node => {
+      const inboundEdges = this._attackGraphEdges.filter(e => e.target === node.id && e.active);
+      const outboundEdges = this._attackGraphEdges.filter(e => e.source === node.id && e.active);
+      const inboundRisk = inboundEdges.length > 0 ? Math.round(inboundEdges.reduce((s,e) => s + e.exploitability, 0) / inboundEdges.length * 10) / 10 : 0;
+      const outboundRisk = outboundEdges.length > 0 ? Math.round(outboundEdges.reduce((s,e) => s + e.exploitability, 0) / outboundEdges.length * 10) / 10 : 0;
+      return {nodeId: node.id, inboundRisk, outboundRisk, compositeRisk: Math.round((inboundRisk + outboundRisk) / 2 * 10) / 10};
+    });
+  }
+
+  private _getGraphComparisonMetrics(): {beforeDefenses:{avgExploitability:number;criticalPaths:number} ;afterDefenses:{avgExploitability:number;criticalPaths:number};reductionPercent:number} {
+    const beforeAvg = Math.round((this._attackGraphEdges.reduce((s,e) => s + e.exploitability, 0) / this._attackGraphEdges.length) * 10) / 10;
+    return {
+      beforeDefenses: {avgExploitability: beforeAvg, criticalPaths: this._attackGraphMetrics.criticalPaths},
+      afterDefenses: {avgExploitability: Math.round(beforeAvg * 0.55 * 10) / 10, criticalPaths: Math.max(0, this._attackGraphMetrics.criticalPaths - 2)},
+      reductionPercent: Math.round(45)
+    };
+  }
+
+
+
+  private _securityBaselineDriftAnalysis: Array<{area:string;baselineValue:number;currentValue:number;driftPercent:number;trend:string;lastAssessed:string;confidence:number;recommendation:string}> = [];
+  private _threatLandscapeShifts: Array<{category:string;currentLevel:string;previousLevel:string;changeDirection:string;keyIndicators:Array<{indicator:string;value:number;trend:string}>;forecast:string}> = [];
+  private _securityPostureAnomalies: Array<{id:string;type:string;severity:string;detectedAt:string;description:string;affectedAssets:number;status:string;rootCause:string;mitigationSteps:Array<string>;resolvedAt:string}> = [];
+  private _crossDomainCorrelationMatrix: Record<string,Record<string,number>> = {};
+  private _securityMaturityRadar: Array<{dimension:string;currentScore:number;targetScore:number;gap:number;initiatives:Array<{name:string;status:string;progress:number;impact:string}> }> = [];
+
+  private _initRound39ExtraAnalytics(): void {
+    const areas = ['Network Security','Endpoint Protection','Identity & Access','Data Protection','Cloud Security','Application Security','Physical Security','Governance & Compliance','Incident Response','Threat Intelligence','Vulnerability Management','Security Awareness'];
+    const levels = ['critical','high','medium','low','minimal'];
+    const statuses = ['active','investigating','mitigated','resolved','accepted'];
+    this._securityBaselineDriftAnalysis = areas.map(area => {
+      const baseline = Math.floor(Math.random() * 40) + 60;
+      const current = Math.floor(baseline * (0.85 + Math.random() * 0.3));
+      return {
+        area, baselineValue: baseline, currentValue: current,
+        driftPercent: Math.round((current - baseline) / baseline * 1000) / 10,
+        trend: current > baseline ? 'degrading' : 'improving',
+        lastAssessed: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+        confidence: Math.round((70 + Math.random() * 25) * 10) / 10,
+        recommendation: current < baseline ? 'Immediate review and remediation recommended' : 'Continue current security controls'
+      };
+    });
+    this._threatLandscapeShifts = ['Ransomware','Supply Chain','Nation State','Insider Threat','DDoS','Zero-Day Exploits','Credential Theft','Cloud Misconfiguration','IoT Vulnerabilities','AI-Powered Attacks'].map(category => ({
+      category,
+      currentLevel: levels[Math.floor(Math.random() * 3)],
+      previousLevel: levels[Math.floor(Math.random() * 3)],
+      changeDirection: Math.random() > 0.5 ? 'increasing' : 'decreasing',
+      keyIndicators: Array.from({length: 3}, () => ({
+        indicator: 'Threat activity metric tracked by intelligence platform',
+        value: Math.floor(Math.random() * 100),
+        trend: Math.random() > 0.5 ? 'up' : 'down'
+      })),
+      forecast: 'Threat level expected to ' + (Math.random() > 0.5 ? 'increase' : 'remain stable') + ' over next 30 days'
+    }));
+    this._securityPostureAnomalies = Array.from({length: 20}, (_, i) => ({
+      id: 'ANOMALY-' + String(i + 1).padStart(4, '0'),
+      type: ['Configuration Drift','Access Anomaly','Behavioral Deviation','Performance Anomaly','Compliance Deviation'][Math.floor(Math.random() * 5)],
+      severity: levels[Math.floor(Math.random() * 4)],
+      detectedAt: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') + 'T' + String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':00Z',
+      description: 'Anomalous security posture change detected by continuous monitoring engine',
+      affectedAssets: Math.floor(Math.random() * 20) + 1,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      rootCause: 'Investigation in progress by security operations team',
+      mitigationSteps: ['Isolate affected assets','Review recent changes','Update baseline configuration','Monitor for recurrence'],
+      resolvedAt: Math.random() > 0.5 ? '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0') : ''
+    }));
+    const domains = ['Network','Endpoint','Identity','Data','Cloud','App'];
+    domains.forEach(d1 => {
+      this._crossDomainCorrelationMatrix[d1] = {};
+      domains.forEach(d2 => {
+        this._crossDomainCorrelationMatrix[d1][d2] = d1 === d2 ? 1.0 : Math.round(Math.random() * 80) / 100;
+      });
+    });
+    this._securityMaturityRadar = areas.slice(0, 8).map(dimension => ({
+      dimension,
+      currentScore: Math.floor(Math.random() * 40) + 30,
+      targetScore: Math.floor(Math.random() * 20) + 75,
+      gap: 0,
+      initiatives: Array.from({length: 3}, () => ({
+        name: 'Security improvement initiative',
+        status: ['planned','in-progress','completed'][Math.floor(Math.random() * 3)],
+        progress: Math.floor(Math.random() * 100),
+        impact: 'Medium to high impact on security posture'
+      }))
+    }));
+    this._securityMaturityRadar.forEach(m => { m.gap = m.targetScore - m.currentScore; });
+  }
+
+  private _getOverallDriftScore(): number {
+    if (this._securityBaselineDriftAnalysis.length === 0) return 0;
+    return Math.round(this._securityBaselineDriftAnalysis.reduce((s, d) => s + Math.abs(d.driftPercent), 0) / this._securityBaselineDriftAnalysis.length * 10) / 10;
+  }
+
+  private _getActiveAnomalyCount(): number {
+    return this._securityPostureAnomalies.filter(a => a.status === 'active' || a.status === 'investigating').length;
+  }
+
+  private _getCriticalThreatShifts(): number {
+    return this._threatLandscapeShifts.filter(t => t.changeDirection === 'increasing' && (t.currentLevel === 'critical' || t.currentLevel === 'high')).length;
+  }
+
+  private _getMaturityGapSummary(): {avgGap:number;dimensionsBelowTarget:number;improvementPotential:number;topDimension:string} {
+    const gaps = this._securityMaturityRadar.map(m => m.gap);
+    const avgGap = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length * 10) / 10;
+    return {
+      avgGap,
+      dimensionsBelowTarget: gaps.filter(g => g > 0).length,
+      improvementPotential: Math.round(avgGap * 1.5),
+      topDimension: this._securityMaturityRadar.reduce((a, b) => a.gap > b.gap ? a : b).dimension
+    };
+  }
+
+
+  private _securityTrendForecaster: Array<{metric:string;currentValue:number;projected30d:number;projected90d:number;confidence:number;model:string;lastUpdated:string;dataPoints:number}> = [];
+  private _securityBenchmarkComparison: Array<{metric:string;ourValue:number;industryAvg:number;topQuartile:number;bottomQuartile:number;percentileRank:number;gapToTop:string}> = [];
+  private _securityAlertSuppressionRules: Array<{ruleId:string;name:string;source:string;condition:string;suppressedCount:number;lastTriggered:string;expiresAt:string;createdBy:string;active:boolean}> = [];
+  private _securityWorkflowAutomations: Array<{workflowId:string;name:string;trigger:string;actions:number;avgExecutionTime:number;successRate:number;lastExecuted:string;enabled:boolean}> = [];
+  private _securityDataQualityMetrics: Array<{dataSource:string;completeness:number;accuracy:number;timeliness:number;consistency:number;freshness:number;overallScore:number;issues:number}> = [];
+
+  private _initRound39ExtraTrends(): void {
+    const metrics = ['MTTD','MTTR','Vulnerability Backlog','Patch Compliance','Phishing Click Rate','MFA Adoption','Encryption Coverage','Access Review Compliance','Incident Frequency','False Positive Rate','Mean Time to Contain','Recovery Time'];
+    this._securityTrendForecaster = metrics.map(metric => ({
+      metric, currentValue: Math.floor(Math.random() * 100) + 10,
+      projected30d: Math.floor(Math.random() * 100) + 10,
+      projected90d: Math.floor(Math.random() * 100) + 10,
+      confidence: Math.round((60 + Math.random() * 35) * 10) / 10,
+      model: ['ARIMA','Prophet','Linear Regression','Exponential Smoothing','LSTM Neural Network'][Math.floor(Math.random() * 5)],
+      lastUpdated: '2026-04-22T08:00:00Z',
+      dataPoints: Math.floor(Math.random() * 300) + 30
+    }));
+    this._securityBenchmarkComparison = metrics.slice(0, 8).map(metric => ({
+      metric, ourValue: Math.floor(Math.random() * 100),
+      industryAvg: Math.floor(Math.random() * 60) + 20,
+      topQuartile: Math.floor(Math.random() * 30) + 70,
+      bottomQuartile: Math.floor(Math.random() * 20) + 5,
+      percentileRank: Math.floor(Math.random() * 100),
+      gapToTop: Math.floor(Math.random() * 40) + 5 + ' points'
+    }));
+    this._securityAlertSuppressionRules = Array.from({length: 15}, (_, i) => ({
+      ruleId: 'SUP-' + String(i + 1).padStart(4, '0'),
+      name: 'Alert suppression rule ' + (i + 1),
+      source: ['SIEM','EDR','WAF','Cloud','IDS'][Math.floor(Math.random() * 5)],
+      condition: 'Pattern match on known benign alert signature',
+      suppressedCount: Math.floor(Math.random() * 5000) + 100,
+      lastTriggered: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      expiresAt: '2026-' + String(Math.floor(Math.random() * 6) + 7).padStart(2, '0') + '-01',
+      createdBy: 'SOC Analyst',
+      active: Math.random() > 0.2
+    }));
+    this._securityWorkflowAutomations = Array.from({length: 12}, (_, i) => ({
+      workflowId: 'WF-' + String(i + 1).padStart(4, '0'),
+      name: 'Automated security workflow ' + (i + 1),
+      trigger: 'Alert triggered matching predefined correlation pattern',
+      actions: Math.floor(Math.random() * 8) + 2,
+      avgExecutionTime: Math.floor(Math.random() * 120) + 5,
+      successRate: Math.round((80 + Math.random() * 20) * 10) / 10,
+      lastExecuted: '2026-04-' + String(Math.floor(Math.random() * 23) + 1).padStart(2, '0'),
+      enabled: Math.random() > 0.15
+    }));
+    this._securityDataQualityMetrics = ['Vulnerability Scanner','SIEM Logs','Asset Inventory','Threat Intelligence','Compliance Database','Identity Store','Network Flows','Cloud Audit Logs'].map(dataSource => ({
+      dataSource, completeness: Math.round((70 + Math.random() * 30) * 10) / 10,
+      accuracy: Math.round((75 + Math.random() * 25) * 10) / 10,
+      timeliness: Math.round((60 + Math.random() * 35) * 10) / 10,
+      consistency: Math.round((80 + Math.random() * 20) * 10) / 10,
+      freshness: Math.round((65 + Math.random() * 30) * 10) / 10,
+      overallScore: 0, issues: Math.floor(Math.random() * 15)
+    }));
+    this._securityDataQualityMetrics.forEach(m => { m.overallScore = Math.round((m.completeness + m.accuracy + m.timeliness + m.consistency + m.freshness) / 5 * 10) / 10; });
+  }
+
+  private _getForecastAccuracy(): number {
+    if (this._securityTrendForecaster.length === 0) return 0;
+    return Math.round(this._securityTrendForecaster.reduce((s, f) => s + f.confidence, 0) / this._securityTrendForecaster.length * 10) / 10;
+  }
+
+  private _getBenchmarkPercentile(): number {
+    if (this._securityBenchmarkComparison.length === 0) return 0;
+    return Math.round(this._securityBenchmarkComparison.reduce((s, b) => s + b.percentileRank, 0) / this._securityBenchmarkComparison.length);
+  }
+
+  private _getActiveSuppressions(): number {
+    return this._securityAlertSuppressionRules.filter(r => r.active).length;
+  }
+
+  private _getTotalSuppressedAlerts(): number {
+    return this._securityAlertSuppressionRules.reduce((s, r) => s + r.suppressedCount, 0);
+  }
+
+  private _getActiveWorkflows(): number {
+    return this._securityWorkflowAutomations.filter(w => w.enabled).length;
+  }
+
+  private _getAverageDataQuality(): number {
+    if (this._securityDataQualityMetrics.length === 0) return 0;
+    return Math.round(this._securityDataQualityMetrics.reduce((s, m) => s + m.overallScore, 0) / this._securityDataQualityMetrics.length * 10) / 10;
+  }
+
+  private _getLowQualityDataSources(): number {
+    return this._securityDataQualityMetrics.filter(m => m.overallScore < 80).length;
+  }
+
+
+  private _securityKpiHistory: Array<{date:string;score:number;target:number;category:string}> = [];
+  private _securityIncidentLessonsLearned: Array<{id:string;incidentId:string;lesson:string;category:string;severity:string;appliedCount:number;status:string;owner:string}> = [];
+  private _securityToolIntegrationMap: Record<string,Array<{tool:string;direction:string;protocol:string;status:string}>> = {};
+
+  private _initRound39ExtraSmall(): void {
+    this._securityKpiHistory = Array.from({length: 30}, (_, i) => ({
+      date: '2026-03-' + String(i + 1).padStart(2, '0'),
+      score: Math.floor(Math.random() * 30) + 70,
+      target: 90,
+      category: 'Overall Security Posture'
+    }));
+    this._securityIncidentLessonsLearned = Array.from({length: 8}, (_, i) => ({
+      id: 'LL-' + String(i + 1).padStart(3, '0'),
+      incidentId: 'INC-2026-' + String(Math.floor(Math.random() * 200) + 1).padStart(4, '0'),
+      lesson: 'Security lesson learned from incident response post-mortem review',
+      category: ['Detection','Response','Prevention','Recovery'][Math.floor(Math.random() * 4)],
+      severity: ['critical','high','medium'][Math.floor(Math.random() * 3)],
+      appliedCount: Math.floor(Math.random() * 5),
+      status: ['applied','pending','deferred'][Math.floor(Math.random() * 3)],
+      owner: 'Security Operations Team'
+    }));
+    const tools = ['SIEM','EDR','NIDS','WAF','DLP','SOAR','TIP','Vuln Scanner'];
+    const protocols = ['syslog','CEF','REST API','Webhook','SNMP','SC4RE'];
+    const directions = ['inbound','outbound','bidirectional'];
+    tools.forEach(tool => {
+      this._securityToolIntegrationMap[tool] = Array.from({length: 3}, () => ({
+        tool: tools[Math.floor(Math.random() * tools.length)],
+        direction: directions[Math.floor(Math.random() * directions.length)],
+        protocol: protocols[Math.floor(Math.random() * protocols.length)],
+        status: Math.random() > 0.2 ? 'active' : 'inactive'
+      }));
+    });
+  }
+
+  private _getKpiTrendDirection(): string {
+    if (this._securityKpiHistory.length < 7) return 'stable';
+    const recent = this._securityKpiHistory.slice(-7);
+    const avg = recent.reduce((s, k) => s + k.score, 0) / recent.length;
+    const older = this._securityKpiHistory.slice(-14, -7);
+    const olderAvg = older.reduce((s, k) => s + k.score, 0) / older.length;
+    return avg > olderAvg + 2 ? 'improving' : avg < olderAvg - 2 ? 'declining' : 'stable';
+  }
+
+  private _getAppliedLessonsCount(): number {
+    return this._securityIncidentLessonsLearned.filter(l => l.status === 'applied').length;
+  }
+
+  private _getActiveIntegrations(): number {
+    let count = 0;
+    Object.values(this._securityToolIntegrationMap).forEach(integrations => {
+      count += integrations.filter(i => i.status === 'active').length;
+    });
+    return count;
+  }
+
+  private _getPendingLessons(): number {
+    return this._securityIncidentLessonsLearned.filter(l => l.status === 'pending').length;
+  }
+
+  private _getAvgKpiScore(): number {
+    if (this._securityKpiHistory.length === 0) return 0;
+    return Math.round(this._securityKpiHistory.reduce((s, k) => s + k.score, 0) / this._securityKpiHistory.length * 10) / 10;
+  }
+
   render() {
     return html`
       <div class="panel">
