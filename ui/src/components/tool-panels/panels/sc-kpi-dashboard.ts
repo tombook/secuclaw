@@ -376,7 +376,113 @@ export class ScKpiDashboard extends LitElement {
     .remediation-box { background: #052e16; border: 1px solid #166534; border-radius: 6px; padding: 10px; font-size: 12px; }
     .remediation-box strong { color: #86efac; }
 
-  `;
+  
+    .risk-transfer-section, .talent-mgmt-section, .vendor-assess-section,
+    .policy-engine-section, .metrics-builder-section {
+      margin-top: 1.5rem; padding: 1rem; border: 1px solid #2a3a5c; border-radius: 8px;
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .risk-transfer-section h4, .talent-mgmt-section h4, .vendor-assess-section h4,
+    .policy-engine-section h4, .metrics-builder-section h4 {
+      margin: 0 0 0.75rem; font-size: 0.95rem; color: #60a5fa; border-bottom: 1px solid #1e3a5f; padding-bottom: 0.4rem;
+    }
+    .risk-transfer-section h5, .talent-mgmt-section h5, .vendor-assess-section h5,
+    .policy-engine-section h5, .metrics-builder-section h5 {
+      margin: 1rem 0 0.5rem; font-size: 0.85rem; color: #93c5fd;
+    }
+    .rt-summary-row, .tm-stats-row, .va-stats-row, .pe-stats-row, .mb-canvas-header {
+      display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem;
+    }
+    .rt-stat, .tm-stat, .va-stat, .pe-stat { flex: 1; min-width: 120px; padding: 0.5rem; background: rgba(30, 58, 95, 0.5); border-radius: 6px; text-align: center; }
+    .rt-label, .tm-label, .va-label, .pe-label { display: block; font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; }
+    .rt-value, .tm-value, .va-value, .pe-value { display: block; font-size: 1.1rem; font-weight: 700; color: #e2e8f0; }
+    .rt-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .rt-table th, .rt-table td { padding: 0.35rem 0.5rem; border: 1px solid #1e3a5f; text-align: left; }
+    .rt-table th { background: #1e3a5f; color: #93c5fd; }
+    .status-active { color: #34d399; } .status-pending { color: #fbbf24; } .status-draft { color: #f97316; }
+    .status-under-review { color: #60a5fa; }
+    .rt-decision-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+    .rt-decision-card { padding: 0.6rem; background: rgba(30, 58, 95, 0.4); border-radius: 6px; border: 1px solid #1e3a5f; }
+    .rt-risk-name { font-weight: 600; color: #e2e8f0; font-size: 0.8rem; } .rt-category { font-size: 0.7rem; color: #94a3b8; }
+    .rt-bar-wrap { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 0.3rem 0; }
+    .rt-bar-transfer { background: #3b82f6; } .rt-bar-retain { background: #f59e0b; }
+    .rt-bar-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: #94a3b8; }
+    .rt-decision-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.65rem; font-weight: 600; margin-top: 0.3rem; }
+    .rt-decision-badge.transfer { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .rt-decision-badge.partial-transfer { background: rgba(168,85,247,0.2); color: #c084fc; }
+    .rt-decision-badge.retain { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .tm-skills-grid { overflow-x: auto; }
+    .tm-skills-header, .tm-member-row { display: flex; align-items: center; min-width: 900px; }
+    .tm-name-cell { width: 140px; min-width: 140px; padding: 0.3rem; font-size: 0.7rem; color: #e2e8f0; }
+    .tm-name-cell small { color: #64748b; }
+    .tm-skill-cell, .tm-level-cell { width: 80px; min-width: 80px; text-align: center; padding: 0.3rem; font-size: 0.65rem; border: 1px solid #1e3a5f; }
+    .tm-skill-cell { background: #1e3a5f; color: #93c5fd; font-weight: 600; }
+    .tm-level-cell { background: rgba(30, 58, 95, 0.3); }
+    .level-5 { background: rgba(16,185,129,0.4) !important; color: #34d399; font-weight: 700; }
+    .level-4 { background: rgba(59,130,246,0.3) !important; color: #60a5fa; font-weight: 600; }
+    .level-3 { background: rgba(168,85,247,0.2) !important; color: #c084fc; }
+    .level-2 { background: rgba(245,158,11,0.2) !important; color: #fbbf24; }
+    .level-1 { background: rgba(239,68,68,0.2) !important; color: #f87171; }
+    .tm-meta-cell { width: 90px; min-width: 90px; text-align: center; font-size: 0.65rem; color: #94a3b8; padding: 0.3rem; }
+    .tm-pipeline { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem; }
+    .tm-pipe-card { padding: 0.5rem; background: rgba(30,58,95,0.4); border-radius: 6px; border: 1px solid #1e3a5f; }
+    .tm-pipe-role { font-weight: 600; font-size: 0.8rem; color: #e2e8f0; }
+    .tm-pipe-stage { font-size: 0.7rem; color: #60a5fa; margin: 0.2rem 0; }
+    .tm-pipe-info { display: flex; justify-content: space-between; font-size: 0.65rem; color: #94a3b8; }
+    .tm-pipe-priority { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 8px; font-size: 0.6rem; font-weight: 600; margin-top: 0.2rem; }
+    .priority-critical { background: rgba(239,68,68,0.3); color: #f87171; }
+    .priority-high { background: rgba(245,158,11,0.3); color: #fbbf24; }
+    .priority-medium { background: rgba(59,130,246,0.3); color: #60a5fa; }
+    .va-scorecard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; }
+    .va-vendor-card { padding: 0.6rem; background: rgba(30,58,95,0.4); border-radius: 6px; border: 1px solid #1e3a5f; }
+    .va-vendor-name { font-weight: 700; font-size: 0.85rem; color: #e2e8f0; }
+    .va-vendor-cat { font-size: 0.7rem; color: #94a3b8; }
+    .va-score-bar { position: relative; height: 8px; background: #1e293b; border-radius: 4px; margin: 0.4rem 0; }
+    .va-score-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 4px; }
+    .va-score-bar span { position: absolute; right: 4px; top: -1px; font-size: 0.65rem; color: #e2e8f0; }
+    .va-vendor-meta { display: flex; gap: 0.5rem; font-size: 0.65rem; color: #94a3b8; flex-wrap: wrap; }
+    .risk-low { color: #34d399; } .risk-medium { color: #fbbf24; } .risk-high { color: #f87171; }
+    .va-renewal { font-size: 0.65rem; color: #60a5fa; margin-top: 0.2rem; }
+    .va-dep-table { overflow-x: auto; }
+    .va-dep-table table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .va-dep-table th, .va-dep-table td { padding: 0.35rem 0.5rem; border: 1px solid #1e3a5f; }
+    .va-dep-table th { background: #1e3a5f; color: #93c5fd; }
+    .sp-yes { color: #f87171; font-weight: 600; } .sp-no { color: #34d399; }
+    .pe-policy-list { max-height: 400px; overflow-y: auto; }
+    .pe-policy-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem; border-bottom: 1px solid #1e293b; font-size: 0.7rem; flex-wrap: wrap; }
+    .pe-id { color: #64748b; width: 60px; } .pe-name { color: #e2e8f0; width: 180px; font-weight: 600; }
+    .pe-ver { color: #94a3b8; width: 40px; } .pe-owner { color: #94a3b8; width: 80px; }
+    .pe-next { color: #fbbf24; font-size: 0.65rem; width: 100px; }
+    .pe-compliance-bar { position: relative; width: 80px; height: 6px; background: #1e293b; border-radius: 3px; }
+    .pe-comp-fill { height: 100%; background: #3b82f6; border-radius: 3px; }
+    .pe-compliance-bar span { position: absolute; right: 2px; top: -2px; font-size: 0.6rem; color: #e2e8f0; }
+    .pe-exceptions { margin-top: 0.5rem; }
+    .pe-exc-row { display: flex; gap: 0.5rem; padding: 0.3rem; border-bottom: 1px solid #1e293b; font-size: 0.7rem; flex-wrap: wrap; }
+    .exc-approved { color: #34d399; } .exc-pending { color: #fbbf24; }
+    .mb-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 120px); gap: 0.5rem; margin-bottom: 1rem; }
+    .mb-widget { background: rgba(30,58,95,0.5); border: 1px solid #1e3a5f; border-radius: 6px; padding: 0.5rem; display: flex; flex-direction: column; }
+    .mb-widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+    .mb-widget-title { font-size: 0.7rem; font-weight: 600; color: #e2e8f0; }
+    .mb-widget-type { font-size: 0.6rem; color: #64748b; background: rgba(100,116,139,0.2); padding: 0.1rem 0.3rem; border-radius: 4px; }
+    .mb-widget-body { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .mb-kpi { font-size: 1.5rem; font-weight: 700; color: #60a5fa; }
+    .mb-trend { font-size: 0.75rem; color: #34d399; margin-left: 0.3rem; }
+    .mb-gauge { width: 80%; height: 10px; background: #1e293b; border-radius: 5px; position: relative; }
+    .mb-gauge-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #3b82f6); border-radius: 5px; }
+    .mb-gauge span { position: absolute; right: -30px; top: -2px; font-size: 0.7rem; color: #e2e8f0; }
+    .mb-counter { font-size: 2rem; font-weight: 700; color: #e2e8f0; }
+    .mb-delta { font-size: 0.8rem; color: #34d399; }
+    .mb-placeholder { color: #475569; font-size: 0.75rem; font-style: italic; }
+    .mb-catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.4rem; }
+    .mb-catalog-item { padding: 0.4rem; background: rgba(30,58,95,0.3); border-radius: 4px; border: 1px solid #1e293b; cursor: grab; }
+    .mb-ci-type { font-size: 0.6rem; color: #64748b; } .mb-ci-name { font-size: 0.75rem; color: #e2e8f0; font-weight: 600; }
+    .mb-ci-desc { font-size: 0.65rem; color: #94a3b8; } .mb-ci-cat { font-size: 0.6rem; color: #60a5fa; margin-top: 0.1rem; }
+    .mb-templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; }
+    .mb-tpl-card { padding: 0.5rem; background: rgba(30,58,95,0.3); border-radius: 6px; border: 1px solid #1e3a5f; }
+    .mb-tpl-name { font-weight: 600; font-size: 0.8rem; color: #e2e8f0; }
+    .mb-tpl-meta { display: flex; gap: 0.5rem; font-size: 0.65rem; color: #94a3b8; }
+    .mb-tpl-shared { font-size: 0.65rem; color: #64748b; margin-top: 0.2rem; }
+`;
 
   @state() private _searchQuery = '';
   @state() private _severityFilter: Severity | 'all' = 'all';
@@ -7877,6 +7983,297 @@ export class ScKpiDashboard extends LitElement {
         </div>
       </section>`;
   }
+
+  // === Security Risk Transfer Matrix ===
+  private _renderRiskTransferMatrix(): TemplateResult {
+    const policies = [
+      { id: 'CYB-001', name: 'Cyber Liability', carrier: 'Chubb', premium: 285000, limit: 5000000, deductible: 250000, status: 'Active', renewDate: '2026-09-15' },
+      { id: 'CYB-002', name: 'D&O Liability', carrier: 'AIG', premium: 175000, limit: 10000000, deductible: 500000, status: 'Active', renewDate: '2026-11-30' },
+      { id: 'CYB-003', name: 'E&O Professional', carrier: 'Zurich', premium: 195000, limit: 3000000, deductible: 100000, status: 'Active', renewDate: '2027-02-28' },
+      { id: 'CYB-004', name: 'Crime/Fraud', carrier: 'Travelers', premium: 89000, limit: 2000000, deductible: 75000, status: 'Pending', renewDate: '2026-08-01' },
+      { id: 'CYB-005', name: 'Business Interruption', carrier: 'Hartford', premium: 142000, limit: 8000000, deductible: 350000, status: 'Active', renewDate: '2026-12-15' },
+    ];
+    const decisions = [
+      { risk: 'Ransomware', category: 'Operational', annualLoss: 1250000, insuranceCost: 85000, transferPct: 80, retainPct: 20, decision: 'Transfer' },
+      { risk: 'Data Breach', category: 'Regulatory', annualLoss: 2400000, insuranceCost: 120000, transferPct: 70, retainPct: 30, decision: 'Partial Transfer' },
+      { risk: 'Insider Threat', category: 'Personnel', annualLoss: 680000, insuranceCost: 45000, transferPct: 30, retainPct: 70, decision: 'Retain' },
+      { risk: 'Third-Party Failure', category: 'Supply Chain', annualLoss: 920000, insuranceCost: 65000, transferPct: 55, retainPct: 45, decision: 'Partial Transfer' },
+      { risk: 'DDoS Attack', category: 'Operational', annualLoss: 380000, insuranceCost: 32000, transferPct: 90, retainPct: 10, decision: 'Transfer' },
+    ];
+    const claims = [
+      { id: 'CLM-2025-001', policy: 'CYB-001', date: '2025-03-15', type: 'Ransomware', filed: 850000, approved: 722500, status: 'Paid' },
+      { id: 'CLM-2025-002', policy: 'CYB-002', date: '2025-07-22', type: 'Regulatory Fine', filed: 1200000, approved: 1080000, status: 'Paid' },
+      { id: 'CLM-2026-001', policy: 'CYB-001', date: '2026-01-10', type: 'Data Breach', filed: 2100000, approved: 0, status: 'Under Review' },
+    ];
+    const totalPremium = policies.reduce((s, p) => s + p.premium, 0);
+    const totalLimit = policies.reduce((s, p) => s + p.limit, 0);
+    const totalDeductible = policies.reduce((s, p) => s + p.deductible, 0);
+    const deductibleRatio = ((totalDeductible / totalLimit) * 100).toFixed(1);
+    const premiumToLimitRatio = ((totalPremium / totalLimit) * 100).toFixed(2);
+    return html`
+      <section class="risk-transfer-section">
+        <h4>Security Risk Transfer Matrix</h4>
+        <div class="rt-summary-row">
+          <div class="rt-stat"><span class="rt-label">Total Annual Premium</span><span class="rt-value">$${(totalPremium/1e6).toFixed(2)}M</span></div>
+          <div class="rt-stat"><span class="rt-label">Aggregate Coverage Limit</span><span class="rt-value">$${(totalLimit/1e6).toFixed(0)}M</span></div>
+          <div class="rt-stat"><span class="rt-label">Deductible Ratio</span><span class="rt-value">${deductibleRatio}%</span></div>
+          <div class="rt-stat"><span class="rt-label">Premium/Limit Ratio</span><span class="rt-value">${premiumToLimitRatio}%</span></div>
+        </div>
+        <div class="rt-table-wrap">
+          <table class="rt-table">
+            <thead><tr><th>Policy ID</th><th>Name</th><th>Carrier</th><th>Premium</th><th>Limit</th><th>Deductible</th><th>Status</th><th>Renewal</th></tr></thead>
+            <tbody>${policies.map(p => html`<tr>
+              <td>${p.id}</td><td>${p.name}</td><td>${p.carrier}</td>
+              <td>$${(p.premium/1e3).toFixed(0)}K</td><td>$${(p.limit/1e6).toFixed(1)}M</td>
+              <td>$${(p.deductible/1e3).toFixed(0)}K</td><td class="status-${p.status.toLowerCase()}">${p.status}</td>
+              <td>${p.renewDate}</td></tr>`)}</tbody>
+          </table>
+        </div>
+        <h5>Risk Transfer vs Retention Decisions</h5>
+        <div class="rt-decision-grid">
+          ${decisions.map(d => html`<div class="rt-decision-card">
+            <div class="rt-risk-name">${d.risk}</div>
+            <div class="rt-category">${d.category}</div>
+            <div class="rt-bar-wrap"><div class="rt-bar-transfer" style="width:${d.transferPct}%"></div><div class="rt-bar-retain" style="width:${d.retainPct}%"></div></div>
+            <div class="rt-bar-labels"><span>Transfer ${d.transferPct}%</span><span>Retain ${d.retainPct}%</span></div>
+            <div class="rt-annual">Annual Loss: $${(d.annualLoss/1e6).toFixed(2)}M | Ins Cost: $${(d.insuranceCost/1e3).toFixed(0)}K</div>
+            <div class="rt-decision-badge ${d.decision.toLowerCase().replace(/ /g,'-')}">${d.decision}</div>
+          </div>`)}</div>
+        </div>
+        <h5>Claims History</h5>
+        <div class="rt-claims">${claims.map(c => html`<div class="rt-claim-row">
+          <span>${c.id}</span><span>${c.policy}</span><span>${c.date}</span><span>${c.type}</span>
+          <span>$${(c.filed/1e6).toFixed(2)}M</span><span>$${(c.approved/1e6).toFixed(2)}M</span>
+          <span class="claim-${c.status.toLowerCase().replace(/ /g,'-')}">${c.status}</span>
+        </div>`)}</div>
+      </section>`;
+  }
+
+  // === Security Talent Management ===
+  private _renderTalentManagement(): TemplateResult {
+    const skills = ['Threat Detection', 'Incident Response', 'Forensics', 'Cloud Security', 'AppSec', 'Network Defense', 'GRC', 'Red Team'];
+    const members = [
+      { name: 'A. Chen', level: [5,4,3,4,3,4,5,2], certs: ['CISSP','GCIA'], training: 92, perf: 4.5, tenure: '6yr' },
+      { name: 'B. Silva', level: [3,5,4,3,2,3,3,4], certs: ['CEH','OSCP'], training: 88, perf: 4.2, tenure: '4yr' },
+      { name: 'C. Patel', level: [4,3,2,5,4,3,4,2], certs: ['CCSP','AWS-SC'], training: 95, perf: 4.7, tenure: '5yr' },
+      { name: 'D. Kim', level: [2,4,5,2,3,4,2,5], certs: ['GCIH','OSCP'], training: 85, perf: 4.3, tenure: '3yr' },
+      { name: 'E. Johnson', level: [5,5,4,4,5,3,4,3], certs: ['CISSP','CISM','CCSP'], training: 98, perf: 4.9, tenure: '8yr' },
+      { name: 'F. Muller', level: [3,3,3,4,4,5,3,2], certs: ['CEH','CompTIA+'], training: 78, perf: 3.8, tenure: '2yr' },
+      { name: 'G. Nakamura', level: [4,4,3,5,3,4,5,3], certs: ['CISSP','GCFA'], training: 91, perf: 4.4, tenure: '5yr' },
+      { name: 'H. Williams', level: [2,2,4,3,5,2,2,3], certs: ['AWS-SC','AZ-500'], training: 82, perf: 3.9, tenure: '2yr' },
+      { name: 'I. Dubois', level: [5,4,4,3,4,5,4,4], certs: ['CISSP','OSCP','GCIH'], training: 96, perf: 4.8, tenure: '7yr' },
+      { name: 'J. Rodriguez', level: [3,3,2,4,3,3,3,2], certs: ['CEH'], training: 75, perf: 3.5, tenure: '1yr' },
+      { name: 'K. Zhang', level: [4,5,5,4,3,4,3,5], certs: ['OSCP','GXPN','CRTO'], training: 93, perf: 4.6, tenure: '4yr' },
+      { name: 'L. Anderson', level: [3,4,3,3,4,3,4,2], certs: ['CISSP','CISM'], training: 87, perf: 4.1, tenure: '3yr' },
+    ];
+    const hiringPipeline = [
+      { role: 'Sr. Threat Hunter', stage: 'Final Interview', candidates: 3, posted: '2026-03-01', priority: 'Critical' },
+      { role: 'Cloud Security Eng', stage: 'Screening', candidates: 12, posted: '2026-04-05', priority: 'High' },
+      { role: 'GRC Analyst', stage: 'Offer Extended', candidates: 1, posted: '2026-02-15', priority: 'Medium' },
+      { role: 'SOC Analyst L2', stage: 'Technical Assessment', candidates: 5, posted: '2026-04-10', priority: 'High' },
+    ];
+    const certCount = members.reduce((s, m) => s + m.certs.length, 0);
+    const avgTraining = (members.reduce((s, m) => s + m.training, 0) / members.length).toFixed(1);
+    const avgPerf = (members.reduce((s, m) => s + m.perf, 0) / members.length).toFixed(1);
+    return html`
+      <section class="talent-mgmt-section">
+        <h4>Security Talent Management</h4>
+        <div class="tm-stats-row">
+          <div class="tm-stat"><span class="tm-label">Team Size</span><span class="tm-value">${members.length}</span></div>
+          <div class="tm-stat"><span class="tm-label">Total Certifications</span><span class="tm-value">${certCount}</span></div>
+          <div class="tm-stat"><span class="tm-label">Avg Training Completion</span><span class="tm-value">${avgTraining}%</span></div>
+          <div class="tm-stat"><span class="tm-label">Avg Performance Score</span><span class="tm-value">${avgPerf}/5.0</span></div>
+        </div>
+        <h5>Team Skills Matrix</h5>
+        <div class="tm-skills-grid">
+          <div class="tm-skills-header"><div class="tm-name-cell"></div>${skills.map(s => html`<div class="tm-skill-cell">${s}</div>`)}</div>
+          ${members.map(m => html`<div class="tm-member-row">
+            <div class="tm-name-cell">${m.name}<br/><small>${m.certs.join(', ')}</small></div>
+            ${m.level.map(l => html`<div class="tm-level-cell level-${l}">${l}</div>`)}
+            <div class="tm-meta-cell">${m.training}% | ${m.perf}</div>
+          </div>`)}
+        </div>
+        <h5>Hiring Pipeline</h5>
+        <div class="tm-pipeline">${hiringPipeline.map(h => html`<div class="tm-pipe-card">
+          <div class="tm-pipe-role">${h.role}</div>
+          <div class="tm-pipe-stage">${h.stage}</div>
+          <div class="tm-pipe-info"><span>Candidates: ${h.candidates}</span><span>Posted: ${h.posted}</span></div>
+          <div class="tm-pipe-priority priority-${h.priority.toLowerCase()}">${h.priority}</div>
+        </div>`)}</div>
+      </section>`;
+  }
+
+  // === Security Vendor Assessment ===
+  private _renderVendorAssessment(): TemplateResult {
+    const vendors = [
+      { name: 'CrowdStrike', category: 'EDR/XDR', score: 92, sla: 99.9, contractEnd: '2027-03-31', tier: 'Tier 1', risk: 'Low', renewalStatus: 'On Track' },
+      { name: 'Palo Alto', category: 'Firewall/NGFW', score: 88, sla: 99.95, contractEnd: '2026-12-31', tier: 'Tier 1', risk: 'Low', renewalStatus: 'Review Needed' },
+      { name: 'Splunk', category: 'SIEM', score: 85, sla: 99.5, contractEnd: '2027-06-30', tier: 'Tier 1', risk: 'Medium', renewalStatus: 'On Track' },
+      { name: 'Duo Security', category: 'MFA', score: 90, sla: 99.99, contractEnd: '2027-01-15', tier: 'Tier 2', risk: 'Low', renewalStatus: 'Auto-Renew' },
+      { name: 'Qualys', category: 'Vuln Mgmt', score: 82, sla: 99.5, contractEnd: '2026-09-30', tier: 'Tier 2', risk: 'Medium', renewalStatus: 'Negotiating' },
+      { name: 'Rapid7', category: 'Pen Testing', score: 78, sla: 99.0, contractEnd: '2027-02-28', tier: 'Tier 2', risk: 'Medium', renewalStatus: 'On Track' },
+      { name: 'KnowBe4', category: 'Security Awareness', score: 75, sla: 99.0, contractEnd: '2026-11-30', tier: 'Tier 3', risk: 'Low', renewalStatus: 'Under Review' },
+      { name: 'Darktrace', category: 'AI/ML Detection', score: 80, sla: 99.5, contractEnd: '2027-04-30', tier: 'Tier 2', risk: 'Medium', renewalStatus: 'On Track' },
+    ];
+    const dependencyMatrix = [
+      { critical: 'EDR/XDR', vendors: ['CrowdStrike'], backup: 'SentinelOne (eval)', singlePoint: true },
+      { critical: 'SIEM', vendors: ['Splunk'], backup: 'Elastic SIEM (partial)', singlePoint: true },
+      { critical: 'Firewall', vendors: ['Palo Alto', 'Fortinet'], backup: 'Internal', singlePoint: false },
+      { critical: 'MFA', vendors: ['Duo Security', 'Okta'], backup: 'Microsoft Entra', singlePoint: false },
+    ];
+    const tierCounts: Record<string, number> = {};
+    vendors.forEach(v => { tierCounts[v.tier] = (tierCounts[v.tier] || 0) + 1; });
+    const avgSla = (vendors.reduce((s, v) => s + v.sla, 0) / vendors.length).toFixed(2);
+    return html`
+      <section class="vendor-assess-section">
+        <h4>Security Vendor Assessment</h4>
+        <div class="va-stats-row">
+          <div class="va-stat"><span class="va-label">Total Vendors</span><span class="va-value">${vendors.length}</span></div>
+          <div class="va-stat"><span class="va-label">Avg SLA Compliance</span><span class="va-value">${avgSla}%</span></div>
+          <div class="va-stat"><span class="va-label">Tier 1</span><span class="va-value">${tierCounts['Tier 1'] || 0}</span></div>
+          <div class="va-stat"><span class="va-label">Tier 2</span><span class="va-value">${tierCounts['Tier 2'] || 0}</span></div>
+          <div class="va-stat"><span class="va-label">Tier 3</span><span class="va-value">${tierCounts['Tier 3'] || 0}</span></div>
+        </div>
+        <h5>Vendor Scorecard</h5>
+        <div class="va-scorecard-grid">
+          ${vendors.map(v => html`<div class="va-vendor-card">
+            <div class="va-vendor-name">${v.name}</div>
+            <div class="va-vendor-cat">${v.category}</div>
+            <div class="va-score-bar"><div class="va-score-fill" style="width:${v.score}%"></div><span>${v.score}</span></div>
+            <div class="va-vendor-meta"><span>SLA: ${v.sla}%</span><span>${v.tier}</span><span class="risk-${v.risk.toLowerCase()}">${v.risk}</span></div>
+            <div class="va-renewal">${v.renewalStatus}</div>
+          </div>`)}
+        </div>
+        <h5>Vendor Dependency Analysis</h5>
+        <div class="va-dep-table">
+          <table><thead><tr><th>Critical Function</th><th>Primary Vendor(s)</th><th>Backup</th><th>Single Point?</th></tr></thead>
+          <tbody>${dependencyMatrix.map(d => html`<tr>
+            <td>${d.critical}</td><td>${d.vendors.join(', ')}</td><td>${d.backup}</td>
+            <td class="${d.singlePoint ? 'sp-yes' : 'sp-no'}">${d.singlePoint ? 'Yes - Risk' : 'No'}</td>
+          </tr>`)}</tbody></table>
+        </div>
+      </section>`;
+  }
+
+  // === Security Policy Engine ===
+  private _renderPolicyEngine(): TemplateResult {
+    const policies = [
+      { id: 'POL-001', name: 'Acceptable Use Policy', version: '3.2', status: 'Active', compliance: 94, owner: 'CISO', nextReview: '2026-07-15' },
+      { id: 'POL-002', name: 'Information Classification', version: '2.8', status: 'Active', compliance: 91, owner: 'CISO', nextReview: '2026-05-20' },
+      { id: 'POL-003', name: 'Access Control Policy', version: '4.1', status: 'Active', compliance: 88, owner: 'IAM Lead', nextReview: '2026-08-10' },
+      { id: 'POL-004', name: 'Incident Response Plan', version: '5.0', status: 'Under Review', compliance: 82, owner: 'IR Manager', nextReview: '2026-03-01' },
+      { id: 'POL-005', name: 'Data Retention Policy', version: '2.3', status: 'Active', compliance: 90, owner: 'DPO', nextReview: '2026-06-05' },
+      { id: 'POL-006', name: 'Password Policy', version: '3.5', status: 'Active', compliance: 96, owner: 'IAM Lead', nextReview: '2026-09-01' },
+      { id: 'POL-007', name: 'Remote Access Policy', version: '2.1', status: 'Draft', compliance: 75, owner: 'Network Lead', nextReview: '2026-02-15' },
+      { id: 'POL-008', name: 'Change Management', version: '3.0', status: 'Active', compliance: 93, owner: 'CISO', nextReview: '2026-07-20' },
+      { id: 'POL-009', name: 'Vendor Risk Management', version: '2.5', status: 'Active', compliance: 85, owner: 'Procurement', nextReview: '2026-04-10' },
+      { id: 'POL-010', name: 'Encryption Standards', version: '4.0', status: 'Active', compliance: 97, owner: 'Crypto Lead', nextReview: '2026-08-28' },
+      { id: 'POL-011', name: 'Cloud Security Policy', version: '2.0', status: 'Under Review', compliance: 78, owner: 'Cloud Lead', nextReview: '2026-01-01' },
+      { id: 'POL-012', name: 'Third-Party Access', version: '1.8', status: 'Active', compliance: 87, owner: 'IAM Lead', nextReview: '2026-05-15' },
+      { id: 'POL-013', name: 'Security Awareness Training', version: '3.1', status: 'Active', compliance: 92, owner: 'Training Mgr', nextReview: '2026-09-15' },
+      { id: 'POL-014', name: 'Disaster Recovery Plan', version: '4.2', status: 'Active', compliance: 89, owner: 'DR Manager', nextReview: '2026-06-20' },
+      { id: 'POL-015', name: 'Physical Security Policy', version: '2.4', status: 'Active', compliance: 95, owner: 'Facilities', nextReview: '2026-03-30' },
+    ];
+    const exceptions = [
+      { id: 'EXC-001', policy: 'POL-003', requestor: 'Dev Team', reason: 'Service account needs elevated access', status: 'Approved', expires: '2026-06-30' },
+      { id: 'EXC-002', policy: 'POL-006', requestor: 'Legacy System', reason: 'Password complexity incompatible', status: 'Approved', expires: '2026-12-31' },
+      { id: 'EXC-003', policy: 'POL-005', requestor: 'Legal Dept', reason: 'Regulatory hold extended retention', status: 'Pending', expires: '2026-09-30' },
+    ];
+    const avgCompliance = (policies.reduce((s, p) => s + p.compliance, 0) / policies.length).toFixed(1);
+    const overdueCount = policies.filter(p => new Date(p.nextReview) < new Date('2026-04-23')).length;
+    const activePolicies = policies.filter(p => p.status === 'Active').length;
+    return html`
+      <section class="policy-engine-section">
+        <h4>Security Policy Engine</h4>
+        <div class="pe-stats-row">
+          <div class="pe-stat"><span class="pe-label">Total Policies</span><span class="pe-value">${policies.length}</span></div>
+          <div class="pe-stat"><span class="pe-label">Active</span><span class="pe-value">${activePolicies}</span></div>
+          <div class="pe-stat"><span class="pe-label">Avg Compliance</span><span class="pe-value">${avgCompliance}%</span></div>
+          <div class="pe-stat"><span class="pe-label">Overdue Reviews</span><span class="pe-value">${overdueCount}</span></div>
+          <div class="pe-stat"><span class="pe-label">Open Exceptions</span><span class="pe-value">${exceptions.length}</span></div>
+        </div>
+        <div class="pe-policy-list">
+          ${policies.map(p => html`<div class="pe-policy-row">
+            <span class="pe-id">${p.id}</span>
+            <span class="pe-name">${p.name}</span>
+            <span class="pe-ver">v${p.version}</span>
+            <span class="pe-status status-${p.status.toLowerCase().replace(/ /g,'-')}">${p.status}</span>
+            <div class="pe-compliance-bar"><div class="pe-comp-fill" style="width:${p.compliance}%"></div><span>${p.compliance}%</span></div>
+            <span class="pe-owner">${p.owner}</span>
+            <span class="pe-next">Next: ${p.nextReview}</span>
+          </div>`)}
+        </div>
+        <h5>Policy Exceptions</h5>
+        <div class="pe-exceptions">${exceptions.map(e => html`<div class="pe-exc-row">
+          <span>${e.id}</span><span>${e.policy}</span><span>${e.requestor}</span>
+          <span>${e.reason}</span><span class="exc-${e.status.toLowerCase()}">${e.status}</span><span>Exp: ${e.expires}</span>
+        </div>`)}</div>
+      </section>`;
+  }
+
+  // === Security Metrics Dashboard Builder ===
+  private _renderMetricsDashboardBuilder(): TemplateResult {
+    const widgetTypes = [
+      { type: 'line-chart', name: 'Line Chart', desc: 'Time-series trends', category: 'Visualization' },
+      { type: 'bar-chart', name: 'Bar Chart', desc: 'Category comparisons', category: 'Visualization' },
+      { type: 'pie-chart', name: 'Pie Chart', desc: 'Distribution view', category: 'Visualization' },
+      { type: 'heatmap', name: 'Heatmap', desc: 'Density/matrix data', category: 'Visualization' },
+      { type: 'kpi-card', name: 'KPI Card', desc: 'Single metric display', category: 'Metric' },
+      { type: 'gauge', name: 'Gauge', desc: 'Progress/percentage', category: 'Metric' },
+      { type: 'table', name: 'Data Table', desc: 'Tabular data view', category: 'Data' },
+      { type: 'timeline', name: 'Timeline', desc: 'Event chronology', category: 'Data' },
+      { type: 'status-list', name: 'Status List', desc: 'Item status tracking', category: 'Data' },
+      { type: 'counter', name: 'Counter', desc: 'Running totals', category: 'Metric' },
+    ];
+    const templates = [
+      { name: 'Executive Overview', widgets: 6, layout: '2x3 Grid', category: 'C-Suite', shared: 12 },
+      { name: 'SOC Daily Ops', widgets: 10, layout: '3x4 Grid', category: 'Operations', shared: 8 },
+      { name: 'Compliance Tracker', widgets: 8, layout: '2x4 Grid', category: 'GRC', shared: 5 },
+      { name: 'Vulnerability Dashboard', widgets: 7, layout: '3x3 Grid', category: 'Vuln Mgmt', shared: 15 },
+      { name: 'Incident Metrics', widgets: 9, layout: '3x3 Grid', category: 'Incident Response', shared: 10 },
+    ];
+    const dashboardWidgets = [
+      { id: 'w1', type: 'kpi-card', title: 'MTTD', row: 1, col: 1, w: 1, data: { value: '4.2min', trend: '-12%' } },
+      { id: 'w2', type: 'line-chart', title: 'Alert Volume (30d)', row: 1, col: 2, w: 2, data: { points: 30 } },
+      { id: 'w3', type: 'gauge', title: 'Patch Compliance', row: 1, col: 4, w: 1, data: { value: 87 } },
+      { id: 'w4', type: 'bar-chart', title: 'Vulns by Severity', row: 2, col: 1, w: 2, data: { categories: 5 } },
+      { id: 'w5', type: 'table', title: 'Top 10 Risks', row: 2, col: 3, w: 2, data: { rows: 10 } },
+      { id: 'w6', type: 'counter', title: 'Open Incidents', row: 3, col: 1, w: 1, data: { value: 23, delta: -5 } },
+    ];
+    return html`
+      <section class="metrics-builder-section">
+        <h4>Security Metrics Dashboard Builder</h4>
+        <div class="mb-canvas">
+          <div class="mb-canvas-header">
+            <span class="mb-canvas-title">Dashboard Editor</span>
+            <span class="mb-canvas-info">Widgets: ${dashboardWidgets.length} | Layout: 4x3</span>
+          </div>
+          <div class="mb-grid">
+            ${dashboardWidgets.map(w => html`<div class="mb-widget" style="grid-row:${w.row};grid-column:${w.col}/span ${w.w}">
+              <div class="mb-widget-header"><span class="mb-widget-title">${w.title}</span><span class="mb-widget-type">${w.type}</span></div>
+              <div class="mb-widget-body">${w.type === 'kpi-card' ? html`<div class="mb-kpi">${w.data.value}<span class="mb-trend">${w.data.trend}</span></div>` :
+                w.type === 'gauge' ? html`<div class="mb-gauge"><div class="mb-gauge-fill" style="width:${w.data.value}%"></div><span>${w.data.value}%</span></div>` :
+                w.type === 'counter' ? html`<div class="mb-counter">${w.data.value} <span class="mb-delta">${w.data.delta}</span></div>` :
+                html`<div class="mb-placeholder">[${w.type}]</div>`}</div>
+            </div>`)}
+          </div>
+        </div>
+        <h5>Widget Type Catalog</h5>
+        <div class="mb-catalog">${widgetTypes.map(w => html`<div class="mb-catalog-item">
+          <div class="mb-ci-type">${w.type}</div>
+          <div class="mb-ci-name">${w.name}</div>
+          <div class="mb-ci-desc">${w.desc}</div>
+          <div class="mb-ci-cat">${w.category}</div>
+        </div>`)}</div>
+        <h5>Dashboard Templates</h5>
+        <div class="mb-templates">${templates.map(t => html`<div class="mb-tpl-card">
+          <div class="mb-tpl-name">${t.name}</div>
+          <div class="mb-tpl-meta"><span>${t.widgets} widgets</span><span>${t.layout}</span><span>${t.category}</span></div>
+          <div class="mb-tpl-shared">Shared with ${t.shared} users</div>
+        </div>`)}</div>
+      </section>`;
+  }
+
   }
 
 
