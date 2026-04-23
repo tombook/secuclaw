@@ -1215,4 +1215,338 @@ export class ScVendorRiskAssessment extends LitElement {
     </div>`;
   }
 }
-declare global { interface HTMLElementTagNameMap { 'sc-vendor-risk-assessment': ScVendorRiskAssessment; } }
+declare global { interface HTMLElementTagNameMap { 'sc-vendor-risk-assessment': ScVendorRiskAssessment; } 
+  // === SECTION A: Multi-Phase Pipeline Execution Engine ===
+  private _pipelinePhases: { id: string; name: string; status: 'pending' | 'running' | 'completed' | 'failed' | 'rolled-back'; progress: number; duration: number; errors: string[]; rollbackSteps: string[] }[] = [
+    { id: 'ph-1', name: 'Vendor Inventory Compilation', status: 'completed', progress: 100, duration: 30, errors: [], rollbackSteps: ['Reset vendor inventory compilation state'] },
+    { id: 'ph-2', name: 'Risk Questionnaire Dispatch', status: 'completed', progress: 100, duration: 20, errors: [], rollbackSteps: ['Reset risk questionnaire dispatch state'] },
+    { id: 'ph-3', name: 'Response Collection', status: 'running', progress: 45, duration: 120, errors: [], rollbackSteps: ['Reset response collection state'] },
+    { id: 'ph-4', name: 'Automated Risk Scoring', status: 'pending', progress: 0, duration: 0, errors: [], rollbackSteps: ['Reset automated risk scoring state'] },
+    { id: 'ph-5', name: 'Third-Party Data Enrichment', status: 'pending', progress: 0, duration: 0, errors: [], rollbackSteps: ['Reset third-party data enrichment state'] },
+    { id: 'ph-6', name: 'Due Diligence Review', status: 'pending', progress: 0, duration: 0, errors: [], rollbackSteps: ['Reset due diligence review state'] },
+    { id: 'ph-7', name: 'Assessment Report', status: 'pending', progress: 0, duration: 0, errors: [], rollbackSteps: ['Reset assessment report state'] },
+  ];
+
+  private _pipelineJobQueue: { id: string; name: string; priority: number; status: 'queued' | 'processing' | 'done'; phaseId: string; submittedAt: number; startedAt: number }[] = [
+    { id: 'job-001', name: 'Import vendor list', priority: 1, status: 'done', phaseId: 'ph-1', submittedAt: Date.now() - 300000, startedAt: Date.now() - 280000 },
+    { id: 'job-002', name: 'Send SOC 2 questionnaires', priority: 2, status: 'done', phaseId: 'ph-2', submittedAt: Date.now() - 250000, startedAt: Date.now() - 230000 },
+    { id: 'job-003', name: 'Collect responses', priority: 3, status: 'processing', phaseId: 'ph-3', submittedAt: Date.now() - 200000, startedAt: 0 },
+    { id: 'job-004', name: 'Enrich with financial data', priority: 2, status: 'queued', phaseId: 'ph-4', submittedAt: Date.now() - 150000, startedAt: 0 },
+    { id: 'job-005', name: 'Calculate risk scores', priority: 4, status: 'queued', phaseId: 'ph-5', submittedAt: Date.now() - 100000, startedAt: 0 },
+  ];
+
+  private _errorCategories: { category: string; icon: string; count: number; autoRemediation: string }[] = [
+    { category: 'Questionnaire Overdue', icon: 'time', count: 8, autoRemediation: 'Send reminder and escalate to vendor PM' },
+    { category: 'SOC 2 Report Expired', icon: 'hash', count: 5, autoRemediation: 'Request updated SOC 2 Type II report' },
+    { category: 'Incomplete Response', icon: 'fs', count: 12, autoRemediation: 'Flag missing sections for follow-up' },
+    { category: 'Financial Instability Flag', icon: 'out', count: 3, autoRemediation: 'Review with legal and procurement' },
+    { category: 'Sub-Processor Unknown', icon: 'scan', count: 6, autoRemediation: 'Request full sub-processor disclosure' },
+    { category: 'Contract Clause Missing', icon: 'enc', count: 4, autoRemediation: 'Flag for legal review and amendment' },
+  ];
+
+  private _batchProcessingConfig: { enabled: boolean; chunkSize: number; parallelChunks: number; retryAttempts: number; retryDelayMs: number } = {
+    enabled: true, chunkSize: 50, parallelChunks: 3, retryAttempts: 3, retryDelayMs: 2000,
+  };
+
+  private _renderPipelineEngine(): any {
+    const phases = this._pipelinePhases;
+    const completed = phases.filter(p => p.status === 'completed').length;
+    const totalProgress = Math.round(phases.reduce((s, p) => s + p.progress, 0) / (phases.length || 1));
+    return html`
+      <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase">Pipeline Execution Engine</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm" style="background:#ef4444;color:#fff" @click=${() => this._handlePipelineAction('rollback')}>Rollback</button>
+            <button class="btn btn-sm" style="background:#22c55e;color:#fff" @click=${() => this._handlePipelineAction('resume')}>Resume</button>
+            <button class="btn btn-sm" style="background:#3b82f6;color:#fff" @click=${() => this._handlePipelineAction('pause')}>Pause</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="flex:1;height:8px;background:#0a0c10;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${totalProgress}%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:4px;transition:width 0.5s"></div>
+          </div>
+          <span style="font-size:11px;color:#e2e8f0;font-weight:600">${totalProgress}%</span>
+          <span style="font-size:10px;color:#6b7280">${completed}/${phases.length} phases</span>
+        </div>
+        ${phases.map((p, i) => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:${p.status === 'running' ? '#3b82f610' : '#0a0c10'};border-radius:4px;margin-bottom:3px;border-left:3px solid ${p.status === 'completed' ? '#22c55e' : p.status === 'running' ? '#3b82f6' : p.status === 'failed' ? '#ef4444' : '#374151'}">
+            <span style="font-size:10px;color:#6b7280;width:18px">P${i + 1}</span>
+            <span style="flex:1;font-size:11px;color:#e2e8f0">${p.name}</span>
+            <div style="width:80px;height:4px;background:#1f2937;border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${p.progress}%;background:${p.status === 'failed' ? '#ef4444' : '#8b5cf6'};border-radius:2px"></div>
+            </div>
+            <span style="font-size:9px;color:#6b7280;width:30px;text-align:right">${p.progress}%</span>
+            ${p.duration > 0 ? html`<span style="font-size:9px;color:#6b7280">${p.duration}s</span>` : html``}
+            <span class="tag" style="font-size:8px;background:${p.status === 'completed' ? '#22c55e20' : p.status === 'running' ? '#3b82f620' : p.status === 'failed' ? '#ef444420' : '#37415120'};color:${p.status === 'completed' ? '#22c55e' : p.status === 'running' ? '#3b82f6' : p.status === 'failed' ? '#ef4444' : '#6b7280'}">${p.status}</span>
+          </div>
+        `)}
+        <div style="margin-top:10px">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:6px;text-transform:uppercase;font-weight:600">Job Queue (${this._pipelineJobQueue.length} jobs)</div>
+          ${this._pipelineJobQueue.slice(0, 4).map(j => html`
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 8px;background:#0a0c10;border-radius:3px;margin-bottom:2px;font-size:10px">
+              <span style="color:#fbbf24;font-weight:700">P${j.priority}</span>
+              <span style="flex:1;color:#d1d5db">${j.name}</span>
+              <span class="tag" style="font-size:8px;color:${j.status === 'done' ? '#22c55e' : j.status === 'processing' ? '#3b82f6' : '#6b7280'}">${j.status}</span>
+            </div>
+          `)}
+        </div>
+      </div>
+      <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin-bottom:10px">Error Categories & Auto-Remediation</div>
+        ${this._errorCategories.map(e => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:3px">
+            <span style="font-size:14px">${e.icon === 'net' ? '🌐' : e.icon === 'proto' ? '📡' : e.icon === 'dns' ? '🔍' : e.icon === 'scan' ? '🔎' : e.icon === 'tls' ? '🔒' : e.icon === 'out' ? '📤' : e.icon === 'disk' ? '💿' : e.icon === 'hash' ? '#️⃣' : e.icon === 'enc' ? '🔐' : e.icon === 'fs' ? '📁' : e.icon === 'time' ? '⏰' : e.icon === 'aft' ? '🛡️' : '⚠️'}</span>
+            <div style="flex:1">
+              <div style="font-size:11px;color:#e2e8f0;font-weight:600">${e.category}</div>
+              <div style="font-size:9px;color:#6b7280">${e.autoRemediation}</div>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:#f87171">${e.count}</span>
+            <button class="btn btn-sm" style="font-size:9px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">Auto-Fix</button>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  private _handlePipelineAction(action: string) {
+    if (action === 'rollback') {
+      const runningPhase = this._pipelinePhases.find(p => p.status === 'running');
+      if (runningPhase) { runningPhase.status = 'rolled-back'; runningPhase.progress = 0; }
+    } else if (action === 'resume') {
+      const pending = this._pipelinePhases.find(p => p.status === 'pending');
+      if (pending) { pending.status = 'running'; pending.progress = 10; }
+    }
+  }
+
+  // === SECTION B: Advanced Data Grid ===
+  private _gridColumns: { key: string; label: string; width: number; frozen: boolean; editable: boolean; type: 'text' | 'progress' | 'badge' | 'sparkline'; sortable: boolean; resizable: boolean }[] = [
+    { key: 'id', label: 'ID', width: 70, frozen: true, editable: false, type: 'text', sortable: true, resizable: true },
+    { key: 'case', label: 'Case/Zone', width: 130, frozen: true, editable: true, type: 'text', sortable: true, resizable: true },
+    { key: 'finding', label: 'Finding', width: 240, frozen: false, editable: true, type: 'text', sortable: true, resizable: true },
+    { key: 'severity', label: 'Severity', width: 90, frozen: false, editable: false, type: 'badge', sortable: true, resizable: true },
+    { key: 'riskScore', label: 'Risk Score', width: 110, frozen: false, editable: false, type: 'progress', sortable: true, resizable: true },
+    { key: 'trend', label: '7-Day Trend', width: 100, frozen: false, editable: false, type: 'sparkline', sortable: false, resizable: true },
+    { key: 'status', label: 'Status', width: 100, frozen: false, editable: true, type: 'badge', sortable: true, resizable: true },
+    { key: 'assignee', label: 'Assignee', width: 120, frozen: false, editable: true, type: 'text', sortable: true, resizable: true },
+  ];
+
+  private _gridRows: Record<string, any>[] = [
+    { id: 'VR-001', case: 'Tier 1', finding: 'Cloud hosting provider SOC 2 gap', severity: 'high', riskScore: 78, trend: [60,63,66,70,73,76,78], status: 'in-review', assignee: 'GRC Team' },
+    { id: 'VR-002', case: 'Tier 2', finding: 'Payment processor PCI compliance expired', severity: 'critical', riskScore: 92, trend: [78,80,82,85,88,90,92], status: 'escalated', assignee: 'PCI Lead' },
+    { id: 'VR-003', case: 'Tier 1', finding: 'SaaS vendor with data residency concern', severity: 'high', riskScore: 82, trend: [62,65,68,72,75,78,82], status: 'open', assignee: 'Privacy Team' },
+    { id: 'VR-004', case: 'Tier 3', finding: 'Marketing tool with excessive permissions', severity: 'medium', riskScore: 55, trend: [35,38,42,45,48,52,55], status: 'in-review', assignee: 'IT Admin' },
+    { id: 'VR-005', case: 'Tier 2', finding: 'HR system vendor financial instability', severity: 'high', riskScore: 85, trend: [68,72,75,78,80,82,85], status: 'open', assignee: 'Procurement' },
+    { id: 'VR-006', case: 'Tier 1', finding: 'CDN provider incident response gap', severity: 'medium', riskScore: 62, trend: [45,48,52,55,58,60,62], status: 'mitigated', assignee: 'Infra Lead' },
+  ];
+
+  private _gridSelectedRows: Set<string> = new Set();
+  private _gridSortColumn: string = 'riskScore';
+  private _gridSortAsc: boolean = false;
+
+  private _renderAdvancedGrid(): any {
+    const cols = this._gridColumns;
+    const rows = [...this._gridRows].sort((a, b) => {
+      const av = a[this._gridSortColumn], bv = b[this._gridSortColumn];
+      if (typeof av === 'number') return this._gridSortAsc ? av - bv : bv - av;
+      return this._gridSortAsc ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    });
+    const frozenCols = cols.filter(c => c.frozen);
+    return html`
+      <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase">Vendor Risk Assessment Findings Grid</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-sm" style="font-size:9px" ?disabled=${this._gridSelectedRows.size === 0} @click=${() => {}}>Export Selected (${this._gridSelectedRows.size})</button>
+            <button class="btn btn-sm" style="font-size:9px" @click=${() => this._gridSelectedRows.clear()}>Clear Selection</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;border-radius:6px;border:1px solid #374151">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr style="background:#0a0c10">
+                <th style="padding:6px 8px;text-align:left;color:#6b7280;width:30px"><input type="checkbox" @change=${(e: any) => { rows.forEach(r => { if (e.target.checked) this._gridSelectedRows.add(r.id); else this._gridSelectedRows.delete(r.id); }); }} /></th>
+                ${cols.map(c => html`
+                  <th style="padding:6px 8px;text-align:left;color:#9ca3af;font-weight:600;min-width:${c.width}px;position:${c.frozen ? 'sticky' : 'static'};left:${c.frozen && frozenCols.indexOf(c) === 0 ? '30px' : c.frozen ? '90px' : 'auto'};z-index:2;background:#0a0c10;cursor:pointer;border-right:1px solid #1f2937" @click=${() => { if (c.sortable) { if (this._gridSortColumn === c.key) this._gridSortAsc = !this._gridSortAsc; else { this._gridSortColumn = c.key; this._gridSortAsc = true; } } }}>
+                    ${c.label} ${this._gridSortColumn === c.key ? (this._gridSortAsc ? '▲' : '▼') : ''}
+                  </th>
+                `)}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => html`
+                <tr style="background:${this._gridSelectedRows.has(r.id) ? '#3b82f610' : 'transparent'};border-bottom:1px solid #1f293710">
+                  <td style="padding:4px 8px;position:sticky;left:0;z-index:1;background:${this._gridSelectedRows.has(r.id) ? '#3b82f610' : '#1f2937'}"><input type="checkbox" .checked=${this._gridSelectedRows.has(r.id)} @change=${(e: any) => { if (e.target.checked) this._gridSelectedRows.add(r.id); else this._gridSelectedRows.delete(r.id); }} /></td>
+                  ${cols.map(c => html`<td style="padding:4px 8px;color:#d1d5db;${c.frozen ? 'position:sticky;z-index:1;background:' + (this._gridSelectedRows.has(r.id) ? '#3b82f610' : '#1f2937') + ';' : ''}${c.frozen && frozenCols.indexOf(c) === 0 ? 'left:30px;' : c.frozen ? 'left:90px;' : ''}">
+                    ${c.type === 'badge' ? html`<span class="tag" style="font-size:9px;background:${r[c.key] === 'critical' ? '#ef444420' : r[c.key] === 'high' ? '#f9731620' : r[c.key] === 'medium' ? '#fbbf2420' : r[c.key] === 'low' ? '#22c55e20' : r[c.key] === 'open' ? '#ef444420' : r[c.key] === 'in-progress' ? '#3b82f620' : r[c.key] === 'investigating' ? '#fbbf2420' : r[c.key] === 'confirmed' ? '#ef444420' : r[c.key] === 'analyzing' ? '#8b5cf620' : r[c.key] === 'escalated' ? '#f9731620' : r[c.key] === 'mitigated' ? '#22c55e20' : r[c.key] === 'active' ? '#3b82f620' : r[c.key] === 'completed' ? '#22c55e20' : '#37415120'};color:${r[c.key] === 'critical' ? '#f87171' : r[c.key] === 'high' ? '#fb923c' : r[c.key] === 'medium' ? '#fbbf24' : r[c.key] === 'low' ? '#34d399' : r[c.key] === 'open' ? '#f87171' : r[c.key] === 'in-progress' ? '#60a5fa' : r[c.key] === 'investigating' ? '#fbbf24' : r[c.key] === 'confirmed' ? '#f87171' : r[c.key] === 'analyzing' ? '#a78bfa' : r[c.key] === 'escalated' ? '#fb923c' : r[c.key] === 'mitigated' ? '#34d399' : r[c.key] === 'active' ? '#60a5fa' : r[c.key] === 'completed' ? '#34d399' : '#6b7280'}">${r[c.key]}</span>` :
+                      c.type === 'progress' ? html`<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#0a0c10;border-radius:3px;overflow:hidden"><div style="height:100%;width:${r[c.key]}%;background:${r[c.key] >= 80 ? '#ef4444' : r[c.key] >= 60 ? '#f97316' : '#22c55e'};border-radius:3px"></div></div><span style="font-size:10px;color:#9ca3af">${r[c.key]}</span></div>` :
+                      c.type === 'sparkline' ? html`<svg width="80" height="24" viewBox="0 0 80 24">${r[c.key].map((v: number, i: number, arr: number[]) => { const x = (i / (arr.length - 1)) * 80; const y = 24 - (v / 100) * 24; return i === 0 ? '' : '<line x1="' + ((i - 1) / (arr.length - 1) * 80) + '" y1="' + (24 - (arr[i - 1] / 100) * 24) + '" x2="' + x + '" y2="' + y + '" stroke="#3b82f6" stroke-width="1.5"/>'; }).join('')}</svg>` :
+                      r[c.key]}
+                  </td>`)}
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  // === SECTION C: Domain-Specific Calculators ===
+  private _roiScenarios: { name: string; investment: number; annualSavings: number; riskReduction: number; paybackMonths: number; npv: number }[] = [
+    { name: 'TPRM Platform License', investment: 95000, annualSavings: 78000, riskReduction: 28, paybackMonths: 15, npv: 205000 },
+    { name: 'Continuous Monitoring Service', investment: 65000, annualSavings: 55000, riskReduction: 22, paybackMonths: 15, npv: 140000 },
+    { name: 'Automated Questionnaire System', investment: 45000, annualSavings: 38000, riskReduction: 18, paybackMonths: 15, npv: 95000 },
+    { name: 'Vendor Onboarding Automation', investment: 55000, annualSavings: 42000, riskReduction: 20, paybackMonths: 16, npv: 110000 },
+  ];
+
+  private _riskQuantMetrics: { metric: string; sle: number; aro: number; ale: number; mitigationCost: number; roi: number }[] = [
+    { metric: 'Vendor Data Breach', sle: 4800000, aro: 0.1, ale: 480000, mitigationCost: 120000, roi: 300 },
+    { metric: 'Service Disruption', sle: 2200000, aro: 0.15, ale: 330000, mitigationCost: 65000, roi: 408 },
+    { metric: 'Regulatory Fine via Vendor', sle: 3500000, aro: 0.06, ale: 210000, mitigationCost: 85000, roi: 147 },
+  ];
+
+  private _renderDomainCalculators(): any {
+    return html`
+      <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin-bottom:10px">ROI Scenario Modeling</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:10px">
+          ${this._roiScenarios.map(s => html`
+            <div style="background:#0a0c10;border-radius:6px;padding:10px;border-left:3px solid ${s.npv > 300000 ? '#22c55e' : s.npv > 150000 ? '#3b82f6' : '#fbbf24'}">
+              <div style="font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:6px">${s.name}</div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:2px"><span>Investment</span><span style="color:#e2e8f0">$${(s.investment / 1000).toFixed(0)}K</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:2px"><span>Annual Savings</span><span style="color:#22c55e">$${(s.annualSavings / 1000).toFixed(0)}K</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:2px"><span>Risk Reduction</span><span style="color:#3b82f6">${s.riskReduction}%</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:2px"><span>Payback</span><span style="color:#fbbf24">${s.paybackMonths}mo</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-top:4px"><span style="color:#9ca3af">NPV (3yr)</span><span style="color:#22c55e">$${(s.npv / 1000).toFixed(0)}K</span></div>
+            </div>
+          `)}
+        </div>
+      </div>
+      <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin-bottom:10px">Risk Quantification (ALE/SLE/ARO)</div>
+        ${this._riskQuantMetrics.map(r => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:3px;font-size:10px">
+            <span style="flex:1;color:#e2e8f0;font-weight:600">${r.metric}</span>
+            <span style="color:#6b7280;width:70px;text-align:right">SLE: $${(r.sle / 1000000).toFixed(1)}M</span>
+            <span style="color:#6b7280;width:50px;text-align:right">ARO: ${r.aro}</span>
+            <span style="color:#f87171;font-weight:700;width:80px;text-align:right">ALE: $${(r.ale / 1000).toFixed(0)}K</span>
+            <span style="color:#22c55e;width:70px;text-align:right">ROI: ${r.roi}%</span>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // === SECTION D: Integration Points ===
+  private _apiEndpoints: { name: string; url: string; method: string; headers: Record<string, string>; lastStatus: number; lastCalled: string }[] = [
+    { name: 'Vendor Registry', url: '/api/v1/vendors', method: 'GET', headers: { 'Content-Type': 'application/json' }, lastStatus: 200, lastCalled: '5m ago' },
+    { name: 'Risk Scorer', url: '/api/v1/vendors/score', method: 'POST', headers: { 'Content-Type': 'application/json' }, lastStatus: 200, lastCalled: '15m ago' },
+    { name: 'Questionnaire Engine', url: '/api/v1/vendors/questionnaire', method: 'POST', headers: { 'Content-Type': 'application/json' }, lastStatus: 200, lastCalled: '30m ago' },
+  ];
+
+  private _webhookConfigs: { id: string; name: string; url: string; events: string[]; active: boolean; lastTriggered: string }[] = [
+    { id: 'wh-1', name: 'High Risk Vendor Alert', url: 'https://hooks.slack.com/T00/B00/vr1', events: ['high_risk_vendor'], active: true, lastTriggered: '1h ago' },
+    { id: 'wh-2', name: 'Assessment Due', url: 'https://hooks.slack.com/T00/B00/vr2', events: ['assessment_due'], active: true, lastTriggered: '6h ago' },
+    { id: 'wh-3', name: 'SOC 2 Expiry Warning', url: 'https://hooks.slack.com/T00/B00/vr3', events: ['cert_expiry'], active: true, lastTriggered: '1d ago' },
+  ];
+
+  private _dataSourceConnections: { name: string; type: string; status: 'connected' | 'disconnected' | 'error'; lastSync: string; records: number }[] = [
+    { name: 'Vendor Database', type: 'PostgreSQL', status: 'connected', lastSync: '5m ago', records: 342 },
+    { name: 'Financial Data Feed', type: 'Bloomberg', status: 'connected', lastSync: '1h ago', records: 342 },
+    { name: 'Threat Intelligence', type: 'Recorded Future', status: 'connected', lastSync: '30m ago', records: 156 },
+  ];
+
+  private _renderIntegrationPoints(): any {
+    return html`
+      <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin-bottom:10px">API Endpoints</div>
+        ${this._apiEndpoints.map(ep => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:3px;font-size:10px">
+            <span class="tag" style="background:${ep.method === 'GET' ? '#22c55e20' : '#3b82f620'};color:${ep.method === 'GET' ? '#22c55e' : '#60a5fa'}">${ep.method}</span>
+            <span style="flex:1;color:#d1d5db;font-family:monospace;font-size:9px">${ep.url}</span>
+            <span style="color:${ep.lastStatus < 300 ? '#22c55e' : '#f87171'}">${ep.lastStatus}</span>
+            <span style="color:#6b7280">${ep.lastCalled}</span>
+            <button class="btn btn-sm" style="font-size:8px">Test</button>
+          </div>
+        `)}
+        <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin:12px 0 8px">Webhooks</div>
+        ${this._webhookConfigs.map(wh => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:3px;font-size:10px">
+            <span style="color:${wh.active ? '#22c55e' : '#6b7280'}">${wh.active ? '●' : '○'}</span>
+            <span style="flex:1;color:#e2e8f0">${wh.name}</span>
+            <span style="color:#6b7280">${wh.events.length} events</span>
+            <span style="color:#6b7280">${wh.lastTriggered}</span>
+            <button class="btn btn-sm" style="font-size:8px">Edit</button>
+          </div>
+        `)}
+        <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin:12px 0 8px">Data Sources</div>
+        ${this._dataSourceConnections.map(ds => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:3px;font-size:10px">
+            <span style="color:${ds.status === 'connected' ? '#22c55e' : ds.status === 'error' ? '#f87171' : '#6b7280'}">${ds.status === 'connected' ? '●' : '○'}</span>
+            <span style="flex:1;color:#e2e8f0">${ds.name}</span>
+            <span class="tag" style="font-size:8px">${ds.type}</span>
+            <span style="color:#6b7280">${ds.records.toLocaleString()} records</span>
+            <span style="color:#6b7280">${ds.lastSync}</span>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // === SECTION E: Documentation & Help ===
+  private _showHelpOverlay = false;
+  private _glossaryTerms: { term: string; definition: string }[] = [
+    { term: 'TPRM', definition: 'Third-Party Risk Management lifecycle for vendor oversight' },
+    { term: 'SOC 2', definition: 'Service Organization Control audit report for service providers' },
+    { term: 'DPA', definition: 'Data Processing Agreement governing data handling by vendors' },
+    { term: 'Tier Classification', definition: 'Risk-based categorization of vendor criticality' },
+    { term: 'Sub-Processor', definition: 'Third party that a vendor uses to process data' },
+    { term: 'Due Diligence', definition: 'Comprehensive investigation before engaging a vendor' },
+    { term: 'Right to Audit', definition: 'Contractual right to inspect vendor security practices' },
+    { term: 'NDA', definition: 'Non-Disclosure Agreement protecting shared confidential data' },
+    { term: 'MSA', definition: 'Master Service Agreement defining vendor relationship terms' },
+    { term: 'BAA', definition: 'Business Associate Agreement for HIPAA-covered data sharing' },
+    { term: 'Residual Risk', definition: 'Risk remaining after controls and mitigations applied' },
+    { term: 'Fourth Party', definition: 'Sub-contractor or sub-processor used by a vendor' },
+  ];
+
+  private _keyboardShortcuts: { key: string; action: string }[] = [
+    { key: 'Ctrl+Enter', action: 'Execute pipeline' },
+    { key: 'Ctrl+Shift+E', action: 'Export current data' },
+    { key: 'Ctrl+Shift+R', action: 'Rollback last phase' },
+    { key: 'Ctrl+F', action: 'Find in grid' },
+    { key: 'Ctrl+A', action: 'Select all rows' },
+    { key: 'Escape', action: 'Close overlay' },
+    { key: 'Ctrl+1-5', action: 'Switch tabs' },
+    { key: 'Ctrl+H', action: 'Toggle help' },
+  ];
+
+  private _renderDocumentationHelp(): any {
+    if (!this._showHelpOverlay) return html``;
+    return html`
+      <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center" @click=${() => { this._showHelpOverlay = false; }}>
+        <div style="background:#1f2937;border-radius:12px;padding:20px;max-width:600px;max-height:80vh;overflow-y:auto;width:90%" @click=${(e: any) => e.stopPropagation()}>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <span style="font-weight:700;font-size:16px;color:#e2e8f0">Help & Documentation</span>
+            <button style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:18px" @click=${() => { this._showHelpOverlay = false; }}>✕</button>
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px">Domain Glossary</div>
+            ${this._glossaryTerms.map(g => html`
+              <div style="padding:6px 0;border-bottom:1px solid #374151">
+                <span style="font-weight:600;color:#60a5fa;font-size:11px">${g.term}</span>
+                <p style="font-size:10px;color:#9ca3af;margin:2px 0 0;line-height:1.4">${g.definition}</p>
+              </div>
+            `)}
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px">Keyboard Shortcuts</div>
+            ${this._keyboardShortcuts.map(s => html`
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px">
+                <span style="color:#d1d5db">${s.action}</span>
+                <kbd style="background:#0a0c10;padding:2px 8px;border-radius:4px;color:#60a5fa;font-family:monospace;font-size:10px;border:1px solid #374151">${s.key}</kbd>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>`;
+  }
+
+}
