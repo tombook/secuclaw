@@ -1726,23 +1726,212 @@ export class ScRoleCommander extends LitElement {
     `;
   }
 
-  // ─── CISO: Executive Dashboard — logical reorganization ───
-  // Layout logic:
-  //   Row 1: Core Metrics (5 cards, full width)
-  //   Row 2: Decision Matrix | SKILL Viz + Framework Coverage (merged as "Security Posture")
-  //   Row 3: Legal Compliance | Dark Side Attack Simulation
-  //   Row 4: Tool Guide (full width, compact cards)
+  // ─── CISO 安全态势总览: 统一 Decision + Legal + Framework + SKILL Viz ───
+  // 信息层级: 决策中心(综合) → 合规与覆盖(详情) → 可视化分析(图表)
+  private _renderCisoPosturePanel() {
+    const decCfg = ScRoleCommander.DECISION_CONFIGS['ciso'];
+    const legalCfg = ScRoleCommander.LEGAL_CONFIGS['ciso'];
+    const fwCfg = ScRoleCommander.FRAMEWORK_COVERAGE['ciso'];
+    const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
+
+    // ── Decision Radar SVG ──
+    const radarSvg = decCfg ? (() => {
+      const size = 120, cx = size / 2, cy = size / 2, r = size / 2 - 16;
+      const n = decCfg.axes.length;
+      const angleStep = (2 * Math.PI) / n;
+      const startAngle = -Math.PI / 2;
+      const gridLevels = [0.25, 0.5, 0.75, 1.0];
+      const gridPaths = gridLevels.map(level => {
+        const pts = Array.from({ length: n }, (_, i) => {
+          const a = startAngle + i * angleStep;
+          return `${(cx + r * level * Math.cos(a)).toFixed(1)},${(cy + r * level * Math.sin(a)).toFixed(1)}`;
+        }).join(' ');
+        return `<polygon points="${pts}" fill="none" stroke="#1e293b" stroke-width="0.5"/>`;
+      }).join('');
+      const axisLines = Array.from({ length: n }, (_, i) => {
+        const a = startAngle + i * angleStep;
+        return `<line x1="${cx}" y1="${cy}" x2="${(cx + r * Math.cos(a)).toFixed(1)}" y2="${(cy + r * Math.sin(a)).toFixed(1)}" stroke="#1e293b" stroke-width="0.5"/>`;
+      }).join('');
+      const dataPoints = decCfg.axes.map((ax, i) => {
+        const a = startAngle + i * angleStep;
+        const v = (ax.value / ax.max) * r;
+        return { x: cx + v * Math.cos(a), y: cy + v * Math.sin(a), label: ax.label, color: ax.color, value: ax.value };
+      });
+      const dataPoly = dataPoints.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      const labelsSvg = dataPoints.map(p => {
+        const a = decCfg.axes.indexOf(decCfg.axes.find(a => a.label === p.label));
+        const ang = startAngle + a * angleStep;
+        const lx = cx + (r + 14) * Math.cos(ang);
+        const ly = cy + (r + 14) * Math.sin(ang);
+        return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${p.color}" font-size="9" font-weight="600">${p.label}</text>`;
+      }).join('');
+      const valueLabels = dataPoints.map(p => {
+        const a = decCfg.axes.indexOf(decCfg.axes.find(ax => ax.label === p.label));
+        const ang = startAngle + a * angleStep;
+        const lx = cx + (r + 26) * Math.cos(ang);
+        const ly = cy + (r + 26) * Math.sin(ang);
+        return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${p.color}" font-size="11" font-weight="700">${p.value}</text>`;
+      }).join('');
+      return `<svg width="${size + 52}" height="${size + 52}" viewBox="-26 -26 ${size + 52} ${size + 52}" xmlns="http://www.w3.org/2000/svg">
+        ${gridPaths}${axisLines}
+        <polygon points="${dataPoly}" fill="#3b82f618" stroke="#3b82f6" stroke-width="1.5"/>
+        ${dataPoints.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${p.color}" stroke="#0f172a" stroke-width="1"/>`).join('')}
+        ${labelsSvg}${valueLabels}
+      </svg>`;
+    })() : '';
+
+    // ── SKILL Viz charts (CISO specific: gauge, bar, donut, line) ──
+    const vizData = [
+      { type: 'gauge', title: '企业风险仪表盘', data: { gauge: { value: 44, max: 100, color: '#fbbf24', label: '/100 风险' } } },
+      { type: 'bar', title: '合规状态追踪', data: { bars: [
+        { label: 'GDPR', value: 93, color: '#22c55e' },
+        { label: 'PIPL', value: 87, color: '#3b82f6' },
+        { label: '网安法', value: 91, color: '#22c55e' },
+        { label: 'ISO27001', value: 85, color: '#f59e0b' },
+      ] } },
+      { type: 'donut', title: '安全预算分配', data: { donut: [
+        { label: '技术', value: 45, color: '#3b82f6' },
+        { label: '合规', value: 25, color: '#8b5cf6' },
+        { label: '运营', value: 20, color: '#06b6d4' },
+        { label: '培训', value: 10, color: '#22c55e' },
+      ] } },
+      { type: 'line', title: '安全事件趋势', data: { lines: [
+        { label: '严重', values: [2,3,1,4,2,3,1,2,3,2,1,2], color: '#ef4444' },
+        { label: '高危', values: [5,4,6,5,7,4,6,5,4,6,5,4], color: '#fd7e14' },
+        { label: '中危', values: [12,15,13,14,16,14,13,15,14,13,15,14], color: '#ffc107' },
+      ] } },
+    ];
+
+    const renderVizChart = (item: typeof vizData[0]) => {
+      const d = item.data as any;
+      let chart: unknown;
+      if (item.type === 'gauge' && d.gauge) chart = this._gauge(d.gauge.value, d.gauge.max, d.gauge.label, 90, d.gauge.color);
+      else if (item.type === 'bar' && d.bars) chart = this._multiBarChart(d.bars, 180, 50);
+      else if (item.type === 'donut' && d.donut) chart = this._donut(d.donut, 70);
+      else if (item.type === 'line' && d.lines) chart = this._lineChart(d.lines, 200, 55);
+      else chart = nothing;
+      return chart;
+    };
+
+    const mitrePct = fwCfg ? Math.round((fwCfg.mitre.covered / fwCfg.mitre.total) * 100) : 0;
+    const scfPct = fwCfg ? Math.round((fwCfg.scf.covered / fwCfg.scf.total) * 100) : 0;
+
+    return html`
+      <div class="ciso-panel" style="padding:0;">
+        <!-- ═══ Section A: 决策中心 ═══ -->
+        <div style="padding:16px 20px 12px;display:flex;gap:16px;align-items:flex-start;">
+          <div style="flex:0 0 auto;">${unsafeSVG(radarSvg)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+              <span>🧭 CISO 决策中心</span>
+            </div>
+            ${decCfg ? html`
+              <div style="font-size:11px;color:${decCfg.recColor};padding:6px 10px;background:${decCfg.recColor}11;border-radius:6px;border-left:3px solid ${decCfg.recColor};margin-bottom:10px;line-height:1.5;">
+                💡 ${decCfg.recommendation}
+              </div>
+              ${decCfg.pendingDecisions.length > 0 ? html`
+                <div style="font-size:10px;color:#64748b;margin-bottom:4px;">待决策事项</div>
+                ${decCfg.pendingDecisions.map(d => html`
+                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #1e293b11;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
+                    <span style="font-size:11px;color:#e2e8f0;font-weight:500;">${d.title}</span>
+                    <span style="font-size:10px;color:#64748b;">${d.impact}</span>
+                    <span style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:4px;background:${d.urgencyColor}15;color:${d.urgencyColor};font-weight:600;">${d.urgency}</span>
+                  </div>
+                `)}
+              ` : nothing}
+            ` : nothing}
+          </div>
+        </div>
+
+        <div class="ciso-divider" style="margin:0 20px;"></div>
+
+        <!-- ═══ Section B: 合规与覆盖 ═══ -->
+        <div style="padding:12px 20px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;">
+          <!-- Legal 合规 -->
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#a78bfa;margin-bottom:8px;">⚖️ 合规状态</div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;">
+              ${legalCfg ? legalCfg.regulations.map(r => html`
+                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 6px;text-align:center;">
+                  <div style="font-size:9px;color:#64748b;margin-bottom:2px;">${statusIcon[r.status] || ''} ${r.name}</div>
+                  <div style="font-size:20px;font-weight:700;color:${r.color};line-height:1.2;">${r.score}%</div>
+                </div>
+              `) : nothing}
+            </div>
+            ${legalCfg && legalCfg.riskItems.length > 0 ? html`
+              <div style="border-top:1px solid #1e293b;padding-top:6px;">
+                ${legalCfg.riskItems.map(ri => html`
+                  <div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0;">
+                    <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
+                    <span style="color:#e2e8f0;">${ri.desc}</span>
+                    <span style="margin-left:auto;font-size:9px;padding:1px 6px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;">${ri.level}</span>
+                  </div>
+                `)}
+              </div>
+            ` : nothing}
+          </div>
+
+          <!-- Framework 覆盖度 -->
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 框架覆盖度</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
+                <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
+                <div style="font-size:24px;font-weight:700;color:#ef4444;line-height:1;">${mitrePct}%</div>
+                <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg?.mitre.covered}/${fwCfg?.mitre.total} techniques</div>
+                ${fwCfg ? html`
+                  <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                    ${fwCfg.mitre.topGaps.map(g => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444411;color:#f87171;border:1px solid #ef444422;">${g}</span>`)}
+                  </div>
+                ` : nothing}
+              </div>
+              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
+                <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
+                <div style="font-size:24px;font-weight:700;color:#3b82f6;line-height:1;">${scfPct}%</div>
+                <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg?.scf.covered}/${fwCfg?.scf.total} controls</div>
+                ${fwCfg ? html`
+                  <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                    ${fwCfg.scf.topGaps.map(g => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#3b82f611;color:#60a5fa;border:1px solid #3b82f622;">${g}</span>`)}
+                  </div>
+                ` : nothing}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ciso-divider" style="margin:0 20px;"></div>
+
+        <!-- ═══ Section C: 可视化分析 ═══ -->
+        <div style="padding:12px 20px 16px;">
+          <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;">📊 可视化分析</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+            ${vizData.map(item => html`
+              <div style="background:#080e1a;border:1px solid #1e293b;border-radius:8px;padding:10px;">
+                <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">${item.title}</div>
+                <div style="display:flex;justify-content:center;">${renderVizChart(item)}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── CISO: Executive Dashboard ───
   // Layout:
-  //   Row 0: 核心指标 (5 metric cards) + 工具使用指南 (inline, no collapse)
-  //   Row 1: 决策矩阵 (1/3) | Legal 合规 (1/3) | 安全框架覆盖度 (1/3) — all expanded
-  //   Row 2: SKILL 可视化 (1/2) | Dark Side 攻防模拟 (1/2) — all expanded
+  //   Row 0: 核心指标 + 工具列表 (full width panel)
+  //   Row 1: 安全态势总览 (unified: Decision + Legal + Framework + SKILL Viz)
+  //   Row 2: Dark Side 攻防模拟 (full width)
   //   Row 3: 事件时间轴 (full width)
-  // No collapsing, no hiding — all content always visible.
+  //
+  // 信息层级: 决策中心(综合) → 合规与覆盖(详情) → 可视化分析(图表)
+  // 关系: Legal + Framework → Decision Matrix(综合) → SKILL Viz(可视化)
   private _renderCisoDashboard() {
     return html`
       <div class="ciso-role-grid">
 
-        <!-- ── Row 0: Executive Metrics + Tool Guide (merged info strip) ── -->
+        <!-- ── Row 0: Executive Metrics + Tool Guide ── -->
         <div class="ciso-panel">
           <div class="ciso-panel-header">
             <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
@@ -1756,34 +1945,18 @@ export class ScRoleCommander extends LitElement {
               this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
             ]}
           </div>
-          <!-- Tool Guide: always visible, inline -->
           ${this._renderToolGuideInline('ciso')}
         </div>
 
-        <!-- ── Row 1: Decision Matrix | Legal | Framework (3-col assessment row) ── -->
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">
-            ${this._renderDecisionZone('ciso')}
-          </div>
-          <div class="ciso-panel">
-            ${this._renderLegalZone('ciso')}
-          </div>
-          <div class="ciso-panel">
-            ${this._renderFrameworkZoneExpanded('ciso')}
-          </div>
+        <!-- ── Row 1: 安全态势总览 (Decision + Legal + Framework + SKILL Viz unified) ── -->
+        ${this._renderCisoPosturePanel()}
+
+        <!-- ── Row 2: Dark Side Simulation (full width) ── -->
+        <div class="ciso-panel">
+          ${this._renderDarkZone('ciso')}
         </div>
 
-        <!-- ── Row 2: SKILL Visualization | Dark Side Simulation (2-col ops row) ── -->
-        <div class="ciso-zone-ops">
-          <div class="ciso-panel">
-            ${this._renderVizZone('ciso')}
-          </div>
-          <div class="ciso-panel">
-            ${this._renderDarkZone('ciso')}
-          </div>
-        </div>
-
-        <!-- ── Row 3: Event Timeline (full width — many items) ── -->
+        <!-- ── Row 3: Event Timeline (full width) ── -->
         <div class="ciso-panel">
           ${this._renderTimelineZone('ciso')}
         </div>
