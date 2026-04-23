@@ -1425,6 +1425,170 @@ export class ScPhishingCampaign extends LitElement {
       </div>`;
   }
 
+  // === Security Chaos Engineering Data ===
+  @state() private _chaosExpResults = [
+    { expId: 'CE-001', runDate: '2026-01-10', duration: '14min', steadyStatePassed: true,
+      recoveryTime: '3.2min', blastActual: 0.65, notes: 'Load balancer failover worked correctly' },
+    { expId: 'CE-001', runDate: '2026-01-15', duration: '15min', steadyStatePassed: true,
+      recoveryTime: '2.8min', blastActual: 0.60, notes: 'Circuit breaker triggered as expected' },
+    { expId: 'CE-002', runDate: '2026-01-12', duration: '28min', steadyStatePassed: true,
+      recoveryTime: '0.5min', blastActual: 0.35, notes: 'Rate limiting prevented cascading failure' },
+    { expId: 'CE-003', runDate: '2026-01-18', duration: '12min', steadyStatePassed: false,
+      recoveryTime: '8.5min', blastActual: 0.90, notes: 'Fallback auth was slow, needs optimization' },
+    { expId: 'CE-004', runDate: '2026-01-20', duration: '22min', steadyStatePassed: false,
+      recoveryTime: '15.0min', blastActual: 0.95, notes: 'Queue overflow caused data loss' },
+    { expId: 'CE-005', runDate: '2026-01-22', duration: '5min', steadyStatePassed: true,
+      recoveryTime: '0.2min', blastActual: 0.25, notes: 'Auto-renewal triggered within 30 seconds' },
+  ] as any[];
+  @state() private _chaosFailureCatalog = [
+    { mode: 'Connection Reset Storm', type: 'network', frequency: 0.3, impact: 'high',
+      detection: 'Connection timeout spike > 50/min', recovery: 'Automatic retry with backoff' },
+    { mode: 'Memory Leak Cascade', type: 'resource', frequency: 0.15, impact: 'critical',
+      detection: 'Heap usage growth rate > 100MB/min', recovery: 'Pod restart with liveness probe' },
+    { mode: 'DNS Cache Poisoning', type: 'network', frequency: 0.05, impact: 'critical',
+      detection: 'DNS query response time > 5s', recovery: 'Flush DNS cache + fallback resolver' },
+    { mode: 'Thread Starvation', type: 'resource', frequency: 0.25, impact: 'high',
+      detection: 'Thread pool queue depth > 1000', recovery: 'Increase pool size + reject overload' },
+    { mode: 'Certificate Chain Break', type: 'crypto', frequency: 0.1, impact: 'high',
+      detection: 'TLS handshake failure rate > 1%', recovery: 'Rotate intermediate certificate' },
+    { mode: 'API Schema Drift', type: 'api', frequency: 0.2, impact: 'medium',
+      detection: 'Schema validation error rate > 0.1%', recovery: 'Rollback API deployment' },
+  ] as any[];
+  @state() private _chaosSafetyChecks = [
+    { check: 'Production blast radius limit', threshold: '20% of traffic', enabled: true },
+    { check: 'Auto-rollback on error rate > 5%', threshold: '5% error rate', enabled: true },
+    { check: 'Maximum experiment duration', threshold: '30 minutes', enabled: true },
+    { check: 'Business hours exclusion', threshold: '09:00-17:00 local time', enabled: true },
+    { check: 'Critical service protection', threshold: 'Payment + Auth services', enabled: true },
+  ] as any[];
+
+  private _calculateExperimentImpact(results: any[]): { avgRecovery: number; passRate: number; avgBlast: number } {
+    if (results.length === 0) return { avgRecovery: 0, passRate: 0, avgBlast: 0 };
+    const avgRecovery = results.reduce((s: number, r: any) => s + parseFloat(r.recoveryTime), 0) / results.length;
+    const passRate = results.filter(r => r.steadyStatePassed).length / results.length;
+    const avgBlast = results.reduce((s: number, r: any) => s + r.blastActual, 0) / results.length;
+    return { avgRecovery: Math.round(avgRecovery * 10) / 10, passRate: Math.round(passRate * 100), avgBlast: Math.round(avgBlast * 100) / 100 };
+  }
+
+  private _assessChaosReadiness(): { score: number; gaps: string[] } {
+    const gaps: string[] = [];
+    let score = 100;
+    if (this._chaosSafetyChecks.some(c => !c.enabled)) { score -= 20; gaps.push('Some safety checks disabled'); }
+    if (this._chaosExpResults.length < 3) { score -= 15; gaps.push('Insufficient experiment history'); }
+    const failedExps = this._chaosExpResults.filter(r => !r.steadyStatePassed);
+    if (failedExps.length > 2) { score -= 25; gaps.push('Multiple recent experiment failures'); }
+    return { score: Math.max(0, score), gaps };
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+
+
 
   render() {
     const campaign = this._activeCampaign;

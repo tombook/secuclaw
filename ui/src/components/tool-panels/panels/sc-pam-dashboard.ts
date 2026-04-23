@@ -1813,6 +1813,204 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+  // === Compliance Evidence Extended ===
+  @state() private _evidenceAuditTrail = [
+    { timestamp: '2026-01-22T14:30:00Z', action: 'evidence_uploaded', control: 'EC-001', item: 'EV-001c', user: 'jane.smith', note: 'Uploaded Q4 access review report' },
+    { timestamp: '2026-01-21T10:15:00Z', action: 'evidence_approved', control: 'EC-003', item: 'EV-003c', user: 'john.doe', note: 'SIEM coverage report approved' },
+    { timestamp: '2026-01-20T16:45:00Z', action: 'evidence_expired', control: 'EC-004', item: 'EV-004b', user: 'system', note: 'Password policy compliance evidence expired' },
+    { timestamp: '2026-01-19T09:00:00Z', action: 'control_review', control: 'EC-002', item: null, user: 'security.team', note: 'Quarterly control review initiated' },
+    { timestamp: '2026-01-18T11:30:00Z', action: 'evidence_rejected', control: 'EC-002', item: 'EV-002c', user: 'auditor', note: 'Encryption evidence insufficient - need full disk encryption proof' },
+  ] as any[];
+  @state() private _evidenceCollectionChecklist = [
+    { control: 'EC-001', items: [
+      { name: 'Policy Document', collected: true, method: 'manual', frequency: 'annual' },
+      { name: 'RBAC Config', collected: true, method: 'automated', frequency: 'quarterly' },
+      { name: 'Access Review', collected: true, method: 'manual', frequency: 'quarterly' },
+      { name: 'MFA Evidence', collected: true, method: 'automated', frequency: 'quarterly' },
+      { name: 'Privileged Access Logs', collected: true, method: 'automated', frequency: 'monthly' },
+    ]},
+    { control: 'EC-002', items: [
+      { name: 'TLS Scan Report', collected: true, method: 'automated', frequency: 'monthly' },
+      { name: 'Certificate Inventory', collected: true, method: 'automated', frequency: 'quarterly' },
+      { name: 'Encryption at Rest', collected: false, method: 'automated', frequency: 'quarterly' },
+    ]},
+  ] as any[];
+  @state() private _evidenceReviewWorkflow = [
+    { stage: 'Collection', status: 'active', assignee: 'Security Analyst', sla: '5 business days' },
+    { stage: 'Validation', status: 'pending', assignee: 'Security Lead', sla: '3 business days' },
+    { stage: 'Approval', status: 'pending', assignee: 'CISO', sla: '2 business days' },
+    { stage: 'Archival', status: 'pending', assignee: 'Compliance Team', sla: '1 business day' },
+  ] as any[];
+
+  private _calculateEvidenceHealthScore(): number {
+    let totalItems = 0;
+    let validItems = 0;
+    for (const ctrl of this._evidenceControls) {
+      for (const ev of ctrl.evidenceItems) {
+        totalItems++;
+        if (ev.status === 'approved') validItems++;
+      }
+    }
+    if (totalItems === 0) return 100;
+    return Math.round((validItems / totalItems) * 100);
+  }
+
+  private _getEvidenceOverdueControls(): any[] {
+    const now = new Date();
+    return this._evidenceControls.filter(c => new Date(c.nextReview) < now && c.status !== 'compliant');
+  }
+
+  private _generateEvidenceGapReport(): { missing: number; expired: number; pending: number; atRisk: number } {
+    let missing = 0, expired = 0, pending = 0, atRisk = 0;
+    for (const ctrl of this._evidenceControls) {
+      for (const ev of ctrl.evidenceItems) {
+        if (ev.status === 'missing') missing++;
+        else if (ev.status === 'expired') expired++;
+        else if (ev.status === 'pending') pending++;
+        const daysToExpiry = (new Date(ev.expiry).getTime() - Date.now()) / 86400000;
+        if (daysToExpiry > 0 && daysToExpiry <= 30) atRisk++;
+      }
+    }
+    return { missing, expired, pending, atRisk };
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+  // === Security Posture Monitoring Extended Module ===
+@state() private _spmNetworkSegment1 = { id: "NET-001", name: "Segment 1", subnet: "10.1.0.0/16", criticality: "high", deviceCount: 13, vulnerabilityCount: 3, lastScan: "2026-01-11" } as any;
+@state() private _spmComplianceCheck2 = { id: "CHK-002", control: "Control 2", framework: "NIST 800-53", status: "pass", evidenceCount: 5, lastAudit: "2026-01-07", nextAudit: "2026-04-07", findings: 2 } as any;
+@state() private _spmRiskRegister3 = { id: "RSK-003", title: "Risk Item 3", category: "operational", likelihood: 4, impact: "high", owner: "Security Team", status: "open", mitigation: "Implement compensating controls", targetDate: "2026-02-13" } as any;
+  private _spmAnalyzeSegment3(): { riskLevel: string; recommendations: string[] } {
+    const segment = this._spmNetworkSegment3;
+    const vulnDensity = segment.vulnerabilityCount / Math.max(1, segment.deviceCount);
+    const riskLevel = vulnDensity > 0.5 ? "critical" : vulnDensity > 0.2 ? "high" : vulnDensity > 0.1 ? "medium" : "low";
+    const recommendations: string[] = [];
+    if (vulnDensity > 0.2) recommendations.push("Prioritize patching for segment " + segment.name);
+    if (segment.criticality === "high" && segment.vulnerabilityCount > 5) recommendations.push("Increase scan frequency for critical segment");
+    if (segment.lastScan < "2026-01-15") recommendations.push("Schedule immediate scan - last scan overdue");
+    return { riskLevel, recommendations };
+  }
+@state() private _spmAssetGroup4 = { id: "AST-004", name: "Asset Group 4", type: "infrastructure", criticality: "medium", assetCount: 40, complianceScore: 88, riskScore: 72, lastAssessment: "2026-01-09" } as any;
+@state() private _spmNetworkSegment5 = { id: "NET-005", name: "Segment 5", subnet: "10.5.0.0/16", criticality: "high", deviceCount: 25, vulnerabilityCount: 7, lastScan: "2026-01-15" } as any;
+@state() private _spmComplianceCheck6 = { id: "CHK-006", control: "Control 6", framework: "NIST 800-53", status: "pass", evidenceCount: 4, lastAudit: "2026-01-11", nextAudit: "2026-04-11", findings: 2 } as any;
+  private _spmValidateCheck6(): { valid: boolean; issues: string[] } {
+    const check = this._spmComplianceCheck6;
+    const issues: string[] = [];
+    if (check.evidenceCount < 3) issues.push("Insufficient evidence for " + check.control);
+    if (check.status === "fail") issues.push("Control failure requires remediation");
+    const daysToNextAudit = Math.max(0, (new Date(check.nextAudit).getTime() - Date.now()) / 86400000);
+    if (daysToNextAudit < 30) issues.push("Upcoming audit in " + Math.round(daysToNextAudit) + " days");
+    return { valid: issues.length === 0, issues };
+  }
+
+
+
+
 
   render() {    if (this._pamRules.length === 0) { this._initPamRules(); this._initPamCvss(); this._runPamAnomalyDetection(); this._generatePamPredictions(); this._initPamApprovals(); this._initPamActivity(); this._initPamNotifications(); }
 

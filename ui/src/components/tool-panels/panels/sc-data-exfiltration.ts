@@ -1867,6 +1867,277 @@ export class ScDataExfiltration extends LitElement {
       </div>`;
   }
 
+  // === Security Chaos Engineering Module ===
+  @state() private _chaosExperiments = [
+    { id: 'CE-001', name: 'Network Partition Injection', type: 'network', severity: 'high',
+      blastRadius: 0.7, duration: '15min', hypothesis: 'Service degradation < 10%',
+      status: 'ready', lastRun: null, successRate: 0.85, category: 'resilience' },
+    { id: 'CE-002', name: 'API Rate Limit Removal', type: 'api', severity: 'medium',
+      blastRadius: 0.4, duration: '30min', hypothesis: 'No cascading failures',
+      status: 'ready', lastRun: null, successRate: 0.92, category: 'availability' },
+    { id: 'CE-003', name: 'Auth Service Latency Spike', type: 'latency', severity: 'high',
+      blastRadius: 0.8, duration: '10min', hypothesis: 'Fallback auth works within 5s',
+      status: 'ready', lastRun: null, successRate: 0.78, category: 'authentication' },
+    { id: 'CE-004', name: 'Database Connection Pool Exhaustion', type: 'resource', severity: 'critical',
+      blastRadius: 0.9, duration: '20min', hypothesis: 'Queue-based requests succeed',
+      status: 'ready', lastRun: null, successRate: 0.65, category: 'data' },
+    { id: 'CE-005', name: 'Certificate Expiry Simulation', type: 'crypto', severity: 'medium',
+      blastRadius: 0.3, duration: '5min', hypothesis: 'Auto-renewal triggers correctly',
+      status: 'ready', lastRun: null, successRate: 0.95, category: 'compliance' },
+    { id: 'CE-006', name: 'DNS Resolution Failure', type: 'network', severity: 'high',
+      blastRadius: 0.6, duration: '10min', hypothesis: 'DNS failover activates < 2s',
+      status: 'ready', lastRun: null, successRate: 0.88, category: 'infrastructure' },
+    { id: 'CE-007', name: 'Memory Pressure Injection', type: 'resource', severity: 'critical',
+      blastRadius: 0.85, duration: '25min', hypothesis: 'OOM killer targets correct process',
+      status: 'ready', lastRun: null, successRate: 0.72, category: 'availability' },
+    { id: 'CE-008', name: 'Firewall Rule Randomization', type: 'network', severity: 'medium',
+      blastRadius: 0.5, duration: '15min', hypothesis: 'Default-deny policy holds',
+      status: 'ready', lastRun: null, successRate: 0.91, category: 'perimeter' },
+  ] as any[];
+  @state() private _chaosSelectedExperiment: string | null = null;
+  @state() private _chaosTimeline: any[] = [];
+  @state() private _chaosResilienceScore = 78.5;
+  @state() private _chaosSteadyStateMetrics = { rps: 5000, latencyP99: 120, errorRate: 0.02, cpuUsage: 45 };
+
+  private _calculateBlastRadius(exp: any): number {
+    const factors = { network: 0.3, api: 0.2, latency: 0.25, resource: 0.35, crypto: 0.15 };
+    const base = factors[exp.type] || 0.2;
+    const severityMult = { low: 0.5, medium: 0.75, high: 1.0, critical: 1.5 };
+    return Math.min(1.0, base * (severityMult[exp.severity] || 1.0) * exp.blastRadius);
+  }
+
+  private _validateSteadyState(metrics: any): { passed: boolean; details: string[] } {
+    const details: string[] = [];
+    const checks = [
+      { name: 'RPS', actual: metrics.rps, threshold: 4000, op: 'gte' },
+      { name: 'P99 Latency', actual: metrics.latencyP99, threshold: 200, op: 'lte' },
+      { name: 'Error Rate', actual: metrics.errorRate, threshold: 0.05, op: 'lte' },
+      { name: 'CPU Usage', actual: metrics.cpuUsage, threshold: 80, op: 'lte' },
+    ];
+    let allPassed = true;
+    for (const check of checks) {
+      const passed = check.op === 'gte' ? check.actual >= check.threshold : check.actual <= check.threshold;
+      details.push(check.name + ': ' + (passed ? 'PASS' : 'FAIL') + ' (' + check.actual + ' vs ' + check.threshold + ')');
+      if (!passed) allPassed = false;
+    }
+    return { passed: allPassed, details };
+  }
+
+  private _analyzeFailureModes(exp: any): string[] {
+    const modes: Record<string, string[]> = {
+      network: ['Connection timeout', 'Packet loss cascade', 'DNS lookup failure', 'Load balancer failover'],
+      api: ['Rate limit bypass', 'Schema validation failure', 'Payload size overflow', 'Timeout cascade'],
+      latency: ['Thread pool exhaustion', 'Circuit breaker trigger', 'Cache stampede', 'Queue buildup'],
+      resource: ['OOM kill', 'GC pressure spike', 'File descriptor exhaustion', 'Socket leak'],
+      crypto: ['Handshake timeout', 'Certificate chain break', 'HSM unavailability', 'Key rotation failure'],
+    };
+    return modes[exp.type] || ['Unknown failure mode', 'Unexpected behavior', 'Service degradation', 'Data corruption'];
+  }
+
+  private _trackResilienceScore(results: any[]): void {
+    if (results.length === 0) return;
+    const recentResults = results.slice(-10);
+    const avgSuccess = recentResults.reduce((sum: number, r: any) => sum + (r.passed ? 1 : 0), 0) / recentResults.length;
+    this._chaosResilienceScore = Math.round(avgSuccess * 100 * 10) / 10;
+  }
+
+  private _generateChaosTimeline(experimentId: string): any[] {
+    const phases = [
+      { phase: 'Initiation', duration: '0-30s', status: 'pending', description: 'Injecting chaos condition' },
+      { phase: 'Steady State', duration: '30s-2min', status: 'monitoring', description: 'Observing system behavior' },
+      { phase: 'Degradation', duration: '2min-5min', status: 'active', description: 'Measuring impact metrics' },
+      { phase: 'Recovery', duration: '5min-10min', status: 'recovering', description: 'Testing recovery mechanisms' },
+      { phase: 'Validation', duration: '10min-15min', status: 'validating', description: 'Verifying steady state restored' },
+      { phase: 'Cleanup', duration: '15min+', status: 'complete', description: 'Removing chaos injection artifacts' },
+    ];
+    return phases.map((p, i) => ({ ...p, experimentId, order: i, timestamp: new Date().toISOString() }));
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+  // === Security Posture Monitoring Extended Module ===
+@state() private _spmNetworkSegment1 = { id: "NET-001", name: "Segment 1", subnet: "10.1.0.0/16", criticality: "high", deviceCount: 13, vulnerabilityCount: 3, lastScan: "2026-01-11" } as any;
+@state() private _spmComplianceCheck2 = { id: "CHK-002", control: "Control 2", framework: "NIST 800-53", status: "pass", evidenceCount: 5, lastAudit: "2026-01-07", nextAudit: "2026-04-07", findings: 2 } as any;
+@state() private _spmRiskRegister3 = { id: "RSK-003", title: "Risk Item 3", category: "operational", likelihood: 4, impact: "high", owner: "Security Team", status: "open", mitigation: "Implement compensating controls", targetDate: "2026-02-13" } as any;
+  private _spmAnalyzeSegment3(): { riskLevel: string; recommendations: string[] } {
+    const segment = this._spmNetworkSegment3;
+    const vulnDensity = segment.vulnerabilityCount / Math.max(1, segment.deviceCount);
+    const riskLevel = vulnDensity > 0.5 ? "critical" : vulnDensity > 0.2 ? "high" : vulnDensity > 0.1 ? "medium" : "low";
+    const recommendations: string[] = [];
+    if (vulnDensity > 0.2) recommendations.push("Prioritize patching for segment " + segment.name);
+    if (segment.criticality === "high" && segment.vulnerabilityCount > 5) recommendations.push("Increase scan frequency for critical segment");
+    if (segment.lastScan < "2026-01-15") recommendations.push("Schedule immediate scan - last scan overdue");
+    return { riskLevel, recommendations };
+  }
+@state() private _spmAssetGroup4 = { id: "AST-004", name: "Asset Group 4", type: "infrastructure", criticality: "medium", assetCount: 40, complianceScore: 88, riskScore: 72, lastAssessment: "2026-01-09" } as any;
+@state() private _spmNetworkSegment5 = { id: "NET-005", name: "Segment 5", subnet: "10.5.0.0/16", criticality: "high", deviceCount: 25, vulnerabilityCount: 7, lastScan: "2026-01-15" } as any;
+@state() private _spmComplianceCheck6 = { id: "CHK-006", control: "Control 6", framework: "NIST 800-53", status: "pass", evidenceCount: 4, lastAudit: "2026-01-11", nextAudit: "2026-04-11", findings: 2 } as any;
+  private _spmValidateCheck6(): { valid: boolean; issues: string[] } {
+    const check = this._spmComplianceCheck6;
+    const issues: string[] = [];
+    if (check.evidenceCount < 3) issues.push("Insufficient evidence for " + check.control);
+    if (check.status === "fail") issues.push("Control failure requires remediation");
+    const daysToNextAudit = Math.max(0, (new Date(check.nextAudit).getTime() - Date.now()) / 86400000);
+    if (daysToNextAudit < 30) issues.push("Upcoming audit in " + Math.round(daysToNextAudit) + " days");
+    return { valid: issues.length === 0, issues };
+  }
+@state() private _spmRiskRegister7 = { id: "RSK-007", title: "Risk Item 7", category: "operational", likelihood: 3, impact: "high", owner: "Security Team", status: "open", mitigation: "Implement compensating controls", targetDate: "2026-02-17" } as any;
+@state() private _spmAssetGroup8 = { id: "AST-008", name: "Asset Group 8", type: "infrastructure", criticality: "medium", assetCount: 60, complianceScore: 76, riskScore: 64, lastAssessment: "2026-01-13" } as any;
+@state() private _spmNetworkSegment9 = { id: "NET-009", name: "Segment 9", subnet: "10.9.0.0/16", criticality: "high", deviceCount: 37, vulnerabilityCount: 3, lastScan: "2026-01-19" } as any;
+  private _spmAssessRisk9(): { score: number; trend: string; action: string } {
+    const risk = this._spmRiskRegister9;
+    const baseScore = risk.likelihood * 20;
+    const score = Math.min(100, baseScore + (risk.status === "open" ? 10 : 0));
+    const trend = risk.status === "mitigated" ? "improving" : risk.status === "accepted" ? "stable" : "worsening";
+    const action = score > 60 ? "Escalate to leadership" : score > 30 ? "Assign remediation owner" : "Monitor and review";
+    return { score, trend, action };
+  }
+@state() private _spmComplianceCheck10 = { id: "CHK-010", control: "Control 10", framework: "NIST 800-53", status: "pass", evidenceCount: 3, lastAudit: "2026-01-15", nextAudit: "2026-04-15", findings: 2 } as any;
+@state() private _spmRiskRegister11 = { id: "RSK-011", title: "Risk Item 11", category: "operational", likelihood: 2, impact: "high", owner: "Security Team", status: "open", mitigation: "Implement compensating controls", targetDate: "2026-02-21" } as any;
+@state() private _spmAssetGroup12 = { id: "AST-012", name: "Asset Group 12", type: "infrastructure", criticality: "medium", assetCount: 80, complianceScore: 64, riskScore: 56, lastAssessment: "2026-01-17" } as any;
+  private _spmEvaluateAssetGroup12(): { posture: string; priority: number; gaps: string[] } {
+    const group = this._spmAssetGroup12;
+    const posture = group.complianceScore > 90 ? "strong" : group.complianceScore > 70 ? "adequate" : group.complianceScore > 50 ? "weak" : "critical";
+    const priority = 100 - group.complianceScore + (group.criticality === "high" ? 20 : 0);
+    const gaps: string[] = [];
+    if (group.riskScore > 70) gaps.push("High risk score detected for " + group.name);
+    if (group.complianceScore < 80) gaps.push("Compliance score below threshold for " + group.name);
+    return { posture, priority, gaps };
+  }
+@state() private _spmNetworkSegment13 = { id: "NET-013", name: "Segment 13", subnet: "10.13.0.0/16", criticality: "high", deviceCount: 49, vulnerabilityCount: 7, lastScan: "2026-01-23" } as any;
+@state() private _spmComplianceCheck14 = { id: "CHK-014", control: "Control 14", framework: "NIST 800-53", status: "pass", evidenceCount: 7, lastAudit: "2026-01-19", nextAudit: "2026-04-19", findings: 2 } as any;
+@state() private _spmRiskRegister15 = { id: "RSK-015", title: "Risk Item 15", category: "operational", likelihood: 1, impact: "high", owner: "Security Team", status: "open", mitigation: "Implement compensating controls", targetDate: "2026-02-25" } as any;
+  private _spmAnalyzeSegment15(): { riskLevel: string; recommendations: string[] } {
+    const segment = this._spmNetworkSegment15;
+    const vulnDensity = segment.vulnerabilityCount / Math.max(1, segment.deviceCount);
+    const riskLevel = vulnDensity > 0.5 ? "critical" : vulnDensity > 0.2 ? "high" : vulnDensity > 0.1 ? "medium" : "low";
+    const recommendations: string[] = [];
+    if (vulnDensity > 0.2) recommendations.push("Prioritize patching for segment " + segment.name);
+    if (segment.criticality === "high" && segment.vulnerabilityCount > 5) recommendations.push("Increase scan frequency for critical segment");
+    if (segment.lastScan < "2026-01-15") recommendations.push("Schedule immediate scan - last scan overdue");
+    return { riskLevel, recommendations };
+  }
+@state() private _spmAssetGroup16 = { id: "AST-016", name: "Asset Group 16", type: "infrastructure", criticality: "medium", assetCount: 100, complianceScore: 92, riskScore: 48, lastAssessment: "2026-01-21" } as any;
+@state() private _spmNetworkSegment17 = { id: "NET-017", name: "Segment 17", subnet: "10.17.0.0/16", criticality: "high", deviceCount: 61, vulnerabilityCount: 3, lastScan: "2026-01-27" } as any;
+@state() private _spmComplianceCheck18 = { id: "CHK-018", control: "Control 18", framework: "NIST 800-53", status: "pass", evidenceCount: 6, lastAudit: "2026-01-08", nextAudit: "2026-04-23", findings: 2 } as any;
+  private _spmValidateCheck18(): { valid: boolean; issues: string[] } {
+    const check = this._spmComplianceCheck18;
+    const issues: string[] = [];
+    if (check.evidenceCount < 3) issues.push("Insufficient evidence for " + check.control);
+    if (check.status === "fail") issues.push("Control failure requires remediation");
+    const daysToNextAudit = Math.max(0, (new Date(check.nextAudit).getTime() - Date.now()) / 86400000);
+    if (daysToNextAudit < 30) issues.push("Upcoming audit in " + Math.round(daysToNextAudit) + " days");
+    return { valid: issues.length === 0, issues };
+  }
+
+
+
+
 
 
   render() {

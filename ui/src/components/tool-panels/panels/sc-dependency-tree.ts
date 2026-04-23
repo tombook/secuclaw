@@ -1813,6 +1813,187 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+  // === Compliance Evidence Manager Module ===
+  @state() private _evidenceControls = [
+    { id: 'EC-001', control: 'AC-01 Access Control Policy', framework: 'NIST 800-53',
+      status: 'compliant', evidenceCount: 5, lastReview: '2026-01-10', nextReview: '2026-04-10',
+      evidenceItems: [
+        { id: 'EV-001a', name: 'Access Control Policy Document', type: 'document', status: 'approved', expiry: '2027-01-10' },
+        { id: 'EV-001b', name: 'RBAC Configuration Export', type: 'config', status: 'approved', expiry: '2026-04-10' },
+        { id: 'EV-001c', name: 'Access Review Report Q4', type: 'report', status: 'pending', expiry: '2026-04-10' },
+        { id: 'EV-001d', name: 'MFA Enrollment Evidence', type: 'screenshot', status: 'approved', expiry: '2026-07-10' },
+        { id: 'EV-001e', name: 'Privileged Access Log Sample', type: 'log', status: 'approved', expiry: '2026-04-10' },
+      ] as any[] },
+    { id: 'EC-002', control: 'SC-08 Transmission Protection', framework: 'NIST 800-53',
+      status: 'partial', evidenceCount: 3, lastReview: '2026-01-05', nextReview: '2026-04-05',
+      evidenceItems: [
+        { id: 'EV-002a', name: 'TLS Configuration Scan Report', type: 'report', status: 'approved', expiry: '2026-04-05' },
+        { id: 'EV-002b', name: 'Certificate Inventory', type: 'document', status: 'approved', expiry: '2026-04-05' },
+        { id: 'EV-002c', name: 'Encryption-at-Rest Evidence', type: 'config', status: 'missing', expiry: '2026-04-05' },
+      ] as any[] },
+    { id: 'EC-003', control: 'AU-02 Audit Logging', framework: 'NIST 800-53',
+      status: 'compliant', evidenceCount: 4, lastReview: '2026-01-12', nextReview: '2026-04-12',
+      evidenceItems: [
+        { id: 'EV-003a', name: 'Audit Log Policy', type: 'document', status: 'approved', expiry: '2027-01-12' },
+        { id: 'EV-003b', name: 'Log Retention Configuration', type: 'config', status: 'approved', expiry: '2026-04-12' },
+        { id: 'EV-003c', name: 'SIEM Coverage Report', type: 'report', status: 'approved', expiry: '2026-04-12' },
+        { id: 'EV-003d', name: 'Log Integrity Verification', type: 'report', status: 'pending', expiry: '2026-04-12' },
+      ] as any[] },
+    { id: 'EC-004', control: 'IA-05 Identification/Auth', framework: 'NIST 800-53',
+      status: 'non-compliant', evidenceCount: 2, lastReview: '2025-12-15', nextReview: '2026-03-15',
+      evidenceItems: [
+        { id: 'EV-004a', name: 'MFA Deployment Report', type: 'report', status: 'approved', expiry: '2026-03-15' },
+        { id: 'EV-004b', name: 'Password Policy Compliance', type: 'report', status: 'expired', expiry: '2025-12-15' },
+      ] as any[] },
+    { id: 'EC-005', control: 'CM-03 Configuration Mgmt', framework: 'NIST 800-53',
+      status: 'compliant', evidenceCount: 4, lastReview: '2026-01-08', nextReview: '2026-04-08',
+      evidenceItems: [
+        { id: 'EV-005a', name: 'Baseline Config Documentation', type: 'document', status: 'approved', expiry: '2027-01-08' },
+        { id: 'EV-005b', name: 'Change Control Log', type: 'log', status: 'approved', expiry: '2026-04-08' },
+        { id: 'EV-005c', name: 'Configuration Drift Report', type: 'report', status: 'approved', expiry: '2026-04-08' },
+        { id: 'EV-005d', name: 'IaC Scan Results', type: 'report', status: 'pending', expiry: '2026-04-08' },
+      ] as any[] },
+  ] as any[];
+  @state() private _evidenceSelectedControl: string | null = null;
+  @state() private _crossFrameworkMapping = { 'NIST 800-53': ['ISO 27001', 'SOC 2', 'PCI DSS'], 'ISO 27001': ['NIST 800-53', 'SOC 2'], 'SOC 2': ['NIST 800-53', 'ISO 27001', 'PCI DSS'], 'PCI DSS': ['NIST 800-53', 'SOC 2'] } as Record<string, string[]>;
+
+  private _calculateEvidenceCompleteness(control: any): number {
+    if (!control.evidenceItems || control.evidenceItems.length === 0) return 0;
+    const approved = control.evidenceItems.filter((e: any) => e.status === 'approved').length;
+    return Math.round((approved / control.evidenceItems.length) * 100);
+  }
+
+  private _getExpiringEvidence(control: any, daysThreshold: number = 30): any[] {
+    const now = new Date();
+    const threshold = new Date(now.getTime() + daysThreshold * 86400000);
+    return control.evidenceItems.filter((e: any) => new Date(e.expiry) <= threshold && e.status !== 'expired');
+  }
+
+  private _mapCrossFramework(controlFramework: string): string[] {
+    return this._crossFrameworkMapping[controlFramework] || [];
+  }
+
+  private _getEvidenceGatheringStatus(): { automated: number; manual: number; missing: number } {
+    let automated = 0, manual = 0, missing = 0;
+    for (const ctrl of this._evidenceControls) {
+      for (const ev of ctrl.evidenceItems) {
+        if (ev.status === 'missing') missing++;
+        else if (ev.type === 'config' || ev.type === 'log') automated++;
+        else manual++;
+      }
+    }
+    return { automated, manual, missing };
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+
+
 
   render() {    if (this._deptRules.length === 0) { this._initDeptRules(); this._initDeptCvss(); this._runDeptAnomalyDetection(); this._generateDeptPredictions(); this._initDeptApprovals(); this._initDeptActivity(); this._initDeptNotifications(); }
 

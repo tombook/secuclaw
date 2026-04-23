@@ -1813,6 +1813,195 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+  // === Security Awareness Simulation Module ===
+  @state() private _awarenessCampaigns = [
+    { id: 'SC-001', name: 'Q1 Phishing Simulation', type: 'phishing', status: 'active',
+      sentCount: 2450, clickCount: 187, reportCount: 312, startDate: '2026-01-15',
+      template: 'Executive Wire Transfer Request', difficulty: 'medium', targetGroups: ['Finance', 'Executive', 'HR'] },
+    { id: 'SC-002', name: 'Social Engineering Voice Test', type: 'vishing', status: 'planned',
+      sentCount: 0, clickCount: 0, reportCount: 0, startDate: '2026-02-01',
+      template: 'IT Help Desk Password Reset', difficulty: 'hard', targetGroups: ['Engineering', 'Operations'] },
+    { id: 'SC-003', name: 'USB Drop Campaign', type: 'physical', status: 'completed',
+      sentCount: 50, clickCount: 8, reportCount: 12, startDate: '2025-11-20',
+      template: 'Labeled USB Drive - Salary Data', difficulty: 'easy', targetGroups: ['All Departments'] },
+    { id: 'SC-004', name: 'Spear Phishing - HR Benefits', type: 'phishing', status: 'active',
+      sentCount: 1800, clickCount: 95, reportCount: 420, startDate: '2026-01-22',
+      template: 'Open Enrollment Benefits Update', difficulty: 'medium', targetGroups: ['All Departments'] },
+    { id: 'SC-005', name: 'QR Code Badge Scanner', type: 'physical', status: 'planned',
+      sentCount: 0, clickCount: 0, reportCount: 0, startDate: '2026-03-01',
+      template: 'Fake Badge Scanner - Parking Garage', difficulty: 'hard', targetGroups: ['Facilities', 'Sales'] },
+    { id: 'SC-006', name: 'SMS Smishing Campaign', type: 'smishing', status: 'active',
+      sentCount: 3200, clickCount: 142, reportCount: 580, startDate: '2026-01-10',
+      template: 'Package Delivery Notification', difficulty: 'easy', targetGroups: ['All Departments'] },
+  ] as any[];
+  @state() private _awarenessTrainingModules = [
+    { id: 'TM-001', name: 'Phishing Recognition Basics', duration: '15min', completionRate: 0.87,
+      avgScore: 82, departmentScores: { Engineering: 89, Finance: 75, HR: 80, Sales: 71, Operations: 84 } },
+    { id: 'TM-002', name: 'Social Engineering Defense', duration: '25min', completionRate: 0.72,
+      avgScore: 78, departmentScores: { Engineering: 85, Finance: 82, HR: 76, Sales: 68, Operations: 79 } },
+    { id: 'TM-003', name: 'Physical Security Awareness', duration: '10min', completionRate: 0.91,
+      avgScore: 88, departmentScores: { Engineering: 92, Finance: 85, HR: 90, Sales: 83, Operations: 91 } },
+    { id: 'TM-004', name: 'Data Handling Best Practices', duration: '20min', completionRate: 0.65,
+      avgScore: 74, departmentScores: { Engineering: 80, Finance: 88, HR: 72, Sales: 65, Operations: 70 } },
+    { id: 'TM-005', name: 'Incident Reporting Procedures', duration: '12min', completionRate: 0.80,
+      avgScore: 85, departmentScores: { Engineering: 88, Finance: 90, HR: 82, Sales: 78, Operations: 86 } },
+  ] as any[];
+  @state() private _awarenessSelectedCampaign: string | null = null;
+
+  private _calculateClickThroughRate(campaign: any): number {
+    if (campaign.sentCount === 0) return 0;
+    return Math.round((campaign.clickCount / campaign.sentCount) * 10000) / 100;
+  }
+
+  private _calculateReportRate(campaign: any): number {
+    if (campaign.sentCount === 0) return 0;
+    return Math.round((campaign.reportCount / campaign.sentCount) * 10000) / 100;
+  }
+
+  private _rankDepartmentVulnerability(): any[] {
+    const deptScores: Record<string, number[]> = {};
+    for (const mod of this._awarenessTrainingModules) {
+      for (const [dept, score] of Object.entries(mod.departmentScores)) {
+        if (!deptScores[dept]) deptScores[dept] = [];
+        deptScores[dept].push(score as number);
+      }
+    }
+    return Object.entries(deptScores)
+      .map(([dept, scores]) => ({ department: dept, avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10, vulnerability: 'medium' }))
+      .sort((a, b) => a.avgScore - b.avgScore)
+      .map((d, i) => ({ ...d, vulnerability: i < 2 ? 'high' : i > 3 ? 'low' : 'medium' }));
+  }
+
+  private _calculateAwarenessROI(): { cost: number; avoidedLoss: number; roi: number } {
+    const trainingCost = 45000;
+    const phishingCost = 12000;
+    const totalCost = trainingCost + phishingCost;
+    const avgBreachCost = 4450000;
+    const riskReduction = 0.15;
+    const avoidedLoss = avgBreachCost * riskReduction;
+    const roi = Math.round(((avoidedLoss - totalCost) / totalCost) * 100);
+    return { cost: totalCost, avoidedLoss, roi };
+  }
+
+  private _buildSocialEngScenario(type: string): any {
+    const scenarios: Record<string, any> = {
+      phishing: { vector: 'Email', technique: 'Spear phishing with personalized content', target: 'Finance team', pretext: 'CEO urgent payment request', indicator: 'Mismatched sender domain, urgent tone, unusual request pattern', difficulty: 'Advanced' },
+      vishing: { vector: 'Phone', technique: 'Pretexting as IT support', target: 'Help desk', pretext: 'Password reset for executive account', indicator: 'Caller refuses to verify identity, asks for password directly', difficulty: 'Intermediate' },
+      smishing: { vector: 'SMS', technique: 'Urgency-based malicious link', target: 'All employees', pretext: 'Your account will be locked in 24 hours', indicator: 'Shortened URL, generic greeting, threat of consequence', difficulty: 'Basic' },
+      physical: { vector: 'Physical', technique: 'Tailgating + USB drop', target: 'Office entrance', pretext: 'Delivery person with package', indicator: 'No badge, avoids security desk, multiple entry attempts', difficulty: 'Advanced' },
+    };
+    return scenarios[type] || scenarios.phishing;
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+
+
 
   render() {    if (this._igRules.length === 0) { this._initIgRules(); this._initIgCvss(); this._runIgAnomalyDetection(); this._generateIgPredictions(); this._initIgApprovals(); this._initIgActivity(); this._initIgNotifications(); }
 

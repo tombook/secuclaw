@@ -1813,6 +1813,255 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+  // === Threat Modeling Automation Module ===
+  @state() private _threatModels = [
+    { id: 'TM-A001', name: 'Payment Processing System', version: '2.3', status: 'approved',
+      components: 24, dataFlows: 38, trustBoundaries: 6, threats: 45, mitigations: 42,
+      lastUpdated: '2026-01-15', riskScore: 72, owner: 'Security Architecture Team' },
+    { id: 'TM-A002', name: 'Customer Identity Platform', version: '1.8', status: 'review',
+      components: 18, dataFlows: 25, trustBoundaries: 4, threats: 32, mitigations: 28,
+      lastUpdated: '2026-01-10', riskScore: 85, owner: 'IAM Team' },
+    { id: 'TM-A003', name: 'API Gateway Layer', version: '3.1', status: 'approved',
+      components: 12, dataFlows: 20, trustBoundaries: 3, threats: 28, mitigations: 27,
+      lastUpdated: '2026-01-20', riskScore: 58, owner: 'Platform Engineering' },
+    { id: 'TM-A004', name: 'Data Analytics Pipeline', version: '1.2', status: 'draft',
+      components: 15, dataFlows: 30, trustBoundaries: 5, threats: 22, mitigations: 15,
+      lastUpdated: '2026-01-18', riskScore: 68, owner: 'Data Engineering' },
+    { id: 'TM-A005', name: 'Microservices Mesh', version: '2.0', status: 'review',
+      components: 42, dataFlows: 65, trustBoundaries: 8, threats: 58, mitigations: 48,
+      lastUpdated: '2026-01-22', riskScore: 91, owner: 'Cloud Infrastructure' },
+  ] as any[];
+  @state() private _threatPatternLibrary = [
+    { pattern: 'STRIDE-Spoofing', category: 'Authentication', severity: 'high',
+      applicableTo: ['web', 'api', 'mobile'], mitigation: 'MFA + Certificate Pinning' },
+    { pattern: 'STRIDE-Tampering', category: 'Integrity', severity: 'high',
+      applicableTo: ['data', 'api', 'file'], mitigation: 'Digital Signatures + HMAC' },
+    { pattern: 'STRIDE-Repudiation', category: 'Non-repudiation', severity: 'medium',
+      applicableTo: ['transaction', 'audit', 'log'], mitigation: 'Immutable Audit Trail' },
+    { pattern: 'STRIDE-InfoDisclosure', category: 'Confidentiality', severity: 'critical',
+      applicableTo: ['data', 'network', 'storage'], mitigation: 'Encryption at Rest + TLS' },
+    { pattern: 'STRIDE-DenialOfService', category: 'Availability', severity: 'high',
+      applicableTo: ['network', 'api', 'service'], mitigation: 'Rate Limiting + Circuit Breaker' },
+    { pattern: 'STRIDE-ElevationOfPrivilege', category: 'Authorization', severity: 'critical',
+      applicableTo: ['auth', 'admin', 'api'], mitigation: 'RBAC + Least Privilege' },
+    { pattern: 'CWE-89-SQLInjection', category: 'Injection', severity: 'critical',
+      applicableTo: ['database', 'api', 'web'], mitigation: 'Parameterized Queries + WAF' },
+    { pattern: 'CWE-79-XSS', category: 'Injection', severity: 'high',
+      applicableTo: ['web', 'browser', 'email'], mitigation: 'Output Encoding + CSP Headers' },
+    { pattern: 'CWE-22-PathTraversal', category: 'File System', severity: 'high',
+      applicableTo: ['file', 'storage', 'upload'], mitigation: 'Input Validation + Chroot' },
+    { pattern: 'CWE-261-WeakCrypto', category: 'Cryptography', severity: 'critical',
+      applicableTo: ['auth', 'data', 'communication'], mitigation: 'AES-256 + TLS 1.3' },
+  ] as any[];
+  @state() private _threatSelectedModel: string | null = null;
+  @state() private _threatSensitivityLevels = ['Public', 'Internal', 'Confidential', 'Restricted', 'Top Secret'] as string[];
+
+  private _detectTrustBoundaries(components: number, dataFlows: number): number {
+    return Math.max(1, Math.round(Math.sqrt(components * dataFlows) / 4));
+  }
+
+  private _classifyDataFlowSensitivity(flowType: string): string {
+    const mapping: Record<string, string> = {
+      'auth-token': 'Restricted', 'pii-data': 'Confidential', 'financial': 'Restricted',
+      'public-content': 'Public', 'internal-api': 'Internal', 'audit-log': 'Confidential',
+      'health-data': 'Restricted', 'session-state': 'Internal', 'config-data': 'Internal',
+    };
+    return mapping[flowType] || 'Internal';
+  }
+
+  private _matchThreatPatterns(componentType: string): any[] {
+    return this._threatPatternLibrary.filter(p => p.applicableTo.includes(componentType));
+  }
+
+  private _generateMitigationSuggestions(threatCount: number, mitigationCount: number): any[] {
+    const gap = threatCount - mitigationCount;
+    if (gap <= 0) return [{ priority: 'low', suggestion: 'All threats have mitigations. Schedule periodic review.' }];
+    const suggestions = [
+      { priority: 'critical', suggestion: `${gap} unmitigated threats require immediate attention` },
+      { priority: 'high', suggestion: 'Review threat model for completeness - missing mitigations detected' },
+      { priority: 'medium', suggestion: 'Consider automated threat detection for identified gaps' },
+    ];
+    return suggestions.slice(0, Math.min(gap, 3));
+  }
+
+  private _computeThreatModelDiff(before: any, after: any): any[] {
+    const changes: any[] = [];
+    if (before.components !== after.components) changes.push({ field: 'Components', before: before.components, after: after.components });
+    if (before.threats !== after.threats) changes.push({ field: 'Threats', before: before.threats, after: after.threats });
+    if (before.mitigations !== after.mitigations) changes.push({ field: 'Mitigations', before: before.mitigations, after: after.mitigations });
+    if (before.riskScore !== after.riskScore) changes.push({ field: 'Risk Score', before: before.riskScore, after: after.riskScore });
+    return changes;
+  }
+
+  private _renderThreatModelingSection(): TemplateResult {
+    const selected = this._threatModels.find(m => m.id === this._threatSelectedModel);
+    return html`
+      <div class="section-card">
+        <div class="section-header">
+          <h3>Threat Modeling Automation</h3>
+          <button class="btn btn-sm btn-primary" @click=${() => {}}>Generate New Model</button>
+        </div>
+        <div class="threat-model-grid">
+          <div class="model-list">
+            ${this._threatModels.map(m => html`
+              <div class="model-card ${this._threatSelectedModel === m.id ? 'selected' : ''}" @click=${() => { this._threatSelectedModel = m.id; }}>
+                <div class="model-header">
+                  <span class="model-id">${m.id}</span>
+                  <span class="status-badge ${m.status}">${m.status}</span>
+                </div>
+                <div class="model-name">${m.name}</div>
+                <div class="model-meta">
+                  <span>v${m.version}</span>
+                  <span>${m.components} components</span>
+                  <span>${m.threats} threats</span>
+                </div>
+                <div class="risk-bar"><div class="risk-fill" style="width: ${m.riskScore}%"></div><span>${m.riskScore}</span></div>
+              </div>
+            `)}
+          </div>
+          ${selected ? html`
+            <div class="threat-detail">
+              <h4>${selected.name} (v${selected.version})</h4>
+              <div class="detail-grid">
+                <div class="detail-item"><label>Trust Boundaries</label><span>${selected.trustBoundaries}</span></div>
+                <div class="detail-item"><label>Data Flows</label><span>${selected.dataFlows}</span></div>
+                <div class="detail-item"><label>Threats</label><span>${selected.threats}</span></div>
+                <div class="detail-item"><label>Mitigations</label><span>${selected.mitigations}</span></div>
+              </div>
+              <h5>Mitigation Suggestions</h5>
+              ${this._generateMitigationSuggestions(selected.threats, selected.mitigations).map(s => html`
+                <div class="suggestion-item ${s.priority}"><span class="priority-badge ${s.priority}">${s.priority}</span><span>${s.suggestion}</span></div>
+              `)}
+              <h5>Data Flow Sensitivity Classification</h5>
+              <div class="sensitivity-grid">
+                ${['auth-token', 'pii-data', 'financial', 'public-content', 'internal-api'].map(f => html`
+                  <div class="sensitivity-item">
+                    <span class="flow-type">${f}</span>
+                    <span class="sensitivity-level ${this._classifyDataFlowSensitivity(f).toLowerCase()}">${this._classifyDataFlowSensitivity(f)}</span>
+                  </div>
+                `)}
+              </div>
+              <h5>Threat Pattern Matches</h5>
+              <div class="pattern-matches">
+                ${this._threatPatternLibrary.slice(0, 6).map(p => html`
+                  <div class="pattern-match"><span class="pattern-name">${p.pattern}</span><span class="pattern-severity ${p.severity}">${p.severity}</span><span class="pattern-mitigation">${p.mitigation}</span></div>
+                `)}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>`;
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+
+
 
   render() {    if (this._caRules.length === 0) { this._initCaRules(); this._initCaCvss(); this._runCaAnomalyDetection(); this._generateCaPredictions(); this._initCaApprovals(); this._initCaActivity(); this._initCaNotifications(); }
 

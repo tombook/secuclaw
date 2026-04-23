@@ -1813,6 +1813,257 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+  // === Security Chaos Engineering Module ===
+  @state() private _chaosExperiments = [
+    { id: 'CE-001', name: 'Network Partition Injection', type: 'network', severity: 'high',
+      blastRadius: 0.7, duration: '15min', hypothesis: 'Service degradation < 10%',
+      status: 'ready', lastRun: null, successRate: 0.85, category: 'resilience' },
+    { id: 'CE-002', name: 'API Rate Limit Removal', type: 'api', severity: 'medium',
+      blastRadius: 0.4, duration: '30min', hypothesis: 'No cascading failures',
+      status: 'ready', lastRun: null, successRate: 0.92, category: 'availability' },
+    { id: 'CE-003', name: 'Auth Service Latency Spike', type: 'latency', severity: 'high',
+      blastRadius: 0.8, duration: '10min', hypothesis: 'Fallback auth works within 5s',
+      status: 'ready', lastRun: null, successRate: 0.78, category: 'authentication' },
+    { id: 'CE-004', name: 'Database Connection Pool Exhaustion', type: 'resource', severity: 'critical',
+      blastRadius: 0.9, duration: '20min', hypothesis: 'Queue-based requests succeed',
+      status: 'ready', lastRun: null, successRate: 0.65, category: 'data' },
+    { id: 'CE-005', name: 'Certificate Expiry Simulation', type: 'crypto', severity: 'medium',
+      blastRadius: 0.3, duration: '5min', hypothesis: 'Auto-renewal triggers correctly',
+      status: 'ready', lastRun: null, successRate: 0.95, category: 'compliance' },
+    { id: 'CE-006', name: 'DNS Resolution Failure', type: 'network', severity: 'high',
+      blastRadius: 0.6, duration: '10min', hypothesis: 'DNS failover activates < 2s',
+      status: 'ready', lastRun: null, successRate: 0.88, category: 'infrastructure' },
+    { id: 'CE-007', name: 'Memory Pressure Injection', type: 'resource', severity: 'critical',
+      blastRadius: 0.85, duration: '25min', hypothesis: 'OOM killer targets correct process',
+      status: 'ready', lastRun: null, successRate: 0.72, category: 'availability' },
+    { id: 'CE-008', name: 'Firewall Rule Randomization', type: 'network', severity: 'medium',
+      blastRadius: 0.5, duration: '15min', hypothesis: 'Default-deny policy holds',
+      status: 'ready', lastRun: null, successRate: 0.91, category: 'perimeter' },
+  ] as any[];
+  @state() private _chaosSelectedExperiment: string | null = null;
+  @state() private _chaosTimeline: any[] = [];
+  @state() private _chaosResilienceScore = 78.5;
+  @state() private _chaosSteadyStateMetrics = { rps: 5000, latencyP99: 120, errorRate: 0.02, cpuUsage: 45 };
+
+  private _calculateBlastRadius(exp: any): number {
+    const factors = { network: 0.3, api: 0.2, latency: 0.25, resource: 0.35, crypto: 0.15 };
+    const base = factors[exp.type] || 0.2;
+    const severityMult = { low: 0.5, medium: 0.75, high: 1.0, critical: 1.5 };
+    return Math.min(1.0, base * (severityMult[exp.severity] || 1.0) * exp.blastRadius);
+  }
+
+  private _validateSteadyState(metrics: any): { passed: boolean; details: string[] } {
+    const details: string[] = [];
+    const checks = [
+      { name: 'RPS', actual: metrics.rps, threshold: 4000, op: 'gte' },
+      { name: 'P99 Latency', actual: metrics.latencyP99, threshold: 200, op: 'lte' },
+      { name: 'Error Rate', actual: metrics.errorRate, threshold: 0.05, op: 'lte' },
+      { name: 'CPU Usage', actual: metrics.cpuUsage, threshold: 80, op: 'lte' },
+    ];
+    let allPassed = true;
+    for (const check of checks) {
+      const passed = check.op === 'gte' ? check.actual >= check.threshold : check.actual <= check.threshold;
+      details.push(`${check.name}: ${passed ? 'PASS' : 'FAIL'} (${check.actual} vs ${check.threshold})`);
+      if (!passed) allPassed = false;
+    }
+    return { passed: allPassed, details };
+  }
+
+  private _analyzeFailureModes(exp: any): string[] {
+    const modes: Record<string, string[]> = {
+      network: ['Connection timeout', 'Packet loss cascade', 'DNS lookup failure', 'Load balancer failover'],
+      api: ['Rate limit bypass', 'Schema validation failure', 'Payload size overflow', 'Timeout cascade'],
+      latency: ['Thread pool exhaustion', 'Circuit breaker trigger', 'Cache stampede', 'Queue buildup'],
+      resource: ['OOM kill', 'GC pressure spike', 'File descriptor exhaustion', 'Socket leak'],
+      crypto: ['Handshake timeout', 'Certificate chain break', 'HSM unavailability', 'Key rotation failure'],
+    };
+    return modes[exp.type] || ['Unknown failure mode', 'Unexpected behavior', 'Service degradation', 'Data corruption'];
+  }
+
+  private _trackResilienceScore(results: any[]): void {
+    if (results.length === 0) return;
+    const recentResults = results.slice(-10);
+    const avgSuccess = recentResults.reduce((sum: number, r: any) => sum + (r.passed ? 1 : 0), 0) / recentResults.length;
+    this._chaosResilienceScore = Math.round(avgSuccess * 100 * 10) / 10;
+  }
+
+  private _generateChaosTimeline(experimentId: string): any[] {
+    const phases = [
+      { phase: 'Initiation', duration: '0-30s', status: 'pending', description: 'Injecting chaos condition' },
+      { phase: 'Steady State', duration: '30s-2min', status: 'monitoring', description: 'Observing system behavior' },
+      { phase: 'Degradation', duration: '2min-5min', status: 'active', description: 'Measuring impact metrics' },
+      { phase: 'Recovery', duration: '5min-10min', status: 'recovering', description: 'Testing recovery mechanisms' },
+      { phase: 'Validation', duration: '10min-15min', status: 'validating', description: 'Verifying steady state restored' },
+      { phase: 'Cleanup', duration: '15min+', status: 'complete', description: 'Removing chaos injection artifacts' },
+    ];
+    return phases.map((p, i) => ({ ...p, experimentId, order: i, timestamp: new Date().toISOString() }));
+  }
+
+  private _renderChaosEngineeringSection(): TemplateResult {
+    const selected = this._chaosExperiments.find(e => e.id === this._chaosSelectedExperiment);
+    return html`
+      <div class="section-card">
+        <div class="section-header">
+          <h3>Security Chaos Engineering</h3>
+          <div class="header-actions">
+            <span class="metric-badge success">Resilience: ${this._chaosResilienceScore}%</span>
+            <button class="btn btn-sm btn-primary" @click=${() => { this._chaosTimeline = this._generateChaosTimeline(this._chaosSelectedExperiment || 'CE-001'); }}>Run Experiment</button>
+          </div>
+        </div>
+        <div class="chaos-grid">
+          <div class="chaos-catalog">
+            ${this._chaosExperiments.map(exp => html`
+              <div class="chaos-experiment-card ${this._chaosSelectedExperiment === exp.id ? 'selected' : ''}" @click=${() => { this._chaosSelectedExperiment = exp.id; }}>
+                <div class="exp-header">
+                  <span class="exp-id">${exp.id}</span>
+                  <span class="severity-badge ${exp.severity}">${exp.severity}</span>
+                </div>
+                <div class="exp-name">${exp.name}</div>
+                <div class="exp-meta">
+                  <span>Blast: ${Math.round(this._calculateBlastRadius(exp) * 100)}%</span>
+                  <span>Duration: ${exp.duration}</span>
+                  <span>Success: ${Math.round(exp.successRate * 100)}%</span>
+                </div>
+                <div class="exp-hypothesis">H: ${exp.hypothesis}</div>
+              </div>
+            `)}
+          </div>
+          ${selected ? html`
+            <div class="chaos-detail">
+              <h4>${selected.name} - Detail</h4>
+              <div class="detail-row"><span>Type:</span><span>${selected.type}</span></div>
+              <div class="detail-row"><span>Category:</span><span>${selected.category}</span></div>
+              <div class="detail-row"><span>Blast Radius:</span><span>${Math.round(this._calculateBlastRadius(selected) * 100)}%</span></div>
+              <div class="detail-row"><span>Failure Modes:</span>
+                <ul>${this._analyzeFailureModes(selected).map(m => html`<li>${m}</li>`)}</ul>
+              </div>
+              <h5>Steady State Validation</h5>
+              ${this._validateSteadyState(this._chaosSteadyStateMetrics).details.map(d => html`<div class="validation-item">${d}</div>`)}
+              ${this._chaosTimeline.length > 0 ? html`
+                <h5>Execution Timeline</h5>
+                <div class="timeline">${this._chaosTimeline.map(t => html`
+                  <div class="timeline-phase ${t.status}">
+                    <span class="phase-name">${t.phase}</span>
+                    <span class="phase-duration">${t.duration}</span>
+                    <span class="phase-desc">${t.description}</span>
+                  </div>
+                `)}</div>
+              ` : ''}
+            </div>
+          ` : ''}
+        </div>
+      </div>`;
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+
+
 
   render() {    if (this._asgRules.length === 0) { this._initAsgRules(); this._initAsgCvss(); this._runAsgAnomalyDetection(); this._generateAsgPredictions(); this._initAsgApprovals(); this._initAsgActivity(); this._initAsgNotifications(); }
 

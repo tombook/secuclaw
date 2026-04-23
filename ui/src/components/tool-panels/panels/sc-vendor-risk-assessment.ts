@@ -1515,6 +1515,249 @@ export class ScVendorRiskAssessment extends LitElement {
       </div>`;
   }
 
+  // === Extended Security Operations Analytics Module ===
+  @state() private _opsAnalyticsConfig = {
+    refreshInterval: 30000,
+    retentionDays: 90,
+    aggregationWindow: '1h',
+    anomalyThreshold: 2.5,
+    trendWindow: 7,
+    baselinePeriod: 30,
+  } as any;
+  @state() private _opsMetricDefinitions = [
+    { id: 'OM-001', name: 'Mean Time To Detect', unit: 'minutes', category: 'incident-response',
+      target: 15, current: 22, trend: 'improving', weight: 0.2, source: 'siem' },
+    { id: 'OM-002', name: 'Mean Time To Respond', unit: 'minutes', category: 'incident-response',
+      target: 30, current: 45, trend: 'stable', weight: 0.15, source: 'ticketing' },
+    { id: 'OM-003', name: 'Mean Time To Contain', unit: 'hours', category: 'incident-response',
+      target: 2, current: 3.5, trend: 'improving', weight: 0.2, source: 'soar' },
+    { id: 'OM-004', name: 'Mean Time To Recover', unit: 'hours', category: 'business-continuity',
+      target: 4, current: 6.2, trend: 'stable', weight: 0.15, source: 'monitoring' },
+    { id: 'OM-005', name: 'Vulnerability Remediation SLA', unit: 'days', category: 'vulnerability',
+      target: 30, current: 42, trend: 'worsening', weight: 0.15, source: 'vuln-mgmt' },
+    { id: 'OM-006', name: 'False Positive Rate', unit: 'percent', category: 'detection',
+      target: 5, current: 8.3, trend: 'improving', weight: 0.1, source: 'siem' },
+    { id: 'OM-007', name: 'Patch Coverage', unit: 'percent', category: 'patching',
+      target: 95, current: 88.5, trend: 'improving', weight: 0.05, source: 'endpoint' },
+  ] as any[];
+  @state() private _opsIncidentCategories = [
+    { category: 'Phishing', count: 142, severity: 'medium', mttr: 0.5, trend: -12,
+      topIndicators: ['Suspicious sender domain', 'Urgent language', 'Unexpected attachment'] },
+    { category: 'Malware', count: 38, severity: 'high', mttr: 4.2, trend: -8,
+      topIndicators: ['Unknown executable', 'Lateral movement', 'Data exfiltration attempt'] },
+    { category: 'Unauthorized Access', count: 25, severity: 'high', mttr: 2.1, trend: -15,
+      topIndicators: ['Anomalous login location', 'Privilege escalation', 'Off-hours access'] },
+    { category: 'Data Leak', count: 12, severity: 'critical', mttr: 8.5, trend: -5,
+      topIndicators: ['Large data transfer', 'Unusual destination', 'Encrypted traffic spike'] },
+    { category: 'DDoS', count: 8, severity: 'high', mttr: 1.2, trend: 3,
+      topIndicators: ['Traffic volume spike', 'Request pattern anomaly', 'GeoIP distribution'] },
+    { category: 'Insider Threat', count: 5, severity: 'critical', mttr: 24.0, trend: 0,
+      topIndicators: ['Access pattern deviation', 'Data access anomaly', 'Policy violation'] },
+  ] as any[];
+  @state() private _opsResponsePlaybooks = [
+    { id: 'PB-001', name: 'Phishing Response', triggers: ['phishing-email-detected'], steps: 12,
+      avgExecTime: '15min', successRate: 0.95, lastUsed: '2026-01-22', autoExec: true },
+    { id: 'PB-002', name: 'Malware Containment', triggers: ['malware-detected', 'ransomware-suspected'], steps: 18,
+      avgExecTime: '45min', successRate: 0.88, lastUsed: '2026-01-20', autoExec: false },
+    { id: 'PB-003', name: 'Data Breach Response', triggers: ['data-exfil-detected', 'breach-confirmed'], steps: 25,
+      avgExecTime: '4h', successRate: 0.72, lastUsed: '2026-01-15', autoExec: false },
+    { id: 'PB-004', name: 'DDoS Mitigation', triggers: ['ddos-attack-detected'], steps: 8,
+      avgExecTime: '10min', successRate: 0.92, lastUsed: '2026-01-18', autoExec: true },
+    { id: 'PB-005', name: 'Account Compromise', triggers: ['account-takeover', 'credential-leak'], steps: 15,
+      avgExecTime: '30min', successRate: 0.90, lastUsed: '2026-01-21', autoExec: true },
+  ] as any[];
+  @state() private _opsTeamPerformance = [
+    { team: 'SOC Tier 1', members: 8, activeAlerts: 15, resolvedToday: 42, avgHandleTime: '12min',
+      escalationRate: 0.15, satisfaction: 4.2 },
+    { team: 'SOC Tier 2', members: 5, activeAlerts: 8, resolvedToday: 18, avgHandleTime: '45min',
+      escalationRate: 0.08, satisfaction: 4.5 },
+    { team: 'Threat Hunt', members: 3, activeAlerts: 3, resolvedToday: 5, avgHandleTime: '2h',
+      escalationRate: 0.0, satisfaction: 4.7 },
+    { team: 'Incident Response', members: 4, activeAlerts: 2, resolvedToday: 3, avgHandleTime: '4h',
+      escalationRate: 0.25, satisfaction: 4.3 },
+  ] as any[];
+  @state() private _opsAutomationMetrics = {
+    totalAutomations: 47, activeAutomations: 38, successRate: 0.94, avgExecutionTime: '3.2s',
+    timeSavedDaily: '12.5h', errorRate: 0.03, lastFailure: '2026-01-19T08:30:00Z',
+    topAutomations: [
+      { name: 'Phishing Triage', executions: 1250, timeSaved: '4.2h/day' },
+      { name: 'Alert Enrichment', executions: 3800, timeSaved: '3.1h/day' },
+      { name: 'IOC Block Propagation', executions: 85, timeSaved: '2.8h/day' },
+      { name: 'User Notification', executions: 450, timeSaved: '1.5h/day' },
+    ],
+  } as any;
+
+  private _calculateOpsHealthScore(): number {
+    let score = 0;
+    for (const metric of this._opsMetricDefinitions) {
+      const ratio = metric.target / metric.current;
+      score += ratio * metric.weight * 100;
+    }
+    return Math.round(Math.min(100, score));
+  }
+
+  private _identifyMetricAnomalies(): any[] {
+    const anomalies: any[] = [];
+    for (const metric of this._opsMetricDefinitions) {
+      const deviation = Math.abs(metric.current - metric.target) / metric.target;
+      if (deviation > this._opsAnalyticsConfig.anomalyThreshold / 100) {
+        anomalies.push({ metric: metric.name, expected: metric.target, actual: metric.current, deviation: Math.round(deviation * 100) });
+      }
+    }
+    return anomalies;
+  }
+
+  private _calculateTeamWorkload(team: any): { utilization: number; risk: string } {
+    const maxAlertsPerMember = 8;
+    const utilization = Math.round((team.activeAlerts / (team.members * maxAlertsPerMember)) * 100);
+    const risk = utilization > 90 ? 'overloaded' : utilization > 70 ? 'high' : utilization > 40 ? 'normal' : 'underutilized';
+    return { utilization, risk };
+  }
+
+  private _predictIncidentVolume(): { nextWeek: number; nextMonth: number; confidence: number } {
+    const recentIncidents = this._opsIncidentCategories.reduce((s: number, c: any) => s + c.count, 0);
+    const avgWeeklyTrend = this._opsIncidentCategories.reduce((s: number, c: any) => s + c.trend, 0) / this._opsIncidentCategories.length;
+    const nextWeek = Math.round(recentIncidents * (1 + avgWeeklyTrend / 100));
+    const nextMonth = Math.round(recentIncidents * 4 * (1 + avgWeeklyTrend * 2 / 100));
+    return { nextWeek, nextMonth, confidence: Math.round(Math.abs(85 - Math.abs(avgWeeklyTrend) * 5)) };
+  }
+
+  private _calculateMTTA(): number {
+    const mttMetric = this._opsMetricDefinitions.find(m => m.name === 'Mean Time To Detect');
+    return mttMetric ? mttMetric.current : 0;
+  }
+
+  private _getTopEscalationReasons(): string[] {
+    return ['Insufficient context for triage', 'Multiple systems affected', 'Executive communication required', 'Legal/compliance involvement needed'];
+  }
+
+  private _calculateAutomationROI(): { investment: number; savings: number; roi: number } {
+    const annualCost = 180000;
+    const hourlyRate = 75;
+    const dailyHours = 12.5;
+    const annualSavings = hourlyRate * dailyHours * 260;
+    const roi = Math.round(((annualSavings - annualCost) / annualCost) * 100);
+    return { investment: annualCost, savings: annualSavings, roi };
+  }
+
+  private _generateOpsDashboardSummary(): { health: number; criticalAlerts: number; automationUptime: number; teamReadiness: string } {
+    const health = this._calculateOpsHealthScore();
+    const criticalAlerts = this._opsIncidentCategories.filter(c => c.severity === 'critical').reduce((s: number, c: any) => s + c.count, 0);
+    const automationUptime = Math.round(this._opsAutomationMetrics.successRate * 100);
+    const overloadedTeams = this._opsTeamPerformance.filter(t => this._calculateTeamWorkload(t).risk === 'overloaded').length;
+    const teamReadiness = overloadedTeams > 0 ? overloadedTeams + ' team(s) overloaded' : 'All teams operational';
+    return { health, criticalAlerts, automationUptime, teamReadiness };
+  }
+
+  // === Security Intelligence Correlation Module ===
+  @state() private _intelFeedAggregation = {
+    activeFeeds: 12, totalIOCs: 45820, enrichedToday: 342, falsePositiveRate: 0.08,
+    feedHealth: [
+      { name: 'AlienVault OTX', status: 'healthy', lastSync: '5min ago', iocCount: 15200, freshness: 'real-time' },
+      { name: 'MITRE ATT&CK', status: 'healthy', lastSync: '1h ago', iocCount: 8500, freshness: 'daily' },
+      { name: 'VirusTotal', status: 'degraded', lastSync: '15min ago', iocCount: 12000, freshness: 'real-time' },
+      { name: 'AbuseIPDB', status: 'healthy', lastSync: '10min ago', iocCount: 5400, freshness: 'real-time' },
+      { name: 'CISA KEV', status: 'healthy', lastSync: '6h ago', iocCount: 2800, freshness: 'daily' },
+      { name: 'Shodan', status: 'maintenance', lastSync: '2h ago', iocCount: 1920, freshness: 'weekly' },
+    ] as any[],
+  } as any;
+  @state() private _intelCorrelationRules = [
+    { id: 'CR-001', name: 'IP Reputation Match', type: 'ioc', severity: 'high',
+      conditions: ['source_ip in threat_feed', 'destination_port in [22,3389,445]'],
+      action: 'block_and_alert', enabled: true, matchCount: 125, fpRate: 0.05 },
+    { id: 'CR-002', name: 'Domain Age + Behavior', type: 'composite', severity: 'medium',
+      conditions: ['domain_age < 7 days', 'request_volume > 100/hour', 'geo_mismatch = true'],
+      action: 'alert_and_quarantine', enabled: true, matchCount: 45, fpRate: 0.12 },
+    { id: 'CR-003', name: 'User Behavior Anomaly', type: 'ueba', severity: 'high',
+      conditions: ['login_deviation > 3sigma', 'access_pattern_change > 80%', 'off_hours_activity = true'],
+      action: 'alert_and_mfa_challenge', enabled: true, matchCount: 18, fpRate: 0.15 },
+    { id: 'CR-004', name: 'Lateral Movement Detection', type: 'composite', severity: 'critical',
+      conditions: ['authentication_target_count > 5', 'time_window < 30min', 'privilege_change = true'],
+      action: 'block_and_escalate', enabled: true, matchCount: 3, fpRate: 0.02 },
+    { id: 'CR-005', name: 'Data Exfiltration Pattern', type: 'ueba', severity: 'critical',
+      conditions: ['egress_volume > baseline_5x', 'encryption_ratio > 95%', 'destination_external = true'],
+      action: 'block_and_investigate', enabled: true, matchCount: 7, fpRate: 0.04 },
+    { id: 'CR-006', name: 'Supply Chain Risk', type: 'ioc', severity: 'medium',
+      conditions: ['dependency_in_known_vuln_list', 'version_behind_latest > 2'],
+      action: 'alert_and_prioritize', enabled: true, matchCount: 89, fpRate: 0.08 },
+  ] as any[];
+  @state() private _intelThreatActors = [
+    { id: 'TA-001', name: 'APT-29', aliases: ['Cozy Bear', 'The Dukes'], sophistication: 'advanced',
+      targeting: ['Government', 'Think Tanks', 'Technology'], recentActivity: '2026-01-18',
+      associatedIOCs: 450, ttps: ['T1190', 'T1059', 'T1003', 'T1071'] },
+    { id: 'TA-002', name: 'APT-41', aliases: ['Double Dragon', 'Winnti'], sophistication: 'advanced',
+      targeting: ['Healthcare', 'Telecom', 'Supply Chain'], recentActivity: '2026-01-15',
+      associatedIOCs: 380, ttps: ['T1053', 'T1027', 'T1055', 'T1566'] },
+    { id: 'TA-003', name: 'FIN7', aliases: ['Carbanak', 'Cobalt Goblin'], sophistication: 'advanced',
+      targeting: ['Financial', 'Retail', 'Hospitality'], recentActivity: '2026-01-20',
+      associatedIOCs: 520, ttps: ['T1566', 'T1059', 'T1003', 'T1083'] },
+    { id: 'TA-004', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Zinc'], sophistication: 'advanced',
+      targeting: ['Financial', 'Cryptocurrency', 'Defense'], recentActivity: '2026-01-22',
+      associatedIOCs: 680, ttps: ['T1059', 'T1105', 'T1003', 'T1562'] },
+  ] as any[];
+  @state() private _intelKPIs = {
+    detectionCoverage: 87.5, mtti: 4.2, iocEnrichmentRate: 94, threatIntelSharing: 12,
+    proactiveHunts: 8, reactiveInvestigations: 23, blockedThreats: 1247, falsePositiveReduction: 15,
+  } as any;
+
+  private _calculateThreatLandscapeScore(): number {
+    const feedHealth = this._intelFeedAggregation.feedHealth.filter(f => f.status === 'healthy').length;
+    const feedScore = (feedHealth / this._intelFeedAggregation.feedHealth.length) * 40;
+    const coverageScore = this._intelKPIs.detectionCoverage * 0.4;
+    const enrichmentScore = this._intelKPIs.iocEnrichmentRate * 0.2;
+    return Math.round(feedScore + coverageScore + enrichmentScore);
+  }
+
+  private _correlateEventsWithActors(events: any[]): any[] {
+    const correlations: any[] = [];
+    for (const actor of this._intelThreatActors) {
+      const matchingEvents = events.filter(e => actor.ttps.some((t: string) => e.technique && e.technique.includes(t)));
+      if (matchingEvents.length > 0) {
+        correlations.push({ actor: actor.name, confidence: Math.min(95, matchingEvents.length * 15), eventCount: matchingEvents.length });
+      }
+    }
+    return correlations.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _assessFeedCoverage(): { gaps: string[]; recommendations: string[] } {
+    const gaps: string[] = [];
+    const recs: string[] = [];
+    for (const feed of this._intelFeedAggregation.feedHealth) {
+      if (feed.status === 'degraded') gaps.push(feed.name + ' is degraded - IOC freshness at risk');
+      if (feed.status === 'maintenance') gaps.push(feed.name + ' is under maintenance');
+    }
+    if (this._intelKPIs.detectionCoverage < 90) recs.push('Add additional threat feeds to improve detection coverage');
+    if (this._intelKPIs.mtti > 5) recs.push('Optimize IOC ingestion pipeline to reduce mean time to ingest');
+    return { gaps, recommendations: recs };
+  }
+
+  private _calculateRuleEffectiveness(): any[] {
+    return this._intelCorrelationRules.map(r => ({
+      rule: r.name, matches: r.matchCount, falsePositiveRate: Math.round(r.fpRate * 100),
+      effectiveness: r.matchCount > 0 ? Math.round((1 - r.fpRate) * 100) : 0,
+      recommendation: r.fpRate > 0.1 ? 'Tune conditions to reduce false positives' : 'Operating within acceptable range',
+    }));
+  }
+
+  private _generateWeeklyIntelBrief(): { summary: string; topThreats: string[]; actions: string[] } {
+    const activeActors = this._intelThreatActors.filter(a => {
+      const daysSinceActivity = (Date.now() - new Date(a.recentActivity).getTime()) / 86400000;
+      return daysSinceActivity <= 14;
+    });
+    const topThreats = activeActors.map(a => a.name + ' (' + a.aliases[0] + ') - last active ' + a.recentActivity);
+    const actions = [
+      'Review and update correlation rules based on latest threat intelligence',
+      'Investigate ' + this._intelKPIs.proactiveHunts + ' proactive hunt findings',
+      'Tune ' + this._intelCorrelationRules.filter(r => r.fpRate > 0.1).length + ' rules with high false positive rates',
+    ];
+    return {
+      summary: activeActors.length + ' threat actors active in the last 14 days. ' + this._intelKPIs.blockedThreats + ' threats blocked this week.',
+      topThreats, actions,
+    };
+  }
+
+
+
 
   render() {
     let filtered = this._vendors;
