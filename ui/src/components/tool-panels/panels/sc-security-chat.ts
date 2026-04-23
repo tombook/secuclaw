@@ -2642,5 +2642,461 @@ private _executionHistory: ExecutionRecord[] = [
     `;
   }
 
+  // === SECTION F: SOAR Playbook Automation ===
+  @state() private _soarPlaybooks: Array<{
+    id: string; name: string; status: 'active' | 'draft' | 'disabled' | 'running';
+    steps: Array<{ id: string; action: string; condition?: string; order: number; type: 'scan' | 'analyze' | 'alert' | 'contain' | 'remediate' | 'notify'; enabled: boolean; executedAt?: string; result?: string; duration?: number }>;
+    triggerType: 'threat-level' | 'ioc-match' | 'schedule' | 'manual' | 'vuln-scan';
+    triggerThreshold: number; totalRuns: number; lastRun: string;
+    autoResolved: number; manualOverrides: number; avgDuration: number;
+    created: string; author: string; tags: string[];
+  }> = [
+    {
+      id: 'pb-soar-001', name: 'Security Chat Auto Response', status: 'active',
+      steps: [
+        { id: 's1', action: 'Scan for indicators', type: 'scan', order: 1, enabled: true, executedAt: '2026-04-22T08:00:00Z', result: '12 indicators found', duration: 4.2 },
+        { id: 's2', action: 'Analyze severity', condition: 'if threat_level > 7 then proceed', type: 'analyze', order: 2, enabled: true, executedAt: '2026-04-22T08:01:00Z', result: 'Critical severity detected', duration: 2.1 },
+        { id: 's3', action: 'Alert SOC team', type: 'alert', order: 3, enabled: true, executedAt: '2026-04-22T08:02:00Z', result: 'Alert sent to 5 analysts', duration: 0.5 },
+        { id: 's4', action: 'Contain threat', type: 'contain', order: 4, enabled: true, executedAt: '2026-04-22T08:05:00Z', result: 'Isolated 3 hosts', duration: 12.8 },
+        { id: 's5', action: 'Remediate findings', condition: 'if auto_resolve_enabled then auto_fix', type: 'remediate', order: 5, enabled: true, executedAt: '2026-04-22T08:10:00Z', result: '8 of 12 findings resolved', duration: 25.3 },
+        { id: 's6', action: 'Notify stakeholders', type: 'notify', order: 6, enabled: true, executedAt: '2026-04-22T08:15:00Z', result: 'Email sent to CISO', duration: 0.3 },
+      ],
+      triggerType: 'threat-level', triggerThreshold: 7, totalRuns: 342, lastRun: '2026-04-22T08:15:00Z',
+      autoResolved: 218, manualOverrides: 124, avgDuration: 45.2,
+      created: '2026-01-15T10:00:00Z', author: 'SOC Automation', tags: ['automated', 'critical', 'response'],
+    },
+    {
+      id: 'pb-soar-002', name: 'Security Chat Investigation Workflow', status: 'active',
+      steps: [
+        { id: 's1', action: 'Collect evidence', type: 'scan', order: 1, enabled: true, executedAt: '2026-04-21T14:00:00Z', result: 'Evidence collected from 7 sources', duration: 8.5 },
+        { id: 's2', action: 'Correlate events', type: 'analyze', order: 2, enabled: true, executedAt: '2026-04-21T14:05:00Z', result: '23 events correlated', duration: 5.2 },
+        { id: 's3', action: 'Escalate if needed', condition: 'if confidence > 85 then escalate', type: 'alert', order: 3, enabled: true },
+        { id: 's4', action: 'Document findings', type: 'remediate', order: 4, enabled: true, executedAt: '2026-04-21T14:20:00Z', result: 'Report generated', duration: 3.1 },
+      ],
+      triggerType: 'ioc-match', triggerThreshold: 3, totalRuns: 156, lastRun: '2026-04-21T14:20:00Z',
+      autoResolved: 89, manualOverrides: 67, avgDuration: 28.7,
+      created: '2026-02-01T09:00:00Z', author: 'Threat Intel Team', tags: ['investigation', 'forensics'],
+    },
+    {
+      id: 'pb-soar-003', name: 'Security Chat Compliance Scan', status: 'draft',
+      steps: [
+        { id: 's1', action: 'Run compliance checks', type: 'scan', order: 1, enabled: true },
+        { id: 's2', action: 'Map to controls', type: 'analyze', order: 2, enabled: true },
+        { id: 's3', action: 'Generate compliance report', type: 'notify', order: 3, enabled: true },
+      ],
+      triggerType: 'schedule', triggerThreshold: 0, totalRuns: 0, lastRun: 'N/A',
+      autoResolved: 0, manualOverrides: 0, avgDuration: 0,
+      created: '2026-04-20T16:00:00Z', author: 'GRC Team', tags: ['compliance', 'audit', 'scheduled'],
+    },
+  ];
+  @state() private _soarSelectedPlaybook: string = '';
+  @state() private _soarMetrics: {
+    actionsPerHour: number; autoResolveRate: number; avgResponseTime: number;
+    activePlaybooks: number; totalActionsToday: number; errorRate: number;
+    manualInterventions: number; escalationRate: number;
+  } = {
+    actionsPerHour: 47.3, autoResolveRate: 73.8, avgResponseTime: 12.4,
+    activePlaybooks: 3, totalActionsToday: 284, errorRate: 2.1,
+    manualInterventions: 18, escalationRate: 8.5,
+  };
+  @state() private _soarDragStep: string | null = null;
+
+  private _renderSoarPlaybookBuilder(): any {
+    const selected = this._soarPlaybooks.find(p => p.id === this._soarSelectedPlaybook);
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">SOAR Playbook Automation</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="tag" style="background:#1e3a5f;color:#60a5fa;font-size:9px">${this._soarMetrics.actionsPerHour} actions/hr</span>
+            <span class="tag" style="background:#14532d;color:#22c55e;font-size:9px">${this._soarMetrics.autoResolveRate}% auto-resolved</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:#111827;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#60a5fa">${this._soarMetrics.totalActionsToday}</div>
+            <div style="font-size:9px;color:#6b7280">Actions Today</div>
+          </div>
+          <div style="background:#111827;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#22c55e">${this._soarMetrics.avgResponseTime}s</div>
+            <div style="font-size:9px;color:#6b7280">Avg Response</div>
+          </div>
+          <div style="background:#111827;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#f59e0b">${this._soarMetrics.errorRate}%</div>
+            <div style="font-size:9px;color:#6b7280">Error Rate</div>
+          </div>
+          <div style="background:#111827;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:18px;font-weight:700;color:#ef4444">${this._soarMetrics.escalationRate}%</div>
+            <div style="font-size:9px;color:#6b7280">Escalation Rate</div>
+          </div>
+        </div>
+        <div style="font-weight:600;font-size:11px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Playbooks</div>
+        ${this._soarPlaybooks.map(pb => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:6px;background:#111827;border-radius:4px;margin-bottom:3px;cursor:pointer;border:1px solid ${selected?.id === pb.id ? '#3b82f6' : 'transparent'}"
+               @click=${() => { this._soarSelectedPlaybook = selected?.id === pb.id ? '' : pb.id; }}
+               @dragover=${(e: any) => { e.preventDefault(); this._soarDragStep = pb.id; }}
+               @dragleave=${() => { this._soarDragStep = null; }}
+               @drop=${(e: any) => { e.preventDefault(); this._soarDragStep = null; }}>
+            <span style="color:${pb.status === 'active' ? '#22c55e' : pb.status === 'running' ? '#3b82f6' : pb.status === 'draft' ? '#f59e0b' : '#6b7280'}">${pb.status === 'active' ? '●' : pb.status === 'running' ? '◉' : pb.status === 'draft' ? '◐' : '○'}</span>
+            <span style="flex:1;color:#e2e8f0;font-size:10px">${pb.name}</span>
+            <span class="tag" style="font-size:8px">${pb.triggerType}</span>
+            <span style="color:#6b7280;font-size:9px">${pb.totalRuns} runs</span>
+            <span style="color:#22c55e;font-size:9px">${pb.autoResolved}% auto</span>
+          </div>
+        `)}
+        ${selected ? html`
+          <div style="margin-top:10px;background:#111827;border-radius:6px;padding:10px">
+            <div style="font-weight:600;font-size:11px;color:#e2e8f0;margin-bottom:8px">${selected.name} - Steps (drag to reorder)</div>
+            ${selected.steps.sort((a, b) => a.order - b.order).map((step, idx) => html`
+              <div style="display:flex;align-items:center;gap:6px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:3px;font-size:10px;cursor:grab;border-left:3px solid ${step.type === 'scan' ? '#3b82f6' : step.type === 'analyze' ? '#8b5cf6' : step.type === 'alert' ? '#f59e0b' : step.type === 'contain' ? '#ef4444' : step.type === 'remediate' ? '#22c55e' : '#06b6d4'}"
+                   draggable="true"
+                   @dragstart=${(e: any) => { e.dataTransfer.setData('text/plain', step.id); }}
+                   @drop=${(e: any) => { e.preventDefault(); const fromId = e.dataTransfer.getData('text/plain'); if (fromId && fromId !== step.id) { const pb = this._soarPlaybooks.find(p => p.id === selected.id); if (pb) { const fromIdx = pb.steps.findIndex(s => s.id === fromId); if (fromIdx >= 0) { const temp = pb.steps[fromIdx].order; pb.steps[fromIdx].order = step.order; step.order = temp; this.requestUpdate(); }} } }}>
+                <span style="color:#6b7280;font-weight:700">${idx + 1}</span>
+                <span style="color:${step.enabled ? '#22c55e' : '#6b7280'}">${step.enabled ? '✓' : '○'}</span>
+                <span style="flex:1;color:#e2e8f0">${step.action}</span>
+                ${step.condition ? html`<span style="color:#f59e0b;font-size:8px;font-style:italic">${step.condition}</span>` : nothing}
+                ${step.duration ? html`<span style="color:#6b7280">${step.duration}s</span>` : nothing}
+                <button class="btn btn-sm" style="font-size:8px">Override</button>
+              </div>
+            `)}
+            <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid #1f2937">
+              <span style="font-size:9px;color:#6b7280">Avg duration: ${selected.avgDuration}s | Manual overrides: ${selected.manualOverrides}</span>
+              <button class="btn btn-sm" style="font-size:9px;background:#1e3a5f">Execute Playbook</button>
+            </div>
+          </div>
+        ` : nothing}
+      </div>`;
+  }
+
+  // === SECTION G: Threat Intelligence Feed ===
+  @state() private _tiFeeds: Array<{
+    id: string; name: string; status: 'healthy' | 'degraded' | 'down'; type: 'STIX' | 'TAXII' | 'CSV' | 'API' | 'RSS';
+    iocsPerHour: number; lastPoll: string; totalIndicators: number;
+    reliability: number; coverage: string;
+  }> = [
+    { id: 'tf-001', name: 'MITRE ATT&CK Feed', status: 'healthy', type: 'STIX', iocsPerHour: 23.5, lastPoll: '2026-04-22T09:30:00Z', totalIndicators: 245000, reliability: 98.2, coverage: 'TTPs, Software, Groups' },
+    { id: 'tf-002', name: 'AlienVault OTX', status: 'healthy', type: 'API', iocsPerHour: 145.7, lastPoll: '2026-04-22T09:29:00Z', totalIndicators: 1820000, reliability: 85.4, coverage: 'IPs, Domains, Hashes, URLs' },
+    { id: 'tf-003', name: 'AbuseIPDB', status: 'degraded', type: 'API', iocsPerHour: 89.3, lastPoll: '2026-04-22T09:25:00Z', totalIndicators: 560000, reliability: 91.7, coverage: 'IPs, ASN' },
+    { id: 'tf-004', name: 'MISP Community', status: 'healthy', type: 'TAXII', iocsPerHour: 67.8, lastPoll: '2026-04-22T09:28:00Z', totalIndicators: 890000, reliability: 88.9, coverage: 'Composite IOCs, Malware' },
+    { id: 'tf-005', name: 'VirusTotal Live', status: 'down', type: 'API', iocsPerHour: 0, lastPoll: '2026-04-22T08:00:00Z', totalIndicators: 0, reliability: 0, coverage: 'Hashes, URLs, Domains' },
+  ];
+  @state() private _tiIndicators: Array<{
+    id: string; value: string; type: 'ip' | 'domain' | 'hash' | 'email' | 'url';
+    severity: 'critical' | 'high' | 'medium' | 'low'; lifecycle: 'new' | 'verified' | 'aging' | 'expired';
+    source: string; firstSeen: string; lastSeen: string; confidence: number;
+    tags: string[]; description: string; hitCount: number;
+  }> = [
+    { id: 'ioc-001', value: '192.168.45.102', type: 'ip', severity: 'critical', lifecycle: 'verified', source: 'MITRE ATT&CK', firstSeen: '2026-04-15T06:00:00Z', lastSeen: '2026-04-22T08:30:00Z', confidence: 95, tags: ['c2', 'apt28'], description: 'Known APT28 command and control server', hitCount: 342 },
+    { id: 'ioc-002', value: 'evil-phishing-login.com', type: 'domain', severity: 'high', lifecycle: 'new', source: 'AlienVault OTX', firstSeen: '2026-04-22T07:00:00Z', lastSeen: '2026-04-22T09:00:00Z', confidence: 82, tags: ['phishing', 'credential-theft'], description: 'Credential harvesting domain mimicking corporate login', hitCount: 56 },
+    { id: 'ioc-003', value: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6', type: 'hash', severity: 'critical', lifecycle: 'verified', source: 'VirusTotal', firstSeen: '2026-03-01T12:00:00Z', lastSeen: '2026-04-20T15:00:00Z', confidence: 99, tags: ['ransomware', 'lockbit'], description: 'LockBit 4.0 ransomware payload', hitCount: 1287 },
+    { id: 'ioc-004', value: 'attacker@evilcorp.net', type: 'email', severity: 'medium', lifecycle: 'aging', source: 'MISP', firstSeen: '2026-02-10T09:00:00Z', lastSeen: '2026-03-15T14:00:00Z', confidence: 71, tags: ['spear-phishing', 'social-engineering'], description: 'Spear phishing sender address linked to Evil Corp', hitCount: 23 },
+    { id: 'ioc-005', value: 'https://malware-distribution.ru/payload.exe', type: 'url', severity: 'critical', lifecycle: 'new', source: 'AbuseIPDB', firstSeen: '2026-04-22T01:00:00Z', lastSeen: '2026-04-22T09:00:00Z', confidence: 88, tags: ['malware', 'drive-by'], description: 'Active malware distribution URL serving Cobalt Strike beacon', hitCount: 189 },
+    { id: 'ioc-006', value: '10.0.15.200', type: 'ip', severity: 'low', lifecycle: 'expired', source: 'Internal', firstSeen: '2026-01-05T08:00:00Z', lastSeen: '2026-02-28T18:00:00Z', confidence: 45, tags: ['internal', 'resolved'], description: 'Previously compromised internal host, now remediated', hitCount: 0 },
+  ];
+  @state() private _tiActors: Array<{
+    id: string; name: string; aliases: string[]; sophistication: 'advanced' | 'intermediate' | 'basic';
+    motivation: string; origin: string; ttpCount: number; activeSince: string;
+    associatedIocs: number; lastActivity: string; description: string;
+  }> = [
+    { id: 'ta-001', name: 'APT28 (Fancy Bear)', aliases: ['Sofacy', 'Sednit', 'Strontium'], sophistication: 'advanced', motivation: 'Espionage', origin: 'Russia', ttpCount: 42, activeSince: '2007', associatedIocs: 1250, lastActivity: '2026-04-22T08:00:00Z', description: 'Russian GRU-linked group targeting government and military organizations' },
+    { id: 'ta-002', name: 'Lazarus Group', aliases: ['Hidden Cobra', 'Diamond Sleet'], sophistication: 'advanced', motivation: 'Financial', origin: 'DPRK', ttpCount: 38, activeSince: '2009', associatedIocs: 980, lastActivity: '2026-04-21T16:00:00Z', description: 'North Korean state-sponsored group targeting financial institutions and cryptocurrency' },
+  ];
+  @state() private _tiFilterType: string = 'all';
+  @state() private _tiFilterLifecycle: string = 'all';
+
+  private _renderThreatIntelFeed(): any {
+    const filtered = this._tiIndicators.filter(i => {
+      if (this._tiFilterType !== 'all' && i.type !== this._tiFilterType) return false;
+      if (this._tiFilterLifecycle !== 'all' && i.lifecycle !== this._tiFilterLifecycle) return false;
+      return true;
+    });
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Threat Intelligence Feed</span>
+          <div style="display:flex;gap:4px">
+            <select style="background:#111827;border:1px solid #374151;color:#9ca3af;font-size:9px;padding:2px 4px;border-radius:3px" @change=${(e: any) => { this._tiFilterType = e.target.value; }}>
+              <option value="all">All Types</option>
+              <option value="ip">IP</option><option value="domain">Domain</option><option value="hash">Hash</option>
+              <option value="email">Email</option><option value="url">URL</option>
+            </select>
+            <select style="background:#111827;border:1px solid #374151;color:#9ca3af;font-size:9px;padding:2px 4px;border-radius:3px" @change=${(e: any) => { this._tiFilterLifecycle = e.target.value; }}>
+              <option value="all">All Lifecycle</option>
+              <option value="new">New</option><option value="verified">Verified</option>
+              <option value="aging">Aging</option><option value="expired">Expired</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-weight:600;font-size:11px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Feed Health (STIX/TAXII)</div>
+        ${this._tiFeeds.map(feed => html`
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#111827;border-radius:3px;margin-bottom:2px;font-size:9px">
+            <span style="color:${feed.status === 'healthy' ? '#22c55e' : feed.status === 'degraded' ? '#f59e0b' : '#ef4444'}">${feed.status === 'healthy' ? '●' : feed.status === 'degraded' ? '◐' : '✕'}</span>
+            <span style="flex:1;color:#e2e8f0">${feed.name}</span>
+            <span class="tag" style="font-size:7px">${feed.type}</span>
+            <span style="color:#6b7280">${feed.iocsPerHour} IOC/hr</span>
+            <span style="color:#6b7280">${feed.reliability}%</span>
+          </div>
+        `)}
+        <div style="font-weight:600;font-size:11px;color:#9ca3af;text-transform:uppercase;margin:10px 0 6px">IOC Indicators (${filtered.length})</div>
+        ${filtered.slice(0, 6).map(ioc => html`
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#111827;border-radius:3px;margin-bottom:2px;font-size:9px">
+            <span class="tag" style="font-size:7px;background:${ioc.type === 'ip' ? '#1e3a5f' : ioc.type === 'domain' ? '#3b1f4a' : ioc.type === 'hash' ? '#1a3a2a' : ioc.type === 'email' ? '#3a2a1a' : '#1a2a3a'};color:${ioc.type === 'ip' ? '#60a5fa' : ioc.type === 'domain' ? '#a78bfa' : ioc.type === 'hash' ? '#22c55e' : ioc.type === 'email' ? '#f59e0b' : '#06b6d4'}">${ioc.type}</span>
+            <span style="flex:1;color:#e2e8f0;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ioc.value}</span>
+            <span style="color:${ioc.lifecycle === 'new' ? '#22c55e' : ioc.lifecycle === 'verified' ? '#60a5fa' : ioc.lifecycle === 'aging' ? '#f59e0b' : '#6b7280'};font-size:8px">${ioc.lifecycle}</span>
+            <span style="color:${ioc.severity === 'critical' ? '#ef4444' : ioc.severity === 'high' ? '#f59e0b' : '#6b7280'};font-size:8px">${ioc.confidence}%</span>
+            <span style="color:#6b7280">${ioc.hitCount} hits</span>
+          </div>
+        `)}
+        <div style="font-weight:600;font-size:11px;color:#9ca3af;text-transform:uppercase;margin:10px 0 6px">Threat Actors</div>
+        ${this._tiActors.map(actor => html`
+          <div style="padding:6px;background:#111827;border-radius:4px;margin-bottom:3px;border-left:3px solid ${actor.sophistication === 'advanced' ? '#ef4444' : actor.sophistication === 'intermediate' ? '#f59e0b' : '#22c55e'}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600;color:#e2e8f0;font-size:10px">${actor.name}</span>
+              <span class="tag" style="font-size:8px;background:#3b1f2a;color:#f87171">${actor.sophistication}</span>
+            </div>
+            <div style="font-size:9px;color:#6b7280;margin-top:2px">${actor.aliases.join(', ')} | ${actor.origin} | ${actor.motivation}</div>
+            <div style="font-size:9px;color:#9ca3af;margin-top:2px">${actor.description}</div>
+            <div style="display:flex;gap:8px;margin-top:3px;font-size:8px;color:#6b7280">
+              <span>${actor.ttpCount} TTPs</span>
+              <span>${actor.associatedIocs} IOCs</span>
+              <span>Since ${actor.activeSince}</span>
+              <span>Last: ${actor.lastActivity.split('T')[0]}</span>
+            </div>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // === SECTION H: Vulnerability Lifecycle Pipeline ===
+  @state() private _vulnPipeline: Array<{
+    id: string; title: string; severity: 'critical' | 'high' | 'medium' | 'low';
+    stage: 'discovery' | 'triage' | 'patch' | 'verify' | 'closed';
+    cvssBase: number; cvssTemporal: number; cvssEnvironmental: number;
+    cve: string; component: string; discovered: string; daysOpen: number;
+    slaDeadline: string; patchProgress: number; environments: Array<{ name: string; status: 'pending' | 'patching' | 'verified' | 'failed'; progress: number }>;
+    recurrence: number; assignee: string; notes: string;
+  }> = [
+    { id: 'vl-001', title: 'Apache Log4j RCE', severity: 'critical', stage: 'verify', cvssBase: 10.0, cvssTemporal: 9.8, cvssEnvironmental: 9.5, cve: 'CVE-2026-44228', component: 'log4j-core 2.14.1', discovered: '2026-04-10T08:00:00Z', daysOpen: 12, slaDeadline: '2026-04-17T08:00:00Z', patchProgress: 75, environments: [{ name: 'dev', status: 'verified', progress: 100 }, { name: 'staging', status: 'patching', progress: 80 }, { name: 'prod', status: 'pending', progress: 0 }], recurrence: 0, assignee: 'Alice Chen', notes: 'Critical RCE in logging library, all environments must be patched' },
+    { id: 'vl-002', title: 'Spring4Shell Path Traversal', severity: 'high', stage: 'patch', cvssBase: 9.8, cvssTemporal: 9.0, cvssEnvironmental: 8.7, cve: 'CVE-2026-22965', component: 'spring-web 5.3.18', discovered: '2026-04-15T12:00:00Z', daysOpen: 7, slaDeadline: '2026-04-22T12:00:00Z', patchProgress: 40, environments: [{ name: 'dev', status: 'patching', progress: 60 }, { name: 'staging', status: 'pending', progress: 0 }, { name: 'prod', status: 'pending', progress: 0 }], recurrence: 1, assignee: 'Bob Smith', notes: 'Second occurrence of this vulnerability class' },
+    { id: 'vl-003', title: 'JWT Secret Weakness', severity: 'medium', stage: 'triage', cvssBase: 7.5, cvssTemporal: 7.0, cvssEnvironmental: 6.8, cve: 'CVE-2026-31001', component: 'jsonwebtoken 8.5.1', discovered: '2026-04-20T09:00:00Z', daysOpen: 2, slaDeadline: '2026-04-27T09:00:00Z', patchProgress: 0, environments: [{ name: 'dev', status: 'pending', progress: 0 }, { name: 'staging', status: 'pending', progress: 0 }, { name: 'prod', status: 'pending', progress: 0 }], recurrence: 0, assignee: 'Carol Wu', notes: 'Algorithm confusion allows token forgery' },
+    { id: 'vl-004', title: 'Outdated OpenSSL Version', severity: 'high', stage: 'discovery', cvssBase: 8.1, cvssTemporal: 7.8, cvssEnvironmental: 7.5, cve: 'CVE-2026-38000', component: 'openssl 1.1.1k', discovered: '2026-04-22T06:00:00Z', daysOpen: 0, slaDeadline: '2026-04-29T06:00:00Z', patchProgress: 0, environments: [{ name: 'dev', status: 'pending', progress: 0 }, { name: 'staging', status: 'pending', progress: 0 }, { name: 'prod', status: 'pending', progress: 0 }], recurrence: 2, assignee: 'Unassigned', notes: 'Multiple known vulnerabilities in current version' },
+    { id: 'vl-005', title: 'XSS in User Dashboard', severity: 'low', stage: 'closed', cvssBase: 4.3, cvssTemporal: 4.0, cvssEnvironmental: 3.8, cve: 'CVE-2026-40123', component: 'dashboard-ui 3.2.0', discovered: '2026-04-01T14:00:00Z', daysOpen: 21, slaDeadline: '2026-04-15T14:00:00Z', patchProgress: 100, environments: [{ name: 'dev', status: 'verified', progress: 100 }, { name: 'staging', status: 'verified', progress: 100 }, { name: 'prod', status: 'verified', progress: 100 }], recurrence: 0, assignee: 'Dave Park', notes: 'Reflected XSS via unsanitized user input, fixed with input validation' },
+  ];
+  @state() private _vulnFilterStage: string = 'all';
+
+  private _renderVulnLifecyclePipeline(): any {
+    const stages = ['discovery', 'triage', 'patch', 'verify', 'closed'] as const;
+    const stageColors: Record<string, string> = { discovery: '#f59e0b', triage: '#3b82f6', patch: '#8b5cf6', verify: '#06b6d4', closed: '#22c55e' };
+    const filtered = this._vulnPipeline.filter(v => this._vulnFilterStage === 'all' || v.stage === this._vulnFilterStage);
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Vulnerability Lifecycle Pipeline</span>
+          <div style="display:flex;gap:4px">
+            ${stages.map(s => html`
+              <button class="btn btn-sm" style="font-size:8px;background:${this._vulnFilterStage === s ? stageColors[s] : '#111827'};color:${this._vulnFilterStage === s ? '#000' : '#9ca3af'};border:1px solid ${stageColors[s]}"
+                      @click=${() => { this._vulnFilterStage = this._vulnFilterStage === s ? 'all' : s; }}
+              >${s} (${this._vulnPipeline.filter(v => v.stage === s).length})</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:10px;align-items:center">
+          ${stages.map((s, i) => html`
+            <span style="flex:1;text-align:center;font-size:8px;font-weight:600;color:${stageColors[s]};text-transform:uppercase;padding:3px;background:${stageColors[s]}22;border-radius:3px">${s}</span>
+            ${i < stages.length - 1 ? html`<span style="color:#374151">→</span>` : nothing}
+          `)}
+        </div>
+        ${filtered.map(v => html`
+          <div style="padding:8px;background:#111827;border-radius:6px;margin-bottom:4px;border-left:3px solid ${stageColors[v.stage]}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-weight:600;color:#e2e8f0;font-size:10px">${v.title}</span>
+                <span style="color:#6b7280;font-size:9px;margin-left:6px">${v.cve}</span>
+              </div>
+              <div style="display:flex;gap:4px;align-items:center">
+                <span class="tag" style="font-size:8px;background:${v.severity === 'critical' ? '#3b1f2a' : v.severity === 'high' ? '#3b2a1a' : v.severity === 'medium' ? '#3b3a1a' : '#1a3a2a'};color:${v.severity === 'critical' ? '#f87171' : v.severity === 'high' ? '#f59e0b' : v.severity === 'medium' ? '#fbbf24' : '#22c55e'}">${v.severity}</span>
+                <span style="color:#6b7280;font-size:9px">${v.daysOpen}d open</span>
+              </div>
+            </div>
+            <div style="font-size:9px;color:#6b7280;margin-top:3px">${v.component} | ${v.assignee}</div>
+            <div style="display:flex;gap:6px;margin-top:4px;font-size:9px">
+              <span style="color:#9ca3af">CVSS: <span style="color:#e2e8f0">${v.cvssBase}</span> / <span style="color:#60a5fa">${v.cvssTemporal}</span> / <span style="color:#22c55e">${v.cvssEnvironmental}</span></span>
+              <span style="color:#6b7280">SLA: ${v.slaDeadline.split('T')[0]}</span>
+              ${v.recurrence > 0 ? html`<span style="color:#f59e0b">Recurrence: ${v.recurrence}x</span>` : nothing}
+            </div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              ${v.environments.map(env => html`
+                <div style="flex:1;padding:3px;background:#0a0c10;border-radius:3px;text-align:center;font-size:8px">
+                  <div style="color:#6b7280">${env.name}</div>
+                  <div style="margin-top:2px;height:3px;background:#1f2937;border-radius:2px;overflow:hidden">
+                    <div style="height:100%;width:${env.progress}%;background:${env.status === 'verified' ? '#22c55e' : env.status === 'patching' ? '#3b82f6' : env.status === 'failed' ? '#ef4444' : '#374151'};border-radius:2px"></div>
+                  </div>
+                  <div style="color:${env.status === 'verified' ? '#22c55e' : env.status === 'patching' ? '#3b82f6' : env.status === 'failed' ? '#ef4444' : '#6b7280'};margin-top:1px">${env.status}</div>
+                </div>
+              `)}
+            </div>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // === SECTION I: Custom Widget Builder ===
+  @state() private _widgetBuilderOpen = false;
+  @state() private _customWidgets: Array<{
+    id: string; name: string; type: 'chart' | 'table' | 'metric' | 'status';
+    dataSource: string; config: Record<string, any>; layout: string;
+    shared: boolean; sharedWith: string[]; createdAt: string; updatedAt: string;
+  }> = [
+    { id: 'cw-001', name: 'Risk Trend Widget', type: 'chart', dataSource: 'risk-assessment', config: { chartType: 'line', xField: 'date', yField: 'score', colorScheme: 'red-to-green' }, layout: 'top-left', shared: true, sharedWith: ['risk-team', 'ciso-dashboard'], createdAt: '2026-03-15T10:00:00Z', updatedAt: '2026-04-20T14:00:00Z' },
+    { id: 'cw-002', name: 'Alert Summary', type: 'metric', dataSource: 'alerts', config: { metric: 'count', aggregation: 'sum', threshold: 100, warningAt: 80 }, layout: 'top-right', shared: false, sharedWith: [], createdAt: '2026-03-20T09:00:00Z', updatedAt: '2026-04-22T08:00:00Z' },
+    { id: 'cw-003', name: 'Compliance Status', type: 'status', dataSource: 'compliance', config: { controls: ['access-control', 'encryption', 'logging'], showPercentage: true }, layout: 'bottom-left', shared: true, sharedWith: ['compliance-team'], createdAt: '2026-04-01T11:00:00Z', updatedAt: '2026-04-21T16:00:00Z' },
+    { id: 'cw-004', name: 'Finding Details Table', type: 'table', dataSource: 'findings', config: { columns: ['id', 'title', 'severity', 'status', 'assignee'], sortable: true, filterable: true, pageSize: 10 }, layout: 'bottom-right', shared: false, sharedWith: [], createdAt: '2026-04-10T13:00:00Z', updatedAt: '2026-04-22T09:00:00Z' },
+  ];
+  @state() private _widgetLayout: string = '2x2';
+  @state() private _widgetPreviewId: string | null = null;
+  @state() private _widgetNewType: string = 'chart';
+  @state() private _widgetNewSource: string = '';
+  @state() private _widgetNewName: string = '';
+
+  private _renderCustomWidgetBuilder(): any {
+    const layouts = ['2x2', '3x3', '1x4', 'freeform'];
+    const typeIcons: Record<string, string> = { chart: '📈', table: '📊', metric: '🔢', status: '✅' };
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Custom Widget Builder</span>
+          <div style="display:flex;gap:6px">
+            <div style="display:flex;gap:2px">${layouts.map(l => html`
+              <button class="btn btn-sm" style="font-size:8px;padding:2px 6px;background:${this._widgetLayout === l ? '#1e3a5f' : '#111827'};color:${this._widgetLayout === l ? '#60a5fa' : '#6b7280'};border:1px solid ${this._widgetLayout === l ? '#3b82f6' : '#374151'}"
+                      @click=${() => { this._widgetLayout = l; }}>${l}</button>
+            `)}</div>
+            <button class="btn btn-sm" style="font-size:9px;background:#14532d;color:#22c55e" @click=${() => { this._widgetBuilderOpen = !this._widgetBuilderOpen; }}>+ New Widget</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:6px;margin-bottom:8px">
+          ${this._customWidgets.map(w => html`
+            <div style="background:#111827;border-radius:6px;padding:8px;cursor:pointer;border:1px solid ${this._widgetPreviewId === w.id ? '#3b82f6' : '#1f2937'};min-height:80px"
+                 @click=${() => { this._widgetPreviewId = this._widgetPreviewId === w.id ? null : w.id; }}>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-size:14px">${typeIcons[w.type] || '📦'}</span>
+                <div style="display:flex;gap:3px">
+                  ${w.shared ? html`<span style="color:#3b82f6;font-size:8px">↗ shared</span>` : nothing}
+                  <button class="btn btn-sm" style="font-size:7px;padding:1px 4px">Edit</button>
+                </div>
+              </div>
+              <div style="font-weight:600;color:#e2e8f0;font-size:10px">${w.name}</div>
+              <div style="font-size:8px;color:#6b7280;margin-top:2px">${w.type} | ${w.dataSource} | ${w.layout}</div>
+              ${this._widgetPreviewId === w.id ? html`
+                <div style="margin-top:6px;padding-top:6px;border-top:1px solid #1f2937;font-size:8px;color:#9ca3af">
+                  <div>Config: ${JSON.stringify(w.config).slice(0, 60)}...</div>
+                  <div style="margin-top:2px">Created: ${w.createdAt.split('T')[0]} | Updated: ${w.updatedAt.split('T')[0]}</div>
+                  ${w.shared && w.sharedWith.length > 0 ? html`<div style="margin-top:2px;color:#3b82f6">Shared with: ${w.sharedWith.join(', ')}</div>` : nothing}
+                </div>
+              ` : nothing}
+            </div>
+          `)}
+        </div>
+        ${this._widgetBuilderOpen ? html`
+          <div style="background:#111827;border-radius:6px;padding:10px;border:1px solid #3b82f6">
+            <div style="font-weight:600;font-size:11px;color:#e2e8f0;margin-bottom:8px">Create New Widget</div>
+            <div style="display:flex;gap:8px;margin-bottom:6px">
+              <input type="text" placeholder="Widget name" style="flex:1;background:#0a0c10;border:1px solid #374151;color:#e2e8f0;font-size:10px;padding:4px 6px;border-radius:3px"
+                     .value=${this._widgetNewName} @input=${(e: any) => { this._widgetNewName = e.target.value; }} />
+              <select style="background:#0a0c10;border:1px solid #374151;color:#9ca3af;font-size:10px;padding:4px 6px;border-radius:3px"
+                      @change=${(e: any) => { this._widgetNewType = e.target.value; }}>
+                <option value="chart">Chart</option><option value="table">Table</option>
+                <option value="metric">Metric</option><option value="status">Status</option>
+              </select>
+            </div>
+            <div style="margin-bottom:6px">
+              <input type="text" placeholder="Data source (e.g., alerts, risk-assessment, compliance)" style="width:100%;background:#0a0c10;border:1px solid #374151;color:#e2e8f0;font-size:10px;padding:4px 6px;border-radius:3px"
+                     .value=${this._widgetNewSource} @input=${(e: any) => { this._widgetNewSource = e.target.value; }} />
+            </div>
+            <div style="display:flex;gap:6px;justify-content:flex-end">
+              <button class="btn btn-sm" style="font-size:9px" @click=${() => { this._widgetBuilderOpen = false; }} >Cancel</button>
+              <button class="btn btn-sm" style="font-size:9px;background:#1e3a5f;color:#60a5fa" @click=${() => {
+                if (this._widgetNewName && this._widgetNewSource) {
+                  this._customWidgets.push({
+                    id: 'cw-' + String(this._customWidgets.length + 1).padStart(3, '0'),
+                    name: this._widgetNewName, type: this._widgetNewType as any,
+                    dataSource: this._widgetNewSource, config: {},
+                    layout: 'freeform', shared: false, sharedWith: [],
+                    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+                  });
+                  this._widgetNewName = ''; this._widgetNewSource = '';
+                  this._widgetBuilderOpen = false;
+                }
+              }}>Create</button>
+            </div>
+          </div>
+        ` : nothing}
+      </div>`;
+  }
+
+  // === SECTION J: Audit & Compliance Trail ===
+  @state() private _auditEntries: Array<{
+    id: string; timestamp: string; action: string; category: 'policy-change' | 'access-grant' | 'config-modify' | 'incident-response' | 'compliance-check';
+    user: string; resource: string; details: string; severity: 'info' | 'warning' | 'critical';
+    previousHash: string; currentHash: string; verified: boolean;
+    evidence: Array<{ type: string; reference: string; collectedAt: string }>;
+    remediation: { status: 'open' | 'in-progress' | 'completed' | 'accepted-risk'; assignee: string; dueDate: string; notes: string } | null;
+  }> = [
+    { id: 'ae-001', timestamp: '2026-04-22T09:00:00Z', action: 'Firewall rule modified', category: 'config-modify', user: 'alice@corp.com', resource: 'fw-prod-01', details: 'Added allow rule for 10.0.0.0/8 to port 443', severity: 'warning', previousHash: 'a1b2c3d4', currentHash: 'e5f6g7h8', verified: true, evidence: [{ type: 'screenshot', reference: 'fw-rule-001.png', collectedAt: '2026-04-22T09:01:00Z' }, { type: 'log', reference: 'fw-audit-2026-04-22.log', collectedAt: '2026-04-22T09:02:00Z' }], remediation: { status: 'completed', assignee: 'alice@corp.com', dueDate: '2026-04-22T18:00:00Z', notes: 'Change approved by security lead' } },
+    { id: 'ae-002', timestamp: '2026-04-22T08:30:00Z', action: 'Admin access granted', category: 'access-grant', user: 'admin@corp.com', resource: 'prod-database', details: 'Temporary admin access granted for incident investigation', severity: 'critical', previousHash: 'b2c3d4e5', currentHash: 'f6g7h8i9', verified: true, evidence: [{ type: 'ticket', reference: 'INC-2026-0442', collectedAt: '2026-04-22T08:25:00Z' }], remediation: { status: 'in-progress', assignee: 'bob@corp.com', dueDate: '2026-04-23T08:30:00Z', notes: 'Access to be revoked after investigation completes' } },
+    { id: 'ae-003', timestamp: '2026-04-22T08:00:00Z', action: 'Compliance check passed', category: 'compliance-check', user: 'system', resource: 'soc2-controls', details: 'Quarterly SOC2 Type II controls assessment completed', severity: 'info', previousHash: 'c3d4e5f6', currentHash: 'g7h8i9j0', verified: true, evidence: [{ type: 'report', reference: 'soc2-q2-2026.pdf', collectedAt: '2026-04-22T08:05:00Z' }, { type: 'evidence-package', reference: 'evidence-soc2-q2.zip', collectedAt: '2026-04-22T08:10:00Z' }], remediation: null },
+    { id: 'ae-004', timestamp: '2026-04-21T16:00:00Z', action: 'Security policy updated', category: 'policy-change', user: 'ciso@corp.com', resource: 'password-policy', details: 'Minimum password length increased from 12 to 14 characters', severity: 'info', previousHash: 'd4e5f6g7', currentHash: 'h8i9j0k1', verified: true, evidence: [{ type: 'diff', reference: 'policy-diff-2026-04-21.txt', collectedAt: '2026-04-21T16:05:00Z' }], remediation: { status: 'completed', assignee: 'ciso@corp.com', dueDate: '2026-04-21T18:00:00Z', notes: 'Policy approved by board' } },
+  ];
+  @state() private _auditFilterCategory: string = 'all';
+  @state() private _auditHashChainValid = true;
+
+  private _renderAuditComplianceTrail(): any {
+    const categories = ['policy-change', 'access-grant', 'config-modify', 'incident-response', 'compliance-check'] as const;
+    const catIcons: Record<string, string> = { 'policy-change': '📋', 'access-grant': '🔑', 'config-modify': '⚙️', 'incident-response': '🚨', 'compliance-check': '✅' };
+    const filtered = this._auditEntries.filter(e => this._auditFilterCategory === 'all' || e.category === this._auditFilterCategory);
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Audit & Compliance Trail</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <span style="font-size:9px;color:${this._auditHashChainValid ? '#22c55e' : '#ef4444'}">${this._auditHashChainValid ? '● Chain Valid' : '✕ Chain Broken'}</span>
+            <button class="btn btn-sm" style="font-size:8px;background:#1e3a5f;color:#60a5fa">Generate Report</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" style="font-size:8px;padding:2px 5px;background:${this._auditFilterCategory === 'all' ? '#1e3a5f' : '#111827'};color:${this._auditFilterCategory === 'all' ? '#60a5fa' : '#6b7280'}"
+                  @click=${() => { this._auditFilterCategory = 'all'; }}>All (${this._auditEntries.length})</button>
+          ${categories.map(c => html`
+            <button class="btn btn-sm" style="font-size:8px;padding:2px 5px;background:${this._auditFilterCategory === c ? '#1e3a5f' : '#111827'};color:${this._auditFilterCategory === c ? '#60a5fa' : '#6b7280'}"
+                    @click=${() => { this._auditFilterCategory = this._auditFilterCategory === c ? 'all' : c; }}>${catIcons[c]} ${c} (${this._auditEntries.filter(e => e.category === c).length})</button>
+          `)}
+        </div>
+        ${filtered.map(entry => html`
+          <div style="padding:6px 8px;background:#111827;border-radius:4px;margin-bottom:3px;border-left:3px solid ${entry.severity === 'critical' ? '#ef4444' : entry.severity === 'warning' ? '#f59e0b' : '#374151'}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="font-size:11px">${catIcons[entry.category]}</span>
+                <span style="font-weight:600;color:#e2e8f0;font-size:10px">${entry.action}</span>
+              </div>
+              <span style="color:#6b7280;font-size:8px">${entry.timestamp.split('T')[1]?.slice(0, 5) || ''}</span>
+            </div>
+            <div style="font-size:9px;color:#6b7280;margin-top:2px">${entry.user} → ${entry.resource} | ${entry.details}</div>
+            <div style="display:flex;gap:8px;margin-top:3px;font-size:8px;align-items:center">
+              <span style="color:${entry.verified ? '#22c55e' : '#ef4444'}">${entry.verified ? '✓ Verified' : '✕ Unverified'}</span>
+              <span style="color:#4b5563;font-family:monospace">hash: ${entry.currentHash}</span>
+              <span style="color:#6b7280">${entry.evidence.length} evidence items</span>
+            </div>
+            ${entry.remediation ? html`
+              <div style="margin-top:3px;padding:3px 6px;background:#0a0c10;border-radius:3px;font-size:8px">
+                <span style="color:${entry.remediation.status === 'completed' ? '#22c55e' : entry.remediation.status === 'in-progress' ? '#3b82f6' : entry.remediation.status === 'accepted-risk' ? '#f59e0b' : '#ef4444'}">Remediation: ${entry.remediation.status}</span>
+                <span style="color:#6b7280;margin-left:6px">${entry.remediation.assignee} | Due: ${entry.remediation.dueDate.split('T')[0]}</span>
+                <span style="color:#9ca3af;margin-left:6px">${entry.remediation.notes}</span>
+              </div>
+            ` : nothing}
+          </div>
+        `)}
+      </div>`;
+  }
+
   }
 declare global { interface HTMLElementTagNameMap { 'sc-security-chat': ScSecurityChat; } }
