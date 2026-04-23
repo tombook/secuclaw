@@ -3439,6 +3439,366 @@ export class ScRiskRegister extends LitElement {
 
 
 
+
+  // --- Security Compliance Calendar ---
+  @state() private _complianceCalendarEvents: Array<{id: string; title: string; deadline: string; category: string; status: string; assignee: string; notes: string}> = [
+    {id: 'cc-risk-register-001', title: 'SOX Section 404 Compliance Review', deadline: '2026-06-30', category: 'Regulatory', status: 'In Progress', assignee: 'Compliance Team', notes: 'Annual internal control assessment for financial reporting'},
+    {id: 'cc-risk-register-002', title: 'GDPR Data Protection Impact Assessment', deadline: '2026-05-15', category: 'Privacy', status: 'Pending', assignee: 'DPO Office', notes: 'Quarterly DPIA for high-risk processing activities'},
+    {id: 'cc-risk-register-003', title: 'ISO 27001 Surveillance Audit', deadline: '2026-07-20', category: 'Certification', status: 'Scheduled', assignee: 'QA Lead', notes: 'Stage 2 surveillance audit for ISMS certification renewal'},
+    {id: 'cc-risk-register-004', title: 'PCI DSS v4.0 Gap Analysis', deadline: '2026-05-30', category: 'Payment', status: 'Not Started', assignee: 'Security Architect', notes: 'Assess current state against PCI DSS v4.0 requirements'},
+    {id: 'cc-risk-register-005', title: 'NIST CSF Self-Assessment', deadline: '2026-08-15', category: 'Framework', status: 'Pending', assignee: 'CISO', notes: 'Biannual self-assessment against NIST Cybersecurity Framework'},
+    {id: 'cc-risk-register-006', title: 'HIPAA Security Rule Audit', deadline: '2026-06-15', category: 'Healthcare', status: 'In Progress', assignee: 'Compliance Analyst', notes: 'Annual audit of administrative, physical, and technical safeguards'},
+    {id: 'cc-risk-register-007', title: 'SOC 2 Type II Report Renewal', deadline: '2026-09-30', category: 'Audit', status: 'Scheduled', assignee: 'External Auditor', notes: 'Engage auditor for SOC 2 Type II examination period'},
+    {id: 'cc-risk-register-008', title: 'FedRAMP Authorization Review', deadline: '2026-07-01', category: 'Government', status: 'Pending', assignee: 'FedRAMP PMO', notes: 'Review and update security authorization package'},
+    {id: 'cc-risk-register-009', title: 'Annual Penetration Test', deadline: '2026-10-15', category: 'Testing', status: 'Not Started', assignee: 'Red Team Lead', notes: 'Comprehensive external and internal penetration testing engagement'},
+    {id: 'cc-risk-register-010', title: 'Security Awareness Training Rollout', deadline: '2026-05-01', category: 'Training', status: 'Completed', assignee: 'Security Awareness Manager', notes: 'Q2 organization-wide security awareness training program'},
+    {id: 'cc-risk-register-011', title: 'Vendor Security Review Cycle', deadline: '2026-06-01', category: 'Third Party', status: 'In Progress', assignee: 'Vendor Manager', notes: 'Quarterly review of critical vendor security posture and SLA compliance'},
+    {id: 'cc-risk-register-012', title: 'Incident Response Plan Update', deadline: '2026-05-20', category: 'Operations', status: 'Pending', assignee: 'IR Team Lead', notes: 'Update IR procedures based on lessons learned from recent incidents'},
+  ];
+
+  private _getComplianceCalendarStats() {
+    const events = this._complianceCalendarEvents;
+    return {
+      total: events.length,
+      completed: events.filter(e => e.status === 'Completed').length,
+      inProgress: events.filter(e => e.status === 'In Progress').length,
+      pending: events.filter(e => e.status === 'Pending' || e.status === 'Not Started').length,
+      scheduled: events.filter(e => e.status === 'Scheduled').length,
+      overdue: events.filter(e => new Date(e.deadline) < new Date() && e.status !== 'Completed').length,
+    };
+  }
+
+  private _renderComplianceCalendar() {
+    const stats = this._getComplianceCalendarStats();
+    const categoryColors: Record<string, string> = {
+      'Regulatory': '#ef4444', 'Privacy': '#8b5cf6', 'Certification': '#06b6d4',
+      'Payment': '#f59e0b', 'Framework': '#10b981', 'Healthcare': '#ec4899',
+      'Audit': '#6366f1', 'Government': '#14b8a6', 'Testing': '#f97316',
+      'Training': '#84cc16', 'Third Party': '#a855f7', 'Operations': '#0ea5e9',
+    };
+    return html`
+      <div class="compliance-calendar-section">
+        <h4 class="section-title">Security Compliance Calendar</h4>
+        <div class="compliance-stats-grid">
+          <div class="stat-card"><span class="stat-value">${stats.total}</span><span class="stat-label">Total Events</span></div>
+          <div class="stat-card"><span class="stat-value">${stats.completed}</span><span class="stat-label">Completed</span></div>
+          <div class="stat-card"><span class="stat-value">${stats.inProgress}</span><span class="stat-label">In Progress</span></div>
+          <div class="stat-card"><span class="stat-value">${stats.pending}</span><span class="stat-label">Pending</span></div>
+          <div class="stat-card"><span class="stat-value">${stats.scheduled}</span><span class="stat-label">Scheduled</span></div>
+          <div class="stat-card"><span class="stat-value">${stats.overdue}</span><span class="stat-label">Overdue</span></div>
+        </div>
+        <div class="compliance-timeline">
+          ${this._complianceCalendarEvents.map(event => html`
+            <div class="calendar-event" style="border-left: 3px solid ${categoryColors[event.category] || '#6b7280'}">
+              <div class="event-header">
+                <span class="event-title">${event.title}</span>
+                <span class="event-badge badge-${event.status.toLowerCase().replace(/ /g, '-')}">${event.status}</span>
+              </div>
+              <div class="event-meta">
+                <span class="event-category" style="color: ${categoryColors[event.category]}">${event.category}</span>
+                <span class="event-deadline">Due: ${event.deadline}</span>
+                <span class="event-assignee">${event.assignee}</span>
+              </div>
+              <div class="event-notes">${event.notes}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+  // --- Security Exception Management ---
+  @state() private _securityExceptions: Array<{id: string; title: string; riskLevel: string; status: string; requestor: string; approver: string; createdDate: string; expiryDate: string; compensatingControls: string[]; justification: string; lastReviewed: string}> = [
+    {id: 'exc-risk-register-001', title: 'Legacy TLS 1.0 Exception for Payment Gateway', riskLevel: 'High', status: 'Approved', requestor: 'Infrastructure Team', approver: 'CISO', createdDate: '2026-01-15', expiryDate: '2026-07-15', compensatingControls: ['Network segmentation', 'Enhanced monitoring', 'Quarterly review'], justification: 'Third-party payment processor requires TLS 1.0; migration planned for Q3'},
+    {id: 'exc-risk-register-002', title: 'Admin Account with Non-SSO Access', riskLevel: 'Medium', status: 'Under Review', requestor: 'DevOps Lead', approver: 'IAM Manager', createdDate: '2026-02-20', expiryDate: '2026-08-20', compensatingControls: ['MFA enforced', 'Session recording', 'Weekly access audit'], justification: 'Emergency break-glass account for critical infrastructure management'},
+    {id: 'exc-risk-register-003', title: 'Outdated Database Version Support', riskLevel: 'High', status: 'Approved', requestor: 'DBA Team', approver: 'CTO', createdDate: '2025-12-01', expiryDate: '2026-06-01', compensatingControls: ['Isolated network zone', 'Application-layer WAF', 'Monthly patching'], justification: 'Vendor application incompatibility with newer DB version; upgrade scheduled'},
+    {id: 'exc-risk-register-004', title: 'Public S3 Bucket for Customer Assets', riskLevel: 'Critical', status: 'Expired', requestor: 'Product Team', approver: 'CISO', createdDate: '2025-09-01', expiryDate: '2026-03-01', compensatingControls: ['Signed URLs', 'Access logging', 'Content encryption'], justification: 'Legacy customer portal requires public access for document delivery'},
+    {id: 'exc-risk-register-005', title: 'VPN Bypass for Cloud-Native Workloads', riskLevel: 'Medium', status: 'Pending', requestor: 'Cloud Architecture', approver: 'Security Architect', createdDate: '2026-03-10', expiryDate: '2026-09-10', compensatingControls: ['Zero Trust network policies', 'mTLS between services', 'Service mesh encryption'], justification: 'Cloud-native microservices require direct connectivity for performance'},
+    {id: 'exc-risk-register-006', title: 'Default Password Policy Override', riskLevel: 'High', status: 'Denied', requestor: 'HR Department', approver: 'CISO', createdDate: '2026-03-15', expiryDate: '2026-09-15', compensatingControls: ['Password manager deployment', 'SSO integration'], justification: 'Requested simpler password requirements for non-technical staff'},
+  ];
+
+  private _getExceptionStats() {
+    const ex = this._securityExceptions;
+    return {
+      total: ex.length,
+      approved: ex.filter(e => e.status === 'Approved').length,
+      pending: ex.filter(e => e.status === 'Pending' || e.status === 'Under Review').length,
+      expired: ex.filter(e => e.status === 'Expired' || e.status === 'Denied').length,
+      highRisk: ex.filter(e => e.riskLevel === 'High' || e.riskLevel === 'Critical').length,
+      expiringSoon: ex.filter(e => {
+        const d = new Date(e.expiryDate);
+        const now = new Date();
+        const soon = new Date(now.getTime() + 30 * 86400000);
+        return d > now && d <= soon;
+      }).length,
+    };
+  }
+
+  private _renderExceptionManagement() {
+    const stats = this._getExceptionStats();
+    const riskColors: Record<string, string> = { 'Critical': '#dc2626', 'High': '#ef4444', 'Medium': '#f59e0b', 'Low': '#22c55e' };
+    return html`
+      <div class="exception-mgmt-section">
+        <h4 class="section-title">Security Exception Management</h4>
+        <div class="exception-stats">
+          <div class="exc-stat"><span class="exc-num">${stats.total}</span><span class="exc-lbl">Total</span></div>
+          <div class="exc-stat"><span class="exc-num">${stats.approved}</span><span class="exc-lbl">Approved</span></div>
+          <div class="exc-stat"><span class="exc-num">${stats.pending}</span><span class="exc-lbl">Pending</span></div>
+          <div class="exc-stat"><span class="exc-num">${stats.expired}</span><span class="exc-lbl">Expired/Denied</span></div>
+          <div class="exc-stat"><span class="exc-num">${stats.highRisk}</span><span class="exc-lbl">High Risk</span></div>
+          <div class="exc-stat"><span class="exc-num">${stats.expiringSoon}</span><span class="exc-lbl">Expiring Soon</span></div>
+        </div>
+        <div class="exception-list">
+          ${this._securityExceptions.map(exc => html`
+            <div class="exception-card" data-risk="${exc.riskLevel}">
+              <div class="exc-header">
+                <span class="exc-title">${exc.title}</span>
+                <span class="exc-risk-badge" style="background: ${riskColors[exc.riskLevel]}20; color: ${riskColors[exc.riskLevel]}">${exc.riskLevel}</span>
+              </div>
+              <div class="exc-details">
+                <div class="exc-row"><span>Status:</span><strong>${exc.status}</strong></div>
+                <div class="exc-row"><span>Requestor:</span><span>${exc.requestor}</span></div>
+                <div class="exc-row"><span>Approver:</span><span>${exc.approver}</span></div>
+                <div class="exc-row"><span>Expiry:</span><span>${exc.expiryDate}</span></div>
+                <div class="exc-row"><span>Justification:</span><span>${exc.justification}</span></div>
+              </div>
+              <div class="exc-controls">
+                <span class="controls-label">Compensating Controls:</span>
+                ${exc.compensatingControls.map(c => html`<span class="control-tag">${c}</span>`)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+  // --- Security Data Quality Framework ---
+  @state() private _dataQualityMetrics: Array<{id: string; dataSource: string; completenessScore: number; accuracyScore: number; timelinessScore: number; consistencyScore: number; reliabilityRank: number; lastUpdated: string; issues: string[]; trend: string}> = [
+    {id: 'dq-risk-register-001', dataSource: 'Vulnerability Scanner Feed', completenessScore: 94, accuracyScore: 91, timelinessScore: 88, consistencyScore: 95, reliabilityRank: 1, lastUpdated: '2026-04-23T08:00:00Z', issues: ['Minor delay in Nessus plugin updates'], trend: 'improving'},
+    {id: 'dq-risk-register-002', dataSource: 'SIEM Event Logs', completenessScore: 87, accuracyScore: 93, timelinessScore: 96, consistencyScore: 89, reliabilityRank: 2, lastUpdated: '2026-04-23T07:30:00Z', issues: ['Some log sources showing gaps in off-hours'], trend: 'stable'},
+    {id: 'dq-risk-register-003', dataSource: 'Asset Inventory Database', completenessScore: 82, accuracyScore: 78, timelinessScore: 75, consistencyScore: 84, reliabilityRank: 4, lastUpdated: '2026-04-22T18:00:00Z', issues: ['Shadow IT devices not fully cataloged', 'Decommissioned assets still listed'], trend: 'declining'},
+    {id: 'dq-risk-register-004', dataSource: 'Threat Intelligence Platform', completenessScore: 91, accuracyScore: 89, timelinessScore: 92, consistencyScore: 87, reliabilityRank: 3, lastUpdated: '2026-04-23T06:00:00Z', issues: ['Some IOC sources lack confidence scoring'], trend: 'improving'},
+    {id: 'dq-risk-register-005', dataSource: 'Identity Provider Logs', completenessScore: 96, accuracyScore: 97, timelinessScore: 98, consistencyScore: 96, reliabilityRank: 1, lastUpdated: '2026-04-23T09:00:00Z', issues: [], trend: 'stable'},
+    {id: 'dq-risk-register-006', dataSource: 'Cloud Security Posture Data', completenessScore: 79, accuracyScore: 85, timelinessScore: 82, consistencyScore: 81, reliabilityRank: 5, lastUpdated: '2026-04-23T05:00:00Z', issues: ['Multi-cloud coverage gaps', 'API rate limiting affects scan frequency'], trend: 'declining'},
+    {id: 'dq-risk-register-007', dataSource: 'Compliance Evidence Store', completenessScore: 88, accuracyScore: 86, timelinessScore: 80, consistencyScore: 83, reliabilityRank: 4, lastUpdated: '2026-04-21T14:00:00Z', issues: ['Manual evidence collection delays', 'Inconsistent formatting across frameworks'], trend: 'stable'},
+    {id: 'dq-risk-register-008', dataSource: 'Network Flow Data', completenessScore: 92, accuracyScore: 90, timelinessScore: 94, consistencyScore: 91, reliabilityRank: 2, lastUpdated: '2026-04-23T08:30:00Z', issues: ['Encrypted traffic classification accuracy needs improvement'], trend: 'improving'},
+  ];
+
+  private _getOverallDataQuality() {
+    const m = this._dataQualityMetrics;
+    const avg = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    return {
+      overallCompleteness: Math.round(avg(m.map(d => d.completenessScore))),
+      overallAccuracy: Math.round(avg(m.map(d => d.accuracyScore))),
+      overallTimeliness: Math.round(avg(m.map(d => d.timelinessScore))),
+      overallConsistency: Math.round(avg(m.map(d => d.consistencyScore))),
+      totalIssues: m.reduce((sum, d) => sum + d.issues.length, 0),
+      improving: m.filter(d => d.trend === 'improving').length,
+      declining: m.filter(d => d.trend === 'declining').length,
+      stable: m.filter(d => d.trend === 'stable').length,
+    };
+  }
+
+  private _renderDataQuality() {
+    const overall = this._getOverallDataQuality();
+    const scoreColor = (s: number) => s >= 90 ? '#22c55e' : s >= 80 ? '#f59e0b' : '#ef4444';
+    const trendIcon = (t: string) => t === 'improving' ? '▲' : t === 'declining' ? '▼' : '■';
+    const trendColor = (t: string) => t === 'improving' ? '#22c55e' : t === 'declining' ? '#ef4444' : '#6b7280';
+    return html`
+      <div class="data-quality-section">
+        <h4 class="section-title">Security Data Quality Framework</h4>
+        <div class="dq-overview">
+          <div class="dq-metric">
+            <div class="dq-score" style="color: ${scoreColor(overall.overallCompleteness)}">${overall.overallCompleteness}%</div>
+            <div class="dq-label">Completeness</div>
+          </div>
+          <div class="dq-metric">
+            <div class="dq-score" style="color: ${scoreColor(overall.overallAccuracy)}">${overall.overallAccuracy}%</div>
+            <div class="dq-label">Accuracy</div>
+          </div>
+          <div class="dq-metric">
+            <div class="dq-score" style="color: ${scoreColor(overall.overallTimeliness)}">${overall.overallTimeliness}%</div>
+            <div class="dq-label">Timeliness</div>
+          </div>
+          <div class="dq-metric">
+            <div class="dq-score" style="color: ${scoreColor(overall.overallConsistency)}">${overall.overallConsistency}%</div>
+            <div class="dq-label">Consistency</div>
+          </div>
+        </div>
+        <div class="dq-trend-summary">
+          <span class="trend-badge improving">Improving: ${overall.improving}</span>
+          <span class="trend-badge stable">Stable: ${overall.stable}</span>
+          <span class="trend-badge declining">Declining: ${overall.declining}</span>
+          <span class="dq-issues-total">Total Issues: ${overall.totalIssues}</span>
+        </div>
+        <div class="dq-sources-list">
+          ${this._dataQualityMetrics.map(d => html`
+            <div class="dq-source-row">
+              <div class="dq-source-name">
+                <span class="dq-rank">#${d.reliabilityRank}</span>
+                ${d.dataSource}
+                <span class="dq-trend-icon" style="color: ${trendColor(d.trend)}">${trendIcon(d.trend)}</span>
+              </div>
+              <div class="dq-scores">
+                <span class="dq-mini-score" style="color: ${scoreColor(d.completenessScore)}">C:${d.completenessScore}</span>
+                <span class="dq-mini-score" style="color: ${scoreColor(d.accuracyScore)}">A:${d.accuracyScore}</span>
+                <span class="dq-mini-score" style="color: ${scoreColor(d.timelinessScore)}">T:${d.timelinessScore}</span>
+                <span class="dq-mini-score" style="color: ${scoreColor(d.consistencyScore)}">Co:${d.consistencyScore}</span>
+              </div>
+              ${d.issues.length > 0 ? html`<div class="dq-issues">${d.issues.map(i => html`<span class="dq-issue">${i}</span>`)}</div>` : html`<span class="dq-no-issues">No issues</span>`}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+  // --- Security Workflow Automation ---
+  @state() private _workflowTemplates: Array<{id: string; name: string; description: string; category: string; steps: number; avgDuration: string; successRate: number; lastRun: string; manualInterventions: number; optimizationScore: number}> = [
+    {id: 'wf-risk-register-001', name: 'Vulnerability Triage Pipeline', description: 'Automated vulnerability assessment, prioritization, and assignment workflow', category: 'Vulnerability Management', steps: 8, avgDuration: '12 min', successRate: 94.5, lastRun: '2026-04-23T06:00:00Z', manualInterventions: 2, optimizationScore: 87},
+    {id: 'wf-risk-register-002', name: 'Incident Response Orchestration', description: 'End-to-end IR workflow from detection to containment and recovery', category: 'Incident Response', steps: 15, avgDuration: '45 min', successRate: 89.2, lastRun: '2026-04-22T14:30:00Z', manualInterventions: 5, optimizationScore: 72},
+    {id: 'wf-risk-register-003', name: 'Access Request Approval Chain', description: 'Multi-level approval workflow for privileged access requests', category: 'Identity & Access', steps: 6, avgDuration: '4 hours', successRate: 97.1, lastRun: '2026-04-23T09:15:00Z', manualInterventions: 1, optimizationScore: 92},
+    {id: 'wf-risk-register-004', name: 'Compliance Evidence Collection', description: 'Automated gathering and packaging of audit evidence artifacts', category: 'Compliance', steps: 10, avgDuration: '30 min', successRate: 91.8, lastRun: '2026-04-21T10:00:00Z', manualInterventions: 3, optimizationScore: 78},
+    {id: 'wf-risk-register-005', name: 'Security Patch Deployment', description: 'Staged patch rollout with validation and rollback capability', category: 'Patch Management', steps: 12, avgDuration: '2 hours', successRate: 96.3, lastRun: '2026-04-20T22:00:00Z', manualInterventions: 1, optimizationScore: 85},
+    {id: 'wf-risk-register-006', name: 'Threat Intelligence Enrichment', description: 'IOC enrichment and correlation with internal threat data', category: 'Threat Intelligence', steps: 7, avgDuration: '8 min', successRate: 93.7, lastRun: '2026-04-23T07:00:00Z', manualInterventions: 0, optimizationScore: 95},
+    {id: 'wf-risk-register-007', name: 'Security Reporting Pipeline', description: 'Automated generation and distribution of security metrics reports', category: 'Reporting', steps: 5, avgDuration: '15 min', successRate: 98.9, lastRun: '2026-04-23T08:00:00Z', manualInterventions: 0, optimizationScore: 97},
+    {id: 'wf-risk-register-008', name: 'Vendor Risk Assessment', description: 'Automated vendor security questionnaire distribution and scoring', category: 'Third Party', steps: 9, avgDuration: '3 days', successRate: 85.4, lastRun: '2026-04-19T11:00:00Z', manualInterventions: 4, optimizationScore: 65},
+  ];
+
+  @state() private _workflowExecutionHistory: Array<{workflowId: string; runDate: string; duration: string; status: string; trigger: string}> = [
+    {workflowId: 'wf-risk-register-001', runDate: '2026-04-23T06:00:00Z', duration: '11 min 23 sec', status: 'Success', trigger: 'Scheduled'},
+    {workflowId: 'wf-risk-register-002', runDate: '2026-04-22T14:30:00Z', duration: '42 min 15 sec', status: 'Success', trigger: 'Alert'},
+    {workflowId: 'wf-risk-register-003', runDate: '2026-04-23T09:15:00Z', duration: '3h 45 min', status: 'Success', trigger: 'User Request'},
+    {workflowId: 'wf-risk-register-001', runDate: '2026-04-22T06:00:00Z', duration: '13 min 08 sec', status: 'Partial', trigger: 'Scheduled'},
+    {workflowId: 'wf-risk-register-004', runDate: '2026-04-21T10:00:00Z', duration: '28 min 42 sec', status: 'Success', trigger: 'Scheduled'},
+  ];
+
+  private _renderWorkflowAutomation() {
+    const avgSuccessRate = Math.round(this._workflowTemplates.reduce((s, w) => s + w.successRate, 0) / this._workflowTemplates.length * 10) / 10;
+    const totalManualInterventions = this._workflowTemplates.reduce((s, w) => s + w.manualInterventions, 0);
+    const avgOptimization = Math.round(this._workflowTemplates.reduce((s, w) => s + w.optimizationScore, 0) / this._workflowTemplates.length);
+    return html`
+      <div class="workflow-automation-section">
+        <h4 class="section-title">Security Workflow Automation</h4>
+        <div class="wf-summary">
+          <div class="wf-summary-item"><span class="wf-num">${this._workflowTemplates.length}</span><span class="wf-lbl">Templates</span></div>
+          <div class="wf-summary-item"><span class="wf-num">${avgSuccessRate}%</span><span class="wf-lbl">Avg Success</span></div>
+          <div class="wf-summary-item"><span class="wf-num">${totalManualInterventions}</span><span class="wf-lbl">Manual Steps</span></div>
+          <div class="wf-summary-item"><span class="wf-num">${avgOptimization}%</span><span class="wf-lbl">Optimization</span></div>
+        </div>
+        <div class="wf-template-list">
+          ${this._workflowTemplates.map(wf => html`
+            <div class="wf-template-card">
+              <div class="wf-template-header">
+                <span class="wf-name">${wf.name}</span>
+                <span class="wf-category">${wf.category}</span>
+              </div>
+              <div class="wf-template-desc">${wf.description}</div>
+              <div class="wf-template-meta">
+                <span>${wf.steps} steps</span>
+                <span>Avg: ${wf.avgDuration}</span>
+                <span>Success: ${wf.successRate}%</span>
+                <span>Opt: ${wf.optimizationScore}%</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+  // --- Security Knowledge Base ---
+  @state() private _knowledgeArticles: Array<{id: string; title: string; category: string; author: string; publishDate: string; views: number; rating: number; tags: string[]; summary: string; readTime: string}> = [
+    {id: 'kb-risk-register-001', title: 'Zero Trust Architecture Implementation Guide', category: 'Architecture', author: 'Security Architecture Team', publishDate: '2026-03-15', views: 1842, rating: 4.8, tags: ['zero-trust', 'network', 'identity'], summary: 'Comprehensive guide for implementing zero trust principles across enterprise infrastructure', readTime: '15 min'},
+    {id: 'kb-risk-register-002', title: 'Ransomware Defense Playbook 2026', category: 'Threats', author: 'Threat Intelligence Team', publishDate: '2026-04-01', views: 2341, rating: 4.9, tags: ['ransomware', 'incident-response', 'defense'], summary: 'Updated playbook with latest ransomware tactics, techniques, and defensive measures', readTime: '12 min'},
+    {id: 'kb-risk-register-003', title: 'Cloud Security Best Practices for Multi-Cloud', category: 'Cloud', author: 'Cloud Security Team', publishDate: '2026-02-28', views: 1567, rating: 4.5, tags: ['cloud', 'aws', 'azure', 'gcp'], summary: 'Best practices for securing workloads across multiple cloud service providers', readTime: '18 min'},
+    {id: 'kb-risk-register-004', title: 'API Security Testing Methodology', category: 'Testing', author: 'Red Team', publishDate: '2026-03-22', views: 987, rating: 4.6, tags: ['api', 'testing', 'owasp'], summary: 'Structured methodology for identifying and testing API security vulnerabilities', readTime: '10 min'},
+    {id: 'kb-risk-register-005', title: 'Supply Chain Security Risk Management', category: 'Third Party', author: 'GRC Team', publishDate: '2026-01-20', views: 1234, rating: 4.3, tags: ['supply-chain', 'vendor', 'risk'], summary: 'Framework for managing security risks in the software supply chain', readTime: '14 min'},
+    {id: 'kb-risk-register-006', title: 'Kubernetes Security Hardening Checklist', category: 'Container', author: 'Platform Security', publishDate: '2026-04-10', views: 2103, rating: 4.7, tags: ['kubernetes', 'container', 'hardening'], summary: 'Step-by-step hardening checklist for production Kubernetes clusters', readTime: '11 min'},
+    {id: 'kb-risk-register-007', title: 'Security Metrics That Matter for Executives', category: 'Metrics', author: 'CISO Office', publishDate: '2026-03-05', views: 876, rating: 4.4, tags: ['metrics', 'kpi', 'reporting'], summary: 'Key security metrics and KPIs that resonate with board-level stakeholders', readTime: '8 min'},
+    {id: 'kb-risk-register-008', title: 'Phishing Simulation Campaign Design', category: 'Awareness', author: 'Security Awareness Team', publishDate: '2026-02-15', views: 1456, rating: 4.5, tags: ['phishing', 'simulation', 'training'], summary: 'Designing effective phishing simulations that drive real behavioral change', readTime: '9 min'},
+    {id: 'kb-risk-register-009', title: 'Data Loss Prevention Strategy and Implementation', category: 'Data Protection', author: 'Data Security Team', publishDate: '2026-03-28', views: 1678, rating: 4.6, tags: ['dlp', 'data-protection', 'compliance'], summary: 'Strategic approach to DLP covering people, process, and technology layers', readTime: '16 min'},
+    {id: 'kb-risk-register-010', title: 'Security Automation with SOAR Platforms', category: 'Automation', author: 'SOC Engineering', publishDate: '2026-04-05', views: 1098, rating: 4.7, tags: ['soar', 'automation', 'soc'], summary: 'Building effective security automation playbooks using SOAR technology', readTime: '13 min'},
+    {id: 'kb-risk-register-011', title: 'Third-Party Risk Assessment Framework', category: 'GRC', author: 'Vendor Management', publishDate: '2026-01-30', views: 1345, rating: 4.4, tags: ['vendor', 'risk', 'assessment'], summary: 'Structured framework for evaluating and monitoring third-party security risks', readTime: '12 min'},
+    {id: 'kb-risk-register-012', title: 'Network Detection and Response Best Practices', category: 'Network', author: 'Network Security Team', publishDate: '2026-03-18', views: 1567, rating: 4.5, tags: ['ndr', 'network', 'detection'], summary: 'Implementing effective network detection and response capabilities', readTime: '14 min'},
+    {id: 'kb-risk-register-013', title: 'Security Chaos Engineering Guide', category: 'Resilience', author: 'SRE Security', publishDate: '2026-04-12', views: 789, rating: 4.3, tags: ['chaos-engineering', 'resilience', 'testing'], summary: 'Applying chaos engineering principles to validate security controls', readTime: '10 min'},
+    {id: 'kb-risk-register-014', title: 'Incident Communication Templates', category: 'Incident Response', author: 'IR Team', publishDate: '2026-02-22', views: 2234, rating: 4.8, tags: ['incident', 'communication', 'templates'], summary: 'Ready-to-use communication templates for security incident scenarios', readTime: '7 min'},
+    {id: 'kb-risk-register-015', title: 'Endpoint Detection and Response Configuration', category: 'Endpoint', author: 'Endpoint Security', publishDate: '2026-03-08', views: 1345, rating: 4.5, tags: ['edr', 'endpoint', 'configuration'], summary: 'Optimal EDR configuration for maximum detection with minimal false positives', readTime: '11 min'},
+    {id: 'kb-risk-register-016', title: 'Security Code Review Standards', category: 'Development', author: 'AppSec Team', publishDate: '2026-02-10', views: 1890, rating: 4.6, tags: ['code-review', 'secure-sdlc', 'standards'], summary: 'Standards and checklists for security-focused code reviews', readTime: '13 min'},
+    {id: 'kb-risk-register-017', title: 'IoT Security Assessment Methodology', category: 'IoT', author: 'IoT Security Lab', publishDate: '2026-04-08', views: 654, rating: 4.2, tags: ['iot', 'embedded', 'assessment'], summary: 'Methodology for assessing security posture of IoT devices and ecosystems', readTime: '15 min'},
+    {id: 'kb-risk-register-018', title: 'Passwordless Authentication Migration Guide', category: 'Identity', author: 'IAM Team', publishDate: '2026-03-25', views: 1678, rating: 4.7, tags: ['passwordless', 'authentication', 'mfa'], summary: 'Step-by-step migration plan from password-based to passwordless authentication', readTime: '12 min'},
+    {id: 'kb-risk-register-019', title: 'Security Awareness Program Metrics', category: 'Awareness', author: 'Security Culture Team', publishDate: '2026-01-25', views: 1123, rating: 4.4, tags: ['awareness', 'metrics', 'culture'], summary: 'Measuring the effectiveness of your security awareness and training programs', readTime: '9 min'},
+    {id: 'kb-risk-register-020', title: 'Deception Technology Deployment Guide', category: 'Detection', author: 'Blue Team', publishDate: '2026-04-15', views: 876, rating: 4.5, tags: ['deception', 'honeypot', 'detection'], summary: 'Planning and deploying deception technology for advanced threat detection', readTime: '11 min'},
+  ];
+
+  @state() private _kbSearchQuery = '';
+  @state() private _kbSelectedCategory = '';
+
+  private _getKbCategories(): string[] {
+    return [...new Set(this._knowledgeArticles.map(a => a.category))].sort();
+  }
+
+  private _getFilteredArticles(): typeof this._knowledgeArticles {
+    let articles = this._knowledgeArticles;
+    if (this._kbSearchQuery) {
+      const q = this._kbSearchQuery.toLowerCase();
+      articles = articles.filter(a => a.title.toLowerCase().includes(q) || a.tags.some(t => t.includes(q)) || a.summary.toLowerCase().includes(q));
+    }
+    if (this._kbSelectedCategory) {
+      articles = articles.filter(a => a.category === this._kbSelectedCategory);
+    }
+    return articles.sort((a, b) => b.views - a.views);
+  }
+
+  private _renderKnowledgeBase() {
+    const categories = this._getKbCategories();
+    const filtered = this._getFilteredArticles();
+    const topArticles = [...this._knowledgeArticles].sort((a, b) => b.views - a.views).slice(0, 5);
+    const gapAreas = ['Container Runtime Security', 'AI/ML Security', 'Quantum Computing Threats', '5G Network Security'];
+    return html`
+      <div class="knowledge-base-section">
+        <h4 class="section-title">Security Knowledge Base</h4>
+        <div class="kb-controls">
+          <input type="text" class="kb-search" placeholder="Search articles, tags..." .value=${this._kbSearchQuery} @input=${(e: Event) => { this._kbSearchQuery = (e.target as HTMLInputElement).value; }} />
+          <select class="kb-category-filter" @change=${(e: Event) => { this._kbSelectedCategory = (e.target as HTMLSelectElement).value; }}>
+            <option value="">All Categories</option>
+            ${categories.map(c => html`<option value="${c}" ?selected=${this._kbSelectedCategory === c}>${c}</option>`)}
+          </select>
+        </div>
+        <div class="kb-sidebar">
+          <div class="kb-popular">
+            <h5>Most Popular</h5>
+            ${topArticles.map((a, i) => html`
+              <div class="kb-popular-item">
+                <span class="kb-rank">${i + 1}</span>
+                <span class="kb-popular-title">${a.title}</span>
+                <span class="kb-views">${a.views.toLocaleString()} views</span>
+              </div>
+            `)}
+          </div>
+          <div class="kb-gaps">
+            <h5>Knowledge Gaps</h5>
+            ${gapAreas.map(g => html`<span class="kb-gap-tag">${g}</span>`)}
+          </div>
+        </div>
+        <div class="kb-article-grid">
+          ${filtered.map(a => html`
+            <div class="kb-article-card">
+              <div class="kb-article-header">
+                <span class="kb-article-title">${a.title}</span>
+                <span class="kb-article-category">${a.category}</span>
+              </div>
+              <div class="kb-article-summary">${a.summary}</div>
+              <div class="kb-article-footer">
+                <span>${a.author}</span>
+                <span>${a.readTime}</span>
+                <span>Views: ${a.views}</span>
+                <span>Rating: ${'\u2605'.repeat(Math.round(a.rating))}</span>
+              </div>
+              <div class="kb-article-tags">${a.tags.map(t => html`<span class="kb-tag">${t}</span>`)}</div>
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
   render() {    if (this._rrRules.length === 0) { this._initRrRules(); this._initRrCvss(); this._runRrAnomalyDetection(); this._generateRrPredictions(); this._initRrApprovals(); this._initRrActivity(); this._initRrNotifications(); }
 
     const items = this._getFiltered();
