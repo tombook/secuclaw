@@ -2185,6 +2185,248 @@ export class ScPhishingCampaign extends LitElement {
       </div>
     `;
   }
+  // Security Maturity Assessment Module
+  private _renderSecurityMaturityAssessment() {
+    const cmmcLevels = [
+      { level: 1, name: 'Initial', practices: 18, implemented: 4, color: '#ef4444' },
+      { level: 2, name: 'Managed', practices: 18, implemented: 9, color: '#f97316' },
+      { level: 3, name: 'Defined', practices: 18, implemented: 14, color: '#eab308' },
+      { level: 4, name: 'Measured', practices: 18, implemented: 16, color: '#22c55e' },
+      { level: 5, name: 'Optimized', practices: 18, implemented: 18, color: '#3b82f6' },
+    ];
+    const currentLevel = cmmcLevels[2];
+    const nistFunctions = [
+      { id: 'GV', name: 'Govern', maturity: 3.2, target: 4.0, trend: 'up' },
+      { id: 'ID', name: 'Identify', maturity: 3.5, target: 4.0, trend: 'up' },
+      { id: 'PR', name: 'Protect', maturity: 3.8, target: 4.5, trend: 'stable' },
+      { id: 'DE', name: 'Detect', maturity: 2.9, target: 4.0, trend: 'up' },
+      { id: 'RS', name: 'Respond', maturity: 3.1, target: 4.0, trend: 'down' },
+      { id: 'RC', name: 'Recover', maturity: 2.7, target: 3.5, trend: 'stable' },
+    ];
+    const peerComparison = [
+      { peer: 'Industry Average', score: 3.1 },
+      { peer: 'Sector Median', score: 3.4 },
+      { peer: 'Top Quartile', score: 4.2 },
+      { peer: 'Your Org', score: 3.2, highlight: true },
+    ];
+    const milestones = [
+      { q: 'Q1 2026', target: 'ID.RA-1 complete', status: 'done' },
+      { q: 'Q2 2026', target: 'PR.AC-3 enhanced', status: 'in-progress' },
+      { q: 'Q3 2026', target: 'DE.CM-1 automation', status: 'planned' },
+      { q: 'Q4 2026', target: 'RS.RP-1 playbooks', status: 'planned' },
+    ];
+    const trendData = [2.1, 2.3, 2.5, 2.6, 2.8, 2.9, 3.0, 3.1, 3.1, 3.2, 3.2, 3.2];
+    const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'];
+    const gapAnalysis = nistFunctions.map(f => ({
+      ...f,
+      gap: Math.round((f.target - f.maturity) * 10) / 10,
+      gapPct: Math.round(((f.target - f.maturity) / f.target) * 100),
+    }));
+    return html`
+      <section class="maturity-assessment">
+        <h4>Security Maturity Assessment</h4>
+        <div class="maturity-grid">
+          <div class="maturity-cmmc">
+            <h5>CMMC Level Assessment</h5>
+            <div class="cmmc-levels">
+              ${cmmcLevels.map(l => {
+                const pct = Math.round((l.implemented / l.practices) * 100);
+                return html`
+                  <div class="cmmc-level-card" style="border-color:${l.color}">
+                    <div class="cmmc-level-num" style="background:${l.color}">L${l.level}</div>
+                    <div class="cmmc-level-name">${l.name}</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${l.color}"></div></div>
+                    <span>${l.implemented}/${l.practices} practices</span>
+                  </div>`;
+              }).join('')}
+            </div>
+            <div class="current-level-badge">Current: Level ${currentLevel.level} - ${currentLevel.name}</div>
+          </div>
+          <div class="maturity-nist">
+            <h5>NIST CSF 2.0 Maturity Scoring</h5>
+            <table class="maturity-table">
+              <thead><tr><th>Function</th><th>Current</th><th>Target</th><th>Gap</th><th>Trend</th></tr></thead>
+              <tbody>
+                ${nistFunctions.map(f => html`
+                  <tr>
+                    <td><strong>${f.id}</strong> ${f.name}</td>
+                    <td>${f.maturity}</td>
+                    <td>${f.target}</td>
+                    <td style="color:${f.maturity >= f.target ? '#10b981' : '#ef4444'}">${(f.target - f.maturity).toFixed(1)}</td>
+                    <td class="trend-${f.trend}">${f.trend === 'up' ? '\u2191' : f.trend === 'down' ? '\u2193' : '\u2192'}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="maturity-peers">
+            <h5>Peer Maturity Comparison</h5>
+            <div class="peer-bars">
+              ${peerComparison.map(p => html`
+                <div class="peer-row ${p.highlight ? 'highlight' : ''}">
+                  <span class="peer-label">${p.peer}</span>
+                  <div class="progress-bar"><div class="progress-fill" style="width:${(p.score / 5) * 100}%;background:${p.highlight ? '#3b82f6' : '#6b7280'}"></div></div>
+                  <span>${p.score}</span>
+                </div>`).join('')}
+            </div>
+          </div>
+          <div class="maturity-trend">
+            <h5>12-Month Maturity Trend</h5>
+            <div class="trend-chart">
+              ${trendData.map((v, i) => html`
+                <div class="trend-bar" style="height:${(v / 5) * 100}%" title="${months[i]}: ${v}">
+                  <span class="trend-val">${v}</span>
+                </div>`).join('')}
+              ${months.map(m => html`<span class="trend-label">${m}</span>`).join('')}
+            </div>
+          </div>
+          <div class="maturity-roadmap">
+            <h5>Improvement Roadmap</h5>
+            <div class="roadmap-timeline">
+              ${milestones.map(m => html`
+                <div class="roadmap-item status-${m.status}">
+                  <div class="roadmap-q">${m.q}</div>
+                  <div class="roadmap-target">${m.target}</div>
+                  <div class="roadmap-status">${m.status.replace('-', ' ')}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+          <div class="maturity-gaps">
+            <h5>Gap-to-Target Analysis</h5>
+            <div class="gap-list">
+              ${gapAnalysis.map(g => html`
+                <div class="gap-item">
+                  <span class="gap-fn">${g.id} ${g.name}</span>
+                  <div class="gap-bar"><div class="gap-fill" style="width:${g.gapPct}%;background:${g.gapPct > 20 ? '#ef4444' : '#f97316'}"></div></div>
+                  <span class="gap-val">${g.gap} gap</span>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </section>`;
+  }
+
+
+  // Threat Scenario Modeling Module
+  private _renderThreatScenarioModeling() {
+    const scenarios = [
+      { id: 'TS-001', name: 'Ransomware Double Extortion', probability: 0.72, impact: 9.2, defense: 0.65, status: 'drilled' },
+      { id: 'TS-002', name: 'Supply Chain Compromise', probability: 0.45, impact: 8.8, defense: 0.42, status: 'planned' },
+      { id: 'TS-003', name: 'Insider Data Exfiltration', probability: 0.58, impact: 7.5, defense: 0.71, status: 'drilled' },
+      { id: 'TS-004', name: 'Cloud Misconfiguration', probability: 0.81, impact: 6.9, defense: 0.58, status: 'active' },
+      { id: 'TS-005', name: 'Zero-Day Exploit Chain', probability: 0.23, impact: 9.8, defense: 0.35, status: 'planned' },
+      { id: 'TS-006', name: 'Credential Stuffing Campaign', probability: 0.67, impact: 5.4, defense: 0.82, status: 'drilled' },
+      { id: 'TS-007', name: 'DNS Tunneling C2', probability: 0.34, impact: 7.1, defense: 0.55, status: 'planned' },
+      { id: 'TS-008', name: 'Social Engineering Phishing', probability: 0.76, impact: 6.2, defense: 0.73, status: 'active' },
+    ];
+    const matrixCells = scenarios.map(s => ({
+      ...s,
+      risk: Math.round(s.probability * s.impact * 10) / 10,
+    }));
+    const playbookSteps = [
+      { step: 1, action: 'Initial Detection', owner: 'SOC L1', sla: '15 min' },
+      { step: 2, action: 'Threat Triage', owner: 'SOC L2', sla: '30 min' },
+      { step: 3, action: 'Containment', owner: 'IR Lead', sla: '2 hours' },
+      { step: 4, action: 'Eradication', owner: 'Forensics', sla: '8 hours' },
+      { step: 5, action: 'Recovery', owner: 'IT Ops', sla: '24 hours' },
+      { step: 6, action: 'Post-Incident Review', owner: 'CISO', sla: '72 hours' },
+    ];
+    const drillSchedule = [
+      { scenario: 'TS-001', date: '2026-05-15', type: 'Tabletop', participants: 12 },
+      { scenario: 'TS-003', date: '2026-06-20', type: 'Live Fire', participants: 8 },
+      { scenario: 'TS-005', date: '2026-07-10', type: 'Tabletop', participants: 15 },
+      { scenario: 'TS-008', date: '2026-08-05', type: 'Simulation', participants: 20 },
+    ];
+    const aarTemplate = {
+      scenario: 'TS-001', date: '2026-03-20',
+      objectives: ['Validate containment', 'Test comms', 'Measure MTTR'],
+      findings: ['Detection delayed 8 min', 'SOC-IT gap', 'Backup OK'],
+      improvements: ['Tune SIEM rules', 'Update IR contacts', 'Auto-contain'],
+      score: 7.2,
+    };
+    const evolution = [
+      { scenario: 'TS-001', v1: 'Basic ransomware', v2: 'Double extortion + lateral', v3: 'Custom payload' },
+      { scenario: 'TS-004', v1: 'Open S3 bucket', v2: 'IAM misconfig chain', v3: 'Multi-cloud priv esc' },
+    ];
+    return html`
+      <section class="threat-scenario-modeling">
+        <h4>Threat Scenario Modeling</h4>
+        <div class="scenario-grid">
+          <div class="scenario-matrix">
+            <h5>Probability x Impact Matrix</h5>
+            <table class="scenario-table">
+              <thead><tr><th>ID</th><th>Scenario</th><th>Prob</th><th>Impact</th><th>Risk</th><th>Defense</th><th>Status</th></tr></thead>
+              <tbody>
+                ${matrixCells.map(s => {
+                  const riskColor = s.risk > 6 ? '#ef4444' : s.risk > 4 ? '#f97316' : '#22c55e';
+                  return html`
+                    <tr>
+                      <td>${s.id}</td>
+                      <td>${s.name}</td>
+                      <td>${(s.probability * 100).toFixed(0)}%</td>
+                      <td>${s.impact}</td>
+                      <td style="color:${riskColor};font-weight:bold">${s.risk}</td>
+                      <td>
+                        <div class="mini-bar"><div class="mini-fill" style="width:${s.defense * 100}%;background:${s.defense > 0.7 ? '#22c55e' : s.defense > 0.5 ? '#f97316' : '#ef4444'}"></div></div>
+                        ${(s.defense * 100).toFixed(0)}%
+                      </td>
+                      <td class="status-${s.status}">${s.status}</td>
+                    </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="scenario-playbook">
+            <h5>Attack Scenario Playbook</h5>
+            <div class="playbook-steps">
+              ${playbookSteps.map(s => html`
+                <div class="playbook-step">
+                  <div class="step-num">${s.step}</div>
+                  <div class="step-detail">
+                    <div class="step-action">${s.action}</div>
+                    <div class="step-meta">Owner: ${s.owner} | SLA: ${s.sla}</div>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>
+          <div class="scenario-drills">
+            <h5>Drill Schedule</h5>
+            <div class="drill-list">
+              ${drillSchedule.map(d => html`
+                <div class="drill-item">
+                  <span class="drill-scenario">${d.scenario}</span>
+                  <span class="drill-date">${d.date}</span>
+                  <span class="drill-type">${d.type}</span>
+                  <span class="drill-participants">${d.participants} ppl</span>
+                </div>`).join('')}
+            </div>
+          </div>
+          <div class="scenario-aar">
+            <h5>After-Action Review: ${aarTemplate.scenario}</h5>
+            <div class="aar-score">Score: ${aarTemplate.score}/10</div>
+            <div class="aar-section"><strong>Findings:</strong>
+              <ul>${aarTemplate.findings.map(f => html`<li>${f}</li>`).join('')}</ul>
+            </div>
+            <div class="aar-section"><strong>Improvements:</strong>
+              <ul>${aarTemplate.improvements.map(i => html`<li>${i}</li>`).join('')}</ul>
+            </div>
+          </div>
+          <div class="scenario-evolution">
+            <h5>Scenario Evolution Tracking</h5>
+            ${evolution.map(e => html`
+              <div class="evo-track">
+                <strong>${e.scenario}</strong>
+                <div class="evo-stages">
+                  <span>V1: ${e.v1}</span> <span>\u2192</span>
+                  <span>V2: ${e.v2}</span> <span>\u2192</span>
+                  <span>V3: ${e.v3}</span>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </section>`;
+  }
+
+
 
   render() {
     const campaign = this._activeCampaign;
