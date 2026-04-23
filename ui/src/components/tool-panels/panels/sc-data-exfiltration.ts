@@ -2074,6 +2074,890 @@ export class ScDataExfiltration extends LitElement {
     document.removeEventListener('keydown', this._deHandleKeydown.bind(this));
   }
 
+  
+  // === MACHINE LEARNING FEATURES ===
+  @state() private _deMlActiveView: string = 'importance';
+  @state() private _deMlModelVersion: string = 'v3.2.1';
+  @state() private _deMlFeatureImportance: {name:string;importance:number;color:string}[] = [];
+  @state() private _deMlMetrics: {accuracy:number;precision:number;recall:number;f1:number;auc:number} = {accuracy:0.945,precision:0.931,recall:0.952,f1:0.941,auc:0.973};
+  @state() private _deMlConfusionMatrix: number[][] = [];
+  @state() private _deMlTrainingHistory: {epoch:number;loss:number;valLoss:number;accuracy:number;valAccuracy:number}[] = [];
+  @state() private _deMlConfidenceBins: {range:string;count:number;color:string}[] = [];
+  @state() private _deMlVersionHistory: {version:string;date:string;accuracy:number;f1:number;notes:string}[] = [];
+  @state() private _deMlSelectedVersion: string = 'v3.2.1';
+
+  private _deInitMlData(): void {
+    this._deMlFeatureImportance = [
+      {name:'Request Rate',importance:0.234,color:'#f97316'},
+      {name:'Payload Size',importance:0.198,color:'#3b82f6'},
+      {name:'Time of Day',importance:0.167,color:'#8b5cf6'},
+      {name:'Source IP Reputation',importance:0.145,color:'#10b981'},
+      {name:'User Behavior Score',importance:0.112,color:'#ef4444'},
+      {name:'Endpoint Type',importance:0.089,color:'#06b6d4'},
+      {name:'Protocol Anomaly',importance:0.055,color:'#f59e0b'},
+    ];
+    this._deMlConfusionMatrix = [
+      [142, 3, 1],
+      [2, 98, 4],
+      [0, 5, 45],
+    ];
+    this._deMlTrainingHistory = Array.from({length:20}, (_,i) => ({
+      epoch: i+1,
+      loss: Math.max(0.02, 0.8 * Math.exp(-0.15*i) + 0.02 + Math.random()*0.01),
+      valLoss: Math.max(0.03, 0.85 * Math.exp(-0.14*i) + 0.03 + Math.random()*0.015),
+      accuracy: Math.min(0.99, 0.6 + 0.39 * (1 - Math.exp(-0.18*i)) + Math.random()*0.005),
+      valAccuracy: Math.min(0.98, 0.58 + 0.38 * (1 - Math.exp(-0.16*i)) + Math.random()*0.008),
+    }));
+    this._deMlConfidenceBins = [
+      {range:'0-10%',count:12,color:'#ef4444'},
+      {range:'10-30%',count:34,color:'#f97316'},
+      {range:'30-50%',count:67,color:'#f59e0b'},
+      {range:'50-70%',count:128,color:'#eab308'},
+      {range:'70-90%',count:245,color:'#22c55e'},
+      {range:'90-100%',count:514,color:'#10b981'},
+    ];
+    this._deMlVersionHistory = [
+      {version:'v1.0.0',date:'2025-01-15',accuracy:0.812,f1:0.789,notes:'Initial model with basic features'},
+      {version:'v2.0.0',date:'2025-04-20',accuracy:0.887,f1:0.874,notes:'Added behavioral analysis features'},
+      {version:'v2.5.0',date:'2025-08-10',accuracy:0.912,f1:0.901,notes:'Improved temporal pattern detection'},
+      {version:'v3.0.0',date:'2025-11-30',accuracy:0.931,f1:0.922,notes:'Neural network architecture upgrade'},
+      {version:'v3.2.1',date:'2026-03-15',accuracy:0.945,f1:0.941,notes:'Fine-tuned on recent threat data'},
+    ];
+  }
+
+  private _deRenderMlFeatures(): any {
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:16px;margin-bottom:12px" role="region" aria-label="Machine Learning Features">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:700;font-size:14px;color:#e2e8f0" role="heading" aria-level="3">Machine Learning Analysis</span>
+          <div style="display:flex;gap:4px">
+            ${['importance','metrics','matrix','training','confidence','versions'].map(v => html`
+              <button class="tab ${this._deMlActiveView === v ? 'active' : ''}" @click=${() => { this._deMlActiveView = v; }}>${v.charAt(0).toUpperCase() + v.slice(1)}</button>
+            `)}
+          </div>
+        </div>
+        ${this._deMlActiveView === 'importance' ? this._deRenderFeatureImportance() : nothing}
+        ${this._deMlActiveView === 'metrics' ? this._deRenderModelMetrics() : nothing}
+        ${this._deMlActiveView === 'matrix' ? this._deRenderConfusionMatrix() : nothing}
+        ${this._deMlActiveView === 'training' ? this._deRenderTrainingHistory() : nothing}
+        ${this._deMlActiveView === 'confidence' ? this._deRenderConfidenceDist() : nothing}
+        ${this._deMlActiveView === 'versions' ? this._deRenderVersionHistory() : nothing}
+      </div>
+    `;
+  }
+
+  private _deRenderFeatureImportance(): any {
+    const maxImp = Math.max(...this._deMlFeatureImportance.map(f => f.importance));
+    return html`
+      <div style="margin-bottom:8px;font-size:11px;color:#9ca3af">Feature Importance Ranking (Model ${this._deMlModelVersion})</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${this._deMlFeatureImportance.map((f, i) => html`
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:18px;font-size:10px;color:#6b7280;text-align:right">${i+1}</span>
+            <span style="width:140px;font-size:11px;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</span>
+            <div style="flex:1;height:20px;background:#1a1d2e;border-radius:4px;overflow:hidden;position:relative">
+              <div style="height:100%;width:${(f.importance/maxImp*100).toFixed(1)}%;background:${f.color};border-radius:4px;transition:width 0.3s"></div>
+            </div>
+            <span style="width:50px;font-size:10px;color:#9ca3af;text-align:right">${(f.importance*100).toFixed(1)}%</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderModelMetrics(): any {
+    const m = this._deMlMetrics;
+    const metrics = [
+      {label:'Accuracy',value:m.accuracy,color:'#10b981'},
+      {label:'Precision',value:m.precision,color:'#3b82f6'},
+      {label:'Recall',value:m.recall,color:'#8b5cf6'},
+      {label:'F1 Score',value:m.f1,color:'#f97316'},
+      {label:'AUC-ROC',value:m.auc,color:'#06b6d4'},
+    ];
+    return html`
+      <div style="margin-bottom:8px;font-size:11px;color:#9ca3af">Model Performance Metrics</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+        ${metrics.map(mt => html`
+          <div style="background:#1a1d2e;border-radius:8px;padding:12px;text-align:center;border-left:3px solid ${mt.color}">
+            <div style="font-size:22px;font-weight:700;color:${mt.color}">${(mt.value*100).toFixed(1)}%</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px">${mt.label}</div>
+            <div style="margin-top:6px;height:4px;background:#0f1117;border-radius:2px">
+              <div style="height:100%;width:${(mt.value*100).toFixed(0)}%;background:${mt.color};border-radius:2px"></div>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderConfusionMatrix(): any {
+    const labels = ['Benign','Suspicious','Malicious'];
+    const cm = this._deMlConfusionMatrix;
+    const total = cm.flat().reduce((a,b)=>a+b,0);
+    return html`
+      <div style="margin-bottom:8px;font-size:11px;color:#9ca3af">Confusion Matrix (3x3 Classification)</div>
+      <div style="display:inline-grid;grid-template-columns:60px repeat(3,1fr);gap:2px;font-size:11px">
+        <div></div>
+        ${labels.map(l => html`<div style="text-align:center;color:#9ca3af;font-weight:600;padding:4px">${l}</div>`)}
+        ${cm.map((row,ri) => html`
+          <div style="display:flex;align-items:center;color:#9ca3af;font-weight:600;padding-right:8px">${labels[ri]}</div>
+          ${row.map((val,ci) => {
+            const intensity = val / Math.max(...cm.flat());
+            const bgColor = ri === ci ? 'rgba(16,185,129,' + (0.2 + intensity*0.6) + ')' : 'rgba(239,68,68,' + (0.15 + intensity*0.5) + ')';
+            return html`<div style="background:${bgColor};text-align:center;padding:10px 4px;border-radius:4px;color:#e2e8f0;font-weight:600">${val}<div style="font-size:9px;color:#9ca3af;font-weight:400">${(val/total*100).toFixed(1)}%</div></div>`;
+          })}
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderTrainingHistory(): any {
+    const data = this._deMlTrainingHistory;
+    const maxEpoch = data.length;
+    const maxLoss = Math.max(...data.map(d => Math.max(d.loss, d.valLoss)));
+    const w = 400, h = 160;
+    return html`
+      <div style="margin-bottom:8px;font-size:11px;color:#9ca3af">Training History: Loss & Accuracy Curves</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="background:#1a1d2e;border-radius:6px;padding:8px">
+          <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;text-align:center">Loss Curves</div>
+          <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">
+            ${data.map((d,i) => {
+              const x1 = (i/maxEpoch*w).toFixed(1);
+              const x2 = ((i+1)/maxEpoch*w).toFixed(1);
+              const y1l = (h - d.loss/maxLoss*h*0.9 - 10).toFixed(1);
+              const y2l = (h - data[i+1]?.loss/maxLoss*h*0.9 - 10 || h - 10).toFixed(1);
+              const y1v = (h - d.valLoss/maxLoss*h*0.9 - 10).toFixed(1);
+              const y2v = (h - data[i+1]?.valLoss/maxLoss*h*0.9 - 10 || h - 10).toFixed(1);
+              if (i < data.length - 1) return html`<line x1=${x1} y1=${y1l} x2=${x2} y2=${y2l} stroke="#3b82f6" stroke-width="1.5"/><line x1=${x1} y1=${y1v} x2=${x2} y2=${y2v} stroke="#f97316" stroke-width="1.5" stroke-dasharray="4"/>`;
+              return nothing;
+            })}
+            <text x="5" y="10" fill="#3b82f6" font-size="9">Train</text>
+            <text x="45" y="10" fill="#f97316" font-size="9">Val</text>
+          </svg>
+        </div>
+        <div style="background:#1a1d2e;border-radius:6px;padding:8px">
+          <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;text-align:center">Accuracy Curves</div>
+          <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">
+            ${data.map((d,i) => {
+              const x1 = (i/maxEpoch*w).toFixed(1);
+              const x2 = ((i+1)/maxEpoch*w).toFixed(1);
+              const y1a = (h - d.accuracy*h*0.9 - 10).toFixed(1);
+              const y2a = (h - (data[i+1]?.accuracy||d.accuracy)*h*0.9 - 10).toFixed(1);
+              const y1va = (h - d.valAccuracy*h*0.9 - 10).toFixed(1);
+              const y2va = (h - (data[i+1]?.valAccuracy||d.valAccuracy)*h*0.9 - 10).toFixed(1);
+              if (i < data.length - 1) return html`<line x1=${x1} y1=${y1a} x2=${x2} y2=${y2a} stroke="#10b981" stroke-width="1.5"/><line x1=${x1} y1=${y1va} x2=${x2} y2=${y2va} stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4"/>`;
+              return nothing;
+            })}
+            <text x="5" y="10" fill="#10b981" font-size="9">Train</text>
+            <text x="45" y="10" fill="#8b5cf6" font-size="9">Val</text>
+          </svg>
+        </div>
+      </div>
+    `;
+  }
+
+  private _deRenderConfidenceDist(): any {
+    const bins = this._deMlConfidenceBins;
+    const maxCount = Math.max(...bins.map(b => b.count));
+    return html`
+      <div style="margin-bottom:8px;font-size:11px;color:#9ca3af">Prediction Confidence Distribution</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 4px">
+        ${bins.map(b => html`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <span style="font-size:9px;color:#9ca3af">${b.count}</span>
+            <div style="width:100%;height:${(b.count/maxCount*100).toFixed(0)}%;background:${b.color};border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s"></div>
+            <span style="font-size:8px;color:#6b7280;text-align:center;white-space:nowrap">${b.range}</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderVersionHistory(): any {
+    return html`
+      <div style="margin-bottom:8px;font-size:11px;color:#9ca3af">Model Version Comparison</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${this._deMlVersionHistory.map(v => html`
+          <div style="background:${v.version === this._deMlSelectedVersion ? '#1e293b' : '#1a1d2e'};border-radius:6px;padding:10px;border-left:3px solid ${v.version === this._deMlSelectedVersion ? '#3b82f6' : '#374151'};cursor:pointer" @click=${() => { this._deMlSelectedVersion = v.version; }}>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-weight:600;font-size:12px;color:#e2e8f0">${v.version}</span>
+                <span style="margin-left:8px;font-size:10px;color:#6b7280">${v.date}</span>
+              </div>
+              <div style="display:flex;gap:12px;font-size:10px">
+                <span style="color:#10b981">Acc: ${(v.accuracy*100).toFixed(1)}%</span>
+                <span style="color:#f97316">F1: ${(v.f1*100).toFixed(1)}%</span>
+              </div>
+            </div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:4px">${v.notes}</div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // === COMPLIANCE FRAMEWORK DEEP DIVE ===
+  @state() private _deCompActiveFramework: string = 'nist';
+  @state() private _deNistCategories: {id:string;name:string;status:'implemented'|'partial'|'not-started';priority:number;progress:number}[] = [];
+  @state() private _deCisControls: {number:number;name:string;implementation:number;maturity:string;owner:string}[] = [];
+  @state() private _deIsoClauses: {clause:string;title:string;status:string;evidence:number;gap:string}[] = [];
+  @state() private _deGdprArticles: {article:string;title:string;compliant:boolean;notes:string}[] = [];
+  @state() private _deSoc2Criteria: {criteria:string;category:string;status:string;score:number}[] = [];
+  @state() private _deCompGapFilter: string = 'all';
+
+  private _deInitComplianceData(): void {
+    this._deNistCategories = [
+      {id:'ID.AM-1',name:'Asset Inventory Management',status:'implemented',priority:1,progress:95},
+      {id:'ID.AM-2',name:'Software Platform Inventory',status:'implemented',priority:1,progress:88},
+      {id:'ID.RA-1',name:'Risk Assessment Strategy',status:'partial',priority:2,progress:72},
+      {id:'ID.RA-2',name:'Asset Vulnerability Assessment',status:'partial',priority:2,progress:65},
+      {id:'PR.AC-1',name:'Identity Management',status:'implemented',priority:1,progress:92},
+      {id:'PR.AC-3',name:'Access Authentication',status:'implemented',priority:1,progress:90},
+      {id:'PR.DS-1',name:'Data-at-Rest Protection',status:'implemented',priority:1,progress:97},
+      {id:'PR.DS-5',name:'Protection Against Malicious Code',status:'partial',priority:2,progress:78},
+      {id:'DE.CM-1',name:'Security Monitoring',status:'implemented',priority:1,progress:85},
+      {id:'DE.AE-2',name:'Incident Response Automation',status:'not-started',priority:3,progress:20},
+      {id:'RS.AN-1',name:'Response Plan Execution',status:'partial',priority:2,progress:60},
+      {id:'RC.CO-1',name:'Recovery Plan Execution',status:'partial',priority:2,progress:55},
+    ];
+    this._deCisControls = [
+      {number:1,name:'Inventory and Control of Enterprise Assets',implementation:82,maturity:'Defined',owner:'IT Ops'},
+      {number:2,name:'Inventory and Control of Software Assets',implementation:75,maturity:'Managed',owner:'SecOps'},
+      {number:3,name:'Data Protection',implementation:90,maturity:'Defined',owner:'DPO'},
+      {number:4,name:'Secure Configuration of Enterprise Assets',implementation:68,maturity:'Managed',owner:'IT Ops'},
+      {number:5,name:'Account Management',implementation:85,maturity:'Defined',owner:'IAM Team'},
+      {number:6,name:'Access Control Management',implementation:88,maturity:'Defined',owner:'IAM Team'},
+      {number:7,name:'Continuous Vulnerability Management',implementation:72,maturity:'Managed',owner:'SecOps'},
+      {number:8,name:'Audit Log Management',implementation:80,maturity:'Defined',owner:'SecOps'},
+    ];
+    this._deIsoClauses = [
+      {clause:'A.5.1',title:'Policies for Information Security',status:'Compliant',evidence:12,gap:'None'},
+      {clause:'A.5.9',title:'Inventory of Information Assets',status:'Compliant',evidence:8,gap:'None'},
+      {clause:'A.6.1',title:'Screening of Candidates',status:'Partial',evidence:5,gap:'Background check process not documented for contractors'},
+      {clause:'A.7.1',title:'Before Using Information',status:'Compliant',evidence:10,gap:'None'},
+      {clause:'A.8.1',title:'User Endpoint Devices',status:'Partial',evidence:4,gap:'MDM coverage at 78%, target 95%'},
+      {clause:'A.8.9',title:'Configuration Management',status:'Partial',evidence:6,gap:'Automated config drift detection missing'},
+      {clause:'A.8.16',title:'Monitoring Activities',status:'Compliant',evidence:9,gap:'None'},
+      {clause:'A.8.23',title:'Web Filtering',status:'Not Started',evidence:0,gap:'No web filtering solution deployed'},
+    ];
+    this._deGdprArticles = [
+      {article:'Art. 5',title:'Principles of Processing',compliant:true,notes:'Data minimization and purpose limitation verified'},
+      {article:'Art. 6',title:'Lawfulness of Processing',compliant:true,notes:'All processing activities have valid legal basis documented'},
+      {article:'Art. 13',title:'Information to Data Subjects',compliant:true,notes:'Privacy notices updated and published'},
+      {article:'Art. 15',title:'Right of Access',compliant:false,notes:'DSAR response time averaging 38 days, SLA is 30 days'},
+      {article:'Art. 17',title:'Right to Erasure',compliant:true,notes:'Automated deletion workflows in place'},
+      {article:'Art. 20',title:'Data Portability',compliant:false,notes:'Machine-readable export not yet available for legacy systems'},
+      {article:'Art. 25',title:'Data Protection by Design',compliant:true,notes:'Privacy impact assessments mandatory for new features'},
+      {article:'Art. 32',title:'Security of Processing',compliant:true,notes:'Encryption, access controls, and logging implemented'},
+      {article:'Art. 33',title:'Breach Notification',compliant:true,notes:'72-hour notification process tested quarterly'},
+      {article:'Art. 35',title:'Impact Assessment',compliant:false,notes:'DPIA backlog: 3 assessments pending review'},
+    ];
+    this._deSoc2Criteria = [
+      {criteria:'CC6.1',category:'Security',status:'Compliant',score:92},
+      {criteria:'CC6.2',category:'Security',status:'Compliant',score:88},
+      {criteria:'CC6.3',category:'Security',status:'Partial',score:74},
+      {criteria:'A1.1',category:'Availability',status:'Compliant',score:95},
+      {criteria:'A1.2',category:'Availability',status:'Compliant',score:90},
+      {criteria:'A1.3',category:'Availability',status:'Partial',score:68},
+      {criteria:'C1.1',category:'Confidentiality',status:'Compliant',score:91},
+      {criteria:'C1.2',category:'Confidentiality',status:'Compliant',score:87},
+      {criteria:'P1.1',category:'Privacy',status:'Partial',score:72},
+      {criteria:'P1.2',category:'Privacy',status:'Not Started',score:35},
+    ];
+  }
+
+  private _deRenderComplianceDeepDive(): any {
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:16px;margin-bottom:12px" role="region" aria-label="Compliance Framework Deep Dive">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:700;font-size:14px;color:#e2e8f0" role="heading" aria-level="3">Compliance Framework</span>
+          <div style="display:flex;gap:4px">
+            ${['nist','cis','iso','gdpr','soc2'].map(fw => html`
+              <button class="tab ${this._deCompActiveFramework === fw ? 'active' : ''}" @click=${() => { this._deCompActiveFramework = fw; }}>${fw.toUpperCase()}</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          ${['all','implemented','partial','not-started'].map(f => html`
+            <button class="tab ${this._deCompGapFilter === f ? 'active' : ''}" @click=${() => { this._deCompGapFilter = f; }} style="font-size:10px">${f === 'all' ? 'All' : f === 'not-started' ? 'Not Started' : f.charAt(0).toUpperCase() + f.slice(1)}</button>
+          `)}
+        </div>
+        ${this._deCompActiveFramework === 'nist' ? this._deRenderNistCsf() : nothing}
+        ${this._deCompActiveFramework === 'cis' ? this._deRenderCisControls() : nothing}
+        ${this._deCompActiveFramework === 'iso' ? this._deRenderIso27001() : nothing}
+        ${this._deCompActiveFramework === 'gdpr' ? this._deRenderGdprChecklist() : nothing}
+        ${this._deCompActiveFramework === 'soc2' ? this._deRenderSoc2Criteria() : nothing}
+      </div>
+    `;
+  }
+
+  private _deRenderNistCsf(): any {
+    const filtered = this._deCompGapFilter === 'all' ? this._deNistCategories : this._deNistCategories.filter(c => c.status === this._deCompGapFilter);
+    const statusColor = (s: string) => s === 'implemented' ? '#10b981' : s === 'partial' ? '#f59e0b' : '#ef4444';
+    return html`
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">NIST CSF 2.0 Subcategory Mapping</div>
+      <div style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto">
+        ${filtered.map(c => html`
+          <div style="display:flex;align-items:center;gap:8px;background:#1a1d2e;border-radius:4px;padding:8px">
+            <span style="width:60px;font-size:10px;color:#6b7280;font-family:monospace">${c.id}</span>
+            <span style="flex:1;font-size:11px;color:#e2e8f0">${c.name}</span>
+            <div style="width:80px;height:6px;background:#0f1117;border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${c.progress}%;background:${statusColor(c.status)};border-radius:3px"></div>
+            </div>
+            <span style="width:35px;font-size:10px;text-align:right;color:${statusColor(c.status)}">${c.progress}%</span>
+            <span style="width:70px;font-size:9px;text-align:center;color:${statusColor(c.status)};background:${statusColor(c.status)}22;padding:2px 4px;border-radius:3px">${c.status}</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderCisControls(): any {
+    return html`
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">CIS Controls v8 Implementation Tracking</div>
+      <div style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto">
+        ${this._deCisControls.map(c => html`
+          <div style="background:#1a1d2e;border-radius:4px;padding:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="background:#3b82f6;color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px">${c.number}</span>
+                <span style="font-size:11px;color:#e2e8f0">${c.name}</span>
+              </div>
+              <span style="font-size:9px;color:#9ca3af">${c.owner}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:6px;background:#0f1117;border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:${c.implementation}%;background:${c.implementation >= 80 ? '#10b981' : c.implementation >= 60 ? '#f59e0b' : '#ef4444'};border-radius:3px"></div>
+              </div>
+              <span style="width:35px;font-size:10px;color:#e2e8f0;text-align:right">${c.implementation}%</span>
+              <span style="font-size:9px;color:#8b5cf6;background:#8b5cf622;padding:2px 6px;border-radius:3px">${c.maturity}</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderIso27001(): any {
+    return html`
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">ISO 27001 Clause Coverage Matrix</div>
+      <div style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto">
+        ${this._deIsoClauses.map(c => html`
+          <div style="background:#1a1d2e;border-radius:4px;padding:8px;border-left:3px solid ${c.status === 'Compliant' ? '#10b981' : c.status === 'Partial' ? '#f59e0b' : '#ef4444'}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-weight:600;font-size:11px;color:#e2e8f0">${c.clause}</span>
+                <span style="margin-left:6px;font-size:11px;color:#9ca3af">${c.title}</span>
+              </div>
+              <span style="font-size:10px;color:${c.status === 'Compliant' ? '#10b981' : c.status === 'Partial' ? '#f59e0b' : '#ef4444'}">${c.status}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px">
+              <span style="color:#6b7280">Evidence: ${c.evidence} items</span>
+              ${c.gap !== 'None' ? html`<span style="color:#f59e0b">Gap: ${c.gap}</span>` : html`<span style="color:#10b981">No gaps</span>`}
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderGdprChecklist(): any {
+    return html`
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">GDPR Article Compliance Checklist</div>
+      <div style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto">
+        ${this._deGdprArticles.map(a => html`
+          <div style="background:#1a1d2e;border-radius:4px;padding:8px;display:flex;align-items:flex-start;gap:8px">
+            <div style="width:18px;height:18px;border-radius:50%;background:${a.compliant ? '#10b981' : '#ef4444'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+              <span style="color:white;font-size:10px">${a.compliant ? '✓' : '✗'}</span>
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-weight:600;font-size:11px;color:#e2e8f0">${a.article}</span>
+                <span style="font-size:11px;color:#9ca3af">${a.title}</span>
+              </div>
+              <div style="font-size:10px;color:#6b7280;margin-top:2px">${a.notes}</div>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _deRenderSoc2Criteria(): any {
+    return html`
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:8px">SOC 2 Trust Service Criteria Mapping</div>
+      <div style="display:flex;flex-direction:column;gap:4px;max-height:240px;overflow-y:auto">
+        ${this._deSoc2Criteria.map(c => html`
+          <div style="background:#1a1d2e;border-radius:4px;padding:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:10px;color:#8b5cf6;background:#8b5cf622;padding:2px 6px;border-radius:3px">${c.category}</span>
+                <span style="font-weight:600;font-size:11px;color:#e2e8f0">${c.criteria}</span>
+              </div>
+              <span style="font-size:11px;font-weight:600;color:${c.score >= 80 ? '#10b981' : c.score >= 50 ? '#f59e0b' : '#ef4444'}">${c.score}%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+              <div style="flex:1;height:4px;background:#0f1117;border-radius:2px;overflow:hidden">
+                <div style="height:100%;width:${c.score}%;background:${c.score >= 80 ? '#10b981' : c.score >= 50 ? '#f59e0b' : '#ef4444'};border-radius:2px"></div>
+              </div>
+              <span style="font-size:9px;color:${c.status === 'Compliant' ? '#10b981' : c.status === 'Partial' ? '#f59e0b' : '#ef4444'}">${c.status}</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // === INTERACTIVE NETWORK MAP ===
+  @state() private _deNetNodes: {id:string;label:string;type:string;segment:string;x:number;y:number;status:string}[] = [];
+  @state() private _deNetEdges: {from:string;to:string;weight:number;traffic:number;type:string}[] = [];
+  @state() private _deNetSelectedNode: string = '';
+  @state() private _deNetPathStart: string = '';
+  @state() private _deNetPathEnd: string = '';
+  @state() private _deNetPathResult: string[] = [];
+  @state() private _deNetSegmentFilter: string = 'all';
+  @state() private _deNetTrafficOverlay: boolean = false;
+  @state() private _deNetZoom: number = 1;
+
+  private _deInitNetworkData(): void {
+    this._deNetNodes = [
+      {id:'fw1',label:'Edge Firewall',type:'firewall',segment:'dmz',x:200,y:60,status:'active'},
+      {id:'waf1',label:'Web App Firewall',type:'firewall',segment:'dmz',x:350,y:60,status:'active'},
+      {id:'lb1',label:'Load Balancer',type:'network',segment:'dmz',x:275,y:130,status:'active'},
+      {id:'web1',label:'Web Server 1',type:'server',segment:'frontend',x:150,y:220,status:'active'},
+      {id:'web2',label:'Web Server 2',type:'server',segment:'frontend',x:300,y:220,status:'warning'},
+      {id:'web3',label:'Web Server 3',type:'server',segment:'frontend',x:450,y:220,status:'active'},
+      {id:'api1',label:'API Gateway',type:'gateway',segment:'backend',x:200,y:320,status:'active'},
+      {id:'app1',label:'App Server 1',type:'server',segment:'backend',x:350,y:320,status:'active'},
+      {id:'app2',label:'App Server 2',type:'server',segment:'backend',x:500,y:320,status:'inactive'},
+      {id:'db1',label:'Primary DB',type:'database',segment:'data',x:200,y:420,status:'active'},
+      {id:'db2',label:'Replica DB',type:'database',segment:'data',x:400,y:420,status:'active'},
+      {id:'cache1',label:'Redis Cache',type:'cache',segment:'data',x:300,y:480,status:'active'},
+      {id:'ldap1',label:'LDAP Server',type:'auth',segment:'services',x:500,y:180,status:'active'},
+      {id:'log1',label:'Log Server',type:'monitoring',segment:'services',x:550,y:420,status:'active'},
+      {id:'siem1',label:'SIEM',type:'monitoring',segment:'services',x:550,y:320,status:'active'},
+    ];
+    this._deNetEdges = [
+      {from:'fw1',to:'lb1',weight:80,traffic:1200,type:'primary'},
+      {from:'waf1',to:'lb1',weight:60,traffic:800,type:'primary'},
+      {from:'lb1',to:'web1',weight:30,traffic:400,type:'primary'},
+      {from:'lb1',to:'web2',weight:30,traffic:380,type:'primary'},
+      {from:'lb1',to:'web3',weight:25,traffic:350,type:'primary'},
+      {from:'web1',to:'api1',weight:20,traffic:250,type:'api'},
+      {from:'web2',to:'api1',weight:18,traffic:220,type:'api'},
+      {from:'web3',to:'api1',weight:15,traffic:180,type:'api'},
+      {from:'api1',to:'app1',weight:25,traffic:300,type:'internal'},
+      {from:'api1',to:'app2',weight:10,traffic:50,type:'internal'},
+      {from:'app1',to:'db1',weight:35,traffic:500,type:'database'},
+      {from:'app1',to:'db2',weight:20,traffic:200,type:'database'},
+      {from:'app2',to:'db2',weight:15,traffic:100,type:'database'},
+      {from:'app1',to:'cache1',weight:25,traffic:400,type:'cache'},
+      {from:'web1',to:'ldap1',weight:5,traffic:20,type:'auth'},
+      {from:'web2',to:'ldap1',weight:5,traffic:18,type:'auth'},
+      {from:'api1',to:'log1',weight:10,traffic:150,type:'logging'},
+      {from:'api1',to:'siem1',weight:8,traffic:120,type:'monitoring'},
+      {from:'log1',to:'siem1',weight:10,traffic:130,type:'monitoring'},
+    ];
+  }
+
+  private _deFindPath(start: string, end: string): string[] {
+    const adj = new Map<string, string[]>();
+    for (const e of this._deNetEdges) {
+      if (!adj.has(e.from)) adj.set(e.from, []);
+      if (!adj.has(e.to)) adj.set(e.to, []);
+      adj.get(e.from)!.push(e.to);
+      adj.get(e.to)!.push(e.from);
+    }
+    const queue = [start];
+    const visited = new Set([start]);
+    const parent = new Map<string, string>();
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      if (node === end) break;
+      for (const neighbor of (adj.get(node) || [])) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          parent.set(neighbor, node);
+          queue.push(neighbor);
+        }
+      }
+    }
+    const path: string[] = [];
+    let cur = end;
+    while (cur && parent.has(cur)) {
+      path.unshift(cur);
+      cur = parent.get(cur)!;
+    }
+    if (cur === start) path.unshift(start);
+    return path;
+  }
+
+  private _deRenderNetworkMap(): any {
+    const filteredNodes = this._deNetSegmentFilter === 'all' ? this._deNetNodes : this._deNetNodes.filter(n => n.segment === this._deNetSegmentFilter);
+    const nodeMap = new Map(this._deNetNodes.map(n => [n.id, n]));
+    const filteredEdges = this._deNetEdges.filter(e => filteredNodes.some(n => n.id === e.from) && filteredNodes.some(n => n.id === e.to));
+    const typeColor: Record<string,string> = {firewall:'#ef4444',network:'#3b82f6',server:'#10b981',gateway:'#8b5cf6',database:'#f97316',cache:'#eab308',auth:'#06b6d4',monitoring:'#ec4899'};
+    const pathSet = new Set(this._deNetPathResult);
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:16px;margin-bottom:12px" role="region" aria-label="Interactive Network Map">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <span style="font-weight:700;font-size:14px;color:#e2e8f0" role="heading" aria-level="3">Network Topology</span>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            ${['all','dmz','frontend','backend','data','services'].map(s => html`
+              <button class="tab ${this._deNetSegmentFilter === s ? 'active' : ''}" @click=${() => { this._deNetSegmentFilter = s; }} style="font-size:10px">${s.charAt(0).toUpperCase() + s.slice(1)}</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+          <select style="background:#1a1d2e;color:#e2e8f0;border:1px solid #374151;border-radius:4px;padding:4px 8px;font-size:11px" @change=${(e: any) => { this._deNetPathStart = e.target.value; }}>
+            <option value="">Path Start...</option>
+            ${this._deNetNodes.map(n => html`<option value=${n.id}>${n.label}</option>`)}
+          </select>
+          <span style="color:#6b7280;font-size:12px">→</span>
+          <select style="background:#1a1d2e;color:#e2e8f0;border:1px solid #374151;border-radius:4px;padding:4px 8px;font-size:11px" @change=${(e: any) => { this._deNetPathEnd = e.target.value; }}>
+            <option value="">Path End...</option>
+            ${this._deNetNodes.map(n => html`<option value=${n.id}>${n.label}</option>`)}
+          </select>
+          <button class="tab active" @click=${() => { if (this._deNetPathStart && this._deNetPathEnd) this._deNetPathResult = this._deFindPath(this._deNetPathStart, this._deNetPathEnd); }} style="font-size:10px">Trace Path</button>
+          <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:#9ca3af;cursor:pointer">
+            <input type="checkbox" .checked=${this._deNetTrafficOverlay} @change=${() => { this._deNetTrafficOverlay = !this._deNetTrafficOverlay; }}> Traffic Overlay
+          </label>
+        </div>
+        <svg viewBox="0 0 650 540" style="width:100%;max-height:400px;background:#0a0c14;border-radius:6px;border:1px solid #1e293b">
+          ${filteredEdges.map(e => {
+            const from = nodeMap.get(e.from);
+            const to = nodeMap.get(e.to);
+            if (!from || !to) return nothing;
+            const isPath = pathSet.has(e.from) && pathSet.has(e.to) && Math.abs(pathSet.indexOf(e.from) - pathSet.indexOf(e.to)) === 1;
+            const strokeWidth = Math.max(1, e.weight / 10);
+            const opacity = this._deNetTrafficOverlay ? Math.min(1, e.traffic / 500) : 0.6;
+            return html`<line x1=${from.x} y1=${from.y} x2=${to.x} y2=${to.y} stroke=${isPath ? '#fbbf24' : '#374151'} stroke-width=${isPath ? strokeWidth + 2 : strokeWidth} opacity=${opacity} ${isPath ? 'stroke-dasharray="6"' : ''}/>`;
+          })}
+          ${filteredNodes.map(n => html`
+            <g @click=${() => { this._deNetSelectedNode = n.id; }}>
+              <circle cx=${n.x} cy=${n.y} r="16" fill=${typeColor[n.type] || '#6b7280'} opacity=${n.status === 'inactive' ? 0.3 : n.status === 'warning' ? 0.7 : 1} stroke=${this._deNetSelectedNode === n.id ? '#fbbf24' : 'none'} stroke-width="2"/>
+              <text x=${n.x} y=${n.y + 1} text-anchor="middle" fill="white" font-size="7" font-weight="600">${n.type.charAt(0).toUpperCase()}</text>
+              <text x=${n.x} y=${n.y + 28} text-anchor="middle" fill="#9ca3af" font-size="8">${n.label}</text>
+              ${this._deNetTrafficOverlay ? html`<text x=${n.x} y=${n.y - 20} text-anchor="middle" fill="#60a5fa" font-size="7">${this._deNetEdges.filter(e => e.from === n.id || e.to === n.id).reduce((s,e) => s + e.traffic, 0)} Mbps</text>` : nothing}
+            </g>
+          `)}
+        </svg>
+        ${this._deNetPathResult.length > 0 ? html`
+          <div style="margin-top:8px;background:#1a1d2e;border-radius:6px;padding:8px">
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:4px">Traced Path (${this._deNetPathResult.length} hops):</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              ${this._deNetPathResult.map((id, i) => {
+                const node = nodeMap.get(id);
+                return html`
+                  <span style="background:#fbbf2422;color:#fbbf24;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600">${node?.label || id}</span>
+                  ${i < this._deNetPathResult.length - 1 ? html`<span style="color:#6b7280">→</span>` : nothing}
+                `;
+              })}
+            </div>
+          </div>
+        ` : nothing}
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+          ${Object.entries(typeColor).map(([type, color]) => html`
+            <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:#9ca3af">
+              <div style="width:8px;height:8px;border-radius:50%;background:${color}"></div>
+              ${type}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  // === ADVANCED SEARCH & FILTER ===
+  @state() private _deSearchQuery: string = '';
+  @state() private _deSearchResults: {id:string;title:string;relevance:number;type:string;date:string;preview:string}[] = [];
+  @state() private _deSavedSearches: {id:string;query:string;createdAt:string;runCount:number}[] = [];
+  @state() private _deRecentSearches: string[] = [];
+  @state() private _deSearchFilters: {field:string;operator:string;value:string;logic:'and'|'or'|'not'}[] = [];
+  @state() private _deSearchActiveFilterIdx: number = -1;
+  @state() private _deSearchPreset: string = 'none';
+  @state() private _deSearchIsRunning: boolean = false;
+
+  private _deInitSearchData(): void {
+    this._deSavedSearches = [
+      {id:'s1',query:'severity:critical status:open',createdAt:'2026-04-20',runCount:12},
+      {id:'s2',query:'type:intrusion network:internal',createdAt:'2026-04-18',runCount:8},
+      {id:'s3',query:'policy:DLP destination:cloud',createdAt:'2026-04-15',runCount:5},
+    ];
+    this._deRecentSearches = ['critical vulnerabilities','failed login attempts','data exfiltration','phishing reports'];
+  }
+
+  private _deExecuteSearch(): void {
+    if (!this._deSearchQuery.trim()) return;
+    this._deSearchIsRunning = true;
+    this._deRecentSearches = [this._deSearchQuery, ...this._deRecentSearches.filter(s => s !== this._deSearchQuery)].slice(0, 10);
+    setTimeout(() => {
+      const q = this._deSearchQuery.toLowerCase();
+      const mockData = [
+        {id:'r1',title:'Critical SQL Injection in Payment API',relevance:0.95,type:'Vulnerability',date:'2026-04-22',preview:'A critical SQL injection vulnerability was detected in the payment processing API endpoint...'},
+        {id:'r2',title:'Unauthorized Access Attempt from External IP',relevance:0.88,type:'Incident',date:'2026-04-21',preview:'Multiple unauthorized access attempts detected from IP range 203.0.113.0/24 targeting...'},
+        {id:'r3',title:'DLP Policy Violation - Cloud Upload',relevance:0.82,type:'DLP',date:'2026-04-21',preview:'Sensitive data (PII) upload to cloud storage service detected and blocked by DLP policy...'},
+        {id:'r4',title:'Firewall Rule Change - Port 445',relevance:0.75,type:'Change',date:'2026-04-20',preview:'Firewall rule modification detected: new inbound rule allowing TCP 445 from segment DMZ...'},
+        {id:'r5',title:'Privilege Escalation - Service Account',relevance:0.71,type:'IAM',date:'2026-04-20',preview:'Service account svc-backup granted domain admin privileges without approval workflow...'},
+        {id:'r6',title:'Malware Detection - Emotet Variant',relevance:0.68,type:'Threat',date:'2026-04-19',preview:'Endpoint detection system identified a new Emotet variant in email attachment from...'},
+        {id:'r7',title:'Compliance Gap - GDPR Data Retention',relevance:0.62,type:'Compliance',date:'2026-04-19',preview:'Audit identified personal data retained beyond the 30-day policy limit in 3 systems...'},
+        {id:'r8',title:'Network Anomaly - DNS Tunneling',relevance:0.58,type:'Network',date:'2026-04-18',preview:'Unusual DNS query pattern detected suggesting possible DNS tunneling activity from...'},
+      ];
+      this._deSearchResults = mockData.filter(r => r.title.toLowerCase().includes(q) || r.type.toLowerCase().includes(q) || r.preview.toLowerCase().includes(q) || q.length < 3);
+      this._deSearchIsRunning = false;
+    }, 300);
+  }
+
+  private _deAddSearchFilter(): void {
+    this._deSearchFilters.push({field:'',operator:'contains',value:'',logic:'and'});
+    this._deSearchActiveFilterIdx = this._deSearchFilters.length - 1;
+  }
+
+  private _deRemoveSearchFilter(idx: number): void {
+    this._deSearchFilters = this._deSearchFilters.filter((_, i) => i !== idx);
+    if (this._deSearchActiveFilterIdx >= this._deSearchFilters.length) this._deSearchActiveFilterIdx = -1;
+  }
+
+  private _deApplySearchPreset(preset: string): void {
+    this._deSearchPreset = preset;
+    if (preset === 'critical') this._deSearchQuery = 'severity:critical status:open';
+    else if (preset === 'recent') this._deSearchQuery = 'date:>2026-04-20 type:*';
+    else if (preset === 'failed') this._deSearchQuery = 'status:failed action:blocked';
+    this._deExecuteSearch();
+  }
+
+  private _deRenderAdvancedSearch(): any {
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:16px;margin-bottom:12px" role="region" aria-label="Advanced Search and Filter">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:14px;color:#e2e8f0" role="heading" aria-level="3">Advanced Search</span>
+          <div style="display:flex;gap:4px">
+            ${['none','critical','recent','failed'].map(p => html`
+              <button class="tab ${this._deSearchPreset === p ? 'active' : ''}" @click=${() => this._deApplySearchPreset(p)} style="font-size:10px">${p === 'none' ? 'Presets' : p.charAt(0).toUpperCase() + p.slice(1)}</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1;position:relative">
+            <input type="text" placeholder="Search across all data types..." value=${this._deSearchQuery} @input=${(e: any) => { this._deSearchQuery = e.target.value; }} @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') this._deExecuteSearch(); }} style="width:100%;background:#1a1d2e;color:#e2e8f0;border:1px solid #374151;border-radius:6px;padding:8px 12px;font-size:12px;outline:none" aria-label="Search input"/>
+          </div>
+          <button class="tab active" @click=${() => this._deExecuteSearch()} style="padding:8px 16px" ?disabled=${this._deSearchIsRunning}>${this._deSearchIsRunning ? '...' : 'Search'}</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:10px;color:#6b7280">Filters:</span>
+          <button class="tab" @click=${() => this._deAddSearchFilter()} style="font-size:10px">+ Add Filter</button>
+          ${this._deSearchFilters.map((f, i) => html`
+            <div style="display:flex;gap:4px;align-items:center;background:#1a1d2e;border-radius:4px;padding:4px 8px">
+              <select style="background:#0f1117;color:#e2e8f0;border:1px solid #374151;border-radius:3px;padding:2px 4px;font-size:10px" @change=${(e: any) => { this._deSearchFilters[i].field = e.target.value; }}>
+                <option value="">Field</option>
+                <option value="severity">Severity</option>
+                <option value="type">Type</option>
+                <option value="status">Status</option>
+                <option value="date">Date</option>
+                <option value="source">Source</option>
+              </select>
+              <select style="background:#0f1117;color:#e2e8f0;border:1px solid #374151;border-radius:3px;padding:2px 4px;font-size:10px" @change=${(e: any) => { this._deSearchFilters[i].operator = e.target.value; }}>
+                <option value="contains">Contains</option>
+                <option value="equals">Equals</option>
+                <option value="starts">Starts with</option>
+                <option value="gt">Greater than</option>
+                <option value="lt">Less than</option>
+              </select>
+              <input type="text" placeholder="Value" style="background:#0f1117;color:#e2e8f0;border:1px solid #374151;border-radius:3px;padding:2px 6px;font-size:10px;width:80px" @input=${(e: any) => { this._deSearchFilters[i].value = e.target.value; }}/>
+              <select style="background:#0f1117;color:#e2e8f0;border:1px solid #374151;border-radius:3px;padding:2px 4px;font-size:10px" @change=${(e: any) => { this._deSearchFilters[i].logic = e.target.value; }}>
+                <option value="and">AND</option>
+                <option value="or">OR</option>
+                <option value="not">NOT</option>
+              </select>
+              <button @click=${() => this._deRemoveSearchFilter(i)} style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0 2px">✕</button>
+            </div>
+          `)}
+        </div>
+        ${this._deSearchResults.length > 0 ? html`
+          <div style="margin-bottom:8px;font-size:10px;color:#9ca3af">${this._deSearchResults.length} results found</div>
+          <div style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto">
+            ${this._deSearchResults.map(r => html`
+              <div style="background:#1a1d2e;border-radius:4px;padding:8px;border-left:3px solid ${r.relevance > 0.85 ? '#10b981' : r.relevance > 0.7 ? '#3b82f6' : '#6b7280'}">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;font-weight:600;color:#e2e8f0">${r.title}</span>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <span style="font-size:9px;color:#6b7280">${r.date}</span>
+                    <span style="font-size:9px;color:#3b82f6;background:#3b82f622;padding:1px 6px;border-radius:3px">${r.type}</span>
+                    <span style="font-size:9px;color:#9ca3af">${(r.relevance*100).toFixed(0)}%</span>
+                  </div>
+                </div>
+                <div style="font-size:10px;color:#6b7280;margin-top:4px;line-height:1.4">${r.preview}</div>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        ${this._deRecentSearches.length > 0 && this._deSearchResults.length === 0 ? html`
+          <div style="margin-top:8px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:6px">Recent Searches:</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              ${this._deRecentSearches.map(s => html`
+                <button class="tab" @click=${() => { this._deSearchQuery = s; this._deExecuteSearch(); }} style="font-size:10px">${s}</button>
+              `)}
+            </div>
+          </div>
+        ` : nothing}
+        ${this._deSavedSearches.length > 0 ? html`
+          <div style="margin-top:8px;border-top:1px solid #1e293b;padding-top:8px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:6px">Saved Searches:</div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              ${this._deSavedSearches.map(s => html`
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#1a1d2e;border-radius:4px;padding:4px 8px;cursor:pointer" @click=${() => { this._deSearchQuery = s.query; this._deExecuteSearch(); }}>
+                  <span style="font-size:11px;color:#e2e8f0;font-family:monospace">${s.query}</span>
+                  <span style="font-size:9px;color:#6b7280">${s.runCount} runs</span>
+                </div>
+              `)}
+            </div>
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === UNDO/REDO & HISTORY ===
+  @state() private _deUndoStack: {id:number;action:string;timestamp:string;snapshot:string}[] = [];
+  @state() private _deRedoStack: {id:number;action:string;timestamp:string;snapshot:string}[] = [];
+  @state() private _deHistoryCounter: number = 0;
+  @state() private _deHistoryVisible: boolean = false;
+  @state() private _deDiffViewActive: boolean = false;
+  @state() private _deDiffFromId: number = -1;
+  @state() private _deDiffToId: number = -1;
+  @state() private _deCurrentSnapshot: string = '';
+
+  private _dePushHistory(action: string): void {
+    this._deHistoryCounter++;
+    const entry = {
+      id: this._deHistoryCounter,
+      action,
+      timestamp: new Date().toISOString(),
+      snapshot: JSON.stringify({searchQuery: this._deSearchQuery, filters: this._deSearchFilters, compFramework: this._deCompActiveFramework, mlView: this._deMlActiveView}),
+    };
+    this._deUndoStack.push(entry);
+    this._deRedoStack = [];
+    this._deCurrentSnapshot = entry.snapshot;
+  }
+
+  private _deUndo(): void {
+    if (this._deUndoStack.length <= 1) return;
+    const current = this._deUndoStack.pop()!;
+    this._deRedoStack.push(current);
+    const prev = this._deUndoStack[this._deUndoStack.length - 1];
+    this._deCurrentSnapshot = prev.snapshot;
+    try {
+      const data = JSON.parse(prev.snapshot);
+      if (data.searchQuery !== undefined) this._deSearchQuery = data.searchQuery;
+      if (data.filters !== undefined) this._deSearchFilters = data.filters;
+      if (data.compFramework !== undefined) this._deCompActiveFramework = data.compFramework;
+      if (data.mlView !== undefined) this._deMlActiveView = data.mlView;
+    } catch(_e) { /* ignore parse errors */ }
+  }
+
+  private _deRedo(): void {
+    if (this._deRedoStack.length === 0) return;
+    const entry = this._deRedoStack.pop()!;
+    this._deUndoStack.push(entry);
+    this._deCurrentSnapshot = entry.snapshot;
+    try {
+      const data = JSON.parse(entry.snapshot);
+      if (data.searchQuery !== undefined) this._deSearchQuery = data.searchQuery;
+      if (data.filters !== undefined) this._deSearchFilters = data.filters;
+      if (data.compFramework !== undefined) this._deCompActiveFramework = data.compFramework;
+      if (data.mlView !== undefined) this._deMlActiveView = data.mlView;
+    } catch(_e) { /* ignore parse errors */ }
+  }
+
+  private _deJumpToHistory(id: number): void {
+    const idx = this._deUndoStack.findIndex(e => e.id === id);
+    if (idx < 0) return;
+    const removed = this._deUndoStack.splice(idx + 1);
+    this._deRedoStack.push(...removed.reverse());
+    const target = this._deUndoStack[this._deUndoStack.length - 1];
+    this._deCurrentSnapshot = target.snapshot;
+    try {
+      const data = JSON.parse(target.snapshot);
+      if (data.searchQuery !== undefined) this._deSearchQuery = data.searchQuery;
+      if (data.filters !== undefined) this._deSearchFilters = data.filters;
+      if (data.compFramework !== undefined) this._deCompActiveFramework = data.compFramework;
+      if (data.mlView !== undefined) this._deMlActiveView = data.mlView;
+    } catch(_e) { /* ignore parse errors */ }
+  }
+
+  private _deGetDiff(fromId: number, toId: number): {field:string;from:string;to:string}[] {
+    const fromEntry = this._deUndoStack.find(e => e.id === fromId);
+    const toEntry = this._deUndoStack.find(e => e.id === toId);
+    if (!fromEntry || !toEntry) return [];
+    try {
+      const fromData = JSON.parse(fromEntry.snapshot);
+      const toData = JSON.parse(toEntry.snapshot);
+      const diffs: {field:string;from:string;to:string}[] = [];
+      const allKeys = new Set([...Object.keys(fromData), ...Object.keys(toData)]);
+      for (const key of allKeys) {
+        const fromVal = JSON.stringify(fromData[key] ?? 'undefined');
+        const toVal = JSON.stringify(toData[key] ?? 'undefined');
+        if (fromVal !== toVal) diffs.push({field: key, from: fromVal, to: toVal});
+      }
+      return diffs;
+    } catch(_e) { return []; }
+  }
+
+  private _deRenderUndoRedo(): any {
+    const allHistory = [...this._deUndoStack];
+    const diffs = this._deDiffViewActive && this._deDiffFromId >= 0 && this._deDiffToId >= 0 ? this._deGetDiff(this._deDiffFromId, this._deDiffToId) : [];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:16px;margin-bottom:12px" role="region" aria-label="Undo Redo History">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:14px;color:#e2e8f0" role="heading" aria-level="3">Action History</span>
+          <div style="display:flex;gap:4px">
+            <button class="tab" @click=${() => this._deUndo()} ?disabled=${this._deUndoStack.length <= 1} style="font-size:10px">↩ Undo</button>
+            <button class="tab" @click=${() => this._deRedo()} ?disabled=${this._deRedoStack.length === 0} style="font-size:10px">Redo ↪</button>
+            <button class="tab ${this._deHistoryVisible ? 'active' : ''}" @click=${() => { this._deHistoryVisible = !this._deHistoryVisible; }} style="font-size:10px">Timeline</button>
+            <button class="tab ${this._deDiffViewActive ? 'active' : ''}" @click=${() => { this._deDiffViewActive = !this._deDiffViewActive; }} style="font-size:10px">Diff</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;font-size:10px;color:#6b7280">
+          <span>Undo: ${this._deUndoStack.length}</span>
+          <span>|</span>
+          <span>Redo: ${this._deRedoStack.length}</span>
+          <span>|</span>
+          <span>Total Actions: ${this._deHistoryCounter}</span>
+        </div>
+        ${this._deHistoryVisible ? html`
+          <div style="background:#1a1d2e;border-radius:6px;padding:8px;max-height:200px;overflow-y:auto;margin-bottom:8px">
+            ${allHistory.map((entry, i) => html`
+              <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #0f1117;cursor:pointer;opacity:${i === allHistory.length - 1 ? 1 : 0.6}" @click=${() => this._deJumpToHistory(entry.id)}>
+                <div style="width:12px;height:12px;border-radius:50%;background:${i === allHistory.length - 1 ? '#3b82f6' : '#374151'};flex-shrink:0"></div>
+                <span style="font-size:10px;color:#e2e8f0;flex:1">${entry.action}</span>
+                <span style="font-size:9px;color:#6b7280">${new Date(entry.timestamp).toLocaleTimeString()}</span>
+                ${this._deDiffViewActive ? html`
+                  <input type="radio" name="diff-from" style="accent-color:#3b82f6" @change=${() => { this._deDiffFromId = entry.id; }}/>
+                  <input type="radio" name="diff-to" style="accent-color:#f97316" @change=${() => { this._deDiffToId = entry.id; }}/>
+                ` : nothing}
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        ${this._deDiffViewActive ? html`
+          <div style="background:#1a1d2e;border-radius:6px;padding:8px">
+            <div style="font-size:10px;color:#9ca3af;margin-bottom:6px">${diffs.length > 0 ? 'Differences found:' : this._deDiffFromId >= 0 && this._deDiffToId >= 0 ? 'No differences' : 'Select two points in timeline to compare'}</div>
+            ${diffs.map(d => html`
+              <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:4px;font-size:10px;padding:4px 0;border-bottom:1px solid #0f1117">
+                <span style="color:#9ca3af;font-weight:600">${d.field}</span>
+                <span style="color:#ef4444;background:#ef444411;padding:2px 4px;border-radius:3px;word-break:break-all">${d.from}</span>
+                <span style="color:#10b981;background:#10b98111;padding:2px 4px;border-radius:3px;word-break:break-all">${d.to}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+
   // === TAB INTEGRATION FOR EXTENDED FEATURES ===
   @state() private _deActiveSubTab: string = 'scenario';
 
