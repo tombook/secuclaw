@@ -4000,6 +4000,384 @@ export class ScMitreNavigator extends LitElement {
     return stakeholders;
   }
 
+
+  // ── Security Risk Appetite Framework ──────────────────────────────
+  private _riskAppetiteCategories: Array<{name: string; appetite: number; tolerance: number; capacity: number; status: string}> = [
+    { name: 'Financial', appetite: 75, tolerance: 60, capacity: 90, status: 'within' },
+    { name: 'Operational', appetite: 70, tolerance: 55, capacity: 85, status: 'within' },
+    { name: 'Reputational', appetite: 65, tolerance: 50, capacity: 80, status: 'within' },
+    { name: 'Regulatory', appetite: 55, tolerance: 40, capacity: 75, status: 'within' },
+    { name: 'Strategic', appetite: 60, tolerance: 45, capacity: 70, status: 'within' },
+    { name: 'Technology', appetite: 70, tolerance: 55, capacity: 85, status: 'within' },
+  ];
+  private _riskAppetiteReviewCycle: Array<{cycle: string; lastReview: string; nextReview: string; reviewer: string; status: string}> = [];
+  private _riskCapacityScore: number = 82;
+  private _riskAppetiteDocRef: string = 'BOARD-RISK-2026-001';
+
+  private _initRiskAppetiteFramework(): void {
+    const cycles = ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'];
+    const reviewers = ['CISO', 'CRO', 'Board Risk Committee', 'Audit Committee'];
+    const statuses = ['completed', 'in-progress', 'scheduled', 'scheduled'];
+    this._riskAppetiteReviewCycle = cycles.map((c, i) => ({
+      cycle: c,
+      lastReview: i === 0 ? '2026-01-15' : '',
+      nextReview: `2026-${(i + 1) * 3 > 12 ? 12 : (i + 1) * 3}-01`,
+      reviewer: reviewers[i],
+      status: statuses[i],
+    }));
+    this._riskCapacityScore = this._calculateRiskCapacity();
+  }
+
+  private _calculateRiskCapacity(): number {
+    const totalCapacity = this._riskAppetiteCategories.reduce((s, c) => s + c.capacity, 0);
+    const totalAppetite = this._riskAppetiteCategories.reduce((s, c) => s + c.appetite, 0);
+    return Math.round((totalCapacity / (this._riskAppetiteCategories.length * 100)) * 100);
+  }
+
+  private _getRiskAppetiteComparison(category: string): {actual: number; appetite: number; delta: number; trend: string} {
+    const cat = this._riskAppetiteCategories.find(c => c.name === category);
+    if (!cat) return { actual: 0, appetite: 0, delta: 0, trend: 'stable' };
+    const actual = cat.appetite + Math.round((Math.random() - 0.5) * 20);
+    const delta = actual - cat.appetite;
+    return { actual, appetite: cat.appetite, delta, trend: delta > 5 ? 'increasing' : delta < -5 ? 'decreasing' : 'stable' };
+  }
+
+  private _renderRiskAppetiteGauge(value: number, max: number, label: string): string {
+    const pct = Math.min(100, Math.round((value / max) * 100));
+    const color = pct < 40 ? '#ef4444' : pct < 70 ? '#f59e0b' : '#22c55e';
+    return `<div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:11px"><span>${label}</span><span>${pct}%</span></div><div style="height:6px;background:#1e293b;border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.3s"></div></div></div>`;
+  }
+
+  private _renderRiskAppetiteFramework(): string {
+    if (this._riskAppetiteReviewCycle.length === 0) this._initRiskAppetiteFramework();
+    let html = `<div style="padding:12px"><h4 style="margin:0 0 8px;color:#f1f5f9">Risk Appetite Framework</h4>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`;
+    for (const cat of this._riskAppetiteCategories) {
+      const comp = this._getRiskAppetiteComparison(cat.name);
+      const trendIcon = comp.trend === 'increasing' ? '▲' : comp.trend === 'decreasing' ? '▼' : '◆';
+      const trendColor = comp.trend === 'increasing' ? '#ef4444' : comp.trend === 'decreasing' ? '#22c55e' : '#64748b';
+      html += `<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px">`;
+      html += `<div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:4px">${cat.name}</div>`;
+      html += this._renderRiskAppetiteGauge(comp.actual, 100, 'Actual');
+      html += this._renderRiskAppetiteGauge(comp.appetite, 100, 'Appetite');
+      html += `<div style="font-size:10px;color:${trendColor};margin-top:2px">${trendIcon} ${comp.trend} (delta: ${comp.delta > 0 ? '+' : ''}${comp.delta})</div>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+    html += `<div style="margin-top:8px;padding:8px;background:#0f172a;border-radius:6px;border:1px solid #1e293b">`;
+    html += `<div style="font-size:11px;color:#94a3b8">Risk Capacity Score: <strong style="color:#22c55e">${this._riskCapacityScore}%</strong></div>`;
+    html += `<div style="font-size:10px;color:#64748b;margin-top:2px">Board Doc: ${this._riskAppetiteDocRef}</div>`;
+    html += `</div></div>`;
+    return html;
+  }
+
+  // ── Security Incident Severity Calculator ─────────────────────────
+  private _severityFactors: Array<{factor: string; weight: number; score: number; maxScore: number}> = [];
+  private _severityHistory: Array<{month: string; critical: number; high: number; medium: number; low: number}> = [];
+  private _escalationThresholds: Array<{level: string; minScore: number; action: string; notify: string}> = [];
+
+  private _initSeverityCalculator(): void {
+    this._severityFactors = [
+      { factor: 'Business Impact', weight: 0.35, score: 7, maxScore: 10 },
+      { factor: 'Likelihood of Recurrence', weight: 0.20, score: 6, maxScore: 10 },
+      { factor: 'Scope Affected', weight: 0.20, score: 8, maxScore: 10 },
+      { factor: 'Data Sensitivity', weight: 0.15, score: 5, maxScore: 10 },
+      { factor: 'Recovery Complexity', weight: 0.10, score: 4, maxScore: 10 },
+    ];
+    this._severityHistory = [
+      { month: 'Jan', critical: 2, high: 5, medium: 18, low: 32 },
+      { month: 'Feb', critical: 1, high: 4, medium: 15, low: 28 },
+      { month: 'Mar', critical: 3, high: 7, medium: 22, low: 35 },
+      { month: 'Apr', critical: 1, high: 3, medium: 14, low: 25 },
+    ];
+    this._escalationThresholds = [
+      { level: 'P1 Critical', minScore: 8.5, action: 'Immediate CISO notification', notify: 'CISO, CTO, Legal' },
+      { level: 'P2 High', minScore: 7.0, action: 'Escalate within 1 hour', notify: 'SOC Lead, IR Team' },
+      { level: 'P3 Medium', minScore: 5.0, action: 'Track and respond within 4 hours', notify: 'SOC Analyst' },
+      { level: 'P4 Low', minScore: 3.0, action: 'Log and monitor', notify: 'Auto-triage' },
+    ];
+  }
+
+  private _calculateSeverityScore(): number {
+    const totalWeighted = this._severityFactors.reduce((s, f) => s + (f.score / f.maxScore) * f.weight, 0);
+    return Math.round(totalWeighted * 10 * 100) / 100;
+  }
+
+  private _getSeverityLevel(score: number): {level: string; color: string; bg: string} {
+    if (score >= 8.5) return { level: 'Critical', color: '#ef4444', bg: 'rgba(239,68,68,0.15)' };
+    if (score >= 7.0) return { level: 'High', color: '#f97316', bg: 'rgba(249,115,22,0.15)' };
+    if (score >= 5.0) return { level: 'Medium', color: '#eab308', bg: 'rgba(234,179,8,0.15)' };
+    if (score >= 3.0) return { level: 'Low', color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' };
+    return { level: 'Info', color: '#64748b', bg: 'rgba(100,116,139,0.15)' };
+  }
+
+  private _getSeverityTrend(): string {
+    if (this._severityHistory.length < 2) return 'stable';
+    const recent = this._severityHistory.slice(-2);
+    const prevTotal = recent[0].critical * 4 + recent[0].high * 3 + recent[0].medium * 2;
+    const currTotal = recent[1].critical * 4 + recent[1].high * 3 + recent[1].medium * 2;
+    return currTotal > prevTotal ? 'increasing' : currTotal < prevTotal ? 'decreasing' : 'stable';
+  }
+
+  private _renderSeverityMatrix(): string {
+    const matrix = [['Low', 'Med', 'High', 'Crit'], ['High', 'Crit', 'Crit', 'Crit'], ['Med', 'High', 'High', 'Crit'], ['Low', 'Med', 'High', 'High']];
+    const colors = [['#22c55e', '#eab308', '#f97316', '#ef4444'], ['#eab308', '#ef4444', '#ef4444', '#ef4444'], ['#22c55e', '#eab308', '#f97316', '#ef4444'], ['#22c55e', '#22c55e', '#eab308', '#f97316']];
+    const labels = ['High', 'Medium', 'Low', 'Minimal'];
+    let html = `<div style="display:grid;grid-template-columns:60px repeat(4,1fr);gap:2px;font-size:10px">`;
+    html += `<div></div>`;
+    for (const l of matrix[0]) html += `<div style="text-align:center;color:#94a3b8;padding:2px">${l}</div>`;
+    for (let i = 0; i < 4; i++) {
+      html += `<div style="color:#94a3b8;padding:2px;display:flex;align-items:center">${labels[i]}</div>`;
+      for (let j = 0; j < 4; j++) {
+        html += `<div style="background:${colors[i][j]};color:#000;font-weight:600;padding:4px;text-align:center;border-radius:2px">${matrix[i][j]}</div>`;
+      }
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  private _renderSeverityCalculator(): string {
+    if (this._severityFactors.length === 0) this._initSeverityCalculator();
+    const score = this._calculateSeverityScore();
+    const sev = this._getSeverityLevel(score);
+    const trend = this._getSeverityTrend();
+    let html = `<div style="padding:12px"><h4 style="margin:0 0 8px;color:#f1f5f9">Incident Severity Calculator</h4>`;
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">`;
+    html += `<div style="font-size:24px;font-weight:700;color:${sev.color}">${score}</div>`;
+    html += `<div style="padding:4px 8px;background:${sev.bg};color:${sev.color};border-radius:4px;font-size:12px;font-weight:600">${sev.level}</div>`;
+    html += `<div style="font-size:10px;color:#94a3b8">Trend: ${trend}</div>`;
+    html += `</div>`;
+    html += `<div style="margin-bottom:8px"><div style="font-size:11px;color:#94a3b8;margin-bottom:4px">Factors:</div>`;
+    for (const f of this._severityFactors) {
+      const pct = Math.round((f.score / f.maxScore) * 100);
+      html += `<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="font-size:10px;color:#cbd5e1;width:120px">${f.factor}</span><div style="flex:1;height:4px;background:#1e293b;border-radius:2px"><div style="height:100%;width:${pct}%;background:#3b82f6;border-radius:2px"></div></div><span style="font-size:10px;color:#64748b">${f.score}/${f.maxScore}</span></div>`;
+    }
+    html += `</div>`;
+    html += `<div style="font-size:11px;color:#94a3b8;margin-bottom:4px">Escalation Thresholds:</div>`;
+    for (const t of this._escalationThresholds) {
+      const color = t.minScore >= 8.5 ? '#ef4444' : t.minScore >= 7 ? '#f97316' : t.minScore >= 5 ? '#eab308' : '#3b82f6';
+      html += `<div style="font-size:10px;color:#cbd5e1;margin:2px 0;padding:2px 4px;background:#0f172a;border-left:3px solid ${color};border-radius:2px">${t.level} (${t.minScore}+) - ${t.action}</div>`;
+    }
+    html += `</div></div>`;
+    return html;
+  }
+
+  // ── Security Tool Efficacy Tracker ────────────────────────────────
+  private _securityTools: Array<{name: string; category: string; efficacy: number; utilization: number; costPerDetection: number; overlap: number; roi: number; status: string}> = [];
+  private _toolEfficacyHistory: Array<{month: string; avgEfficacy: number; avgUtilization: number; totalDetections: number; totalCost: number}> = [];
+
+  private _initToolEfficacyTracker(): void {
+    this._securityTools = [
+      { name: 'SIEM Platform', category: 'Detection', efficacy: 87, utilization: 92, costPerDetection: 12.5, overlap: 15, roi: 340, status: 'optimal' },
+      { name: 'EDR Solution', category: 'Endpoint', efficacy: 91, utilization: 88, costPerDetection: 8.3, overlap: 10, roi: 420, status: 'optimal' },
+      { name: 'WAF', category: 'Network', efficacy: 78, utilization: 95, costPerDetection: 5.2, overlap: 22, roi: 280, status: 'review' },
+      { name: 'DLP Suite', category: 'Data', efficacy: 72, utilization: 65, costPerDetection: 18.7, overlap: 8, roi: 180, status: 'underutilized' },
+      { name: 'Vulnerability Scanner', category: 'Assessment', efficacy: 85, utilization: 80, costPerDetection: 6.1, overlap: 12, roi: 360, status: 'optimal' },
+      { name: 'Threat Intel Feed', category: 'Intelligence', efficacy: 69, utilization: 70, costPerDetection: 22.0, overlap: 18, roi: 150, status: 'review' },
+      { name: 'CASB', category: 'Cloud', efficacy: 76, utilization: 58, costPerDetection: 15.3, overlap: 14, roi: 200, status: 'underutilized' },
+      { name: 'SOAR Platform', category: 'Orchestration', efficacy: 83, utilization: 75, costPerDetection: 10.8, overlap: 20, roi: 300, status: 'optimal' },
+      { name: 'Email Gateway', category: 'Email', efficacy: 89, utilization: 97, costPerDetection: 3.2, overlap: 5, roi: 480, status: 'optimal' },
+      { name: 'IAM System', category: 'Identity', efficacy: 81, utilization: 82, costPerDetection: 14.1, overlap: 11, roi: 250, status: 'optimal' },
+    ];
+    this._toolEfficacyHistory = [
+      { month: 'Jan', avgEfficacy: 78, avgUtilization: 76, totalDetections: 1240, totalCost: 18500 },
+      { month: 'Feb', avgEfficacy: 80, avgUtilization: 78, totalDetections: 1380, totalCost: 19200 },
+      { month: 'Mar', avgEfficacy: 82, avgUtilization: 80, totalDetections: 1520, totalCost: 19800 },
+      { month: 'Apr', avgEfficacy: 81, avgUtilization: 81, totalDetections: 1450, totalCost: 20100 },
+    ];
+  }
+
+  private _getToolROIranking(): Array<{name: string; roi: number; rank: number}> {
+    const sorted = [...this._securityTools].sort((a, b) => b.roi - a.roi);
+    return sorted.map((t, i) => ({ name: t.name, roi: t.roi, rank: i + 1 }));
+  }
+
+  private _getToolReplacementRecommendations(): Array<{tool: string; reason: string; suggestion: string; savings: number}> {
+    return [
+      { tool: 'DLP Suite', reason: 'Low utilization (65%) and high cost-per-detection', suggestion: 'Consider consolidation with CASB', savings: 35000 },
+      { tool: 'Threat Intel Feed', reason: 'High overlap (18%) with SIEM native feeds', suggestion: 'Reduce feed tier or integrate with SIEM', savings: 22000 },
+    ];
+  }
+
+  private _renderToolEfficacyTracker(): string {
+    if (this._securityTools.length === 0) this._initToolEfficacyTracker();
+    let html = `<div style="padding:12px"><h4 style="margin:0 0 8px;color:#f1f5f9">Security Tool Efficacy</h4>`;
+    const ranked = this._getToolROIranking();
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px">`;
+    for (let i = 0; i < 5; i++) {
+      const t = ranked[i];
+      const color = i === 0 ? '#fbbf24' : i === 1 ? '#94a3b8' : i === 2 ? '#d97706' : '#64748b';
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:#0f172a;border-radius:4px">`;
+      html += `<span style="font-size:12px;color:${color};font-weight:700">#${t.rank}</span>`;
+      html += `<span style="font-size:10px;color:#cbd5e1;flex:1">${t.name}</span>`;
+      html += `<span style="font-size:10px;color:#22c55e">${t.roi}%</span></div>`;
+    }
+    html += `</div>`;
+    const recs = this._getToolReplacementRecommendations();
+    if (recs.length > 0) {
+      html += `<div style="font-size:11px;color:#f59e0b;margin-bottom:4px">Replacement Recommendations:</div>`;
+      for (const r of recs) {
+        html += `<div style="padding:4px 6px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:4px;margin-bottom:4px">`;
+        html += `<div style="font-size:10px;color:#fbbf24;font-weight:600">${r.tool}</div>`;
+        html += `<div style="font-size:9px;color:#94a3b8">${r.reason}</div>`;
+        html += `<div style="font-size:9px;color:#22c55e">Est. savings: $${r.savings.toLocaleString()}/yr - ${r.suggestion}</div></div>`;
+      }
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  // ── Security Regulatory Mapping ───────────────────────────────────
+  private _regulations: Array<{name: string; controls: number; overlap: number; effort: number; status: string; lastAudit: string}> = [];
+  private _crossRegulationMatrix: Array<{source: string; target: string; commonControls: number; gaps: number}> = [];
+
+  private _initRegulatoryMapping(): void {
+    this._regulations = [
+      { name: 'GDPR', controls: 78, overlap: 42, effort: 85, status: 'compliant', lastAudit: '2026-02-15' },
+      { name: 'HIPAA', controls: 62, overlap: 35, effort: 78, status: 'compliant', lastAudit: '2026-01-20' },
+      { name: 'PCI DSS', controls: 55, overlap: 28, effort: 72, status: 'partial', lastAudit: '2025-11-10' },
+      { name: 'SOX', controls: 48, overlap: 30, effort: 68, status: 'compliant', lastAudit: '2026-03-01' },
+      { name: 'ISO 27001', controls: 93, overlap: 55, effort: 90, status: 'certified', lastAudit: '2026-01-05' },
+    ];
+    const regNames = this._regulations.map(r => r.name);
+    this._crossRegulationMatrix = [];
+    for (let i = 0; i < regNames.length; i++) {
+      for (let j = i + 1; j < regNames.length; j++) {
+        this._crossRegulationMatrix.push({
+          source: regNames[i], target: regNames[j],
+          commonControls: Math.round(15 + Math.random() * 25),
+          gaps: Math.round(Math.random() * 8),
+        });
+      }
+    }
+  }
+
+  private _getUnifiedControlSet(): Array<{control: string; regulations: string[]; coverage: number}> {
+    return [
+      { control: 'Access Control', regulations: ['GDPR', 'HIPAA', 'PCI DSS', 'SOX', 'ISO 27001'], coverage: 100 },
+      { control: 'Encryption', regulations: ['GDPR', 'HIPAA', 'PCI DSS', 'ISO 27001'], coverage: 80 },
+      { control: 'Audit Logging', regulations: ['SOX', 'PCI DSS', 'ISO 27001'], coverage: 60 },
+      { control: 'Incident Response', regulations: ['GDPR', 'HIPAA', 'ISO 27001'], coverage: 60 },
+      { control: 'Data Retention', regulations: ['GDPR', 'HIPAA', 'SOX'], coverage: 60 },
+      { control: 'Vulnerability Mgmt', regulations: ['PCI DSS', 'ISO 27001'], coverage: 40 },
+    ];
+  }
+
+  private _getRegulatoryChangeImpact(): Array<{regulation: string; change: string; impact: string; deadline: string; readiness: number}> {
+    return [
+      { regulation: 'GDPR', change: 'AI Act Integration', impact: 'High - New AI governance requirements', deadline: '2026-08-01', readiness: 45 },
+      { regulation: 'PCI DSS 5.0', change: 'v5.0 Mandatory', impact: 'Medium - Enhanced authentication requirements', deadline: '2027-03-31', readiness: 60 },
+      { regulation: 'ISO 27001', change: '2025 Amendment', impact: 'Low - Minor clause updates', deadline: '2026-12-31', readiness: 80 },
+    ];
+  }
+
+  private _renderRegulatoryMapping(): string {
+    if (this._regulations.length === 0) this._initRegulatoryMapping();
+    let html = `<div style="padding:12px"><h4 style="margin:0 0 8px;color:#f1f5f9">Regulatory Mapping</h4>`;
+    html += `<div style="display:grid;gap:4px;margin-bottom:8px">`;
+    for (const reg of this._regulations) {
+      const statusColor = reg.status === 'certified' ? '#22c55e' : reg.status === 'compliant' ? '#3b82f6' : '#f59e0b';
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#0f172a;border-radius:4px">`;
+      html += `<span style="font-size:11px;font-weight:600;color:#e2e8f0;width:80px">${reg.name}</span>`;
+      html += `<span style="font-size:9px;color:#94a3b8">${reg.controls} controls</span>`;
+      html += `<span style="font-size:9px;color:#94a3b8">${reg.overlap}% overlap</span>`;
+      html += `<span style="font-size:9px;padding:1px 4px;background:${statusColor}22;color:${statusColor};border-radius:3px">${reg.status}</span></div>`;
+    }
+    html += `</div>`;
+    const changes = this._getRegulatoryChangeImpact();
+    html += `<div style="font-size:11px;color:#f97316;margin-bottom:4px">Regulatory Changes:</div>`;
+    for (const c of changes) {
+      html += `<div style="padding:3px 6px;background:rgba(249,115,22,0.08);border-left:2px solid #f97316;margin-bottom:3px;font-size:9px;color:#cbd5e1">`;
+      html += `<strong>${c.regulation}</strong>: ${c.change} - ${c.impact}<br/>Deadline: ${c.deadline} | Readiness: ${c.readiness}%</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
+  // ── Security Team Performance ─────────────────────────────────────
+  private _teamMembers: Array<{name: string; role: string; kpis: Array<{name: string; value: number; target: number}>; workload: number; trend: string}> = [];
+  private _teamSkillCoverage: Array<{skill: string; coverage: number; analysts: number}> = [];
+
+  private _initTeamPerformance(): void {
+    this._teamMembers = [
+      { name: 'Alice Chen', role: 'SOC Lead', kpis: [
+        { name: 'MTTD', value: 12, target: 15 }, { name: 'MTTR', value: 45, target: 60 },
+        { name: 'Incidents Closed', value: 34, target: 30 }, { name: 'False Positive Rate', value: 8, target: 10 },
+        { name: 'Escalations', value: 3, target: 5 }, { name: 'Report Quality', value: 92, target: 85 },
+        { name: 'Training Hours', value: 18, target: 20 }, { name: 'Certifications', value: 4, target: 3 },
+      ], workload: 85, trend: 'improving' },
+      { name: 'Bob Martinez', role: 'IR Specialist', kpis: [
+        { name: 'MTTD', value: 18, target: 15 }, { name: 'MTTR', value: 72, target: 60 },
+        { name: 'Incidents Closed', value: 28, target: 30 }, { name: 'False Positive Rate', value: 12, target: 10 },
+        { name: 'Escalations', value: 4, target: 5 }, { name: 'Report Quality', value: 88, target: 85 },
+        { name: 'Training Hours', value: 14, target: 20 }, { name: 'Certifications', value: 3, target: 3 },
+      ], workload: 72, trend: 'stable' },
+      { name: 'Carol Williams', role: 'Threat Hunter', kpis: [
+        { name: 'MTTD', value: 8, target: 15 }, { name: 'MTTR', value: 55, target: 60 },
+        { name: 'Incidents Closed', value: 22, target: 30 }, { name: 'False Positive Rate', value: 6, target: 10 },
+        { name: 'Escalations', value: 2, target: 5 }, { name: 'Report Quality', value: 95, target: 85 },
+        { name: 'Training Hours', value: 22, target: 20 }, { name: 'Certifications', value: 5, target: 3 },
+      ], workload: 90, trend: 'excelling' },
+    ];
+    this._teamSkillCoverage = [
+      { skill: 'Incident Response', coverage: 85, analysts: 3 },
+      { skill: 'Malware Analysis', coverage: 60, analysts: 2 },
+      { skill: 'Threat Hunting', coverage: 70, analysts: 2 },
+      { skill: 'Forensics', coverage: 45, analysts: 1 },
+      { skill: 'Cloud Security', coverage: 55, analysts: 2 },
+      { skill: 'Network Analysis', coverage: 75, analysts: 2 },
+      { skill: 'Reverse Engineering', coverage: 30, analysts: 1 },
+      { skill: 'Compliance', coverage: 80, analysts: 3 },
+    ];
+  }
+
+  private _getTeamWorkloadDistribution(): Array<{range: string; count: number; color: string}> {
+    return [
+      { range: '0-40%', count: 0, color: '#22c55e' },
+      { range: '41-60%', count: 1, color: '#3b82f6' },
+      { range: '61-80%', count: 2, color: '#eab308' },
+      { range: '81-100%', count: 3, color: '#f97316' },
+      { range: 'Overloaded', count: 1, color: '#ef4444' },
+    ];
+  }
+
+  private _getTrainingRecommendations(): Array<{analyst: string; course: string; priority: string; estimatedHours: number}> {
+    return [
+      { analyst: 'Bob Martinez', course: 'Advanced Forensics (GCFE)', priority: 'High', estimatedHours: 40 },
+      { analyst: 'Alice Chen', course: 'Cloud Security (CCSP)', priority: 'Medium', estimatedHours: 30 },
+      { analyst: 'Team', course: 'MITRE ATT&CK Practitioner', priority: 'High', estimatedHours: 20 },
+    ];
+  }
+
+  private _renderTeamPerformance(): string {
+    if (this._teamMembers.length === 0) this._initTeamPerformance();
+    let html = `<div style="padding:12px"><h4 style="margin:0 0 8px;color:#f1f5f9">Team Performance</h4>`;
+    for (const member of this._teamMembers) {
+      const metCount = member.kpis.filter(k => {
+        if (k.name === 'False Positive Rate') return k.value <= k.target;
+        return k.value >= k.target;
+      }).length;
+      const kpiPct = Math.round((metCount / member.kpis.length) * 100);
+      const trendColor = member.trend === 'excelling' ? '#22c55e' : member.trend === 'improving' ? '#3b82f6' : '#eab308';
+      html += `<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px;margin-bottom:6px">`;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">`;
+      html += `<span style="font-size:11px;font-weight:600;color:#e2e8f0">${member.name} <span style="color:#64748b;font-weight:400">(${member.role})</span></span>`;
+      html += `<span style="font-size:10px;color:${trendColor}">${member.trend}</span></div>`;
+      html += `<div style="display:flex;gap:8px;margin-bottom:4px">`;
+      html += `<span style="font-size:9px;color:#94a3b8">KPIs: ${metCount}/${member.kpis.length} met</span>`;
+      html += `<span style="font-size:9px;color:#94a3b8">Workload: ${member.workload}%</span></div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px">`;
+      for (const kpi of member.kpis) {
+        const met = kpi.name === 'False Positive Rate' ? kpi.value <= kpi.target : kpi.value >= kpi.target;
+        const color = met ? '#22c55e' : '#ef4444';
+        html += `<div style="font-size:9px;color:#94a3b8"><span style="color:${color}">${met ? '●' : '○'}</span> ${kpi.name}: <span style="color:${color}">${kpi.value}</span>/${kpi.target}</div>`;
+      }
+      html += `</div></div>`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
   render() {    if (this._mitreRules.length === 0) { this._initMitreRules(); this._initMitreCvss(); this._runMitreAnomalyDetection(); this._generateMitrePredictions(); this._initMitreApprovals(); this._initMitreActivity(); this._initMitreNotifications(); }
 
     const items = this._getFiltered();
