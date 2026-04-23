@@ -1575,6 +1575,426 @@ export class ScVulnPriority extends LitElement {
   }
 
 
+  // ─── Incident Post-Mortem Engine ───
+  @state() private _pmActiveTab: string = 'timeline';
+  @state() private _pmIncidents: Array<{ id: string; title: string; severity: string; date: string; status: string; rootCause: string; rcaMethod: string; timeline: Array<{ time: string; event: string; actor: string }>; impactMatrix: Array<{ dimension: string; score: number; description: string }>; actionItems: Array<{ id: string; title: string; owner: string; priority: string; status: string; dueDate: string }>; lessonsLearned: string[] }> = [];
+  @state() private _pmSelectedIncident: string = '';
+  @state() private _pmFishboneCategories: string[] = ['People', 'Process', 'Technology', 'Environment', 'Communication', 'External'];
+  @state() private _pmFiveWhysResults: string[] = [];
+  @state() private _pmReportFormat: string = 'detailed';
+
+  private _initPostMortem(): void {
+    if (this._pmIncidents.length > 0) return;
+    this._pmIncidents = [
+      {
+        id: 'PM-2024-001', title: 'Ransomware Attack on File Servers', severity: 'critical',
+        date: '2024-03-15', status: 'completed', rootCause: 'Unpatched VPN gateway + weak MFA',
+        rcaMethod: '5-Whys',
+        timeline: [
+          { time: '03:12', event: 'Initial compromise via VPN vulnerability CVE-2024-1234', actor: 'APT-29' },
+          { time: '03:45', event: 'Lateral movement to file server cluster', actor: 'APT-29' },
+          { time: '04:02', event: 'Data exfiltration initiated (2.3 TB)', actor: 'APT-29' },
+          { time: '04:30', event: 'Ransomware payload deployed across 14 servers', actor: 'APT-29' },
+          { time: '05:15', event: 'SOC detected anomalous network traffic spike', actor: 'SOC Analyst' },
+          { time: '05:30', event: 'Incident response team activated', actor: 'IR Lead' },
+          { time: '06:00', event: 'Network segmentation completed', actor: 'Network Ops' },
+          { time: '08:45', event: 'Containment achieved, forensic imaging started', actor: 'Forensic Team' },
+        ],
+        impactMatrix: [
+          { dimension: 'Financial', score: 9, description: 'Estimated $4.2M in downtime, recovery, and regulatory fines' },
+          { dimension: 'Operational', score: 8, description: '14 servers offline for 72 hours, 200+ users affected' },
+          { dimension: 'Reputational', score: 7, description: 'Customer notification required, media coverage risk' },
+          { dimension: 'Compliance', score: 6, description: 'GDPR breach notification, PCI-DSS audit triggered' },
+          { dimension: 'Data Integrity', score: 9, description: '15% of encrypted files had no backup, permanent data loss' },
+        ],
+        actionItems: [
+          { id: 'AI-001', title: 'Patch all VPN gateways to latest firmware', owner: 'Network Team', priority: 'critical', status: 'completed', dueDate: '2024-03-20' },
+          { id: 'AI-002', title: 'Implement hardware MFA for all VPN users', owner: 'Identity Team', priority: 'critical', status: 'completed', dueDate: '2024-03-25' },
+          { id: 'AI-003', title: 'Deploy network detection rules for lateral movement', owner: 'SOC', priority: 'high', status: 'in-progress', dueDate: '2024-04-01' },
+          { id: 'AI-004', title: 'Review and update incident response playbook', owner: 'IR Lead', priority: 'high', status: 'pending', dueDate: '2024-04-15' },
+          { id: 'AI-005', title: 'Implement immutable backups for critical file servers', owner: 'Backup Ops', priority: 'critical', status: 'completed', dueDate: '2024-03-22' },
+        ],
+        lessonsLearned: [
+          'VPN gateway patching cycle was 90 days instead of the required 14 days',
+          'MFA bypass was possible because SMS-based OTP was still allowed',
+          'Network segmentation between DMZ and internal network was insufficient',
+          'SOC lacked automated detection rules for lateral movement patterns',
+          'Backup verification testing had not been performed in 6 months',
+        ],
+      },
+      {
+        id: 'PM-2024-002', title: 'Phishing Campaign Targeting Finance Team', severity: 'high',
+        date: '2024-04-02', status: 'in-review', rootCause: 'Lack of URL sandboxing for email attachments',
+        rcaMethod: 'Fishbone',
+        timeline: [
+          { time: '09:15', event: 'Spear-phishing email sent to 12 finance team members', actor: 'Threat Actor' },
+          { time: '09:22', event: '3 users clicked malicious link in email', actor: 'Finance Staff' },
+          { time: '09:25', event: 'Credential harvesting form submitted by 2 users', actor: 'Threat Actor' },
+          { time: '09:45', event: 'Email gateway flagged campaign as spam (delayed)', actor: 'Email Gateway' },
+          { time: '10:00', event: 'SOC received alert on suspicious login from new geolocation', actor: 'SOC Analyst' },
+          { time: '10:15', event: 'Compromised accounts identified and locked', actor: 'Identity Team' },
+        ],
+        impactMatrix: [
+          { dimension: 'Financial', score: 4, description: 'No direct financial loss, remediation cost estimated at $15K' },
+          { dimension: 'Operational', score: 5, description: '2 accounts locked for 4 hours during investigation' },
+          { dimension: 'Reputational', score: 2, description: 'Internal incident, no external disclosure needed' },
+          { dimension: 'Compliance', score: 3, description: 'Minor policy violation, no regulatory impact' },
+          { dimension: 'Data Integrity', score: 2, description: 'No data exfiltration detected' },
+        ],
+        actionItems: [
+          { id: 'AI-010', title: 'Deploy URL sandboxing for all email attachments', owner: 'Email Admin', priority: 'high', status: 'in-progress', dueDate: '2024-04-20' },
+          { id: 'AI-011', title: 'Mandatory anti-phishing training for finance team', owner: 'Security Awareness', priority: 'high', status: 'completed', dueDate: '2024-04-10' },
+          { id: 'AI-012', title: 'Implement conditional access policies for finance apps', owner: 'Identity Team', priority: 'medium', status: 'pending', dueDate: '2024-05-01' },
+        ],
+        lessonsLearned: [
+          'Email gateway sandboxing was disabled due to performance concerns',
+          'Finance team had not received targeted phishing training in 12 months',
+          'Geolocation-based anomaly detection had a 15-minute delay',
+        ],
+      },
+      {
+        id: 'PM-2024-003', title: 'Insider Data Exfiltration via Cloud Storage', severity: 'critical',
+        date: '2024-04-10', status: 'completed', rootCause: 'Excessive cloud storage permissions + no DLP',
+        rcaMethod: '5-Whys',
+        timeline: [
+          { time: '14:00', event: 'Employee uploaded 45GB of sensitive documents to personal cloud', actor: 'Insider' },
+          { time: '14:30', event: 'DLP alert triggered on bulk upload (previously disabled)', actor: 'DLP System' },
+          { time: '15:00', event: 'Security team initiated investigation', actor: 'Investigator' },
+          { time: '16:00', event: 'Employee account suspended pending HR review', actor: 'Security Lead' },
+          { time: '17:00', event: 'Legal team engaged for data breach assessment', actor: 'Legal Counsel' },
+        ],
+        impactMatrix: [
+          { dimension: 'Financial', score: 7, description: 'Potential IP theft valued at $8M, legal costs TBD' },
+          { dimension: 'Operational', score: 3, description: 'One account suspended, minimal operational disruption' },
+          { dimension: 'Reputational', score: 6, description: 'Client trust impact if data reaches competitors' },
+          { dimension: 'Compliance', score: 8, description: 'Multiple regulatory violations, potential fines' },
+          { dimension: 'Data Integrity', score: 8, description: 'Trade secrets and client PII were exfiltrated' },
+        ],
+        actionItems: [
+          { id: 'AI-020', title: 'Re-enable and tune DLP policies for cloud storage uploads', owner: 'DLP Admin', priority: 'critical', status: 'completed', dueDate: '2024-04-12' },
+          { id: 'AI-021', title: 'Implement just-in-time access for sensitive document repositories', owner: 'IAM Team', priority: 'critical', status: 'in-progress', dueDate: '2024-04-25' },
+          { id: 'AI-022', title: 'Deploy user behavior analytics for anomaly detection', owner: 'SOC', priority: 'high', status: 'pending', dueDate: '2024-05-10' },
+        ],
+        lessonsLearned: [
+          'DLP policies were disabled 3 months ago without proper change approval',
+          'Cloud storage permissions followed allow-all default rather than least-privilege',
+          'No automated alerting for bulk uploads to external cloud services',
+        ],
+      },
+    ];
+    this._pmSelectedIncident = this._pmIncidents[0]?.id || '';
+    this._pmFiveWhysResults = [
+      'Why did the breach occur? -> Unpatched VPN gateway vulnerability was exploited',
+      'Why was the VPN unpatched? -> Patching cycle was set to 90 days, not 14-day critical path',
+      'Why was the patching cycle 90 days? -> Change management process required extensive testing',
+      'Why was extensive testing required? -> Previous patch caused service disruption',
+      'Why did previous patch cause disruption? -> No staging environment for pre-deployment validation',
+    ];
+  }
+
+  private _getPmSelectedIncident() {
+    return this._pmIncidents.find(i => i.id === this._pmSelectedIncident) || this._pmIncidents[0];
+  }
+
+  private _getPmSeverityColor(severity: string): string {
+    return severity === 'critical' ? '#ff4757' : severity === 'high' ? '#ff6b35' : severity === 'medium' ? '#ffa502' : '#2ed573';
+  }
+
+  private _getPmActionCompletionRate(incident: typeof this._pmIncidents[0]): number {
+    if (!incident || incident.actionItems.length === 0) return 0;
+    return Math.round((incident.actionItems.filter(a => a.status === 'completed').length / incident.actionItems.length) * 100);
+  }
+
+  private _getPmAvgImpactScore(incident: typeof this._pmIncidents[0]): number {
+    if (!incident || incident.impactMatrix.length === 0) return 0;
+    return Math.round(incident.impactMatrix.reduce((s, m) => s + m.score, 0) / incident.impactMatrix.length * 10) / 10;
+  }
+
+  private _getPmTotalActionItems(): { total: number; completed: number; inProgress: number; pending: number } {
+    const all = this._pmIncidents.flatMap(i => i.actionItems);
+    return {
+      total: all.length,
+      completed: all.filter(a => a.status === 'completed').length,
+      inProgress: all.filter(a => a.status === 'in-progress').length,
+      pending: all.filter(a => a.status === 'pending').length,
+    };
+  }
+
+  // ─── Security Metrics Benchmarking ───
+  @state() private _benchActiveTab: string = 'overview';
+  @state() private _benchSelectedFramework: string = 'cis';
+  @state() private _benchMaturityData: Array<{ domain: string; currentLevel: number; targetLevel: number; industryAvg: number; gaps: string[] }> = [];
+  @state() private _benchPeerComparison: Array<{ metric: string; ourValue: number; peerAvg: number; peerBest: number; industryStd: number; unit: string }> = [];
+  @state() private _benchTrendData: Array<{ month: string; score: number; benchmark: number }> = [];
+
+  private _initBenchmarking(): void {
+    if (this._benchMaturityData.length > 0) return;
+    this._benchMaturityData = [
+      { domain: 'Governance & Risk', currentLevel: 4, targetLevel: 5, industryAvg: 3.2, gaps: ['Formal risk quantification not fully adopted', 'Board reporting cadence needs improvement'] },
+      { domain: 'Identity & Access', currentLevel: 3, targetLevel: 4, industryAvg: 2.8, gaps: ['MFA coverage at 78%, target 95%', 'Privileged access review cycle too long'] },
+      { domain: 'Data Protection', currentLevel: 3, targetLevel: 5, industryAvg: 2.5, gaps: ['DLP policies need tuning', 'Data classification incomplete for cloud workloads'] },
+      { domain: 'Threat Detection', currentLevel: 4, targetLevel: 5, industryAvg: 3.0, gaps: ['MITRE ATT&CK coverage at 65%', 'Automated response playbooks need expansion'] },
+      { domain: 'Vulnerability Mgmt', currentLevel: 3, targetLevel: 4, industryAvg: 2.9, gaps: ['Mean time to patch critical: 18 days (target: 7)', 'Asset inventory incomplete'] },
+      { domain: 'Incident Response', currentLevel: 4, targetLevel: 5, industryAvg: 3.1, gaps: ['Tabletop exercises quarterly instead of monthly', 'Forensic capability gaps for cloud environments'] },
+    ];
+    this._benchPeerComparison = [
+      { metric: 'Mean Time to Detect (MTTD)', ourValue: 4.2, peerAvg: 12.5, peerBest: 1.8, industryStd: 8.0, unit: 'hours' },
+      { metric: 'Mean Time to Respond (MTTR)', ourValue: 2.1, peerAvg: 8.3, peerBest: 0.5, industryStd: 4.0, unit: 'hours' },
+      { metric: 'Patch Compliance (Critical)', ourValue: 78, peerAvg: 65, peerBest: 98, industryStd: 80, unit: '%' },
+      { metric: 'Phishing Click Rate', ourValue: 3.2, peerAvg: 12.5, peerBest: 0.8, industryStd: 8.0, unit: '%' },
+      { metric: 'Vulnerability Backlog (Critical)', ourValue: 12, peerAvg: 45, peerBest: 2, industryStd: 25, unit: 'count' },
+      { metric: 'Security Awareness Score', ourValue: 82, peerAvg: 68, peerBest: 96, industryStd: 75, unit: '%' },
+      { metric: 'MFA Adoption Rate', ourValue: 78, peerAvg: 62, peerBest: 100, industryStd: 85, unit: '%' },
+      { metric: 'Endpoint Compliance', ourValue: 91, peerAvg: 78, peerBest: 99, industryStd: 85, unit: '%' },
+    ];
+    this._benchTrendData = [
+      { month: '2024-01', score: 62, benchmark: 58 },
+      { month: '2024-02', score: 65, benchmark: 59 },
+      { month: '2024-03', score: 61, benchmark: 60 },
+      { month: '2024-04', score: 68, benchmark: 61 },
+      { month: '2024-05', score: 72, benchmark: 62 },
+      { month: '2024-06', score: 74, benchmark: 63 },
+      { month: '2024-07', score: 73, benchmark: 64 },
+      { month: '2024-08', score: 76, benchmark: 65 },
+      { month: '2024-09', score: 79, benchmark: 66 },
+      { month: '2024-10', score: 81, benchmark: 67 },
+      { month: '2024-11', score: 83, benchmark: 68 },
+      { month: '2024-12', score: 85, benchmark: 69 },
+    ];
+  }
+
+  private _getBenchOverallMaturity(): number {
+    if (this._benchMaturityData.length === 0) return 0;
+    return Math.round(this._benchMaturityData.reduce((s, d) => s + d.currentLevel, 0) / this._benchMaturityData.length * 10) / 10;
+  }
+
+  private _getBenchTargetMaturity(): number {
+    if (this._benchMaturityData.length === 0) return 0;
+    return Math.round(this._benchMaturityData.reduce((s, d) => s + d.targetLevel, 0) / this._benchMaturityData.length * 10) / 10;
+  }
+
+  private _getBenchTotalGaps(): number {
+    return this._benchMaturityData.reduce((s, d) => s + d.gaps.length, 0);
+  }
+
+  private _getBenchOutperformingMetrics(): number {
+    return this._benchPeerComparison.filter(m => m.ourValue > m.peerAvg).length;
+  }
+
+  private _getBenchMaturityLevelLabel(level: number): string {
+    const labels = ['', 'Initial', 'Developing', 'Defined', 'Managed', 'Optimizing'];
+    return labels[level] || 'Unknown';
+  }
+
+  private _getBenchMaturityColor(level: number): string {
+    if (level >= 4) return '#2ed573';
+    if (level >= 3) return '#ffa502';
+    if (level >= 2) return '#ff6b35';
+    return '#ff4757';
+  }
+
+  private _getBenchScoreTrend(): string {
+    if (this._benchTrendData.length < 2) return 'neutral';
+    const recent = this._benchTrendData.slice(-3);
+    const first = recent[0].score;
+    const last = recent[recent.length - 1].score;
+    if (last > first + 3) return 'improving';
+    if (last < first - 3) return 'declining';
+    return 'stable';
+  }
+
+  // ─── Alert Triage & Enrichment ───
+  @state() private _triageActiveView: string = 'queue';
+  @state() private _triageAlerts: Array<{ id: string; title: string; severity: string; source: string; status: string; score: number; confidence: number; enrichment: { iocCount: number; relatedAlerts: number; assetCriticality: string; threatIntelHits: number; mitreTactics: string[] }; assignedTo: string; created: string; enrichedAt: string }> = [];
+  @state() private _triageRoutingRules: Array<{ id: string; name: string; condition: string; action: string; enabled: boolean }> = [];
+  @state() private _triageEscalationPolicy: Array<{ level: number; threshold: string; notify: string; autoAction: string }> = [];
+
+  private _initTriage(): void {
+    if (this._triageAlerts.length > 0) return;
+    this._triageAlerts = [
+      { id: 'ALT-001', title: 'Brute force login attempt detected', severity: 'high', source: 'SIEM', status: 'new', score: 85, confidence: 92,
+        enrichment: { iocCount: 3, relatedAlerts: 2, assetCriticality: 'high', threatIntelHits: 5, mitreTactics: ['TA0006', 'TA0001'] }, assignedTo: '', created: '2024-04-15T09:12:00Z', enrichedAt: '2024-04-15T09:12:05Z' },
+      { id: 'ALT-002', title: 'Suspicious PowerShell execution on workstation', severity: 'critical', source: 'EDR', status: 'investigating', score: 95, confidence: 88,
+        enrichment: { iocCount: 7, relatedAlerts: 5, assetCriticality: 'critical', threatIntelHits: 12, mitreTactics: ['TA0002', 'TA0005', 'TA0003'] }, assignedTo: 'SOC-L1-John', created: '2024-04-15T08:45:00Z', enrichedAt: '2024-04-15T08:45:03Z' },
+      { id: 'ALT-003', title: 'Anomalous data transfer to external IP', severity: 'high', source: 'NDR', status: 'escalated', score: 88, confidence: 76,
+        enrichment: { iocCount: 4, relatedAlerts: 3, assetCriticality: 'high', threatIntelHits: 8, mitreTactics: ['TA0010', 'TA0009'] }, assignedTo: 'SOC-L2-Sarah', created: '2024-04-15T07:30:00Z', enrichedAt: '2024-04-15T07:30:08Z' },
+      { id: 'ALT-004', title: 'Failed SSL certificate validation', severity: 'low', source: 'Proxy', status: 'resolved', score: 25, confidence: 95,
+        enrichment: { iocCount: 0, relatedAlerts: 0, assetCriticality: 'low', threatIntelHits: 0, mitreTactics: [] }, assignedTo: 'SOC-L1-Mike', created: '2024-04-15T06:15:00Z', enrichedAt: '2024-04-15T06:15:02Z' },
+      { id: 'ALT-005', title: 'Privileged account used from new location', severity: 'critical', source: 'IAM', status: 'new', score: 92, confidence: 84,
+        enrichment: { iocCount: 5, relatedAlerts: 4, assetCriticality: 'critical', threatIntelHits: 9, mitreTactics: ['TA0006', 'TA0001'] }, assignedTo: '', created: '2024-04-15T10:00:00Z', enrichedAt: '2024-04-15T10:00:04Z' },
+      { id: 'ALT-006', title: 'Malware signature match on email attachment', severity: 'medium', source: 'Email GW', status: 'auto-contained', score: 72, confidence: 98,
+        enrichment: { iocCount: 2, relatedAlerts: 1, assetCriticality: 'medium', threatIntelHits: 15, mitreTactics: ['TA0001'] }, assignedTo: 'Auto-Remediation', created: '2024-04-15T09:30:00Z', enrichedAt: '2024-04-15T09:30:01Z' },
+    ];
+    this._triageRoutingRules = [
+      { id: 'RR-001', name: 'Critical Alert to SOC L2', condition: 'severity == critical AND score >= 90', action: 'Assign to SOC-L2 on-call', enabled: true },
+      { id: 'RR-002', name: 'Threat Intel Match Enrichment', condition: 'threatIntelHits > 0', action: 'Auto-enrich with CTI context', enabled: true },
+      { id: 'RR-003', name: 'Low Confidence Auto-Close', condition: 'confidence < 30 AND severity == low', action: 'Auto-close with note after 24h', enabled: true },
+      { id: 'RR-004', name: 'Related Alert Grouping', condition: 'relatedAlerts > 2', action: 'Group as incident and notify IR lead', enabled: true },
+      { id: 'RR-005', name: 'VIP Asset Escalation', condition: 'assetCriticality == critical AND severity >= high', action: 'Page on-call security engineer', enabled: false },
+    ];
+    this._triageEscalationPolicy = [
+      { level: 1, threshold: 'No response in 15 minutes', notify: 'SOC L1 team chat', autoAction: 'Reassign to next available analyst' },
+      { level: 2, threshold: 'No response in 30 minutes', notify: 'SOC L2 on-call via SMS', autoAction: 'Escalate to L2 queue' },
+      { level: 3, threshold: 'No response in 60 minutes', notify: 'Security Manager + CISO', autoAction: 'Page on-call incident commander' },
+      { level: 4, threshold: 'Active threat confirmed', notify: 'Executive team', autoAction: 'Activate full incident response' },
+    ];
+  }
+
+  private _getTriageStats(): { total: number; newCount: number; investigating: number; escalated: number; resolved: number; autoContained: number } {
+    return {
+      total: this._triageAlerts.length,
+      newCount: this._triageAlerts.filter(a => a.status === 'new').length,
+      investigating: this._triageAlerts.filter(a => a.status === 'investigating').length,
+      escalated: this._triageAlerts.filter(a => a.status === 'escalated').length,
+      resolved: this._triageAlerts.filter(a => a.status === 'resolved').length,
+      autoContained: this._triageAlerts.filter(a => a.status === 'auto-contained').length,
+    };
+  }
+
+  private _getTriageAvgScore(): number {
+    if (this._triageAlerts.length === 0) return 0;
+    return Math.round(this._triageAlerts.reduce((s, a) => s + a.score, 0) / this._triageAlerts.length);
+  }
+
+  private _getTriageHighConfidence(): number {
+    return this._triageAlerts.filter(a => a.confidence >= 85).length;
+  }
+
+  private _getTriageTopSource(): string {
+    if (this._triageAlerts.length === 0) return 'N/A';
+    const counts: Record<string, number> = {};
+    this._triageAlerts.forEach(a => { counts[a.source] = (counts[a.source] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  private _getTriageActiveRoutingRules(): number {
+    return this._triageRoutingRules.filter(r => r.enabled).length;
+  }
+
+  // ─── Security Architecture Review ───
+  @state() private _archActiveSection: string = 'components';
+  @state() private _archComponents: Array<{ id: string; name: string; category: string; trustZone: string; controls: string[]; status: string; lastReview: string; riskScore: number }> = [];
+  @state() private _archTrustBoundaries: Array<{ id: string; name: string; from: string; to: string; controlType: string; enforcement: string; status: string }> = [];
+  @state() private _archDecisionRecords: Array<{ id: string; title: string; date: string; status: string; context: string; decision: string; consequences: string }> = [];
+
+  private _initArchitecture(): void {
+    if (this._archComponents.length > 0) return;
+    this._archComponents = [
+      { id: 'AC-001', name: 'Web Application Firewall', category: 'Network Security', trustZone: 'DMZ', controls: ['OWASP CRS', 'Rate Limiting', 'Bot Detection', 'Geo-blocking'], status: 'active', lastReview: '2024-04-01', riskScore: 2 },
+      { id: 'AC-002', name: 'Identity Provider (IdP)', category: 'Identity & Access', trustZone: 'Internal', controls: ['SAML 2.0', 'OIDC', 'MFA', 'Adaptive Auth', 'SSO'], status: 'active', lastReview: '2024-03-15', riskScore: 3 },
+      { id: 'AC-003', name: 'Data Loss Prevention', category: 'Data Protection', trustZone: 'Internal', controls: ['Content Inspection', 'Endpoint Agent', 'Cloud API Integration', 'Encryption'], status: 'needs-review', lastReview: '2024-01-20', riskScore: 7 },
+      { id: 'AC-004', name: 'SIEM Platform', category: 'Detection & Response', trustZone: 'SOC', controls: ['Log Aggregation', 'Correlation Rules', 'Threat Intel Feed', 'SOAR Integration'], status: 'active', lastReview: '2024-03-28', riskScore: 4 },
+      { id: 'AC-005', name: 'Container Security Platform', category: 'Cloud Security', trustZone: 'Cloud', controls: ['Image Scanning', 'Runtime Protection', 'Network Policy', 'Secrets Management'], status: 'active', lastReview: '2024-04-05', riskScore: 3 },
+      { id: 'AC-006', name: 'Zero Trust Network Access', category: 'Network Security', trustZone: 'Perimeter', controls: ['Micro-segmentation', 'Continuous Verification', 'Least Privilege Access', 'Device Trust'], status: 'implementing', lastReview: '2024-04-10', riskScore: 5 },
+    ];
+    this._archTrustBoundaries = [
+      { id: 'TB-001', name: 'Internet to DMZ', from: 'External', to: 'DMZ', controlType: 'WAF + DDoS Protection', enforcement: 'Active', status: 'enforced' },
+      { id: 'TB-002', name: 'DMZ to Internal', from: 'DMZ', to: 'Internal', controlType: 'Application Layer Firewall', enforcement: 'Active', status: 'enforced' },
+      { id: 'TB-003', name: 'Internal to SOC', from: 'Internal', to: 'SOC', controlType: 'Role-Based Access + Network Segmentation', enforcement: 'Active', status: 'enforced' },
+      { id: 'TB-004', name: 'Internal to Cloud', from: 'Internal', to: 'Cloud', controlType: 'CASB + Zero Trust', enforcement: 'Partial', status: 'partial' },
+      { id: 'TB-005', name: 'Partner to Internal', from: 'External', to: 'Internal', controlType: 'VPN + MFA + Limited Access', enforcement: 'Active', status: 'needs-review' },
+    ];
+    this._archDecisionRecords = [
+      { id: 'ADR-001', title: 'Adopt Zero Trust Architecture', date: '2024-01-15', status: 'accepted', context: 'VPN-based perimeter security is insufficient for hybrid workforce', decision: 'Implement ZTNA with micro-segmentation across all network zones', consequences: 'Reduced lateral movement risk, increased authentication friction' },
+      { id: 'ADR-002', title: 'Migrate SIEM to Cloud-Native Platform', date: '2024-02-20', status: 'accepted', context: 'On-prem SIEM cannot scale to handle cloud log volume', decision: 'Migrate to cloud-native SIEM with 90-day retention', consequences: 'Better scalability, dependency on cloud provider uptime' },
+      { id: 'ADR-003', title: 'Deploy Runtime Container Security', date: '2024-03-10', status: 'accepted', context: 'Static image scanning misses runtime threats and supply chain attacks', decision: 'Deploy eBPF-based runtime security agent in all Kubernetes clusters', consequences: 'Improved threat detection, minimal performance overhead' },
+    ];
+  }
+
+  private _getArchComponentStats(): { total: number; active: number; needsReview: number; implementing: number; avgRisk: number } {
+    const active = this._archComponents.filter(c => c.status === 'active').length;
+    const needsReview = this._archComponents.filter(c => c.status === 'needs-review').length;
+    const implementing = this._archComponents.filter(c => c.status === 'implementing').length;
+    const avgRisk = this._archComponents.length > 0
+      ? Math.round(this._archComponents.reduce((s, c) => s + c.riskScore, 0) / this._archComponents.length * 10) / 10 : 0;
+    return { total: this._archComponents.length, active, needsReview, implementing, avgRisk };
+  }
+
+  private _getArchBoundaryStats(): { total: number; enforced: number; partial: number; needsReview: number } {
+    return {
+      total: this._archTrustBoundaries.length,
+      enforced: this._archTrustBoundaries.filter(b => b.status === 'enforced').length,
+      partial: this._archTrustBoundaries.filter(b => b.status === 'partial').length,
+      needsReview: this._archTrustBoundaries.filter(b => b.status === 'needs-review').length,
+    };
+  }
+
+  private _getArchControlCoverage(): number {
+    if (this._archComponents.length === 0) return 0;
+    const totalControls = this._archComponents.reduce((s, c) => s + c.controls.length, 0);
+    return totalControls;
+  }
+
+  // ─── Continuous Monitoring Suite ───
+  @state() private _monActiveView: string = 'dashboard';
+  @state() private _monMetricGauges: Array<{ id: string; name: string; value: number; max: number; unit: string; status: string; trend: string }> = [];
+  @state() private _monAnomalyStream: Array<{ id: string; timestamp: string; type: string; description: string; severity: string; source: string; status: string }> = [];
+  @state() private _monHealthChecks: Array<{ service: string; status: string; latency: number; uptime: number; lastCheck: string; slaTarget: number }> = [];
+  @state() private _monAlertFatigue: { totalAlerts: number; actionable: number; falsePositive: number; noiseRate: number; topNoiseSource: string; fatigueIndex: number } = { totalAlerts: 0, actionable: 0, falsePositive: 0, noiseRate: 0, topNoiseSource: '', fatigueIndex: 0 };
+
+  private _initMonitoring(): void {
+    if (this._monMetricGauges.length > 0) return;
+    this._monMetricGauges = [
+      { id: 'MG-001', name: 'Threat Detection Coverage', value: 72, max: 100, unit: '%', status: 'warning', trend: 'improving' },
+      { id: 'MG-002', name: 'Mean Time to Detect', value: 4.2, max: 24, unit: 'hrs', status: 'healthy', trend: 'improving' },
+      { id: 'MG-003', name: 'Mean Time to Respond', value: 2.1, max: 8, unit: 'hrs', status: 'healthy', trend: 'stable' },
+      { id: 'MG-004', name: 'Patch Compliance', value: 78, max: 100, unit: '%', status: 'warning', trend: 'improving' },
+      { id: 'MG-005', name: 'MFA Adoption', value: 78, max: 100, unit: '%', status: 'warning', trend: 'improving' },
+      { id: 'MG-006', name: 'Security Posture Score', value: 82, max: 100, unit: '', status: 'healthy', trend: 'improving' },
+      { id: 'MG-007', name: 'Endpoint Compliance', value: 91, max: 100, unit: '%', status: 'healthy', trend: 'stable' },
+      { id: 'MG-008', name: 'Vulnerability SLA Compliance', value: 85, max: 100, unit: '%', status: 'healthy', trend: 'declining' },
+    ];
+    this._monAnomalyStream = [
+      { id: 'AN-001', timestamp: '2024-04-15T10:32:00Z', type: 'Behavioral', description: 'Unusual login pattern detected for service account svc-backup', severity: 'high', source: 'UEBA', status: 'investigating' },
+      { id: 'AN-002', timestamp: '2024-04-15T10:15:00Z', type: 'Network', description: 'DNS tunneling attempt blocked from workstation WS-042', severity: 'medium', source: 'NDR', status: 'blocked' },
+      { id: 'AN-003', timestamp: '2024-04-15T09:58:00Z', type: 'Endpoint', description: 'New autorun key created on server SRV-DB-03', severity: 'high', source: 'EDR', status: 'investigating' },
+      { id: 'AN-004', timestamp: '2024-04-15T09:30:00Z', type: 'Cloud', description: 'IAM role assumption from unexpected principal', severity: 'medium', source: 'CSPM', status: 'resolved' },
+      { id: 'AN-005', timestamp: '2024-04-15T09:12:00Z', type: 'Data', description: 'Bulk download of sensitive files detected (3.2 GB in 5 min)', severity: 'critical', source: 'DLP', status: 'escalated' },
+    ];
+    this._monHealthChecks = [
+      { service: 'SIEM Platform', status: 'healthy', latency: 45, uptime: 99.97, lastCheck: '2024-04-15T10:35:00Z', slaTarget: 99.9 },
+      { service: 'EDR Agent Fleet', status: 'healthy', latency: 120, uptime: 99.85, lastCheck: '2024-04-15T10:35:00Z', slaTarget: 99.5 },
+      { service: 'Threat Intel Feed', status: 'healthy', latency: 200, uptime: 99.99, lastCheck: '2024-04-15T10:35:00Z', slaTarget: 99.5 },
+      { service: 'Vulnerability Scanner', status: 'degraded', latency: 3500, uptime: 98.2, lastCheck: '2024-04-15T10:35:00Z', slaTarget: 99.0 },
+      { service: 'SOAR Platform', status: 'healthy', latency: 80, uptime: 99.95, lastCheck: '2024-04-15T10:35:00Z', slaTarget: 99.5 },
+      { service: 'Log Forwarder Cluster', status: 'healthy', latency: 15, uptime: 99.98, lastCheck: '2024-04-15T10:35:00Z', slaTarget: 99.9 },
+    ];
+    this._monAlertFatigue = {
+      totalAlerts: 1247, actionable: 312, falsePositive: 685,
+      noiseRate: 54.9, topNoiseSource: 'Endpoint Detection (false positives on legitimate admin tools)',
+      fatigueIndex: 3.8,
+    };
+  }
+
+  private _getMonOverallHealth(): string {
+    const degraded = this._monHealthChecks.filter(h => h.status !== 'healthy').length;
+    if (degraded === 0) return 'healthy';
+    if (degraded <= 1) return 'warning';
+    return 'critical';
+  }
+
+  private _getMonAvgUptime(): number {
+    if (this._monHealthChecks.length === 0) return 0;
+    return Math.round(this._monHealthChecks.reduce((s, h) => s + h.uptime, 0) / this._monHealthChecks.length * 100) / 100;
+  }
+
+  private _getMonSlaBreaches(): number {
+    return this._monHealthChecks.filter(h => h.uptime < h.slaTarget).length;
+  }
+
+  private _getMonActiveAnomalies(): number {
+    return this._monAnomalyStream.filter(a => a.status !== 'resolved' && a.status !== 'blocked').length;
+  }
+
+  private _getMonGaugeStatusColor(status: string): string {
+    if (status === 'healthy') return '#2ed573';
+    if (status === 'warning') return '#ffa502';
+    if (status === 'critical') return '#ff4757';
+    return '#95a5a6';
+  }
+
+
+
   render() {    if (this._vpRules.length === 0) { this._initVpRules(); this._initVpCvss(); this._runVpAnomalyDetection(); this._generateVpPredictions(); this._initVpApprovals(); this._initVpActivity(); this._initVpNotifications(); }
 
     const items = this._getFiltered();
