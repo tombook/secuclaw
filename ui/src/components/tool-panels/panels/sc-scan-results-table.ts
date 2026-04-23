@@ -7312,6 +7312,209 @@ export class ScScanResultsTable extends LitElement {
         </div>
       </section>`;
   }
+
+
+  private _renderGamification() {
+    const leaderboard = [
+      { rank: 1, name: 'Sarah Chen', dept: 'Engineering', score: 9850, badges: 24, streak: 45, level: 'Platinum Guardian', avatar: 'SC' },
+      { rank: 2, name: 'Mike Rodriguez', dept: 'Operations', score: 9420, badges: 21, streak: 38, level: 'Platinum Guardian', avatar: 'MR' },
+      { rank: 3, name: 'Aisha Patel', dept: 'Finance', score: 8910, badges: 19, streak: 52, level: 'Gold Defender', avatar: 'AP' },
+      { rank: 4, name: 'James Wilson', dept: 'Engineering', score: 8750, badges: 18, streak: 30, level: 'Gold Defender', avatar: 'JW' },
+      { rank: 5, name: 'Lisa Kim', dept: 'HR', score: 8320, badges: 17, streak: 28, level: 'Gold Defender', avatar: 'LK' },
+      { rank: 6, name: 'David Brown', dept: 'Legal', score: 7890, badges: 15, streak: 22, level: 'Silver Sentinel', avatar: 'DB' },
+      { rank: 7, name: 'Emma Zhang', dept: 'Marketing', score: 7650, badges: 14, streak: 19, level: 'Silver Sentinel', avatar: 'EZ' },
+      { rank: 8, name: 'Tom Anderson', dept: 'Engineering', score: 7200, badges: 13, streak: 15, level: 'Silver Sentinel', avatar: 'TA' },
+    ];
+    const achievements = [
+      { name: 'Eagle Eye', desc: 'Reported 10 phishing emails', icon: 'eagle', unlocked: 45, total: 120 },
+      { name: 'Patch Master', desc: 'All systems patched within SLA', icon: 'patch', unlocked: 8, total: 8 },
+      { name: 'Zero Breach Quarter', desc: 'No security incidents in 90 days', icon: 'shield', unlocked: 2, total: 4 },
+      { name: 'Quiz Champion', desc: 'Scored 100% on monthly quiz', icon: 'brain', unlocked: 34, total: 120 },
+      { name: 'Incident Hero', desc: 'Resolved 5 critical incidents', icon: 'hero', unlocked: 12, total: 120 },
+      { name: 'Social Guardian', desc: 'Completed all social engineering modules', icon: 'people', unlocked: 67, total: 120 },
+    ];
+    const teamScores = [
+      { team: 'Engineering', score: 38500, members: 42, avgScore: 917, completion: 94 },
+      { team: 'Operations', score: 31200, members: 35, avgScore: 891, completion: 88 },
+      { team: 'Finance', score: 22800, members: 28, avgScore: 814, completion: 82 },
+      { team: 'Legal', score: 18900, members: 22, avgScore: 859, completion: 91 },
+      { team: 'HR', score: 15600, members: 18, avgScore: 867, completion: 85 },
+      { team: 'Marketing', score: 12400, members: 15, avgScore: 827, completion: 78 },
+    ];
+    const rankColors = ['#fbbf24', '#94a3b8', '#cd7f32'];
+    return html`
+      <section class="gamification">
+        <h4>Security Awareness Gamification</h4>
+        <div class="gamification-grid">
+          <div class="gam-leaderboard">
+            <h5>Security Champion Leaderboard</h5>
+            ${leaderboard.map(p => html`
+              <div class="gam-player" style="border-left:4px solid ${p.rank <= 3 ? rankColors[p.rank - 1] : '#6b7280'}">
+                <span class="gam-rank" style="color:${p.rank <= 3 ? rankColors[p.rank - 1] : '#6b7280'}">${p.rank}</span>
+                <div class="gam-avatar">${p.avatar}</div>
+                <div class="gam-info">
+                  <span class="gam-name">${p.name}</span>
+                  <span class="gam-dept">${p.dept} | ${p.level}</span>
+                </div>
+                <div class="gam-stats">
+                  <span>${p.score.toLocaleString()} pts</span>
+                  <span>${p.badges} badges</span>
+                  <span class="gam-streak">${p.streak}d streak</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="gam-achievements">
+            <h5>Achievement Badges</h5>
+            ${achievements.map(a => html`
+              <div class="gam-badge-card">
+                <span class="badge-icon">${a.icon}</span>
+                <div class="badge-info">
+                  <span class="badge-name">${a.name}</span>
+                  <span class="badge-desc">${a.desc}</span>
+                  <div class="badge-progress">
+                    <div class="badge-bar"><div class="badge-fill" style="width:${(a.unlocked / a.total) * 100}%"></div></div>
+                    <span>${a.unlocked}/${a.total} unlocked</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="gam-teams">
+            <h5>Team Competition Scores</h5>
+            ${teamScores.map(t => html`
+              <div class="gam-team-row">
+                <span class="gam-team-name">${t.team}</span>
+                <span class="gam-team-score">${t.score.toLocaleString()}</span>
+                <span class="gam-team-members">${t.members} members</span>
+                <span class="gam-team-avg">Avg: ${t.avgScore}</span>
+                <div class="gam-team-comp"><div class="gam-team-fill" style="width:${t.completion}%"></div></div>
+                <span class="gam-team-pct">${t.completion}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>`;
+  }
+
+
+
+  private _renderPlaybookLibrary() {
+    const playbooks = [
+      { id: 'PB-001', name: 'Ransomware Response', version: '3.2.1', status: 'active', steps: 14, avgTime: '4.2h', successRate: 94, lastRun: '2026-04-20', author: 'SOC Team Alpha', category: 'Incident Response' },
+      { id: 'PB-002', name: 'Phishing Triage', version: '2.8.0', status: 'active', steps: 8, avgTime: '0.8h', successRate: 97, lastRun: '2026-04-22', author: 'IR Lead', category: 'Incident Response' },
+      { id: 'PB-003', name: 'Data Breach Notification', version: '4.1.0', status: 'active', steps: 22, avgTime: '48h', successRate: 89, lastRun: '2026-03-15', author: 'Legal & Privacy', category: 'Compliance' },
+      { id: 'PB-004', name: 'Cloud Infrastructure Recovery', version: '1.5.2', status: 'draft', steps: 18, avgTime: '6.1h', successRate: 85, lastRun: '2026-04-18', author: 'Cloud Ops', category: 'Recovery' },
+      { id: 'PB-005', name: 'Insider Threat Investigation', version: '2.3.0', status: 'active', steps: 16, avgTime: '12h', successRate: 78, lastRun: '2026-04-10', author: 'HR Security', category: 'Investigation' },
+      { id: 'PB-006', name: 'DDoS Mitigation', version: '5.0.1', status: 'active', steps: 10, avgTime: '2.1h', successRate: 96, lastRun: '2026-04-21', author: 'Network Team', category: 'Incident Response' },
+      { id: 'PB-007', name: 'Third-Party Breach Assessment', version: '1.2.0', status: 'review', steps: 20, avgTime: '24h', successRate: 82, lastRun: '2026-02-28', author: 'Vendor Mgmt', category: 'Assessment' },
+      { id: 'PB-008', name: 'Zero-Day Vulnerability Patch', version: '3.0.0', status: 'active', steps: 12, avgTime: '8h', successRate: 91, lastRun: '2026-04-19', author: 'Patch Team', category: 'Vulnerability' },
+      { id: 'PB-009', name: 'Executive Impersonation Response', version: '2.1.0', status: 'active', steps: 9, avgTime: '1.5h', successRate: 93, lastRun: '2026-04-17', author: 'CISO Office', category: 'Social Engineering' },
+      { id: 'PB-010', name: 'Supply Chain Compromise', version: '1.0.0', status: 'draft', steps: 25, avgTime: '72h', successRate: 0, lastRun: 'Never', author: 'Threat Intel', category: 'Advanced Threats' },
+    ];
+    const statusColors: Record<string, string> = { active: '#10b981', draft: '#f59e0b', review: '#3b82f6', archived: '#6b7280' };
+    return html`
+      <section class="playbook-library">
+        <div class="pb-header">
+          <h4>Security Orchestration Playbook Library</h4>
+        </div>
+        <div class="pb-grid">
+          ${playbooks.map(pb => html`
+            <div class="pb-card" style="border-top:3px solid ${statusColors[pb.status]}">
+              <div class="pb-card-header">
+                <span class="pb-id">${pb.id}</span>
+                <span class="pb-status-badge" style="background:${statusColors[pb.status]}22;color:${statusColors[pb.status]}">${pb.status.toUpperCase()}</span>
+              </div>
+              <div class="pb-name">${pb.name}</div>
+              <div class="pb-meta">
+                <span>v${pb.version}</span>
+                <span>${pb.category}</span>
+                <span>${pb.steps} steps</span>
+                <span>Avg: ${pb.avgTime}</span>
+              </div>
+              <div class="pb-metrics">
+                <div class="pb-metric">
+                  <span class="pb-metric-label">Success Rate</span>
+                  <div class="mini-bar"><div class="mini-fill" style="width:${pb.successRate}%;background:${pb.successRate >= 90 ? '#10b981' : pb.successRate >= 80 ? '#f59e0b' : '#ef4444'}"></div></div>
+                  <span class="pb-metric-val">${pb.successRate}%</span>
+                </div>
+                <div class="pb-metric">
+                  <span class="pb-metric-label">Last Run</span>
+                  <span class="pb-metric-val">${pb.lastRun}</span>
+                </div>
+              </div>
+              <div class="pb-author">Author: ${pb.author}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderToolchainIntegration() {
+    const tools = [
+      { name: 'CrowdStrike Falcon', category: 'EDR', version: '7.12.0', status: 'healthy', lastSync: '5m ago', alerts: 3, apiCalls: '12.4K/hr', license: 'Enterprise', expiry: '2026-12-31' },
+      { name: 'Palo Alto Prisma', category: 'CSPM', version: '3.8.2', status: 'healthy', lastSync: '2m ago', alerts: 8, apiCalls: '8.2K/hr', license: 'Premium', expiry: '2026-09-15' },
+      { name: 'Splunk Enterprise', category: 'SIEM', version: '9.2.1', status: 'degraded', lastSync: '15m ago', alerts: 12, apiCalls: '45.6K/hr', license: 'Enterprise', expiry: '2027-03-01' },
+      { name: 'Snyk', category: 'SCA', version: '1.1200.0', status: 'healthy', lastSync: '1m ago', alerts: 156, apiCalls: '22.1K/hr', license: 'Team', expiry: '2026-07-22' },
+      { name: 'Tenable.io', category: 'VA', version: '6.14.0', status: 'healthy', lastSync: '10m ago', alerts: 42, apiCalls: '5.8K/hr', license: 'Professional', expiry: '2026-11-30' },
+      { name: 'HashiCorp Vault', category: 'Secrets', version: '1.16.2', status: 'healthy', lastSync: '30s ago', alerts: 0, apiCalls: '34.2K/hr', license: 'Enterprise', expiry: '2027-06-01' },
+      { name: 'Opa Gatekeeper', category: 'Policy', version: '3.15.0', status: 'healthy', lastSync: '1m ago', alerts: 5, apiCalls: '18.7K/hr', license: 'OSS', expiry: 'N/A' },
+      { name: 'Aqua Security', category: 'Container', version: '2024.4.2', status: 'warning', lastSync: '8m ago', alerts: 11, apiCalls: '9.3K/hr', license: 'Enterprise', expiry: '2026-08-15' },
+    ];
+    const dataFlows = [
+      { from: 'CrowdStrike', to: 'Splunk', type: 'alerts', volume: '2.1K/min', latency: '3s', status: 'active' },
+      { from: 'Palo Alto', to: 'Splunk', type: 'logs', volume: '5.4K/min', latency: '5s', status: 'active' },
+      { from: 'Snyk', to: 'Jira', type: 'vulns', volume: '120/hr', latency: '15s', status: 'active' },
+      { from: 'Tenable', to: 'ServiceNow', type: 'findings', volume: '80/hr', latency: '30s', status: 'active' },
+      { from: 'Aqua', to: 'Splunk', type: 'runtime', volume: '8.9K/min', latency: '4s', status: 'degraded' },
+    ];
+    const statusColor = (s: string) => s === 'healthy' ? '#10b981' : s === 'warning' ? '#f59e0b' : '#ef4444';
+    return html`
+      <section class="toolchain-integration">
+        <h4>Security Toolchain Integration</h4>
+        <div class="tool-inventory">
+          <h5>Tool Inventory and Health</h5>
+          <div class="tool-grid">
+            ${tools.map(t => html`
+              <div class="tool-card" style="border-top:3px solid ${statusColor(t.status)}">
+                <div class="tool-name">${t.name}</div>
+                <div class="tool-meta">
+                  <span class="tool-category">${t.category}</span>
+                  <span>v${t.version}</span>
+                  <span class="tool-status" style="color:${statusColor(t.status)}">${t.status.toUpperCase()}</span>
+                </div>
+                <div class="tool-stats">
+                  <span>Sync: ${t.lastSync}</span>
+                  <span>Alerts: ${t.alerts}</span>
+                  <span>API: ${t.apiCalls}</span>
+                </div>
+                <div class="tool-license">
+                  <span>${t.license}</span>
+                  <span>Expires: ${t.expiry}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="tool-data-flows">
+          <h5>Data Flow Between Tools</h5>
+          <div class="flow-list">
+            ${dataFlows.map(f => html`
+              <div class="flow-row" style="border-left:3px solid ${f.status === 'active' ? '#10b981' : '#f59e0b'}">
+                <span class="flow-from">${f.from}</span>
+                <span class="flow-arrow">-></span>
+                <span class="flow-to">${f.to}</span>
+                <span class="flow-type">${f.type}</span>
+                <span class="flow-volume">${f.volume}</span>
+                <span class="flow-latency">Latency: ${f.latency}</span>
+                <span class="flow-status">${f.status}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>`;
+  }
+
   }
 
 

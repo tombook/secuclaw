@@ -7258,6 +7258,271 @@ private _executionHistory: ExecutionRecord[] = [
         </div>
       </section>`;
   }
+
+
+  private _renderIncidentAnalytics() {
+    const months = ['May 25', 'Jun 25', 'Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26'];
+    const incidentCounts = [42, 38, 55, 47, 36, 44, 51, 39, 33, 41, 37, 28];
+    const categories = [
+      { name: 'Malware/Ransomware', count: 87, pct: 24, avgMttd: 32, avgMttr: 195, trend: 'decreasing', color: '#ef4444' },
+      { name: 'Phishing/Social Eng.', count: 72, pct: 20, avgMttd: 18, avgMttr: 45, trend: 'stable', color: '#f59e0b' },
+      { name: 'Unauthorized Access', count: 58, pct: 16, avgMttd: 55, avgMttr: 240, trend: 'increasing', color: '#8b5cf6' },
+      { name: 'Data Exfiltration', count: 45, pct: 12, avgMttd: 72, avgMttr: 180, trend: 'decreasing', color: '#ec4899' },
+      { name: 'DDoS', count: 38, pct: 11, avgMttd: 8, avgMttr: 90, trend: 'stable', color: '#3b82f6' },
+      { name: 'Insider Threat', count: 28, pct: 8, avgMttd: 120, avgMttr: 480, trend: 'increasing', color: '#14b8a6' },
+      { name: 'Supply Chain', count: 18, pct: 5, avgMttd: 96, avgMttr: 720, trend: 'increasing', color: '#f97316' },
+      { name: 'Cloud Misconfig', count: 22, pct: 4, avgMttd: 15, avgMttr: 60, trend: 'decreasing', color: '#06b6d4' },
+    ];
+    const severityDist = [
+      { level: 'Critical', count: 18, pct: 5, avgCost: 850000, color: '#dc2626' },
+      { level: 'High', count: 67, pct: 19, avgCost: 320000, color: '#ef4444' },
+      { level: 'Medium', count: 142, pct: 39, avgCost: 85000, color: '#f59e0b' },
+      { level: 'Low', count: 133, pct: 37, avgCost: 15000, color: '#10b981' },
+    ];
+    const trendIcon = (t: string) => t === 'decreasing' ? 'downarrow' : t === 'increasing' ? 'uparrow' : 'rightarrow';
+    const maxVal = Math.max(...incidentCounts);
+    return html`
+      <section class="incident-analytics">
+        <h4>Security Incident Analytics (12-Month View)</h4>
+        <div class="ia-trend-chart">
+          <h5>Incident Trend Analysis</h5>
+          <div class="trend-bars">
+            ${months.map((m, i) => {
+              const h = Math.round((incidentCounts[i] / maxVal) * 100);
+              return html`
+                <div class="trend-col">
+                  <div class="trend-bar" style="height:${h}%" title="${incidentCounts[i]} incidents"></div>
+                  <span class="trend-label">${m}</span>
+                  <span class="trend-val">${incidentCounts[i]}</span>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="ia-category-matrix">
+          <h5>Incident Categorization Matrix</h5>
+          <div class="cat-table">
+            <div class="cat-row cat-header">
+              <span>Category</span><span>Count</span><span>Share</span><span>Avg MTTD</span><span>Avg MTTR</span><span>Trend</span>
+            </div>
+            ${categories.map(c => html`
+              <div class="cat-row">
+                <span style="color:${c.color}">${c.name}</span>
+                <span>${c.count}</span>
+                <span>${c.pct}%</span>
+                <span>${c.avgMttd}min</span>
+                <span>${c.avgMttr}min</span>
+                <span class="cat-trend" style="color:${c.trend === 'decreasing' ? '#10b981' : c.trend === 'increasing' ? '#ef4444' : '#6b7280'}">${trendIcon(c.trend)} ${c.trend}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ia-severity-dist">
+          <h5>Impact Severity Distribution</h5>
+          <div class="sev-bars">
+            ${severityDist.map(s => html`
+              <div class="sev-row">
+                <span class="sev-level" style="color:${s.color}">${s.level}</span>
+                <div class="sev-bar-bg"><div class="sev-bar-fill" style="width:${s.pct * 2.5}%;background:${s.color}"></div></div>
+                <span class="sev-count">${s.count}</span>
+                <span class="sev-pct">${s.pct}%</span>
+                <span class="sev-cost">$${(s.avgCost / 1000).toFixed(0)}K avg cost</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ia-metrics-summary">
+          <div class="ia-metric-card">
+            <span class="iam-label">Avg MTTD (Current)</span>
+            <span class="iam-value" style="color:#3b82f6">24 min</span>
+            <span class="iam-delta" style="color:#10b981">-23% vs prior month</span>
+          </div>
+          <div class="ia-metric-card">
+            <span class="iam-label">Avg MTTR (Current)</span>
+            <span class="iam-value" style="color:#8b5cf6">110 min</span>
+            <span class="iam-delta" style="color:#10b981">-19% vs prior month</span>
+          </div>
+          <div class="ia-metric-card">
+            <span class="iam-label">Forecast (Next Month)</span>
+            <span class="iam-value" style="color:#f59e0b">~25 incidents</span>
+            <span class="iam-delta" style="color:#10b981">-11% projected decrease</span>
+          </div>
+        </div>
+      </section>`;
+  }
+
+
+
+  private _renderIncidentAnalytics() {
+    const months = ['May 25', 'Jun 25', 'Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26'];
+    const incidentCounts = [42, 38, 55, 47, 36, 44, 51, 39, 33, 41, 37, 28];
+    const categories = [
+      { name: 'Malware/Ransomware', count: 87, pct: 24, avgMttd: 32, avgMttr: 195, trend: 'decreasing', color: '#ef4444' },
+      { name: 'Phishing/Social Eng.', count: 72, pct: 20, avgMttd: 18, avgMttr: 45, trend: 'stable', color: '#f59e0b' },
+      { name: 'Unauthorized Access', count: 58, pct: 16, avgMttd: 55, avgMttr: 240, trend: 'increasing', color: '#8b5cf6' },
+      { name: 'Data Exfiltration', count: 45, pct: 12, avgMttd: 72, avgMttr: 180, trend: 'decreasing', color: '#ec4899' },
+      { name: 'DDoS', count: 38, pct: 11, avgMttd: 8, avgMttr: 90, trend: 'stable', color: '#3b82f6' },
+      { name: 'Insider Threat', count: 28, pct: 8, avgMttd: 120, avgMttr: 480, trend: 'increasing', color: '#14b8a6' },
+      { name: 'Supply Chain', count: 18, pct: 5, avgMttd: 96, avgMttr: 720, trend: 'increasing', color: '#f97316' },
+      { name: 'Cloud Misconfig', count: 22, pct: 4, avgMttd: 15, avgMttr: 60, trend: 'decreasing', color: '#06b6d4' },
+    ];
+    const severityDist = [
+      { level: 'Critical', count: 18, pct: 5, avgCost: 850000, color: '#dc2626' },
+      { level: 'High', count: 67, pct: 19, avgCost: 320000, color: '#ef4444' },
+      { level: 'Medium', count: 142, pct: 39, avgCost: 85000, color: '#f59e0b' },
+      { level: 'Low', count: 133, pct: 37, avgCost: 15000, color: '#10b981' },
+    ];
+    const maxVal = Math.max(...incidentCounts);
+    return html`
+      <section class="incident-analytics">
+        <h4>Security Incident Analytics (12-Month View)</h4>
+        <div class="ia-trend-chart">
+          <h5>Incident Trend Analysis</h5>
+          <div class="trend-bars">
+            ${months.map((m, i) => {
+              const h = Math.round((incidentCounts[i] / maxVal) * 100);
+              return html`
+                <div class="trend-col">
+                  <div class="trend-bar" style="height:${h}%" title="${incidentCounts[i]} incidents"></div>
+                  <span class="trend-label">${m}</span>
+                  <span class="trend-val">${incidentCounts[i]}</span>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="ia-category-matrix">
+          <h5>Incident Categorization Matrix</h5>
+          <div class="cat-table">
+            <div class="cat-row cat-header">
+              <span>Category</span><span>Count</span><span>Share</span><span>Avg MTTD</span><span>Avg MTTR</span><span>Trend</span>
+            </div>
+            ${categories.map(c => html`
+              <div class="cat-row">
+                <span style="color:${c.color}">${c.name}</span>
+                <span>${c.count}</span>
+                <span>${c.pct}%</span>
+                <span>${c.avgMttd}min</span>
+                <span>${c.avgMttr}min</span>
+                <span class="cat-trend" style="color:${c.trend === 'decreasing' ? '#10b981' : c.trend === 'increasing' ? '#ef4444' : '#6b7280'}">${c.trend}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ia-severity-dist">
+          <h5>Impact Severity Distribution</h5>
+          <div class="sev-bars">
+            ${severityDist.map(s => html`
+              <div class="sev-row">
+                <span class="sev-level" style="color:${s.color}">${s.level}</span>
+                <div class="sev-bar-bg"><div class="sev-bar-fill" style="width:${s.pct * 2.5}%;background:${s.color}"></div></div>
+                <span class="sev-count">${s.count}</span>
+                <span class="sev-pct">${s.pct}%</span>
+                <span class="sev-cost">$${(s.avgCost / 1000).toFixed(0)}K avg cost</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ia-metrics-summary">
+          <div class="ia-metric-card">
+            <span class="iam-label">Avg MTTD (Current)</span>
+            <span class="iam-value" style="color:#3b82f6">24 min</span>
+            <span class="iam-delta" style="color:#10b981">-23% vs prior month</span>
+          </div>
+          <div class="ia-metric-card">
+            <span class="iam-label">Avg MTTR (Current)</span>
+            <span class="iam-value" style="color:#8b5cf6">110 min</span>
+            <span class="iam-delta" style="color:#10b981">-19% vs prior month</span>
+          </div>
+          <div class="ia-metric-card">
+            <span class="iam-label">Forecast (Next Month)</span>
+            <span class="iam-value" style="color:#f59e0b">~25 incidents</span>
+            <span class="iam-delta" style="color:#10b981">-11% projected decrease</span>
+          </div>
+        </div>
+      </section>`;
+  }
+
+  private _renderGamification() {
+    const leaderboard = [
+      { rank: 1, name: 'Sarah Chen', dept: 'Engineering', score: 9850, badges: 24, streak: 45, level: 'Platinum Guardian', avatar: 'SC' },
+      { rank: 2, name: 'Mike Rodriguez', dept: 'Operations', score: 9420, badges: 21, streak: 38, level: 'Platinum Guardian', avatar: 'MR' },
+      { rank: 3, name: 'Aisha Patel', dept: 'Finance', score: 8910, badges: 19, streak: 52, level: 'Gold Defender', avatar: 'AP' },
+      { rank: 4, name: 'James Wilson', dept: 'Engineering', score: 8750, badges: 18, streak: 30, level: 'Gold Defender', avatar: 'JW' },
+      { rank: 5, name: 'Lisa Kim', dept: 'HR', score: 8320, badges: 17, streak: 28, level: 'Gold Defender', avatar: 'LK' },
+      { rank: 6, name: 'David Brown', dept: 'Legal', score: 7890, badges: 15, streak: 22, level: 'Silver Sentinel', avatar: 'DB' },
+      { rank: 7, name: 'Emma Zhang', dept: 'Marketing', score: 7650, badges: 14, streak: 19, level: 'Silver Sentinel', avatar: 'EZ' },
+      { rank: 8, name: 'Tom Anderson', dept: 'Engineering', score: 7200, badges: 13, streak: 15, level: 'Silver Sentinel', avatar: 'TA' },
+    ];
+    const achievements = [
+      { name: 'Eagle Eye', desc: 'Reported 10 phishing emails', unlocked: 45, total: 120 },
+      { name: 'Patch Master', desc: 'All systems patched within SLA', unlocked: 8, total: 8 },
+      { name: 'Zero Breach Quarter', desc: 'No security incidents in 90 days', unlocked: 2, total: 4 },
+      { name: 'Quiz Champion', desc: 'Scored 100% on monthly quiz', unlocked: 34, total: 120 },
+      { name: 'Incident Hero', desc: 'Resolved 5 critical incidents', unlocked: 12, total: 120 },
+      { name: 'Social Guardian', desc: 'Completed all social engineering modules', unlocked: 67, total: 120 },
+    ];
+    const teamScores = [
+      { team: 'Engineering', score: 38500, members: 42, avgScore: 917, completion: 94 },
+      { team: 'Operations', score: 31200, members: 35, avgScore: 891, completion: 88 },
+      { team: 'Finance', score: 22800, members: 28, avgScore: 814, completion: 82 },
+      { team: 'Legal', score: 18900, members: 22, avgScore: 859, completion: 91 },
+      { team: 'HR', score: 15600, members: 18, avgScore: 867, completion: 85 },
+      { team: 'Marketing', score: 12400, members: 15, avgScore: 827, completion: 78 },
+    ];
+    const rankColors = ['#fbbf24', '#94a3b8', '#cd7f32'];
+    return html`
+      <section class="gamification">
+        <h4>Security Awareness Gamification</h4>
+        <div class="gamification-grid">
+          <div class="gam-leaderboard">
+            <h5>Security Champion Leaderboard</h5>
+            ${leaderboard.map(p => html`
+              <div class="gam-player" style="border-left:4px solid ${p.rank <= 3 ? rankColors[p.rank - 1] : '#6b7280'}">
+                <span class="gam-rank" style="color:${p.rank <= 3 ? rankColors[p.rank - 1] : '#6b7280'}">${p.rank}</span>
+                <div class="gam-avatar">${p.avatar}</div>
+                <div class="gam-info">
+                  <span class="gam-name">${p.name}</span>
+                  <span class="gam-dept">${p.dept} | ${p.level}</span>
+                </div>
+                <div class="gam-stats">
+                  <span>${p.score.toLocaleString()} pts</span>
+                  <span>${p.badges} badges</span>
+                  <span class="gam-streak">${p.streak}d streak</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="gam-achievements">
+            <h5>Achievement Badges</h5>
+            ${achievements.map(a => html`
+              <div class="gam-badge-card">
+                <div class="badge-info">
+                  <span class="badge-name">${a.name}</span>
+                  <span class="badge-desc">${a.desc}</span>
+                  <div class="badge-progress">
+                    <div class="badge-bar"><div class="badge-fill" style="width:${(a.unlocked / a.total) * 100}%"></div></div>
+                    <span>${a.unlocked}/${a.total} unlocked</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="gam-teams">
+            <h5>Team Competition Scores</h5>
+            ${teamScores.map(t => html`
+              <div class="gam-team-row">
+                <span class="gam-team-name">${t.team}</span>
+                <span class="gam-team-score">${t.score.toLocaleString()}</span>
+                <span class="gam-team-members">${t.members} members</span>
+                <span class="gam-team-avg">Avg: ${t.avgScore}</span>
+                <div class="gam-team-comp"><div class="gam-team-fill" style="width:${t.completion}%"></div></div>
+                <span class="gam-team-pct">${t.completion}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>`;
+  }
+
   }
 
 

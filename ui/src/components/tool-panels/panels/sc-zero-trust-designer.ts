@@ -7251,6 +7251,253 @@ private _executionHistory: ExecutionRecord[] = [
         </div>
       </section>`;
   }
+
+
+  private _renderIncidentAnalytics() {
+    const months = ['May 25', 'Jun 25', 'Jul 25', 'Aug 25', 'Sep 25', 'Oct 25', 'Nov 25', 'Dec 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26'];
+    const incidentCounts = [42, 38, 55, 47, 36, 44, 51, 39, 33, 41, 37, 28];
+    const categories = [
+      { name: 'Malware/Ransomware', count: 87, pct: 24, avgMttd: 32, avgMttr: 195, trend: 'decreasing', color: '#ef4444' },
+      { name: 'Phishing/Social Eng.', count: 72, pct: 20, avgMttd: 18, avgMttr: 45, trend: 'stable', color: '#f59e0b' },
+      { name: 'Unauthorized Access', count: 58, pct: 16, avgMttd: 55, avgMttr: 240, trend: 'increasing', color: '#8b5cf6' },
+      { name: 'Data Exfiltration', count: 45, pct: 12, avgMttd: 72, avgMttr: 180, trend: 'decreasing', color: '#ec4899' },
+      { name: 'DDoS', count: 38, pct: 11, avgMttd: 8, avgMttr: 90, trend: 'stable', color: '#3b82f6' },
+      { name: 'Insider Threat', count: 28, pct: 8, avgMttd: 120, avgMttr: 480, trend: 'increasing', color: '#14b8a6' },
+      { name: 'Supply Chain', count: 18, pct: 5, avgMttd: 96, avgMttr: 720, trend: 'increasing', color: '#f97316' },
+      { name: 'Cloud Misconfig', count: 22, pct: 4, avgMttd: 15, avgMttr: 60, trend: 'decreasing', color: '#06b6d4' },
+    ];
+    const severityDist = [
+      { level: 'Critical', count: 18, pct: 5, avgCost: 850000, color: '#dc2626' },
+      { level: 'High', count: 67, pct: 19, avgCost: 320000, color: '#ef4444' },
+      { level: 'Medium', count: 142, pct: 39, avgCost: 85000, color: '#f59e0b' },
+      { level: 'Low', count: 133, pct: 37, avgCost: 15000, color: '#10b981' },
+    ];
+    const trendIcon = (t: string) => t === 'decreasing' ? 'downarrow' : t === 'increasing' ? 'uparrow' : 'rightarrow';
+    const maxVal = Math.max(...incidentCounts);
+    return html`
+      <section class="incident-analytics">
+        <h4>Security Incident Analytics (12-Month View)</h4>
+        <div class="ia-trend-chart">
+          <h5>Incident Trend Analysis</h5>
+          <div class="trend-bars">
+            ${months.map((m, i) => {
+              const h = Math.round((incidentCounts[i] / maxVal) * 100);
+              return html`
+                <div class="trend-col">
+                  <div class="trend-bar" style="height:${h}%" title="${incidentCounts[i]} incidents"></div>
+                  <span class="trend-label">${m}</span>
+                  <span class="trend-val">${incidentCounts[i]}</span>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="ia-category-matrix">
+          <h5>Incident Categorization Matrix</h5>
+          <div class="cat-table">
+            <div class="cat-row cat-header">
+              <span>Category</span><span>Count</span><span>Share</span><span>Avg MTTD</span><span>Avg MTTR</span><span>Trend</span>
+            </div>
+            ${categories.map(c => html`
+              <div class="cat-row">
+                <span style="color:${c.color}">${c.name}</span>
+                <span>${c.count}</span>
+                <span>${c.pct}%</span>
+                <span>${c.avgMttd}min</span>
+                <span>${c.avgMttr}min</span>
+                <span class="cat-trend" style="color:${c.trend === 'decreasing' ? '#10b981' : c.trend === 'increasing' ? '#ef4444' : '#6b7280'}">${trendIcon(c.trend)} ${c.trend}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ia-severity-dist">
+          <h5>Impact Severity Distribution</h5>
+          <div class="sev-bars">
+            ${severityDist.map(s => html`
+              <div class="sev-row">
+                <span class="sev-level" style="color:${s.color}">${s.level}</span>
+                <div class="sev-bar-bg"><div class="sev-bar-fill" style="width:${s.pct * 2.5}%;background:${s.color}"></div></div>
+                <span class="sev-count">${s.count}</span>
+                <span class="sev-pct">${s.pct}%</span>
+                <span class="sev-cost">$${(s.avgCost / 1000).toFixed(0)}K avg cost</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="ia-metrics-summary">
+          <div class="ia-metric-card">
+            <span class="iam-label">Avg MTTD (Current)</span>
+            <span class="iam-value" style="color:#3b82f6">24 min</span>
+            <span class="iam-delta" style="color:#10b981">-23% vs prior month</span>
+          </div>
+          <div class="ia-metric-card">
+            <span class="iam-label">Avg MTTR (Current)</span>
+            <span class="iam-value" style="color:#8b5cf6">110 min</span>
+            <span class="iam-delta" style="color:#10b981">-19% vs prior month</span>
+          </div>
+          <div class="ia-metric-card">
+            <span class="iam-label">Forecast (Next Month)</span>
+            <span class="iam-value" style="color:#f59e0b">~25 incidents</span>
+            <span class="iam-delta" style="color:#10b981">-11% projected decrease</span>
+          </div>
+        </div>
+      </section>`;
+  }
+
+
+
+  private _renderPlaybookLibrary() {
+    const playbooks = [
+      { id: 'PB-001', name: 'Ransomware Response', version: '3.2.1', status: 'active', steps: 14, avgTime: '4.2h', successRate: 94, lastRun: '2026-04-20', author: 'SOC Team Alpha', category: 'Incident Response' },
+      { id: 'PB-002', name: 'Phishing Triage', version: '2.8.0', status: 'active', steps: 8, avgTime: '0.8h', successRate: 97, lastRun: '2026-04-22', author: 'IR Lead', category: 'Incident Response' },
+      { id: 'PB-003', name: 'Data Breach Notification', version: '4.1.0', status: 'active', steps: 22, avgTime: '48h', successRate: 89, lastRun: '2026-03-15', author: 'Legal & Privacy', category: 'Compliance' },
+      { id: 'PB-004', name: 'Cloud Infrastructure Recovery', version: '1.5.2', status: 'draft', steps: 18, avgTime: '6.1h', successRate: 85, lastRun: '2026-04-18', author: 'Cloud Ops', category: 'Recovery' },
+      { id: 'PB-005', name: 'Insider Threat Investigation', version: '2.3.0', status: 'active', steps: 16, avgTime: '12h', successRate: 78, lastRun: '2026-04-10', author: 'HR Security', category: 'Investigation' },
+      { id: 'PB-006', name: 'DDoS Mitigation', version: '5.0.1', status: 'active', steps: 10, avgTime: '2.1h', successRate: 96, lastRun: '2026-04-21', author: 'Network Team', category: 'Incident Response' },
+      { id: 'PB-007', name: 'Third-Party Breach Assessment', version: '1.2.0', status: 'review', steps: 20, avgTime: '24h', successRate: 82, lastRun: '2026-02-28', author: 'Vendor Mgmt', category: 'Assessment' },
+      { id: 'PB-008', name: 'Zero-Day Vulnerability Patch', version: '3.0.0', status: 'active', steps: 12, avgTime: '8h', successRate: 91, lastRun: '2026-04-19', author: 'Patch Team', category: 'Vulnerability' },
+      { id: 'PB-009', name: 'Executive Impersonation Response', version: '2.1.0', status: 'active', steps: 9, avgTime: '1.5h', successRate: 93, lastRun: '2026-04-17', author: 'CISO Office', category: 'Social Engineering' },
+      { id: 'PB-010', name: 'Supply Chain Compromise', version: '1.0.0', status: 'draft', steps: 25, avgTime: '72h', successRate: 0, lastRun: 'Never', author: 'Threat Intel', category: 'Advanced Threats' },
+    ];
+    const statusColors: Record<string, string> = { active: '#10b981', draft: '#f59e0b', review: '#3b82f6', archived: '#6b7280' };
+    return html`
+      <section class="playbook-library">
+        <div class="pb-header">
+          <h4>Security Orchestration Playbook Library</h4>
+        </div>
+        <div class="pb-grid">
+          ${playbooks.map(pb => html`
+            <div class="pb-card" style="border-top:3px solid ${statusColors[pb.status]}">
+              <div class="pb-card-header">
+                <span class="pb-id">${pb.id}</span>
+                <span class="pb-status-badge" style="background:${statusColors[pb.status]}22;color:${statusColors[pb.status]}">${pb.status.toUpperCase()}</span>
+              </div>
+              <div class="pb-name">${pb.name}</div>
+              <div class="pb-meta">
+                <span>v${pb.version}</span>
+                <span>${pb.category}</span>
+                <span>${pb.steps} steps</span>
+                <span>Avg: ${pb.avgTime}</span>
+              </div>
+              <div class="pb-metrics">
+                <div class="pb-metric">
+                  <span class="pb-metric-label">Success Rate</span>
+                  <div class="mini-bar"><div class="mini-fill" style="width:${pb.successRate}%;background:${pb.successRate >= 90 ? '#10b981' : pb.successRate >= 80 ? '#f59e0b' : '#ef4444'}"></div></div>
+                  <span class="pb-metric-val">${pb.successRate}%</span>
+                </div>
+                <div class="pb-metric">
+                  <span class="pb-metric-label">Last Run</span>
+                  <span class="pb-metric-val">${pb.lastRun}</span>
+                </div>
+              </div>
+              <div class="pb-author">Author: ${pb.author}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderToolchainIntegration() {
+    const tools = [
+      { name: 'CrowdStrike Falcon', category: 'EDR', version: '7.12.0', status: 'healthy', lastSync: '5m ago', alerts: 3, apiCalls: '12.4K/hr', license: 'Enterprise', expiry: '2026-12-31' },
+      { name: 'Palo Alto Prisma', category: 'CSPM', version: '3.8.2', status: 'healthy', lastSync: '2m ago', alerts: 8, apiCalls: '8.2K/hr', license: 'Premium', expiry: '2026-09-15' },
+      { name: 'Splunk Enterprise', category: 'SIEM', version: '9.2.1', status: 'degraded', lastSync: '15m ago', alerts: 12, apiCalls: '45.6K/hr', license: 'Enterprise', expiry: '2027-03-01' },
+      { name: 'Snyk', category: 'SCA', version: '1.1200.0', status: 'healthy', lastSync: '1m ago', alerts: 156, apiCalls: '22.1K/hr', license: 'Team', expiry: '2026-07-22' },
+      { name: 'Tenable.io', category: 'VA', version: '6.14.0', status: 'healthy', lastSync: '10m ago', alerts: 42, apiCalls: '5.8K/hr', license: 'Professional', expiry: '2026-11-30' },
+      { name: 'HashiCorp Vault', category: 'Secrets', version: '1.16.2', status: 'healthy', lastSync: '30s ago', alerts: 0, apiCalls: '34.2K/hr', license: 'Enterprise', expiry: '2027-06-01' },
+      { name: 'Opa Gatekeeper', category: 'Policy', version: '3.15.0', status: 'healthy', lastSync: '1m ago', alerts: 5, apiCalls: '18.7K/hr', license: 'OSS', expiry: 'N/A' },
+      { name: 'Aqua Security', category: 'Container', version: '2024.4.2', status: 'warning', lastSync: '8m ago', alerts: 11, apiCalls: '9.3K/hr', license: 'Enterprise', expiry: '2026-08-15' },
+    ];
+    const dataFlows = [
+      { from: 'CrowdStrike', to: 'Splunk', type: 'alerts', volume: '2.1K/min', latency: '3s', status: 'active' },
+      { from: 'Palo Alto', to: 'Splunk', type: 'logs', volume: '5.4K/min', latency: '5s', status: 'active' },
+      { from: 'Snyk', to: 'Jira', type: 'vulns', volume: '120/hr', latency: '15s', status: 'active' },
+      { from: 'Tenable', to: 'ServiceNow', type: 'findings', volume: '80/hr', latency: '30s', status: 'active' },
+      { from: 'Aqua', to: 'Splunk', type: 'runtime', volume: '8.9K/min', latency: '4s', status: 'degraded' },
+    ];
+    const statusColor = (s: string) => s === 'healthy' ? '#10b981' : s === 'warning' ? '#f59e0b' : '#ef4444';
+    return html`
+      <section class="toolchain-integration">
+        <h4>Security Toolchain Integration</h4>
+        <div class="tool-inventory">
+          <h5>Tool Inventory and Health</h5>
+          <div class="tool-grid">
+            ${tools.map(t => html`
+              <div class="tool-card" style="border-top:3px solid ${statusColor(t.status)}">
+                <div class="tool-name">${t.name}</div>
+                <div class="tool-meta">
+                  <span class="tool-category">${t.category}</span>
+                  <span>v${t.version}</span>
+                  <span class="tool-status" style="color:${statusColor(t.status)}">${t.status.toUpperCase()}</span>
+                </div>
+                <div class="tool-stats">
+                  <span>Sync: ${t.lastSync}</span>
+                  <span>Alerts: ${t.alerts}</span>
+                  <span>API: ${t.apiCalls}</span>
+                </div>
+                <div class="tool-license">
+                  <span>${t.license}</span>
+                  <span>Expires: ${t.expiry}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="tool-data-flows">
+          <h5>Data Flow Between Tools</h5>
+          <div class="flow-list">
+            ${dataFlows.map(f => html`
+              <div class="flow-row" style="border-left:3px solid ${f.status === 'active' ? '#10b981' : '#f59e0b'}">
+                <span class="flow-from">${f.from}</span>
+                <span class="flow-arrow">-></span>
+                <span class="flow-to">${f.to}</span>
+                <span class="flow-type">${f.type}</span>
+                <span class="flow-volume">${f.volume}</span>
+                <span class="flow-latency">Latency: ${f.latency}</span>
+                <span class="flow-status">${f.status}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>`;
+  }
+
+
+
+  private _renderCloudNativeSecurity() {
+    const clusters = [
+      { name: 'prod-us-east-1', pods: 342, nodes: 24, criticalIssues: 3, highIssues: 12, compliance: 87, imageScans: '98.2%', networkPolicies: 156, rbacRules: 89, runtimeAlerts: 2 },
+      { name: 'prod-eu-west-1', pods: 218, nodes: 16, criticalIssues: 1, highIssues: 8, compliance: 92, imageScans: '97.1%', networkPolicies: 124, rbacRules: 67, runtimeAlerts: 0 },
+      { name: 'staging-us-east-1', pods: 95, nodes: 8, criticalIssues: 0, highIssues: 5, compliance: 78, imageScans: '89.5%', networkPolicies: 67, rbacRules: 34, runtimeAlerts: 1 },
+      { name: 'dev-us-east-1', pods: 156, nodes: 12, criticalIssues: 2, highIssues: 15, compliance: 65, imageScans: '76.3%', networkPolicies: 45, rbacRules: 23, runtimeAlerts: 4 },
+    ];
+    const riskColor = (r: string) => r === 'high' ? '#ef4444' : r === 'medium' ? '#f59e0b' : '#10b981';
+    return html`
+      <section class="cloud-native-security">
+        <h4>Cloud-Native Security Dashboard</h4>
+        <div class="k8s-clusters">
+          <h5>Kubernetes Cluster Security</h5>
+          <div class="cluster-grid">
+            ${clusters.map(c => html`
+              <div class="cluster-card" style="border-left:4px solid ${c.criticalIssues > 0 ? '#ef4444' : '#10b981'}">
+                <div class="cluster-name">${c.name}</div>
+                <div class="cluster-stats">
+                  <div class="cs-stat"><span class="cs-label">Pods</span><span class="cs-val">${c.pods}</span></div>
+                  <div class="cs-stat"><span class="cs-label">Nodes</span><span class="cs-val">${c.nodes}</span></div>
+                  <div class="cs-stat"><span class="cs-label">Critical</span><span class="cs-val" style="color:#ef4444">${c.criticalIssues}</span></div>
+                  <div class="cs-stat"><span class="cs-label">High</span><span class="cs-val" style="color:#f59e0b">${c.highIssues}</span></div>
+                  <div class="cs-stat"><span class="cs-label">Compliance</span><span class="cs-val">${c.compliance}%</span></div>
+                  <div class="cs-stat"><span class="cs-label">Image Scans</span><span class="cs-val">${c.imageScans}</span></div>
+                  <div class="cs-stat"><span class="cs-label">Net Policies</span><span class="cs-val">${c.networkPolicies}</span></div>
+                  <div class="cs-stat"><span class="cs-label">RBAC Rules</span><span class="cs-val">${c.rbacRules}</span></div>
+                </div>
+                ${c.runtimeAlerts > 0 ? html`<div class="runtime-alert">Runtime Alerts: ${c.runtimeAlerts}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>`;
+  }
+
   }
 
 
