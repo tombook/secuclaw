@@ -6530,6 +6530,309 @@ export class ScAptSimulator extends LitElement {
   }
 
 
+
+  // === Security Risk Register (apt_simulato) ===
+  private _apt_simulatoRiskRegister = [
+    { id: "RSK-APT-0001", title: "Data breach from unpatched systems", owner: "CTO", category: "Financial", status: "mitigating", trend: "stable", severity: "low", likelihood: 9, impact: 7, treatment: "Monitor and review quarterly", lastReview: "2026-04-02", nextReview: "2026-07-26" },
+    { id: "RSK-APT-0002", title: "Ransomware attack on critical infrastructure", owner: "CRO", category: "Strategic", status: "closed", trend: "decreasing", severity: "high", likelihood: 2, impact: 2, treatment: "Monitor and review quarterly", lastReview: "2026-04-04", nextReview: "2026-07-16" },
+    { id: "RSK-APT-0003", title: "Insider threat data exfiltration", owner: "VP Eng", category: "Compliance", status: "accepted", trend: "increasing", severity: "critical", likelihood: 10, impact: 8, treatment: "Monitor and review quarterly", lastReview: "2026-04-05", nextReview: "2026-07-24" },
+    { id: "RSK-APT-0004", title: "Supply chain compromise", owner: "Security Lead", category: "Technical", status: "open", trend: "stable", severity: "high", likelihood: 4, impact: 5, treatment: "Monitor and review quarterly", lastReview: "2026-04-17", nextReview: "2026-07-27" },
+    { id: "RSK-APT-0005", title: "Cloud misconfiguration exposure", owner: "Risk Mgr", category: "Reputational", status: "mitigating", trend: "decreasing", severity: "low", likelihood: 2, impact: 1, treatment: "Monitor and review quarterly", lastReview: "2026-04-20", nextReview: "2026-07-06" },
+    { id: "RSK-APT-0006", title: "Phishing campaign success rate", owner: "Compliance Dir", category: "Legal", status: "closed", trend: "increasing", severity: "medium", likelihood: 6, impact: 6, treatment: "Monitor and review quarterly", lastReview: "2026-04-08", nextReview: "2026-07-03" },
+    { id: "RSK-APT-0007", title: "Third-party vendor data breach", owner: "IT Dir", category: "Regulatory", status: "accepted", trend: "stable", severity: "medium", likelihood: 3, impact: 7, treatment: "Monitor and review quarterly", lastReview: "2026-04-09", nextReview: "2026-07-20" },
+    { id: "RSK-APT-0008", title: "Regulatory non-compliance penalty", owner: "DevOps Lead", category: "Third-Party", status: "open", trend: "decreasing", severity: "medium", likelihood: 7, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-12", nextReview: "2026-07-16" },
+    { id: "RSK-APT-0009", title: "Zero-day exploit in production", owner: "Architect", category: "Human Capital", status: "mitigating", trend: "increasing", severity: "high", likelihood: 7, impact: 6, treatment: "Monitor and review quarterly", lastReview: "2026-04-12", nextReview: "2026-07-22" },
+    { id: "RSK-APT-0010", title: "Insufficient access controls", owner: "CISO", category: "Operational", status: "closed", trend: "stable", severity: "low", likelihood: 10, impact: 10, treatment: "Monitor and review quarterly", lastReview: "2026-04-13", nextReview: "2026-07-16" },
+    { id: "RSK-APT-0011", title: "DDoS attack on services", owner: "CTO", category: "Financial", status: "accepted", trend: "decreasing", severity: "high", likelihood: 3, impact: 1, treatment: "Monitor and review quarterly", lastReview: "2026-04-12", nextReview: "2026-07-27" },
+    { id: "RSK-APT-0012", title: "Social engineering attack", owner: "CRO", category: "Strategic", status: "open", trend: "increasing", severity: "medium", likelihood: 5, impact: 7, treatment: "Monitor and review quarterly", lastReview: "2026-04-19", nextReview: "2026-07-21" },
+    { id: "RSK-APT-0013", title: "API security vulnerability", owner: "VP Eng", category: "Compliance", status: "mitigating", trend: "stable", severity: "critical", likelihood: 4, impact: 3, treatment: "Monitor and review quarterly", lastReview: "2026-04-03", nextReview: "2026-07-05" },
+    { id: "RSK-APT-0014", title: "Mobile device compromise", owner: "Security Lead", category: "Technical", status: "closed", trend: "decreasing", severity: "high", likelihood: 9, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-11", nextReview: "2026-07-15" },
+    { id: "RSK-APT-0015", title: "Physical security breach", owner: "Risk Mgr", category: "Reputational", status: "accepted", trend: "increasing", severity: "medium", likelihood: 7, impact: 2, treatment: "Monitor and review quarterly", lastReview: "2026-04-04", nextReview: "2026-07-24" },
+    { id: "RSK-APT-0016", title: "Password policy weakness", owner: "Compliance Dir", category: "Legal", status: "open", trend: "stable", severity: "critical", likelihood: 4, impact: 8, treatment: "Monitor and review quarterly", lastReview: "2026-04-16", nextReview: "2026-07-04" },
+    { id: "RSK-APT-0017", title: "Network segmentation gap", owner: "IT Dir", category: "Regulatory", status: "mitigating", trend: "decreasing", severity: "critical", likelihood: 7, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-08", nextReview: "2026-07-15" },
+    { id: "RSK-APT-0018", title: "Encryption key management failure", owner: "DevOps Lead", category: "Third-Party", status: "closed", trend: "increasing", severity: "high", likelihood: 7, impact: 10, treatment: "Monitor and review quarterly", lastReview: "2026-04-09", nextReview: "2026-07-16" },
+    { id: "RSK-APT-0019", title: "Audit trail tampering", owner: "Architect", category: "Human Capital", status: "accepted", trend: "stable", severity: "low", likelihood: 2, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-21", nextReview: "2026-07-28" },
+    { id: "RSK-APT-0020", title: "Business email compromise", owner: "CISO", category: "Operational", status: "open", trend: "decreasing", severity: "medium", likelihood: 1, impact: 8, treatment: "Monitor and review quarterly", lastReview: "2026-04-19", nextReview: "2026-07-09" },
+  ];
+  private _apt_simulatoRiskFilter: string = 'all';
+  private _apt_simulatoRiskSeverity: string = 'all';
+  private _apt_simulatoRiskStatus: string = 'all';
+  private _apt_simulatoExpandedRisk: string = '';
+  private _apt_simulatoFilterRisks() {
+    const reg = this._apt_simulatoRiskRegister;
+    return reg.filter(r => {
+      if (this._apt_simulatoRiskFilter !== "all" && r.category !== this._apt_simulatoRiskFilter) return false;
+      if (this._apt_simulatoRiskSeverity !== "all" && r.severity !== this._apt_simulatoRiskSeverity) return false;
+      if (this._apt_simulatoRiskStatus !== "all" && r.status !== this._apt_simulatoRiskStatus) return false;
+      return true;
+    });
+  }
+  private _apt_simulatoGetRiskScore(r: any) { return Math.round(r.likelihood * r.impact * 1.5); }
+  private _apt_simulatoGetRiskTrendIcon(trend: string) {
+    if (trend === "increasing") return "\u2191";
+    if (trend === "decreasing") return "\u2193";
+    return "\u2192";
+  }
+  private _apt_simulatoGetRiskColor(sev: string) {
+    if (sev === "critical") return "#dc2626";
+    if (sev === "high") return "#ea580c";
+    if (sev === "medium") return "#d97706";
+    return "#16a34a";
+  }
+  private _apt_simulatoGetRiskCounts() {
+    const reg = this._apt_simulatoRiskRegister;
+    return { total: reg.length, open: reg.filter(r=>r.status==="open").length, mitigating: reg.filter(r=>r.status==="mitigating").length, closed: reg.filter(r=>r.status==="closed").length, accepted: reg.filter(r=>r.status==="accepted").length, critical: reg.filter(r=>r.severity==="critical").length };
+  }
+  private _apt_simulatoGetTreatmentProgress() {
+    const reg = this._apt_simulatoRiskRegister;
+    const treated = reg.filter(r => r.status === "mitigating" || r.status === "closed").length;
+    return Math.round((treated / Math.max(reg.length, 1)) * 100);
+  }
+
+  // === Security Metrics API Gateway (apt_simulato) ===
+  private _apt_simulatoApiEndpoints = [
+    { method: "GET", path: "/api/v1/threats", name: "Threat Intelligence Feed", status: "active", avgLatency: 275.7, reqPerMin: 2388.0, errorRate: 1.02, uptime: round(95.09364987408142,2), version: "v3.8.14" },
+    { method: "POST", path: "/api/v1/scans/start", name: "Vulnerability Scanner", status: "active", avgLatency: 105.2, reqPerMin: 28.0, errorRate: 1.2, uptime: round(98.8377515169255,2), version: "v2.1.10" },
+    { method: "GET", path: "/api/v1/assets", name: "Asset Inventory", status: "active", avgLatency: 88.2, reqPerMin: 1001.0, errorRate: 0.53, uptime: round(97.32514277355466,2), version: "v1.0.6" },
+    { method: "POST", path: "/api/v1/alerts", name: "Alert Management", status: "active", avgLatency: 440.1, reqPerMin: 1911.0, errorRate: 2.02, uptime: round(99.51115911447882,2), version: "v1.0.19" },
+    { method: "GET", path: "/api/v1/compliance", name: "Compliance Status", status: "active", avgLatency: 347.1, reqPerMin: 422.0, errorRate: 1.32, uptime: round(97.49855443955411,2), version: "v3.2.13" },
+    { method: "PUT", path: "/api/v1/policies", name: "Policy Engine", status: "active", avgLatency: 99.7, reqPerMin: 2014.0, errorRate: 0.73, uptime: round(97.51467619183279,2), version: "v1.5.4" },
+    { method: "GET", path: "/api/v1/incidents", name: "Incident Tracker", status: "active", avgLatency: 27.9, reqPerMin: 575.0, errorRate: 1.67, uptime: round(99.36061518609809,2), version: "v2.3.9" },
+    { method: "POST", path: "/api/v1/forensics", name: "Forensics Collector", status: "degraded", avgLatency: 89.8, reqPerMin: 458.0, errorRate: 2.18, uptime: round(98.78007690635157,2), version: "v3.4.0" },
+    { method: "GET", path: "/api/v1/risk/assess", name: "Risk Assessment", status: "active", avgLatency: 394.2, reqPerMin: 1878.0, errorRate: 2.09, uptime: round(99.59684682671832,2), version: "v1.5.20" },
+    { method: "POST", path: "/api/v1/auth/verify", name: "Authentication", status: "active", avgLatency: 45.2, reqPerMin: 2280.0, errorRate: 1.27, uptime: round(96.03783971406321,2), version: "v2.0.7" },
+    { method: "GET", path: "/api/v1/logs/audit", name: "Audit Log Query", status: "active", avgLatency: 376.8, reqPerMin: 2373.0, errorRate: 2.09, uptime: round(98.48074877997514,2), version: "v3.1.16" },
+    { method: "PUT", path: "/api/v1/users/roles", name: "Role Management", status: "active", avgLatency: 166.7, reqPerMin: 25.0, errorRate: 0.58, uptime: round(96.16616298358225,2), version: "v1.7.19" },
+    { method: "POST", path: "/api/v1/encrypt", name: "Encryption Service", status: "active", avgLatency: 189.2, reqPerMin: 1850.0, errorRate: 0.01, uptime: round(99.02676460838458,2), version: "v1.3.0" },
+    { method: "GET", path: "/api/v1/network/topo", name: "Network Topology", status: "maintenance", avgLatency: 420.1, reqPerMin: 982.0, errorRate: 0.96, uptime: round(96.19287218387616,2), version: "v2.5.5" },
+    { method: "DELETE", path: "/api/v1/sessions", name: "Session Manager", status: "active", avgLatency: 179.3, reqPerMin: 451.0, errorRate: 2.29, uptime: round(99.58477809859122,2), version: "v1.6.10" },
+  ];
+  private _apt_simulatoApiKeys = [
+    { id: "ak-000001", name: "key-apt_-001", created: "2026-04-14", lastUsed: "2026-04-23", status: "revoked", calls: 37451, rateLimit: 5000 },
+    { id: "ak-000002", name: "key-apt_-002", created: "2026-07-03", lastUsed: "2026-04-13", status: "active", calls: 33108, rateLimit: 500 },
+    { id: "ak-000003", name: "key-apt_-003", created: "2026-03-27", lastUsed: "2026-04-15", status: "active", calls: 2024, rateLimit: 500 },
+    { id: "ak-000004", name: "key-apt_-004", created: "2026-05-25", lastUsed: "2026-04-05", status: "revoked", calls: 27854, rateLimit: 5000 },
+    { id: "ak-000005", name: "key-apt_-005", created: "2026-04-27", lastUsed: "2026-04-03", status: "active", calls: 14132, rateLimit: 100 },
+    { id: "ak-000006", name: "key-apt_-006", created: "2026-01-15", lastUsed: "2026-04-23", status: "active", calls: 40430, rateLimit: 1000 },
+    { id: "ak-000007", name: "key-apt_-007", created: "2026-07-26", lastUsed: "2026-04-01", status: "active", calls: 9525, rateLimit: 500 },
+    { id: "ak-000008", name: "key-apt_-008", created: "2026-03-21", lastUsed: "2026-04-01", status: "active", calls: 40666, rateLimit: 5000 },
+  ];
+  private _apt_simulatoApiHealthSummary() {
+    const eps = this._apt_simulatoApiEndpoints;
+    return { total: eps.length, active: eps.filter(e=>e.status==="active").length, degraded: eps.filter(e=>e.status==="degraded").length, maintenance: eps.filter(e=>e.status==="maintenance").length, avgLatency: round(eps.reduce((s,e)=>s+e.avgLatency,0)/eps.length,1), totalReqPerMin: round(eps.reduce((s,e)=>s+e.reqPerMin,0)), avgUptime: round(eps.reduce((s,e)=>s+e.uptime,0)/eps.length,2) };
+  }
+  private _apt_simulatoGetApiByMethod(method: string) { return this._apt_simulatoApiEndpoints.filter(e=>e.method===method); }
+  private _apt_simulatoGetSlowEndpoints() { return this._apt_simulatoApiEndpoints.filter(e=>e.avgLatency>200).sort((a,b)=>b.avgLatency-a.avgLatency); }
+  private _apt_simulatoGetHighErrorEndpoints() { return this._apt_simulatoApiEndpoints.filter(e=>e.errorRate>1.0).sort((a,b)=>b.errorRate-a.errorRate); }
+
+  // === Security Training Effectiveness (apt_simulato) ===
+  private _apt_simulatoTrainingModules = [
+    { id: "TRN-001", name: "Security Fundamentals", completionRate: 92.5, avgScore: 56.4, behaviorChange: 83.0, enrolled: 378, completed: 30, duration: "120min", category: "mandatory" },
+    { id: "TRN-002", name: "Phishing Awareness", completionRate: 65.3, avgScore: 86.1, behaviorChange: 36.9, enrolled: 392, completed: 86, duration: "16min", category: "mandatory" },
+    { id: "TRN-003", name: "Social Engineering Defense", completionRate: 51.7, avgScore: 65.3, behaviorChange: 67.2, enrolled: 492, completed: 409, duration: "50min", category: "optional" },
+    { id: "TRN-004", name: "Password Hygiene", completionRate: 51.8, avgScore: 81.0, behaviorChange: 42.6, enrolled: 162, completed: 102, duration: "60min", category: "mandatory" },
+    { id: "TRN-005", name: "Data Classification", completionRate: 77.3, avgScore: 70.7, behaviorChange: 32.2, enrolled: 124, completed: 145, duration: "96min", category: "mandatory" },
+    { id: "TRN-006", name: "Incident Response Basics", completionRate: 96.5, avgScore: 77.8, behaviorChange: 72.0, enrolled: 113, completed: 214, duration: "106min", category: "mandatory" },
+    { id: "TRN-007", name: "Secure Coding", completionRate: 92.7, avgScore: 57.8, behaviorChange: 41.2, enrolled: 494, completed: 58, duration: "90min", category: "optional" },
+    { id: "TRN-008", name: "Cloud Security", completionRate: 69.9, avgScore: 87.3, behaviorChange: 70.9, enrolled: 411, completed: 60, duration: "20min", category: "mandatory" },
+    { id: "TRN-009", name: "Mobile Device Security", completionRate: 45.1, avgScore: 68.7, behaviorChange: 34.6, enrolled: 360, completed: 116, duration: "43min", category: "mandatory" },
+    { id: "TRN-010", name: "Network Security", completionRate: 54.5, avgScore: 85.6, behaviorChange: 68.6, enrolled: 264, completed: 220, duration: "69min", category: "mandatory" },
+    { id: "TRN-011", name: "Physical Security", completionRate: 59.3, avgScore: 61.3, behaviorChange: 67.0, enrolled: 498, completed: 354, duration: "32min", category: "optional" },
+    { id: "TRN-012", name: "Regulatory Compliance", completionRate: 85.6, avgScore: 60.9, behaviorChange: 35.4, enrolled: 354, completed: 298, duration: "72min", category: "mandatory" },
+    { id: "TRN-013", name: "Risk Management", completionRate: 57.2, avgScore: 72.6, behaviorChange: 89.2, enrolled: 436, completed: 156, duration: "40min", category: "mandatory" },
+    { id: "TRN-014", name: "Cryptography Basics", completionRate: 92.9, avgScore: 90.0, behaviorChange: 70.7, enrolled: 57, completed: 162, duration: "111min", category: "mandatory" },
+    { id: "TRN-015", name: "Access Control", completionRate: 93.0, avgScore: 89.2, behaviorChange: 57.9, enrolled: 214, completed: 132, duration: "109min", category: "optional" },
+    { id: "TRN-016", name: "Vendor Management", completionRate: 85.4, avgScore: 73.7, behaviorChange: 74.6, enrolled: 218, completed: 412, duration: "59min", category: "mandatory" },
+  ];
+  private _apt_simulatoPhishingResults = [
+    { month: "2026-01", sent: 852, clicked: 39, reported: 170, clickRate: round(4.577464788732395,1), reportRate: round(19.953051643192488,1) },
+    { month: "2026-02", sent: 943, clicked: 109, reported: 373, clickRate: round(11.558854718981973,1), reportRate: round(39.55461293743372,1) },
+    { month: "2026-03", sent: 254, clicked: 21, reported: 139, clickRate: round(8.267716535433072,1), reportRate: round(54.7244094488189,1) },
+    { month: "2026-04", sent: 482, clicked: 9, reported: 47, clickRate: round(1.8672199170124482,1), reportRate: round(9.751037344398341,1) },
+    { month: "2026-05", sent: 579, clicked: 173, reported: 262, clickRate: round(29.879101899827287,1), reportRate: round(45.25043177892919,1) },
+    { month: "2026-06", sent: 719, clicked: 19, reported: 19, clickRate: round(2.642559109874826,1), reportRate: round(2.642559109874826,1) },
+  ];
+  private _apt_simulatoTrainingROI = { totalInvestment: 75615, avgCostPerEmployee: 673, riskReductionPct: round(random.uniform(15,45),1), incidentReductionPct: round(random.uniform(10,35),1), complianceScoreGain: round(random.uniform(5,25),1) };
+  private _apt_simulatoLearningPaths = [
+    { name: "Beginner Security Analyst", totalModules: 15, completedModules: 14, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 64, enrolled: 56 },
+    { name: "Advanced Threat Hunter", totalModules: 8, completedModules: 12, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 14, enrolled: 78 },
+    { name: "Security Architect", totalModules: 11, completedModules: 3, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 33, enrolled: 151 },
+    { name: "Incident Responder", totalModules: 12, completedModules: 18, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 42, enrolled: 82 },
+    { name: "Compliance Specialist", totalModules: 15, completedModules: 11, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 48, enrolled: 199 },
+    { name: "DevSecOps Engineer", totalModules: 15, completedModules: 9, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 34, enrolled: 178 },
+  ];
+  private _apt_simulatoGetOverallCompletion() {
+    const mods = this._apt_simulatoTrainingModules;
+    return round(mods.reduce((s,m)=>s+m.completionRate,0)/mods.length,1);
+  }
+  private _apt_simulatoGetTopPerformers() { return [...this._apt_simulatoTrainingModules].sort((a,b)=>b.avgScore-a.avgScore).slice(0,5); }
+  private _apt_simulatoGetModulesNeedingAttention() { return this._apt_simulatoTrainingModules.filter(m=>m.completionRate<70||m.avgScore<65); }
+
+  // === Security Governance Framework (apt_simulato) ===
+  private _apt_simulatoGovBodies = [
+    { name: "Security Steering Committee", members: 13, chair: "CISO", meetingFreq: "Weekly", lastMeeting: "2026-04-05", nextMeeting: "2026-05-04", quorum: 4 },
+    { name: "Risk Management Board", members: 8, chair: "CTO", meetingFreq: "Bi-weekly", lastMeeting: "2026-04-10", nextMeeting: "2026-05-05", quorum: 4 },
+    { name: "Data Governance Council", members: 11, chair: "CRO", meetingFreq: "Monthly", lastMeeting: "2026-04-15", nextMeeting: "2026-05-08", quorum: 8 },
+    { name: "Compliance Oversight Board", members: 10, chair: "CDO", meetingFreq: "Monthly", lastMeeting: "2026-04-14", nextMeeting: "2026-05-04", quorum: 5 },
+    { name: "Architecture Review Board", members: 15, chair: "VP Eng", meetingFreq: "Bi-weekly", lastMeeting: "2026-04-10", nextMeeting: "2026-05-22", quorum: 3 },
+    { name: "Change Advisory Board", members: 15, chair: "CISO", meetingFreq: "Weekly", lastMeeting: "2026-04-13", nextMeeting: "2026-05-10", quorum: 7 },
+    { name: "Incident Review Board", members: 5, chair: "CIO", meetingFreq: "As needed", lastMeeting: "2026-04-12", nextMeeting: "2026-05-21", quorum: 4 },
+    { name: "Vendor Risk Committee", members: 7, chair: "CFO", meetingFreq: "Quarterly", lastMeeting: "2026-04-13", nextMeeting: "2026-05-04", quorum: 5 },
+  ];
+  private _apt_simulatoDecisions = [
+    { id: "DEC-0001", title: "Adopt zero-trust architecture framework", date: "2026-04-24", status: "approved", owner: "CISO" },
+    { id: "DEC-0002", title: "Migrate to SIEM 2.0 platform", date: "2026-01-23", status: "implemented", owner: "CTO" },
+    { id: "DEC-0003", title: "Implement DLP across all endpoints", date: "2026-04-20", status: "in-progress", owner: "Security Lead" },
+    { id: "DEC-0004", title: "Mandate MFA for all external access", date: "2026-01-14", status: "pending", owner: "CRO" },
+    { id: "DEC-0005", title: "Establish bug bounty program", date: "2026-02-15", status: "approved", owner: "VP Eng" },
+    { id: "DEC-0006", title: "Deploy EDR solution enterprise-wide", date: "2026-03-12", status: "approved", owner: "CISO" },
+    { id: "DEC-0007", title: "Conduct annual penetration testing", date: "2026-04-24", status: "implemented", owner: "CTO" },
+    { id: "DEC-0008", title: "Implement network micro-segmentation", date: "2026-04-22", status: "in-progress", owner: "Security Lead" },
+    { id: "DEC-0009", title: "Establish security champion program", date: "2026-02-14", status: "pending", owner: "CRO" },
+    { id: "DEC-0010", title: "Migrate to passwordless authentication", date: "2026-03-21", status: "approved", owner: "VP Eng" },
+  ];
+  private _apt_simulatoPolicyLifecycle = [
+    { name: "Information Security Policy", version: "v2.3", status: "active", lastUpdated: "2026-03-14", nextReview: "2026-9-25", owner: "CISO" },
+    { name: "Acceptable Use Policy", version: "v2.1", status: "active", lastUpdated: "2026-01-23", nextReview: "2026-9-10", owner: "Legal" },
+    { name: "Data Retention Policy", version: "v4.2", status: "under-review", lastUpdated: "2026-03-01", nextReview: "2026-8-25", owner: "DPO" },
+    { name: "Access Control Policy", version: "v3.5", status: "active", lastUpdated: "2026-03-20", nextReview: "2026-11-05", owner: "IAM Lead" },
+    { name: "Incident Response Policy", version: "v2.2", status: "draft", lastUpdated: "2026-01-27", nextReview: "2026-9-09", owner: "IR Lead" },
+    { name: "Business Continuity Plan", version: "v3.5", status: "active", lastUpdated: "2026-02-26", nextReview: "2026-7-14", owner: "BCP Mgr" },
+    { name: "Vendor Management Policy", version: "v1.4", status: "active", lastUpdated: "2026-04-19", nextReview: "2026-11-10", owner: "Procurement" },
+    { name: "Encryption Standard", version: "v3.3", status: "under-review", lastUpdated: "2026-01-11", nextReview: "2026-11-12", owner: "Security Arch" },
+  ];
+  private _apt_simulatoGovMaturityScore = { overall: 4.4, riskManagement: 4.0, compliance: 5.8, incidentResponse: 2.2, awareness: 5.6, technology: 5.6 };
+  private _apt_simulatoGetPendingDecisions() { return this._apt_simulatoDecisions.filter(d=>d.status==='pending'||d.status==='in-progress'); }
+  private _apt_simulatoGetActivePolicies() { return this._apt_simulatoPolicyLifecycle.filter(p=>p.status==='active'); }
+  private _apt_simulatoGetEscalationPath() { return ["L1 Analyst","L2 Senior","Security Lead","CISO","Board"]; }
+
+  // === Security Innovation Lab (apt_simulato) ===
+  private _apt_simulatoInnoProjects = [
+    { id: "INN-001", name: "AI-Powered Threat Detection", description: "Machine learning models for real-time threat identification", status: "active", progress: 72, startDate: "2026-03-03", teamSize: 7, budget: 79561, milestones: 5, completedMilestones: 6 },
+    { id: "INN-002", name: "Quantum-Resistant Cryptography", description: "Post-quantum encryption algorithm prototyping", status: "research", progress: 35, startDate: "2026-01-10", teamSize: 6, budget: 23289, milestones: 6, completedMilestones: 6 },
+    { id: "INN-003", name: "Automated Red Teaming", description: "Autonomous penetration testing framework", status: "active", progress: 58, startDate: "2026-02-03", teamSize: 4, budget: 101855, milestones: 3, completedMilestones: 1 },
+    { id: "INN-004", name: "Zero-Knowledge Authentication", description: "Privacy-preserving identity verification", status: "poc", progress: 88, startDate: "2026-02-27", teamSize: 4, budget: 166438, milestones: 8, completedMilestones: 4 },
+    { id: "INN-005", name: "Blockchain Audit Trail", description: "Immutable security event logging", status: "active", progress: 45, startDate: "2026-03-17", teamSize: 8, budget: 113642, milestones: 4, completedMilestones: 7 },
+    { id: "INN-006", name: "Behavioral Biometrics", description: "Continuous authentication via user behavior patterns", status: "research", progress: 22, startDate: "2026-02-14", teamSize: 5, budget: 58429, milestones: 9, completedMilestones: 1 },
+    { id: "INN-007", name: "Deception Grid 2.0", description: "Advanced honeypot network with adaptive responses", status: "active", progress: 65, startDate: "2026-01-23", teamSize: 3, budget: 122285, milestones: 8, completedMilestones: 1 },
+    { id: "INN-008", name: "Secure Enclave Integration", description: "Hardware-backed security for critical workloads", status: "poc", progress: 40, startDate: "2026-01-01", teamSize: 7, budget: 76244, milestones: 4, completedMilestones: 8 },
+  ];
+  private _apt_simulatoTechEvaluations = [
+    { name: "Rust for Security Tools", status: "evaluating", score: 8.4, recommendation: "Adopt", vendor: "Open Source" },
+    { name: "eBPF for Runtime Detection", status: "completed", score: 4.5, recommendation: "Adopt", vendor: "AWS" },
+    { name: "Confidential Computing", status: "planned", score: 10.1, recommendation: "Investigate", vendor: "Azure" },
+    { name: "Homomorphic Encryption", status: "evaluating", score: 5.7, recommendation: "Pilot", vendor: "GCP" },
+    { name: "SASE Architecture", status: "completed", score: 6.1, recommendation: "Adopt", vendor: "Multiple" },
+    { name: "SOAR Platform 3.0", status: "planned", score: 8.4, recommendation: "Monitor", vendor: "Splunk" },
+  ];
+  private _apt_simulatoCollaborationPartners = [
+    { name: "MIT CSAIL", type: "Academic", projects: 4, status: "active" },
+    { name: "Stanford Security Lab", type: "Academic", projects: 2, status: "active" },
+    { name: "DARPA Cyber", type: "Government", projects: 5, status: "pending" },
+    { name: "NIST", type: "Government", projects: 1, status: "active" },
+    { name: "CISA", type: "Government", projects: 2, status: "active" },
+    { name: "OWASP Foundation", type: "Non-profit", projects: 2, status: "active" },
+    { name: "SANS Institute", type: "Training", projects: 3, status: "completed" },
+    { name: "Cloud Security Alliance", type: "Industry", projects: 5, status: "active" },
+  ];
+  private _apt_simulatoInnoMetrics = { totalProjects: 8, activeProjects: 4, avgTimeToValue: "105 days", pocSuccessRate: round(random.uniform(55,85),1), researchToProduction: round(random.uniform(20,50),1), innovationIndex: round(random.uniform(6.0,9.5),1) };
+  private _apt_simulatoGetProjectByStatus(status: string) { return this._apt_simulatoInnoProjects.filter(p=>p.status===status); }
+  private _apt_simulatoGetTopEvaluations() { return [...this._apt_simulatoTechEvaluations].sort((a,b)=>b.score-a.score).slice(0,3); }
+
+
+
+  // === Compliance Dashboard Extension (apt_simulato) ===
+  private _apt_simulatoComplianceFrameworks = [
+    { name: "SOC 2 Type II", description: "Trust Services Criteria", totalControls: 5, implementedControls: 4, status: "in-review", lastAudit: "2026-02-26", nextAudit: "2026-10-11", evidenceCount: 300 },
+    { name: "ISO 27001", description: "Information Security Management", totalControls: 114, implementedControls: 103, status: "non-compliant", lastAudit: "2026-04-06", nextAudit: "2026-11-06", evidenceCount: 392 },
+    { name: "PCI DSS 4.0", description: "Payment Card Industry", totalControls: 12, implementedControls: 12, status: "compliant", lastAudit: "2026-03-27", nextAudit: "2026-12-21", evidenceCount: 457 },
+    { name: "HIPAA", description: "Health Insurance Portability", totalControls: 18, implementedControls: 18, status: "non-compliant", lastAudit: "2026-04-09", nextAudit: "2026-9-05", evidenceCount: 446 },
+    { name: "GDPR", description: "Data Protection Regulation", totalControls: 99, implementedControls: 80, status: "compliant", lastAudit: "2026-01-21", nextAudit: "2026-8-20", evidenceCount: 72 },
+    { name: "NIST CSF 2.0", description: "Cybersecurity Framework", totalControls: 6, implementedControls: 4, status: "in-review", lastAudit: "2026-03-01", nextAudit: "2026-8-22", evidenceCount: 282 },
+    { name: "FedRAMP", description: "Federal Risk Authorization", totalControls: 15, implementedControls: 9, status: "partially-compliant", lastAudit: "2026-02-19", nextAudit: "2026-12-06", evidenceCount: 323 },
+    { name: "SOX", description: "Sarbanes-Oxley Compliance", totalControls: 8, implementedControls: 5, status: "non-compliant", lastAudit: "2026-02-10", nextAudit: "2026-10-05", evidenceCount: 338 },
+    { name: "CIS Controls v8", description: "Center for Internet Security", totalControls: 18, implementedControls: 17, status: "non-compliant", lastAudit: "2026-03-16", nextAudit: "2026-12-28", evidenceCount: 76 },
+    { name: "COBIT 2019", description: "IT Governance Framework", totalControls: 40, implementedControls: 26, status: "non-compliant", lastAudit: "2026-01-18", nextAudit: "2026-11-21", evidenceCount: 136 },
+  ];
+  private _apt_simulatoGetComplianceScore() {
+    const fw = this._apt_simulatoComplianceFrameworks;
+    return round(fw.reduce((s,f)=>s + (f.implementedControls/Math.max(f.totalControls,1))*100, 0) / fw.length, 1);
+  }
+  private _apt_simulatoGetGaps() {
+    return this._apt_simulatoComplianceFrameworks.filter(f => f.status !== "compliant");
+  }
+  private _apt_simulatoAuditTrail = [
+    { id: "AUD-0001", action: "Control tested", auditor: "Internal Audit", date: "2026-04-07", result: "pass", findings: 4 },
+    { id: "AUD-0002", action: "Evidence collected", auditor: "External Auditor", date: "2026-04-18", result: "pass", findings: 0 },
+    { id: "AUD-0003", action: "Gap identified", auditor: "Security Team", date: "2026-04-17", result: "fail", findings: 3 },
+    { id: "AUD-0004", action: "Remediation completed", auditor: "Compliance Officer", date: "2026-04-01", result: "pass", findings: 1 },
+    { id: "AUD-0005", action: "Policy updated", auditor: "IT Audit", date: "2026-04-07", result: "pass", findings: 4 },
+    { id: "AUD-0006", action: "Training verified", auditor: "Risk Team", date: "2026-04-22", result: "pass", findings: 2 },
+    { id: "AUD-0007", action: "Access reviewed", auditor: "QA Team", date: "2026-04-12", result: "pass", findings: 3 },
+    { id: "AUD-0008", action: "Exception approved", auditor: "CISO Office", date: "2026-04-20", result: "conditional", findings: 1 },
+    { id: "AUD-0009", action: "Risk accepted", auditor: "Board Audit", date: "2026-04-19", result: "pass", findings: 0 },
+    { id: "AUD-0010", action: "Control enhanced", auditor: "Third Party", date: "2026-04-18", result: "pass", findings: 3 },
+  ];
+
+  // === Threat Intelligence Feed Extension (apt_simulato) ===
+  private _apt_simulatoThreatActors = [
+    { name: "APT-29", alias: "Cozy Bear", origin: "Russia", type: "Nation-State", severity: "high", lastActivity: "2026-04-01", targets: "Energy", indicators: 281, ttps: 30 },
+    { name: "APT-41", alias: "Double Dragon", origin: "China", type: "Nation-State", severity: "critical", lastActivity: "2026-04-14", targets: "Finance", indicators: 168, ttps: 15 },
+    { name: "Lazarus Group", alias: "Hidden Cobra", origin: "North Korea", type: "Nation-State", severity: "critical", lastActivity: "2026-04-09", targets: "Healthcare", indicators: 262, ttps: 46 },
+    { name: "FIN7", alias: "Carbanak", origin: "Eastern Europe", type: "Financial", severity: "high", lastActivity: "2026-04-04", targets: "Government", indicators: 296, ttps: 6 },
+    { name: "Conti", alias: "Wizard Spider", origin: "Russia", type: "Ransomware", severity: "critical", lastActivity: "2026-04-23", targets: "Manufacturing", indicators: 495, ttps: 9 },
+    { name: "LockBit", alias: "LockBit Gang", origin: "Unknown", type: "Ransomware", severity: "high", lastActivity: "2026-04-06", targets: "Energy", indicators: 274, ttps: 17 },
+    { name: "Cl0p", alias: "Cl0p Team", origin: "Unknown", type: "Ransomware", severity: "high", lastActivity: "2026-04-09", targets: "Energy", indicators: 244, ttps: 45 },
+    { name: "Sandworm", alias: "Unit 74455", origin: "Russia", type: "Nation-State", severity: "critical", lastActivity: "2026-04-15", targets: "Energy", indicators: 124, ttps: 26 },
+  ];
+  private _apt_simulatoIoCFeed = [
+    { id: "ioc-000001", type: "ip", value: "125.253.66.215", confidence: 46, source: "AlienVault", firstSeen: "2026-04-17", lastSeen: "2026-04-08" },
+    { id: "ioc-000002", type: "ip", value: "60.6.207.111", confidence: 65, source: "VirusTotal", firstSeen: "2026-04-20", lastSeen: "2026-04-06" },
+    { id: "ioc-000003", type: "ip", value: "217.219.137.166", confidence: 95, source: "Mandiant", firstSeen: "2026-04-02", lastSeen: "2026-04-11" },
+    { id: "ioc-000004", type: "ip", value: "56.131.13.112", confidence: 80, source: "CrowdStrike", firstSeen: "2026-04-10", lastSeen: "2026-04-08" },
+    { id: "ioc-000005", type: "ip", value: "99.167.112.22", confidence: 42, source: "Mandiant", firstSeen: "2026-04-03", lastSeen: "2026-04-12" },
+    { id: "ioc-000006", type: "ip", value: "70.250.156.116", confidence: 86, source: "STIX", firstSeen: "2026-04-18", lastSeen: "2026-04-20" },
+    { id: "ioc-000007", type: "ip", value: "204.216.202.228", confidence: 72, source: "CrowdStrike", firstSeen: "2026-04-13", lastSeen: "2026-04-12" },
+    { id: "ioc-000008", type: "ip", value: "195.52.3.248", confidence: 63, source: "STIX", firstSeen: "2026-04-02", lastSeen: "2026-04-05" },
+    { id: "ioc-000009", type: "ip", value: "32.112.49.127", confidence: 58, source: "STIX", firstSeen: "2026-04-05", lastSeen: "2026-04-01" },
+    { id: "ioc-000010", type: "ip", value: "184.193.116.29", confidence: 83, source: "VirusTotal", firstSeen: "2026-04-01", lastSeen: "2026-04-19" },
+    { id: "ioc-000011", type: "ip", value: "80.197.114.195", confidence: 44, source: "STIX", firstSeen: "2026-04-20", lastSeen: "2026-04-11" },
+    { id: "ioc-000012", type: "ip", value: "42.254.60.118", confidence: 45, source: "STIX", firstSeen: "2026-04-07", lastSeen: "2026-04-08" },
+    { id: "ioc-000013", type: "ip", value: "145.23.1.135", confidence: 55, source: "Mandiant", firstSeen: "2026-04-11", lastSeen: "2026-04-22" },
+    { id: "ioc-000014", type: "ip", value: "30.93.71.212", confidence: 62, source: "STIX", firstSeen: "2026-04-09", lastSeen: "2026-04-13" },
+    { id: "ioc-000015", type: "ip", value: "154.218.110.206", confidence: 90, source: "CrowdStrike", firstSeen: "2026-04-08", lastSeen: "2026-04-19" },
+  ];
+  private _apt_simulatoGetActiveThreats() { return this._apt_simulatoThreatActors.filter(a => a.severity === 'critical'); }
+  private _apt_simulatoGetThreatSummary() {
+    const actors = this._apt_simulatoThreatActors;
+    return { total: actors.length, critical: actors.filter(a=>a.severity==="critical").length, high: actors.filter(a=>a.severity==="high").length, nationState: actors.filter(a=>a.type==="Nation-State").length, ransomware: actors.filter(a=>a.type==="Ransomware").length };
+  }
+
+  // === Incident Management Extension (apt_simulato) ===
+  private _apt_simulatoIncidents = [
+    { id: "INC-20260001", title: "Unauthorized access detected", severity: "critical", status: "open", assignedTo: "SOC L1", detectedAt: "2026-04-06T16:32", affectedAssets: 38, rootCause: "Misconfiguration" },
+    { id: "INC-20260002", title: "Malware outbreak on workstation", severity: "high", status: "investigating", assignedTo: "SOC L2", detectedAt: "2026-04-10T12:19", affectedAssets: 23, rootCause: "Credential compromise" },
+    { id: "INC-20260003", title: "Data leak from S3 bucket", severity: "medium", status: "contained", assignedTo: "IR Lead", detectedAt: "2026-04-16T04:22", affectedAssets: 10, rootCause: "Zero-day" },
+    { id: "INC-20260004", title: "Phishing campaign targeting finance", severity: "low", status: "eradicated", assignedTo: "CISO", detectedAt: "2026-04-03T15:12", affectedAssets: 30, rootCause: "Human error" },
+    { id: "INC-20260005", title: "DDoS attack on web services", severity: "critical", status: "recovered", assignedTo: "Security Eng", detectedAt: "2026-04-21T15:37", affectedAssets: 43, rootCause: "Policy violation" },
+    { id: "INC-20260006", title: "Ransomware encryption attempt", severity: "high", status: "closed", assignedTo: "Forensics", detectedAt: "2026-04-11T15:50", affectedAssets: 26, rootCause: "Unknown" },
+    { id: "INC-20260007", title: "Insider data exfiltration", severity: "medium", status: "open", assignedTo: "SOC L1", detectedAt: "2026-04-11T16:58", affectedAssets: 50, rootCause: "Misconfiguration" },
+    { id: "INC-20260008", title: "API key exposure in repo", severity: "low", status: "investigating", assignedTo: "SOC L2", detectedAt: "2026-04-04T13:59", affectedAssets: 37, rootCause: "Credential compromise" },
+    { id: "INC-20260009", title: "SQL injection on portal", severity: "critical", status: "contained", assignedTo: "IR Lead", detectedAt: "2026-04-07T00:38", affectedAssets: 25, rootCause: "Zero-day" },
+    { id: "INC-20260010", title: "Brute force on VPN", severity: "high", status: "eradicated", assignedTo: "CISO", detectedAt: "2026-04-06T23:30", affectedAssets: 8, rootCause: "Human error" },
+    { id: "INC-20260011", title: "Supply chain alert from vendor", severity: "medium", status: "recovered", assignedTo: "Security Eng", detectedAt: "2026-04-01T14:21", affectedAssets: 33, rootCause: "Policy violation" },
+    { id: "INC-20260012", title: "Suspicious lateral movement", severity: "low", status: "closed", assignedTo: "Forensics", detectedAt: "2026-04-15T16:04", affectedAssets: 1, rootCause: "Unknown" },
+  ];
+  private _apt_simulatoGetIncidentStats() {
+    const inc = this._apt_simulatoIncidents;
+    return { total: inc.length, open: inc.filter(i=>i.status==="open").length, investigating: inc.filter(i=>i.status==="investigating").length, mttd: 31, mttr: 54 };
+  }
+  private _apt_simulatoGetSeverityDistribution() {
+    const inc = this._apt_simulatoIncidents;
+    return { critical: inc.filter(i=>i.severity==="critical").length, high: inc.filter(i=>i.severity==="high").length, medium: inc.filter(i=>i.severity==="medium").length, low: inc.filter(i=>i.severity==="low").length };
+  }
+
+
   render() {
     const profile = this._getAptProfile();
     const campaign = this._activeCampaign;

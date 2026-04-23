@@ -4520,6 +4520,309 @@ export class ScComplianceMap extends LitElement {
   }
 
 
+
+  // === Security Risk Register (compliance_m) ===
+  private _compliance_mRiskRegister = [
+    { id: "RSK-COM-0001", title: "Data breach from unpatched systems", owner: "CTO", category: "Financial", status: "mitigating", trend: "stable", severity: "medium", likelihood: 2, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-22", nextReview: "2026-07-23" },
+    { id: "RSK-COM-0002", title: "Ransomware attack on critical infrastructure", owner: "CRO", category: "Strategic", status: "closed", trend: "decreasing", severity: "medium", likelihood: 1, impact: 2, treatment: "Monitor and review quarterly", lastReview: "2026-04-10", nextReview: "2026-07-11" },
+    { id: "RSK-COM-0003", title: "Insider threat data exfiltration", owner: "VP Eng", category: "Compliance", status: "accepted", trend: "increasing", severity: "critical", likelihood: 8, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-06", nextReview: "2026-07-22" },
+    { id: "RSK-COM-0004", title: "Supply chain compromise", owner: "Security Lead", category: "Technical", status: "open", trend: "stable", severity: "medium", likelihood: 8, impact: 2, treatment: "Monitor and review quarterly", lastReview: "2026-04-05", nextReview: "2026-07-22" },
+    { id: "RSK-COM-0005", title: "Cloud misconfiguration exposure", owner: "Risk Mgr", category: "Reputational", status: "mitigating", trend: "decreasing", severity: "high", likelihood: 4, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-08", nextReview: "2026-07-03" },
+    { id: "RSK-COM-0006", title: "Phishing campaign success rate", owner: "Compliance Dir", category: "Legal", status: "closed", trend: "increasing", severity: "medium", likelihood: 7, impact: 2, treatment: "Monitor and review quarterly", lastReview: "2026-04-03", nextReview: "2026-07-13" },
+    { id: "RSK-COM-0007", title: "Third-party vendor data breach", owner: "IT Dir", category: "Regulatory", status: "accepted", trend: "stable", severity: "high", likelihood: 6, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-21", nextReview: "2026-07-08" },
+    { id: "RSK-COM-0008", title: "Regulatory non-compliance penalty", owner: "DevOps Lead", category: "Third-Party", status: "open", trend: "decreasing", severity: "medium", likelihood: 10, impact: 6, treatment: "Monitor and review quarterly", lastReview: "2026-04-11", nextReview: "2026-07-26" },
+    { id: "RSK-COM-0009", title: "Zero-day exploit in production", owner: "Architect", category: "Human Capital", status: "mitigating", trend: "increasing", severity: "critical", likelihood: 3, impact: 7, treatment: "Monitor and review quarterly", lastReview: "2026-04-22", nextReview: "2026-07-19" },
+    { id: "RSK-COM-0010", title: "Insufficient access controls", owner: "CISO", category: "Operational", status: "closed", trend: "stable", severity: "medium", likelihood: 10, impact: 8, treatment: "Monitor and review quarterly", lastReview: "2026-04-06", nextReview: "2026-07-02" },
+    { id: "RSK-COM-0011", title: "DDoS attack on services", owner: "CTO", category: "Financial", status: "accepted", trend: "decreasing", severity: "critical", likelihood: 9, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-20", nextReview: "2026-07-11" },
+    { id: "RSK-COM-0012", title: "Social engineering attack", owner: "CRO", category: "Strategic", status: "open", trend: "increasing", severity: "medium", likelihood: 1, impact: 6, treatment: "Monitor and review quarterly", lastReview: "2026-04-11", nextReview: "2026-07-26" },
+    { id: "RSK-COM-0013", title: "API security vulnerability", owner: "VP Eng", category: "Compliance", status: "mitigating", trend: "stable", severity: "critical", likelihood: 1, impact: 6, treatment: "Monitor and review quarterly", lastReview: "2026-04-07", nextReview: "2026-07-26" },
+    { id: "RSK-COM-0014", title: "Mobile device compromise", owner: "Security Lead", category: "Technical", status: "closed", trend: "decreasing", severity: "low", likelihood: 4, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-17", nextReview: "2026-07-27" },
+    { id: "RSK-COM-0015", title: "Physical security breach", owner: "Risk Mgr", category: "Reputational", status: "accepted", trend: "increasing", severity: "medium", likelihood: 1, impact: 9, treatment: "Monitor and review quarterly", lastReview: "2026-04-10", nextReview: "2026-07-04" },
+    { id: "RSK-COM-0016", title: "Password policy weakness", owner: "Compliance Dir", category: "Legal", status: "open", trend: "stable", severity: "low", likelihood: 5, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-01", nextReview: "2026-07-10" },
+    { id: "RSK-COM-0017", title: "Network segmentation gap", owner: "IT Dir", category: "Regulatory", status: "mitigating", trend: "decreasing", severity: "low", likelihood: 7, impact: 10, treatment: "Monitor and review quarterly", lastReview: "2026-04-18", nextReview: "2026-07-16" },
+    { id: "RSK-COM-0018", title: "Encryption key management failure", owner: "DevOps Lead", category: "Third-Party", status: "closed", trend: "increasing", severity: "medium", likelihood: 1, impact: 8, treatment: "Monitor and review quarterly", lastReview: "2026-04-18", nextReview: "2026-07-24" },
+    { id: "RSK-COM-0019", title: "Audit trail tampering", owner: "Architect", category: "Human Capital", status: "accepted", trend: "stable", severity: "medium", likelihood: 1, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-03", nextReview: "2026-07-01" },
+    { id: "RSK-COM-0020", title: "Business email compromise", owner: "CISO", category: "Operational", status: "open", trend: "decreasing", severity: "low", likelihood: 8, impact: 4, treatment: "Monitor and review quarterly", lastReview: "2026-04-22", nextReview: "2026-07-26" },
+  ];
+  private _compliance_mRiskFilter: string = 'all';
+  private _compliance_mRiskSeverity: string = 'all';
+  private _compliance_mRiskStatus: string = 'all';
+  private _compliance_mExpandedRisk: string = '';
+  private _compliance_mFilterRisks() {
+    const reg = this._compliance_mRiskRegister;
+    return reg.filter(r => {
+      if (this._compliance_mRiskFilter !== "all" && r.category !== this._compliance_mRiskFilter) return false;
+      if (this._compliance_mRiskSeverity !== "all" && r.severity !== this._compliance_mRiskSeverity) return false;
+      if (this._compliance_mRiskStatus !== "all" && r.status !== this._compliance_mRiskStatus) return false;
+      return true;
+    });
+  }
+  private _compliance_mGetRiskScore(r: any) { return Math.round(r.likelihood * r.impact * 1.5); }
+  private _compliance_mGetRiskTrendIcon(trend: string) {
+    if (trend === "increasing") return "\u2191";
+    if (trend === "decreasing") return "\u2193";
+    return "\u2192";
+  }
+  private _compliance_mGetRiskColor(sev: string) {
+    if (sev === "critical") return "#dc2626";
+    if (sev === "high") return "#ea580c";
+    if (sev === "medium") return "#d97706";
+    return "#16a34a";
+  }
+  private _compliance_mGetRiskCounts() {
+    const reg = this._compliance_mRiskRegister;
+    return { total: reg.length, open: reg.filter(r=>r.status==="open").length, mitigating: reg.filter(r=>r.status==="mitigating").length, closed: reg.filter(r=>r.status==="closed").length, accepted: reg.filter(r=>r.status==="accepted").length, critical: reg.filter(r=>r.severity==="critical").length };
+  }
+  private _compliance_mGetTreatmentProgress() {
+    const reg = this._compliance_mRiskRegister;
+    const treated = reg.filter(r => r.status === "mitigating" || r.status === "closed").length;
+    return Math.round((treated / Math.max(reg.length, 1)) * 100);
+  }
+
+  // === Security Metrics API Gateway (compliance_m) ===
+  private _compliance_mApiEndpoints = [
+    { method: "GET", path: "/api/v1/threats", name: "Threat Intelligence Feed", status: "active", avgLatency: 389.9, reqPerMin: 486.0, errorRate: 1.55, uptime: round(97.91105126493406,2), version: "v2.1.12" },
+    { method: "POST", path: "/api/v1/scans/start", name: "Vulnerability Scanner", status: "active", avgLatency: 45.6, reqPerMin: 433.0, errorRate: 0.13, uptime: round(97.70279429144024,2), version: "v2.6.19" },
+    { method: "GET", path: "/api/v1/assets", name: "Asset Inventory", status: "active", avgLatency: 246.9, reqPerMin: 1295.0, errorRate: 1.31, uptime: round(96.51650521205863,2), version: "v3.4.20" },
+    { method: "POST", path: "/api/v1/alerts", name: "Alert Management", status: "active", avgLatency: 71.1, reqPerMin: 567.0, errorRate: 0.88, uptime: round(97.22809467810569,2), version: "v2.4.7" },
+    { method: "GET", path: "/api/v1/compliance", name: "Compliance Status", status: "active", avgLatency: 119.1, reqPerMin: 1940.0, errorRate: 1.84, uptime: round(99.85721082617795,2), version: "v1.4.5" },
+    { method: "PUT", path: "/api/v1/policies", name: "Policy Engine", status: "active", avgLatency: 325.7, reqPerMin: 20.0, errorRate: 2.28, uptime: round(96.14496373712498,2), version: "v1.4.15" },
+    { method: "GET", path: "/api/v1/incidents", name: "Incident Tracker", status: "active", avgLatency: 338.9, reqPerMin: 1950.0, errorRate: 2.1, uptime: round(97.01065720518426,2), version: "v2.5.10" },
+    { method: "POST", path: "/api/v1/forensics", name: "Forensics Collector", status: "degraded", avgLatency: 165.3, reqPerMin: 589.0, errorRate: 1.54, uptime: round(97.9066158345932,2), version: "v1.0.5" },
+    { method: "GET", path: "/api/v1/risk/assess", name: "Risk Assessment", status: "active", avgLatency: 340.9, reqPerMin: 2035.0, errorRate: 0.64, uptime: round(97.44784017841938,2), version: "v3.5.8" },
+    { method: "POST", path: "/api/v1/auth/verify", name: "Authentication", status: "active", avgLatency: 208.3, reqPerMin: 27.0, errorRate: 1.21, uptime: round(95.24671052487581,2), version: "v3.4.19" },
+    { method: "GET", path: "/api/v1/logs/audit", name: "Audit Log Query", status: "active", avgLatency: 238.4, reqPerMin: 428.0, errorRate: 2.39, uptime: round(96.90843437436985,2), version: "v2.5.18" },
+    { method: "PUT", path: "/api/v1/users/roles", name: "Role Management", status: "active", avgLatency: 316.5, reqPerMin: 1727.0, errorRate: 0.48, uptime: round(96.891077267583,2), version: "v3.0.13" },
+    { method: "POST", path: "/api/v1/encrypt", name: "Encryption Service", status: "active", avgLatency: 137.9, reqPerMin: 2431.0, errorRate: 0.9, uptime: round(98.01941551841082,2), version: "v2.8.6" },
+    { method: "GET", path: "/api/v1/network/topo", name: "Network Topology", status: "maintenance", avgLatency: 145.3, reqPerMin: 476.0, errorRate: 0.51, uptime: round(97.01833719202857,2), version: "v2.2.3" },
+    { method: "DELETE", path: "/api/v1/sessions", name: "Session Manager", status: "active", avgLatency: 430.1, reqPerMin: 1317.0, errorRate: 1.61, uptime: round(99.51752626269145,2), version: "v3.0.15" },
+  ];
+  private _compliance_mApiKeys = [
+    { id: "ak-000001", name: "key-comp-001", created: "2026-06-18", lastUsed: "2026-04-05", status: "revoked", calls: 30174, rateLimit: 5000 },
+    { id: "ak-000002", name: "key-comp-002", created: "2026-08-14", lastUsed: "2026-04-20", status: "revoked", calls: 5819, rateLimit: 100 },
+    { id: "ak-000003", name: "key-comp-003", created: "2026-03-13", lastUsed: "2026-04-09", status: "revoked", calls: 40604, rateLimit: 5000 },
+    { id: "ak-000004", name: "key-comp-004", created: "2026-05-01", lastUsed: "2026-04-17", status: "active", calls: 46965, rateLimit: 5000 },
+    { id: "ak-000005", name: "key-comp-005", created: "2026-03-04", lastUsed: "2026-04-12", status: "active", calls: 43563, rateLimit: 100 },
+    { id: "ak-000006", name: "key-comp-006", created: "2026-05-09", lastUsed: "2026-04-07", status: "active", calls: 18475, rateLimit: 5000 },
+    { id: "ak-000007", name: "key-comp-007", created: "2026-05-23", lastUsed: "2026-04-11", status: "revoked", calls: 13625, rateLimit: 1000 },
+    { id: "ak-000008", name: "key-comp-008", created: "2026-07-22", lastUsed: "2026-04-08", status: "active", calls: 13106, rateLimit: 5000 },
+  ];
+  private _compliance_mApiHealthSummary() {
+    const eps = this._compliance_mApiEndpoints;
+    return { total: eps.length, active: eps.filter(e=>e.status==="active").length, degraded: eps.filter(e=>e.status==="degraded").length, maintenance: eps.filter(e=>e.status==="maintenance").length, avgLatency: round(eps.reduce((s,e)=>s+e.avgLatency,0)/eps.length,1), totalReqPerMin: round(eps.reduce((s,e)=>s+e.reqPerMin,0)), avgUptime: round(eps.reduce((s,e)=>s+e.uptime,0)/eps.length,2) };
+  }
+  private _compliance_mGetApiByMethod(method: string) { return this._compliance_mApiEndpoints.filter(e=>e.method===method); }
+  private _compliance_mGetSlowEndpoints() { return this._compliance_mApiEndpoints.filter(e=>e.avgLatency>200).sort((a,b)=>b.avgLatency-a.avgLatency); }
+  private _compliance_mGetHighErrorEndpoints() { return this._compliance_mApiEndpoints.filter(e=>e.errorRate>1.0).sort((a,b)=>b.errorRate-a.errorRate); }
+
+  // === Security Training Effectiveness (compliance_m) ===
+  private _compliance_mTrainingModules = [
+    { id: "TRN-001", name: "Security Fundamentals", completionRate: 87.8, avgScore: 75.1, behaviorChange: 35.8, enrolled: 333, completed: 153, duration: "19min", category: "mandatory" },
+    { id: "TRN-002", name: "Phishing Awareness", completionRate: 97.4, avgScore: 73.2, behaviorChange: 37.8, enrolled: 464, completed: 26, duration: "113min", category: "mandatory" },
+    { id: "TRN-003", name: "Social Engineering Defense", completionRate: 93.2, avgScore: 63.4, behaviorChange: 50.9, enrolled: 374, completed: 341, duration: "62min", category: "optional" },
+    { id: "TRN-004", name: "Password Hygiene", completionRate: 51.8, avgScore: 70.7, behaviorChange: 49.5, enrolled: 212, completed: 104, duration: "111min", category: "mandatory" },
+    { id: "TRN-005", name: "Data Classification", completionRate: 51.1, avgScore: 64.4, behaviorChange: 34.2, enrolled: 352, completed: 314, duration: "83min", category: "mandatory" },
+    { id: "TRN-006", name: "Incident Response Basics", completionRate: 91.8, avgScore: 72.6, behaviorChange: 51.4, enrolled: 339, completed: 162, duration: "51min", category: "mandatory" },
+    { id: "TRN-007", name: "Secure Coding", completionRate: 55.1, avgScore: 92.8, behaviorChange: 85.3, enrolled: 108, completed: 369, duration: "46min", category: "optional" },
+    { id: "TRN-008", name: "Cloud Security", completionRate: 64.4, avgScore: 62.6, behaviorChange: 76.4, enrolled: 155, completed: 312, duration: "46min", category: "mandatory" },
+    { id: "TRN-009", name: "Mobile Device Security", completionRate: 73.0, avgScore: 85.0, behaviorChange: 46.6, enrolled: 370, completed: 350, duration: "99min", category: "mandatory" },
+    { id: "TRN-010", name: "Network Security", completionRate: 86.6, avgScore: 81.9, behaviorChange: 74.6, enrolled: 133, completed: 72, duration: "24min", category: "mandatory" },
+    { id: "TRN-011", name: "Physical Security", completionRate: 91.3, avgScore: 66.7, behaviorChange: 67.6, enrolled: 315, completed: 160, duration: "94min", category: "optional" },
+    { id: "TRN-012", name: "Regulatory Compliance", completionRate: 86.2, avgScore: 73.5, behaviorChange: 51.7, enrolled: 334, completed: 129, duration: "95min", category: "mandatory" },
+    { id: "TRN-013", name: "Risk Management", completionRate: 85.1, avgScore: 87.9, behaviorChange: 76.8, enrolled: 278, completed: 131, duration: "34min", category: "mandatory" },
+    { id: "TRN-014", name: "Cryptography Basics", completionRate: 59.7, avgScore: 90.5, behaviorChange: 79.7, enrolled: 421, completed: 48, duration: "77min", category: "mandatory" },
+    { id: "TRN-015", name: "Access Control", completionRate: 57.9, avgScore: 67.2, behaviorChange: 80.7, enrolled: 128, completed: 78, duration: "24min", category: "optional" },
+    { id: "TRN-016", name: "Vendor Management", completionRate: 90.7, avgScore: 72.0, behaviorChange: 69.8, enrolled: 267, completed: 286, duration: "75min", category: "mandatory" },
+  ];
+  private _compliance_mPhishingResults = [
+    { month: "2026-01", sent: 814, clicked: 16, reported: 159, clickRate: round(1.9656019656019657,1), reportRate: round(19.533169533169534,1) },
+    { month: "2026-02", sent: 847, clicked: 106, reported: 329, clickRate: round(12.514757969303425,1), reportRate: round(38.84297520661157,1) },
+    { month: "2026-03", sent: 446, clicked: 40, reported: 20, clickRate: round(8.968609865470851,1), reportRate: round(4.484304932735426,1) },
+    { month: "2026-04", sent: 423, clicked: 52, reported: 187, clickRate: round(12.293144208037825,1), reportRate: round(44.2080378250591,1) },
+    { month: "2026-05", sent: 346, clicked: 90, reported: 158, clickRate: round(26.011560693641616,1), reportRate: round(45.664739884393065,1) },
+    { month: "2026-06", sent: 445, clicked: 110, reported: 79, clickRate: round(24.719101123595504,1), reportRate: round(17.752808988764045,1) },
+  ];
+  private _compliance_mTrainingROI = { totalInvestment: 142950, avgCostPerEmployee: 312, riskReductionPct: round(random.uniform(15,45),1), incidentReductionPct: round(random.uniform(10,35),1), complianceScoreGain: round(random.uniform(5,25),1) };
+  private _compliance_mLearningPaths = [
+    { name: "Beginner Security Analyst", totalModules: 10, completedModules: 8, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 28, enrolled: 68 },
+    { name: "Advanced Threat Hunter", totalModules: 11, completedModules: 18, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 25, enrolled: 31 },
+    { name: "Security Architect", totalModules: 9, completedModules: 12, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 27, enrolled: 95 },
+    { name: "Incident Responder", totalModules: 12, completedModules: 15, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 69, enrolled: 51 },
+    { name: "Compliance Specialist", totalModules: 18, completedModules: 3, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 23, enrolled: 76 },
+    { name: "DevSecOps Engineer", totalModules: 17, completedModules: 8, progress: round(random.uniform(10,95),1), estimatedHoursLeft: 39, enrolled: 190 },
+  ];
+  private _compliance_mGetOverallCompletion() {
+    const mods = this._compliance_mTrainingModules;
+    return round(mods.reduce((s,m)=>s+m.completionRate,0)/mods.length,1);
+  }
+  private _compliance_mGetTopPerformers() { return [...this._compliance_mTrainingModules].sort((a,b)=>b.avgScore-a.avgScore).slice(0,5); }
+  private _compliance_mGetModulesNeedingAttention() { return this._compliance_mTrainingModules.filter(m=>m.completionRate<70||m.avgScore<65); }
+
+  // === Security Governance Framework (compliance_m) ===
+  private _compliance_mGovBodies = [
+    { name: "Security Steering Committee", members: 13, chair: "CISO", meetingFreq: "Weekly", lastMeeting: "2026-04-08", nextMeeting: "2026-05-27", quorum: 4 },
+    { name: "Risk Management Board", members: 14, chair: "CTO", meetingFreq: "Bi-weekly", lastMeeting: "2026-04-07", nextMeeting: "2026-05-08", quorum: 6 },
+    { name: "Data Governance Council", members: 14, chair: "CRO", meetingFreq: "Monthly", lastMeeting: "2026-04-19", nextMeeting: "2026-05-25", quorum: 4 },
+    { name: "Compliance Oversight Board", members: 11, chair: "CDO", meetingFreq: "Monthly", lastMeeting: "2026-04-12", nextMeeting: "2026-05-03", quorum: 8 },
+    { name: "Architecture Review Board", members: 6, chair: "VP Eng", meetingFreq: "Bi-weekly", lastMeeting: "2026-04-09", nextMeeting: "2026-05-27", quorum: 8 },
+    { name: "Change Advisory Board", members: 15, chair: "CISO", meetingFreq: "Weekly", lastMeeting: "2026-04-13", nextMeeting: "2026-05-15", quorum: 4 },
+    { name: "Incident Review Board", members: 12, chair: "CIO", meetingFreq: "As needed", lastMeeting: "2026-04-02", nextMeeting: "2026-05-17", quorum: 5 },
+    { name: "Vendor Risk Committee", members: 15, chair: "CFO", meetingFreq: "Quarterly", lastMeeting: "2026-04-11", nextMeeting: "2026-05-10", quorum: 7 },
+  ];
+  private _compliance_mDecisions = [
+    { id: "DEC-0001", title: "Adopt zero-trust architecture framework", date: "2026-01-26", status: "approved", owner: "CISO" },
+    { id: "DEC-0002", title: "Migrate to SIEM 2.0 platform", date: "2026-01-13", status: "implemented", owner: "CTO" },
+    { id: "DEC-0003", title: "Implement DLP across all endpoints", date: "2026-04-02", status: "in-progress", owner: "Security Lead" },
+    { id: "DEC-0004", title: "Mandate MFA for all external access", date: "2026-02-23", status: "pending", owner: "CRO" },
+    { id: "DEC-0005", title: "Establish bug bounty program", date: "2026-03-09", status: "approved", owner: "VP Eng" },
+    { id: "DEC-0006", title: "Deploy EDR solution enterprise-wide", date: "2026-03-06", status: "approved", owner: "CISO" },
+    { id: "DEC-0007", title: "Conduct annual penetration testing", date: "2026-02-27", status: "implemented", owner: "CTO" },
+    { id: "DEC-0008", title: "Implement network micro-segmentation", date: "2026-02-05", status: "in-progress", owner: "Security Lead" },
+    { id: "DEC-0009", title: "Establish security champion program", date: "2026-02-25", status: "pending", owner: "CRO" },
+    { id: "DEC-0010", title: "Migrate to passwordless authentication", date: "2026-03-21", status: "approved", owner: "VP Eng" },
+  ];
+  private _compliance_mPolicyLifecycle = [
+    { name: "Information Security Policy", version: "v3.1", status: "active", lastUpdated: "2026-02-07", nextReview: "2026-9-11", owner: "CISO" },
+    { name: "Acceptable Use Policy", version: "v1.5", status: "active", lastUpdated: "2026-04-08", nextReview: "2026-12-14", owner: "Legal" },
+    { name: "Data Retention Policy", version: "v4.5", status: "under-review", lastUpdated: "2026-01-08", nextReview: "2026-7-12", owner: "DPO" },
+    { name: "Access Control Policy", version: "v1.3", status: "active", lastUpdated: "2026-01-27", nextReview: "2026-8-20", owner: "IAM Lead" },
+    { name: "Incident Response Policy", version: "v4.3", status: "draft", lastUpdated: "2026-03-20", nextReview: "2026-7-07", owner: "IR Lead" },
+    { name: "Business Continuity Plan", version: "v2.4", status: "active", lastUpdated: "2026-04-20", nextReview: "2026-12-24", owner: "BCP Mgr" },
+    { name: "Vendor Management Policy", version: "v1.3", status: "active", lastUpdated: "2026-01-10", nextReview: "2026-12-19", owner: "Procurement" },
+    { name: "Encryption Standard", version: "v3.2", status: "under-review", lastUpdated: "2026-02-05", nextReview: "2026-7-12", owner: "Security Arch" },
+  ];
+  private _compliance_mGovMaturityScore = { overall: 3.9, riskManagement: 2.7, compliance: 3.9, incidentResponse: 5.0, awareness: 4.8, technology: 5.2 };
+  private _compliance_mGetPendingDecisions() { return this._compliance_mDecisions.filter(d=>d.status==='pending'||d.status==='in-progress'); }
+  private _compliance_mGetActivePolicies() { return this._compliance_mPolicyLifecycle.filter(p=>p.status==='active'); }
+  private _compliance_mGetEscalationPath() { return ["L1 Analyst","L2 Senior","Security Lead","CISO","Board"]; }
+
+  // === Security Innovation Lab (compliance_m) ===
+  private _compliance_mInnoProjects = [
+    { id: "INN-001", name: "AI-Powered Threat Detection", description: "Machine learning models for real-time threat identification", status: "active", progress: 72, startDate: "2026-01-20", teamSize: 7, budget: 42561, milestones: 5, completedMilestones: 5 },
+    { id: "INN-002", name: "Quantum-Resistant Cryptography", description: "Post-quantum encryption algorithm prototyping", status: "research", progress: 35, startDate: "2026-02-17", teamSize: 2, budget: 88781, milestones: 8, completedMilestones: 3 },
+    { id: "INN-003", name: "Automated Red Teaming", description: "Autonomous penetration testing framework", status: "active", progress: 58, startDate: "2026-02-02", teamSize: 6, budget: 158621, milestones: 8, completedMilestones: 7 },
+    { id: "INN-004", name: "Zero-Knowledge Authentication", description: "Privacy-preserving identity verification", status: "poc", progress: 88, startDate: "2026-03-08", teamSize: 8, budget: 55876, milestones: 5, completedMilestones: 5 },
+    { id: "INN-005", name: "Blockchain Audit Trail", description: "Immutable security event logging", status: "active", progress: 45, startDate: "2026-02-18", teamSize: 5, budget: 184660, milestones: 4, completedMilestones: 1 },
+    { id: "INN-006", name: "Behavioral Biometrics", description: "Continuous authentication via user behavior patterns", status: "research", progress: 22, startDate: "2026-02-26", teamSize: 5, budget: 89266, milestones: 7, completedMilestones: 3 },
+    { id: "INN-007", name: "Deception Grid 2.0", description: "Advanced honeypot network with adaptive responses", status: "active", progress: 65, startDate: "2026-02-07", teamSize: 5, budget: 16208, milestones: 8, completedMilestones: 7 },
+    { id: "INN-008", name: "Secure Enclave Integration", description: "Hardware-backed security for critical workloads", status: "poc", progress: 40, startDate: "2026-03-19", teamSize: 6, budget: 163070, milestones: 7, completedMilestones: 1 },
+  ];
+  private _compliance_mTechEvaluations = [
+    { name: "Rust for Security Tools", status: "evaluating", score: 3.4, recommendation: "Adopt", vendor: "Open Source" },
+    { name: "eBPF for Runtime Detection", status: "completed", score: 8.8, recommendation: "Adopt", vendor: "AWS" },
+    { name: "Confidential Computing", status: "planned", score: 3.9, recommendation: "Investigate", vendor: "Azure" },
+    { name: "Homomorphic Encryption", status: "evaluating", score: 3.8, recommendation: "Pilot", vendor: "GCP" },
+    { name: "SASE Architecture", status: "completed", score: 10.7, recommendation: "Adopt", vendor: "Multiple" },
+    { name: "SOAR Platform 3.0", status: "planned", score: 7.6, recommendation: "Monitor", vendor: "Splunk" },
+  ];
+  private _compliance_mCollaborationPartners = [
+    { name: "MIT CSAIL", type: "Academic", projects: 4, status: "active" },
+    { name: "Stanford Security Lab", type: "Academic", projects: 4, status: "active" },
+    { name: "DARPA Cyber", type: "Government", projects: 1, status: "pending" },
+    { name: "NIST", type: "Government", projects: 5, status: "active" },
+    { name: "CISA", type: "Government", projects: 3, status: "active" },
+    { name: "OWASP Foundation", type: "Non-profit", projects: 2, status: "active" },
+    { name: "SANS Institute", type: "Training", projects: 3, status: "completed" },
+    { name: "Cloud Security Alliance", type: "Industry", projects: 4, status: "active" },
+  ];
+  private _compliance_mInnoMetrics = { totalProjects: 8, activeProjects: 4, avgTimeToValue: "60 days", pocSuccessRate: round(random.uniform(55,85),1), researchToProduction: round(random.uniform(20,50),1), innovationIndex: round(random.uniform(6.0,9.5),1) };
+  private _compliance_mGetProjectByStatus(status: string) { return this._compliance_mInnoProjects.filter(p=>p.status===status); }
+  private _compliance_mGetTopEvaluations() { return [...this._compliance_mTechEvaluations].sort((a,b)=>b.score-a.score).slice(0,3); }
+
+
+
+  // === Compliance Dashboard Extension (compliance_m) ===
+  private _compliance_mComplianceFrameworks = [
+    { name: "SOC 2 Type II", description: "Trust Services Criteria", totalControls: 5, implementedControls: 5, status: "compliant", lastAudit: "2026-01-23", nextAudit: "2026-8-05", evidenceCount: 94 },
+    { name: "ISO 27001", description: "Information Security Management", totalControls: 114, implementedControls: 79, status: "partially-compliant", lastAudit: "2026-04-26", nextAudit: "2026-10-23", evidenceCount: 213 },
+    { name: "PCI DSS 4.0", description: "Payment Card Industry", totalControls: 12, implementedControls: 6, status: "partially-compliant", lastAudit: "2026-01-10", nextAudit: "2026-9-27", evidenceCount: 241 },
+    { name: "HIPAA", description: "Health Insurance Portability", totalControls: 18, implementedControls: 11, status: "compliant", lastAudit: "2026-01-01", nextAudit: "2026-10-05", evidenceCount: 362 },
+    { name: "GDPR", description: "Data Protection Regulation", totalControls: 99, implementedControls: 89, status: "partially-compliant", lastAudit: "2026-04-10", nextAudit: "2026-8-15", evidenceCount: 394 },
+    { name: "NIST CSF 2.0", description: "Cybersecurity Framework", totalControls: 6, implementedControls: 6, status: "non-compliant", lastAudit: "2026-01-18", nextAudit: "2026-7-22", evidenceCount: 441 },
+    { name: "FedRAMP", description: "Federal Risk Authorization", totalControls: 15, implementedControls: 7, status: "in-review", lastAudit: "2026-03-28", nextAudit: "2026-8-15", evidenceCount: 172 },
+    { name: "SOX", description: "Sarbanes-Oxley Compliance", totalControls: 8, implementedControls: 7, status: "partially-compliant", lastAudit: "2026-04-18", nextAudit: "2026-12-18", evidenceCount: 457 },
+    { name: "CIS Controls v8", description: "Center for Internet Security", totalControls: 18, implementedControls: 14, status: "non-compliant", lastAudit: "2026-01-27", nextAudit: "2026-10-26", evidenceCount: 336 },
+    { name: "COBIT 2019", description: "IT Governance Framework", totalControls: 40, implementedControls: 21, status: "non-compliant", lastAudit: "2026-01-10", nextAudit: "2026-12-08", evidenceCount: 291 },
+  ];
+  private _compliance_mGetComplianceScore() {
+    const fw = this._compliance_mComplianceFrameworks;
+    return round(fw.reduce((s,f)=>s + (f.implementedControls/Math.max(f.totalControls,1))*100, 0) / fw.length, 1);
+  }
+  private _compliance_mGetGaps() {
+    return this._compliance_mComplianceFrameworks.filter(f => f.status !== "compliant");
+  }
+  private _compliance_mAuditTrail = [
+    { id: "AUD-0001", action: "Control tested", auditor: "Internal Audit", date: "2026-04-16", result: "pass", findings: 5 },
+    { id: "AUD-0002", action: "Evidence collected", auditor: "External Auditor", date: "2026-04-12", result: "pass", findings: 2 },
+    { id: "AUD-0003", action: "Gap identified", auditor: "Security Team", date: "2026-04-15", result: "fail", findings: 3 },
+    { id: "AUD-0004", action: "Remediation completed", auditor: "Compliance Officer", date: "2026-04-09", result: "pass", findings: 1 },
+    { id: "AUD-0005", action: "Policy updated", auditor: "IT Audit", date: "2026-04-05", result: "pass", findings: 4 },
+    { id: "AUD-0006", action: "Training verified", auditor: "Risk Team", date: "2026-04-15", result: "pass", findings: 1 },
+    { id: "AUD-0007", action: "Access reviewed", auditor: "QA Team", date: "2026-04-04", result: "pass", findings: 2 },
+    { id: "AUD-0008", action: "Exception approved", auditor: "CISO Office", date: "2026-04-11", result: "conditional", findings: 1 },
+    { id: "AUD-0009", action: "Risk accepted", auditor: "Board Audit", date: "2026-04-02", result: "pass", findings: 4 },
+    { id: "AUD-0010", action: "Control enhanced", auditor: "Third Party", date: "2026-04-16", result: "pass", findings: 4 },
+  ];
+
+  // === Threat Intelligence Feed Extension (compliance_m) ===
+  private _compliance_mThreatActors = [
+    { name: "APT-29", alias: "Cozy Bear", origin: "Russia", type: "Nation-State", severity: "high", lastActivity: "2026-04-03", targets: "Government", indicators: 23, ttps: 15 },
+    { name: "APT-41", alias: "Double Dragon", origin: "China", type: "Nation-State", severity: "critical", lastActivity: "2026-04-07", targets: "Energy", indicators: 122, ttps: 45 },
+    { name: "Lazarus Group", alias: "Hidden Cobra", origin: "North Korea", type: "Nation-State", severity: "critical", lastActivity: "2026-04-13", targets: "Finance", indicators: 256, ttps: 27 },
+    { name: "FIN7", alias: "Carbanak", origin: "Eastern Europe", type: "Financial", severity: "high", lastActivity: "2026-04-23", targets: "Manufacturing", indicators: 121, ttps: 5 },
+    { name: "Conti", alias: "Wizard Spider", origin: "Russia", type: "Ransomware", severity: "critical", lastActivity: "2026-04-17", targets: "Technology", indicators: 349, ttps: 10 },
+    { name: "LockBit", alias: "LockBit Gang", origin: "Unknown", type: "Ransomware", severity: "high", lastActivity: "2026-04-07", targets: "Healthcare", indicators: 276, ttps: 19 },
+    { name: "Cl0p", alias: "Cl0p Team", origin: "Unknown", type: "Ransomware", severity: "high", lastActivity: "2026-04-08", targets: "Government", indicators: 449, ttps: 44 },
+    { name: "Sandworm", alias: "Unit 74455", origin: "Russia", type: "Nation-State", severity: "critical", lastActivity: "2026-04-18", targets: "Healthcare", indicators: 166, ttps: 23 },
+  ];
+  private _compliance_mIoCFeed = [
+    { id: "ioc-000001", type: "ip", value: "63.3.86.49", confidence: 51, source: "STIX", firstSeen: "2026-04-11", lastSeen: "2026-04-21" },
+    { id: "ioc-000002", type: "ip", value: "55.219.252.131", confidence: 64, source: "Mandiant", firstSeen: "2026-04-05", lastSeen: "2026-04-03" },
+    { id: "ioc-000003", type: "ip", value: "239.53.45.176", confidence: 89, source: "VirusTotal", firstSeen: "2026-04-02", lastSeen: "2026-04-05" },
+    { id: "ioc-000004", type: "ip", value: "204.8.107.93", confidence: 90, source: "Mandiant", firstSeen: "2026-04-02", lastSeen: "2026-04-02" },
+    { id: "ioc-000005", type: "ip", value: "207.18.201.147", confidence: 85, source: "MISP", firstSeen: "2026-04-01", lastSeen: "2026-04-20" },
+    { id: "ioc-000006", type: "ip", value: "88.49.230.179", confidence: 46, source: "MISP", firstSeen: "2026-04-08", lastSeen: "2026-04-05" },
+    { id: "ioc-000007", type: "ip", value: "121.28.171.112", confidence: 87, source: "VirusTotal", firstSeen: "2026-04-04", lastSeen: "2026-04-22" },
+    { id: "ioc-000008", type: "ip", value: "236.169.16.108", confidence: 53, source: "VirusTotal", firstSeen: "2026-04-22", lastSeen: "2026-04-08" },
+    { id: "ioc-000009", type: "ip", value: "235.235.69.221", confidence: 97, source: "CrowdStrike", firstSeen: "2026-04-16", lastSeen: "2026-04-04" },
+    { id: "ioc-000010", type: "ip", value: "142.238.169.90", confidence: 94, source: "STIX", firstSeen: "2026-04-06", lastSeen: "2026-04-03" },
+    { id: "ioc-000011", type: "ip", value: "44.21.221.209", confidence: 59, source: "Mandiant", firstSeen: "2026-04-02", lastSeen: "2026-04-13" },
+    { id: "ioc-000012", type: "ip", value: "238.1.193.218", confidence: 75, source: "Mandiant", firstSeen: "2026-04-18", lastSeen: "2026-04-05" },
+    { id: "ioc-000013", type: "ip", value: "255.23.102.222", confidence: 57, source: "Mandiant", firstSeen: "2026-04-18", lastSeen: "2026-04-06" },
+    { id: "ioc-000014", type: "ip", value: "205.21.220.47", confidence: 46, source: "STIX", firstSeen: "2026-04-11", lastSeen: "2026-04-18" },
+    { id: "ioc-000015", type: "ip", value: "204.210.73.110", confidence: 70, source: "AlienVault", firstSeen: "2026-04-12", lastSeen: "2026-04-02" },
+  ];
+  private _compliance_mGetActiveThreats() { return this._compliance_mThreatActors.filter(a => a.severity === 'critical'); }
+  private _compliance_mGetThreatSummary() {
+    const actors = this._compliance_mThreatActors;
+    return { total: actors.length, critical: actors.filter(a=>a.severity==="critical").length, high: actors.filter(a=>a.severity==="high").length, nationState: actors.filter(a=>a.type==="Nation-State").length, ransomware: actors.filter(a=>a.type==="Ransomware").length };
+  }
+
+  // === Incident Management Extension (compliance_m) ===
+  private _compliance_mIncidents = [
+    { id: "INC-20260001", title: "Unauthorized access detected", severity: "critical", status: "open", assignedTo: "SOC L1", detectedAt: "2026-04-12T06:30", affectedAssets: 22, rootCause: "Misconfiguration" },
+    { id: "INC-20260002", title: "Malware outbreak on workstation", severity: "high", status: "investigating", assignedTo: "SOC L2", detectedAt: "2026-04-12T11:31", affectedAssets: 30, rootCause: "Credential compromise" },
+    { id: "INC-20260003", title: "Data leak from S3 bucket", severity: "medium", status: "contained", assignedTo: "IR Lead", detectedAt: "2026-04-15T11:35", affectedAssets: 10, rootCause: "Zero-day" },
+    { id: "INC-20260004", title: "Phishing campaign targeting finance", severity: "low", status: "eradicated", assignedTo: "CISO", detectedAt: "2026-04-05T12:06", affectedAssets: 21, rootCause: "Human error" },
+    { id: "INC-20260005", title: "DDoS attack on web services", severity: "critical", status: "recovered", assignedTo: "Security Eng", detectedAt: "2026-04-07T19:54", affectedAssets: 36, rootCause: "Policy violation" },
+    { id: "INC-20260006", title: "Ransomware encryption attempt", severity: "high", status: "closed", assignedTo: "Forensics", detectedAt: "2026-04-19T07:29", affectedAssets: 3, rootCause: "Unknown" },
+    { id: "INC-20260007", title: "Insider data exfiltration", severity: "medium", status: "open", assignedTo: "SOC L1", detectedAt: "2026-04-18T10:59", affectedAssets: 15, rootCause: "Misconfiguration" },
+    { id: "INC-20260008", title: "API key exposure in repo", severity: "low", status: "investigating", assignedTo: "SOC L2", detectedAt: "2026-04-18T21:38", affectedAssets: 7, rootCause: "Credential compromise" },
+    { id: "INC-20260009", title: "SQL injection on portal", severity: "critical", status: "contained", assignedTo: "IR Lead", detectedAt: "2026-04-02T00:03", affectedAssets: 39, rootCause: "Zero-day" },
+    { id: "INC-20260010", title: "Brute force on VPN", severity: "high", status: "eradicated", assignedTo: "CISO", detectedAt: "2026-04-20T10:34", affectedAssets: 10, rootCause: "Human error" },
+    { id: "INC-20260011", title: "Supply chain alert from vendor", severity: "medium", status: "recovered", assignedTo: "Security Eng", detectedAt: "2026-04-01T13:18", affectedAssets: 8, rootCause: "Policy violation" },
+    { id: "INC-20260012", title: "Suspicious lateral movement", severity: "low", status: "closed", assignedTo: "Forensics", detectedAt: "2026-04-05T23:45", affectedAssets: 13, rootCause: "Unknown" },
+  ];
+  private _compliance_mGetIncidentStats() {
+    const inc = this._compliance_mIncidents;
+    return { total: inc.length, open: inc.filter(i=>i.status==="open").length, investigating: inc.filter(i=>i.status==="investigating").length, mttd: 18, mttr: 56 };
+  }
+  private _compliance_mGetSeverityDistribution() {
+    const inc = this._compliance_mIncidents;
+    return { critical: inc.filter(i=>i.severity==="critical").length, high: inc.filter(i=>i.severity==="high").length, medium: inc.filter(i=>i.severity==="medium").length, low: inc.filter(i=>i.severity==="low").length };
+  }
+
+
   render() {
     if (this._compRules.length === 0) { this._initCompRules(); this._initCvssData(); this._runAnomalyDetection(); this._generatePredictions(); this._initApprovals(); this._initActivityFeed(); this._initNotifications(); }
     const items = this._getFiltered();
