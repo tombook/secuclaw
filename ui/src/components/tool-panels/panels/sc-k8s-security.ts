@@ -7106,6 +7106,317 @@ private _executionHistory: ExecutionRecord[] = [
       { severity: 'critical', avgTotalCost: 4500000, responseTime: '1h', staffRequired: 30, historicalCount: 2, trend: 'increasing' }
     ];
   }
+  // === Security Threat Landscape Dashboard (K8Se) ===
+  private _K8SeLThreatData = {} as Record<string, unknown[]>;
+  private _K8SeLThreatReady = false;
+  private _K8SeLInitThreatLandscape() {
+    if (this._K8SeLThreatReady) return;
+    this._K8SeLThreatReady = true;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const categories = ['Malware', 'Phishing', 'Ransomware', 'Insider', 'DDoS', 'Supply Chain'];
+    const severityTrend: Record<string, number[]> = {};
+    categories.forEach((cat: string) => {
+      severityTrend[cat] = months.map((_: string, i: number) => {
+        const base = 40 + Math.floor(Math.random() * 60);
+        const seasonal = Math.sin((i / 11) * Math.PI * 2) * 15;
+        return Math.max(10, Math.min(100, Math.round(base + seasonal)));
+      });
+    });
+    this._K8SeLThreatData["severityTrend"] = Object.entries(severityTrend).map(([cat, vals]) => ({ category: cat, monthlyScores: vals }));
+    const emergingThreats = [('AI-Powered Phishing', 'High', 'email', 45), ('Deepfake Social Eng', 'Critical', 'social', 32), ('IoT Botnet Variant', 'High', 'network', 28), ('Cloud Misconfig Exploit', 'Medium', 'web', 22), ('Ransomware-as-Service', 'Critical', 'network', 51), ('Supply Chain Backdoor', 'Critical', 'network', 38), ('QR Code Phishing', 'Medium', 'physical', 19), ('Voice Cloning Fraud', 'High', 'social', 26)];
+    this._K8SeLThreatData["emergingRadar"] = emergingThreats.map(([name, severity, vector, score]) => ({
+      name, severity, primaryVector: vector, riskScore: score,
+      firstDetected: "2025-Q" + (1 + Math.floor(Math.random() * 4)),
+      growthRate: +(10 + Math.random() * 40).toFixed(1),
+      affectedIndustries: ["Finance","Healthcare","Tech","Government"].slice(0, 1 + Math.floor(Math.random() * 3))
+    }));
+    const threatVectors = ['Email', 'Web', 'Network', 'Physical', 'Social'];
+    this._K8SeLThreatData["volumeByVector"] = threatVectors.map(v => ({
+      vector: v,
+      volume24h: 120 + Math.floor(Math.random() * 880),
+      volume7d: 2800 + Math.floor(Math.random() * 12000),
+      volume30d: 12000 + Math.floor(Math.random() * 48000),
+      trendDirection: Math.random() > 0.5 ? "increasing" : "decreasing",
+      topThreatType: ["Phishing","Malware","DDoS","Social Engineering","Physical Breach"][threatVectors.indexOf(v) % 5]
+    }));
+    this._K8SeLThreatData["sophisticationProgression"] = [
+      {period: "2020", level: "Basic", score: 25}, {period: "2021", level: "Intermediate", score: 42},
+      {period: "2022", level: "Advanced", score: 61}, {period: "2023", level: "Sophisticated", score: 78},
+      {period: "2024", level: "AI-Augmented", score: 89}, {period: "2025", level: "Autonomous", score: 95}
+    ];
+    const geoRegions = ["North America","Europe","Asia-Pacific","Middle East","Latin America","Africa"];
+    this._K8SeLThreatData["geographicDistribution"] = geoRegions.map(region => ({
+      region, threatDensity: +(3 + Math.random() * 9).toFixed(1),
+      topThreatCategory: categories[Math.floor(Math.random() * categories.length)],
+      activeCampaigns: Math.floor(Math.random() * 25),
+      mitigationReadiness: +(20 + Math.random() * 80).toFixed(0)
+    }));
+    this._K8SeLThreatData["predictionModel"] = {
+      modelAccuracy: +(82 + Math.random() * 15).toFixed(1),
+      predictedNextMonthTrend: +(5 + Math.random() * 30).toFixed(1),
+      confidenceInterval: [65, 92],
+      highRiskWindows: ["2025-07-15 to 2025-07-22", "2025-08-10 to 2025-08-18"],
+      recommendedActions: ["Increase monitoring on email vectors", "Patch critical vulnerabilities within 48h",
+        "Conduct tabletop exercises for ransomware scenarios", "Review supply chain access controls"]
+    };
+    this.requestUpdate();
+  }
+
+  // === Security Controls Gap Analysis (K8Se) ===
+  private _K8SeGControls: Array<Record<string, unknown>> = [];
+  private _K8SeGGapReady = false;
+  private _K8SeGInitGapAnalysis() {
+    if (this._K8SeGGapReady) return;
+    this._K8SeGGapReady = true;
+    const controlNames = ['MFA Enforcement', 'Network Segmentation', 'Encryption at Rest', 'Encryption in Transit', 'Endpoint Detection', 'SIEM Integration', 'Vulnerability Scanning', 'Patch Management', 'Access Reviews', 'Incident Response Plan', 'Data Loss Prevention', 'Security Awareness Training', 'Third-Party Risk Management', 'Log Retention Policy', 'Backup Verification', 'Privileged Access Mgmt', 'API Security Controls', 'Container Security', 'Cloud Security Posture', 'Zero Trust Architecture'];
+    const severities = ["critical","high","medium","low"] as const;
+    const statuses = ["Implemented","Partial","Missing","Planned"] as const;
+    const owners = ['Security Team', 'IT Operations', 'DevOps', 'Compliance', 'CISO Office', 'Infrastructure'];
+    this._K8SeGControls = controlNames.map((name, idx) => {
+      const status = statuses[idx % 4];
+      const implPct = status === "Implemented" ? 90 + Math.floor(Math.random() * 10) :
+        status === "Partial" ? 40 + Math.floor(Math.random() * 40) :
+        status === "Planned" ? 10 + Math.floor(Math.random() * 20) : Math.floor(Math.random() * 10);
+      const gapSeverity = implPct >= 80 ? "low" : implPct >= 50 ? "medium" : implPct >= 25 ? "high" : "critical";
+      const effortDays = status === "Implemented" ? 0 : 5 + Math.floor(Math.random() * 45);
+      return {
+        id: "CTL-" + String(idx + 1).padStart(3, "0"),
+        name,
+        status,
+        implementationPct: implPct,
+        gapSeverity,
+        remediationPriority: Math.max(1, 10 - Math.floor(implPct / 10)),
+        estimatedEffortDays: effortDays,
+        owner: owners[idx % owners.length],
+        targetClosureDate: effortDays > 0 ? "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0") : "Complete",
+        lastAssessed: "2025-06-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        complianceMapping: ["SOC2","ISO27001","NIST CSF","GDPR"].slice(0, 1 + Math.floor(Math.random() * 3)),
+        riskIfUnaddressed: +(20 + Math.random() * 80).toFixed(0)
+      };
+    });
+    this._K8SeGControls.sort((a, b) => (b.remediationPriority as number) - (a.remediationPriority as number));
+    this.requestUpdate();
+  }
+  private _K8SeGGetGapStats() {
+    const total = this._K8SeGControls.length;
+    const critical = this._K8SeGControls.filter(c => c.gapSeverity === "critical").length;
+    const high = this._K8SeGControls.filter(c => c.gapSeverity === "high").length;
+    const medium = this._K8SeGControls.filter(c => c.gapSeverity === "medium").length;
+    const low = this._K8SeGControls.filter(c => c.gapSeverity === "low").length;
+    const totalEffort = this._K8SeGControls.reduce((s, c) => s + (c.estimatedEffortDays as number), 0);
+    const avgImpl = this._K8SeGControls.reduce((s, c) => s + (c.implementationPct as number), 0) / total;
+    return { total, critical, high, medium, low, totalEffort, avgImplementation: Math.round(avgImpl) };
+  }
+
+  // === Security Program ROI Calculator (K8Se) ===
+  private _K8SeRRoiData: Record<string, unknown> = {};
+  private _K8SeRRoiReady = false;
+  private _K8SeRInitRoiCalc() {
+    if (this._K8SeRRoiReady) return;
+    this._K8SeRRoiReady = true;
+    const categories = ['Threat Detection', 'Incident Response', 'Compliance Automation', 'Security Awareness', 'Infrastructure Hardening'];
+    const roiDetails = categories.map((cat, idx) => {
+      const investment = 150000 + Math.floor(Math.random() * 850000);
+      const annualBenefit = investment * (1.5 + Math.random() * 3.5);
+      const costAvoidance = investment * (0.8 + Math.random() * 2.0);
+      const riskReduction = 15 + Math.floor(Math.random() * 65);
+      const timeToValue = 3 + Math.floor(Math.random() * 9);
+      return {
+        category: cat,
+        annualInvestment: investment,
+        annualBenefit: Math.round(annualBenefit),
+        costAvoidance: Math.round(costAvoidance),
+        roi: +((annualBenefit / investment - 1) * 100).toFixed(1),
+        riskReductionPct: riskReduction,
+        timeToValueMonths: timeToValue,
+        paybackPeriodMonths: Math.round(12 / (annualBenefit / investment)),
+        netPresentValue: Math.round(annualBenefit * 3 - investment * 3),
+        confidence: +(70 + Math.random() * 25).toFixed(0),
+        yearOverYearGrowth: +((-5 + Math.random() * 25)).toFixed(1)
+      };
+    });
+    this._K8SeRRoiData["categories"] = roiDetails;
+    const totalInvestment = roiDetails.reduce((s, c) => s + c.annualInvestment, 0);
+    const totalBenefit = roiDetails.reduce((s, c) => s + c.annualBenefit, 0);
+    this._K8SeRRoiData["executiveSummary"] = {
+      totalAnnualInvestment: totalInvestment,
+      totalAnnualBenefit: totalBenefit,
+      overallROI: +((totalBenefit / totalInvestment - 1) * 100).toFixed(1),
+      totalCostAvoidance: roiDetails.reduce((s, c) => s + c.costAvoidance, 0),
+      averageRiskReduction: Math.round(roiDetails.reduce((s, c) => s + c.riskReductionPct, 0) / roiDetails.length),
+      weightedTimeToValue: Math.round(roiDetails.reduce((s, c) => s + c.timeToValueMonths, 0) / roiDetails.length),
+      programHealthScore: +(75 + Math.random() * 20).toFixed(0),
+      benchmarkComparison: "Top quartile" as const,
+      maturityLevel: ["Developing","Established","Mature","Optimizing"][Math.floor(Math.random() * 4)]
+    };
+    this.requestUpdate();
+  }
+  private _K8SeRGetRoiGauge(value: number): string {
+    if (value >= 300) return "excellent";
+    if (value >= 200) return "good";
+    if (value >= 100) return "moderate";
+    return "needs-improvement";
+  }
+
+  // === Security Team Workload Balancer (K8Se) ===
+  private _K8SeWTMembers: Array<Record<string, unknown>> = [];
+  private _K8SeWTReady = false;
+  private _K8SeWTInitWorkload() {
+    if (this._K8SeWTReady) return;
+    this._K8SeWTReady = true;
+    const members = ['Alice Chen', 'Bob Martinez', 'Carol Davis', 'David Kim', 'Eva Mueller', 'Frank Obi', 'Grace Liu', 'Henry Patel', 'Iris Novak', 'Jack Wilson', 'Kate Thompson', 'Leo Santos'];
+    const skills = ['Incident Response', 'Threat Hunting', 'Forensics', 'Compliance', 'Architecture', 'Automation', 'Cloud Security', 'Network Security', 'Application Security', 'GRC', 'Penetration Testing', 'SOC Analysis'];
+    this._K8SeWTMembers = members.map((name, idx) => {
+      const capacity = 70 + Math.floor(Math.random() * 55);
+      const utilization = Math.min(120, capacity - 10 + Math.floor(Math.random() * 60));
+      const burnoutRisk = utilization > 100 ? "high" : utilization > 85 ? "medium" : "low";
+      const weeklyTrend = [35 + Math.floor(Math.random() * 40), 40 + Math.floor(Math.random() * 40),
+        45 + Math.floor(Math.random() * 40), 40 + Math.floor(Math.random() * 40)];
+      const primarySkill = skills[idx % skills.length];
+      const secondarySkill = skills[(idx + 3) % skills.length];
+      return {
+        name,
+        currentTasks: 3 + Math.floor(Math.random() * 12),
+        capacityPct: Math.min(130, capacity),
+        utilizationPct: utilization,
+        burnoutRisk,
+        primarySkill,
+        secondarySkill,
+        weeklyTrend,
+        avgTaskDuration: +(1 + Math.random() * 7).toFixed(1),
+        overdueTasks: Math.floor(Math.random() * 3),
+        suggestedRebalance: utilization > 95 ? "Redistribute " + Math.floor((utilization - 90) / 10) + " tasks" : "Balanced"
+      };
+    });
+    this.requestUpdate();
+  }
+  private _K8SeWTGetTeamStats() {
+    const members = this._K8SeWTMembers;
+    if (!members.length) return null;
+    const avgUtil = members.reduce((s, m) => s + (m.utilizationPct as number), 0) / members.length;
+    const burnoutCount = members.filter(m => m.burnoutRisk === "high").length;
+    const balancedCount = members.filter(m => m.burnoutRisk === "low" && (m.utilizationPct as number) < 95).length;
+    return { avgUtilization: Math.round(avgUtil), burnoutCount, balancedCount, totalMembers: members.length };
+  }
+
+  // === Security Regulatory Tracker (K8Se) ===
+  private _K8SeRTRegs: Array<Record<string, unknown>> = [];
+  private _K8SeRTChanges: Array<Record<string, unknown>> = [];
+  private _K8SeRTReady = false;
+  private _K8SeRTInitRegTracker() {
+    if (this._K8SeRTReady) return;
+    this._K8SeRTReady = true;
+    const regulations = ['GDPR', 'CCPA/CPRA', 'HIPAA', 'PCI DSS 4.0', 'SOX', 'NIST CSF 2.0', 'DORA', 'SEC Cyber Rules'];
+    const complianceStatuses = ["Compliant","Partial","Non-Compliant","In Review"] as const;
+    this._K8SeRTRegs = regulations.map((reg, idx) => {
+      const status = complianceStatuses[idx % 4];
+      const daysUntilDeadline = status === "Compliant" ? 0 : 30 + Math.floor(Math.random() * 270);
+      return {
+        regulation: reg,
+        status,
+        compliancePct: status === "Compliant" ? 95 + Math.floor(Math.random() * 5) :
+          status === "Partial" ? 50 + Math.floor(Math.random() * 35) : 10 + Math.floor(Math.random() * 30),
+        daysUntilDeadline,
+        riskScore: status === "Compliant" ? +(5 + Math.random() * 15).toFixed(0) : +(30 + Math.random() * 60).toFixed(0),
+        lastAudit: "2025-0" + (1 + Math.floor(Math.random() * 6)) + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        nextAudit: "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        owner: ["CISO","DPO","CLO","CRO","VP Compliance","CTO","CISO","CFO"][idx],
+        overlappingRegs: regulations.filter((_, i) => i !== idx).slice(0, 1 + Math.floor(Math.random() * 2))
+      };
+    });
+    const changeDescriptions = ['New AI governance requirements published', 'Data breach notification timeline reduced to 72h', 'Third-party risk assessment standards updated', 'Cloud security controls added to framework', 'Incident reporting requirements expanded', 'Cross-border data transfer mechanisms revised'];
+    this._K8SeRTChanges = changeDescriptions.map((desc, idx) => ({
+      id: "REG-CHG-" + String(idx + 1).padStart(3, "0"),
+      description: desc,
+      affectedRegulations: regulations.slice(idx % 3, idx % 3 + 2),
+      impactLevel: ["High","Medium","Low"][idx % 3],
+      effectiveDate: "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-01",
+      actionRequired: idx % 2 === 0 ? "Policy update needed" : "Technical controls adjustment",
+      readiness: +(20 + Math.random() * 70).toFixed(0)
+    }));
+    this.requestUpdate();
+  }
+  private _K8SeRTGetComplianceSummary() {
+    const regs = this._K8SeRTRegs;
+    if (!regs.length) return null;
+    const compliant = regs.filter(r => r.status === "Compliant").length;
+    const avgCompliance = regs.reduce((s, r) => s + (r.compliancePct as number), 0) / regs.length;
+    const highRisk = regs.filter(r => (r.riskScore as number) > 50).length;
+    return { total: regs.length, compliant, avgCompliance: Math.round(avgCompliance), highRiskRegs: highRisk };
+  }
+  // === Advanced Security Analytics Layer (K8Se) ===
+  private _K8SeXAnalyticsReady = false;
+  private _K8SeXBehaviorProfiles: Record<string, number[]> = {};
+  private _K8SeXAnomalyScores: number[] = [];
+  private _K8SeXRiskFactors: Array<Record<string, unknown>> = [];
+  private _K8SeXTemporalPatterns: Record<string, number> = {};
+  private _K8SeXCorrelationMatrix: number[][] = [];
+  private _K8SeXInitAnalytics() {
+    if (this._K8SeXAnalyticsReady) return;
+    this._K8SeXAnalyticsReady = true;
+    const entityTypes = ["users","endpoints","services","networks","applications","datastores"];
+    entityTypes.forEach(entity => {
+      this._K8SeXBehaviorProfiles[entity] = Array.from({ length: 24 }, (_, h) => {
+        const baseActivity = entity === "users" ? 30 : entity === "networks" ? 80 : 50;
+        const hourFactor = Math.sin((h - 6) / 24 * Math.PI * 2) * 0.6 + 0.4;
+        return Math.round(baseActivity * hourFactor + Math.random() * 20 - 10);
+      });
+    });
+    this._K8SeXAnomalyScores = Array.from({ length: 30 }, (_, d) => {
+      const trend = Math.sin(d / 30 * Math.PI) * 20;
+      const noise = Math.random() * 15 - 7;
+      const spike = d === 17 ? 35 : d === 23 ? 28 : 0;
+      return Math.max(0, Math.min(100, Math.round(25 + trend + noise + spike)));
+    });
+    const riskCategories = ["Data Exposure","Access Violation","Configuration Drift",
+      "Compliance Deviation","Performance Anomaly","Threat Intelligence Match"];
+    this._K8SeXRiskFactors = riskCategories.map((cat, idx) => {
+      const currentScore = 20 + Math.floor(Math.random() * 60);
+      const trend30d = Array.from({ length: 30 }, (_, d) => {
+        const direction = Math.random() > 0.3 ? 1 : -1;
+        return Math.max(0, Math.min(100, currentScore + Math.round(direction * d * 0.8 + Math.random() * 10 - 5)));
+      });
+      return {
+        category: cat,
+        currentScore,
+        severity: currentScore > 70 ? "critical" : currentScore > 50 ? "high" : currentScore > 30 ? "medium" : "low",
+        trend30d,
+        contributingFactors: Math.floor(2 + Math.random() * 6),
+        topContributor: ["Misconfiguration","Policy Violation","Expired Certificate","Unpatched System","Weak Credential","Anomalous Traffic"][idx],
+        remediationStatus: ["Open","In Progress","Mitigated","Resolved"][idx % 4],
+        estimatedFixHours: 2 + Math.floor(Math.random() * 46)
+      };
+    });
+    const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const hourNames = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0") + ":00");
+    dayNames.forEach(day => {
+      hourNames.forEach(hour => {
+        const key = day + "_" + hour;
+        const isWeekend = day === "Sat" || day === "Sun";
+        const hourNum = parseInt(hour.split(":")[0]);
+        const isBusinessHours = hourNum >= 9 && hourNum <= 17;
+        let base = isWeekend ? 15 : isBusinessHours ? 65 : 30;
+        this._K8SeXTemporalPatterns[key] = Math.round(base + Math.random() * 20 - 10);
+      });
+    });
+    const dims = 8;
+    this._K8SeXCorrelationMatrix = Array.from({ length: dims }, (_, i) =>
+      Array.from({ length: dims }, (_, j) => {
+        if (i === j) return 1.0;
+        return +(0.1 + Math.random() * 0.8).toFixed(2);
+      })
+    );
+    this.requestUpdate();
+  }
+  private _K8SeXGetAnalyticsSummary() {
+    const avgAnomaly = this._K8SeXAnomalyScores.length > 0
+      ? this._K8SeXAnomalyScores.reduce((a, b) => a + b, 0) / this._K8SeXAnomalyScores.length : 0;
+    const criticalRisk = this._K8SeXRiskFactors.filter(r => r.severity === "critical").length;
+    const peakHour = Object.entries(this._K8SeXTemporalPatterns)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+    return { avgAnomalyScore: Math.round(avgAnomaly), criticalRiskCount: criticalRisk, peakActivityHour: peakHour };
+  }
+
 
   render() {    if (this._k8sRules.length === 0) { this._initK8SRules(); this._initK8SCvss(); this._runK8SAnomalyDetection(); this._generateK8SPredictions(); this._initK8SApprovals(); this._initK8SActivity(); this._initK8SNotifications(); }
 

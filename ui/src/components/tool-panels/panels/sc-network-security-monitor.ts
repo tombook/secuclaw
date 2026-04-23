@@ -6809,6 +6809,245 @@ export class ScNetworkSecurityMonitor extends LitElement {
       encryptionEnabled: true, mTLS: String(s.securityLevel) === 'high'
     }));
   }
+  // === Security Threat Landscape Dashboard (NeSeMo) ===
+  private _NeSeMoLThreatData = {} as Record<string, unknown[]>;
+  private _NeSeMoLThreatReady = false;
+  private _NeSeMoLInitThreatLandscape() {
+    if (this._NeSeMoLThreatReady) return;
+    this._NeSeMoLThreatReady = true;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const categories = ['Malware', 'Phishing', 'Ransomware', 'Insider', 'DDoS', 'Supply Chain'];
+    const severityTrend: Record<string, number[]> = {};
+    categories.forEach((cat: string) => {
+      severityTrend[cat] = months.map((_: string, i: number) => {
+        const base = 40 + Math.floor(Math.random() * 60);
+        const seasonal = Math.sin((i / 11) * Math.PI * 2) * 15;
+        return Math.max(10, Math.min(100, Math.round(base + seasonal)));
+      });
+    });
+    this._NeSeMoLThreatData["severityTrend"] = Object.entries(severityTrend).map(([cat, vals]) => ({ category: cat, monthlyScores: vals }));
+    const emergingThreats = [('AI-Powered Phishing', 'High', 'email', 45), ('Deepfake Social Eng', 'Critical', 'social', 32), ('IoT Botnet Variant', 'High', 'network', 28), ('Cloud Misconfig Exploit', 'Medium', 'web', 22), ('Ransomware-as-Service', 'Critical', 'network', 51), ('Supply Chain Backdoor', 'Critical', 'network', 38), ('QR Code Phishing', 'Medium', 'physical', 19), ('Voice Cloning Fraud', 'High', 'social', 26)];
+    this._NeSeMoLThreatData["emergingRadar"] = emergingThreats.map(([name, severity, vector, score]) => ({
+      name, severity, primaryVector: vector, riskScore: score,
+      firstDetected: "2025-Q" + (1 + Math.floor(Math.random() * 4)),
+      growthRate: +(10 + Math.random() * 40).toFixed(1),
+      affectedIndustries: ["Finance","Healthcare","Tech","Government"].slice(0, 1 + Math.floor(Math.random() * 3))
+    }));
+    const threatVectors = ['Email', 'Web', 'Network', 'Physical', 'Social'];
+    this._NeSeMoLThreatData["volumeByVector"] = threatVectors.map(v => ({
+      vector: v,
+      volume24h: 120 + Math.floor(Math.random() * 880),
+      volume7d: 2800 + Math.floor(Math.random() * 12000),
+      volume30d: 12000 + Math.floor(Math.random() * 48000),
+      trendDirection: Math.random() > 0.5 ? "increasing" : "decreasing",
+      topThreatType: ["Phishing","Malware","DDoS","Social Engineering","Physical Breach"][threatVectors.indexOf(v) % 5]
+    }));
+    this._NeSeMoLThreatData["sophisticationProgression"] = [
+      {period: "2020", level: "Basic", score: 25}, {period: "2021", level: "Intermediate", score: 42},
+      {period: "2022", level: "Advanced", score: 61}, {period: "2023", level: "Sophisticated", score: 78},
+      {period: "2024", level: "AI-Augmented", score: 89}, {period: "2025", level: "Autonomous", score: 95}
+    ];
+    const geoRegions = ["North America","Europe","Asia-Pacific","Middle East","Latin America","Africa"];
+    this._NeSeMoLThreatData["geographicDistribution"] = geoRegions.map(region => ({
+      region, threatDensity: +(3 + Math.random() * 9).toFixed(1),
+      topThreatCategory: categories[Math.floor(Math.random() * categories.length)],
+      activeCampaigns: Math.floor(Math.random() * 25),
+      mitigationReadiness: +(20 + Math.random() * 80).toFixed(0)
+    }));
+    this._NeSeMoLThreatData["predictionModel"] = {
+      modelAccuracy: +(82 + Math.random() * 15).toFixed(1),
+      predictedNextMonthTrend: +(5 + Math.random() * 30).toFixed(1),
+      confidenceInterval: [65, 92],
+      highRiskWindows: ["2025-07-15 to 2025-07-22", "2025-08-10 to 2025-08-18"],
+      recommendedActions: ["Increase monitoring on email vectors", "Patch critical vulnerabilities within 48h",
+        "Conduct tabletop exercises for ransomware scenarios", "Review supply chain access controls"]
+    };
+    this.requestUpdate();
+  }
+
+  // === Security Controls Gap Analysis (NeSeMo) ===
+  private _NeSeMoGControls: Array<Record<string, unknown>> = [];
+  private _NeSeMoGGapReady = false;
+  private _NeSeMoGInitGapAnalysis() {
+    if (this._NeSeMoGGapReady) return;
+    this._NeSeMoGGapReady = true;
+    const controlNames = ['MFA Enforcement', 'Network Segmentation', 'Encryption at Rest', 'Encryption in Transit', 'Endpoint Detection', 'SIEM Integration', 'Vulnerability Scanning', 'Patch Management', 'Access Reviews', 'Incident Response Plan', 'Data Loss Prevention', 'Security Awareness Training', 'Third-Party Risk Management', 'Log Retention Policy', 'Backup Verification', 'Privileged Access Mgmt', 'API Security Controls', 'Container Security', 'Cloud Security Posture', 'Zero Trust Architecture'];
+    const severities = ["critical","high","medium","low"] as const;
+    const statuses = ["Implemented","Partial","Missing","Planned"] as const;
+    const owners = ['Security Team', 'IT Operations', 'DevOps', 'Compliance', 'CISO Office', 'Infrastructure'];
+    this._NeSeMoGControls = controlNames.map((name, idx) => {
+      const status = statuses[idx % 4];
+      const implPct = status === "Implemented" ? 90 + Math.floor(Math.random() * 10) :
+        status === "Partial" ? 40 + Math.floor(Math.random() * 40) :
+        status === "Planned" ? 10 + Math.floor(Math.random() * 20) : Math.floor(Math.random() * 10);
+      const gapSeverity = implPct >= 80 ? "low" : implPct >= 50 ? "medium" : implPct >= 25 ? "high" : "critical";
+      const effortDays = status === "Implemented" ? 0 : 5 + Math.floor(Math.random() * 45);
+      return {
+        id: "CTL-" + String(idx + 1).padStart(3, "0"),
+        name,
+        status,
+        implementationPct: implPct,
+        gapSeverity,
+        remediationPriority: Math.max(1, 10 - Math.floor(implPct / 10)),
+        estimatedEffortDays: effortDays,
+        owner: owners[idx % owners.length],
+        targetClosureDate: effortDays > 0 ? "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0") : "Complete",
+        lastAssessed: "2025-06-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        complianceMapping: ["SOC2","ISO27001","NIST CSF","GDPR"].slice(0, 1 + Math.floor(Math.random() * 3)),
+        riskIfUnaddressed: +(20 + Math.random() * 80).toFixed(0)
+      };
+    });
+    this._NeSeMoGControls.sort((a, b) => (b.remediationPriority as number) - (a.remediationPriority as number));
+    this.requestUpdate();
+  }
+  private _NeSeMoGGetGapStats() {
+    const total = this._NeSeMoGControls.length;
+    const critical = this._NeSeMoGControls.filter(c => c.gapSeverity === "critical").length;
+    const high = this._NeSeMoGControls.filter(c => c.gapSeverity === "high").length;
+    const medium = this._NeSeMoGControls.filter(c => c.gapSeverity === "medium").length;
+    const low = this._NeSeMoGControls.filter(c => c.gapSeverity === "low").length;
+    const totalEffort = this._NeSeMoGControls.reduce((s, c) => s + (c.estimatedEffortDays as number), 0);
+    const avgImpl = this._NeSeMoGControls.reduce((s, c) => s + (c.implementationPct as number), 0) / total;
+    return { total, critical, high, medium, low, totalEffort, avgImplementation: Math.round(avgImpl) };
+  }
+
+  // === Security Program ROI Calculator (NeSeMo) ===
+  private _NeSeMoRRoiData: Record<string, unknown> = {};
+  private _NeSeMoRRoiReady = false;
+  private _NeSeMoRInitRoiCalc() {
+    if (this._NeSeMoRRoiReady) return;
+    this._NeSeMoRRoiReady = true;
+    const categories = ['Threat Detection', 'Incident Response', 'Compliance Automation', 'Security Awareness', 'Infrastructure Hardening'];
+    const roiDetails = categories.map((cat, idx) => {
+      const investment = 150000 + Math.floor(Math.random() * 850000);
+      const annualBenefit = investment * (1.5 + Math.random() * 3.5);
+      const costAvoidance = investment * (0.8 + Math.random() * 2.0);
+      const riskReduction = 15 + Math.floor(Math.random() * 65);
+      const timeToValue = 3 + Math.floor(Math.random() * 9);
+      return {
+        category: cat,
+        annualInvestment: investment,
+        annualBenefit: Math.round(annualBenefit),
+        costAvoidance: Math.round(costAvoidance),
+        roi: +((annualBenefit / investment - 1) * 100).toFixed(1),
+        riskReductionPct: riskReduction,
+        timeToValueMonths: timeToValue,
+        paybackPeriodMonths: Math.round(12 / (annualBenefit / investment)),
+        netPresentValue: Math.round(annualBenefit * 3 - investment * 3),
+        confidence: +(70 + Math.random() * 25).toFixed(0),
+        yearOverYearGrowth: +((-5 + Math.random() * 25)).toFixed(1)
+      };
+    });
+    this._NeSeMoRRoiData["categories"] = roiDetails;
+    const totalInvestment = roiDetails.reduce((s, c) => s + c.annualInvestment, 0);
+    const totalBenefit = roiDetails.reduce((s, c) => s + c.annualBenefit, 0);
+    this._NeSeMoRRoiData["executiveSummary"] = {
+      totalAnnualInvestment: totalInvestment,
+      totalAnnualBenefit: totalBenefit,
+      overallROI: +((totalBenefit / totalInvestment - 1) * 100).toFixed(1),
+      totalCostAvoidance: roiDetails.reduce((s, c) => s + c.costAvoidance, 0),
+      averageRiskReduction: Math.round(roiDetails.reduce((s, c) => s + c.riskReductionPct, 0) / roiDetails.length),
+      weightedTimeToValue: Math.round(roiDetails.reduce((s, c) => s + c.timeToValueMonths, 0) / roiDetails.length),
+      programHealthScore: +(75 + Math.random() * 20).toFixed(0),
+      benchmarkComparison: "Top quartile" as const,
+      maturityLevel: ["Developing","Established","Mature","Optimizing"][Math.floor(Math.random() * 4)]
+    };
+    this.requestUpdate();
+  }
+  private _NeSeMoRGetRoiGauge(value: number): string {
+    if (value >= 300) return "excellent";
+    if (value >= 200) return "good";
+    if (value >= 100) return "moderate";
+    return "needs-improvement";
+  }
+
+  // === Security Team Workload Balancer (NeSeMo) ===
+  private _NeSeMoWTMembers: Array<Record<string, unknown>> = [];
+  private _NeSeMoWTReady = false;
+  private _NeSeMoWTInitWorkload() {
+    if (this._NeSeMoWTReady) return;
+    this._NeSeMoWTReady = true;
+    const members = ['Alice Chen', 'Bob Martinez', 'Carol Davis', 'David Kim', 'Eva Mueller', 'Frank Obi', 'Grace Liu', 'Henry Patel', 'Iris Novak', 'Jack Wilson', 'Kate Thompson', 'Leo Santos'];
+    const skills = ['Incident Response', 'Threat Hunting', 'Forensics', 'Compliance', 'Architecture', 'Automation', 'Cloud Security', 'Network Security', 'Application Security', 'GRC', 'Penetration Testing', 'SOC Analysis'];
+    this._NeSeMoWTMembers = members.map((name, idx) => {
+      const capacity = 70 + Math.floor(Math.random() * 55);
+      const utilization = Math.min(120, capacity - 10 + Math.floor(Math.random() * 60));
+      const burnoutRisk = utilization > 100 ? "high" : utilization > 85 ? "medium" : "low";
+      const weeklyTrend = [35 + Math.floor(Math.random() * 40), 40 + Math.floor(Math.random() * 40),
+        45 + Math.floor(Math.random() * 40), 40 + Math.floor(Math.random() * 40)];
+      const primarySkill = skills[idx % skills.length];
+      const secondarySkill = skills[(idx + 3) % skills.length];
+      return {
+        name,
+        currentTasks: 3 + Math.floor(Math.random() * 12),
+        capacityPct: Math.min(130, capacity),
+        utilizationPct: utilization,
+        burnoutRisk,
+        primarySkill,
+        secondarySkill,
+        weeklyTrend,
+        avgTaskDuration: +(1 + Math.random() * 7).toFixed(1),
+        overdueTasks: Math.floor(Math.random() * 3),
+        suggestedRebalance: utilization > 95 ? "Redistribute " + Math.floor((utilization - 90) / 10) + " tasks" : "Balanced"
+      };
+    });
+    this.requestUpdate();
+  }
+  private _NeSeMoWTGetTeamStats() {
+    const members = this._NeSeMoWTMembers;
+    if (!members.length) return null;
+    const avgUtil = members.reduce((s, m) => s + (m.utilizationPct as number), 0) / members.length;
+    const burnoutCount = members.filter(m => m.burnoutRisk === "high").length;
+    const balancedCount = members.filter(m => m.burnoutRisk === "low" && (m.utilizationPct as number) < 95).length;
+    return { avgUtilization: Math.round(avgUtil), burnoutCount, balancedCount, totalMembers: members.length };
+  }
+
+  // === Security Regulatory Tracker (NeSeMo) ===
+  private _NeSeMoRTRegs: Array<Record<string, unknown>> = [];
+  private _NeSeMoRTChanges: Array<Record<string, unknown>> = [];
+  private _NeSeMoRTReady = false;
+  private _NeSeMoRTInitRegTracker() {
+    if (this._NeSeMoRTReady) return;
+    this._NeSeMoRTReady = true;
+    const regulations = ['GDPR', 'CCPA/CPRA', 'HIPAA', 'PCI DSS 4.0', 'SOX', 'NIST CSF 2.0', 'DORA', 'SEC Cyber Rules'];
+    const complianceStatuses = ["Compliant","Partial","Non-Compliant","In Review"] as const;
+    this._NeSeMoRTRegs = regulations.map((reg, idx) => {
+      const status = complianceStatuses[idx % 4];
+      const daysUntilDeadline = status === "Compliant" ? 0 : 30 + Math.floor(Math.random() * 270);
+      return {
+        regulation: reg,
+        status,
+        compliancePct: status === "Compliant" ? 95 + Math.floor(Math.random() * 5) :
+          status === "Partial" ? 50 + Math.floor(Math.random() * 35) : 10 + Math.floor(Math.random() * 30),
+        daysUntilDeadline,
+        riskScore: status === "Compliant" ? +(5 + Math.random() * 15).toFixed(0) : +(30 + Math.random() * 60).toFixed(0),
+        lastAudit: "2025-0" + (1 + Math.floor(Math.random() * 6)) + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        nextAudit: "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        owner: ["CISO","DPO","CLO","CRO","VP Compliance","CTO","CISO","CFO"][idx],
+        overlappingRegs: regulations.filter((_, i) => i !== idx).slice(0, 1 + Math.floor(Math.random() * 2))
+      };
+    });
+    const changeDescriptions = ['New AI governance requirements published', 'Data breach notification timeline reduced to 72h', 'Third-party risk assessment standards updated', 'Cloud security controls added to framework', 'Incident reporting requirements expanded', 'Cross-border data transfer mechanisms revised'];
+    this._NeSeMoRTChanges = changeDescriptions.map((desc, idx) => ({
+      id: "REG-CHG-" + String(idx + 1).padStart(3, "0"),
+      description: desc,
+      affectedRegulations: regulations.slice(idx % 3, idx % 3 + 2),
+      impactLevel: ["High","Medium","Low"][idx % 3],
+      effectiveDate: "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-01",
+      actionRequired: idx % 2 === 0 ? "Policy update needed" : "Technical controls adjustment",
+      readiness: +(20 + Math.random() * 70).toFixed(0)
+    }));
+    this.requestUpdate();
+  }
+  private _NeSeMoRTGetComplianceSummary() {
+    const regs = this._NeSeMoRTRegs;
+    if (!regs.length) return null;
+    const compliant = regs.filter(r => r.status === "Compliant").length;
+    const avgCompliance = regs.reduce((s, r) => s + (r.compliancePct as number), 0) / regs.length;
+    const highRisk = regs.filter(r => (r.riskScore as number) > 50).length;
+    return { total: regs.length, compliant, avgCompliance: Math.round(avgCompliance), highRiskRegs: highRisk };
+  }
+
 
   render() {
     return html`

@@ -7574,6 +7574,317 @@ export class ScVulnManagementWorkflow extends LitElement {
       encryptionEnabled: true, mTLS: String(s.securityLevel) === 'high'
     }));
   }
+  // === Security Threat Landscape Dashboard (VuMaWo) ===
+  private _VuMaWoLThreatData = {} as Record<string, unknown[]>;
+  private _VuMaWoLThreatReady = false;
+  private _VuMaWoLInitThreatLandscape() {
+    if (this._VuMaWoLThreatReady) return;
+    this._VuMaWoLThreatReady = true;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const categories = ['Malware', 'Phishing', 'Ransomware', 'Insider', 'DDoS', 'Supply Chain'];
+    const severityTrend: Record<string, number[]> = {};
+    categories.forEach((cat: string) => {
+      severityTrend[cat] = months.map((_: string, i: number) => {
+        const base = 40 + Math.floor(Math.random() * 60);
+        const seasonal = Math.sin((i / 11) * Math.PI * 2) * 15;
+        return Math.max(10, Math.min(100, Math.round(base + seasonal)));
+      });
+    });
+    this._VuMaWoLThreatData["severityTrend"] = Object.entries(severityTrend).map(([cat, vals]) => ({ category: cat, monthlyScores: vals }));
+    const emergingThreats = [('AI-Powered Phishing', 'High', 'email', 45), ('Deepfake Social Eng', 'Critical', 'social', 32), ('IoT Botnet Variant', 'High', 'network', 28), ('Cloud Misconfig Exploit', 'Medium', 'web', 22), ('Ransomware-as-Service', 'Critical', 'network', 51), ('Supply Chain Backdoor', 'Critical', 'network', 38), ('QR Code Phishing', 'Medium', 'physical', 19), ('Voice Cloning Fraud', 'High', 'social', 26)];
+    this._VuMaWoLThreatData["emergingRadar"] = emergingThreats.map(([name, severity, vector, score]) => ({
+      name, severity, primaryVector: vector, riskScore: score,
+      firstDetected: "2025-Q" + (1 + Math.floor(Math.random() * 4)),
+      growthRate: +(10 + Math.random() * 40).toFixed(1),
+      affectedIndustries: ["Finance","Healthcare","Tech","Government"].slice(0, 1 + Math.floor(Math.random() * 3))
+    }));
+    const threatVectors = ['Email', 'Web', 'Network', 'Physical', 'Social'];
+    this._VuMaWoLThreatData["volumeByVector"] = threatVectors.map(v => ({
+      vector: v,
+      volume24h: 120 + Math.floor(Math.random() * 880),
+      volume7d: 2800 + Math.floor(Math.random() * 12000),
+      volume30d: 12000 + Math.floor(Math.random() * 48000),
+      trendDirection: Math.random() > 0.5 ? "increasing" : "decreasing",
+      topThreatType: ["Phishing","Malware","DDoS","Social Engineering","Physical Breach"][threatVectors.indexOf(v) % 5]
+    }));
+    this._VuMaWoLThreatData["sophisticationProgression"] = [
+      {period: "2020", level: "Basic", score: 25}, {period: "2021", level: "Intermediate", score: 42},
+      {period: "2022", level: "Advanced", score: 61}, {period: "2023", level: "Sophisticated", score: 78},
+      {period: "2024", level: "AI-Augmented", score: 89}, {period: "2025", level: "Autonomous", score: 95}
+    ];
+    const geoRegions = ["North America","Europe","Asia-Pacific","Middle East","Latin America","Africa"];
+    this._VuMaWoLThreatData["geographicDistribution"] = geoRegions.map(region => ({
+      region, threatDensity: +(3 + Math.random() * 9).toFixed(1),
+      topThreatCategory: categories[Math.floor(Math.random() * categories.length)],
+      activeCampaigns: Math.floor(Math.random() * 25),
+      mitigationReadiness: +(20 + Math.random() * 80).toFixed(0)
+    }));
+    this._VuMaWoLThreatData["predictionModel"] = {
+      modelAccuracy: +(82 + Math.random() * 15).toFixed(1),
+      predictedNextMonthTrend: +(5 + Math.random() * 30).toFixed(1),
+      confidenceInterval: [65, 92],
+      highRiskWindows: ["2025-07-15 to 2025-07-22", "2025-08-10 to 2025-08-18"],
+      recommendedActions: ["Increase monitoring on email vectors", "Patch critical vulnerabilities within 48h",
+        "Conduct tabletop exercises for ransomware scenarios", "Review supply chain access controls"]
+    };
+    this.requestUpdate();
+  }
+
+  // === Security Controls Gap Analysis (VuMaWo) ===
+  private _VuMaWoGControls: Array<Record<string, unknown>> = [];
+  private _VuMaWoGGapReady = false;
+  private _VuMaWoGInitGapAnalysis() {
+    if (this._VuMaWoGGapReady) return;
+    this._VuMaWoGGapReady = true;
+    const controlNames = ['MFA Enforcement', 'Network Segmentation', 'Encryption at Rest', 'Encryption in Transit', 'Endpoint Detection', 'SIEM Integration', 'Vulnerability Scanning', 'Patch Management', 'Access Reviews', 'Incident Response Plan', 'Data Loss Prevention', 'Security Awareness Training', 'Third-Party Risk Management', 'Log Retention Policy', 'Backup Verification', 'Privileged Access Mgmt', 'API Security Controls', 'Container Security', 'Cloud Security Posture', 'Zero Trust Architecture'];
+    const severities = ["critical","high","medium","low"] as const;
+    const statuses = ["Implemented","Partial","Missing","Planned"] as const;
+    const owners = ['Security Team', 'IT Operations', 'DevOps', 'Compliance', 'CISO Office', 'Infrastructure'];
+    this._VuMaWoGControls = controlNames.map((name, idx) => {
+      const status = statuses[idx % 4];
+      const implPct = status === "Implemented" ? 90 + Math.floor(Math.random() * 10) :
+        status === "Partial" ? 40 + Math.floor(Math.random() * 40) :
+        status === "Planned" ? 10 + Math.floor(Math.random() * 20) : Math.floor(Math.random() * 10);
+      const gapSeverity = implPct >= 80 ? "low" : implPct >= 50 ? "medium" : implPct >= 25 ? "high" : "critical";
+      const effortDays = status === "Implemented" ? 0 : 5 + Math.floor(Math.random() * 45);
+      return {
+        id: "CTL-" + String(idx + 1).padStart(3, "0"),
+        name,
+        status,
+        implementationPct: implPct,
+        gapSeverity,
+        remediationPriority: Math.max(1, 10 - Math.floor(implPct / 10)),
+        estimatedEffortDays: effortDays,
+        owner: owners[idx % owners.length],
+        targetClosureDate: effortDays > 0 ? "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0") : "Complete",
+        lastAssessed: "2025-06-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        complianceMapping: ["SOC2","ISO27001","NIST CSF","GDPR"].slice(0, 1 + Math.floor(Math.random() * 3)),
+        riskIfUnaddressed: +(20 + Math.random() * 80).toFixed(0)
+      };
+    });
+    this._VuMaWoGControls.sort((a, b) => (b.remediationPriority as number) - (a.remediationPriority as number));
+    this.requestUpdate();
+  }
+  private _VuMaWoGGetGapStats() {
+    const total = this._VuMaWoGControls.length;
+    const critical = this._VuMaWoGControls.filter(c => c.gapSeverity === "critical").length;
+    const high = this._VuMaWoGControls.filter(c => c.gapSeverity === "high").length;
+    const medium = this._VuMaWoGControls.filter(c => c.gapSeverity === "medium").length;
+    const low = this._VuMaWoGControls.filter(c => c.gapSeverity === "low").length;
+    const totalEffort = this._VuMaWoGControls.reduce((s, c) => s + (c.estimatedEffortDays as number), 0);
+    const avgImpl = this._VuMaWoGControls.reduce((s, c) => s + (c.implementationPct as number), 0) / total;
+    return { total, critical, high, medium, low, totalEffort, avgImplementation: Math.round(avgImpl) };
+  }
+
+  // === Security Program ROI Calculator (VuMaWo) ===
+  private _VuMaWoRRoiData: Record<string, unknown> = {};
+  private _VuMaWoRRoiReady = false;
+  private _VuMaWoRInitRoiCalc() {
+    if (this._VuMaWoRRoiReady) return;
+    this._VuMaWoRRoiReady = true;
+    const categories = ['Threat Detection', 'Incident Response', 'Compliance Automation', 'Security Awareness', 'Infrastructure Hardening'];
+    const roiDetails = categories.map((cat, idx) => {
+      const investment = 150000 + Math.floor(Math.random() * 850000);
+      const annualBenefit = investment * (1.5 + Math.random() * 3.5);
+      const costAvoidance = investment * (0.8 + Math.random() * 2.0);
+      const riskReduction = 15 + Math.floor(Math.random() * 65);
+      const timeToValue = 3 + Math.floor(Math.random() * 9);
+      return {
+        category: cat,
+        annualInvestment: investment,
+        annualBenefit: Math.round(annualBenefit),
+        costAvoidance: Math.round(costAvoidance),
+        roi: +((annualBenefit / investment - 1) * 100).toFixed(1),
+        riskReductionPct: riskReduction,
+        timeToValueMonths: timeToValue,
+        paybackPeriodMonths: Math.round(12 / (annualBenefit / investment)),
+        netPresentValue: Math.round(annualBenefit * 3 - investment * 3),
+        confidence: +(70 + Math.random() * 25).toFixed(0),
+        yearOverYearGrowth: +((-5 + Math.random() * 25)).toFixed(1)
+      };
+    });
+    this._VuMaWoRRoiData["categories"] = roiDetails;
+    const totalInvestment = roiDetails.reduce((s, c) => s + c.annualInvestment, 0);
+    const totalBenefit = roiDetails.reduce((s, c) => s + c.annualBenefit, 0);
+    this._VuMaWoRRoiData["executiveSummary"] = {
+      totalAnnualInvestment: totalInvestment,
+      totalAnnualBenefit: totalBenefit,
+      overallROI: +((totalBenefit / totalInvestment - 1) * 100).toFixed(1),
+      totalCostAvoidance: roiDetails.reduce((s, c) => s + c.costAvoidance, 0),
+      averageRiskReduction: Math.round(roiDetails.reduce((s, c) => s + c.riskReductionPct, 0) / roiDetails.length),
+      weightedTimeToValue: Math.round(roiDetails.reduce((s, c) => s + c.timeToValueMonths, 0) / roiDetails.length),
+      programHealthScore: +(75 + Math.random() * 20).toFixed(0),
+      benchmarkComparison: "Top quartile" as const,
+      maturityLevel: ["Developing","Established","Mature","Optimizing"][Math.floor(Math.random() * 4)]
+    };
+    this.requestUpdate();
+  }
+  private _VuMaWoRGetRoiGauge(value: number): string {
+    if (value >= 300) return "excellent";
+    if (value >= 200) return "good";
+    if (value >= 100) return "moderate";
+    return "needs-improvement";
+  }
+
+  // === Security Team Workload Balancer (VuMaWo) ===
+  private _VuMaWoWTMembers: Array<Record<string, unknown>> = [];
+  private _VuMaWoWTReady = false;
+  private _VuMaWoWTInitWorkload() {
+    if (this._VuMaWoWTReady) return;
+    this._VuMaWoWTReady = true;
+    const members = ['Alice Chen', 'Bob Martinez', 'Carol Davis', 'David Kim', 'Eva Mueller', 'Frank Obi', 'Grace Liu', 'Henry Patel', 'Iris Novak', 'Jack Wilson', 'Kate Thompson', 'Leo Santos'];
+    const skills = ['Incident Response', 'Threat Hunting', 'Forensics', 'Compliance', 'Architecture', 'Automation', 'Cloud Security', 'Network Security', 'Application Security', 'GRC', 'Penetration Testing', 'SOC Analysis'];
+    this._VuMaWoWTMembers = members.map((name, idx) => {
+      const capacity = 70 + Math.floor(Math.random() * 55);
+      const utilization = Math.min(120, capacity - 10 + Math.floor(Math.random() * 60));
+      const burnoutRisk = utilization > 100 ? "high" : utilization > 85 ? "medium" : "low";
+      const weeklyTrend = [35 + Math.floor(Math.random() * 40), 40 + Math.floor(Math.random() * 40),
+        45 + Math.floor(Math.random() * 40), 40 + Math.floor(Math.random() * 40)];
+      const primarySkill = skills[idx % skills.length];
+      const secondarySkill = skills[(idx + 3) % skills.length];
+      return {
+        name,
+        currentTasks: 3 + Math.floor(Math.random() * 12),
+        capacityPct: Math.min(130, capacity),
+        utilizationPct: utilization,
+        burnoutRisk,
+        primarySkill,
+        secondarySkill,
+        weeklyTrend,
+        avgTaskDuration: +(1 + Math.random() * 7).toFixed(1),
+        overdueTasks: Math.floor(Math.random() * 3),
+        suggestedRebalance: utilization > 95 ? "Redistribute " + Math.floor((utilization - 90) / 10) + " tasks" : "Balanced"
+      };
+    });
+    this.requestUpdate();
+  }
+  private _VuMaWoWTGetTeamStats() {
+    const members = this._VuMaWoWTMembers;
+    if (!members.length) return null;
+    const avgUtil = members.reduce((s, m) => s + (m.utilizationPct as number), 0) / members.length;
+    const burnoutCount = members.filter(m => m.burnoutRisk === "high").length;
+    const balancedCount = members.filter(m => m.burnoutRisk === "low" && (m.utilizationPct as number) < 95).length;
+    return { avgUtilization: Math.round(avgUtil), burnoutCount, balancedCount, totalMembers: members.length };
+  }
+
+  // === Security Regulatory Tracker (VuMaWo) ===
+  private _VuMaWoRTRegs: Array<Record<string, unknown>> = [];
+  private _VuMaWoRTChanges: Array<Record<string, unknown>> = [];
+  private _VuMaWoRTReady = false;
+  private _VuMaWoRTInitRegTracker() {
+    if (this._VuMaWoRTReady) return;
+    this._VuMaWoRTReady = true;
+    const regulations = ['GDPR', 'CCPA/CPRA', 'HIPAA', 'PCI DSS 4.0', 'SOX', 'NIST CSF 2.0', 'DORA', 'SEC Cyber Rules'];
+    const complianceStatuses = ["Compliant","Partial","Non-Compliant","In Review"] as const;
+    this._VuMaWoRTRegs = regulations.map((reg, idx) => {
+      const status = complianceStatuses[idx % 4];
+      const daysUntilDeadline = status === "Compliant" ? 0 : 30 + Math.floor(Math.random() * 270);
+      return {
+        regulation: reg,
+        status,
+        compliancePct: status === "Compliant" ? 95 + Math.floor(Math.random() * 5) :
+          status === "Partial" ? 50 + Math.floor(Math.random() * 35) : 10 + Math.floor(Math.random() * 30),
+        daysUntilDeadline,
+        riskScore: status === "Compliant" ? +(5 + Math.random() * 15).toFixed(0) : +(30 + Math.random() * 60).toFixed(0),
+        lastAudit: "2025-0" + (1 + Math.floor(Math.random() * 6)) + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        nextAudit: "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-" + String(1 + Math.floor(Math.random() * 28)).padStart(2, "0"),
+        owner: ["CISO","DPO","CLO","CRO","VP Compliance","CTO","CISO","CFO"][idx],
+        overlappingRegs: regulations.filter((_, i) => i !== idx).slice(0, 1 + Math.floor(Math.random() * 2))
+      };
+    });
+    const changeDescriptions = ['New AI governance requirements published', 'Data breach notification timeline reduced to 72h', 'Third-party risk assessment standards updated', 'Cloud security controls added to framework', 'Incident reporting requirements expanded', 'Cross-border data transfer mechanisms revised'];
+    this._VuMaWoRTChanges = changeDescriptions.map((desc, idx) => ({
+      id: "REG-CHG-" + String(idx + 1).padStart(3, "0"),
+      description: desc,
+      affectedRegulations: regulations.slice(idx % 3, idx % 3 + 2),
+      impactLevel: ["High","Medium","Low"][idx % 3],
+      effectiveDate: "2025-" + String(7 + Math.floor(Math.random() * 6)).padStart(2, "0") + "-01",
+      actionRequired: idx % 2 === 0 ? "Policy update needed" : "Technical controls adjustment",
+      readiness: +(20 + Math.random() * 70).toFixed(0)
+    }));
+    this.requestUpdate();
+  }
+  private _VuMaWoRTGetComplianceSummary() {
+    const regs = this._VuMaWoRTRegs;
+    if (!regs.length) return null;
+    const compliant = regs.filter(r => r.status === "Compliant").length;
+    const avgCompliance = regs.reduce((s, r) => s + (r.compliancePct as number), 0) / regs.length;
+    const highRisk = regs.filter(r => (r.riskScore as number) > 50).length;
+    return { total: regs.length, compliant, avgCompliance: Math.round(avgCompliance), highRiskRegs: highRisk };
+  }
+  // === Advanced Security Analytics Layer (VuMaWo) ===
+  private _VuMaWoXAnalyticsReady = false;
+  private _VuMaWoXBehaviorProfiles: Record<string, number[]> = {};
+  private _VuMaWoXAnomalyScores: number[] = [];
+  private _VuMaWoXRiskFactors: Array<Record<string, unknown>> = [];
+  private _VuMaWoXTemporalPatterns: Record<string, number> = {};
+  private _VuMaWoXCorrelationMatrix: number[][] = [];
+  private _VuMaWoXInitAnalytics() {
+    if (this._VuMaWoXAnalyticsReady) return;
+    this._VuMaWoXAnalyticsReady = true;
+    const entityTypes = ["users","endpoints","services","networks","applications","datastores"];
+    entityTypes.forEach(entity => {
+      this._VuMaWoXBehaviorProfiles[entity] = Array.from({ length: 24 }, (_, h) => {
+        const baseActivity = entity === "users" ? 30 : entity === "networks" ? 80 : 50;
+        const hourFactor = Math.sin((h - 6) / 24 * Math.PI * 2) * 0.6 + 0.4;
+        return Math.round(baseActivity * hourFactor + Math.random() * 20 - 10);
+      });
+    });
+    this._VuMaWoXAnomalyScores = Array.from({ length: 30 }, (_, d) => {
+      const trend = Math.sin(d / 30 * Math.PI) * 20;
+      const noise = Math.random() * 15 - 7;
+      const spike = d === 17 ? 35 : d === 23 ? 28 : 0;
+      return Math.max(0, Math.min(100, Math.round(25 + trend + noise + spike)));
+    });
+    const riskCategories = ["Data Exposure","Access Violation","Configuration Drift",
+      "Compliance Deviation","Performance Anomaly","Threat Intelligence Match"];
+    this._VuMaWoXRiskFactors = riskCategories.map((cat, idx) => {
+      const currentScore = 20 + Math.floor(Math.random() * 60);
+      const trend30d = Array.from({ length: 30 }, (_, d) => {
+        const direction = Math.random() > 0.3 ? 1 : -1;
+        return Math.max(0, Math.min(100, currentScore + Math.round(direction * d * 0.8 + Math.random() * 10 - 5)));
+      });
+      return {
+        category: cat,
+        currentScore,
+        severity: currentScore > 70 ? "critical" : currentScore > 50 ? "high" : currentScore > 30 ? "medium" : "low",
+        trend30d,
+        contributingFactors: Math.floor(2 + Math.random() * 6),
+        topContributor: ["Misconfiguration","Policy Violation","Expired Certificate","Unpatched System","Weak Credential","Anomalous Traffic"][idx],
+        remediationStatus: ["Open","In Progress","Mitigated","Resolved"][idx % 4],
+        estimatedFixHours: 2 + Math.floor(Math.random() * 46)
+      };
+    });
+    const dayNames = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const hourNames = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0") + ":00");
+    dayNames.forEach(day => {
+      hourNames.forEach(hour => {
+        const key = day + "_" + hour;
+        const isWeekend = day === "Sat" || day === "Sun";
+        const hourNum = parseInt(hour.split(":")[0]);
+        const isBusinessHours = hourNum >= 9 && hourNum <= 17;
+        let base = isWeekend ? 15 : isBusinessHours ? 65 : 30;
+        this._VuMaWoXTemporalPatterns[key] = Math.round(base + Math.random() * 20 - 10);
+      });
+    });
+    const dims = 8;
+    this._VuMaWoXCorrelationMatrix = Array.from({ length: dims }, (_, i) =>
+      Array.from({ length: dims }, (_, j) => {
+        if (i === j) return 1.0;
+        return +(0.1 + Math.random() * 0.8).toFixed(2);
+      })
+    );
+    this.requestUpdate();
+  }
+  private _VuMaWoXGetAnalyticsSummary() {
+    const avgAnomaly = this._VuMaWoXAnomalyScores.length > 0
+      ? this._VuMaWoXAnomalyScores.reduce((a, b) => a + b, 0) / this._VuMaWoXAnomalyScores.length : 0;
+    const criticalRisk = this._VuMaWoXRiskFactors.filter(r => r.severity === "critical").length;
+    const peakHour = Object.entries(this._VuMaWoXTemporalPatterns)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+    return { avgAnomalyScore: Math.round(avgAnomaly), criticalRiskCount: criticalRisk, peakActivityHour: peakHour };
+  }
+
 
   render() {
     const findings = this._getFilteredFindings();
