@@ -1301,6 +1301,519 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+
+  // ===== THREAT HUNTING WORKSPACE MODULE =====
+  @state() private _huntHypotheses: Array<{
+    id: string; title: string; description: string; status: 'active' | 'validated' | 'refuted' | 'pending';
+    created: string; lastUpdated: string; assignedTo: string; killChainStage: string;
+    iocPivots: number; findingsCount: number; confidence: number;
+  }> = [
+    { id: 'h-001', title: 'Credential Dumping via LSASS', description: 'Investigate potential LSASS access patterns from non-system processes',
+      status: 'active', created: '2026-04-20T08:00:00Z', lastUpdated: '2026-04-23T06:30:00Z',
+      assignedTo: 'Hunter-A', killChainStage: 'Credential Access', iocPivots: 12, findingsCount: 3, confidence: 72 },
+    { id: 'h-002', title: 'Lateral Movement via RDP', description: 'Detect anomalous RDP connections between workstations',
+      status: 'validated', created: '2026-04-19T14:00:00Z', lastUpdated: '2026-04-22T18:00:00Z',
+      assignedTo: 'Hunter-B', killChainStage: 'Lateral Movement', iocPivots: 8, findingsCount: 5, confidence: 89 },
+    { id: 'h-003', title: 'DNS Tunneling Detection', description: 'Analyze DNS query patterns for potential data exfiltration tunnels',
+      status: 'pending', created: '2026-04-21T10:00:00Z', lastUpdated: '2026-04-21T10:00:00Z',
+      assignedTo: 'Hunter-C', killChainStage: 'Command & Control', iocPivots: 3, findingsCount: 0, confidence: 35 },
+    { id: 'h-004', title: 'Persistence via Scheduled Tasks', description: 'Hunt for suspicious scheduled task creations on critical servers',
+      status: 'active', created: '2026-04-18T09:00:00Z', lastUpdated: '2026-04-22T12:00:00Z',
+      assignedTo: 'Hunter-A', killChainStage: 'Persistence', iocPivots: 6, findingsCount: 2, confidence: 64 },
+    { id: 'h-005', title: 'Living off the Land Binaries', description: 'Identify abuse of legitimate system tools for malicious purposes',
+      status: 'refuted', created: '2026-04-17T11:00:00Z', lastUpdated: '2026-04-20T16:00:00Z',
+      assignedTo: 'Hunter-D', killChainStage: 'Defense Evasion', iocPivots: 15, findingsCount: 1, confidence: 91 },
+  ];
+  @state() private _huntSessions: Array<{
+    id: string; hypothesisId: string; startedAt: string; endedAt: string | null; duration: number;
+    queriesRun: number; resultsFound: number; truePositives: number; falsePositives: number; status: 'running' | 'completed' | 'paused';
+  }> = [
+    { id: 's-001', hypothesisId: 'h-001', startedAt: '2026-04-23T06:00:00Z', endedAt: null, duration: 4500,
+      queriesRun: 24, resultsFound: 8, truePositives: 3, falsePositives: 5, status: 'running' },
+    { id: 's-002', hypothesisId: 'h-002', startedAt: '2026-04-22T14:00:00Z', endedAt: '2026-04-22T18:00:00Z', duration: 14400,
+      queriesRun: 47, resultsFound: 12, truePositives: 5, falsePositives: 7, status: 'completed' },
+    { id: 's-003', hypothesisId: 'h-004', startedAt: '2026-04-22T08:00:00Z', endedAt: '2026-04-22T11:30:00Z', duration: 12600,
+      queriesRun: 31, resultsFound: 6, truePositives: 2, falsePositives: 4, status: 'completed' },
+  ];
+  @state() private _huntTimer: number = 0;
+  @state() private _huntTimerRunning: boolean = false;
+  @state() private _selectedHypothesis: string = 'h-001';
+
+  private _renderHuntingWorkspace(): unknown {
+    const statusColors: Record<string, string> = { active: '#3b82f6', validated: '#22c55e', refuted: '#ef4444', pending: '#f59e0b', running: '#3b82f6', completed: '#22c55e', paused: '#f59e0b' };
+    const formatDuration = (s: number) => { const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60); return h > 0 ? h + 'h ' + m + 'm' : m + 'm'; };
+    return html`
+      <div style="padding:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:#e2e8f0">Threat Hunting Workspace</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:9px;color:#9ca3af">Session Timer:</span>
+            <span style="font-size:10px;font-weight:600;color:#60a5fa;font-family:monospace">${formatDuration(this._huntTimer)}</span>
+            <button @click=${() => { this._huntTimerRunning = !this._huntTimerRunning; }}
+              style="padding:2px 8px;font-size:8px;border-radius:3px;border:1px solid #374151;background:${this._huntTimerRunning ? '#dc2626' : '#1f2937'};color:#e2e8f0;cursor:pointer">${this._huntTimerRunning ? 'Stop' : 'Start'}</button>
+          </div>
+        </div>
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Active Hypotheses</div>
+        ${this._huntHypotheses.filter(h => h.status !== 'refuted').map(h => html`
+          <div style="padding:5px 8px;background:${h.id === this._selectedHypothesis ? '#1e3a5f' : '#111827'};border:1px solid ${h.id === this._selectedHypothesis ? '#2563eb' : '#1f2937'};border-radius:4px;margin-bottom:3px;cursor:pointer"
+            @click=${() => { this._selectedHypothesis = h.id; }}>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="width:6px;height:6px;border-radius:50%;background:${statusColors[h.status]}"></span>
+                <span style="font-size:9px;font-weight:600;color:#e2e8f0">${h.title}</span>
+                <span style="font-size:7px;color:#6b7280;background:#1f2937;padding:1px 4px;border-radius:2px">${h.killChainStage}</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <span style="font-size:8px;color:#60a5fa">IOCs: ${h.iocPivots}</span>
+                <span style="font-size:8px;color:#22c55e">Findings: ${h.findingsCount}</span>
+                <span style="font-size:8px;color:${h.confidence > 70 ? '#22c55e' : h.confidence > 40 ? '#f59e0b' : '#ef4444'}">${h.confidence}%</span>
+              </div>
+            </div>
+            <div style="font-size:7px;color:#6b7280;margin-top:2px;margin-left:12px">${h.description}</div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Hunt Sessions</div>
+        ${this._huntSessions.map(s => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="width:5px;height:5px;border-radius:50%;background:${statusColors[s.status]}"></span>
+              <span style="color:#e2e8f0;font-weight:600">${s.id}</span>
+              <span style="color:#6b7280">${formatDuration(s.duration)}</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <span style="color:#9ca3af">Queries: ${s.queriesRun}</span>
+              <span style="color:#22c55e">TP: ${s.truePositives}</span>
+              <span style="color:#ef4444">FP: ${s.falsePositives}</span>
+              <span style="color:#60a5fa">Precision: ${s.resultsFound > 0 ? Math.round(s.truePositives/s.resultsFound*100) : 0}%</span>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Hypothesis Evolution Timeline</div>
+        ${[
+          { date: 'Apr 17', event: 'H005 Living off the Land - Refuted after 47 queries, confirmed as admin activity', status: 'refuted' },
+          { date: 'Apr 18', event: 'H004 Scheduled Tasks - 2 suspicious tasks found on DC-01 and FILE-03', status: 'active' },
+          { date: 'Apr 19', event: 'H002 RDP Lateral Movement - Validated: 5 confirmed lateral hops from WKST-07', status: 'validated' },
+          { date: 'Apr 20', event: 'H001 LSASS Credential Dumping - Elevated priority based on H002 findings', status: 'active' },
+          { date: 'Apr 21', event: 'H003 DNS Tunneling - New hypothesis created from anomaly detection alerts', status: 'pending' },
+        ].map(e => html`
+          <div style="padding:3px 8px;border-left:2px solid ${statusColors[e.status]};margin-bottom:2px;margin-left:4px;font-size:7px">
+            <span style="color:#60a5fa;font-weight:600">${e.date}</span>
+            <span style="color:#9ca3af;margin-left:6px">${e.event}</span>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // ===== DIGITAL FORENSICS LAB MODULE =====
+  @state() private _forensicCases: Array<{
+    id: string; caseName: string; status: 'open' | 'in-progress' | 'closed' | 'archived';
+    priority: 'critical' | 'high' | 'medium' | 'low'; assignedTo: string; created: string;
+    evidenceItems: number; artifacts: number; timelineEvents: number; findings: number;
+  }> = [
+    { id: 'fc-001', caseName: 'Ransomware Incident - FIN-DEPT', status: 'in-progress', priority: 'critical',
+      assignedTo: 'Forensics-A', created: '2026-04-15T08:00:00Z', evidenceItems: 23, artifacts: 156, timelineEvents: 89, findings: 34 },
+    { id: 'fc-002', caseName: 'Insider Threat - Engineering', status: 'open', priority: 'high',
+      assignedTo: 'Forensics-B', created: '2026-04-20T14:00:00Z', evidenceItems: 8, artifacts: 45, timelineEvents: 23, findings: 12 },
+    { id: 'fc-003', caseName: 'Data Exfiltration Attempt', status: 'in-progress', priority: 'high',
+      assignedTo: 'Forensics-A', created: '2026-04-18T10:00:00Z', evidenceItems: 15, artifacts: 78, timelineEvents: 56, findings: 18 },
+    { id: 'fc-004', caseName: 'Phishing Campaign Analysis', status: 'closed', priority: 'medium',
+      assignedTo: 'Forensics-C', created: '2026-04-10T09:00:00Z', evidenceItems: 31, artifacts: 203, timelineEvents: 120, findings: 45 },
+  ];
+  @state() private _chainOfCustody: Array<{
+    id: string; caseId: string; item: string; collectedBy: string; collectedAt: string;
+    hashMd5: string; hashSha1: string; hashSha256: string; storage: string;
+    transferLog: string;
+  }> = [
+    { id: 'coc-001', caseId: 'fc-001', item: 'WKST-FIN01 Memory Dump', collectedBy: 'Forensics-A', collectedAt: '2026-04-15T09:30:00Z',
+      hashMd5: 'a3f2b8c1d4e5f6a7b8c9d0e1f2a3b4c5', hashSha1: 'b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', hashSha256: 'c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7',
+      storage: 'Evidence Locker A-3', transferLog: 'Scene -> Lab (Apr 15) -> Reviewer (Apr 16)' },
+    { id: 'coc-002', caseId: 'fc-001', item: 'Server-FIN01 Disk Image', collectedBy: 'Forensics-A', collectedAt: '2026-04-15T11:00:00Z',
+      hashMd5: 'd4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9', hashSha1: 'e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3', hashSha256: 'f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7',
+      storage: 'Evidence Locker A-3', transferLog: 'Scene -> Lab (Apr 15)' },
+  ];
+  @state() private _artifactChecklist: Array<{
+    category: string; items: Array<{ name: string; status: 'pending' | 'collected' | 'analyzed' | 'skipped'; notes: string }>;
+  }> = [
+    { category: 'Registry', items: [
+      { name: 'SAM/SYSTEM Hives', status: 'collected', notes: 'Extracted from WKST-FIN01' },
+      { name: 'NTUSER.DAT', status: 'analyzed', notes: 'Suspicious run keys found' },
+      { name: 'Software Hive', status: 'analyzed', notes: 'Unusual installed software detected' },
+      { name: 'Amcache', status: 'collected', notes: 'Pending analysis' },
+      { name: 'UserAssist', status: 'pending', notes: '' },
+    ]},
+    { category: 'Memory', items: [
+      { name: 'Process List', status: 'analyzed', notes: '3 suspicious processes identified' },
+      { name: 'Network Connections', status: 'analyzed', notes: 'C2 callback to 192.168.45.102' },
+      { name: 'DLL List', status: 'collected', notes: '2 injected DLLs detected' },
+      { name: 'Handle Table', status: 'pending', notes: '' },
+    ]},
+    { category: 'Network', items: [
+      { name: 'PCAP Files', status: 'collected', notes: 'Firewall logs exported' },
+      { name: 'DNS Cache', status: 'analyzed', notes: 'Tunneling patterns found' },
+      { name: 'Proxy Logs', status: 'pending', notes: '' },
+    ]},
+    { category: 'Disk', items: [
+      { name: 'MFT Analysis', status: 'analyzed', notes: 'Deleted ransomware binary recovered' },
+      { name: 'USN Journal', status: 'analyzed', notes: 'File encryption timeline reconstructed' },
+      { name: 'Prefetch', status: 'collected', notes: '' },
+      { name: 'Event Logs', status: 'analyzed', notes: '4624/4625 anomalies detected' },
+    ]},
+  ];
+  @state() private _forensicTimeline: Array<{
+    time: string; event: string; source: string; severity: 'critical' | 'high' | 'medium' | 'low'; confidence: number;
+  }> = [
+    { time: '2026-04-15 02:14:33', event: 'Initial access via phishing email attachment', source: 'Email Gateway', severity: 'critical', confidence: 95 },
+    { time: '2026-04-15 02:15:01', event: 'Malicious macro execution in Word document', source: 'AMSI Logs', severity: 'critical', confidence: 92 },
+    { time: '2026-04-15 02:15:45', event: 'PowerShell download cradle executed', source: 'PowerShell Logging', severity: 'critical', confidence: 98 },
+    { time: '2026-04-15 02:16:12', event: 'Second stage payload dropped to AppData', source: 'File System Timeline', severity: 'high', confidence: 88 },
+    { time: '2026-04-15 02:17:30', event: 'LSASS memory access from non-system process', source: 'EDR Alerts', severity: 'critical', confidence: 97 },
+    { time: '2026-04-15 02:18:00', event: 'Lateral movement to SRV-FIN01 via WMI', source: 'WMI Event Logs', severity: 'high', confidence: 90 },
+    { time: '2026-04-15 02:20:00', event: 'File encryption started on network shares', source: 'File Server Logs', severity: 'critical', confidence: 99 },
+    { time: '2026-04-15 02:25:00', event: 'Ransom note deployed to all accessible shares', source: 'File System', severity: 'critical', confidence: 100 },
+  ];
+
+  private _renderForensicsLab(): unknown {
+    const statusColors: Record<string, string> = { open: '#f59e0b', 'in-progress': '#3b82f6', closed: '#22c55e', archived: '#6b7280', pending: '#6b7280', collected: '#60a5fa', analyzed: '#22c55e', skipped: '#ef4444' };
+    const severityColors: Record<string, string> = { critical: '#ef4444', high: '#f59e0b', medium: '#3b82f6', low: '#22c55e' };
+    return html`
+      <div style="padding:8px">
+        <div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Digital Forensics Lab</div>
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Case Management</div>
+        ${this._forensicCases.map(c => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="width:6px;height:6px;border-radius:50%;background:${statusColors[c.status]}"></span>
+              <span style="color:#e2e8f0;font-weight:600">${c.caseName}</span>
+              <span style="color:${severityColors[c.priority]};font-weight:600">${c.priority.toUpperCase()}</span>
+            </div>
+            <div style="display:flex;gap:6px;color:#9ca3af">
+              <span>Evidence: ${c.evidenceItems}</span>
+              <span>Artifacts: ${c.artifacts}</span>
+              <span>Timeline: ${c.timelineEvents}</span>
+              <span style="color:#60a5fa">Findings: ${c.findings}</span>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Chain of Custody</div>
+        ${this._chainOfCustody.map(c => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;font-size:7px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:#e2e8f0;font-weight:600">${c.item}</span>
+              <span style="color:#6b7280">${c.storage}</span>
+            </div>
+            <div style="color:#4b5563;margin-top:1px;font-family:monospace;font-size:6px">MD5: ${c.hashMd5} | SHA1: ${c.hashSha1.substring(0, 16)}... | SHA256: ${c.hashSha256.substring(0, 24)}...</div>
+            <div style="color:#9ca3af;margin-top:1px">Transfers: ${c.transferLog}</div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Artifact Analysis Checklist</div>
+        ${this._artifactChecklist.map(cat => html`
+          <div style="margin-bottom:4px">
+            <div style="font-size:8px;font-weight:600;color:#60a5fa;margin-bottom:2px">${cat.category}</div>
+            ${cat.items.map(item => html`
+              <div style="padding:2px 8px;background:#0d1117;border-radius:2px;margin-bottom:1px;display:flex;justify-content:space-between;align-items:center;font-size:7px">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span style="color:${statusColors[item.status]}">${item.status === 'analyzed' ? '[OK]' : item.status === 'collected' ? '[..]' : '[  ]'}</span>
+                  <span style="color:#d1d5db">${item.name}</span>
+                </div>
+                <span style="color:#6b7280">${item.notes || '-'}</span>
+              </div>
+            `)}
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Incident Timeline Reconstruction</div>
+        ${this._forensicTimeline.map(e => html`
+          <div style="padding:3px 8px;border-left:2px solid ${severityColors[e.severity]};margin-bottom:1px;margin-left:4px;font-size:7px;display:flex;justify-content:space-between">
+            <div>
+              <span style="color:#60a5fa;font-family:monospace">${e.time}</span>
+              <span style="color:#d1d5db;margin-left:6px">${e.event}</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <span style="color:#6b7280">${e.source}</span>
+              <span style="color:${e.confidence > 90 ? '#22c55e' : '#f59e0b'}">${e.confidence}%</span>
+            </div>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // ===== PENETRATION TESTING DASHBOARD MODULE =====
+  @state() private _pentestEngagements: Array<{
+    id: string; name: string; client: string; phase: 'scoping' | 'recon' | 'exploit' | 'post-exploit' | 'reporting' | 'delivered';
+    startDate: string; endDate: string; scope: string; vulnsFound: number; critVulns: number;
+    exploited: number; credentials: number; progress: number;
+  }> = [
+    { id: 'pe-001', name: 'External Network Assessment', client: 'Acme Corp', phase: 'exploit',
+      startDate: '2026-04-10', endDate: '2026-04-24', scope: '241 hosts / 18 web apps', vulnsFound: 47, critVulns: 6, exploited: 8, credentials: 12, progress: 72 },
+    { id: 'pe-002', name: 'Internal Network Pentest', client: 'Globex Inc', phase: 'recon',
+      startDate: '2026-04-18', endDate: '2026-05-02', scope: '1847 hosts / AD environment', vulnsFound: 12, critVulns: 1, exploited: 2, credentials: 5, progress: 25 },
+    { id: 'pe-003', name: 'Web Application Assessment', client: 'Initech LLC', phase: 'reporting',
+      startDate: '2026-04-01', endDate: '2026-04-15', scope: '6 web applications', vulnsFound: 89, critVulns: 11, exploited: 15, credentials: 3, progress: 92 },
+  ];
+  @state() private _exploitCatalog: Array<{
+    id: string; name: string; type: string; platform: string;
+    cve: string; risk: 'critical' | 'high' | 'medium' | 'low'; verified: boolean; pocAvailable: boolean;
+  }> = [
+    { id: 'ex-001', name: 'EternalBlue SMB RCE', type: 'remote', platform: 'Windows', cve: 'CVE-2017-0144', risk: 'critical', verified: true, pocAvailable: true },
+    { id: 'ex-002', name: 'Log4Shell JNDI Injection', type: 'remote', platform: 'Java', cve: 'CVE-2021-44228', risk: 'critical', verified: true, pocAvailable: true },
+    { id: 'ex-003', name: 'SQL Injection Auth Bypass', type: 'web', platform: 'PHP', cve: 'N/A', risk: 'high', verified: true, pocAvailable: true },
+    { id: 'ex-004', name: 'Privilege Escalation via Kernel', type: 'local', platform: 'Linux', cve: 'CVE-2023-32233', risk: 'high', verified: false, pocAvailable: true },
+    { id: 'ex-005', name: 'XSS Stored in Dashboard', type: 'web', platform: 'React', cve: 'N/A', risk: 'medium', verified: true, pocAvailable: true },
+    { id: 'ex-006', name: 'SSRF Internal Port Scan', type: 'web', platform: 'Node.js', cve: 'N/A', risk: 'high', verified: true, pocAvailable: true },
+  ];
+  @state() private _deliverableChecklist: Array<{
+    engagementId: string; item: string; status: 'pending' | 'in-progress' | 'completed';
+  }> = [
+    { engagementId: 'pe-003', item: 'Executive Summary', status: 'completed' },
+    { engagementId: 'pe-003', item: 'Technical Findings Report', status: 'completed' },
+    { engagementId: 'pe-003', item: 'Vulnerability Remediation Guide', status: 'in-progress' },
+    { engagementId: 'pe-003', item: 'Evidence Screenshots and Videos', status: 'completed' },
+    { engagementId: 'pe-003', item: 'Re-test Verification Results', status: 'pending' },
+    { engagementId: 'pe-003', item: 'Risk Rating Matrix', status: 'completed' },
+  ];
+
+  private _renderPentestDashboard(): unknown {
+    const phaseColors: Record<string, string> = { scoping: '#9ca3af', recon: '#60a5fa', exploit: '#ef4444', 'post-exploit': '#f59e0b', reporting: '#22c55e', delivered: '#6b7280' };
+    const riskColors: Record<string, string> = { critical: '#ef4444', high: '#f59e0b', medium: '#3b82f6', low: '#22c55e' };
+    return html`
+      <div style="padding:8px">
+        <div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Penetration Testing Dashboard</div>
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Active Engagements</div>
+        ${this._pentestEngagements.map(e => html`
+          <div style="padding:5px 8px;background:#111827;border-radius:4px;margin-bottom:3px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:9px;font-weight:600;color:#e2e8f0">${e.name}</span>
+                <span style="font-size:7px;color:${phaseColors[e.phase]};background:#1f2937;padding:1px 4px;border-radius:2px">${e.phase.toUpperCase()}</span>
+              </div>
+              <span style="font-size:8px;color:#6b7280">${e.startDate} - ${e.endDate}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:8px">
+              <span style="color:#9ca3af">${e.scope}</span>
+              <div style="display:flex;gap:6px">
+                <span style="color:#ef4444">Critical: ${e.critVulns}</span>
+                <span style="color:#f59e0b">Total: ${e.vulnsFound}</span>
+                <span style="color:#22c55e">Exploited: ${e.exploited}</span>
+                <span style="color:#60a5fa">Creds: ${e.credentials}</span>
+              </div>
+            </div>
+            <div style="margin-top:3px;height:3px;background:#1f2937;border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${e.progress}%;background:${phaseColors[e.phase]};border-radius:2px;transition:width 0.3s"></div>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Exploit Catalog</div>
+        ${this._exploitCatalog.map(ex => html`
+          <div style="padding:3px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="color:${ex.verified ? '#22c55e' : '#f59e0b'}">${ex.verified ? '[V]' : '[U]'}</span>
+              <span style="color:#e2e8f0;font-weight:600">${ex.name}</span>
+              <span style="color:#6b7280;font-size:7px">${ex.cve}</span>
+            </div>
+            <div style="display:flex;gap:4px">
+              <span style="color:#9ca3af">${ex.type}</span>
+              <span style="color:#6b7280">${ex.platform}</span>
+              <span style="color:${riskColors[ex.risk]}">${ex.risk}</span>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Client Deliverables</div>
+        ${this._deliverableChecklist.map(d => html`
+          <div style="padding:2px 8px;font-size:7px;display:flex;justify-content:space-between;color:#9ca3af">
+            <span>${d.item}</span>
+            <span style="color:${d.status === 'completed' ? '#22c55e' : d.status === 'in-progress' ? '#3b82f6' : '#6b7280'}">${d.status}</span>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // ===== RED TEAM OPERATIONS MODULE =====
+  @state() private _redteamObjectives: Array<{
+    id: string; title: string; status: 'planned' | 'active' | 'achieved' | 'failed';
+    mitreTactic: string; mitreTechnique: string; difficulty: 'easy' | 'medium' | 'hard';
+    started: string; completed: string | null; assignedTo: string; notes: string;
+  }> = [
+    { id: 'rt-001', title: 'Gain initial access via phishing', status: 'achieved', mitreTactic: 'Initial Access', mitreTechnique: 'T1566.001', difficulty: 'easy', started: '2026-04-15', completed: '2026-04-15', assignedTo: 'RT-Lead', notes: 'Spear-phishing email with macro-enabled doc' },
+    { id: 'rt-002', title: 'Establish C2 channel', status: 'achieved', mitreTactic: 'Command & Control', mitreTechnique: 'T1071.001', difficulty: 'medium', started: '2026-04-15', completed: '2026-04-16', assignedTo: 'RT-Oper', notes: 'HTTPS beaconing via CDN-fronted domain' },
+    { id: 'rt-003', title: 'Dump AD credentials', status: 'active', mitreTactic: 'Credential Access', mitreTechnique: 'T1003.006', difficulty: 'medium', started: '2026-04-18', completed: null, assignedTo: 'RT-Oper', notes: 'DCSync attack in progress' },
+    { id: 'rt-004', title: 'Pivot to segmented network', status: 'planned', mitreTactic: 'Lateral Movement', mitreTechnique: 'T1021.002', difficulty: 'hard', started: '', completed: null, assignedTo: 'RT-Lead', notes: 'Target: PCI segment via compromised jump host' },
+    { id: 'rt-005', title: 'Exfiltrate customer PII', status: 'planned', mitreTactic: 'Exfiltration', mitreTechnique: 'T1048.003', difficulty: 'hard', started: '', completed: null, assignedTo: 'RT-Lead', notes: 'Test DLP controls effectiveness' },
+    { id: 'rt-006', title: 'Domain admin escalation', status: 'active', mitreTactic: 'Privilege Escalation', mitreTechnique: 'T1068', difficulty: 'hard', started: '2026-04-19', completed: null, assignedTo: 'RT-Oper', notes: 'Kerberoasting attack vector' },
+  ];
+  @state() private _ttpLibrary: Array<{
+    techniqueId: string; name: string; tactic: string; detectionRate: number;
+    blueTeamDetection: 'detected' | 'missed' | 'partial'; timeToDetect: number;
+  }> = [
+    { techniqueId: 'T1566.001', name: 'Spearphishing Attachment', tactic: 'Initial Access', detectionRate: 65, blueTeamDetection: 'partial', timeToDetect: 2400 },
+    { techniqueId: 'T1071.001', name: 'Web C2', tactic: 'Command & Control', detectionRate: 40, blueTeamDetection: 'missed', timeToDetect: 0 },
+    { techniqueId: 'T1003.006', name: 'DCSync', tactic: 'Credential Access', detectionRate: 55, blueTeamDetection: 'missed', timeToDetect: 0 },
+    { techniqueId: 'T1059.001', name: 'PowerShell', tactic: 'Execution', detectionRate: 80, blueTeamDetection: 'detected', timeToDetect: 300 },
+    { techniqueId: 'T1087.002', name: 'Domain Account', tactic: 'Discovery', detectionRate: 70, blueTeamDetection: 'detected', timeToDetect: 1800 },
+    { techniqueId: 'T1021.002', name: 'SMB Admin Shares', tactic: 'Lateral Movement', detectionRate: 60, blueTeamDetection: 'partial', timeToDetect: 3600 },
+  ];
+  @state() private _c2Infrastructure: Array<{
+    id: string; domain: string; ip: string; port: number; protocol: string;
+    status: 'active' | 'burned' | 'standby'; lastCheckin: string; beacons: number;
+  }> = [
+    { id: 'c2-001', domain: 'cdn-static-assets.net', ip: '10.0.0.50', port: 443, protocol: 'HTTPS', status: 'active', lastCheckin: '2026-04-23T10:00:00Z', beacons: 156 },
+    { id: 'c2-002', domain: 'api-update-service.io', ip: '10.0.0.51', port: 8443, protocol: 'HTTPS', status: 'active', lastCheckin: '2026-04-23T09:55:00Z', beacons: 89 },
+    { id: 'c2-003', domain: 'relay-analytics.cloud', ip: '10.0.0.52', port: 53, protocol: 'DNS', status: 'burned', lastCheckin: '2026-04-20T14:00:00Z', beacons: 234 },
+  ];
+
+  private _renderRedteamOps(): unknown {
+    const statusColors: Record<string, string> = { planned: '#6b7280', active: '#3b82f6', achieved: '#22c55e', failed: '#ef4444', burned: '#ef4444', standby: '#f59e0b' };
+    const detColors: Record<string, string> = { detected: '#22c55e', missed: '#ef4444', partial: '#f59e0b' };
+    return html`
+      <div style="padding:8px">
+        <div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Red Team Operations</div>
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Operation Objectives</div>
+        ${this._redteamObjectives.map(o => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;font-size:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="width:6px;height:6px;border-radius:50%;background:${statusColors[o.status]}"></span>
+                <span style="color:#e2e8f0;font-weight:600">${o.title}</span>
+                <span style="font-size:7px;color:#6b7280">${o.mitreTechnique}</span>
+              </div>
+              <span style="color:${o.difficulty === 'hard' ? '#ef4444' : o.difficulty === 'medium' ? '#f59e0b' : '#22c55e'};font-size:7px">${o.difficulty}</span>
+            </div>
+            <div style="color:#6b7280;font-size:7px;margin-top:1px;margin-left:10px">${o.notes}</div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">TTP Detection Analysis</div>
+        ${this._ttpLibrary.map(t => html`
+          <div style="padding:3px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="color:#60a5fa;font-weight:600">${t.techniqueId}</span>
+              <span style="color:#e2e8f0">${t.name}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="color:${detColors[t.blueTeamDetection]}">${t.blueTeamDetection.toUpperCase()}</span>
+              <span style="color:#9ca3af">Detect: ${t.detectionRate}%</span>
+              <span style="color:#6b7280">MTTD: ${t.timeToDetect > 0 ? Math.floor(t.timeToDetect/60) + 'm' : 'N/A'}</span>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">C2 Infrastructure</div>
+        ${this._c2Infrastructure.map(c => html`
+          <div style="padding:3px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="width:5px;height:5px;border-radius:50%;background:${statusColors[c.status]}"></span>
+              <span style="color:#e2e8f0">${c.domain}</span>
+              <span style="color:#6b7280;font-size:7px">${c.ip}:${c.port}</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <span style="color:#9ca3af">${c.protocol}</span>
+              <span style="color:#60a5fa">Beacons: ${c.beacons}</span>
+            </div>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  // ===== BLUE TEAM DEFENSE METRICS MODULE =====
+  @state() private _defenseMetrics: {
+    mttD: number; mttC: number; mttR: number;
+    alertVolume: number; truePositiveRate: number; falsePositiveRate: number;
+    triageEfficiency: number; detectionCoverage: number; controlEffectiveness: number;
+  } = { mttD: 847, mttC: 2340, mttR: 7200, alertVolume: 1247, truePositiveRate: 23.4, falsePositiveRate: 76.6, triageEfficiency: 67.2, detectionCoverage: 71.8, controlEffectiveness: 78.3 };
+  @state() private _defenseTrend: Array<{
+    period: string; mttD: number; mttC: number; mttR: number; fpr: number; coverage: number;
+  }> = [
+    { period: 'Week 1', mttD: 1200, mttC: 3600, mttR: 14400, fpr: 82.1, coverage: 65.2 },
+    { period: 'Week 2', mttD: 1050, mttC: 3200, mttR: 10800, fpr: 79.5, coverage: 67.8 },
+    { period: 'Week 3', mttD: 920, mttC: 2800, mttR: 9000, fpr: 77.3, coverage: 69.4 },
+    { period: 'Week 4', mttD: 847, mttC: 2340, mttR: 7200, fpr: 76.6, coverage: 71.8 },
+  ];
+  @state() private _defenseLayers: Array<{
+    layer: string; status: 'active' | 'degraded' | 'offline'; effectiveness: number;
+    controls: number; gaps: number; lastTested: string;
+  }> = [
+    { layer: 'Perimeter Firewall', status: 'active', effectiveness: 92, controls: 18, gaps: 2, lastTested: '2026-04-20' },
+    { layer: 'Endpoint Detection', status: 'active', effectiveness: 78, controls: 24, gaps: 5, lastTested: '2026-04-22' },
+    { layer: 'Network IDS/IPS', status: 'degraded', effectiveness: 65, controls: 12, gaps: 4, lastTested: '2026-04-18' },
+    { layer: 'Email Security', status: 'active', effectiveness: 88, controls: 15, gaps: 2, lastTested: '2026-04-21' },
+    { layer: 'Identity and Access', status: 'active', effectiveness: 82, controls: 20, gaps: 3, lastTested: '2026-04-19' },
+    { layer: 'Data Loss Prevention', status: 'degraded', effectiveness: 58, controls: 10, gaps: 6, lastTested: '2026-04-15' },
+    { layer: 'SIEM / Log Analysis', status: 'active', effectiveness: 75, controls: 16, gaps: 4, lastTested: '2026-04-22' },
+    { layer: 'Vulnerability Management', status: 'active', effectiveness: 71, controls: 14, gaps: 5, lastTested: '2026-04-17' },
+  ];
+  @state() private _alertTriage: Array<{
+    category: string; volume: number; autoResolved: number; manualTriage: number; avgTriageTime: number; backlog: number;
+  }> = [
+    { category: 'Malware Detection', volume: 342, autoResolved: 289, manualTriage: 53, avgTriageTime: 120, backlog: 8 },
+    { category: 'Network Anomaly', volume: 278, autoResolved: 198, manualTriage: 80, avgTriageTime: 300, backlog: 15 },
+    { category: 'Phishing Report', volume: 224, autoResolved: 180, manualTriage: 44, avgTriageTime: 90, backlog: 3 },
+    { category: 'Privilege Escalation', volume: 156, autoResolved: 45, manualTriage: 111, avgTriageTime: 600, backlog: 22 },
+    { category: 'Data Exfiltration', volume: 89, autoResolved: 34, manualTriage: 55, avgTriageTime: 480, backlog: 12 },
+    { category: 'Brute Force', volume: 158, autoResolved: 142, manualTriage: 16, avgTriageTime: 60, backlog: 2 },
+  ];
+
+  private _renderBlueTeamMetrics(): unknown {
+    const fmtMins = (s: number) => { const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60); return h > 0 ? h + 'h ' + m + 'm' : m + 'min'; };
+    const layerColors: Record<string, string> = { active: '#22c55e', degraded: '#f59e0b', offline: '#ef4444' };
+    return html`
+      <div style="padding:8px">
+        <div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Blue Team Defense Metrics</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:8px">
+          ${[
+            { label: 'MTTD', value: fmtMins(this._defenseMetrics.mttD), color: '#3b82f6' },
+            { label: 'MTTC', value: fmtMins(this._defenseMetrics.mttC), color: '#f59e0b' },
+            { label: 'MTTR', value: fmtMins(this._defenseMetrics.mttR), color: '#22c55e' },
+            { label: 'Alert Volume', value: String(this._defenseMetrics.alertVolume), color: '#60a5fa' },
+            { label: 'TP Rate', value: this._defenseMetrics.truePositiveRate + '%', color: '#22c55e' },
+            { label: 'FP Rate', value: this._defenseMetrics.falsePositiveRate + '%', color: '#ef4444' },
+          ].map(m => html`
+            <div style="padding:4px 6px;background:#111827;border-radius:3px;text-align:center">
+              <div style="font-size:7px;color:#6b7280;text-transform:uppercase">${m.label}</div>
+              <div style="font-size:12px;font-weight:700;color:${m.color}">${m.value}</div>
+            </div>
+          `)}
+        </div>
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Defense-in-Depth Layers</div>
+        ${this._defenseLayers.map(l => html`
+          <div style="padding:3px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="width:5px;height:5px;border-radius:50%;background:${layerColors[l.status]}"></span>
+              <span style="color:#e2e8f0;font-weight:500">${l.layer}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <div style="width:50px;height:3px;background:#1f2937;border-radius:2px;overflow:hidden">
+                <div style="height:100%;width:${l.effectiveness}%;background:${l.effectiveness > 80 ? '#22c55e' : l.effectiveness > 60 ? '#f59e0b' : '#ef4444'};border-radius:2px"></div>
+              </div>
+              <span style="color:${l.effectiveness > 80 ? '#22c55e' : l.effectiveness > 60 ? '#f59e0b' : '#ef4444'};font-weight:600;min-width:28px">${l.effectiveness}%</span>
+              <span style="color:#9ca3af">Controls: ${l.controls}</span>
+              <span style="color:#ef4444">Gaps: ${l.gaps}</span>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Alert Triage Efficiency</div>
+        ${this._alertTriage.map(a => html`
+          <div style="padding:3px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <span style="color:#e2e8f0;min-width:120px">${a.category}</span>
+            <div style="display:flex;gap:8px">
+              <span style="color:#9ca3af">Vol: ${a.volume}</span>
+              <span style="color:#22c55e">Auto: ${a.autoResolved}</span>
+              <span style="color:#f59e0b">Manual: ${a.manualTriage}</span>
+              <span style="color:#60a5fa">Avg: ${a.avgTriageTime}s</span>
+              <span style="color:${a.backlog > 10 ? '#ef4444' : '#22c55e'}">Backlog: ${a.backlog}</span>
+            </div>
+          </div>
+        `)}
+        <div style="font-size:9px;font-weight:600;color:#9ca3af;margin-top:8px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Weekly Trend (FPR Reduction)</div>
+        ${this._defenseTrend.map(t => html`
+          <div style="padding:2px 8px;background:#111827;border-radius:2px;margin-bottom:1px;display:flex;justify-content:space-between;font-size:7px;color:#9ca3af">
+            <span style="min-width:60px">${t.period}</span>
+            <span>MTTD: ${fmtMins(t.mttD)}</span>
+            <span>MTTC: ${fmtMins(t.mttC)}</span>
+            <span>MTTR: ${fmtMins(t.mttR)}</span>
+            <span style="color:${t.fpr < 78 ? '#22c55e' : '#f59e0b'}">FPR: ${t.fpr}%</span>
+            <span style="color:#60a5fa">Coverage: ${t.coverage}%</span>
+          </div>
+        `)}
+      </div>`;
+  }
+
+
   render() {    if (this._mdmRules.length === 0) { this._initMdmRules(); this._initMdmCvss(); this._runMdmAnomalyDetection(); this._generateMdmPredictions(); this._initMdmApprovals(); this._initMdmActivity(); this._initMdmNotifications(); }
 
     const items = this._getFiltered();
