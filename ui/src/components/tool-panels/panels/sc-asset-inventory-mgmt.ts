@@ -143,7 +143,59 @@ export class ScAssetInventoryMgmt extends LitElement {
   @state() private _tablePage = 0;
   @state() private _tablePageSize = 10;
   @state() private _showEnhanced = false;
+  @state() private _showComplianceEngine = false;
+  @state() private _showRiskBreakdown = false;
+  @state() private _showTeamPanel = false;
+  @state() private _showTrendAnalysis = false;
+  @state() private _treemapHover = '';
+  @state() private _layoutMode: 'grid' | 'list' | 'compact' = 'grid';
+  @state() private _colorTheme: 'dark' | 'midnight' | 'ocean' = 'dark';
+  @state() private _autoRefreshInterval = 0;
 
+  private _items: Asset[] = [];
+
+  // Compliance rule engine: NIST 800-53 / CIS Controls mapping
+  private _complianceRules = [
+    { id: 'CR-001', framework: 'NIST 800-53', control: 'CM-6', title: 'Configuration Management', description: 'All assets must have documented baseline configurations', severity: 'high', applicableTypes: ['server', 'network', 'database'] as string[], checkFn: (a: Asset) => a.status === 'active' && a.compliance !== 'non-compliant' },
+    { id: 'CR-002', framework: 'NIST 800-53', control: 'RA-5', title: 'Vulnerability Scanning', description: 'Active assets must be scanned within 30 days', severity: 'critical', applicableTypes: ['server', 'workstation', 'database'] as string[], checkFn: (a: Asset) => a.lastScan !== 'Never' && !a.lastScan.includes('d ago') || parseInt(a.lastScan) <= 30 },
+    { id: 'CR-003', framework: 'CIS v8', control: '2.1', title: 'Inventory of Authorized Assets', description: 'All managed assets must have assigned owners', severity: 'medium', applicableTypes: ['server', 'network', 'database', 'application', 'cloud'] as string[], checkFn: (a: Asset) => a.owner !== 'Unknown' && a.owner !== '' },
+    { id: 'CR-004', framework: 'CIS v8', control: '4.1', title: 'Secure Configuration of Enterprise Assets', description: 'End-of-life systems must be retired or have approved exceptions', severity: 'critical', applicableTypes: ['server', 'database', 'workstation'] as string[], checkFn: (a: Asset) => !a.eolDate || new Date(a.eolDate) > new Date() || a.status === 'retired' },
+    { id: 'CR-005', framework: 'GDPR', control: 'Art. 32', title: 'Security of Processing', description: 'Assets processing PII must maintain compliant security posture', severity: 'high', applicableTypes: ['server', 'database', 'application', 'cloud'] as string[], checkFn: (a: Asset) => a.compliance === 'compliant' || a.compliance === 'partial' },
+    { id: 'CR-006', framework: 'HIPAA', control: '164.308(a)(1)', title: 'Security Management Process', description: 'Healthcare-related assets require active vulnerability management', severity: 'critical', applicableTypes: ['server', 'database', 'workstation'] as string[], checkFn: (a: Asset) => a.vulnCount <= 2 && a.lastPatch !== 'Never' },
+    { id: 'CR-007', framework: 'PCI-DSS', control: 'Req. 2', title: 'System Components Inventory', description: 'All in-scope PCI assets must be identified and documented', severity: 'high', applicableTypes: ['server', 'network', 'database', 'application'] as string[], checkFn: (a: Asset) => a.status !== 'discovered' && a.status !== 'retired' },
+    { id: 'CR-008', framework: 'NIST 800-53', control: 'SI-4', title: 'System Monitoring', description: 'Critical assets must have active monitoring and logging', severity: 'medium', applicableTypes: ['server', 'network', 'database', 'cloud'] as string[], checkFn: (a: Asset) => a.status === 'active' && a.lastScan !== 'Never' },
+    { id: 'CR-009', framework: 'ISO 27001', control: 'A.8.1', title: 'Asset Inventory', description: 'Inventory of information and associated assets must be maintained', severity: 'medium', applicableTypes: ['server', 'workstation', 'network', 'database', 'application', 'cloud'] as string[], checkFn: (a: Asset) => a.status !== 'discovered' },
+    { id: 'CR-010', framework: 'CIS v8', control: '7.4', title: 'Maintain Up-to-Date Software', description: 'Assets must be patched within 30 days of security updates', severity: 'high', applicableTypes: ['server', 'workstation', 'database'] as string[], checkFn: (a: Asset) => a.lastPatch !== 'Never' && (new Date().getTime() - new Date(a.lastPatch).getTime()) < 30 * 86400000 },
+  ];
+
+  // Team members for collaboration
+  private _teamMembers = [
+    { id: 'tm1', name: 'Alex Chen', role: 'Security Analyst', avatar: 'AC', color: '#3b82f6', workload: 7, activeTasks: 3 },
+    { id: 'tm2', name: 'Sarah Kim', role: 'IT Ops Lead', avatar: 'SK', color: '#8b5cf6', workload: 5, activeTasks: 2 },
+    { id: 'tm3', name: 'Mike Johnson', role: 'System Admin', avatar: 'MJ', color: '#f59e0b', workload: 8, activeTasks: 4 },
+    { id: 'tm4', name: 'Lisa Park', role: 'Compliance Officer', avatar: 'LP', color: '#22c55e', workload: 4, activeTasks: 1 },
+    { id: 'tm5', name: 'David Wu', role: 'DevOps Engineer', avatar: 'DW', color: '#ef4444', workload: 6, activeTasks: 3 },
+  ];
+
+  // Activity feed for collaboration
+  private _activityFeed = [
+    { id: 'act1', user: 'Alex Chen', action: 'flagged', target: 'legacy-app-01 as critical risk', time: '5m ago', type: 'risk' },
+    { id: 'act2', user: 'Sarah Kim', action: 'completed scan on', target: 'Tier 1 assets cluster', time: '22m ago', type: 'scan' },
+    { id: 'act3', user: 'Lisa Park', action: 'approved compliance exception for', target: 'old-database-vendor', time: '1h ago', type: 'approval' },
+    { id: 'act4', user: 'Mike Johnson', action: 'patched', target: 'web-prod-01 (OS update)', time: '2h ago', type: 'patch' },
+    { id: 'act5', user: 'David Wu', action: 'added new asset', target: 'k8s-node-04 to inventory', time: '3h ago', type: 'inventory' },
+    { id: 'act6', user: 'Alex Chen', action: 'assigned remediation task for', target: 'legacy-app-01 to Mike Johnson', time: '4h ago', type: 'assignment' },
+    { id: 'act7', user: 'Sarah Kim', action: 'updated ownership of', target: 'unmanaged-switch-05', time: '5h ago', type: 'config' },
+    { id: 'act8', user: 'Lisa Park', action: 'generated compliance report for', target: 'Q1 2026 audit cycle', time: '6h ago', type: 'report' },
+  ];
+
+  private _tasks = [
+    { id: 'task1', title: 'Patch legacy-app-01', assignee: 'Mike Johnson', priority: 'critical', status: 'in-progress', dueDate: '2026-04-25', assetId: 'a5' },
+    { id: 'task2', title: 'Review unmanaged-switch-05', assignee: 'Sarah Kim', priority: 'high', status: 'pending', dueDate: '2026-04-26', assetId: 'a9' },
+    { id: 'task3', title: 'Retire old-database-vendor', assignee: 'Alex Chen', priority: 'high', status: 'pending', dueDate: '2026-05-10', assetId: 'a8' },
+    { id: 'task4', title: 'Update fin-server-01 baseline', assignee: 'David Wu', priority: 'medium', status: 'pending', dueDate: '2026-04-28', assetId: 'a6' },
+    { id: 'task5', title: 'Scan workstation pool', assignee: 'Sarah Kim', priority: 'low', status: 'completed', dueDate: '2026-04-22', assetId: 'a7' },
+  ];
 
   private _assets: Asset[] = [
     { id: 'a1', name: 'web-prod-01.acme.com', type: 'server', criticality: 'tier1', owner: 'Platform Team', ip: '10.0.1.10', status: 'active', lastScan: '2h ago', vulnCount: 2, eolDate: null, dependencies: ['db-master-01', 'cache-01'], os: 'Ubuntu 22.04 LTS', location: 'US-East-1a', compliance: 'compliant', lastPatch: '2026-04-20', riskScore: 35 },
@@ -628,32 +680,382 @@ export class ScAssetInventoryMgmt extends LitElement {
   private _renderEnhancedSection(): any {
     if (!this._showEnhanced) return nothing;
     return html`<div style="margin-top:16px;border-top:1px solid #374151;padding-top:16px">
-      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #374151;padding-bottom:8px">
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #374151;padding-bottom:8px;flex-wrap:wrap">
         <button class="btn btn-sm ${this._settingsTab === 'audit' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'audit'; }}>Audit</button>
         <button class="btn btn-sm ${this._settingsTab === 'history' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'history'; }}>History</button>
         <button class="btn btn-sm ${this._settingsTab === 'settings' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'settings'; }}>Settings</button>
+        <button class="btn btn-sm ${this._settingsTab === 'compliance' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'compliance'; }}>Compliance</button>
+        <button class="btn btn-sm ${this._settingsTab === 'risk-breakdown' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'risk-breakdown'; }}>Risk Analysis</button>
+        <button class="btn btn-sm ${this._settingsTab === 'team' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'team'; }}>Team</button>
+        <button class="btn btn-sm ${this._settingsTab === 'trends' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'trends'; }}>Trends</button>
+        <button class="btn btn-sm ${this._settingsTab === 'config' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'config'; }}>Config</button>
       </div>
       ${this._settingsTab === 'audit' ? this._renderAuditPanel() : ''}
       ${this._settingsTab === 'history' ? this._renderExecHistory() : ''}
       ${this._settingsTab === 'settings' ? this._renderSettingsPanel() : ''}
-      <div style="margin-top:12px">
-        ${this._renderRiskGauge()}
-        ${this._renderBarChart()}
-      </div>
+      ${this._settingsTab === 'compliance' ? this._renderComplianceEngine() : ''}
+      ${this._settingsTab === 'risk-breakdown' ? html`${this._renderRiskBreakdown()}${this._renderRiskGauge()}${this._renderBarChart()}` : ''}
+      ${this._settingsTab === 'team' ? this._renderTeamPanel() : ''}
+      ${this._settingsTab === 'trends' ? html`${this._renderTrendAnalysis()}${this._renderHeatmap()}` : ''}
+      ${this._settingsTab === 'config' ? this._renderPanelConfig() : ''}
       <div style="display:flex;gap:8px;margin-top:8px">
         <div style="flex:1;padding:8px;border-radius:6px;border:1px solid #374151;background:#1f2937;color:#94a3b8;font-size:11px;cursor:pointer;text-align:center" @click=${() => { this._addAudit('export', 'Report exported'); }}>Export Report</div>
         <div style="flex:1;padding:8px;border-radius:6px;border:1px solid #374151;background:#1f2937;color:#94a3b8;font-size:11px;cursor:pointer;text-align:center" @click=${this._runScanWithHistory}>Run Analysis</div>
       </div>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid #374151;display:flex;justify-content:space-between;font-size:10px;color:#6b7280">
         <span>Last scan: ${this._execHistory.length > 0 ? new Date(this._execHistory[0].timestamp).toLocaleString() : 'Never'}</span>
-        <span>${this._items.length} items | ${this._auditTrail.length} audit entries</span>
+        <span>${this._items.length} items | ${this._auditTrail.length} audit entries | ${this._complianceRules.length} compliance rules</span>
       </div>
     </div>`;
   }
 
 
+  // --- Advanced Risk Scoring Algorithm ---
+  private _calculateAssetRisk(asset: Asset): { score: number; factors: { name: string; weight: number; value: number; contribution: number }[]; level: string } {
+    const factors: { name: string; weight: number; value: number; contribution: number }[] = [];
+    // Factor 1: Vulnerability count (weight 0.25)
+    const vulnScore = Math.min(100, (asset.vulnCount / 10) * 100);
+    factors.push({ name: 'Vulnerability Count', weight: 0.25, value: vulnScore, contribution: vulnScore * 0.25 });
+    // Factor 2: Criticality tier (weight 0.20)
+    const tierScores: Record<string, number> = { tier1: 100, tier2: 70, tier3: 40, tier4: 10 };
+    const tierScore = tierScores[asset.criticality] || 50;
+    factors.push({ name: 'Criticality Tier', weight: 0.20, value: tierScore, contribution: tierScore * 0.20 });
+    // Factor 3: Compliance status (weight 0.20)
+    const compScores: Record<string, number> = { 'non-compliant': 100, partial: 60, unknown: 80, compliant: 10 };
+    const compScore = compScores[asset.compliance] || 50;
+    factors.push({ name: 'Compliance Status', weight: 0.20, value: compScore, contribution: compScore * 0.20 });
+    // Factor 4: EOL proximity (weight 0.15)
+    let eolScore = 0;
+    if (asset.eolDate) {
+      const daysToEol = (new Date(asset.eolDate).getTime() - Date.now()) / 86400000;
+      if (daysToEol < 0) eolScore = 100;
+      else if (daysToEol < 30) eolScore = 90;
+      else if (daysToEol < 90) eolScore = 70;
+      else if (daysToEol < 180) eolScore = 40;
+      else eolScore = 10;
+    }
+    factors.push({ name: 'EOL Proximity', weight: 0.15, value: eolScore, contribution: eolScore * 0.15 });
+    // Factor 5: Scan freshness (weight 0.10)
+    let scanScore = 50;
+    if (asset.lastScan === 'Never') scanScore = 100;
+    else if (asset.lastScan.includes('d ago')) { const d = parseInt(asset.lastScan); scanScore = d > 7 ? 80 : d > 3 ? 50 : 20; }
+    else scanScore = 10;
+    factors.push({ name: 'Scan Freshness', weight: 0.10, value: scanScore, contribution: scanScore * 0.10 });
+    // Factor 6: Patch age (weight 0.10)
+    let patchScore = 50;
+    if (asset.lastPatch === 'Never') patchScore = 100;
+    else { const daysSincePatch = (Date.now() - new Date(asset.lastPatch).getTime()) / 86400000; patchScore = daysSincePatch > 60 ? 80 : daysSincePatch > 30 ? 50 : 20; }
+    factors.push({ name: 'Patch Age', weight: 0.10, value: patchScore, contribution: patchScore * 0.10 });
+    const totalScore = Math.round(factors.reduce((sum, f) => sum + f.contribution, 0));
+    const level = totalScore >= 75 ? 'Critical' : totalScore >= 50 ? 'High' : totalScore >= 30 ? 'Medium' : 'Low';
+    return { score: totalScore, factors, level };
+  }
+
+  // --- Compliance Rule Engine ---
+  private _evaluateCompliance(asset: Asset): { ruleId: string; framework: string; control: string; title: string; passed: boolean; severity: string }[] {
+    return this._complianceRules
+      .filter(r => r.applicableTypes.includes(asset.type))
+      .map(r => ({ ruleId: r.id, framework: r.framework, control: r.control, title: r.title, passed: r.checkFn(asset), severity: r.severity }));
+  }
+
+  private _getComplianceSummary(): { total: number; passed: number; failed: number; byFramework: Record<string, { total: number; passed: number }> } {
+    const results = this._assets.map(a => this._evaluateCompliance(a));
+    const flat = results.flat();
+    const total = flat.length;
+    const passed = flat.filter(r => r.passed).length;
+    const byFramework: Record<string, { total: number; passed: number }> = {};
+    for (const r of flat) {
+      if (!byFramework[r.framework]) byFramework[r.framework] = { total: 0, passed: 0 };
+      byFramework[r.framework].total++;
+      if (r.passed) byFramework[r.framework].passed++;
+    }
+    return { total, passed, failed: total - passed, byFramework };
+  }
+
+  // --- Treemap Visualization ---
+  private _renderTreemapSVG(): string {
+    const groups = [
+      { label: 'Servers', type: 'server' as const, color: '#3b82f6' },
+      { label: 'Databases', type: 'database' as const, color: '#8b5cf6' },
+      { label: 'Network', type: 'network' as const, color: '#f59e0b' },
+      { label: 'Cloud', type: 'cloud' as const, color: '#22c55e' },
+      { label: 'Applications', type: 'application' as const, color: '#ef4444' },
+      { label: 'Workstations', type: 'workstation' as const, color: '#06b6d4' },
+    ];
+    const data = groups.map(g => {
+      const items = this._assets.filter(a => a.type === g.type);
+      const avgRisk = items.length ? Math.round(items.reduce((s, a) => s + a.riskScore, 0) / items.length) : 0;
+      return { ...g, count: items.length, avgRisk, items };
+    }).filter(d => d.count > 0).sort((a, b) => b.count - a.count);
+    const total = data.reduce((s, d) => s + d.count, 0);
+    const W = 560, H = 220, pad = 2;
+    let x = 0, y = 0, rowH = 0;
+    const rects: string[] = [];
+    const sideW = W * 0.7;
+    let curX = 0, curY = 0;
+    // Simple squarified layout approximation
+    let accumW = 0;
+    for (const d of data) {
+      const w = Math.max(40, (d.count / total) * sideW);
+      const h = H;
+      const op = d.avgRisk >= 60 ? 'cc' : d.avgRisk >= 30 ? '99' : '66';
+      rects.push(`<rect x="${curX}" y="0" width="${w - pad}" height="${h}" fill="${d.color}${op}" rx="4" stroke="${d.color}" stroke-width="0.5"/>`);
+      rects.push(`<text x="${curX + w / 2}" y="${h / 2 - 8}" text-anchor="middle" fill="white" font-size="11" font-weight="700">${d.label}</text>`);
+      rects.push(`<text x="${curX + w / 2}" y="${h / 2 + 6}" text-anchor="middle" fill="white" font-size="9" opacity="0.8">${d.count} assets</text>`);
+      rects.push(`<text x="${curX + w / 2}" y="${h / 2 + 18}" text-anchor="middle" fill="${d.color}" font-size="10" font-weight="600">Risk: ${d.avgRisk}</text>`);
+      curX += w;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
+      <text x="0" y="-6" fill="#94a3b8" font-size="11" font-weight="600">Asset Distribution Treemap (by type, area = count)</text>
+      ${rects.join('')}
+      <rect x="${sideW + 8}" y="0" width="${W - sideW - 8}" height="${H}" fill="#0f172a" rx="4"/>
+      ${data.map((d, i) => htmlStr => `<text x="${sideW + 16}" y="${24 + i * 30}" fill="${d.color}" font-size="10" font-weight="600">${d.label}</text>
+        <text x="${sideW + 16}" y="${36 + i * 30}" fill="#94a3b8" font-size="9">${d.count} | avg risk ${d.avgRisk}</text>`).join('')}
+    </svg>`;
+  }
+
+  // --- Trend Prediction with Linear Regression ---
+  private _linearRegression(values: number[]): { slope: number; intercept: number; predict: (x: number) => number; r2: number } {
+    const n = values.length;
+    if (n < 2) return { slope: 0, intercept: values[0] || 0, predict: (x: number) => values[0] || 0, r2: 0 };
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+    for (let i = 0; i < n; i++) { sumX += i; sumY += values[i]; sumXY += i * values[i]; sumX2 += i * i; sumY2 += values[i] * values[i]; }
+    const denom = n * sumX2 - sumX * sumX;
+    if (denom === 0) return { slope: 0, intercept: sumY / n, predict: (x: number) => sumY / n, r2: 0 };
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+    const meanY = sumY / n;
+    const ssTot = values.reduce((s, v) => s + (v - meanY) ** 2, 0);
+    const ssRes = values.reduce((s, v, i) => s + (v - (slope * i + intercept)) ** 2, 0);
+    const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
+    return { slope, intercept, predict: (x: number) => slope * x + intercept, r2 };
+  }
+
+  private _renderTrendAnalysis(): any {
+    const vulnData = this._scanHistory.map(s => s.newVulns).reverse();
+    const resolvedData = this._scanHistory.map(s => s.resolvedVulns).reverse();
+    const vulnReg = this._linearRegression(vulnData);
+    const resReg = this._linearRegression(resolvedData);
+    const predictedVulns = Math.max(0, Math.round(vulnReg.predict(vulnData.length)));
+    const predictedResolved = Math.max(0, Math.round(resRegReg.predict(resolvedData.length)));
+    const W = 400, H = 140, padL = 35, padB = 25, padT = 10;
+    const chartW = W - padL - padB, chartH = H - padT - padB;
+    const allVals = [...vulnData, ...resolvedData, predictedVulns, predictedResolved];
+    const maxV = Math.max(...allVals, 1);
+    const minV = Math.min(...allVals, 0);
+    const range = maxV - minV || 1;
+    const toY = (v: number) => padT + chartH - ((v - minV) / range) * chartH;
+    const toX = (i: number) => padL + (i / (vulnData.length)) * chartW;
+    // Historical lines
+    const vulnPoints = vulnData.map((v, i) => `${toX(i)},${toY(v)}`).join(' ');
+    const resPoints = resolvedData.map((v, i) => `${toX(i)},${toY(v)}`).join(' ');
+    // Prediction lines
+    const predVulnStart = `${toX(vulnData.length - 1)},${toY(vulnData[vulnData.length - 1])}`;
+    const predVulnEnd = `${toX(vulnData.length)},${toY(predictedVulns)}`;
+    const predResStart = `${toX(resolvedData.length - 1)},${toY(resolvedData[resolvedData.length - 1])}`;
+    const predResEnd = `${toX(resolvedData.length)},${toY(predictedResolved)}`;
+
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Vulnerability Trend Analysis (with Prediction)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280">New Vuln Trend</div>
+          <div style="font-size:14px;font-weight:700;color:${vulnReg.slope > 0 ? '#ef4444' : '#22c55e'}">${vulnReg.slope > 0 ? '+' : ''}${vulnReg.slope.toFixed(2)}/day</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280">Resolved Trend</div>
+          <div style="font-size:14px;font-weight:700;color:${resReg.slope > 0 ? '#22c55e' : '#ef4444'}">${resReg.slope > 0 ? '+' : ''}${resReg.slope.toFixed(2)}/day</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280">Predicted New (next)</div>
+          <div style="font-size:14px;font-weight:700;color:#f59e0b">${predictedVulns}</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#6b7280">Model Fit (R²)</div>
+          <div style="font-size:14px;font-weight:700;color:#8b5cf6">${(vulnReg.r2 * 100).toFixed(0)}%</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:440px">
+        ${[0, 2, 4, 6, 8, 10].filter(v => v >= minV && v <= maxV).map(v => html`<line x1="${padL}" y1="${toY(v)}" x2="${W - padB}" y2="${toY(v)}" stroke="#1f2937" stroke-width="0.5"/><text x="${padL - 4}" y="${toY(v) + 3}" text-anchor="end" fill="#6b7280" font-size="7">${v}</text>`)}
+        <polyline points="${vulnPoints}" fill="none" stroke="#ef4444" stroke-width="2"/>
+        <polyline points="${resPoints}" fill="none" stroke="#22c55e" stroke-width="2"/>
+        <line x1="${predVulnStart.split(',')[0]}" y1="${predVulnStart.split(',')[1]}" x2="${predVulnEnd.split(',')[0]}" y2="${predVulnEnd.split(',')[1]}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="${predResStart.split(',')[0]}" y1="${predResStart.split(',')[1]}" x2="${predResEnd.split(',')[0]}" y2="${predResEnd.split(',')[1]}" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4,3"/>
+        ${vulnData.map((_, i) => html`<circle cx="${toX(i)}" cy="${toY(vulnData[i])}" r="3" fill="#ef4444"/>`)}
+        ${resolvedData.map((_, i) => html`<circle cx="${toX(i)}" cy="${toY(resolvedData[i])}" r="3" fill="#22c55e"/>`)}
+        <circle cx="${toX(vulnData.length)}" cy="${toY(predictedVulns)}" r="4" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2,2"/>
+        <circle cx="${toX(resolvedData.length)}" cy="${toY(predictedResolved)}" r="4" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="2,2"/>
+        <text x="${toX(vulnData.length)}" y="${toY(predictedVulns) - 8}" text-anchor="middle" fill="#ef4444" font-size="7">${predictedVulns}</text>
+        <text x="${toX(resolvedData.length)}" y="${toY(predictedResolved) - 8}" text-anchor="middle" fill="#22c55e" font-size="7">${predictedResolved}</text>
+        <line x1="${padL}" y1="${H - padB}" x2="${W - padB}" y2="${H - padB}" stroke="#374151" stroke-width="1"/>
+        ${vulnData.map((_, i) => html`<text x="${toX(i)}" y="${H - padB + 12}" text-anchor="middle" fill="#6b7280" font-size="7">D${i + 1}</text>`)}
+        <text x="${toX(vulnData.length)}" y="${H - padB + 12}" text-anchor="middle" fill="#f59e0b" font-size="7">Pred</text>
+      </svg>
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:9px;color:#6b7280">
+        <span><span style="display:inline-block;width:12px;height:2px;background:#ef4444;margin-right:3px;vertical-align:middle"></span>New Vulns</span>
+        <span><span style="display:inline-block;width:12px;height:2px;background:#22c55e;margin-right:3px;vertical-align:middle"></span>Resolved</span>
+        <span><span style="display:inline-block;width:12px;height:2px;background:#f59e0b;margin-right:3px;vertical-align:middle;border-top:1px dashed #f59e0b"></span>Predicted</span>
+      </div>
+    </div>`;
+  }
+
+  // --- Team Collaboration Panel ---
+  private _renderTeamPanel(): any {
+    const typeColors: Record<string, string> = { risk: '#ef4444', scan: '#3b82f6', approval: '#22c55e', patch: '#f59e0b', inventory: '#8b5cf6', assignment: '#06b6d4', config: '#94a3b8', report: '#a78bfa' };
+    const priorityColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Team Collaboration</div>
+        <div style="display:flex;gap:4px">
+          ${this._teamMembers.slice(0, 3).map(m => html`<div title="${m.name} (${m.role}) - ${m.activeTasks} active tasks" style="width:24px;height:24px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;border:2px solid #0f172a;cursor:pointer">${m.avatar}</div>`)}
+          <div style="width:24px;height:24px;border-radius:50%;background:#374151;display:flex;align-items:center;justify-content:center;font-size:8px;color:#94a3b8;border:2px solid #0f172a">+${this._teamMembers.length - 3}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">
+        ${this._teamMembers.map(m => html`<div style="background:#1f2937;border-radius:6px;padding:8px;display:flex;gap:8px;align-items:center">
+          <div style="width:32px;height:32px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0">${m.avatar}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+            <div style="font-size:9px;color:#6b7280">${m.role}</div>
+            <div style="display:flex;gap:4px;margin-top:3px">
+              <span style="font-size:9px;color:#f59e0b">${m.activeTasks} tasks</span>
+              <div style="flex:1;height:4px;background:#374151;border-radius:2px;overflow:hidden">
+                <div style="width:${(m.workload / 10) * 100}%;height:100%;background:${m.workload >= 8 ? '#ef4444' : m.workload >= 5 ? '#f59e0b' : '#22c55e'};border-radius:2px"></div>
+              </div>
+            </div>
+          </div>
+        </div>`)}
+      </div>
+      <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px">Active Tasks</div>
+      <div style="max-height:160px;overflow-y:auto">
+        ${this._tasks.filter(t => t.status !== 'completed').map(t => html`<div style="background:#1f2937;border-radius:6px;padding:8px;margin-bottom:4px;border-left:3px solid ${priorityColors[t.priority] || '#94a3b8'}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:11px;font-weight:600">${t.title}</div>
+            <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${priorityColors[t.priority]}20;color:${priorityColors[t.priority]};font-weight:600">${t.priority}</span>
+          </div>
+          <div style="font-size:9px;color:#6b7280;margin-top:2px">Assigned: ${t.assignee} | Due: ${t.dueDate}</div>
+        </div>`)}
+      </div>
+      <div style="font-size:11px;font-weight:600;color:#94a3b8;margin:10px 0 6px">Activity Feed</div>
+      <div style="max-height:180px;overflow-y:auto">
+        ${this._activityFeed.map(a => html`<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #1f2937;font-size:11px">
+          <div style="width:6px;height:6px;border-radius:50%;background:${typeColors[a.type] || '#94a3b8'};margin-top:5px;flex-shrink:0"></div>
+          <div style="flex:1"><span style="font-weight:600;color:#e2e8f0">${a.user}</span> <span style="color:#94a3b8">${a.action}</span> <span style="color:#e2e8f0">${a.target}</span></div>
+          <span style="font-size:9px;color:#6b7280;white-space:nowrap">${a.time}</span>
+        </div>`)}
+      </div>
+    </div>`;
+  }
+
+  // --- Compliance Engine Visualization ---
+  private _renderComplianceEngine(): any {
+    const summary = this._getComplianceSummary();
+    const passRate = summary.total ? Math.round((summary.passed / summary.total) * 100) : 0;
+    const passColor = passRate >= 90 ? '#22c55e' : passRate >= 70 ? '#f59e0b' : '#ef4444';
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Compliance Rule Engine</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+        <div style="background:#1f2937;border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:${passColor}">${passRate}%</div>
+          <div style="font-size:9px;color:#6b7280">Pass Rate</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:#22c55e">${summary.passed}</div>
+          <div style="font-size:9px;color:#6b7280">Passed</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:#ef4444">${summary.failed}</div>
+          <div style="font-size:9px;color:#6b7280">Failed</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:#8b5cf6">${Object.keys(summary.byFramework).length}</div>
+          <div style="font-size:9px;color:#6b7280">Frameworks</div>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:600;margin-bottom:6px">By Framework</div>
+      ${Object.entries(summary.byFramework).map(([fw, data]) => html`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="width:100px;font-size:10px;color:#94a3b8;font-weight:600">${fw}</span>
+        <div style="flex:1;height:8px;background:#1f2937;border-radius:4px;overflow:hidden">
+          <div style="width:${data.total ? (data.passed / data.total) * 100 : 0}%;height:100%;background:${data.total && data.passed / data.total >= 0.9 ? '#22c55e' : data.total && data.passed / data.total >= 0.7 ? '#f59e0b' : '#ef4444'};border-radius:4px"></div>
+        </div>
+        <span style="font-size:10px;font-weight:700;color:#e2e8f0;min-width:50px;text-align:right">${data.passed}/${data.total}</span>
+      </div>`)}
+      <div style="font-size:11px;font-weight:600;margin:10px 0 6px">Active Rules (${this._complianceRules.length})</div>
+      <div style="max-height:200px;overflow-y:auto">
+        ${this._complianceRules.map(r => html`<div style="background:#1f2937;border-radius:6px;padding:8px;margin-bottom:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-size:11px;font-weight:600">${r.control}: ${r.title}</span>
+              <span style="font-size:9px;color:#6b7280;margin-left:6px">${r.framework}</span>
+            </div>
+            <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${r.severity === 'critical' ? '#ef444420' : r.severity === 'high' ? '#f9731620' : '#eab30820'};color:${r.severity === 'critical' ? '#fca5a5' : r.severity === 'high' ? '#fdba74' : '#fde047'};font-weight:600">${r.severity}</span>
+          </div>
+          <div style="font-size:9px;color:#6b7280;margin-top:2px">${r.description}</div>
+          <div style="font-size:9px;color:#6b7280;margin-top:1px">Applies to: ${r.applicableTypes.join(', ')}</div>
+        </div>`)}
+      </div>
+    </div>`;
+  }
+
+  // --- Risk Breakdown per Asset ---
+  private _renderRiskBreakdown(): any {
+    const topAssets = this._assets.filter(a => a.status !== 'retired').sort((a, b) => b.riskScore - a.riskScore).slice(0, 8);
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Multi-Factor Risk Breakdown</div>
+      ${topAssets.map(a => {
+        const analysis = this._calculateAssetRisk(a);
+        return html`<div style="background:#1f2937;border-radius:6px;padding:10px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:11px;font-weight:700">${a.name.split('.')[0]}</span>
+            <span style="font-size:13px;font-weight:700;color:${this._getRiskColor(analysis.score)}">${analysis.score} (${analysis.level})</span>
+          </div>
+          <div style="display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden">
+            ${analysis.factors.map(f => html`<div style="width:${f.weight * 100}%;background:${f.contribution >= 20 ? '#ef4444' : f.contribution >= 12 ? '#f97316' : f.contribution >= 6 ? '#eab308' : '#22c55e'};opacity:${0.4 + (f.contribution / 25)}" title="${f.name}: ${f.contribution.toFixed(1)}"></div>`)}
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+            ${analysis.factors.map(f => html`<span style="font-size:8px;color:#6b7280;background:#0f172a;padding:1px 4px;border-radius:2px">${f.name}: ${f.contribution.toFixed(1)}</span>`)}
+          </div>
+        </div>`;
+      })}
+    </div>`;
+  }
+
+  // --- Panel Configuration ---
+  private _renderPanelConfig(): any {
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Panel Configuration</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px">Layout Mode</div>
+          <div style="display:flex;gap:4px">
+            ${(['grid', 'list', 'compact'] as const).map(m => html`<button class="btn btn-sm ${this._layoutMode === m ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:10px" @click=${() => { this._layoutMode = m; }}>${m}</button>`)}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px">Color Theme</div>
+          <div style="display:flex;gap:4px">
+            ${(['dark', 'midnight', 'ocean'] as const).map(t => html`<button class="btn btn-sm ${this._colorTheme === t ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:10px" @click=${() => { this._colorTheme = t; }}>${t}</button>`)}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px">Auto-Refresh</div>
+          <select style="background:#0f172a;border:1px solid #374151;border-radius:4px;padding:4px 8px;color:#e2e8f0;font-size:11px;width:100%" @change=${(e: Event) => { this._autoRefreshInterval = parseInt((e.target as HTMLSelectElement).value); }}>
+            <option value="0">Disabled</option><option value="60">1 minute</option><option value="300">5 minutes</option><option value="900">15 minutes</option><option value="3600">1 hour</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px">Default Filters</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            ${['Tier 1 Only', 'EOL Watch', 'Non-Compliant'].map(f => html`<span class="filter-chip" style="font-size:9px;padding:2px 8px">${f}</span>`)}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   render() {
     const assets = this._getFilteredAssets();
+    this._items = this._assets;
     const tier1Count = this._assets.filter(a => a.criticality === 'tier1').length;
     const eolCount = this._assets.filter(a => a.eolDate && new Date(a.eolDate) < new Date('2026-07-01')).length;
     const unmanagedCount = this._assets.filter(a => a.status === 'discovered').length;

@@ -846,4 +846,373 @@ export class ScPrivilegeEscalation extends LitElement {
       </div>
     `;
   }
+
+  // --- Privilege Escalation Risk Scoring Engine ---
+  private _escRiskFactors: Record<string, { weight: number; label: string; description: string }> = {
+    vectorCount: { weight: 0.20, label: 'Available Vectors', description: 'Number of viable escalation paths' },
+    highestLevel: { weight: 0.25, label: 'Achievable Level', description: 'Highest privilege level attainable' },
+    successRate: { weight: 0.15, label: 'Success Rate', description: 'Historical exploitation success percentage' },
+    patchCoverage: { weight: 0.20, label: 'Patch Coverage', description: 'Percentage of vectors with available patches' },
+    detectionRisk: { weight: 0.10, label: 'Detection Risk', description: 'Likelihood of triggering security alerts' },
+    complexityScore: { weight: 0.10, label: 'Complexity', description: 'Technical complexity of exploitation' },
+  };
+
+  private _computeEscalationRisk(): { score: number; level: string; factors: { name: string; score: number; label: string }[] } {
+    const levelValues: Record<string, number> = { user: 10, 'power-user': 25, 'local-admin': 50, system: 70, 'nt-authority': 85, kernel: 95, 'domain-user': 30, 'domain-admin': 100 };
+    const vectors = this._vectors.filter(v => v.status === 'available');
+    const highestLevel = vectors.reduce((max, v) => { const val = levelValues[v.achievableLevel] || 0; return val > max ? val : max; }, 0);
+    const totalAttempts = this._history.reduce((s, h) => s + h.attempts, 0);
+    const totalSuccesses = this._history.reduce((s, h) => s + h.successes, 0);
+    const successRate = totalAttempts > 0 ? (totalSuccesses / totalAttempts) * 100 : 0;
+    const patchedVectors = vectors.filter(v => v.patchAvailable).length;
+    const patchRate = vectors.length > 0 ? (patchedVectors / vectors.length) * 100 : 100;
+
+    const factors = [
+      { name: 'vectorCount', score: Math.min(100, vectors.length * 12), label: this._escRiskFactors.vectorCount.label },
+      { name: 'highestLevel', score: highestLevel, label: this._escRiskFactors.highestLevel.label },
+      { name: 'successRate', score: successRate, label: this._escRiskFactors.successRate.label },
+      { name: 'patchCoverage', score: 100 - patchRate, label: this._escRiskFactors.patchCoverage.label },
+      { name: 'detectionRisk', score: Math.min(100, vectors.filter(v => v.stealth === 'low').length * 15), label: this._escRiskFactors.detectionRisk.label },
+      { name: 'complexityScore', score: Math.min(100, vectors.filter(v => v.complexity === 'low').length * 20), label: this._escRiskFactors.complexityScore.label },
+    ];
+
+    const score = Math.round(factors.reduce((s, f) => s + f.score * (this._escRiskFactors[f.name]?.weight || 0.15), 0));
+    const level = score > 75 ? 'critical' : score > 50 ? 'high' : score > 25 ? 'medium' : 'low';
+    return { score, level, factors };
+  }
+
+  // --- MITRE ATT&CK Privilege Escalation Correlation ---
+  private _mitreEscMap: Record<string, { techniqueId: string; techniqueName: string; tactic: string; subtechniques: string[] }> = {
+    'kernel-exploit': { techniqueId: 'T1068', techniqueName: 'Exploitation for Privilege Escalation', tactic: 'Privilege Escalation', subtechniques: ['T1068.001', 'T1068.002'] },
+    'token-impersonation': { techniqueId: 'T1134', techniqueName: 'Access Token Manipulation', tactic: 'Privilege Escalation', subtechniques: ['T1134.001', 'T1134.002', 'T1134.003', 'T1134.004'] },
+    'scheduled-task': { techniqueId: 'T1053', techniqueName: 'Scheduled Task/Job', tactic: 'Privilege Escalation', subtechniques: ['T1053.005', 'T1053.008'] },
+    'service-misconfig': { techniqueId: 'T1543', techniqueName: 'Create or Modify System Process', tactic: 'Privilege Escalation', subtechniques: ['T1543.003'] },
+    'dll-hijack': { techniqueId: 'T1574', techniqueName: 'Hijack Execution Flow', tactic: 'Privilege Escalation', subtechniques: ['T1574.001', 'T1574.002'] },
+    'registry': { techniqueId: 'T1112', techniqueName: 'Modify Registry', tactic: 'Privilege Escalation', subtechniques: [] },
+    'named-pipe': { techniqueId: 'T1059', techniqueName: 'Command and Scripting Interpreter', tactic: 'Execution', subtechniques: ['T1059.001'] },
+    'credential-theft': { techniqueId: 'T1003', techniqueName: 'OS Credential Dumping', tactic: 'Credential Access', subtechniques: ['T1003.001', 'T1003.002', 'T1003.003'] },
+    'sudo-misconfig': { techniqueId: 'T1548', techniqueName: 'Abuse Elevation Control Mechanism', tactic: 'Privilege Escalation', subtechniques: ['T1548.003'] },
+    'suid-bit': { techniqueId: 'T1548', techniqueName: 'Abuse Elevation Control Mechanism', tactic: 'Privilege Escalation', subtechniques: ['T1548.001'] },
+    'cron-job': { techniqueId: 'T1053', techniqueName: 'Scheduled Task/Job', tactic: 'Privilege Escalation', subtechniques: ['T1053.003'] },
+    'docker-escape': { techniqueId: 'T1611', techniqueName: 'Escape to Host', tactic: 'Privilege Escalation', subtechniques: [] },
+  };
+
+  private _correlateEscMitre(): { tactic: string; techniques: { id: string; name: string; subtechniques: string[]; vectorCount: number }[] }[] {
+    const tacticMap: Record<string, { id: string; name: string; subtechniques: string[]; vectorCount: number }[]> = {};
+    const availableVectors = this._vectors.filter(v => v.status === 'available');
+    availableVectors.forEach(v => {
+      const mitre = this._mitreEscMap[v.category];
+      if (mitre) {
+        if (!tacticMap[mitre.tactic]) tacticMap[mitre.tactic] = [];
+        const existing = tacticMap[mitre.tactic].find(t => t.id === mitre.techniqueId);
+        if (existing) { existing.vectorCount++; } else { tacticMap[mitre.tactic].push({ id: mitre.techniqueId, name: mitre.techniqueName, subtechniques: mitre.subtechniques, vectorCount: 1 }); }
+      }
+    });
+    return Object.entries(tacticMap).map(([tactic, techniques]) => ({ tactic, techniques }));
+  }
+
+  // --- Escalation Path Treemap SVG ---
+  private _escalationTreemapSVG(): string {
+    const w = 500, h = 250;
+    const categories = ['kernel-exploit', 'service-misconfig', 'token-impersonation', 'scheduled-task', 'dll-hijack', 'registry', 'credential-theft', 'named-pipe', 'sudo-misconfig', 'suid-bit', 'cron-job', 'docker-escape'];
+    const data = categories.map(cat => {
+      const count = this._vectors.filter(v => v.category === cat).length;
+      return { cat, count, color: count > 3 ? '#ef4444' : count > 1 ? '#f97316' : count > 0 ? '#eab308' : '#374151' };
+    }).filter(d => d.count > 0);
+    const total = data.reduce((s, d) => s + d.count, 0) || 1;
+    let x = 0, y = 0, rowH = h;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    data.sort((a, b) => b.count - a.count).forEach(d => {
+      const cellW = (d.count / total) * w;
+      if (x + cellW > w) { x = 0; y += rowH; rowH = h - y; }
+      const cellH = rowH;
+      svg += `<rect x="${x}" y="${y}" width="${cellW - 2}" height="${cellH - 2}" rx="4" fill="${d.color}" opacity="0.3" stroke="${d.color}" stroke-width="1"/>`;
+      svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 - 4}" fill="#e2e8f0" font-size="9" text-anchor="middle" font-weight="600">${d.cat}</text>`;
+      svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 + 10}" fill="#9ca3af" font-size="8" text-anchor="middle">${d.count} vectors</text>`;
+      x += cellW;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Escalation Radar Chart ---
+  private _escRadarSVG(): string {
+    const dims = ['Exploitability', 'Stealth', 'Reliability', 'Impact', 'Coverage', 'Speed'];
+    const values = [0.7, 0.5, 0.8, 0.9, 0.6, 0.4];
+    const cx = 100, cy = 100, r = 70, n = dims.length;
+    let svg = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">`;
+    for (let ring = 1; ring <= 4; ring++) {
+      const rr = (ring / 4) * r;
+      const pts = dims.map((_, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`; }).join(' ');
+      svg += `<polygon points="${pts}" fill="none" stroke="#374151" stroke-width="0.5"/>`;
+    }
+    dims.forEach((_, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; svg += `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(a)}" y2="${cy + r * Math.sin(a)}" stroke="#374151" stroke-width="0.5"/>`; });
+    const dataPts = values.map((v, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; return `${cx + v * r * Math.cos(a)},${cy + v * r * Math.sin(a)}`; }).join(' ');
+    svg += `<polygon points="${dataPts}" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="1.5"/>`;
+    dims.forEach((d, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; const lx = cx + (r + 18) * Math.cos(a), ly = cy + (r + 18) * Math.sin(a); svg += `<text x="${lx}" y="${ly}" fill="#9ca3af" font-size="7" text-anchor="middle" dominant-baseline="middle">${d}</text>`; });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Collaboration ---
+  @state() private _team: { id: string; name: string; role: string; status: string }[] = [
+    { id: 'e1', name: 'Red Team Operator', role: 'Offense', status: 'online' },
+    { id: 'e2', name: 'Blue Team Analyst', role: 'Defense', status: 'online' },
+    { id: 'e3', name: 'System Admin', role: 'Infrastructure', status: 'busy' },
+  ];
+  @state() private _teamNotes: { id: string; userId: string; text: string; timestamp: string }[] = [];
+  @state() private _noteText = '';
+
+  private _addTeamNote() {
+    if (!this._noteText.trim()) return;
+    this._teamNotes = [{ id: 'n' + Date.now(), userId: 'You', text: this._noteText.trim(), timestamp: new Date().toISOString() }, ...this._teamNotes].slice(0, 30);
+    this._noteText = '';
+  }
+
+  private _renderTeamCollab(): any {
+    return html`
+      <div style="margin-top:16px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span>Team Notes</span>
+          <span style="font-size:10px;color:#6b7280">${this._team.filter(t => t.status === 'online').length} online</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          ${this._team.map(m => html`
+            <div style="display:flex;align-items:center;gap:4px;background:#1f2937;border-radius:4px;padding:3px 8px;font-size:10px">
+              <div style="width:6px;height:6px;border-radius:50%;background:${m.status === 'online' ? '#22c55e' : m.status === 'busy' ? '#eab308' : '#6b7280'}"></div>
+              <span style="font-weight:600">${m.name}</span>
+              <span style="color:#6b7280">${m.role}</span>
+            </div>
+          `)}
+        </div>
+        ${this._teamNotes.length > 0 ? html`
+          <div style="max-height:80px;overflow-y:auto;margin-bottom:8px">
+            ${this._teamNotes.slice(0, 5).map(n => html`
+              <div style="font-size:10px;padding:4px 0;border-bottom:1px solid #1f2937">
+                <span style="font-weight:600;color:#e2e8f0">${n.userId}</span>
+                <span style="color:#9ca3af">: ${n.text}</span>
+                <span style="float:right;font-size:8px;color:#4b5563">${new Date(n.timestamp).toLocaleTimeString()}</span>
+              </div>
+            `)}
+          </div>
+        ` : ''}
+        <div style="display:flex;gap:6px">
+          <input style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:4px;padding:5px 8px;color:#e2e8f0;font-size:10px" placeholder="Add team note..." .value=${this._noteText} @input=${(e: any) => this._noteText = e.target.value}>
+          <button style="background:#f59e0b;color:#111827;border:none;border-radius:4px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer" @click=${this._addTeamNote}>Add</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Auto-Insights ---
+  private _generateEscInsights(): { icon: string; text: string; severity: string; category: string }[] {
+    const insights: { icon: string; text: string; severity: string; category: string }[] = [];
+    const available = this._vectors.filter(v => v.status === 'available');
+    const kernelVectors = available.filter(v => v.category === 'kernel-exploit');
+    const credVectors = available.filter(v => v.category === 'credential-theft');
+    const stealthyVectors = available.filter(v => v.stealth === 'high');
+    if (kernelVectors.length > 0) insights.push({ icon: '\uD83D\uDC27', text: `${kernelVectors.length} kernel-level escalation vectors available. Highest risk category - full system compromise possible.`, severity: 'critical', category: 'risk' });
+    if (credVectors.length > 0) insights.push({ icon: '\uD83D\uDD11', text: `${credVectors.length} credential theft vectors detected. Credential hygiene review recommended.`, severity: 'high', category: 'credential' });
+    if (stealthyVectors.length > available.length * 0.5) insights.push({ icon: '\uD83D\uDEE1\uFE0F', text: 'Majority of vectors have high stealth rating. Detection capabilities may be insufficient.', severity: 'high', category: 'detection' });
+    const risk = this._computeEscalationRisk();
+    if (risk.score > 75) insights.push({ icon: '\uD83D\uDD04', text: `Overall escalation risk score is ${risk.score}/100. Immediate remediation required.`, severity: 'critical', category: 'overall' });
+    const unpatched = available.filter(v => !v.patchAvailable).length;
+    if (unpatched > 0) insights.push({ icon: '\uD83D\uDC9C', text: `${unpatched} vectors have no available patches. Compensating controls needed.`, severity: 'medium', category: 'patching' });
+    return insights.length > 0 ? insights : [{ icon: '\u2705', text: 'No critical privilege escalation risks detected.', severity: 'low', category: 'status' }];
+  }
+
+  private _renderEscInsights(): any {
+    const insights = this._generateEscInsights();
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Auto-Insights</div>
+        ${insights.map(i => html`
+          <div style="display:flex;gap:8px;padding:6px;margin-bottom:4px;background:#1f2937;border-radius:4px;font-size:11px;border-left:3px solid ${i.severity === 'critical' ? '#ef4444' : i.severity === 'high' ? '#f97316' : i.severity === 'medium' ? '#eab308' : '#22c55e'}">
+            <span>${i.icon}</span><div><span style="color:#e2e8f0">${i.text}</span><div style="font-size:8px;color:#4b5563;margin-top:2px">${i.category}</div></div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Panel Config ---
+  @state() private _panelConfig: { showTreemap: boolean; showRadar: boolean; showTeam: boolean; autoRefresh: boolean; compactView: boolean } = {
+    showTreemap: true, showRadar: true, showTeam: true, autoRefresh: false, compactView: false,
+  };
+
+  // --- CVSS-like Severity Calculator for Escalation Vectors ---
+  private _calculateEscCVSS(vector: any): { baseScore: number; impact: number; exploitability: number; severity: string } {
+    const severityValues: Record<string, number> = { critical: 10, high: 7.5, medium: 5, low: 2.5 };
+    const impactVal = severityValues[vector.risk] || 5;
+    const av = vector.requiresLocalAccess ? 0.55 : 0.85;
+    const complexity = vector.complexity === 'low' ? 0.85 : vector.complexity === 'medium' ? 0.6 : 0.35;
+    const privileges = vector.requiresUserInteraction ? 0.5 : 0.85;
+    const userInt = vector.requiresPhysicalAccess ? 0.4 : 0.85;
+    const exploitability = 8.22 * av * complexity * privileges * userInt;
+    const impact = Math.min(10, impactVal * 1.0);
+    const iss = Math.min(10, impact);
+    const baseScore = iss === 0 ? 0 : Math.min(10, Math.round((iss + exploitability) * 0.5 * 10) / 10);
+    const severity = baseScore >= 9 ? 'critical' : baseScore >= 7 ? 'high' : baseScore >= 4 ? 'medium' : 'low';
+    return { baseScore, impact: Math.round(impact * 10) / 10, exploitability: Math.round(exploitability * 10) / 10, severity };
+  }
+
+  private _renderSeverityMatrix(): any {
+    const available = this._vectors.filter(v => v.status === 'available').slice(0, 10);
+    if (available.length === 0) return nothing;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Vector Severity Matrix</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px">
+          <thead><tr style="background:#0f172a;color:#94a3b8">
+            <th style="padding:5px;text-align:left">Vector</th>
+            <th style="padding:5px;text-align:center">CVSS</th>
+            <th style="padding:5px;text-align:center">Impact</th>
+            <th style="padding:5px;text-align:center">Exploit</th>
+            <th style="padding:5px;text-align:center">Level</th>
+          </tr></thead>
+          <tbody>
+            ${available.map(v => {
+              const cvss = this._calculateEscCVSS(v);
+              return html`<tr style="border-bottom:1px solid #1f2937">
+                <td style="padding:5px;color:#e2e8f0">${v.name}</td>
+                <td style="padding:5px;text-align:center;color:${cvss.severity === 'critical' ? '#ef4444' : cvss.severity === 'high' ? '#f97316' : '#eab308'};font-weight:700">${cvss.baseScore}</td>
+                <td style="padding:5px;text-align:center">${cvss.impact}</td>
+                <td style="padding:5px;text-align:center">${cvss.exploitability}</td>
+                <td style="padding:5px;text-align:center">${v.achievableLevel}</td>
+              </tr>`;
+            })}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // --- MITRE ATT&CK Navigator SVG ---
+  private _mitreHeatmapSVG(): string {
+    const tactics = ['Privilege Escalation', 'Credential Access', 'Execution', 'Persistence', 'Defense Evasion', 'Discovery', 'Lateral Movement', 'Collection'];
+    const w = 700, h = 180;
+    const colW = (w - 40) / tactics.length, rowH = 30;
+    const correlation = this._correlateEscMitre();
+    const tactData = tactics.map(t => {
+      const found = correlation.find(c => c.tactic === t);
+      return { tactic: t, count: found ? found.techniques.reduce((s, t) => s + t.vectorCount, 0) : 0 };
+    });
+    const maxCount = Math.max(...tactData.map(d => d.count), 1);
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    tactData.forEach((d, i) => {
+      const x = 20 + i * colW, y = 30;
+      const intensity = d.count / maxCount;
+      const color = intensity > 0.7 ? '#ef4444' : intensity > 0.4 ? '#f97316' : intensity > 0 ? '#eab308' : '#1f2937';
+      svg += `<rect x="${x + 2}" y="${y}" width="${colW - 4}" height="${rowH * 2}" rx="4" fill="${color}" opacity="${0.2 + intensity * 0.6}" stroke="${color}" stroke-width="1"/>`;
+      svg += `<text x="${x + colW / 2}" y="${y + rowH}" fill="#e2e8f0" font-size="8" text-anchor="middle" font-weight="600">${d.count}</text>`;
+      svg += `<text x="${x + colW / 2}" y="${y + rowH + 15}" fill="#9ca3af" font-size="7" text-anchor="middle">${d.tactic}</text>`;
+    });
+    svg += `<text x="${w / 2}" y="18" fill="#e2e8f0" font-size="10" text-anchor="middle" font-weight="700">MITRE ATT&CK Escalation Correlation</text>`;
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Anomaly Detection ---
+  private _detectAnomalies(): { id: string; type: string; description: string; severity: string; timestamp: string }[] {
+    const anomalies: { id: string; type: string; description: string; severity: string; timestamp: string }[] = [];
+    const recentHistory = this._history.filter(h => (Date.now() - new Date(h.timestamp).getTime()) < 86400000);
+    if (recentHistory.some(h => h.successes > 5)) anomalies.push({ id: 'a1', type: 'Burst Activity', description: 'Multiple successful escalations within 24 hours. Possible automated attack.', severity: 'critical', timestamp: new Date().toISOString() });
+    if (this._vectors.filter(v => v.status === 'available' && v.category === 'kernel-exploit').length > 2) anomalies.push({ id: 'a2', type: 'Kernel Vector Cluster', description: 'Multiple kernel exploitation vectors available. System may be significantly outdated.', severity: 'high', timestamp: new Date().toISOString() });
+    const stealthRatio = this._vectors.filter(v => v.status === 'available' && v.stealth === 'high').length;
+    if (stealthRatio > 3) anomalies.push({ id: 'a3', type: 'Stealth Dominance', description: 'High number of stealthy vectors available. Detection coverage is likely insufficient.', severity: 'high', timestamp: new Date().toISOString() });
+    return anomalies;
+  }
+
+  private _renderAnomalies(): any {
+    const anomalies = this._detectAnomalies();
+    if (anomalies.length === 0) return nothing;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#f59e0b">Anomaly Detection (${anomalies.length})</div>
+        ${anomalies.map(a => html`
+          <div style="background:#1f2937;border-radius:4px;padding:8px;margin-bottom:4px;border-left:3px solid ${a.severity === 'critical' ? '#ef4444' : '#f97316'}">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0">${a.type}</div>
+            <div style="font-size:10px;color:#9ca3af">${a.description}</div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Trend Prediction ---
+  private _predictEscTrend(): { direction: 'increasing' | 'stable' | 'decreasing'; confidence: number; reason: string; nextScore: number } {
+    const risk = this._computeEscalationRisk();
+    const unpatched = this._vectors.filter(v => v.status === 'available' && !v.patchAvailable).length;
+    const total = this._vectors.filter(v => v.status === 'available').length;
+    const patchGap = total > 0 ? unpatched / total : 0;
+    if (patchGap > 0.6) return { direction: 'increasing', confidence: 0.8, reason: 'Large patch gap suggests growing risk', nextScore: Math.min(100, risk.score + 15) };
+    if (risk.score > 50) return { direction: 'stable', confidence: 0.6, reason: 'Elevated risk with moderate patch coverage', nextScore: risk.score + 3 };
+    return { direction: 'decreasing', confidence: 0.7, reason: 'Good patch coverage and low vector count', nextScore: Math.max(0, risk.score - 10) };
+  }
+
+  private _renderTrendPrediction(): any {
+    const trend = this._predictEscTrend();
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Trend Prediction</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px">${trend.direction === 'increasing' ? '\uD83D\uDD3C' : trend.direction === 'decreasing' ? '\uD83D\uDD3D' : '\u2192'}</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:${trend.direction === 'increasing' ? '#ef4444' : trend.direction === 'decreasing' ? '#22c55e' : '#eab308'}">${trend.direction.toUpperCase()} RISK</div>
+            <div style="font-size:10px;color:#9ca3af">${trend.reason}</div>
+            <div style="font-size:10px;color:#6b7280;margin-top:2px">Confidence: ${Math.round(trend.confidence * 100)}% | Predicted next score: ${trend.nextScore}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Compliance Rules Engine ---
+  private _complianceRules: { id: string; rule: string; standard: string; status: 'pass' | 'fail' | 'warning'; detail: string }[] = [
+    { id: 'cr1', rule: 'No kernel exploits available', standard: 'CIS Level 2', status: 'fail', detail: 'Kernel exploitation vectors detected on target system' },
+    { id: 'cr2', rule: 'All services run with minimum privileges', standard: 'NIST 800-53 AC-6', status: 'warning', detail: '2 services running with elevated privileges' },
+    { id: 'cr3', rule: 'Password policy enforced', standard: 'PCI-DSS 8.2.3', status: 'pass', detail: 'Password complexity and rotation policies are active' },
+    { id: 'cr4', rule: 'Audit logging enabled for privilege changes', standard: 'SOC2 CC6.1', status: 'pass', detail: 'All privilege escalation events are logged' },
+    { id: 'cr5', rule: 'No default credentials in use', standard: 'ISO 27001 A.9.2.1', status: 'warning', detail: 'Default credentials found on 1 service account' },
+    { id: 'cr6', rule: 'MFA enforced for admin accounts', standard: 'NIST 800-63B', status: 'pass', detail: 'Multi-factor authentication is enabled' },
+  ];
+
+  private _renderComplianceCheck(): any {
+    const pass = this._complianceRules.filter(r => r.status === 'pass').length;
+    const fail = this._complianceRules.filter(r => r.status === 'fail').length;
+    const warn = this._complianceRules.filter(r => r.status === 'warning').length;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <span>Compliance Check</span>
+          <span style="font-size:10px;color:#22c55e">${pass} pass</span>
+          <span style="font-size:10px;color:#eab308">${warn} warn</span>
+          <span style="font-size:10px;color:#ef4444">${fail} fail</span>
+        </div>
+        ${this._complianceRules.map(r => html`
+          <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1f2937;font-size:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${r.status === 'pass' ? '#22c55e' : r.status === 'fail' ? '#ef4444' : '#eab308'}"></div>
+            <span style="flex:1;color:#e2e8f0">${r.rule}</span>
+            <span style="color:#6b7280;font-size:9px">${r.standard}</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _renderPanelConfig(): any {
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Configuration</div>
+        ${Object.entries(this._panelConfig).map(([key, val]) => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #1f2937">
+            <span style="font-size:11px;color:#9ca3af">${key.replace(/([A-Z])/g, ' $1').trim()}</span>
+            <div style="width:32px;height:18px;border-radius:9px;background:${val ? '#22c55e' : '#374151'};cursor:pointer;position:relative" @click=${() => { this._panelConfig = { ...this._panelConfig, [key]: !val }; }}>
+              <div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;left:${val ? '16px' : '2px'};transition:left 0.2s"></div>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
 }

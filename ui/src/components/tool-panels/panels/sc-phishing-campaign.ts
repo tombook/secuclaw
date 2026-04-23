@@ -196,6 +196,23 @@ export class ScPhishingCampaign extends LitElement {
     .dist-legend { display: flex; gap: 12px; font-size: 9px; color: #6b7280; }
     .dist-legend span { display: inline-flex; align-items: center; gap: 3px; }
     .dist-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+    .intel-row { display: flex; gap: 10px; padding: 8px; background: #0a0c10; border-radius: 6px; margin-bottom: 6px; align-items: center; }
+    .intel-type { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+    .intel-val { font-family: monospace; font-size: 12px; color: #e2e8f0; min-width: 120px; }
+    .intel-desc { flex: 1; font-size: 10px; color: #6b7280; }
+    .intel-conf { font-size: 10px; font-weight: 700; min-width: 40px; text-align: right; }
+    .insight-card { background: linear-gradient(135deg, #1a1d27 0%, #0a0c10 100%); border-radius: 8px; padding: 14px; margin-bottom: 8px; border-left: 3px solid #8b5cf6; }
+    .insight-title { font-size: 12px; font-weight: 700; color: #8b5cf6; margin-bottom: 4px; }
+    .insight-body { font-size: 11px; color: #9ca3af; line-height: 1.5; }
+    .trend-indicator { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; }
+    .trend-up { color: #f87171; }
+    .trend-down { color: #34d399; }
+    .trend-flat { color: #9ca3af; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #f87171; position: relative; display: inline-block; }
+    .notif-dot::after { content: ''; position: absolute; top: -2px; left: -2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #f87171; animation: nd-pulse 1.5s infinite; }
+    @keyframes nd-pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+    .config-select { padding: 6px 10px; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 6px; color: #e2e8f0; font-size: 11px; outline: none; }
+    .config-select:focus { border-color: #8b5cf6; }
   `;
 
   private _getTemplate(): PhishTemplate {
@@ -542,7 +559,95 @@ export class ScPhishingCampaign extends LitElement {
         <input type="text" placeholder="Add comment..." .value=${this._newComment} @input=${(e: Event) => { this._newComment = (e.target as HTMLInputElement).value; }} @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') this._addComment(); }} style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:6px;padding:8px;color:#e2e8f0;font-size:12px;outline:none">
         <button class="btn btn-primary btn-sm" @click=${this._addComment}>Post</button>
       </div>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        ${['Security Team', 'IT Ops', 'HR', 'Legal', 'Compliance'].map(team => html`<span class="tag" style="cursor:pointer;background:#3b82f620;color:#60a5fa" @click=${() => { this._newComment += '@' + team + ' '; }}>@${team}</span>`)}
+      </div>
     </div>`;
+  }
+
+  // Panel configuration
+  private _renderPanelConfig(): any {
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Panel Configuration</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0a0c10">
+        <div><div style="font-size:11px;color:#e2e8f0">Auto-Refresh Interval</div><div style="font-size:9px;color:#6b7280">Refresh campaign metrics automatically</div></div>
+        <select class="config-select" style="width:120px">
+          <option value="0">Disabled</option>
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="300">5 minutes</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0a0c10">
+        <div><div style="font-size:11px;color:#e2e8f0">Color Theme</div><div style="font-size:9px;color:#6b7280">Visual theme for charts and metrics</div></div>
+        <select class="config-select" style="width:120px">
+          <option value="dark">Dark (Default)</option>
+          <option value="high-contrast">High Contrast</option>
+          <option value="minimal">Minimal</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0a0c10">
+        <div><div style="font-size:11px;color:#e2e8f0">Default Campaign Type</div><div style="font-size:9px;color:#6b7280">Pre-select when creating new campaigns</div></div>
+        <select class="config-select" style="width:120px">
+          <option value="spear-phishing">Spear Phishing</option>
+          <option value="credential-harvest">Credential Harvest</option>
+          <option value="business-compromise">BEC</option>
+          <option value="malware-delivery">Malware</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+        <div><div style="font-size:11px;color:#e2e8f0">Filter Presets</div><div style="font-size:9px;color:#6b7280">Quick filter targets by risk profile</div></div>
+        <div style="display:flex;gap:4px">
+          ${['All', 'High Risk', 'Untrained', 'Executives'].map(preset => html`<span class="tag" style="cursor:pointer;background:#8b5cf620;color:#a5b4fc">${preset}</span>`)}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Team workload for campaign review
+  private _renderReviewWorkflow(): any {
+    const reviewers = [
+      { name: 'Sarah Chen', role: 'Security Lead', status: 'approved', time: '2h ago' },
+      { name: 'James Wilson', role: 'Compliance', status: 'pending', time: '' },
+      { name: 'Maria Garcia', role: 'HR Manager', status: 'pending', time: '' },
+    ];
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Campaign Approval Workflow</div>
+      ${reviewers.map(r => html`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0a0c10;border-radius:6px;margin-bottom:4px">
+          <div class="comment-avatar" style="background:${r.status === 'approved' ? '#22c55e30' : '#fbbf2430'};color:${r.status === 'approved' ? '#34d399' : '#fbbf24'}">${r.name.split(' ').map((n: string) => n[0]).join('')}</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600">${r.name}</div>
+            <div style="font-size:9px;color:#6b7280">${r.role}${r.time ? ' - ' + r.time : ''}</div>
+          </div>
+          ${r.status === 'approved' ? html`<span class="tag" style="background:#22c55e20;color:#34d399">Approved</span>` : html`
+            <div style="display:flex;gap:4px">
+              <button class="btn btn-sm" style="background:#22c55e;color:#fff;padding:4px 10px" @click=${() => { this._addAudit('approval', r.name + ' approved campaign'); }}>Approve</button>
+              <button class="btn btn-sm" style="background:#ef4444;color:#fff;padding:4px 10px" @click=${() => { this._addAudit('approval', r.name + ' rejected campaign'); }}>Reject</button>
+            </div>
+          `}
+        </div>
+      `)}
+    </div>`;
+  }
+
+  // Department risk distribution
+  private _renderDeptRiskDistSVG(): string {
+    const W = 260, H = 80;
+    const depts = ['Engineering', 'Finance', 'HR', 'Sales', 'Marketing', 'Legal'];
+    const values = depts.map(() => Math.floor(Math.random() * 80) + 20);
+    const maxVal = Math.max(...values);
+    const barW = (W - 60) / depts.length - 4;
+    let svg = '';
+    depts.forEach((d, i) => {
+      const h = (values[i] / maxVal) * (H - 24);
+      const x = 50 + i * (barW + 4);
+      const color = values[i] > 70 ? '#ef4444' : values[i] > 45 ? '#fbbf24' : '#34d399';
+      svg += `<rect x="${x}" y="${H - 18 - h}" width="${barW}" height="${h}" rx="2" fill="${color}" fill-opacity="0.7"/>`;
+      svg += `<text x="${x + barW / 2}" y="${H - 6}" text-anchor="middle" fill="#6b7280" font-size="6">${d.substring(0, 5)}</text>`;
+      svg += `<text x="${x + barW / 2}" y="${H - 20 - h}" text-anchor="middle" fill="#e2e8f0" font-size="7" font-weight="600">${values[i]}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
   }
 
   private _renderFooter(): any {
@@ -646,6 +751,168 @@ export class ScPhishingCampaign extends LitElement {
     </div>`;
   }
 
+  // Domain-specific risk scoring engine for phishing campaigns
+  private _calculateCampaignRisk(campaign: any): { overall: number; factors: { name: string; score: number; weight: number; color: string }[] } {
+    const clickRate = campaign.metrics.sent > 0 ? campaign.metrics.clicked / campaign.metrics.sent : 0;
+    const submitRate = campaign.metrics.sent > 0 ? campaign.metrics.submitted / campaign.metrics.sent : 0;
+    const reportRate = campaign.metrics.sent > 0 ? campaign.metrics.reported / campaign.metrics.sent : 0;
+    const avgPhishScore = campaign.targets.length > 0 ? campaign.targets.reduce((s: number, t: any) => s + t.phishingScore, 0) / campaign.targets.length : 0;
+    const factors = [
+      { name: 'Click Rate', score: Math.min(100, clickRate * 200), weight: 25, color: clickRate > 0.3 ? '#ef4444' : clickRate > 0.15 ? '#f59e0b' : '#22c55e' },
+      { name: 'Credential Exposure', score: Math.min(100, submitRate * 250), weight: 30, color: submitRate > 0.1 ? '#ef4444' : submitRate > 0.05 ? '#f59e0b' : '#22c55e' },
+      { name: 'Report Rate (inverse)', score: Math.min(100, (1 - reportRate) * 100), weight: 20, color: reportRate < 0.1 ? '#ef4444' : reportRate < 0.3 ? '#f59e0b' : '#22c55e' },
+      { name: 'Target Risk Profile', score: avgPhishScore, weight: 15, color: avgPhishScore > 60 ? '#ef4444' : avgPhishScore > 40 ? '#f59e0b' : '#22c55e' },
+      { name: 'Template Sophistication', score: this._config.payload.obfuscation ? 75 : 40, weight: 10, color: this._config.payload.obfuscation ? '#f97316' : '#22c55e' },
+    ];
+    const overall = Math.round(factors.reduce((s: number, f: any) => s + f.score * f.weight / 100, 0));
+    return { overall: Math.min(100, overall), factors };
+  }
+
+  // MITRE ATT&CK technique mapping for phishing campaigns
+  private _mitrePhishingMap: { id: string; name: string; tactic: string; relevance: number }[] = [
+    { id: 'T1566.001', name: 'Spearphishing Attachment', tactic: 'Initial Access', relevance: 95 },
+    { id: 'T1566.002', name: 'Spearphishing Link', tactic: 'Initial Access', relevance: 90 },
+    { id: 'T1566.003', name: 'Spearphishing via Service', tactic: 'Initial Access', relevance: 85 },
+    { id: 'T1566.004', name: 'Spearphishing Voice', tactic: 'Initial Access', relevance: 70 },
+    { id: 'T1193', name: 'Spearphishing Attachment', tactic: 'Initial Access', relevance: 80 },
+    { id: 'T1071.001', name: 'Web Protocols', tactic: 'Command and Control', relevance: 60 },
+    { id: 'T1071.004', name: 'DNS', tactic: 'Command and Control', relevance: 55 },
+    { id: 'T1327', name: 'Phishing for Information', tactic: 'Collection', relevance: 75 },
+  ];
+
+  private _renderMitreMapping(): any {
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">MITRE ATT&CK Mapping</div>
+      ${this._mitrePhishingMap.map(m => html`
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #0a0c10;font-size:11px">
+          <span class="mitre-tag">${m.id}</span>
+          <span style="flex:1;color:#e2e8f0">${m.name}</span>
+          <span class="tag">${m.tactic}</span>
+          <div style="width:60px;height:6px;background:#1f2937;border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${m.relevance}%;background:${m.relevance >= 85 ? '#ef4444' : m.relevance >= 60 ? '#f59e0b' : '#22c55e'};border-radius:3px"></div>
+          </div>
+          <span style="font-size:10px;color:#9ca3af;min-width:30px;text-align:right">${m.relevance}%</span>
+        </div>
+      `)}
+    </div>`;
+  }
+
+  // Sankey diagram for campaign funnel
+  private _renderCampaignFunnelSVG(): string {
+    const W = 280, H = 140;
+    const stages = [
+      { label: 'Sent', value: 500, color: '#3b82f6' },
+      { label: 'Opened', value: 320, color: '#fbbf24' },
+      { label: 'Clicked', value: 140, color: '#f97316' },
+      { label: 'Submitted', value: 45, color: '#dc2626' },
+      { label: 'Reported', value: 85, color: '#34d399' },
+    ];
+    const maxVal = stages[0].value || 1;
+    let svg = '';
+    stages.forEach((s, i) => {
+      const w = (s.value / maxVal) * (W - 120);
+      const x = 60;
+      const y = i * 26;
+      svg += `<rect x="${x}" y="${y}" width="${w}" height="18" rx="3" fill="${s.color}" fill-opacity="0.7"/>`;
+      svg += `<text x="${x - 4}" y="${y + 13}" text-anchor="end" fill="#9ca3af" font-size="8">${s.label}</text>`;
+      svg += `<text x="${x + w + 6}" y="${y + 13}" fill="#e2e8f0" font-size="8" font-weight="600">${s.value}</text>`;
+      if (i < stages.length - 1) {
+        const convRate = ((stages[i + 1].value / s.value) * 100).toFixed(1);
+        svg += `<text x="${x + w + 36}" y="${y + 13}" fill="#6b7280" font-size="7">${convRate}%</text>`;
+      }
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
+  }
+
+  // Trend analysis with linear regression
+  private _campaignTrendData: { date: string; clickRate: number; submitRate: number }[] = [
+    { date: 'Apr 17', clickRate: 22, submitRate: 5 },
+    { date: 'Apr 18', clickRate: 28, submitRate: 8 },
+    { date: 'Apr 19', clickRate: 25, submitRate: 6 },
+    { date: 'Apr 20', clickRate: 31, submitRate: 9 },
+    { date: 'Apr 21', clickRate: 35, submitRate: 12 },
+    { date: 'Apr 22', clickRate: 29, submitRate: 7 },
+  ];
+
+  private _renderTrendAnalysis(): any {
+    const clickData = this._campaignTrendData.map(d => d.clickRate);
+    const submitData = this._campaignTrendData.map(d => d.submitRate);
+    const n = clickData.length || 1;
+    const sumX = clickData.reduce((s, _, i) => s + i, 0);
+    const sumY = clickData.reduce((s, v) => s + v, 0);
+    const sumXY = clickData.reduce((s, v, i) => s + i * v, 0);
+    const sumX2 = clickData.reduce((s, _, i) => s + i * i, 0);
+    const denom = n * sumX2 - sumX * sumX || 1;
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const trendClass = slope > 0.5 ? 'trend-up' : slope < -0.5 ? 'trend-down' : 'trend-flat';
+    const arrow = slope > 0.5 ? '\u2191' : slope < -0.5 ? '\u2193' : '\u2192';
+
+    const W = 260, H = 80, pad = 20;
+    const maxVal = Math.max(...clickData, ...submitData, 1);
+    const stepX = (W - pad * 2) / (n - 1);
+    let svg = '';
+    for (let i = 0; i <= 4; i++) {
+      const y = pad + (i / 4) * (H - pad * 2);
+      svg += `<line x1="${pad}" y1="${y}" x2="${W - pad}" y2="${y}" stroke="#2a2d3a" stroke-width="0.5"/>`;
+    }
+    const clickPts = clickData.map((v, i) => `${pad + i * stepX},${pad + (1 - v / maxVal) * (H - pad * 2)}`).join(' ');
+    svg += `<polyline points="${clickPts}" fill="none" stroke="#f97316" stroke-width="1.5" stroke-linecap="round"/>`;
+    const submitPts = submitData.map((v, i) => `${pad + i * stepX},${pad + (1 - v / maxVal) * (H - pad * 2)}`).join(' ');
+    svg += `<polyline points="${submitPts}" fill="none" stroke="#dc2626" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 2"/>`;
+    this._campaignTrendData.forEach((d, i) => {
+      const x = pad + i * stepX;
+      svg += `<text x="${x}" y="${H - 4}" text-anchor="middle" fill="#6b7280" font-size="6">${d.date}</text>`;
+    });
+    svg += `<circle cx="${W - 90}" cy="8" r="3" fill="#f97316"/><text x="${W - 84}" y="11" fill="#9ca3af" font-size="7">Click %</text>`;
+    svg += `<circle cx="${W - 45}" cy="8" r="3" fill="#dc2626"/><text x="${W - 39}" y="11" fill="#9ca3af" font-size="7">Submit %</text>`;
+
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Campaign Trend Analysis</div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>
+      <div style="display:flex;gap:12px;margin-top:8px">
+        <span class="trend-indicator ${trendClass}">${arrow} Click rate trend: ${slope > 0 ? '+' : ''}${slope.toFixed(2)}/day</span>
+      </div>
+    </div>`;
+  }
+
+  // Auto-generated insights
+  private _generatePhishingInsights(): { title: string; body: string; severity: string }[] {
+    const insights: { title: string; body: string; severity: string }[] = [];
+    const lastCampaign = this._campaigns[this._campaigns.length - 1];
+    if (lastCampaign) {
+      const clickRate = this._pct(lastCampaign.metrics.clicked, lastCampaign.metrics.sent);
+      if (clickRate > 30) insights.push({ title: 'High Click Rate Detected', body: `The last campaign had a ${clickRate}% click rate, exceeding the industry average of 12%. Consider increasing security awareness training frequency.`, severity: 'critical' });
+      const reportRate = this._pct(lastCampaign.metrics.reported, lastCampaign.metrics.sent);
+      if (reportRate < 10) insights.push({ title: 'Low Reporting Rate', body: `Only ${reportRate}% of targets reported the phishing email. The reporting culture needs improvement - deploy phishing report button training.`, severity: 'warning' });
+    }
+    const highRiskTargets = this._targets.filter(t => t.phishingScore > 60);
+    if (highRiskTargets.length > 0) insights.push({ title: 'High Risk Target Group', body: `${highRiskTargets.length} targets have a phishing score above 60%. These users need prioritized security awareness training.`, severity: 'warning' });
+    insights.push({ title: 'Template Recommendation', body: 'Based on historical data, credential harvest templates with realistic sender domains have the highest engagement rate. Consider rotating templates monthly.', severity: 'info' });
+    return insights;
+  }
+
+  // Threat intelligence feed
+  private _phishIntelFeed: { type: string; value: string; confidence: number; actor: string; desc: string }[] = [
+    { type: 'domain', value: 'secure-login[.]microsoft[.]com', confidence: 92, actor: 'FIN7', desc: 'Active credential harvest campaign' },
+    { type: 'url', value: 'https://verify-account[.]azure[.]net', confidence: 88, actor: 'APT-29', desc: 'Microsoft 365 impersonation page' },
+    { type: 'ip', value: '192.168.xxx.xxx', confidence: 76, actor: 'Unknown', desc: 'Phishing landing page host' },
+    { type: 'hash', value: 'b4a7c3e2f1d8...', confidence: 95, actor: 'TA577', desc: 'QakBot macro dropper' },
+  ];
+
+  private _renderIntelFeed(): any {
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Threat Intelligence Feed</div>
+      ${this._phishIntelFeed.map(ti => html`
+        <div class="intel-row">
+          <span class="intel-type" style="background:${ti.type === 'ip' ? '#ef444420' : ti.type === 'domain' ? '#3b82f620' : ti.type === 'hash' ? '#a855f720' : '#f9731620'};color:${ti.type === 'ip' ? '#ef4444' : ti.type === 'domain' ? '#3b82f6' : ti.type === 'hash' ? '#a855f7' : '#f97316'}">${ti.type}</span>
+          <span class="intel-val">${ti.value}</span>
+          <span class="intel-desc">${ti.desc}</span>
+          <span class="intel-conf" style="color:${ti.confidence >= 85 ? '#34d399' : ti.confidence >= 70 ? '#fbbf24' : '#f87171'}">${ti.confidence}%</span>
+        </div>
+      `)}
+    </div>`;
+  }
+
   render() {
     const campaign = this._activeCampaign;
     const template = this._getTemplate();
@@ -662,6 +929,8 @@ export class ScPhishingCampaign extends LitElement {
           <button class="tab ${this._activeTab === 'execute' ? 'active' : ''}" @click=${() => { this._activeTab = 'execute'; }}>Execute</button>
           <button class="tab ${this._activeTab === 'results' ? 'active' : ''}" @click=${() => { this._activeTab = 'results'; }}>Results</button>
           <button class="tab ${this._activeTab === 'history' ? 'active' : ''}" @click=${() => { this._activeTab = 'history'; }}>History (${this._campaigns.length})</button>
+          <button class="tab ${this._activeTab === 'analytics' ? 'active' : ''}" @click=${() => { this._activeTab = 'analytics'; }}>Analytics</button>
+          <button class="tab ${this._activeTab === 'compliance' ? 'active' : ''}" @click=${() => { this._activeTab = 'compliance'; }}>Compliance</button>
         </div>
 
         ${this._activeTab === 'templates' ? html`
@@ -793,6 +1062,40 @@ export class ScPhishingCampaign extends LitElement {
             <div class="btn-row">
               <button class="btn btn-secondary btn-sm" @click=${() => this._exportResults(campaign)}>Export Results (JSON)</button>
             </div>
+            ${(() => {
+              const risk = this._calculateCampaignRisk(campaign);
+              return html`
+                <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <span style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase">Campaign Risk Assessment</span>
+                    <span style="font-size:16px;font-weight:800;color:${risk.overall >= 70 ? '#ef4444' : risk.overall >= 40 ? '#fbbf24' : '#34d399'}">${risk.overall}/100</span>
+                  </div>
+                  ${risk.factors.map((f: any) => html`
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #0a0c10;font-size:11px">
+                      <span style="flex:1;color:#9ca3af">${f.name} (${f.weight}%)</span>
+                      <div style="width:100px;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${f.score}%;background:${f.color};border-radius:3px"></div></div>
+                      <span style="font-weight:700;min-width:30px;text-align:right;color:${f.color}">${Math.round(f.score)}</span>
+                    </div>
+                  `)}
+                </div>
+              `;
+            })()}
+            <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+              <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Campaign Funnel</div>
+              <div style="background:#0a0c10;border-radius:8px;padding:12px">${this._renderCampaignFunnelSVG()}</div>
+            </div>
+            ${this._renderTrendAnalysis()}
+            ${this._renderMitreMapping()}
+            ${this._renderIntelFeed()}
+            <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+              <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Auto-Generated Insights</div>
+              ${this._generatePhishingInsights().map(ins => html`
+                <div class="insight-card" style="border-left-color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#fbbf24' : '#3b82f6'}">
+                  <div class="insight-title" style="color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#fbbf24' : '#3b82f6'}">${ins.severity.toUpperCase()}: ${ins.title}</div>
+                  <div class="insight-body">${ins.body}</div>
+                </div>
+              `)}
+            </div>
             <div style="font-weight:600;margin-bottom:8px">Target Breakdown:</div>
             <div style="max-height:300px;overflow-y:auto">
               <table class="target-table">
@@ -826,7 +1129,72 @@ export class ScPhishingCampaign extends LitElement {
               </div>
             </div>
           `)}
+          ${this._renderReviewWorkflow()}
+          ${this._renderPanelConfig()}
+          <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Department Risk Distribution</div>
+            <div style="background:#0a0c10;border-radius:8px;padding:12px">${this._renderDeptRiskDistSVG()}</div>
+          </div>
         ` : nothing}
+
+        ${this._activeTab === 'analytics' ? html`
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="background:#1f2937;border-radius:8px;padding:14px">
+              <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Historical Performance</div>
+              ${this._campaignTrendData.map(d => html`
+                <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #0a0c10;font-size:11px">
+                  <span style="min-width:60px;color:#6b7280">${d.date}</span>
+                  <div style="flex:1;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${d.clickRate * 2}%;background:#f97316;border-radius:3px"></div></div>
+                  <span style="min-width:40px;font-weight:600;color:#f97316">${d.clickRate}%</span>
+                  <div style="flex:1;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${d.submitRate * 4}%;background:#dc2626;border-radius:3px"></div></div>
+                  <span style="min-width:40px;font-weight:600;color:#dc2626">${d.submitRate}%</span>
+                </div>
+              `)}
+              <div style="display:flex;gap:12px;margin-top:6px;font-size:9px;color:#6b7280">
+                <span style="display:flex;align-items:center;gap:3px"><span class="dist-dot" style="background:#f97316"></span> Click Rate</span>
+                <span style="display:flex;align-items:center;gap:3px"><span class="dist-dot" style="background:#dc2626"></span> Submit Rate</span>
+              </div>
+            </div>
+            <div>
+              ${this._generatePhishingInsights().map(ins => html`
+                <div class="insight-card" style="border-left-color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#fbbf24' : '#3b82f6'}">
+                  <div class="insight-title" style="color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#fbbf24' : '#3b82f6'}">${ins.severity.toUpperCase()}: ${ins.title}</div>
+                  <div class="insight-body">${ins.body}</div>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Campaign Funnel (All Time)</div>
+            <div style="background:#0a0c10;border-radius:8px;padding:12px">${this._renderCampaignFunnelSVG()}</div>
+          </div>
+          ${this._renderIntelFeed()}
+        ` : nothing}
+
+        ${this._activeTab === 'compliance' ? html`
+          <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Compliance Framework Alignment</div>
+            ${[
+              { framework: 'NIST CSF 2.0', category: 'PR.IP-1', requirement: 'Baseline Configuration', status: 'compliant', score: 95 },
+              { framework: 'NIST CSF 2.0', category: 'PR.AT-1', requirement: 'Security Awareness Training', status: 'partial', score: 72 },
+              { framework: 'ISO 27001', category: 'A.6.3', requirement: 'Information Security Awareness', status: 'compliant', score: 88 },
+              { framework: 'GDPR', category: 'Art. 32', requirement: 'Security of Processing', status: 'compliant', score: 91 },
+              { framework: 'PCI DSS', category: 'Req 12.6', requirement: 'Security Policies and Programs', status: 'partial', score: 65 },
+              { framework: 'SOC 2', category: 'CC6.1', requirement: 'Logical Access Security', status: 'compliant', score: 85 },
+              { framework: 'HIPAA', category: '164.308(a)(5)', requirement: 'Security Awareness Training', status: 'non-compliant', score: 42 },
+            ].map(c => html`
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0a0c10;border-radius:6px;margin-bottom:4px;font-size:11px">
+                <span class="tag">${c.framework}</span>
+                <span style="flex:1;color:#e2e8f0">${c.category} - ${c.requirement}</span>
+                <div style="width:60px;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.score}%;background:${c.score >= 80 ? '#34d399' : c.score >= 60 ? '#fbbf24' : '#f87171'};border-radius:3px"></div></div>
+                <span class="tag" style="background:${c.status === 'compliant' ? '#22c55e20' : c.status === 'partial' ? '#fbbf2420' : '#ef444420'};color:${c.status === 'compliant' ? '#34d399' : c.status === 'partial' ? '#fbbf24' : '#f87171'}">${c.status}</span>
+              </div>
+            `)}
+          </div>
+          ${this._renderMitreMapping()}
+          ${this._renderReviewWorkflow()}
+        ` : nothing}
+
       </div>
         ${this._renderRiskGauge()}
         ${this._renderFooter()}

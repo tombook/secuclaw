@@ -134,6 +134,47 @@ export class ScSocAnalystWorkflow extends LitElement {
     .form-input { width: 100%; padding: 8px 12px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; color: #e2e8f0; font-size: 12px; outline: none; }
     .form-input:focus { border-color: #f59e0b; }
     .topology-svg { background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    .risk-card { background: #0f172a; border-radius: 8px; padding: 14px; margin-bottom: 8px; }
+    .risk-factor-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #1f2937; font-size: 11px; }
+    .risk-factor-row:last-child { border-bottom: none; }
+    .risk-factor-label { flex: 1; color: #94a3b8; }
+    .risk-factor-bar { width: 100px; height: 6px; background: #374151; border-radius: 3px; overflow: hidden; }
+    .risk-factor-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+    .risk-factor-value { min-width: 32px; text-align: right; font-weight: 700; }
+    .sankey-svg { background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    .intel-row { display: flex; gap: 10px; padding: 8px; background: #0f172a; border-radius: 6px; margin-bottom: 6px; align-items: center; }
+    .intel-type { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+    .intel-ip { font-family: monospace; font-size: 12px; color: #e2e8f0; }
+    .intel-detail { flex: 1; font-size: 10px; color: #6b7280; }
+    .intel-confidence { font-size: 10px; font-weight: 700; }
+    .notification-dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; position: relative; }
+    .notification-dot::after { content: ''; position: absolute; top: -2px; left: -2px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ef4444; animation: notif-pulse 1.5s infinite; }
+    @keyframes notif-pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+    .mention-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #3b82f620; border-radius: 12px; font-size: 10px; color: #60a5fa; }
+    .trend-indicator { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; }
+    .trend-up { color: #ef4444; }
+    .trend-down { color: #22c55e; }
+    .trend-flat { color: #94a3b8; }
+    .insight-card { background: linear-gradient(135deg, #1f2937 0%, #0f172a 100%); border-radius: 8px; padding: 14px; margin-bottom: 8px; border-left: 3px solid #f59e0b; }
+    .insight-title { font-size: 12px; font-weight: 700; color: #f59e0b; margin-bottom: 4px; }
+    .insight-body { font-size: 11px; color: #94a3b8; line-height: 1.5; }
+    .config-select { padding: 6px 10px; background: #0f172a; border: 1px solid #374151; border-radius: 6px; color: #e2e8f0; font-size: 11px; outline: none; }
+    .config-select:focus { border-color: #f59e0b; }
+    .workload-bar-container { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .workload-bar-label { font-size: 10px; color: #94a3b8; min-width: 80px; }
+    .workload-bar-track { flex: 1; height: 18px; background: #1f2937; border-radius: 4px; overflow: hidden; display: flex; }
+    .workload-bar-seg { height: 100%; transition: width 0.3s; }
+    .workload-bar-value { font-size: 10px; font-weight: 700; min-width: 30px; text-align: right; }
+    .anomaly-marker { width: 12px; height: 12px; background: #ef4444; border-radius: 50%; border: 2px solid #0f172a; animation: pulse 1.5s infinite; }
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .team-member-card { background: #0f172a; border-radius: 8px; padding: 12px; text-align: center; }
+    .team-member-avatar { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+    .team-member-name { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+    .team-member-role { font-size: 9px; color: #6b7280; margin-bottom: 6px; }
+    .team-member-stats { display: flex; justify-content: center; gap: 12px; font-size: 10px; }
+    .team-stat-item { text-align: center; }
+    .team-stat-value { font-weight: 700; font-size: 14px; }
+    .team-stat-label { color: #6b7280; font-size: 8px; }
   `;
 
   @state() private _tab: 'alerts' | 'cases' | 'workload' | 'handoff' | 'playbook' | 'tasks' | 'approvals' | 'analysis' | 'sla' | 'audit' | 'config' = 'alerts';
@@ -146,6 +187,141 @@ export class ScSocAnalystWorkflow extends LitElement {
   @state() private _auditLog: { timestamp: string; action: string; user: string; detail: string }[] = [];
   @state() private _slaItems: { id: string; case: string; assignee: string; deadline: string; elapsed: number; total: number; priority: string }[] = [];
   @state() private _configSettings: { autoEscalate: boolean; autoAssign: boolean; slaAlerts: boolean; mitreMapping: boolean; playbookAuto: boolean; shiftHandoff: boolean } = { autoEscalate: true, autoAssign: true, slaAlerts: true, mitreMapping: true, playbookAuto: false, shiftHandoff: true };
+  @state() private _selectedAlertRisk: { overall: number; factors: { name: string; weight: number; score: number; color: string }[] } | null = null;
+  @state() private _panelLayout: 'default' | 'compact' | 'wide' = 'default';
+  @state() private _autoRefreshSec: number = 0;
+  @state() private _filterPreset: 'all' | 'critical-only' | 'my-alerts' | 'unassigned' = 'all';
+  @state() private _notifications: { id: string; message: string; time: string; type: string; read: boolean }[] = [];
+  @state() private _showNotifPanel: boolean = false;
+  @state() private _trendData: { hour: string; alerts: number; resolved: number; mttb: number }[] = [];
+  @state() private _anomalyPoints: number[] = [];
+
+  // Risk Scoring Engine
+  private _calculateRiskScore(alert: Alert): { overall: number; factors: { name: string; weight: number; score: number; color: string }[] } {
+    const sevScore: Record<string, number> = { critical: 95, high: 75, medium: 45, low: 15 };
+    const statusPenalty: Record<string, number> = { new: 0, triage: 5, investigating: -10, escalated: 15, resolved: -50 };
+    const sourceReliability: Record<string, number> = { EDR: 90, SIEM: 85, Network: 80, Firewall: 75, IAM: 70, AD: 65, DLP: 70, Endpoint: 60 };
+    const mitreFactors: Record<string, number> = { 'T1059.001': 25, 'T1110': 20, 'T1203': 30, 'T1567': 20, 'T1548': 25, 'T1048': 22, 'T1091': 10, 'T1110.001': 22 };
+    const assignedFactor = alert.assignee ? -10 : 15;
+    const sev = sevScore[alert.severity] || 50;
+    const status = statusPenalty[alert.status] || 0;
+    const source = sourceReliability[alert.source] || 50;
+    const mitre = mitreFactors[alert.ruleName] || 10;
+    const timeUrgency = alert.status === 'new' ? 12 : 5;
+    const raw = sev * 0.30 + (100 - status) * 0.15 + source * 0.15 + mitre * 0.20 + timeUrgency * 0.10 + (100 - assignedFactor) * 0.10;
+    const overall = Math.min(100, Math.max(0, Math.round(raw)));
+    const factors = [
+      { name: 'Severity Impact', weight: 30, score: sev, color: sev >= 80 ? '#ef4444' : sev >= 50 ? '#f59e0b' : '#22c55e' },
+      { name: 'Status Urgency', weight: 15, score: 100 - status, color: status >= 0 ? '#ef4444' : '#22c55e' },
+      { name: 'Source Reliability', weight: 15, score: source, color: source >= 80 ? '#22c55e' : '#f59e0b' },
+      { name: 'MITRE Threat Level', weight: 20, score: mitre, color: mitre >= 20 ? '#ef4444' : mitre >= 10 ? '#f59e0b' : '#22c55e' },
+      { name: 'Assignment Gap', weight: 10, score: 100 - assignedFactor, color: alert.assignee ? '#22c55e' : '#ef4444' },
+      { name: 'Time Pressure', weight: 10, score: timeUrgency * 5, color: timeUrgency >= 10 ? '#ef4444' : '#f59e0b' },
+    ];
+    return { overall, factors };
+  }
+
+  private _getRiskLevel(score: number): { label: string; color: string } {
+    if (score >= 85) return { label: 'CRITICAL', color: '#ef4444' };
+    if (score >= 65) return { label: 'HIGH', color: '#f97316' };
+    if (score >= 40) return { label: 'MEDIUM', color: '#eab308' };
+    return { label: 'LOW', color: '#22c55e' };
+  }
+
+  // MITRE ATT&CK Deep Correlation
+  private _mitreTechniqueDB: { id: string; name: string; tactic: string; subtechniques: string[]; detectionRate: number; trends12h: number[] }[] = [
+    { id: 'T1059.001', name: 'PowerShell', tactic: 'Execution', subtechniques: ['T1059.001', 'T1059.003'], detectionRate: 92, trends12h: [3, 5, 2, 8, 4, 6, 3, 7, 5, 4, 6, 8] },
+    { id: 'T1110', name: 'Brute Force', tactic: 'Credential Access', subtechniques: ['T1110.001', 'T1110.003'], detectionRate: 88, trends12h: [2, 3, 5, 4, 3, 6, 8, 5, 4, 7, 6, 5] },
+    { id: 'T1203', name: 'Exploitation for Client Execution', tactic: 'Execution', subtechniques: ['T1203.001', 'T1203.002'], detectionRate: 75, trends12h: [1, 0, 2, 1, 3, 2, 1, 0, 2, 3, 1, 2] },
+    { id: 'T1567', name: 'Exfiltration Over Web Service', tactic: 'Exfiltration', subtechniques: ['T1567.001'], detectionRate: 68, trends12h: [0, 1, 0, 2, 1, 0, 1, 2, 3, 1, 0, 1] },
+    { id: 'T1548', name: 'Abuse Elevation Control Mechanism', tactic: 'Privilege Escalation', subtechniques: ['T1548.001', 'T1548.002'], detectionRate: 82, trends12h: [1, 2, 1, 3, 2, 1, 2, 4, 3, 2, 3, 4] },
+    { id: 'T1048', name: 'Exfiltration Over Alternative Protocol', tactic: 'Exfiltration', subtechniques: ['T1048.001', 'T1048.003'], detectionRate: 55, trends12h: [0, 0, 1, 0, 1, 2, 1, 0, 1, 2, 3, 2] },
+    { id: 'T1071', name: 'Application Layer Protocol', tactic: 'Command and Control', subtechniques: ['T1071.001'], detectionRate: 78, trends12h: [4, 3, 5, 4, 6, 5, 7, 6, 5, 8, 7, 6] },
+    { id: 'T1083', name: 'File and Directory Discovery', tactic: 'Discovery', subtechniques: [], detectionRate: 95, trends12h: [12, 15, 10, 18, 14, 16, 12, 19, 15, 13, 17, 14] },
+  ];
+
+  private _correlateTechniques(alertIds: string[]): { relatedTechs: string[]; killChainGaps: string[]; riskMultiplier: number } {
+    const ruleNames = alertIds.map(id => this._alerts.find(a => a.id === id)?.ruleName).filter(Boolean) as string[];
+    const activeTechniques = new Set<string>();
+    ruleNames.forEach(rn => {
+      const mapping = this._mitreMap[rn];
+      if (mapping) activeTechniques.add(mapping.id);
+    });
+    const related: string[] = [];
+    const allTechs = this._mitreTechniqueDB;
+    allTechs.forEach(tech => {
+      if (activeTechniques.has(tech.id)) {
+        related.push(tech.id, ...tech.subtechniques.filter(s => !activeTechniques.has(s)));
+      }
+    });
+    const killChainPhases = ['Initial Access', 'Execution', 'Persistence', 'Privilege Escalation', 'Defense Evasion', 'Credential Access', 'Discovery', 'Lateral Movement', 'Collection', 'Exfiltration', 'Command and Control', 'Impact'];
+    const activeTactics = new Set<string>();
+    allTechs.filter(t => activeTechniques.has(t.id)).forEach(t => activeTactics.add(t.tactic));
+    const gaps = killChainPhases.filter(p => !activeTactics.has(p)).slice(0, 4);
+    const multiplier = 1 + (activeTechniques.size * 0.15) + (gaps.length < 5 ? 0.3 : 0);
+    return { relatedTechs: [...new Set(related)], killChainGaps: gaps, riskMultiplier: Math.min(3, multiplier) };
+  }
+
+  // Trend Analysis Engine
+  private _initTrendData() {
+    const hours = ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+    this._trendData = hours.map((h, i) => ({
+      hour: h,
+      alerts: i >= 4 && i <= 9 ? Math.floor(Math.random() * 20) + 15 : Math.floor(Math.random() * 8) + 3,
+      resolved: i >= 4 && i <= 9 ? Math.floor(Math.random() * 15) + 10 : Math.floor(Math.random() * 6) + 2,
+      mttb: i >= 4 && i <= 9 ? Math.floor(Math.random() * 5) + 2 : Math.floor(Math.random() * 10) + 5,
+    }));
+    this._detectAnomalies();
+  }
+
+  private _detectAnomalies() {
+    const values = this._trendData.map(d => d.alerts);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const std = Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length) || 1;
+    this._anomalyPoints = values.map((v, i) => Math.abs(v - mean) / std > 1.8 ? i : -1).filter(i => i >= 0);
+  }
+
+  private _linearRegression(data: number[]): { slope: number; intercept: number; trend: 'up' | 'down' | 'stable' } {
+    const n = data.length || 1;
+    const sumX = data.reduce((s, _, i) => s + i, 0);
+    const sumY = data.reduce((s, v) => s + v, 0);
+    const sumXY = data.reduce((s, v, i) => s + i * v, 0);
+    const sumX2 = data.reduce((s, _, i) => s + i * i, 0);
+    const denom = n * sumX2 - sumX * sumX || 1;
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumY - slope * sumX) / n;
+    const trend = slope > 0.5 ? 'up' as const : slope < -0.5 ? 'down' as const : 'stable' as const;
+    return { slope, intercept, trend };
+  }
+
+  // Threat Intelligence Data
+  private _threatIntelFeed: { type: 'ip' | 'domain' | 'hash' | 'url'; value: string; confidence: number; threatActor: string; firstSeen: string; description: string; tags: string[] }[] = [
+    { type: 'ip', value: '185.174.xxx.xxx', confidence: 92, threatActor: 'APT-29', firstSeen: '2026-04-20', description: 'C2 beacon communication detected', tags: ['c2', 'beacon', 'apt29'] },
+    { type: 'domain', value: 'update-service[.]cloud', confidence: 88, threatActor: 'APT-29', firstSeen: '2026-04-19', description: 'Mimics legitimate update service', tags: ['phishing', 'dns', 'apt29'] },
+    { type: 'hash', value: 'a3f2b8c1d4e5...', confidence: 95, threatActor: 'Cobalt Strike', firstSeen: '2026-04-18', description: 'Cobalt Strike beacon DLL', tags: ['malware', 'beacon', 'cobalt'] },
+    { type: 'ip', value: '91.234.xxx.xxx', confidence: 76, threatActor: 'Unknown', firstSeen: '2026-04-22', description: 'Port scanning activity from this IP', tags: ['recon', 'scanner'] },
+    { type: 'url', value: 'https://evil[.]com/login', confidence: 83, threatActor: 'FIN7', firstSeen: '2026-04-21', description: 'Credential harvesting landing page', tags: ['phishing', 'credential-theft'] },
+    { type: 'hash', value: '7e2a1b3c5d8f...', confidence: 71, threatActor: 'Lazarus', firstSeen: '2026-04-17', description: 'Ransomware dropper variant', tags: ['ransomware', 'dropper'] },
+  ];
+
+  // Notification system
+  private _initNotifications() {
+    this._notifications = [
+      { id: 'n1', message: 'CRITICAL: New ransomware precursor detected on ws-finance-03', time: '2 min ago', type: 'critical', read: false },
+      { id: 'n2', message: 'SLA Warning: Case c2 is overdue by 30 minutes', time: '15 min ago', type: 'warning', read: false },
+      { id: 'n3', message: 'Chen Li resolved alert a7 - USB device blocked', time: '30 min ago', type: 'info', read: false },
+      { id: 'n4', message: 'Shift handoff report generated successfully', time: '1h ago', type: 'info', read: true },
+      { id: 'n5', message: 'MITRE ATT&CK mapping updated: 3 new techniques', time: '2h ago', type: 'info', read: true },
+    ];
+  }
+
+  private _markNotifRead(id: string) {
+    this._notifications = this._notifications.map(n => n.id === id ? { ...n, read: true } : n);
+  }
+
+  private _markAllNotifsRead() {
+    this._notifications = this._notifications.map(n => ({ ...n, read: true }));
+  }
 
   private _mitreMap: Record<string, { id: string; tactic: string }> = {
     'T1059.001 - PowerShell': { id: 'T1059.001', tactic: 'Execution' },
@@ -398,7 +574,179 @@ export class ScSocAnalystWorkflow extends LitElement {
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${rects}</svg>`;
   }
 
-  connectedCallback() { super.connectedCallback(); this._initAuditLog(); this._initSlaItems(); }
+  // Sankey diagram for alert-to-case flow
+  private _sankeyFlowSVG(): string {
+    const W = 280, H = 180;
+    const sources = [
+      { label: 'EDR', value: 12, color: '#ef4444' },
+      { label: 'SIEM', value: 18, color: '#3b82f6' },
+      { label: 'Network', value: 8, color: '#f97316' },
+      { label: 'IAM', value: 6, color: '#a855f7' },
+      { label: 'DLP', value: 4, color: '#eab308' },
+    ];
+    const sinks = [
+      { label: 'Case APT', value: 14, color: '#ef4444' },
+      { label: 'Case Ransom', value: 10, color: '#f97316' },
+      { label: 'Case Insider', value: 8, color: '#eab308' },
+      { label: 'Resolved', value: 16, color: '#22c55e' },
+    ];
+    const totalSrc = sources.reduce((s, v) => s + v.value, 0) || 1;
+    let svg = '';
+    // Source nodes
+    sources.forEach((src, i) => {
+      const h = (src.value / totalSrc) * (H - 20);
+      const y = 10 + sources.slice(0, i).reduce((s, v) => s + (v.value / totalSrc) * (H - 20), 0);
+      svg += `<rect x="5" y="${y}" width="40" height="${h}" rx="3" fill="${src.color}" fill-opacity="0.7"/>`;
+      svg += `<text x="25" y="${y + h / 2 + 3}" text-anchor="middle" fill="#fff" font-size="7" font-weight="600">${src.label}</text>`;
+      svg += `<text x="50" y="${y + h / 2 + 3}" fill="#94a3b8" font-size="7">${src.value}</text>`;
+    });
+    // Sink nodes
+    sinks.forEach((sink, i) => {
+      const h = (sink.value / totalSrc) * (H - 20);
+      const y = 10 + sinks.slice(0, i).reduce((s, v) => s + (v.value / totalSrc) * (H - 20), 0);
+      svg += `<rect x="${W - 45}" y="${y}" width="40" height="${h}" rx="3" fill="${sink.color}" fill-opacity="0.7"/>`;
+      svg += `<text x="${W - 25}" y="${y + h / 2 + 3}" text-anchor="middle" fill="#fff" font-size="7" font-weight="600">${sink.label}</text>`;
+    });
+    // Flow paths (simplified curved bands)
+    const flowData = [
+      { src: 0, snk: 0, val: 6 }, { src: 0, snk: 1, val: 4 }, { src: 0, snk: 3, val: 2 },
+      { src: 1, snk: 0, val: 8 }, { src: 1, snk: 2, val: 4 }, { src: 1, snk: 3, val: 6 },
+      { src: 2, snk: 0, val: 0 }, { src: 2, snk: 1, val: 4 }, { src: 2, snk: 2, val: 2 }, { src: 2, snk: 3, val: 2 },
+      { src: 3, snk: 2, val: 2 }, { src: 3, snk: 3, val: 4 },
+      { src: 4, snk: 2, val: 0 }, { src: 4, snk: 3, val: 4 },
+    ];
+    flowData.forEach(f => {
+      if (f.val === 0) return;
+      const opacity = Math.min(0.4, f.val / 20);
+      svg += `<path d="M55,${H / 2} C120,${H / 2} 160,${H / 2} ${W - 50},${H / 2}" stroke="#94a3b8" stroke-opacity="${opacity}" stroke-width="${f.val * 0.8}" fill="none"/>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
+  }
+
+  // Multi-series time-series chart
+  private _trendChartSVG(): string {
+    const W = 280, H = 100, pad = 20;
+    const data = this._trendData;
+    if (data.length === 0) return '';
+    const maxAlerts = Math.max(...data.map(d => d.alerts), 1);
+    const maxResolved = Math.max(...data.map(d => d.resolved), 1);
+    const maxVal = Math.max(maxAlerts, maxResolved);
+    const stepX = (W - pad * 2) / (data.length - 1);
+    let svg = '';
+    // Grid lines
+    for (let i = 0; i <= 4; i++) {
+      const y = pad + (i / 4) * (H - pad * 2);
+      svg += `<line x1="${pad}" y1="${y}" x2="${W - pad}" y2="${y}" stroke="#1f2937" stroke-width="0.5"/>`;
+      svg += `<text x="${pad - 4}" y="${y + 3}" text-anchor="end" fill="#6b7280" font-size="6">${Math.round(maxVal * (1 - i / 4))}</text>`;
+    }
+    // Alert line
+    const alertPts = data.map((d, i) => `${pad + i * stepX},${pad + (1 - d.alerts / maxVal) * (H - pad * 2)}`).join(' ');
+    svg += `<polyline points="${alertPts}" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    // Resolved line
+    const resolvedPts = data.map((d, i) => `${pad + i * stepX},${pad + (1 - d.resolved / maxVal) * (H - pad * 2)}`).join(' ');
+    svg += `<polyline points="${resolvedPts}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 2"/>`;
+    // Anomaly markers
+    this._anomalyPoints.forEach(idx => {
+      const x = pad + idx * stepX;
+      const y = pad + (1 - data[idx].alerts / maxVal) * (H - pad * 2);
+      svg += `<circle cx="${x}" cy="${y}" r="4" fill="#ef4444" opacity="0.8"/>`;
+      svg += `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.4"/>`;
+    });
+    // X axis labels
+    data.forEach((d, i) => {
+      if (i % 2 === 0) {
+        const x = pad + i * stepX;
+        svg += `<text x="${x}" y="${H - 4}" text-anchor="middle" fill="#6b7280" font-size="6">${d.hour}</text>`;
+      }
+    });
+    // Legend
+    svg += `<circle cx="${W - 100}" cy="8" r="3" fill="#ef4444"/><text x="${W - 94}" y="11" fill="#94a3b8" font-size="7">Alerts</text>`;
+    svg += `<circle cx="${W - 55}" cy="8" r="3" fill="#22c55e"/><text x="${W - 49}" y="11" fill="#94a3b8" font-size="7">Resolved</text>`;
+    svg += `<circle cx="${W - 10}" cy="8" r="3" fill="#ef4444" opacity="0.8"/><text x="${W - 4}" y="11" fill="#94a3b8" font-size="6">!</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
+  }
+
+  // Team workload distribution chart
+  private _teamWorkloadSVG(): string {
+    const W = 280, H = 60;
+    const analysts = this._analysts;
+    const total = analysts.reduce((s, a) => s + a.activeCases, 0) || 1;
+    let svg = '';
+    const colors = ['#ef4444', '#f97316', '#22c55e', '#3b82f6'];
+    let xPos = 0;
+    analysts.forEach((a, i) => {
+      const w = (a.activeCases / total) * (W - 80);
+      svg += `<rect x="${xPos + 70}" y="8" width="${w}" height="20" rx="2" fill="${colors[i]}" fill-opacity="0.7"/>`;
+      svg += `<text x="${xPos + 70 + w / 2}" y="22" text-anchor="middle" fill="#fff" font-size="8" font-weight="600">${a.activeCases}</text>`;
+      xPos += w;
+    });
+    analysts.forEach((a, i) => {
+      const y = 38;
+      svg += `<circle cx="${75 + i * 52}" cy="${y}" r="4" fill="${colors[i]}"/>`;
+      svg += `<text x="${82 + i * 52}" y="${y + 3}" fill="#94a3b8" font-size="7">${a.name.split(' ')[0]}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
+  }
+
+  // Radar chart for MITRE tactic coverage
+  private _mitreRadarSVG(): string {
+    const W = 200, H = 200, cx = W / 2, cy = H / 2, R = 70;
+    const tactics = ['Initial Access', 'Execution', 'Persistence', 'Priv Esc', 'Defense Evasion', 'Credential Access', 'Discovery', 'Exfiltration'];
+    const n = tactics.length;
+    const scores = tactics.map(() => Math.floor(Math.random() * 60) + 40);
+    let svg = '';
+    // Grid rings
+    for (let ring = 1; ring <= 4; ring++) {
+      const r = (ring / 4) * R;
+      const pts = tactics.map((_, i) => {
+        const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+        return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+      }).join(' ');
+      svg += `<polygon points="${pts}" fill="none" stroke="#1f2937" stroke-width="0.5"/>`;
+    }
+    // Axis lines and labels
+    tactics.forEach((t, i) => {
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const ex = cx + R * Math.cos(angle);
+      const ey = cy + R * Math.sin(angle);
+      svg += `<line x1="${cx}" y1="${cy}" x2="${ex}" y2="${ey}" stroke="#1f2937" stroke-width="0.5"/>`;
+      const lx = cx + (R + 14) * Math.cos(angle);
+      const ly = cy + (R + 14) * Math.sin(angle);
+      svg += `<text x="${lx}" y="${ly + 3}" text-anchor="middle" fill="#6b7280" font-size="5.5">${t}</text>`;
+    });
+    // Data polygon
+    const dataPts = scores.map((s, i) => {
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const r = (s / 100) * R;
+      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+    }).join(' ');
+    svg += `<polygon points="${dataPts}" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="1.5"/>`;
+    // Data points
+    scores.forEach((s, i) => {
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const r = (s / 100) * R;
+      svg += `<circle cx="${cx + r * Math.cos(angle)}" cy="${cy + r * Math.sin(angle)}" r="2.5" fill="#f59e0b"/>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="200" height="200">${svg}</svg>`;
+  }
+
+  // Auto-generated insights
+  private _generateInsights(): { title: string; body: string; severity: 'critical' | 'warning' | 'info' }[] {
+    const regression = this._linearRegression(this._trendData.map(d => d.alerts));
+    const insights: { title: string; body: string; severity: 'critical' | 'warning' | 'info' }[] = [];
+    if (regression.trend === 'up') insights.push({ title: 'Alert Volume Trending Up', body: `Alert volume is increasing with a slope of ${regression.slope.toFixed(2)} alerts/hour. Consider increasing analyst staffing during peak hours.`, severity: 'warning' });
+    if (this._anomalyPoints.length > 0) insights.push({ title: 'Anomaly Detected', body: `Statistical anomaly detected at ${this._anomalyPoints.map(i => this._trendData[i]?.hour).join(', ')}. Alert volume exceeded 1.8 standard deviations from the mean.`, severity: 'critical' });
+    const unassigned = this._alerts.filter(a => !a.assignee && a.severity !== 'low').length;
+    if (unassigned > 0) insights.push({ title: 'Unassigned Critical Alerts', body: `${unassigned} high/critical alerts remain unassigned. Auto-assignment is recommended to meet SLA targets.`, severity: 'warning' });
+    const overloaded = this._analysts.filter(a => a.load > 80).length;
+    if (overloaded > 0) insights.push({ title: 'Team Capacity Alert', body: `${overloaded} analysts are above 80% workload capacity. Redistribution may improve response times.`, severity: 'info' });
+    const overdueCases = this._slaItems.filter(s => s.elapsed > s.total).length;
+    if (overdueCases > 0) insights.push({ title: 'SLA Breach Warning', body: `${overdueCases} case(s) have exceeded their SLA deadlines. Immediate escalation recommended.`, severity: 'critical' });
+    insights.push({ title: 'MITRE Coverage', body: `Current detection covers 8 of 14 MITRE ATT&CK tactics. Priority gaps: Lateral Movement, Collection, Impact.`, severity: 'info' });
+    return insights;
+  }
+
+  connectedCallback() { super.connectedCallback(); this._initAuditLog(); this._initSlaItems(); this._initTrendData(); this._initNotifications(); }
 
   private _getSeverityColor(sev: string): string {
     const m: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
@@ -494,13 +842,37 @@ export class ScSocAnalystWorkflow extends LitElement {
       ${this._selectedAlert ? html`
         <div class="handoff-box">
           <div style="font-weight:600;margin-bottom:8px">Alert Actions: ${this._selectedAlert}</div>
+          ${(() => {
+            const alert = this._alerts.find(a => a.id === this._selectedAlert);
+            if (!alert) return nothing;
+            const risk = this._calculateRiskScore(alert);
+            const riskLevel = this._getRiskLevel(risk.overall);
+            return html`
+              <div class="risk-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                  <span style="font-size:12px;font-weight:700">Risk Assessment</span>
+                  <span style="font-size:14px;font-weight:800;color:${riskLevel.color}">${risk.overall}/100 (${riskLevel.label})</span>
+                </div>
+                ${risk.factors.map(f => html`
+                  <div class="risk-factor-row">
+                    <span class="risk-factor-label">${f.name} (${f.weight}%)</span>
+                    <div class="risk-factor-bar"><div class="risk-factor-fill" style="width:${f.score}%;background:${f.color}"></div></div>
+                    <span class="risk-factor-value" style="color:${f.color}">${f.score}</span>
+                  </div>
+                `)}
+              </div>
+            `;
+          })()}
           <div style="display:flex;gap:6px;margin-bottom:8px">
             <button class="runbook-btn" @click=${() => alert('Assigning...')}>Assign</button>
             <button class="runbook-btn" @click=${() => alert('Escalating...')}>Escalate</button>
             <button class="runbook-btn" @click=${() => alert('Running playbook...')}>Run Playbook</button>
             <button class="runbook-btn" @click=${() => alert('Resolving...')}>Resolve</button>
           </div>
-          <textarea placeholder="Add notes..."></textarea>
+          <textarea placeholder="Add notes... @mention an analyst to notify them..."></textarea>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            ${this._analysts.map(a => html`<span class="mention-tag" style="cursor:pointer" @click=${() => { this._addAudit('MENTION', 'You', `Mentioned ${a.name} in alert ${this._selectedAlert}`); }}>@${a.name.split(' ')[0]}</span>`)}
+          </div>
         </div>
       ` : nothing}
     `;
@@ -539,6 +911,24 @@ export class ScSocAnalystWorkflow extends LitElement {
     const trendData = [8, 12, 10, 15, 11, 9, 14, 13, 16, 12, 10, 8];
     const mttrData = [3.2, 2.8, 3.5, 2.1, 2.5, 1.8, 2.3, 1.9, 2.0, 1.7, 2.1, 1.5];
     return html`
+      <div class="section" style="margin-bottom:12px">
+        <div class="stitle">Team Workload Distribution</div>
+        ${this._teamWorkloadSVG()}
+      </div>
+      <div class="team-grid" style="margin-bottom:12px">
+        ${this._analysts.map(a => html`
+          <div class="team-member-card">
+            <div class="team-member-avatar" style="background:${this._getLoadColor(a.load)}30;color:${this._getLoadColor(a.load)}">${a.name.split(' ').map(n => n[0]).join('')}</div>
+            <div class="team-member-name">${a.name}</div>
+            <div class="team-member-role">L2 SOC Analyst</div>
+            <div class="team-member-stats">
+              <div class="team-stat-item"><div class="team-stat-value" style="color:${this._getLoadColor(a.load)}">${a.load}%</div><div class="team-stat-label">Load</div></div>
+              <div class="team-stat-item"><div class="team-stat-value">${a.activeCases}</div><div class="team-stat-label">Active</div></div>
+              <div class="team-stat-item"><div class="team-stat-value" style="color:#22c55e">${a.resolvedToday}</div><div class="team-stat-label">Resolved</div></div>
+            </div>
+          </div>
+        `)}
+      </div>
       <div class="grid-2">
         <div class="section">
           <div class="stitle">Analyst Workload</div>
@@ -630,10 +1020,33 @@ export class ScSocAnalystWorkflow extends LitElement {
     const activeAlerts = this._alerts.filter(a => a.status !== 'resolved').length;
     const criticalActive = this._alerts.filter(a => a.status !== 'resolved' && a.severity === 'critical').length;
     const openCases = this._cases.filter(c => c.status !== 'resolved').length;
+    const unreadNotifs = this._notifications.filter(n => !n.read).length;
 
     return html`
       <div class="panel">
-        <div class="pt">SOC Analyst Workflow<span style="flex:1"></span><button class="export-btn" @click=${this._exportJSON}>Export</button></div>
+        <div class="pt">SOC Analyst Workflow<span style="flex:1"></span>
+          <div style="position:relative;display:inline-block">
+            <button style="background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;position:relative" @click=${() => { this._showNotifPanel = !this._showNotifPanel; }}>
+              ${this._showNotifPanel ? '\uD83D\uDD14' : '\uD83D\uDD15'}
+              ${unreadNotifs > 0 ? html`<span class="notification-dot" style="position:absolute;top:-2px;right:-4px"></span>` : nothing}
+            </button>
+            ${this._showNotifPanel ? html`
+              <div style="position:absolute;top:28px;right:0;width:300px;background:#1f2937;border-radius:8px;padding:10px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.5)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <span style="font-size:12px;font-weight:700">Notifications (${unreadNotifs})</span>
+                  <span style="font-size:10px;color:#3b82f6;cursor:pointer" @click=${this._markAllNotifsRead}>Mark all read</span>
+                </div>
+                ${this._notifications.map(n => html`
+                  <div style="padding:8px;background:${n.read ? 'transparent' : '#0f172a'};border-radius:6px;margin-bottom:4px;cursor:pointer;border-left:3px solid ${n.type === 'critical' ? '#ef4444' : n.type === 'warning' ? '#f59e0b' : '#3b82f6'}" @click=${() => this._markNotifRead(n.id)}>
+                    <div style="font-size:11px;color:${n.read ? '#6b7280' : '#e2e8f0'};font-weight:${n.read ? '400' : '600'}">${n.message}</div>
+                    <div style="font-size:9px;color:#6b7280;margin-top:2px">${n.time}</div>
+                  </div>
+                `)}
+              </div>
+            ` : nothing}
+          </div>
+          <button class="export-btn" @click=${this._exportJSON}>Export</button>
+        </div>
         <div class="stats">
           <div class="stat"><div class="sv" style="color:#ef4444">${criticalActive}</div><div class="sl">Critical Active</div></div>
           <div class="stat"><div class="sv">${activeAlerts}</div><div class="sl">Active Alerts</div></div>
@@ -709,46 +1122,91 @@ export class ScSocAnalystWorkflow extends LitElement {
           </div>
         ` : ''}
         ${this._tab === 'analysis' ? html`
-          <div class="section">
-            <div class="stitle">Auto-Triage Pipeline</div>
-            <div style="display:flex;gap:8px;margin-bottom:12px">
-              <button class="runbook-btn" @click=${this._runTriagePipeline} ?disabled=${this._execPhase === 'running'}>${this._execPhase === 'running' ? 'Running...' : 'Run Auto-Triage'}</button>
-              ${this._execPhase === 'complete' ? html`<button class="runbook-btn" style="background:#374151" @click=${() => { this._execPhase = 'idle'; this._execResults = []; }}>Reset</button>` : nothing}
-              <span style="flex:1"></span>
-              <span style="font-size:10px;color:#94a3b8">${this._execProgress}%</span>
-            </div>
-            <div style="height:8px;background:#374151;border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${this._execProgress}%;background:${this._execPhase === 'complete' ? '#22c55e' : '#f59e0b'};border-radius:4px;transition:width 0.3s"></div></div>
-            <div class="exec-pipeline">
-              ${this._execSteps.map((s, i) => html`
-                <div class="pipeline-step">
-                  <div class="step-icon ${s.status}">${s.status === 'done' ? '\u2713' : s.status === 'running' ? '\u25CF' : (i + 1)}</div>
-                  <div class="step-info"><div class="step-name">${s.name}</div><div class="step-desc">${s.desc}</div></div>
-                  <div class="step-time">${s.status === 'done' ? s.duration + 'ms' : ''}</div>
+          <div class="grid-2">
+            <div>
+              <div class="section">
+                <div class="stitle">Auto-Triage Pipeline</div>
+                <div style="display:flex;gap:8px;margin-bottom:12px">
+                  <button class="runbook-btn" @click=${this._runTriagePipeline} ?disabled=${this._execPhase === 'running'}>${this._execPhase === 'running' ? 'Running...' : 'Run Auto-Triage'}</button>
+                  ${this._execPhase === 'complete' ? html`<button class="runbook-btn" style="background:#374151" @click=${() => { this._execPhase = 'idle'; this._execResults = []; }}>Reset</button>` : nothing}
+                  <span style="flex:1"></span>
+                  <span style="font-size:10px;color:#94a3b8">${this._execProgress}%</span>
                 </div>
-              `)}
-            </div>
-            ${this._execResults.length > 0 ? html`
-              <div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:12px">
-                <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">Triage Results</div>
-                ${this._execResults.map(r => html`<div style="padding:6px 0;border-bottom:1px solid #1f2937"><div style="font-size:11px;font-weight:600;color:#f59e0b">${r.step}</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">${r.output}</div></div>`)}
+                <div style="height:8px;background:#374151;border-radius:4px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:${this._execProgress}%;background:${this._execPhase === 'complete' ? '#22c55e' : '#f59e0b'};border-radius:4px;transition:width 0.3s"></div></div>
+                <div class="exec-pipeline">
+                  ${this._execSteps.map((s, i) => html`
+                    <div class="pipeline-step">
+                      <div class="step-icon ${s.status}">${s.status === 'done' ? '\u2713' : s.status === 'running' ? '\u25CF' : (i + 1)}</div>
+                      <div class="step-info"><div class="step-name">${s.name}</div><div class="step-desc">${s.desc}</div></div>
+                      <div class="step-time">${s.status === 'done' ? s.duration + 'ms' : ''}</div>
+                    </div>
+                  `)}
+                </div>
+                ${this._execResults.length > 0 ? html`
+                  <div style="background:#0f172a;border-radius:8px;padding:12px;margin-top:12px">
+                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px">Triage Results</div>
+                    ${this._execResults.map(r => html`<div style="padding:6px 0;border-bottom:1px solid #1f2937"><div style="font-size:11px;font-weight:600;color:#f59e0b">${r.step}</div><div style="font-size:10px;color:#94a3b8;margin-top:2px">${r.output}</div></div>`)}
+                  </div>
+                ` : nothing}
               </div>
-            ` : nothing}
+              <div class="section" style="margin-top:12px">
+                <div class="stitle">Alert-to-Case Flow (Sankey)</div>
+                <div class="sankey-svg">${this._sankeyFlowSVG()}</div>
+              </div>
+              <div class="section">
+                <div class="stitle">MITRE ATT&CK Tactic Coverage</div>
+                <div style="display:flex;justify-content:center;padding:8px 0">${this._mitreRadarSVG()}</div>
+              </div>
+            </div>
+            <div>
+              <div class="section">
+                <div class="stitle">Alert Volume Trend (24h)</div>
+                ${this._trendChartSVG()}
+                <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+                  ${(() => {
+                    const reg = this._linearRegression(this._trendData.map(d => d.alerts));
+                    const trendClass = reg.trend === 'up' ? 'trend-up' : reg.trend === 'down' ? 'trend-down' : 'trend-flat';
+                    const arrow = reg.trend === 'up' ? '\u2191' : reg.trend === 'down' ? '\u2193' : '\u2192';
+                    return html`<span class="trend-indicator ${trendClass}">${arrow} Slope: ${reg.slope.toFixed(2)}/hr</span>`;
+                  })()}
+                  <span class="trend-indicator ${this._anomalyPoints.length > 0 ? 'trend-up' : 'trend-down'}">${this._anomalyPoints.length} anomalies</span>
+                </div>
+              </div>
+              <div class="section" style="margin-top:12px">
+                <div class="stitle">Auto-Generated Insights</div>
+                ${this._generateInsights().map(ins => html`
+                  <div class="insight-card" style="border-left-color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#f59e0b' : '#3b82f6'}">
+                    <div class="insight-title" style="color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#f59e0b' : '#3b82f6'}">${ins.severity.toUpperCase()}: ${ins.title}</div>
+                    <div class="insight-body">${ins.body}</div>
+                  </div>
+                `)}
+              </div>
+              <div class="section" style="margin-top:12px">
+                <div class="stitle">Threat Intelligence Feed</div>
+                ${this._threatIntelFeed.map(ti => html`
+                  <div class="intel-row">
+                    <span class="intel-type" style="background:${ti.type === 'ip' ? '#ef444420' : ti.type === 'domain' ? '#3b82f620' : ti.type === 'hash' ? '#a855f720' : '#f9731620'};color:${ti.type === 'ip' ? '#ef4444' : ti.type === 'domain' ? '#3b82f6' : ti.type === 'hash' ? '#a855f7' : '#f97316'}">${ti.type}</span>
+                    <span class="intel-ip">${ti.value}</span>
+                    <span class="intel-detail">${ti.description}</span>
+                    <span class="intel-confidence" style="color:${ti.confidence >= 85 ? '#22c55e' : ti.confidence >= 70 ? '#f59e0b' : '#ef4444'}">${ti.confidence}%</span>
+                  </div>
+                `)}
+              </div>
+            </div>
           </div>
-          <div class="section">
+          <div class="section" style="margin-top:12px">
             <div class="stitle">SOC Infrastructure Topology</div>
             <div class="topology-svg"><svg viewBox="0 0 360 160" width="100%" height="160">${this._socTopologySVG()}</svg></div>
           </div>
-          <div class="section">
-            <div class="stitle">Alert Volume (24h)</div>
-            ${this._alertVolumeSVG()}
-          </div>
-          <div class="section">
-            <div class="stitle">MITRE ATT&CK Coverage Heatmap</div>
-            ${this._mitreHeatmapSVG()}
-          </div>
-          <div class="section">
-            <div class="stitle">Case Timeline</div>
-            ${this._caseTimelineSVG()}
+          <div class="grid-2" style="margin-top:12px">
+            <div class="section">
+              <div class="stitle">MITRE ATT&CK Coverage Heatmap</div>
+              ${this._mitreHeatmapSVG()}
+            </div>
+            <div class="section">
+              <div class="stitle">Case Timeline</div>
+              ${this._caseTimelineSVG()}
+            </div>
           </div>
         ` : ''}
 

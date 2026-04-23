@@ -209,6 +209,28 @@ export class ScZeroTrustBypass extends LitElement {
     .dist-legend { display: flex; gap: 12px; font-size: 9px; color: #6b7280; }
     .dist-legend span { display: inline-flex; align-items: center; gap: 3px; }
     .dist-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+    .intel-row { display: flex; gap: 10px; padding: 8px; background: #0a0c10; border-radius: 6px; margin-bottom: 6px; align-items: center; }
+    .intel-type { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+    .intel-val { font-family: monospace; font-size: 12px; color: #e2e8f0; min-width: 120px; }
+    .intel-desc { flex: 1; font-size: 10px; color: #6b7280; }
+    .intel-conf { font-size: 10px; font-weight: 700; min-width: 40px; text-align: right; }
+    .insight-card { background: linear-gradient(135deg, #1a1d27 0%, #0a0c10 100%); border-radius: 8px; padding: 14px; margin-bottom: 8px; border-left: 3px solid #3b82f6; }
+    .insight-title { font-size: 12px; font-weight: 700; color: #3b82f6; margin-bottom: 4px; }
+    .insight-body { font-size: 11px; color: #9ca3af; line-height: 1.5; }
+    .trend-indicator { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; }
+    .trend-up { color: #f87171; }
+    .trend-down { color: #34d399; }
+    .trend-flat { color: #9ca3af; }
+    .risk-factor-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #0a0c10; font-size: 11px; }
+    .risk-factor-label { flex: 1; color: #9ca3af; }
+    .risk-factor-bar { width: 100px; height: 6px; background: #1f2937; border-radius: 3px; overflow: hidden; }
+    .risk-factor-fill { height: 100%; border-radius: 3px; }
+    .config-select { padding: 6px 10px; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 6px; color: #e2e8f0; font-size: 11px; outline: none; }
+    .config-select:focus { border-color: #3b82f6; }
+    .approval-row { display: flex; align-items: center; gap: 10px; padding: 10px; background: #0a0c10; border-radius: 6px; margin-bottom: 6px; }
+    .approval-btn { padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 600; cursor: pointer; border: none; }
+    .approval-btn.approve { background: #22c55e; color: #fff; }
+    .approval-btn.reject { background: #ef4444; color: #fff; }
   `;
 
   private _togglePolicy(policy: ZTPolicy, enabled: boolean): void {
@@ -674,6 +696,331 @@ export class ScZeroTrustBypass extends LitElement {
     </div>`;
   }
 
+  // Zero Trust risk scoring engine
+  private _calculateZTRisk(vector: BypassVector, policy: ZTPolicy | undefined): { overall: number; factors: { name: string; score: number; weight: number; color: string }[] } {
+    const impactScore: Record<string, number> = { low: 20, medium: 45, high: 70, critical: 95 };
+    const complexityScore: Record<string, number> = { low: 85, medium: 60, high: 35, expert: 15 };
+    const detectionScore = 100 - (vector.detectability || 50);
+    const policyGap = policy ? (policy.enforcement === 'none' ? 90 : policy.enforcement === 'monitor' ? 50 : 10) : 50;
+    const mitreWeight = vector.mitreId.startsWith('T1') ? 25 : vector.mitreId.startsWith('T10') ? 30 : 20;
+    const factors = [
+      { name: 'Impact Potential', score: impactScore[vector.impact] || 50, weight: 25, color: impactScore[vector.impact] >= 70 ? '#ef4444' : '#fbbf24' },
+      { name: 'Exploit Complexity', score: complexityScore[vector.complexity] || 50, weight: 20, color: complexityScore[vector.complexity] <= 35 ? '#ef4444' : '#34d399' },
+      { name: 'Detection Evasion', score: detectionScore, weight: 20, color: detectionScore >= 60 ? '#ef4444' : '#34d399' },
+      { name: 'Policy Gap', score: policyGap, weight: 20, color: policyGap >= 60 ? '#ef4444' : '#34d399' },
+      { name: 'MITRE Severity', score: mitreWeight, weight: 15, color: mitreWeight >= 25 ? '#ef4444' : '#fbbf24' },
+    ];
+    const overall = Math.min(100, Math.round(factors.reduce((s: number, f: any) => s + f.score * f.weight / 100, 0)));
+    return { overall, factors };
+  }
+
+  // MITRE ATT&CK correlation for zero trust
+  private _ztMitreTechniques: { id: string; name: string; tactic: string; detection: number; trend12h: number[] }[] = [
+    { id: 'T1078', name: 'Valid Accounts', tactic: 'Initial Access', detection: 72, trend12h: [2, 3, 1, 4, 2, 3, 5, 2, 3, 4, 3, 2] },
+    { id: 'T1550', name: 'Use Alternate Authentication Material', tactic: 'Lateral Movement', detection: 45, trend12h: [1, 0, 2, 1, 0, 1, 2, 0, 1, 0, 2, 1] },
+    { id: 'T1558', name: 'Steal or Forge Kerberos Tickets', tactic: 'Credential Access', detection: 55, trend12h: [0, 1, 0, 1, 2, 1, 0, 1, 0, 2, 1, 0] },
+    { id: 'T1134', name: 'Access Token Manipulation', tactic: 'Defense Evasion', detection: 62, trend12h: [1, 2, 1, 0, 1, 2, 3, 2, 1, 0, 1, 2] },
+    { id: 'T1078.004', name: 'Cloud Accounts', tactic: 'Initial Access', detection: 48, trend12h: [3, 2, 4, 3, 5, 4, 3, 6, 4, 3, 5, 4] },
+    { id: 'T1021', name: 'Remote Services', tactic: 'Lateral Movement', detection: 78, trend12h: [5, 4, 6, 5, 4, 7, 6, 5, 8, 6, 5, 7] },
+  ];
+
+  // Compliance scoring against frameworks
+  private _ztComplianceChecks: { framework: string; control: string; name: string; status: 'pass' | 'partial' | 'fail'; score: number }[] = [
+    { framework: 'NIST 800-207', control: 'SC-7', name: 'Continuous Verification', status: 'pass', score: 92 },
+    { framework: 'NIST 800-207', control: 'SC-8', name: 'Micro-segmentation', status: 'partial', score: 68 },
+    { framework: 'NIST 800-207', control: 'SC-9', name: 'Least Privilege Access', status: 'pass', score: 85 },
+    { framework: 'CIS ZT 1.0', control: '1.1', name: 'Identity Verification', status: 'pass', score: 90 },
+    { framework: 'CIS ZT 1.0', control: '2.1', name: 'Device Trust', status: 'partial', score: 72 },
+    { framework: 'CIS ZT 1.0', control: '3.1', name: 'Network Segmentation', status: 'fail', score: 38 },
+    { framework: 'ISO 27001', control: 'A.9.2', name: 'User Access Management', status: 'pass', score: 88 },
+    { framework: 'ISO 27001', control: 'A.13.1', name: 'Network Controls', status: 'partial', score: 65 },
+  ];
+
+  // Trend analysis
+  private _ztTrendData: { period: string; tests: number; passed: number; failed: number; avgRisk: number }[] = [
+    { period: 'Week 1', tests: 45, passed: 32, failed: 8, avgRisk: 62 },
+    { period: 'Week 2', tests: 52, passed: 38, failed: 9, avgRisk: 58 },
+    { period: 'Week 3', tests: 48, passed: 40, failed: 5, avgRisk: 51 },
+    { period: 'Week 4', tests: 55, passed: 42, failed: 7, avgRisk: 54 },
+    { period: 'Week 5', tests: 60, passed: 48, failed: 6, avgRisk: 48 },
+    { period: 'Week 6', tests: 58, passed: 50, failed: 4, avgRisk: 44 },
+  ];
+
+  private _renderRiskAssessment(vector: BypassVector): any {
+    const policy = this._policies.find(p => vector.affectedPolicies.includes(p.id));
+    const risk = this._calculateZTRisk(vector, policy);
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-weight:600;font-size:12px;color:#9ca3af;text-transform:uppercase">Risk Assessment: ${vector.name}</span>
+        <span style="font-size:16px;font-weight:800;color:${risk.overall >= 70 ? '#ef4444' : risk.overall >= 40 ? '#fbbf24' : '#34d399'}">${risk.overall}/100</span>
+      </div>
+      ${risk.factors.map(f => html`
+        <div class="risk-factor-row">
+          <span class="risk-factor-label">${f.name} (${f.weight}%)</span>
+          <div class="risk-factor-bar"><div class="risk-factor-fill" style="width:${f.score}%;background:${f.color}"></div></div>
+          <span style="font-weight:700;min-width:30px;text-align:right;color:${f.color}">${Math.round(f.score)}</span>
+        </div>
+      `)}
+    </div>`;
+  }
+
+  private _renderComplianceDashboard(): any {
+    const total = this._ztComplianceChecks.length || 1;
+    const passed = this._ztComplianceChecks.filter(c => c.status === 'pass').length;
+    const partial = this._ztComplianceChecks.filter(c => c.status === 'partial').length;
+    const failed = this._ztComplianceChecks.filter(c => c.status === 'fail').length;
+    const avgScore = Math.round(this._ztComplianceChecks.reduce((s, c) => s + c.score, 0) / total);
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Compliance Score: ${avgScore}/100</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div style="background:#0a0c10;border-radius:6px;padding:10px;text-align:center;flex:1"><div style="font-size:20px;font-weight:700;color:#34d399">${passed}</div><div style="font-size:9px;color:#6b7280">Pass</div></div>
+        <div style="background:#0a0c10;border-radius:6px;padding:10px;text-align:center;flex:1"><div style="font-size:20px;font-weight:700;color:#fbbf24">${partial}</div><div style="font-size:9px;color:#6b7280">Partial</div></div>
+        <div style="background:#0a0c10;border-radius:6px;padding:10px;text-align:center;flex:1"><div style="font-size:20px;font-weight:700;color:#f87171">${failed}</div><div style="font-size:9px;color:#6b7280">Fail</div></div>
+      </div>
+      ${this._ztComplianceChecks.map(c => html`
+        <div style="display:flex;align-items:center;gap:10px;padding:6px;background:#0a0c10;border-radius:4px;margin-bottom:4px;font-size:11px">
+          <span class="tag">${c.framework}</span>
+          <span style="flex:1;color:#e2e8f0">${c.control}: ${c.name}</span>
+          <div style="width:60px;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.score}%;background:${c.score >= 80 ? '#34d399' : c.score >= 60 ? '#fbbf24' : '#f87171'};border-radius:3px"></div></div>
+          <span class="tag" style="background:${c.status === 'pass' ? '#22c55e20' : c.status === 'partial' ? '#fbbf2420' : '#ef444420'};color:${c.status === 'pass' ? '#34d399' : c.status === 'partial' ? '#fbbf24' : '#f87171'}">${c.status}</span>
+        </div>
+      `)}
+    </div>`;
+  }
+
+  private _renderTrendChart(): any {
+    const data = this._ztTrendData;
+    const W = 260, H = 80, pad = 20;
+    const maxTests = Math.max(...data.map(d => d.tests), 1);
+    const stepX = (W - pad * 2) / (data.length - 1);
+    let svg = '';
+    for (let i = 0; i <= 4; i++) {
+      const y = pad + (i / 4) * (H - pad * 2);
+      svg += `<line x1="${pad}" y1="${y}" x2="${W - pad}" y2="${y}" stroke="#2a2d3a" stroke-width="0.5"/>`;
+    }
+    const passedPts = data.map((d, i) => `${pad + i * stepX},${pad + (1 - d.passed / maxTests) * (H - pad * 2)}`).join(' ');
+    svg += `<polyline points="${passedPts}" fill="none" stroke="#34d399" stroke-width="1.5" stroke-linecap="round"/>`;
+    const failedPts = data.map((d, i) => `${pad + i * stepX},${pad + (1 - d.failed / maxTests) * (H - pad * 2)}`).join(' ');
+    svg += `<polyline points="${failedPts}" fill="none" stroke="#f87171" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 2"/>`;
+    data.forEach((d, i) => { svg += `<text x="${pad + i * stepX}" y="${H - 4}" text-anchor="middle" fill="#6b7280" font-size="6">${d.period}</text>`; });
+    svg += `<circle cx="${W - 100}" cy="8" r="3" fill="#34d399"/><text x="${W - 94}" y="11" fill="#9ca3af" font-size="7">Passed</text>`;
+    svg += `<circle cx="${W - 55}" cy="8" r="3" fill="#f87171"/><text x="${W - 49}" y="11" fill="#9ca3af" font-size="7">Failed</text>`;
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Test Results Trend</div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>
+      ${(() => {
+        const risks = data.map(d => d.avgRisk);
+        const n = risks.length || 1;
+        const sumX = risks.reduce((s, _, i) => s + i, 0);
+        const sumY = risks.reduce((s, v) => s + v, 0);
+        const sumXY = risks.reduce((s, v, i) => s + i * v, 0);
+        const sumX2 = risks.reduce((s, _, i) => s + i * i, 0);
+        const denom = n * sumX2 - sumX * sumX || 1;
+        const slope = (n * sumXY - sumX * sumY) / denom;
+        const cls = slope < -0.5 ? 'trend-down' : slope > 0.5 ? 'trend-up' : 'trend-flat';
+        const arrow = slope < -0.5 ? '\u2193' : slope > 0.5 ? '\u2191' : '\u2192';
+        return html`<span class="trend-indicator ${cls}" style="margin-top:8px;display:inline-flex">${arrow} Risk trend: ${slope > 0 ? '+' : ''}${slope.toFixed(1)}/week (improving)</span>`;
+      })()}
+    </div>`;
+  }
+
+  private _renderMitreCorrelation(): any {
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">MITRE ATT&CK Detection Coverage</div>
+      ${this._ztMitreTechniques.map(t => html`
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #0a0c10;font-size:11px">
+          <span class="tag" style="background:#312e81;color:#a5b4fc">${t.id}</span>
+          <span style="flex:1;color:#e2e8f0">${t.name}</span>
+          <span class="tag">${t.tactic}</span>
+          <div style="width:60px;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${t.detection}%;background:${t.detection >= 70 ? '#34d399' : t.detection >= 50 ? '#fbbf24' : '#f87171'};border-radius:3px"></div></div>
+          <span style="font-size:10px;color:${t.detection >= 70 ? '#34d399' : '#fbbf24'};min-width:30px;text-align:right">${t.detection}%</span>
+        </div>
+      `)}
+    </div>`;
+  }
+
+  private _renderApprovalWorkflow(): any {
+    const approvals = [
+      { name: 'Dr. Sarah Chen', role: 'CISO', status: 'approved', time: '1h ago' },
+      { name: 'James Wilson', role: 'Network Lead', status: 'pending', time: '' },
+      { name: 'Maria Garcia', role: 'IAM Lead', status: 'pending', time: '' },
+    ];
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Test Approval Workflow</div>
+      ${approvals.map(a => html`
+        <div class="approval-row">
+          <div style="width:28px;height:28px;border-radius:50%;background:${a.status === 'approved' ? '#34d39930' : '#fbbf2430'};color:${a.status === 'approved' ? '#34d399' : '#fbbf24'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${a.name.split(' ').map((n: string) => n[0]).join('')}</div>
+          <div style="flex:1"><div style="font-size:11px;font-weight:600">${a.name}</div><div style="font-size:9px;color:#6b7280">${a.role}${a.time ? ' - ' + a.time : ''}</div></div>
+          ${a.status === 'approved' ? html`<span class="tag" style="background:#22c55e20;color:#34d399">Approved</span>` : html`
+            <div style="display:flex;gap:4px">
+              <button class="approval-btn approve" @click=${() => { this._addAudit('approval', a.name + ' approved test'); }}>Approve</button>
+              <button class="approval-btn reject" @click=${() => { this._addAudit('approval', a.name + ' rejected test'); }}>Reject</button>
+            </div>
+          `}
+        </div>
+      `)}
+    </div>`;
+  }
+
+  private _renderPanelConfig(): any {
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Panel Configuration</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0a0c10">
+        <div><div style="font-size:11px;color:#e2e8f0">Auto-Refresh Interval</div><div style="font-size:9px;color:#6b7280">Refresh test results automatically</div></div>
+        <select class="config-select" style="width:120px"><option value="0">Disabled</option><option value="30">30s</option><option value="60">1 min</option><option value="300">5 min</option></select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0a0c10">
+        <div><div style="font-size:11px;color:#e2e8f0">Risk Threshold</div><div style="font-size:9px;color:#6b7280">Alert when risk score exceeds</div></div>
+        <select class="config-select" style="width:120px"><option value="50">50 (Medium)</option><option value="70">70 (High)</option><option value="85">85 (Critical)</option></select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+        <div><div style="font-size:11px;color:#e2e8f0">Filter Presets</div><div style="font-size:9px;color:#6b7280">Quick filter bypass vectors</div></div>
+        <div style="display:flex;gap:4px">${['All', 'High Risk', 'Unpatched', 'Identity'].map(p => html`<span class="tag" style="cursor:pointer;background:#3b82f620;color:#60a5fa">${p}</span>`)}</div>
+      </div>
+    </div>`;
+  }
+
+  // Generate auto-insights
+  private _generateZTInsights(): { title: string; body: string; severity: string }[] {
+    const insights: { title: string; body: string; severity: string }[] = [];
+    const failedTests = this._ztComplianceChecks.filter(c => c.status === 'fail');
+    if (failedTests.length > 0) insights.push({ title: 'Compliance Gaps Detected', body: `${failedTests.length} controls are failing. Priority: ${failedTests.map(f => f.control).join(', ')}. Remediation plan required within 30 days.`, severity: 'critical' });
+    const avgRisk = this._ztTrendData.length > 0 ? this._ztTrendData[this._ztTrendData.length - 1].avgRisk : 50;
+    if (avgRisk > 50) insights.push({ title: 'Risk Score Above Threshold', body: `Average risk score is ${avgRisk}/100. The target is below 40. Focus areas: identity verification and network segmentation.`, severity: 'warning' });
+    const lowDetect = this._ztMitreTechniques.filter(t => t.detection < 50);
+    if (lowDetect.length > 0) insights.push({ title: 'Detection Coverage Gap', body: `${lowDetect.length} MITRE techniques have below 50% detection rate: ${lowDetect.map(t => t.id).join(', ')}. Deploy additional sensors.`, severity: 'warning' });
+    insights.push({ title: 'Policy Improvement', body: 'Zero trust posture has improved 16% over the last 6 weeks. Continue micro-segmentation rollout and enforce continuous verification for all cloud workloads.', severity: 'info' });
+    return insights;
+  }
+
+  // MITRE ATT&CK heatmap for zero trust techniques
+  private _renderMitreHeatmapSVG(): string {
+    const W = 260, H = 100;
+    const tactics = ['Initial Access', 'Lateral Move', 'Priv Esc', 'Defense Evade', 'Cred Access', 'Exfil', 'C2', 'Impact'];
+    const techs = this._ztMitreTechniques;
+    const cellW = 28;
+    const cellH = 18;
+    let svg = '';
+    // Column headers (tactics)
+    tactics.forEach((t, i) => {
+      svg += `<text x="${10 + i * (cellW + 2)}" y="10" text-anchor="middle" fill="#6b7280" font-size="5.5" transform="rotate(-25, ${10 + i * (cellW + 2)}, 10)">${t}</text>`;
+    });
+    // Data rows
+    techs.forEach((tech, row) => {
+      const y = 25 + row * (cellH + 2);
+      svg += `<text x="0" y="${y + cellH / 2 + 3}" fill="#9ca3af" font-size="6">${tech.id}</text>`;
+      // Generate cells per tactic with varying detection scores
+      tactics.forEach((_, col) => {
+        const score = Math.floor(Math.random() * 80) + 20;
+        const color = score >= 70 ? '#34d399' : score >= 45 ? '#fbbf24' : '#f87171';
+        const x = 10 + col * (cellW + 2);
+        svg += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="2" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="0.5"/>`;
+        svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 + 3}" text-anchor="middle" fill="#e2e8f0" font-size="6">${score}</text>`;
+      });
+    });
+    // Legend
+    svg += `<rect x="10" y="${H - 12}" width="8" height="8" rx="1" fill="#34d39940" stroke="#34d399" stroke-width="0.5"/>`;
+    svg += `<text x="22" y="${H - 5}" fill="#6b7280" font-size="6">High</text>`;
+    svg += `<rect x="50" y="${H - 12}" width="8" height="8" rx="1" fill="#fbbf2440" stroke="#fbbf24" stroke-width="0.5"/>`;
+    svg += `<text x="62" y="${H - 5}" fill="#6b7280" font-size="6">Medium</text>`;
+    svg += `<rect x="100" y="${H - 12}" width="8" height="8" rx="1" fill="#f8717140" stroke="#f87171" stroke-width="0.5"/>`;
+    svg += `<text x="112" y="${H - 5}" fill="#6b7280" font-size="6">Low</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
+  }
+
+  // Sankey diagram for policy-to-vector flow
+  private _renderPolicyVectorSankeySVG(): string {
+    const W = 260, H = 120;
+    const policies = [
+      { label: 'Identity', value: 15, color: '#3b82f6' },
+      { label: 'Device', value: 12, color: '#f97316' },
+      { label: 'Network', value: 18, color: '#22c55e' },
+      { label: 'App', value: 8, color: '#a855f7' },
+      { label: 'Data', value: 10, color: '#ef4444' },
+    ];
+    const vectors = [
+      { label: 'Cred Theft', value: 14, color: '#ef4444' },
+      { label: 'Token Forge', value: 8, color: '#f97316' },
+      { label: 'Lateral', value: 12, color: '#fbbf24' },
+      { label: 'Priv Esc', value: 10, color: '#a855f7' },
+      { label: 'API Abuse', value: 7, color: '#3b82f6' },
+    ];
+    const total = policies.reduce((s, p) => s + p.value, 0) || 1;
+    let svg = '';
+    policies.forEach((p, i) => {
+      const h = (p.value / total) * (H - 20);
+      const y = 10 + policies.slice(0, i).reduce((s, v) => s + (v.value / total) * (H - 20), 0);
+      svg += `<rect x="5" y="${y}" width="35" height="${h}" rx="3" fill="${p.color}" fill-opacity="0.7"/>`;
+      svg += `<text x="22" y="${y + h / 2 + 3}" text-anchor="middle" fill="#fff" font-size="6" font-weight="600">${p.label}</text>`;
+    });
+    vectors.forEach((v, i) => {
+      const h = (v.value / total) * (H - 20);
+      const y = 10 + vectors.slice(0, i).reduce((s, vec) => s + (vec.value / total) * (H - 20), 0);
+      svg += `<rect x="${W - 40}" y="${y}" width="35" height="${h}" rx="3" fill="${v.color}" fill-opacity="0.7"/>`;
+      svg += `<text x="${W - 22}" y="${y + h / 2 + 3}" text-anchor="middle" fill="#fff" font-size="6" font-weight="600">${v.label}</text>`;
+    });
+    for (let i = 0; i < 6; i++) {
+      const opacity = Math.random() * 0.3 + 0.1;
+      svg += `<path d="M45,${H / 2} C100,${H / 2} 160,${H / 2} ${W - 45},${H / 2}" stroke="#94a3b8" stroke-opacity="${opacity}" stroke-width="${Math.random() * 8 + 2}" fill="none"/>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">${svg}</svg>`;
+  }
+
+  // Network segmentation gap analysis
+  private _renderSegGapAnalysis(): any {
+    const gaps = [
+      { zone: 'DMZ to Internal', status: 'open', risk: 'high', recommendation: 'Implement micro-firewall with explicit allow-list' },
+      { zone: 'Prod to Dev', status: 'partial', risk: 'medium', recommendation: 'Enforce network policy agent on all Dev hosts' },
+      { zone: 'Cloud to On-Prem', status: 'open', risk: 'critical', recommendation: 'Deploy ZTNA gateway with identity-based access' },
+      { zone: 'IoT to Corporate', status: 'closed', risk: 'low', recommendation: 'N/A - Already segmented via VLAN isolation' },
+      { zone: 'Guest to Corporate', status: 'partial', risk: 'medium', recommendation: 'Enforce captive portal with 802.1X authentication' },
+    ];
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Segmentation Gap Analysis</div>
+      ${gaps.map(g => html`
+        <div style="padding:8px;background:#0a0c10;border-radius:6px;margin-bottom:4px;border-left:3px solid ${g.status === 'open' ? '#ef4444' : g.status === 'partial' ? '#fbbf24' : '#34d399'}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:11px;font-weight:600;color:#e2e8f0">${g.zone}</span>
+            <div style="display:flex;gap:4px">
+              <span class="tag" style="background:${g.risk === 'critical' ? '#ef444420' : g.risk === 'high' ? '#f9731620' : g.risk === 'medium' ? '#fbbf2420' : '#22c55e20'};color:${g.risk === 'critical' ? '#f87171' : g.risk === 'high' ? '#f97316' : g.risk === 'medium' ? '#fbbf24' : '#34d399'}">${g.risk}</span>
+              <span class="tag" style="background:${g.status === 'open' ? '#ef444420' : g.status === 'partial' ? '#fbbf2420' : '#22c55e20'};color:${g.status === 'open' ? '#f87171' : g.status === 'partial' ? '#fbbf24' : '#34d399'}">${g.status}</span>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#6b7280">${g.recommendation}</div>
+        </div>
+      `)}
+    </div>`;
+  }
+
+  // Identity trust level assessment
+  private _renderIdentityTrustAssessment(): any {
+    const identities = [
+      { name: 'svc-app-api', type: 'Service Account', trust: 'low', lastVerified: '3 days ago', mfa: false, risk: 85 },
+      { name: 'admin-john', type: 'Human Admin', trust: 'high', lastVerified: '2h ago', mfa: true, risk: 25 },
+      { name: 'svc-backup-02', type: 'Service Account', trust: 'medium', lastVerified: '1 week ago', mfa: false, risk: 62 },
+      { name: 'api-gateway-key', type: 'API Key', trust: 'low', lastVerified: 'Never', mfa: false, risk: 95 },
+      { name: 'dev-sarah', type: 'Developer', trust: 'high', lastVerified: '4h ago', mfa: true, risk: 18 },
+      { name: 'ci-cd-pipeline', type: 'Machine Identity', trust: 'medium', lastVerified: '5 days ago', mfa: false, risk: 55 },
+    ];
+    return html`<div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Identity Trust Assessment</div>
+      ${identities.map(id => html`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#0a0c10;border-radius:6px;margin-bottom:4px">
+          <div style="width:32px;height:32px;border-radius:50%;background:${id.trust === 'high' ? '#34d39920' : id.trust === 'medium' ? '#fbbf2420' : '#f8717120'};color:${id.trust === 'high' ? '#34d399' : id.trust === 'medium' ? '#fbbf24' : '#f87171'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${id.type === 'Human Admin' || id.type === 'Developer' ? '\uD83D\uDC64' : id.type === 'API Key' ? '\uD83D\uDD11' : '\u2699\uFE0F'}</div>
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0">${id.name}</div>
+            <div style="font-size:9px;color:#6b7280">${id.type} | Verified: ${id.lastVerified} | MFA: ${id.mfa ? 'Yes' : 'No'}</div>
+          </div>
+          <div style="text-align:right;min-width:60px">
+            <div style="font-size:14px;font-weight:700;color:${id.risk >= 70 ? '#f87171' : id.risk >= 40 ? '#fbbf24' : '#34d399'}">${id.risk}</div>
+            <div style="font-size:8px;color:#6b7280">Risk</div>
+          </div>
+          <div style="width:50px;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${id.risk}%;background:${id.risk >= 70 ? '#f87171' : id.risk >= 40 ? '#fbbf24' : '#34d399'};border-radius:3px"></div></div>
+        </div>
+      `)}
+    </div>`;
+  }
+
   render() {
     const overallScore = this._getOverallScore();
     const scoreColor = overallScore >= 80 ? '#34d399' : overallScore >= 60 ? '#fbbf24' : '#f87171';
@@ -692,6 +1039,8 @@ export class ScZeroTrustBypass extends LitElement {
           <button class="tab ${this._activeTab === 'test' ? 'active' : ''}" @click=${() => { this._activeTab = 'test'; }}>Test</button>
           <button class="tab ${this._activeTab === 'results' ? 'active' : ''}" @click=${() => { this._activeTab = 'results'; }}>Results</button>
           <button class="tab ${this._activeTab === 'score' ? 'active' : ''}" @click=${() => { this._activeTab = 'score'; }}>Score</button>
+          <button class="tab ${this._activeTab === 'compliance' ? 'active' : ''}" @click=${() => { this._activeTab = 'compliance'; }}>Compliance</button>
+          <button class="tab ${this._activeTab === 'analytics' ? 'active' : ''}" @click=${() => { this._activeTab = 'analytics'; }}>Analytics</button>
         </div>
 
         ${this._activeTab === 'policies' ? html`
@@ -826,6 +1175,47 @@ export class ScZeroTrustBypass extends LitElement {
           <div class="btn-row" style="margin-top:16px;justify-content:center">
             <button class="btn btn-secondary" @click=${this._exportReport}>Export Assessment (JSON)</button>
           </div>
+        ` : nothing}
+
+        ${this._activeTab === 'compliance' ? html`
+          ${this._renderComplianceDashboard()}
+          ${this._renderMitreCorrelation()}
+          <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">MITRE ATT&CK Detection Heatmap</div>
+            <div style="background:#0a0c10;border-radius:8px;padding:12px">${this._renderMitreHeatmapSVG()}</div>
+          </div>
+          ${this._renderSegGapAnalysis()}
+          ${this._renderIdentityTrustAssessment()}
+          ${this._renderApprovalWorkflow()}
+        ` : nothing}
+
+        ${this._activeTab === 'analytics' ? html`
+          ${this._renderTrendChart()}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              ${this._generateZTInsights().map(ins => html`
+                <div class="insight-card" style="border-left-color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#fbbf24' : '#3b82f6'}">
+                  <div class="insight-title" style="color:${ins.severity === 'critical' ? '#ef4444' : ins.severity === 'warning' ? '#fbbf24' : '#3b82f6'}">${ins.severity.toUpperCase()}: ${ins.title}</div>
+                  <div class="insight-body">${ins.body}</div>
+                </div>
+              `)}
+            </div>
+            <div>
+              ${this._ztTrendData.map(d => html`
+                <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #0a0c10;font-size:11px">
+                  <span style="min-width:60px;color:#6b7280">${d.period}</span>
+                  <div style="flex:1;height:6px;background:#1f2937;border-radius:3px;overflow:hidden"><div style="height:100%;width:${d.passed / d.tests * 100}%;background:#34d399;border-radius:3px"></div></div>
+                  <span style="min-width:50px;font-weight:600;color:#34d399">${d.passed}/${d.tests}</span>
+                  <span style="font-size:10px;color:${d.avgRisk <= 40 ? '#34d399' : d.avgRisk <= 60 ? '#fbbf24' : '#f87171'};min-width:30px;text-align:right">${d.avgRisk}</span>
+                </div>
+              `)}
+            </div>
+          </div>
+          <div style="background:#1f2937;border-radius:8px;padding:14px;margin-bottom:12px">
+            <div style="font-weight:600;font-size:12px;margin-bottom:10px;color:#9ca3af;text-transform:uppercase">Policy to Vector Attack Flow</div>
+            <div style="background:#0a0c10;border-radius:8px;padding:12px">${this._renderPolicyVectorSankeySVG()}</div>
+          </div>
+          ${this._renderPanelConfig()}
         ` : nothing}
       </div>
         ${this._renderRiskGauge()}

@@ -523,6 +523,364 @@ export class ScForensicsWorkstation extends LitElement {
     </div>`;
   }
 
+  // --- Forensic Risk Scoring Engine ---
+  private _riskFactors: Record<string, { weight: number; label: string; description: string }> = {
+    criticalArtifacts: { weight: 0.25, label: 'Critical Findings', description: 'High-severity artifacts discovered' },
+    evidenceIntegrity: { weight: 0.20, label: 'Evidence Integrity', description: 'Hash verification and chain of custody status' },
+    caseAge: { weight: 0.15, label: 'Case Age', description: 'Time elapsed since case creation' },
+    artifactDensity: { weight: 0.15, label: 'Artifact Density', description: 'Number of artifacts per evidence item' },
+    analysisCoverage: { weight: 0.15, label: 'Analysis Coverage', description: 'Percentage of evidence analyzed' },
+    timelineGaps: { weight: 0.10, label: 'Timeline Gaps', description: 'Unexplained time periods in event timeline' },
+  };
+
+  private _computeForensicRisk(): { score: number; factors: { name: string; score: number; weight: number; label: string }[]; level: string } {
+    const factors: { name: string; score: number; weight: number; label: string }[] = [];
+    const caseArtifacts = this._artifacts.filter(a => this._activeCase && a.caseId === this._activeCase.id);
+    const criticalCount = caseArtifacts.filter(a => a.severity === 'critical').length;
+    const highCount = caseArtifacts.filter(a => a.severity === 'high').length;
+    const totalArtifacts = caseArtifacts.length;
+    const verifiedEvidence = this._evidence.filter(e => e.verified && (!this._activeCase || e.caseId === this._activeCase.id)).length;
+    const totalEvidence = this._evidence.filter(e => !this._activeCase || e.caseId === this._activeCase.id).length;
+    const caseAge = this._activeCase ? (Date.now() - new Date(this._activeCase.createdAt).getTime()) / (1000 * 60 * 60 * 24) : 0;
+    const analyzedEvidence = this._evidence.filter(e => e.analysisStatus === 'complete' && (!this._activeCase || e.caseId === this._activeCase.id)).length;
+
+    // Critical artifacts factor (0-100)
+    const critScore = Math.min(100, (criticalCount * 30 + highCount * 15));
+    factors.push({ name: 'criticalArtifacts', score: critScore, weight: this._riskFactors.criticalArtifacts.weight, label: this._riskFactors.criticalArtifacts.label });
+
+    // Evidence integrity factor (0-100, inverted: higher = better)
+    const integrityScore = totalEvidence > 0 ? Math.round((verifiedEvidence / totalEvidence) * 100) : 50;
+    factors.push({ name: 'evidenceIntegrity', score: 100 - integrityScore, weight: this._riskFactors.evidenceIntegrity.weight, label: this._riskFactors.evidenceIntegrity.label });
+
+    // Case age factor (0-100)
+    const ageScore = Math.min(100, caseAge * 2);
+    factors.push({ name: 'caseAge', score: ageScore, weight: this._riskFactors.caseAge.weight, label: this._riskFactors.caseAge.label });
+
+    // Artifact density (0-100)
+    const density = totalEvidence > 0 ? totalArtifacts / totalEvidence : 0;
+    const densityScore = Math.min(100, density * 10);
+    factors.push({ name: 'artifactDensity', score: densityScore, weight: this._riskFactors.artifactDensity.weight, label: this._riskFactors.artifactDensity.label });
+
+    // Analysis coverage (0-100, inverted)
+    const coverageScore = totalEvidence > 0 ? Math.round((analyzedEvidence / totalEvidence) * 100) : 0;
+    factors.push({ name: 'analysisCoverage', score: 100 - coverageScore, weight: this._riskFactors.analysisCoverage.weight, label: this._riskFactors.analysisCoverage.label });
+
+    // Timeline gaps (simplified)
+    const gapScore = totalArtifacts > 0 ? Math.max(0, 30 - totalArtifacts) * 3 : 50;
+    factors.push({ name: 'timelineGaps', score: gapScore, weight: this._riskFactors.timelineGaps.weight, label: this._riskFactors.timelineGaps.label });
+
+    const weightedScore = factors.reduce((sum, f) => sum + f.score * f.weight, 0);
+    const level = weightedScore > 75 ? 'critical' : weightedScore > 50 ? 'high' : weightedScore > 25 ? 'medium' : 'low';
+    return { score: Math.round(weightedScore), factors, level };
+  }
+
+  // --- MITRE ATT&CK Correlation for Forensics ---
+  private _forensicMitreMap: Record<string, { tactic: string; techniqueId: string; techniqueName: string; description: string }> = {
+    'registry-modification': { tactic: 'Persistence', techniqueId: 'T1112', techniqueName: 'Modify Registry', description: 'Registry keys modified for persistence' },
+    'suspicious-process': { tactic: 'Execution', techniqueId: 'T1059', techniqueName: 'Command and Scripting Interpreter', description: 'Suspicious process execution detected' },
+    'credential-access': { tactic: 'Credential Access', techniqueId: 'T1003', techniqueName: 'OS Credential Dumping', description: 'Credential harvesting activity' },
+    'network-exfiltration': { tactic: 'Exfiltration', techniqueId: 'T1041', techniqueName: 'Exfiltration Over C2 Channel', description: 'Data exfiltration via command channel' },
+    'lateral-movement': { tactic: 'Lateral Movement', techniqueId: 'T1021', techniqueName: 'Remote Services', description: 'Lateral movement via remote services' },
+    'privilege-escalation': { tactic: 'Privilege Escalation', techniqueId: 'T1068', techniqueName: 'Exploitation for Privilege Escalation', description: 'Exploitation-based privilege escalation' },
+    'defense-evasion': { tactic: 'Defense Evasion', techniqueId: 'T1070', techniqueName: 'Indicator Removal', description: 'Anti-forensic techniques detected' },
+    'malware-install': { tactic: 'Initial Access', techniqueId: 'T1193', techniqueName: 'Spearphishing Attachment', description: 'Malware delivery via attachment' },
+  };
+
+  private _correlateMitre(artifacts: typeof this._artifacts): { tactic: string; techniques: { id: string; name: string; count: number; artifacts: string[] }[] }[] {
+    const tacticMap: Record<string, { id: string; name: string; count: number; artifacts: string[] }[]> = {};
+    for (const art of artifacts) {
+      for (const [key, mitre] of Object.entries(this._forensicMitreMap)) {
+        if (art.name.toLowerCase().includes(key) || art.description.toLowerCase().includes(key)) {
+          if (!tacticMap[mitre.tactic]) tacticMap[mitre.tactic] = [];
+          const existing = tacticMap[mitre.tactic].find(t => t.id === mitre.techniqueId);
+          if (existing) {
+            existing.count++;
+            existing.artifacts.push(art.name);
+          } else {
+            tacticMap[mitre.tactic].push({ id: mitre.techniqueId, name: mitre.techniqueName, count: 1, artifacts: [art.name] });
+          }
+        }
+      }
+    }
+    return Object.entries(tacticMap).map(([tactic, techniques]) => ({ tactic, techniques }));
+  }
+
+  // --- Advanced Forensic Timeline SVG ---
+  private _forensicTimelineSVG(): string {
+    const artifacts = this._artifacts.filter(a => this._activeCase && a.caseId === this._activeCase.id);
+    if (artifacts.length === 0) return '';
+    const sorted = [...artifacts].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    const minTime = new Date(sorted[0].timestamp).getTime();
+    const maxTime = new Date(sorted[sorted.length - 1].timestamp).getTime();
+    const range = maxTime - minTime || 1;
+    const w = 800, h = 200, pad = 40;
+    const colors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e', info: '#6366f1' };
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<line x1="${pad}" y1="${h / 2}" x2="${w - pad}" y2="${h / 2}" stroke="#374151" stroke-width="2"/>`;
+    // Time markers
+    for (let i = 0; i <= 5; i++) {
+      const x = pad + (i / 5) * (w - 2 * pad);
+      const t = new Date(minTime + (i / 5) * range);
+      svg += `<line x1="${x}" y1="${h / 2 - 5}" x2="${x}" y2="${h / 2 + 5}" stroke="#4b5563" stroke-width="1"/>`;
+      svg += `<text x="${x}" y="${h - 5}" fill="#6b7280" font-size="9" text-anchor="middle">${t.toLocaleTimeString()}</text>`;
+    }
+    // Event dots
+    sorted.forEach((art, idx) => {
+      const x = pad + ((new Date(art.timestamp).getTime() - minTime) / range) * (w - 2 * pad);
+      const y = idx % 2 === 0 ? h / 2 - 30 : h / 2 + 30;
+      const c = colors[art.severity] || '#6b7280';
+      svg += `<circle cx="${x}" cy="${h / 2}" r="5" fill="${c}" opacity="0.8"><title>${art.name}: ${art.description}</title></circle>`;
+      svg += `<line x1="${x}" y1="${h / 2}" x2="${x}" y2="${y}" stroke="${c}" stroke-width="1" opacity="0.5"/>`;
+      svg += `<text x="${x}" y="${y - 5}" fill="${c}" font-size="8" text-anchor="middle">${art.name.substring(0, 12)}</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Evidence Integrity Heatmap ---
+  private _evidenceHeatmapSVG(): string {
+    const w = 400, h = 180;
+    const evidence = this._evidence.filter(e => !this._activeCase || e.caseId === this._activeCase.id).slice(0, 12);
+    const cols = 4, rows = Math.ceil(evidence.length / cols);
+    const cellW = (w - 40) / cols, cellH = (h - 40) / rows;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    evidence.forEach((ev, idx) => {
+      const col = idx % cols, row = Math.floor(idx / cols);
+      const x = 20 + col * cellW, y = 20 + row * cellH;
+      const integrity = ev.verified ? (ev.analysisStatus === 'complete' ? 1.0 : 0.6) : 0.2;
+      const color = integrity > 0.8 ? '#22c55e' : integrity > 0.5 ? '#eab308' : '#ef4444';
+      svg += `<rect x="${x + 2}" y="${y + 2}" width="${cellW - 4}" height="${cellH - 4}" rx="4" fill="${color}" opacity="0.3" stroke="${color}" stroke-width="1"/>`;
+      svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 - 4}" fill="#e2e8f0" font-size="9" text-anchor="middle">${ev.name.substring(0, 15)}</text>`;
+      svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 + 10}" fill="#9ca3af" font-size="8" text-anchor="middle">${Math.round(integrity * 100)}% integrity</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Forensic Collaboration Features ---
+  @state() private _collaborators: { id: string; name: string; role: string; avatar: string; status: 'online' | 'offline' | 'busy'; lastActive: string }[] = [
+    { id: 'u1', name: 'Dr. Chen', role: 'Lead Forensics', avatar: 'DC', status: 'online', lastActive: '2 min ago' },
+    { id: 'u2', name: 'Agent Smith', role: 'Digital Analyst', avatar: 'AS', status: 'busy', lastActive: '15 min ago' },
+    { id: 'u3', name: 'Officer Lee', role: 'Law Enforcement', avatar: 'OL', status: 'online', lastActive: '5 min ago' },
+    { id: 'u4', name: 'Tech Expert Kim', role: 'Malware Analyst', avatar: 'TK', status: 'offline', lastActive: '2 hours ago' },
+  ];
+
+  @state() private _activityFeed: { id: string; userId: string; action: string; target: string; timestamp: string; type: 'comment' | 'action' | 'mention' | 'approval' }[] = [];
+  @state() private _pendingApprovals: { id: string; requester: string; action: string; item: string; timestamp: string }[] = [
+    { id: 'ap1', requester: 'Agent Smith', action: 'request_destroy_evidence', item: 'EVD-003 (Malware Sample)', timestamp: new Date(Date.now() - 3600000).toISOString() },
+    { id: 'ap2', requester: 'Officer Lee', action: 'request_case_closure', item: 'CASE-2024-001', timestamp: new Date(Date.now() - 7200000).toISOString() },
+  ];
+  @state() private _showCollabPanel = false;
+  @state() private _commentText = '';
+  @state() private _mentionQuery = '';
+
+  private _addActivity(userId: string, action: string, target: string, type: 'comment' | 'action' | 'mention' | 'approval' = 'action') {
+    this._activityFeed = [{ id: 'act-' + Date.now(), userId, action, target, timestamp: new Date().toISOString(), type }, ...this._activityFeed].slice(0, 50);
+  }
+
+  private _approveAction(approvalId: string, approved: boolean) {
+    const approval = this._pendingApprovals.find(a => a.id === approvalId);
+    if (approval) {
+      this._addActivity('You', approved ? 'approved' : 'rejected', approval.item, 'approval');
+      this._pendingApprovals = this._pendingApprovals.filter(a => a.id !== approvalId);
+    }
+  }
+
+  private _renderCollaboration(): any {
+    return html`
+      <div style="margin-top:16px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:8px;cursor:pointer" @click=${() => { this._showCollabPanel = !this._showCollabPanel; }}>
+          <span>Team Collaboration</span>
+          <span style="font-size:10px;color:#6b7280">${this._collaborators.filter(c => c.status === 'online').length} online</span>
+          <span style="font-size:10px">${this._showCollabPanel ? '\u25B2' : '\u25BC'}</span>
+        </div>
+        ${this._showCollabPanel ? html`
+          <div style="background:#1a1d27;border-radius:8px;padding:12px;margin-bottom:12px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              ${this._collaborators.map(c => html`
+                <div style="display:flex;align-items:center;gap:6px;background:#1f2937;border-radius:6px;padding:6px 10px">
+                  <div style="width:24px;height:24px;border-radius:50%;background:#374151;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#e2e8f0">${c.avatar}</div>
+                  <div><div style="font-size:11px;font-weight:600">${c.name}</div><div style="font-size:9px;color:#6b7280">${c.role}</div></div>
+                  <div style="width:8px;height:8px;border-radius:50%;background:${c.status === 'online' ? '#22c55e' : c.status === 'busy' ? '#eab308' : '#6b7280'}"></div>
+                </div>
+              `)}
+            </div>
+            <div style="margin-bottom:8px;font-size:11px;font-weight:600;color:#9ca3af">Activity Feed</div>
+            <div style="max-height:120px;overflow-y:auto">
+              ${this._activityFeed.length === 0 ? html`<div style="font-size:11px;color:#6b7280;padding:8px">No recent activity</div>` : this._activityFeed.slice(0, 10).map(act => {
+                const user = this._collaborators.find(c => c.id === act.userId);
+                return html`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #1f2937;font-size:11px">
+                  <span style="font-weight:600;color:#e2e8f0">${user?.name || act.userId}</span>
+                  <span style="color:#6b7280">${act.action}</span>
+                  <span style="color:#9ca3af">${act.target}</span>
+                  <span style="margin-left:auto;font-size:9px;color:#4b5563">${new Date(act.timestamp).toLocaleTimeString()}</span>
+                </div>`;
+              })}
+            </div>
+            ${this._pendingApprovals.length > 0 ? html`
+              <div style="margin-top:12px;font-size:11px;font-weight:600;color:#f59e0b">Pending Approvals (${this._pendingApprovals.length})</div>
+              ${this._pendingApprovals.map(a => html`
+                <div style="background:#1f2937;border-radius:6px;padding:8px;margin-top:6px;display:flex;align-items:center;gap:8px;font-size:11px">
+                  <span style="font-weight:600">${a.requester}</span>
+                  <span style="color:#6b7280">requests:</span>
+                  <span style="flex:1">${a.item}</span>
+                  <button style="background:#052e16;color:#86efac;border:none;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer" @click=${() => this._approveAction(a.id, true)}>Approve</button>
+                  <button style="background:#450a0a;color:#fca5a5;border:none;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer" @click=${() => this._approveAction(a.id, false)}>Reject</button>
+                </div>
+              `)}
+            ` : ''}
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <input style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:11px" placeholder="@mention collaborator..." .value=${this._mentionQuery} @input=${(e: any) => { this._mentionQuery = e.target.value; }}>
+              <input style="flex:2;background:#0f172a;border:1px solid #374151;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:11px" placeholder="Add comment..." .value=${this._commentText} @input=${(e: any) => { this._commentText = e.target.value; }}>
+              <button style="background:#f59e0b;color:#111827;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer" @click=${() => { if (this._commentText.trim()) { this._addActivity('You', 'commented', this._commentText.trim(), 'comment'); this._commentText = ''; } }}>Post</button>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // --- Auto-Insights Engine ---
+  private _generateForensicInsights(): { icon: string; text: string; severity: string; category: string }[] {
+    const insights: { icon: string; text: string; severity: string; category: string }[] = [];
+    const caseArtifacts = this._artifacts.filter(a => this._activeCase && a.caseId === this._activeCase.id);
+    const criticalArtifacts = caseArtifacts.filter(a => a.severity === 'critical');
+    const verifiedEvidence = this._evidence.filter(e => e.verified && (!this._activeCase || e.caseId === this._activeCase.id));
+    const unverified = this._evidence.filter(e => !e.verified && (!this._activeCase || e.caseId === this._activeCase.id));
+
+    if (criticalArtifacts.length >= 3) {
+      insights.push({ icon: '\u26A0\uFE0F', text: `High concentration of critical findings (${criticalArtifacts.length}). Consider escalation to incident response team.`, severity: 'critical', category: 'risk' });
+    }
+    if (unverified.length > 0) {
+      insights.push({ icon: '\uD83D\uDD12', text: `${unverified.length} evidence items lack hash verification. Integrity cannot be guaranteed for legal proceedings.`, severity: 'high', category: 'integrity' });
+    }
+    const mitreCorrelation = this._correlateMitre(caseArtifacts);
+    if (mitreCorrelation.length > 3) {
+      insights.push({ icon: '\uD83D\uDD0D', text: `Artifacts correlate with ${mitreCorrelation.length} MITRE ATT&CK tactics. Attack pattern analysis recommended.`, severity: 'medium', category: 'correlation' });
+    }
+    if (caseArtifacts.filter(a => a.category === 'network').length > 0 && caseArtifacts.filter(a => a.category === 'credential').length > 0) {
+      insights.push({ icon: '\uD83C\uDF10', text: 'Network activity combined with credential artifacts detected. Possible lateral movement pattern.', severity: 'high', category: 'pattern' });
+    }
+    if (caseArtifacts.filter(a => a.category === 'registry').length > 0 && caseArtifacts.filter(a => a.category === 'process').length > 0) {
+      insights.push({ icon: '\uD83D\uDCBB', text: 'Registry modifications paired with suspicious processes suggest persistence mechanism.', severity: 'high', category: 'pattern' });
+    }
+    const recentArtifacts = caseArtifacts.filter(a => (Date.now() - new Date(a.timestamp).getTime()) < 86400000);
+    if (recentArtifacts.length > 0) {
+      insights.push({ icon: '\uD83D\uDCC5', text: `${recentArtifacts.length} artifacts from the last 24 hours. Activity appears recent and ongoing.`, severity: 'medium', category: 'temporal' });
+    }
+    if (insights.length === 0) {
+      insights.push({ icon: '\u2705', text: 'No significant anomalies detected in current case evidence.', severity: 'low', category: 'status' });
+    }
+    return insights;
+  }
+
+  private _renderInsightsPanel(): any {
+    const insights = this._generateForensicInsights();
+    return html`
+      <div style="margin-top:16px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span>Auto-Insights</span>
+          <span style="font-size:10px;color:#6b7280">${insights.length} findings</span>
+        </div>
+        ${insights.map(i => html`
+          <div style="display:flex;gap:8px;padding:8px;margin-bottom:4px;background:#1f2937;border-radius:6px;border-left:3px solid ${i.severity === 'critical' ? '#ef4444' : i.severity === 'high' ? '#f97316' : i.severity === 'medium' ? '#eab308' : '#22c55e'}">
+            <span style="font-size:14px">${i.icon}</span>
+            <div style="flex:1"><div style="font-size:11px;color:#e2e8f0">${i.text}</div><div style="font-size:9px;color:#6b7280;margin-top:2px">${i.category} | ${i.severity}</div></div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Forensic Pattern Analysis Engine ---
+  private _forensicPatterns: { id: string; name: string; description: string; indicators: string[]; severity: string; confidence: number }[] = [
+    { id: 'fp1', name: 'Ransomware Deployment', description: 'Pattern of file encryption, shadow copy deletion, and ransom note deployment', indicators: ['vss-delete', 'cipher-wipe', 'ransom-note', 'mass-file-mod'], severity: 'critical', confidence: 0 },
+    { id: 'fp2', name: 'Data Exfiltration Chain', description: 'Staged data collection, compression, and encrypted outbound transfer', indicators: ['archive-create', 'large-upload', 'encrypted-tunnel', 'dns-tunneling'], severity: 'high', confidence: 0 },
+    { id: 'fp3', name: 'Persistence Framework', description: 'Multiple persistence mechanisms established across registry, services, and scheduled tasks', indicators: ['run-key', 'service-install', 'scheduled-task', 'wmi-subscription'], severity: 'high', confidence: 0 },
+    { id: 'fp4', name: 'Credential Harvesting', description: 'Systematic credential collection from memory, registry, and browser stores', indicators: ['lsass-access', 'credential-dump', 'cookie-extract', 'password-vault'], severity: 'critical', confidence: 0 },
+    { id: 'fp5', name: 'Anti-Forensics Activity', description: 'Evidence destruction, log clearing, and timestamp manipulation', indicators: ['log-clear', 'timestomp', 'secure-delete', 'event-log-wipe'], severity: 'high', confidence: 0 },
+    { id: 'fp6', name: 'Lateral Movement Campaign', description: 'Sequential compromise of systems via pass-the-hash, RDP, or WMI', indicators: ['pth-attempt', 'rdp-session', 'wmi-exec', 'ps-exec'], severity: 'high', confidence: 0 },
+  ];
+
+  private _matchForensicPatterns(): typeof this._forensicPatterns {
+    const caseArtifacts = this._artifacts.filter(a => this._activeCase && a.caseId === this._activeCase.id);
+    const allText = caseArtifacts.map(a => (a.name + ' ' + a.description + ' ' + a.tags.join(' ')).toLowerCase()).join(' ');
+    return this._forensicPatterns.map(pattern => {
+      const matched = pattern.indicators.filter(ind => allText.includes(ind));
+      const confidence = matched.length > 0 ? Math.min(1, matched.length / pattern.indicators.length) : 0;
+      return { ...pattern, confidence };
+    }).filter(p => p.confidence > 0).sort((a, b) => b.confidence - a.confidence);
+  }
+
+  private _renderPatternAnalysis(): any {
+    const matched = this._matchForensicPatterns();
+    if (matched.length === 0) return nothing;
+    return html`
+      <div style="margin-top:16px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span>Pattern Analysis</span>
+          <span style="font-size:10px;color:#f59e0b">${matched.length} patterns detected</span>
+        </div>
+        ${matched.map(p => html`
+          <div style="background:#1f2937;border-radius:6px;padding:10px;margin-bottom:6px;border-left:3px solid ${p.severity === 'critical' ? '#ef4444' : '#f97316'}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600;font-size:12px;color:#e2e8f0">${p.name}</span>
+              <span style="font-size:10px;font-weight:700;color:${p.confidence > 0.7 ? '#ef4444' : p.confidence > 0.4 ? '#f59e0b' : '#22c55e'}">${Math.round(p.confidence * 100)}% confidence</span>
+            </div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:4px">${p.description}</div>
+            <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+              ${p.indicators.map(ind => html`<span style="font-size:9px;background:#0f172a;color:#6b7280;padding:2px 6px;border-radius:3px">${ind}</span>`)}
+            </div>
+            <div style="margin-top:6px;height:4px;background:#0f172a;border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${p.confidence * 100}%;background:${p.confidence > 0.7 ? '#ef4444' : p.confidence > 0.4 ? '#f59e0b' : '#22c55e'};border-radius:2px;transition:width 0.3s"></div>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Artifact Category Radar Chart ---
+  private _artifactRadarSVG(): string {
+    const categories = ['filesystem', 'registry', 'network', 'process', 'memory', 'browser', 'credential', 'timeline'];
+    const caseArtifacts = this._artifacts.filter(a => this._activeCase && a.caseId === this._activeCase.id);
+    const counts = categories.map(cat => caseArtifacts.filter(a => a.category === cat).length);
+    const maxCount = Math.max(...counts, 1);
+    const cx = 100, cy = 100, r = 70;
+    const n = categories.length;
+    let svg = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">`;
+    // Grid rings
+    for (let ring = 1; ring <= 4; ring++) {
+      const rr = (ring / 4) * r;
+      const points = categories.map((_, i) => {
+        const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+        return `${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`;
+      }).join(' ');
+      svg += `<polygon points="${points}" fill="none" stroke="#374151" stroke-width="0.5"/>`;
+    }
+    // Axis lines
+    categories.forEach((_, i) => {
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      svg += `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(angle)}" y2="${cy + r * Math.sin(angle)}" stroke="#374151" stroke-width="0.5"/>`;
+    });
+    // Data polygon
+    const dataPoints = counts.map((count, i) => {
+      const val = (count / maxCount) * r;
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      return `${cx + val * Math.cos(angle)},${cy + val * Math.sin(angle)}`;
+    }).join(' ');
+    svg += `<polygon points="${dataPoints}" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="1.5"/>`;
+    // Labels
+    categories.forEach((cat, i) => {
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      const lx = cx + (r + 15) * Math.cos(angle);
+      const ly = cy + (r + 15) * Math.sin(angle);
+      svg += `<text x="${lx}" y="${ly}" fill="#9ca3af" font-size="7" text-anchor="middle" dominant-baseline="middle">${cat}</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
   private _renderRiskGauge(): any {
     const riskDist = { critical: 0, high: 0, medium: 0, low: 0 };
     this._items.forEach((item: any) => { riskDist[item.risk] = (riskDist[item.risk] || 0) + 1; });
@@ -833,6 +1191,9 @@ export class ScForensicsWorkstation extends LitElement {
           `}
         ` : nothing}
       </div>
+        ${this._renderPatternAnalysis()}
+        ${this._renderCollaboration()}
+        ${this._renderInsightsPanel()}
         ${this._renderRiskGauge()}
         ${this._renderFooter()}
       </div>

@@ -914,9 +914,9 @@ export class ScBlueteamDefenseSimulator extends LitElement {
       </div>
       </div>
       <div style="margin-top:12px;display:flex;justify-content:center">
-        <button class="btn btn-sm ${{this._showEnhanced ? 'btn-primary' : 'btn-secondary'}}" @click=${{() => {{ this._showEnhanced = !this._showEnhanced; this.requestUpdate(); }}}}>${{this._showEnhanced ? 'Hide' : 'Show'}} Advanced</button>
+        <button class="btn btn-sm ${this._showEnhanced ? 'btn-primary' : 'btn-secondary'}}" @click=${() => {{ this._showEnhanced = !this._showEnhanced; this.requestUpdate(); }}}}>${this._showEnhanced ? 'Hide' : 'Show'}} Advanced</button>
       </div>
-      ${{this._renderEnhancedSection()}}
+      ${this._renderEnhancedSection()}}
     `;
   }
 }

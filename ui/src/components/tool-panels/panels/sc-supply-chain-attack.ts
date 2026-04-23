@@ -118,6 +118,229 @@ export class ScSupplyChainAttack extends LitElement {
   @state() private _settingsTab: string = 'general';
   @state() private _autoInterval = 24;
   @state() private _criticalThreshold = 3;
+  @state() private _showEnhanced = false;
+  @state() private _showDependencyTree = false;
+  @state() private _showVendorRiskMatrix = false;
+  @state() private _showVulnDistribution = false;
+  @state() private _showComplianceMap = false;
+  @state() private _showTeamPanel = false;
+
+  // CVSS Calculator Data
+  private _cvssMetrics = [
+    { id: 'AV', label: 'Attack Vector', options: ['Network', 'Adjacent', 'Local', 'Physical'], values: ['N', 'A', 'L', 'P'] },
+    { id: 'AC', label: 'Attack Complexity', options: ['Low', 'High'], values: ['L', 'H'] },
+    { id: 'PR', label: 'Privileges Required', options: ['None', 'Low', 'High'], values: ['N', 'L', 'H'] },
+    { id: 'UI', label: 'User Interaction', options: ['None', 'Required'], values: ['N', 'R'] },
+    { id: 'S', label: 'Scope', options: ['Unchanged', 'Changed'], values: ['U', 'C'] },
+    { id: 'C', label: 'Confidentiality', options: ['None', 'Low', 'High'], values: ['N', 'L', 'H'] },
+    { id: 'I', label: 'Integrity', options: ['None', 'Low', 'High'], values: ['N', 'L', 'H'] },
+    { id: 'A', label: 'Availability', options: ['None', 'Low', 'High'], values: ['N', 'L', 'H'] },
+  ];
+  private _cvssSelections: Record<string, number> = { AV: 0, AC: 0, PR: 0, UI: 0, S: 0, C: 2, I: 2, A: 2 };
+
+  // Vendor Risk Matrix data
+  private _vendorRiskFactors = [
+    { factor: 'MFA Enabled', weight: 0.20 },
+    { factor: 'Signed Releases', weight: 0.15 },
+    { factor: 'Code Review Process', weight: 0.20 },
+    { factor: 'Compromise History', weight: 0.20 },
+    { factor: 'Last Audit Date', weight: 0.10 },
+    { factor: 'Dependency Count', weight: 0.10 },
+    { factor: 'Maintainer Count', weight: 0.05 },
+  ];
+
+  // Team members
+  private _supplyChainTeam = [
+    { id: 'sct1', name: 'Alex Rivera', role: 'Security Architect', avatar: 'AR', color: '#ef4444', components: 15, audits: 8, findings: 12 },
+    { id: 'sct2', name: 'Priya Patel', role: 'AppSec Engineer', avatar: 'PP', color: '#3b82f6', components: 22, audits: 12, findings: 8 },
+    { id: 'sct3', name: 'Chris Lee', role: 'DevSecOps', avatar: 'CL', color: '#22c55e', components: 18, audits: 5, findings: 15 },
+    { id: 'sct4', name: 'Nina Kowalski', role: 'Compliance Analyst', avatar: 'NK', color: '#f59e0b', components: 8, audits: 20, findings: 6 },
+  ];
+
+  // Compliance mappings
+  private _complianceMappings = [
+    { standard: 'NIST 800-53', controls: ['SA-12', 'SR-3', 'RA-5'], description: 'Supply chain risk management, third-party authorization, vulnerability scanning' },
+    { standard: 'CIS v8', controls: ['15.1', '15.2', '15.3'], description: 'Service provider management, application software security, penetration testing' },
+    { standard: 'SLSA', levels: ['Level 1', 'Level 2', 'Level 3'], description: 'Build provenance, hosted build platform, hardened builds' },
+    { standard: 'ISO 27001', controls: ['A.15.1', 'A.15.2'], description: 'Information security in supplier relationships, supplier service delivery management' },
+    { standard: 'EO 14028', focus: 'Software supply chain security', description: 'Executive order on improving the nation cybersecurity, SBOM requirements' },
+  ];
+
+  // CVSS v3.1 Base Score Calculator
+  private _calculateCVSS(): { score: number; severity: string; vector: string } {
+    const avScores: Record<string, number> = { N: 0.85, A: 0.62, L: 0.55, P: 0.20 };
+    const acScores: Record<string, number> = { L: 0.77, H: 0.44 };
+    const prScoresChanged: Record<string, number> = { N: 0.85, L: 0.62, H: 0.27 };
+    const prScoresUnchanged: Record<string, number> = { N: 0.85, L: 0.68, H: 0.50 };
+    const uiScores: Record<string, number> = { N: 0.85, R: 0.62 };
+    const ciaScores: Record<string, number> = { N: 0, L: 0.22, H: 0.56 };
+    const issBase = 1 - ((1 - ciaScores[this._cvssSelections.C === 0 ? 'N' : this._cvssSelections.C === 1 ? 'L' : 'H']) * (1 - ciaScores[this._cvssSelections.I === 0 ? 'N' : this._cvssSelections.I === 1 ? 'L' : 'H']) * (1 - ciaScores[this._cvssSelections.A === 0 ? 'N' : this._cvssSelections.A === 1 ? 'L' : 'H']));
+    const av = avScores[this._cvssSelections.AV === 0 ? 'N' : this._cvssSelections.AV === 1 ? 'A' : this._cvssSelections.AV === 2 ? 'L' : 'P'];
+    const ac = acScores[this._cvssSelections.AC === 0 ? 'L' : 'H'];
+    const pr = this._cvssSelections.S === 1 ? prScoresChanged[this._cvssSelections.PR === 0 ? 'N' : this._cvssSelections.PR === 1 ? 'L' : 'H'] : prScoresUnchanged[this._cvssSelections.PR === 0 ? 'N' : this._cvssSelections.PR === 1 ? 'L' : 'H'];
+    const ui = uiScores[this._cvssSelections.UI === 0 ? 'N' : 'R'];
+    const exploitability = 8.22 * av * ac * pr * ui;
+    let baseScore: number;
+    if (issBase <= 0) baseScore = 0;
+    else if (this._cvssSelections.S === 1) baseScore = Math.min(10, 1.08 * (issBase + exploitability));
+    else baseScore = Math.min(10, issBase + exploitability);
+    const severity = baseScore >= 9.0 ? 'Critical' : baseScore >= 7.0 ? 'High' : baseScore >= 4.0 ? 'Medium' : baseScore > 0 ? 'Low' : 'None';
+    const vector = `CVSS:3.1/AV:${this._cvssSelections.AV === 0 ? 'N' : this._cvssSelections.AV === 1 ? 'A' : this._cvssSelections.AV === 2 ? 'L' : 'P'}/AC:${this._cvssSelections.AC === 0 ? 'L' : 'H'}/PR:${this._cvssSelections.PR === 0 ? 'N' : this._cvssSelections.PR === 1 ? 'L' : 'H'}/UI:${this._cvssSelections.UI === 0 ? 'N' : 'R'}/S:${this._cvssSelections.S === 0 ? 'U' : 'C'}/C:${this._cvssSelections.C === 0 ? 'N' : this._cvssSelections.C === 1 ? 'L' : 'H'}/I:${this._cvssSelections.I === 0 ? 'N' : this._cvssSelections.I === 1 ? 'L' : 'H'}/A:${this._cvssSelections.A === 0 ? 'N' : this._cvssSelections.A === 1 ? 'L' : 'H'}`;
+    return { score: Math.round(baseScore * 10) / 10, severity, vector };
+  }
+
+  private _renderCVSSCalculator(): any {
+    const result = this._calculateCVSS();
+    const sevColors: Record<string, string> = { Critical: '#ef4444', High: '#f97316', Medium: '#eab308', Low: '#22c55e', None: '#6b7280' };
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">CVSS v3.1 Base Score Calculator</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="background:#0f1117;border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:28px;font-weight:700;color:${sevColors[result.severity]}">${result.score}</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px">Base Score</div>
+          <div style="font-size:12px;font-weight:600;color:${sevColors[result.severity]};margin-top:4px">${result.severity}</div>
+        </div>
+        <div style="grid-column:span 2;background:#0f1117;border-radius:8px;padding:10px">
+          <div style="font-size:9px;color:#6b7280;margin-bottom:4px">Vector String</div>
+          <div style="font-size:10px;font-family:monospace;color:#e2e8f0;word-break:break-all">${result.vector}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        ${this._cvssMetrics.map(m => html`<div style="background:#0f1117;border-radius:6px;padding:8px">
+          <div style="font-size:9px;color:#6b7280;margin-bottom:4px">${m.label}</div>
+          <select style="width:100%;background:#1a1d27;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:10px;font-family:inherit" @change=${(e: Event) => { this._cvssSelections[m.id] = parseInt((e.target as HTMLSelectElement).value); this.requestUpdate(); }}>
+            ${m.options.map((opt, i) => html`<option value="${i}" .selected=${this._cvssSelections[m.id] === i}>${opt} (${m.values[i]})</option>`)}
+          </select>
+        </div>`)}
+      </div>
+    </div>`;
+  }
+
+  private _renderVendorRiskMatrix(): any {
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Vendor Risk Factor Matrix</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+        ${this._vendorRiskFactors.map(f => html`<div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:9px;color:#6b7280">${f.factor}</div>
+          <div style="font-size:14px;font-weight:700;color:#e2e8f0">${(f.weight * 100).toFixed(0)}%</div>
+          <div style="font-size:8px;color:#6b7280">weight</div>
+        </div>`)}
+      </div>
+      ${this._suppliers.sort((a, b) => a.securityScore - b.securityScore).map(s => {
+        const riskLevel = s.securityScore < 40 ? 'Critical' : s.securityScore < 60 ? 'High' : s.securityScore < 75 ? 'Medium' : 'Low';
+        const rlColor = riskLevel === 'Critical' ? '#ef4444' : riskLevel === 'High' ? '#f97316' : riskLevel === 'Medium' ? '#eab308' : '#22c55e';
+        return html`<div style="background:#0f1117;border-radius:6px;padding:10px;margin-bottom:6px;border-left:3px solid ${rlColor}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;font-weight:600">${s.name}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:60px;height:6px;background:#2a2d3a;border-radius:3px;overflow:hidden">
+                <div style="width:${s.securityScore}%;height:100%;background:${rlColor};border-radius:3px"></div>
+              </div>
+              <span style="font-size:12px;font-weight:700;color:${rlColor}">${s.securityScore}</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;font-size:10px;color:#94a3b8;flex-wrap:wrap">
+            <span>MFA: ${s.mfaEnabled ? '✅' : '❌'}</span>
+            <span>Signed: ${s.signedReleases ? '✅' : '❌'}</span>
+            <span>Compromises: ${s.compromiseHistory}</span>
+            <span>Audit: ${s.lastAudit}</span>
+            <span>Components: ${s.components.length}</span>
+          </div>
+        </div>`;
+      })}
+    </div>`;
+  }
+
+  private _renderVulnDistribution(): any {
+    const allVulns = this._sbom.flatMap(s => s.vulnerabilities);
+    const bySev = { critical: allVulns.filter(v => v.severity === 'critical').length, high: allVulns.filter(v => v.severity === 'high').length, medium: allVulns.filter(v => v.severity === 'medium').length, low: allVulns.filter(v => v.severity === 'low').length };
+    const total = allVulns.length || 1;
+    const patched = allVulns.filter(v => v.patched).length;
+    const unpatched = allVulns.filter(v => !v.patched).length;
+    const sevColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+    const W = 400, H = 160;
+    const barH = 20;
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Vulnerability Distribution</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#ef4444">${bySev.critical}</div>
+          <div style="font-size:9px;color:#6b7280">Critical</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#f97316">${bySev.high}</div>
+          <div style="font-size:9px;color:#6b7280">High</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#22c55e">${patched}</div>
+          <div style="font-size:9px;color:#6b7280">Patched</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#f59e0b">${unpatched}</div>
+          <div style="font-size:9px;color:#6b7280">Unpatched</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:420px">
+        ${Object.entries(bySev).map(([sev, count], i) => {
+          const y = i * (barH + 16);
+          const w = (count / total) * (W - 100);
+          return html`<g>
+            <text x="0" y="${y + barH / 2 + 3}" fill="#94a3b8" font-size="9" font-weight="600">${sev}</text>
+            <rect x="60" y="${y}" width="${Math.max(2, w)}" height="${barH}" fill="${sevColors[sev]}40" rx="4" stroke="${sevColors[sev]}" stroke-width="0.5"/>
+            <text x="${65 + w}" y="${y + barH / 2 + 3}" fill="#e2e8f0" font-size="9" font-weight="600">${count}</text>
+            <text x="${W - 30}" y="${y + barH / 2 + 3}" fill="#6b7280" font-size="8">${Math.round((count / total) * 100)}%</text>
+          </g>`;
+        })}
+      </svg>
+      <div style="font-size:10px;color:#6b7280;margin-top:8px">Patch rate: ${Math.round((patched / total) * 100)}% | ${allVulns.length} total vulnerabilities across ${this._sbom.length} components</div>
+    </div>`;
+  }
+
+  private _renderComplianceMap(): any {
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Compliance Framework Mapping</div>
+      ${this._complianceMappings.map(cm => html`<div style="background:#0f1117;border-radius:6px;padding:10px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:#e2e8f0">${cm.standard}</span>
+          <div style="display:flex;gap:4px">
+            ${(cm.controls || cm.levels || []).map((c: string) => html`<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:#172554;color:#93c5fd">${c}</span>`)}
+          </div>
+        </div>
+        <div style="font-size:10px;color:#94a3b8">${cm.description}</div>
+      </div>`)}
+    </div>`;
+  }
+
+  private _renderTeamPanel(): any {
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Supply Chain Security Team</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">
+        ${this._supplyChainTeam.map(m => html`<div style="background:#0f1117;border-radius:8px;padding:10px;display:flex;gap:10px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0">${m.avatar}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:600">${m.name}</div>
+            <div style="font-size:9px;color:#6b7280">${m.role}</div>
+            <div style="display:flex;gap:8px;margin-top:3px;font-size:9px">
+              <span style="color:#3b82f6">${m.components} comps</span>
+              <span style="color:#22c55e">${m.audits} audits</span>
+              <span style="color:#ef4444">${m.findings} findings</span>
+            </div>
+          </div>
+        </div>`)}
+      </div>
+      <div style="font-size:11px;font-weight:600;margin-bottom:6px">Recent Activity</div>
+      ${[
+        { user: 'Priya Patel', action: 'completed SLSA audit for', target: 'build pipeline', time: '30m ago', color: '#3b82f6' },
+        { user: 'Alex Rivera', action: 'flagged new vulnerability in', target: 'event-stream dependency', time: '2h ago', color: '#ef4444' },
+        { user: 'Chris Lee', action: 'updated SBOM for', target: 'production release v2.4', time: '4h ago', color: '#22c55e' },
+        { user: 'Nina Kowalski', action: 'generated compliance report for', target: 'Q2 2026 NIST audit', time: '6h ago', color: '#f59e0b' },
+      ].map(a => html`<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #2a2d3a;font-size:11px">
+        <div style="width:5px;height:5px;border-radius:50%;background:${a.color};margin-top:6px;flex-shrink:0"></div>
+        <div style="flex:1"><span style="font-weight:600;color:#e2e8f0">${a.user}</span> <span style="color:#9ca3af">${a.action}</span> <span style="color:#e2e8f0">${a.target}</span></div>
+        <span style="font-size:9px;color:#6b7280;white-space:nowrap">${a.time}</span>
+      </div>`)}
+    </div>`;
+  }
   @state() private _escalationEmail = '';
   @state() private _webhookUrl = '';
   @state() private _slaTargetHours = 72;
@@ -623,18 +846,24 @@ export class ScSupplyChainAttack extends LitElement {
   private _renderEnhancedSection(): any {
     if (!this._showEnhanced) return nothing;
     return html`<div style="margin-top:16px;border-top:1px solid #374151;padding-top:16px">
-      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #374151;padding-bottom:8px">
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #374151;padding-bottom:8px;flex-wrap:wrap">
         <button class="btn btn-sm ${this._settingsTab === 'audit' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'audit'; }}>Audit</button>
         <button class="btn btn-sm ${this._settingsTab === 'history' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'history'; }}>History</button>
         <button class="btn btn-sm ${this._settingsTab === 'settings' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'settings'; }}>Settings</button>
+        <button class="btn btn-sm ${this._settingsTab === 'cvss' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'cvss'; }}>CVSS Calc</button>
+        <button class="btn btn-sm ${this._settingsTab === 'vendor' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'vendor'; }}>Vendor Matrix</button>
+        <button class="btn btn-sm ${this._settingsTab === 'vuln-dist' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'vuln-dist'; }}>Vuln Dist</button>
+        <button class="btn btn-sm ${this._settingsTab === 'compliance' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'compliance'; }}>Compliance</button>
+        <button class="btn btn-sm ${this._settingsTab === 'team' ? 'btn-primary' : 'btn-secondary'}" @click=${() => { this._settingsTab = 'team'; }}>Team</button>
       </div>
       ${this._settingsTab === 'audit' ? this._renderAuditPanel() : ''}
       ${this._settingsTab === 'history' ? this._renderExecHistory() : ''}
       ${this._settingsTab === 'settings' ? this._renderSettingsPanel() : ''}
-      <div style="margin-top:12px">
-        ${this._renderRiskGauge()}
-        ${this._renderBarChart()}
-      </div>
+      ${this._settingsTab === 'cvss' ? this._renderCVSSCalculator() : ''}
+      ${this._settingsTab === 'vendor' ? html`${this._renderVendorRiskMatrix()}${this._renderComplianceMap()}` : ''}
+      ${this._settingsTab === 'vuln-dist' ? html`${this._renderVulnDistribution()}${this._renderRiskGauge()}${this._renderBarChart()}` : ''}
+      ${this._settingsTab === 'compliance' ? html`${this._renderComplianceMap()}${this._renderVendorRiskMatrix()}` : ''}
+      ${this._settingsTab === 'team' ? html`${this._renderTeamPanel()}${this._renderCVSSCalculator()}` : ''}
       <div style="display:flex;gap:8px;margin-top:8px">
         <div style="flex:1;padding:8px;border-radius:6px;border:1px solid #374151;background:#1f2937;color:#94a3b8;font-size:11px;cursor:pointer;text-align:center" @click=${() => { this._addAudit('export', 'Report exported'); }}>Export Report</div>
         <div style="flex:1;padding:8px;border-radius:6px;border:1px solid #374151;background:#1f2937;color:#94a3b8;font-size:11px;cursor:pointer;text-align:center" @click=${this._runScanWithHistory}>Run Analysis</div>

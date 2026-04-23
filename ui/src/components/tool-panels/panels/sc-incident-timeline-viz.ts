@@ -108,7 +108,7 @@ export class ScIncidentTimelineViz extends LitElement {
   `;
 
   @state() private _selectedIncident = 'inc1';
-  @state() private _tab: 'timeline' | 'impact' | 'evidence' | 'lessons' | 'comms' | 'costs' | 'report' | 'history' | 'audit' | 'settings' = 'timeline';
+  @state() private _tab: 'timeline' | 'impact' | 'evidence' | 'lessons' | 'comms' | 'costs' | 'report' | 'history' | 'audit' | 'settings' | 'analytics' = 'timeline';
   @state() private _notifications: Array<{id: string; message: string; timestamp: number}> = [];
   @state() private _aafComment = '';
   @state() private _execHistory: ReportExecRecord[] = [];
@@ -131,6 +131,305 @@ export class ScIncidentTimelineViz extends LitElement {
   @state() private _selectedRows: Set<string> = new Set();
   @state() private _filterType = 'all';
   @state() private _filterSeverity = 'all';
+  @state() private _showInsightsPanel = false;
+  @state() private _showGeoMap = false;
+  @state() private _showResponseMetrics = false;
+  @state() private _insightTab = 'auto' | 'sla' | 'correlation' | 'response' = 'auto';
+
+  // --- SLA Breach Prediction ---
+  private _incidentMetrics = [
+    { id: 'm1', incident: 'Ransomware Finance Dept', mtdMinutes: 12, mtcMinutes: 251, mttrMinutes: 135, slaMtd: 15, slaMtc: 240, slaMttr: 480, severity: 'critical', date: '2026-04-21' },
+    { id: 'm2', incident: 'Phishing Campaign', mtdMinutes: 45, mtcMinutes: 180, mttrMinutes: 90, slaMtd: 30, slaMtc: 240, slaMttr: 360, severity: 'high', date: '2026-04-18' },
+    { id: 'm3', incident: 'Insider Threat Alert', mtdMinutes: 8, mtcMinutes: 60, mttrMinutes: 120, slaMtd: 15, slaMtc: 120, slaMttr: 240, severity: 'high', date: '2026-04-15' },
+    { id: 'm4', incident: 'DDoS Attack', mtdMinutes: 3, mtcMinutes: 30, mttrMinutes: 45, slaMtd: 5, slaMtc: 60, slaMttr: 120, severity: 'critical', date: '2026-04-12' },
+    { id: 'm5', incident: 'Data Exfiltration Attempt', mtdMinutes: 120, mtcMinutes: 480, mttrMinutes: 300, slaMtd: 60, slaMtc: 360, slaMttr: 720, severity: 'critical', date: '2026-04-08' },
+    { id: 'm6', incident: 'Malware Outbreak', mtdMinutes: 25, mtcMinutes: 200, mttrMinutes: 180, slaMtd: 15, slaMtc: 240, slaMttr: 480, severity: 'high', date: '2026-04-05' },
+  ];
+
+  // --- MITRE ATT&CK Correlation Engine ---
+  private _mitreTechniques = [
+    { id: 'T1566.001', name: 'Spearphishing Link', tactic: 'Initial Access', confidence: 95, incidents: ['inc1'], related: ['T1189', 'T1078'] },
+    { id: 'T1078.002', name: 'Domain Account', tactic: 'Initial Access', confidence: 88, incidents: ['inc1'], related: ['T1003', 'T1021'] },
+    { id: 'T1003.001', name: 'LSASS Memory', tactic: 'Credential Access', confidence: 92, incidents: ['inc1'], related: ['T1078', 'T1558'] },
+    { id: 'T1021.002', name: 'SMB/Windows Admin Shares', tactic: 'Lateral Movement', confidence: 85, incidents: ['inc1'], related: ['T1003', 'T1570'] },
+    { id: 'T1486', name: 'Data Encrypted for Impact', tactic: 'Impact', confidence: 98, incidents: ['inc1'], related: ['T1489', 'T1490'] },
+    { id: 'T1490', name: 'Inhibit System Recovery', tactic: 'Impact', confidence: 90, incidents: ['inc1'], related: ['T1486', 'T1489'] },
+    { id: 'T1070.004', name: 'File Deletion', tactic: 'Defense Evasion', confidence: 75, incidents: ['inc1'], related: ['T1562', 'T1070'] },
+    { id: 'T1059.001', name: 'PowerShell', tactic: 'Execution', confidence: 80, incidents: ['inc1'], related: ['T1059.003', 'T1564'] },
+    { id: 'T1083', name: 'File Discovery', tactic: 'Discovery', confidence: 70, incidents: ['inc1'], related: ['T1082', 'T1046'] },
+    { id: 'T1048', name: 'Exfiltration Over Alt Protocol', tactic: 'Exfiltration', confidence: 65, incidents: ['inc1'], related: ['T1041', 'T1567'] },
+  ];
+
+  // --- Automated Insights ---
+  private _generateInsights(): { id: string; type: 'warning' | 'positive' | 'trend' | 'recommendation'; icon: string; title: string; description: string; metric: string }[] {
+    const insights: { id: string; type: 'warning' | 'positive' | 'trend' | 'recommendation'; icon: string; title: string; description: string; metric: string }[] = [];
+    // SLA breach analysis
+    const breaches = this._incidentMetrics.filter(m => m.mtdMinutes > m.slaMtd || m.mtcMinutes > m.slaMtc);
+    if (breaches.length > 0) {
+      insights.push({ id: 'ins-1', type: 'warning', icon: '⚠️', title: 'SLA Breaches Detected', description: `${breaches.length} of ${this._incidentMetrics.length} incidents exceeded at least one SLA threshold. Primary area: MTD (Mean Time to Detect).`, metric: `${Math.round((breaches.length / this._incidentMetrics.length) * 100)}% breach rate` });
+    }
+    // Average metrics
+    const avgMtd = Math.round(this._incidentMetrics.reduce((s, m) => s + m.mtdMinutes, 0) / this._incidentMetrics.length);
+    const avgMtc = Math.round(this._incidentMetrics.reduce((s, m) => s + m.mtcMinutes, 0) / this._incidentMetrics.length);
+    const avgMttr = Math.round(this._incidentMetrics.reduce((s, m) => s + m.mttrMinutes, 0) / this._incidentMetrics.length);
+    insights.push({ id: 'ins-2', type: 'trend', icon: '📊', title: 'Average Response Metrics', description: `MTD: ${avgMtd}m | MTC: ${avgMtc}m | MTTR: ${avgMttr}m. ${avgMtd > 30 ? 'Detection times are above industry benchmark (15m).' : 'Detection times are within acceptable range.'}`, metric: `MTD ${avgMtd}m` });
+    // Top technique
+    const topTech = this._mitreTechniques.reduce((a, b) => a.confidence > b.confidence ? a : b);
+    insights.push({ id: 'ins-3', type: 'warning', icon: '🎯', title: 'Highest Confidence Technique', description: `${topTech.name} (${topTech.id}) in ${topTech.tactic} with ${topTech.confidence}% confidence. This technique should be prioritized for detection rule tuning.`, metric: `${topTech.confidence}%` });
+    // Positive trend
+    const recent3 = this._incidentMetrics.slice(0, 3);
+    const older3 = this._incidentMetrics.slice(3);
+    const recentAvgMtd = recent3.reduce((s, m) => s + m.mtdMinutes, 0) / recent3.length;
+    const olderAvgMtd = older3.length ? older3.reduce((s, m) => s + m.mtdMinutes, 0) / older3.length : recentAvgMtd;
+    if (recentAvgMtd < olderAvgMtd) {
+      insights.push({ id: 'ins-4', type: 'positive', icon: '✅', title: 'Detection Time Improving', description: `Average MTD improved from ${Math.round(olderAvgMtd)}m to ${Math.round(recentAvgMtd)}m (-${Math.round(((olderAvgMtd - recentAvgMtd) / olderAvgMtd) * 100)}%) in the last 3 incidents.`, metric: '-22% MTD' });
+    }
+    // Technique cluster
+    const tacticCounts: Record<string, number> = {};
+    this._mitreTechniques.forEach(t => { tacticCounts[t.tactic] = (tacticCounts[t.tactic] || 0) + 1; });
+    const topTactic = Object.entries(tacticCounts).sort((a, b) => b[1] - a[1])[0];
+    insights.push({ id: 'ins-5', type: 'recommendation', icon: '💡', title: 'Technique Cluster Detected', description: `${topTactic[1]} techniques mapped to "${topTactic[0]}" tactic. Consider investing in detection coverage for this kill chain stage.`, metric: `${topTactic[1]} techniques` });
+    return insights;
+  }
+
+  // --- SLA Breach Prediction ---
+  private _predictSLABreach(currentMinutes: number, slaMinutes: number, elapsedMinutes: number): { willBreach: boolean; estimatedBreachTime: string; confidence: number; riskLevel: string } {
+    if (currentMinutes >= slaMinutes) return { willBreach: false, estimatedBreachTime: 'Already breached', confidence: 100, riskLevel: 'breached' };
+    const remaining = slaMinutes - currentMinutes;
+    const avgRate = currentMinutes / Math.max(1, elapsedMinutes);
+    const projectedTotal = currentMinutes + avgRate * remaining;
+    const willBreach = projectedTotal > slaMinutes * 1.2;
+    const confidence = Math.min(98, Math.round((currentMinutes / slaMinutes) * 100));
+    const riskLevel = confidence >= 80 ? 'critical' : confidence >= 60 ? 'high' : confidence >= 40 ? 'medium' : 'low';
+    const breachTime = willBreach ? `~${Math.round((slaMinutes - currentMinutes) * 0.8)}m remaining` : `Within SLA (${remaining}m left)`;
+    return { willBreach, estimatedBreachTime: breachTime, confidence, riskLevel };
+  }
+
+  private _renderSLAPrediction(): any {
+    const incident = this._incidents.find(i => i.id === this._selectedIncident);
+    if (!incident) return nothing;
+    const metrics = this._incidentMetrics[0];
+    const mtdPrediction = this._predictSLABreach(metrics.mtdMinutes, metrics.slaMtd, metrics.mtdMinutes);
+    const mtcPrediction = this._predictSLABreach(metrics.mtcMinutes, metrics.slaMtc, metrics.mtcMinutes);
+    const mttrPrediction = this._predictSLABreach(metrics.mttrMinutes, metrics.slaMttr, metrics.mttrMinutes);
+    const riskColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e', breached: '#ef4444' };
+
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">SLA Breach Prediction</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+        ${[
+          { label: 'MTD', current: metrics.mtdMinutes, sla: metrics.slaMtd, pred: mtdPrediction },
+          { label: 'MTC', current: metrics.mtcMinutes, sla: metrics.slaMtc, pred: mtcPrediction },
+          { label: 'MTTR', current: metrics.mttrMinutes, sla: metrics.slaMttr, pred: mttrPrediction },
+        ].map(s => html`<div style="background:#1f2937;border-radius:8px;padding:12px;border-top:3px solid ${riskColors[s.pred.riskLevel]}">
+          <div style="font-size:11px;font-weight:700;margin-bottom:6px">${s.label}</div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="color:#94a3b8">Current</span><span style="font-weight:700">${s.current}m</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="color:#94a3b8">SLA</span><span>${s.sla}m</span>
+          </div>
+          <div style="height:6px;background:#374151;border-radius:3px;overflow:hidden;margin-bottom:4px">
+            <div style="width:${Math.min(100, (s.current / s.sla) * 100)}%;height:100%;background:${riskColors[s.pred.riskLevel]};border-radius:3px"></div>
+          </div>
+          <div style="font-size:9px;color:${riskColors[s.pred.riskLevel]};font-weight:600">${s.pred.estimatedBreachTime}</div>
+          <div style="font-size:9px;color:#6b7280">Confidence: ${s.pred.confidence}%</div>
+        </div>`)}
+      </div>
+      <div style="font-size:11px;font-weight:600;margin-bottom:8px">Historical SLA Performance</div>
+      <svg viewBox="0 0 500 120" width="100%" style="max-width:500px">
+        ${this._incidentMetrics.map((m, i) => {
+          const x = 60 + i * 70;
+          const mtdRatio = Math.min(1, m.mtdMinutes / m.slaMtd);
+          const mtcRatio = Math.min(1, m.mtcMinutes / m.slaMtc);
+          return html`<g>
+            <line x1="${x}" y1="10" x2="${x}" y2="100" stroke="#1f2937" stroke-width="0.5"/>
+            <rect x="${x - 12}" y="${10 + (1 - mtdRatio) * 40}" width="10" height="${mtdRatio * 40}" fill="${mtdRatio > 1 ? '#ef4444' : mtdRatio > 0.8 ? '#f97316' : '#22c55e'}" rx="2"/>
+            <rect x="${x}" y="${10 + (1 - mtcRatio) * 40}" width="10" height="${mtcRatio * 40}" fill="${mtcRatio > 1 ? '#ef4444' : mtcRatio > 0.8 ? '#f97316' : '#22c55e'}" rx="2"/>
+            <text x="${x - 2}" y="62" text-anchor="middle" fill="#6b7280" font-size="6">${m.date.slice(5)}</text>
+          </g>`;
+        })}
+        <line x1="55" y1="50" x2="500" y2="50" stroke="#f59e0b" stroke-width="0.5" stroke-dasharray="3,2"/>
+        <text x="50" y="53" text-anchor="end" fill="#f59e0b" font-size="7">SLA</text>
+        <text x="30" y="25" text-anchor="end" fill="#6b7280" font-size="7">MTD</text>
+        <text x="30" y="55" text-anchor="end" fill="#6b7280" font-size="7">MTC</text>
+      </svg>
+    </div>`;
+  }
+
+  // --- MITRE ATT&CK Correlation ---
+  private _renderMitreCorrelation(): any {
+    const tacticGroups: Record<string, typeof this._mitreTechniques> = {};
+    this._mitreTechniques.forEach(t => {
+      if (!tacticGroups[t.tactic]) tacticGroups[t.tactic] = [];
+      tacticGroups[t.tactic].push(t);
+    });
+    const tacticColors: Record<string, string> = {
+      'Initial Access': '#ef4444', 'Execution': '#f97316', 'Persistence': '#eab308',
+      'Privilege Escalation': '#22c55e', 'Defense Evasion': '#3b82f6', 'Credential Access': '#8b5cf6',
+      'Discovery': '#06b6d4', 'Lateral Movement': '#ec4899', 'Collection': '#f59e0b',
+      'C2': '#14b8a6', 'Exfiltration': '#a855f7', 'Impact': '#dc2626'
+    };
+
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">MITRE ATT&CK Technique Correlation</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#ef4444">${this._mitreTechniques.length}</div>
+          <div style="font-size:9px;color:#6b7280">Mapped Techniques</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#f59e0b">${Object.keys(tacticGroups).length}</div>
+          <div style="font-size:9px;color:#6b7280">Tactics Covered</div>
+        </div>
+        <div style="background:#1f2937;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#22c55e">${Math.round(this._mitreTechniques.reduce((s, t) => s + t.confidence, 0) / this._mitreTechniques.length)}%</div>
+          <div style="font-size:9px;color:#6b7280">Avg Confidence</div>
+        </div>
+      </div>
+      <div style="max-height:250px;overflow-y:auto">
+        ${Object.entries(tacticGroups).map(([tactic, techs]) => html`<div style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <div style="width:8px;height:8px;border-radius:2px;background:${tacticColors[tactic] || '#94a3b8'}"></div>
+            <span style="font-size:11px;font-weight:600;color:${tacticColors[tactic] || '#94a3b8'}">${tactic}</span>
+            <span style="font-size:9px;color:#6b7280">(${techs.length} techniques)</span>
+          </div>
+          ${techs.sort((a, b) => b.confidence - a.confidence).map(t => html`<div style="background:#1f2937;border-radius:4px;padding:6px 8px;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-size:10px;font-weight:600;color:#e2e8f0">${t.id}</span>
+              <span style="font-size:10px;color:#94a3b8;margin-left:6px">${t.name}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${t.related.length > 0 ? html`<div style="display:flex;gap:2px">${t.related.map(r => html`<span style="font-size:8px;background:#172554;color:#93c5fd;padding:1px 4px;border-radius:2px">${r}</span>`)}</div>` : nothing}
+              <div style="width:50px;height:5px;background:#374151;border-radius:2px;overflow:hidden">
+                <div style="width:${t.confidence}%;height:100%;background:${t.confidence >= 90 ? '#ef4444' : t.confidence >= 75 ? '#f97316' : '#eab308'};border-radius:2px"></div>
+              </div>
+              <span style="font-size:9px;font-weight:700;color:${t.confidence >= 90 ? '#ef4444' : t.confidence >= 75 ? '#f97316' : '#eab308'}">${t.confidence}%</span>
+            </div>
+          </div>`)}
+        </div>`)}
+      </div>
+    </div>`;
+  }
+
+  // --- Response Metrics Radar ---
+  private _renderResponseMetrics(): any {
+    const metrics = this._incidentMetrics;
+    const avgMtd = Math.round(metrics.reduce((s, m) => s + m.mtdMinutes, 0) / metrics.length);
+    const avgMtc = Math.round(metrics.reduce((s, m) => s + m.mtcMinutes, 0) / metrics.length);
+    const avgMttr = Math.round(metrics.reduce((s, m) => s + m.mttrMinutes, 0) / metrics.length);
+    const industryMtd = 15, industryMtc = 60, industryMttr = 120;
+    // Radar chart (hexagonal)
+    const cx = 100, cy = 100, r = 80;
+    const axes = ['MTD', 'MTC', 'MTTR', 'Coverage', 'Accuracy', 'Speed'];
+    const actual = [avgMtd / industryMtd, avgMtc / industryMtc, avgMttr / industryMttr, 0.85, 0.78, 0.65];
+    const target = [0.8, 0.8, 0.8, 0.95, 0.9, 0.85];
+    const angle = (i: number) => (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+    const actualPts = actual.map((v, i) => `${cx + Math.cos(angle(i)) * r * Math.min(v, 1)},${cy + Math.sin(angle(i)) * r * Math.min(v, 1)}`).join(' ');
+    const targetPts = target.map((v, i) => `${cx + Math.cos(angle(i)) * r * v},${cy + Math.sin(angle(i)) * r * v}`).join(' ');
+    const gridLines = [0.25, 0.5, 0.75, 1].map(scale => axes.map((_, i) => `${cx + Math.cos(angle(i)) * r * scale},${cy + Math.sin(angle(i)) * r * scale}`).join(' '));
+
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Response Metrics (Actual vs Target)</div>
+      <div style="display:flex;gap:20px;align-items:flex-start">
+        <svg viewBox="0 0 200 200" width="200" height="200">
+          ${gridLines.map(pts => html`<polygon points="${pts}" fill="none" stroke="#1f2937" stroke-width="0.5"/>`)}
+          ${axes.map((_, i) => html`<line x1="${cx}" y1="${cy}" x2="${cx + Math.cos(angle(i)) * r}" y2="${cy + Math.sin(angle(i)) * r}" stroke="#1f2937" stroke-width="0.5"/><text x="${cx + Math.cos(angle(i)) * (r + 14)}" y="${cy + Math.sin(angle(i)) * (r + 14) + 3}" text-anchor="middle" fill="#94a3b8" font-size="8">${axes[i]}</text>`)}
+          <polygon points="${targetPts}" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <polygon points="${actualPts}" fill="#f59e0b20" stroke="#f59e0b" stroke-width="2"/>
+          ${actual.map((v, i) => html`<circle cx="${cx + Math.cos(angle(i)) * r * Math.min(v, 1)}" cy="${cy + Math.sin(angle(i)) * r * Math.min(v, 1)}" r="3" fill="#f59e0b"/>`)}
+        </svg>
+        <div style="flex:1">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            ${[
+              { label: 'Avg MTD', value: avgMtd + 'm', target: industryMtd + 'm', ok: avgMtd <= industryMtd },
+              { label: 'Avg MTC', value: avgMtc + 'm', target: industryMtc + 'm', ok: avgMtc <= industryMtc },
+              { label: 'Avg MTTR', value: avgMttr + 'm', target: industryMttr + 'm', ok: avgMttr <= industryMttr },
+              { label: 'Incidents (30d)', value: String(metrics.length), target: '< 10', ok: metrics.length < 10 },
+            ].map(m => html`<div style="background:#1f2937;border-radius:6px;padding:8px">
+              <div style="font-size:9px;color:#6b7280">${m.label}</div>
+              <div style="font-size:14px;font-weight:700;color:${m.ok ? '#22c55e' : '#ef4444'}">${m.value}</div>
+              <div style="font-size:9px;color:#6b7280">Target: ${m.target}</div>
+            </div>`)}
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px;font-size:9px;color:#6b7280">
+            <span><span style="display:inline-block;width:12px;height:2px;background:#f59e0b;margin-right:3px;vertical-align:middle"></span>Actual</span>
+            <span><span style="display:inline-block;width:12px;height:2px;background:#22c55e;margin-right:3px;vertical-align:middle;border-top:1px dashed #22c55e"></span>Target</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // --- Geographic Threat Map ---
+  private _renderGeoMap(): any {
+    const threats = [
+      { region: 'US-East', lat: 39, lon: -77, count: 3, type: 'Ransomware', severity: 'critical' },
+      { region: 'EU-West', lat: 51, lon: -1, count: 2, type: 'Phishing', severity: 'high' },
+      { region: 'APAC', lat: 35, lon: 139, count: 1, type: 'Insider', severity: 'medium' },
+      { region: 'US-West', lat: 37, lon: -122, count: 1, type: 'DDoS', severity: 'high' },
+    ];
+    const mapW = 500, mapH = 250;
+    const toMapX = (lon: number) => ((lon + 180) / 360) * mapW;
+    const toMapY = (lat: number) => ((90 - lat) / 180) * mapH;
+    const sevColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+    // Simplified world map outline (continents as rectangles)
+    const continents = [
+      { x: 50, y: 40, w: 80, h: 80, label: 'N. America' },
+      { x: 150, y: 60, w: 60, h: 70, label: 'Europe' },
+      { x: 250, y: 50, w: 80, h: 90, label: 'Asia' },
+      { x: 150, y: 140, w: 50, h: 60, label: 'Africa' },
+      { x: 350, y: 160, w: 60, h: 50, label: 'Oceania' },
+    ];
+
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Geographic Threat Map</div>
+      <svg viewBox="0 0 ${mapW} ${mapH}" width="100%" style="max-width:520px">
+        ${continents.map(c => html`<rect x="${c.x}" y="${c.y}" width="${c.w}" height="${c.h}" fill="#1f293720" stroke="#374151" stroke-width="0.5" rx="4"/><text x="${c.x + c.w / 2}" y="${c.y + c.h / 2}" text-anchor="middle" fill="#374151" font-size="8">${c.label}</text>`)}
+        ${threats.map(t => html`<g>
+          <circle cx="${toMapX(t.lon)}" cy="${toMapY(t.lat)}" r="${6 + t.count * 3}" fill="${sevColors[t.severity]}30" stroke="${sevColors[t.severity]}" stroke-width="1.5"/>
+          <circle cx="${toMapX(t.lon)}" cy="${toMapY(t.lat)}" r="3" fill="${sevColors[t.severity]}"/>
+          <text x="${toMapX(t.lon)}" y="${toMapY(t.lat) - 12}" text-anchor="middle" fill="${sevColors[t.severity]}" font-size="8" font-weight="600">${t.type}</text>
+          <text x="${toMapX(t.lon)}" y="${toMapY(t.lat) - 3}" text-anchor="middle" fill="#e2e8f0" font-size="7">${t.count} incidents</text>
+        </g>`)}
+      </svg>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:9px;color:#6b7280;justify-content:center">
+        ${Object.entries(sevColors).map(([k, v]) => html`<span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${v};margin-right:3px"></span>${k}</span>`)}
+      </div>
+    </div>`;
+  }
+
+  // --- Automated Insights Panel ---
+  private _renderInsightsPanel(): any {
+    const insights = this._generateInsights();
+    const typeConfig: Record<string, { bg: string; border: string }> = {
+      warning: { bg: '#450a0a', border: '#ef4444' },
+      positive: { bg: '#052e16', border: '#22c55e' },
+      trend: { bg: '#172554', border: '#3b82f6' },
+      recommendation: { bg: '#422006', border: '#f59e0b' },
+    };
+
+    return html`<div style="background:#0f172a;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Automated Insights</div>
+        <span style="font-size:10px;color:#6b7280">${insights.length} generated</span>
+      </div>
+      ${insights.map(ins => {
+        const config = typeConfig[ins.type];
+        return html`<div style="background:${config.bg};border:1px solid ${config.border}30;border-radius:8px;padding:10px;margin-bottom:6px;border-left:3px solid ${config.border}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:600;color:#e2e8f0">${ins.icon} ${ins.title}</span>
+            <span style="font-size:10px;font-weight:700;color:${config.border}">${ins.metric}</span>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;line-height:1.5">${ins.description}</div>
+        </div>`;
+      })}
+    </div>`;
+  }
+
+  private _renderAnalyticsTab(): any {
+    return html`${this._renderInsightsPanel()}${this._renderSLAPrediction()}${this._renderResponseMetrics()}${this._renderMitreCorrelation()}${this._renderGeoMap()}`;
+  }
 
   private _lessonsLearned: LessonLearned[] = [
     { id: 'll-1', category: 'Detection', finding: 'EDR alert for encryption activity took 12 minutes to reach Tier 1', recommendation: 'Configure direct EDR-to-SOC integration with 60-second SLA', priority: 'critical', status: 'open', assignee: 'SOC Lead', dueDate: '2026-05-15' },
@@ -780,6 +1079,7 @@ interface TimelineComment {
           <span class="tab ${this._tab === 'history' ? 'active' : ''}" @click=${() => { this._tab = 'history'; this.requestUpdate(); }}>History</span>
           <span class="tab ${this._tab === 'audit' ? 'active' : ''}" @click=${() => { this._tab = 'audit'; this.requestUpdate(); }}>Audit</span>
           <span class="tab ${this._tab === 'settings' ? 'active' : ''}" @click=${() => { this._tab = 'settings'; this.requestUpdate(); }}>Settings</span>
+          <span class="tab ${this._tab === 'analytics' ? 'active' : ''}" @click=${() => { this._tab = 'analytics'; this.requestUpdate(); }}>Analytics</span>
         </div>
 
         ${this._tab === 'timeline' ? html`${this._renderTimeline()}${this._renderAttackGraph()}${this._renderKillChain()}${this._renderCommentSection()}` : ''}
@@ -792,6 +1092,7 @@ interface TimelineComment {
         ${this._tab === 'history' ? this._renderExecHistory() : ''}
         ${this._tab === 'audit' ? this._renderAuditPanel() : ''}
         ${this._tab === 'settings' ? this._renderSettingsPanel() : ''}
+        ${this._tab === 'analytics' ? this._renderAnalyticsTab() : ''}
 
         ${this._renderNotifications()}
       </div>

@@ -143,6 +143,62 @@ export class ScBusinessFraud extends LitElement {
   @state() private _tablePage = 0;
   @state() private _tablePageSize = 10;
   @state() private _selectedAlerts: Set<string> = new Set();
+  @state() private _activeTab: 'monitor' | 'rules' | 'cases' | 'report' | 'history' | 'audit' | 'settings' | 'analytics' = 'monitor';
+  @state() private _analyticsSubTab = 'benford' | 'anomaly' | 'sankey' | 'team' | 'trends' | 'prediction' = 'benford';
+
+  // --- Benford's Law Analysis ---
+  private _benfordData = [
+    { digit: 1, expected: 30.1, actual: 31.2, deviation: 1.1 },
+    { digit: 2, expected: 17.6, actual: 16.8, deviation: 0.8 },
+    { digit: 3, expected: 12.5, actual: 12.9, deviation: 0.4 },
+    { digit: 4, expected: 9.7, actual: 10.2, deviation: 0.5 },
+    { digit: 5, expected: 7.9, actual: 7.5, deviation: 0.4 },
+    { digit: 6, expected: 6.7, actual: 6.1, deviation: 0.6 },
+    { digit: 7, expected: 5.8, actual: 5.5, deviation: 0.3 },
+    { digit: 8, expected: 5.1, actual: 5.8, deviation: 0.7 },
+    { digit: 9, expected: 4.6, actual: 4.0, deviation: 0.6 },
+  ];
+
+  // --- Anomaly Detection Engine ---
+  private _anomalyResults = [
+    { id: 'an-1', entity: 'Vendor-Acme Corp', metric: 'Invoice Amount', value: 85000, baseline: 12000, zscore: 4.2, status: 'confirmed', type: 'statistical' },
+    { id: 'an-2', entity: 'Employee-JSmith', metric: 'Expense Claims', value: 15200, baseline: 3200, zscore: 3.8, status: 'investigating', type: 'statistical' },
+    { id: 'an-3', entity: 'Account-7742', metric: 'Transaction Freq', value: 47, baseline: 8, zscore: 5.1, status: 'confirmed', type: 'behavioral' },
+    { id: 'an-4', entity: 'Vendor-GlobalTech', metric: 'Payment Velocity', value: 12, baseline: 2, zscore: 3.5, status: 'review', type: 'temporal' },
+    { id: 'an-5', entity: 'Employee-KChen', metric: 'After-hours Access', value: 34, baseline: 5, zscore: 4.6, status: 'investigating', type: 'behavioral' },
+    { id: 'an-6', entity: 'Payroll-Dept', metric: 'Ghost Employee', value: 3, baseline: 0, zscore: 6.2, status: 'confirmed', type: 'pattern' },
+  ];
+
+  // --- Fund Flow Data for Sankey ---
+  private _fundFlows = [
+    { source: 'Client A', target: 'Acme Corp', amount: 250000, risk: 'low' },
+    { source: 'Client B', target: 'Acme Corp', amount: 180000, risk: 'low' },
+    { source: 'Acme Corp', target: 'Vendor Alpha', amount: 95000, risk: 'high' },
+    { source: 'Acme Corp', target: 'Vendor Beta', amount: 120000, risk: 'medium' },
+    { source: 'Acme Corp', target: 'Payroll', amount: 340000, risk: 'low' },
+    { source: 'Vendor Alpha', target: 'Unknown Entity X', amount: 45000, risk: 'critical' },
+    { source: 'Payroll', target: 'Ghost Employee 1', amount: 8500, risk: 'critical' },
+    { source: 'Payroll', target: 'Ghost Employee 2', amount: 7200, risk: 'critical' },
+    { source: 'Vendor Beta', target: 'Shell Company Y', amount: 60000, risk: 'high' },
+  ];
+
+  // --- Team workload ---
+  private _fraudTeam = [
+    { id: 'ft1', name: 'Sarah Mitchell', role: 'Lead Investigator', avatar: 'SM', color: '#ef4444', cases: 5, resolved: 12, active: 3 },
+    { id: 'ft2', name: 'James Wilson', role: 'Forensic Analyst', avatar: 'JW', color: '#3b82f6', cases: 3, resolved: 8, active: 2 },
+    { id: 'ft3', name: 'Emily Zhang', role: 'Data Analyst', avatar: 'EZ', color: '#22c55e', cases: 4, resolved: 15, active: 4 },
+    { id: 'ft4', name: 'Michael Brown', role: 'Compliance Officer', avatar: 'MB', color: '#f59e0b', cases: 2, resolved: 10, active: 1 },
+  ];
+
+  // --- Monthly trend data ---
+  private _monthlyTrends = [
+    { month: 'Jan', alerts: 12, confirmed: 4, loss: 85000, recovered: 72000 },
+    { month: 'Feb', alerts: 18, confirmed: 7, loss: 142000, recovered: 95000 },
+    { month: 'Mar', alerts: 15, confirmed: 5, loss: 98000, recovered: 88000 },
+    { month: 'Apr', alerts: 22, confirmed: 9, loss: 210000, recovered: 165000 },
+    { month: 'May', alerts: 19, confirmed: 6, loss: 125000, recovered: 110000 },
+    { month: 'Jun', alerts: 25, confirmed: 11, loss: 280000, recovered: 195000 },
+  ];
 
   static styles = css`
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; color: var(--text-primary, #e2e8f0); }
@@ -640,6 +696,7 @@ export class ScBusinessFraud extends LitElement {
           <button class="tab ${this._activeTab === 'history' ? 'active' : ''}" @click=${() => { this._activeTab = 'history'; }}>History</button>
           <button class="tab ${this._activeTab === 'audit' ? 'active' : ''}" @click=${() => { this._activeTab = 'audit'; }}>Audit</button>
           <button class="tab ${this._activeTab === 'settings' ? 'active' : ''}" @click=${() => { this._activeTab = 'settings'; }}>Settings</button>
+          <button class="tab ${this._activeTab === 'analytics' ? 'active' : ''}" @click=${() => { this._activeTab = 'analytics'; }}>Analytics</button>
         </div>
 
         ${this._activeTab === 'monitor' ? html`${this._renderSLABar()}${this._renderMonitor()}` : nothing}
@@ -649,6 +706,7 @@ export class ScBusinessFraud extends LitElement {
         ${this._activeTab === 'history' ? this._renderHistoryTable() : nothing}
         ${this._activeTab === 'audit' ? this._renderAuditPanel() : nothing}
         ${this._activeTab === 'settings' ? this._renderSettingsPanel() : nothing}
+        ${this._activeTab === 'analytics' ? this._renderAnalyticsTab() : nothing}
       </div>
     `;
   }
@@ -808,5 +866,299 @@ export class ScBusinessFraud extends LitElement {
       </div>
       <div class="report-box">${this._reportContent}</div>
     </div>`;
+  }
+
+  // --- Benford's Law Visualization ---
+  private _renderBenfordLaw(): any {
+    const W = 460, H = 180, padL = 40, padB = 30, padT = 10;
+    const chartW = W - padL - padB, chartH = H - padT - padB;
+    const maxVal = 35;
+    const toY = (v: number) => padT + chartH - (v / maxVal) * chartH;
+    const barW = chartW / 9 - 4;
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Benford's Law Analysis (First Digit Distribution)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:#22c55e">Pass</div>
+          <div style="font-size:9px;color:#6b7280">Chi-Square Test</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:#f59e0b">2.1%</div>
+          <div style="font-size:9px;color:#6b7280">Max Deviation</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:#3b82f6">0.94</div>
+          <div style="font-size:9px;color:#6b7280">Correlation (R)</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:480px">
+        ${[0, 10, 20, 30].map(v => html`<line x1="${padL}" y1="${toY(v)}" x2="${W - padB}" y2="${toY(v)}" stroke="#2a2d3a" stroke-width="0.5"/><text x="${padL - 4}" y="${toY(v) + 3}" text-anchor="end" fill="#6b7280" font-size="7">${v}%</text>`)}
+        ${this._benfordData.map((d, i) => {
+          const x = padL + i * (chartW / 9) + 2;
+          const expH = (d.expected / maxVal) * chartH;
+          const actH = (d.actual / maxVal) * chartH;
+          const devColor = d.deviation > 1.0 ? '#ef4444' : d.deviation > 0.5 ? '#f59e0b' : '#22c55e';
+          return html`<g>
+            <rect x="${x}" y="${padT + chartH - expH}" width="${barW / 2 - 1}" height="${expH}" fill="#3b82f640" rx="1" stroke="#3b82f6" stroke-width="0.5"/>
+            <rect x="${x + barW / 2}" y="${padT + chartH - actH}" width="${barW / 2 - 1}" height="${actH}" fill="${devColor}40" rx="1" stroke="${devColor}" stroke-width="0.5"/>
+            <text x="${x + barW / 2}" y="${H - padB + 14}" text-anchor="middle" fill="#9ca3af" font-size="8" font-weight="600">${d.digit}</text>
+            ${d.deviation > 0.8 ? html`<circle cx="${x + barW / 2}" y="${toY(d.actual) - 8}" r="3" fill="${devColor}"/>` : nothing}
+          </g>`;
+        })}
+        <line x1="${padL}" y1="${H - padB}" x2="${W - padB}" y2="${H - padB}" stroke="#2a2d3a" stroke-width="1"/>
+      </svg>
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:9px;color:#6b7280">
+        <span><span style="display:inline-block;width:10px;height:8px;background:#3b82f640;border:1px solid #3b82f6;margin-right:3px;vertical-align:middle"></span>Expected (Benford)</span>
+        <span><span style="display:inline-block;width:10px;height:8px;background:#22c55e40;border:1px solid #22c55e;margin-right:3px;vertical-align:middle"></span>Actual</span>
+        <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ef4444;margin-right:3px;vertical-align:middle"></span>High deviation</span>
+      </div>
+    </div>`;
+  }
+
+  // --- Anomaly Detection Panel ---
+  private _renderAnomalyDetection(): any {
+    const statusColors: Record<string, string> = { confirmed: '#ef4444', investigating: '#f59e0b', review: '#3b82f6' };
+    const typeColors: Record<string, string> = { statistical: '#8b5cf6', behavioral: '#06b6d4', temporal: '#f97316', pattern: '#ec4899' };
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px">Anomaly Detection Engine</div>
+        <div style="display:flex;gap:6px">
+          ${this._anomalyResults.filter(a => a.status === 'confirmed').length > 0 ? html`<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:#ef444420;color:#fca5a5;font-weight:600">${this._anomalyResults.filter(a => a.status === 'confirmed').length} confirmed</span>` : nothing}
+          ${this._anomalyResults.filter(a => a.status === 'investigating').length > 0 ? html`<span style="font-size:10px;padding:2px 8px;border-radius:4px;background:#f59e0b20;color:#fde047;font-weight:600">${this._anomalyResults.filter(a => a.status === 'investigating').length} investigating</span>` : nothing}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#ef4444">${this._anomalyResults.length}</div>
+          <div style="font-size:9px;color:#6b7280">Total Anomalies</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#f59e0b">${Math.round(this._anomalyResults.reduce((s, a) => s + a.zscore, 0) / this._anomalyResults.length * 10) / 10}</div>
+          <div style="font-size:9px;color:#6b7280">Avg Z-Score</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#22c55e">${this._anomalyResults.filter(a => a.zscore >= 4).length}</div>
+          <div style="font-size:9px;color:#6b7280">High Confidence (Z>=4)</div>
+        </div>
+      </div>
+      ${this._anomalyResults.sort((a, b) => b.zscore - a.zscore).map(a => html`<div style="background:#0f1117;border-radius:6px;padding:10px;margin-bottom:6px;border-left:3px solid ${statusColors[a.status] || '#94a3b8'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div style="font-size:12px;font-weight:600">${a.entity}</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${typeColors[a.type]}20;color:${typeColors[a.type]}">${a.type}</span>
+            <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${statusColors[a.status]}20;color:${statusColors[a.status]};font-weight:600">${a.status}</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#94a3b8">${a.metric}: $${a.value.toLocaleString()} (baseline: $${a.baseline.toLocaleString()})</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:9px;color:#6b7280">Z-Score:</span>
+          <div style="flex:1;height:6px;background:#2a2d3a;border-radius:3px;overflow:hidden;max-width:120px">
+            <div style="width:${Math.min(100, (a.zscore / 7) * 100)}%;height:100%;background:${a.zscore >= 5 ? '#ef4444' : a.zscore >= 3 ? '#f59e0b' : '#22c55e'};border-radius:3px"></div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${a.zscore >= 5 ? '#ef4444' : a.zscore >= 3 ? '#f59e0b' : '#22c55e'}">${a.zscore}</span>
+        </div>
+      </div>`)}
+    </div>`;
+  }
+
+  // --- Sankey-style Fund Flow ---
+  private _renderFundFlowSankey(): any {
+    const riskColors: Record<string, string> = { low: '#22c55e', medium: '#f59e0b', high: '#f97316', critical: '#ef4444' };
+    const leftNodes = [...new Set(this._fundFlows.map(f => f.source))];
+    const midNodes = [...new Set(this._fundFlows.map(f => f.target).filter(t => leftNodes.includes(this._fundFlows.find(fl => fl.target === t)?.source || ''))];
+    const rightNodes = [...new Set(this._fundFlows.map(f => f.target).filter(t => !leftNodes.includes(t)))];
+    const W = 500, H = 240;
+    const leftX = 60, midX = 220, rightX = 380;
+    const nodeH = 24;
+    const leftSpacing = H / (leftNodes.length + 1);
+    const midSpacing = H / (midNodes.length + 1);
+    const rightSpacing = H / (rightNodes.length + 1);
+
+    const leftPos: Record<string, number> = {};
+    leftNodes.forEach((n, i) => { leftPos[n] = leftSpacing * (i + 1); });
+    const midPos: Record<string, number> = {};
+    midNodes.forEach((n, i) => { midPos[n] = midSpacing * (i + 1); });
+    const rightPos: Record<string, number> = {};
+    rightNodes.forEach((n, i) => { rightPos[n] = rightSpacing * (i + 1); });
+
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Fund Flow Analysis (Sankey)</div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:520px">
+        ${leftNodes.map(n => {
+          const y = leftPos[n];
+          return html`<rect x="${leftX - 40}" y="${y - 10}" width="80" height="20" fill="#1f2937" stroke="#374151" stroke-width="0.5" rx="4"/><text x="${leftX}" y="${y + 3}" text-anchor="middle" fill="#e2e8f0" font-size="7" font-weight="600">${n.length > 14 ? n.slice(0, 12) + '..' : n}</text>`;
+        })}
+        ${midNodes.map(n => {
+          const y = midPos[n];
+          return html`<rect x="${midX - 40}" y="${y - 10}" width="80" height="20" fill="#1f2937" stroke="#374151" stroke-width="0.5" rx="4"/><text x="${midX}" y="${y + 3}" text-anchor="middle" fill="#e2e8f0" font-size="7" font-weight="600">${n.length > 14 ? n.slice(0, 12) + '..' : n}</text>`;
+        })}
+        ${rightNodes.map(n => {
+          const y = rightPos[n];
+          const isHighRisk = this._fundFlows.some(f => f.target === n && (f.risk === 'critical' || f.risk === 'high'));
+          return html`<rect x="${rightX - 40}" y="${y - 10}" width="80" height="20" fill="${isHighRisk ? '#450a0a' : '#1f2937'}" stroke="${isHighRisk ? '#ef4444' : '#374151'}" stroke-width="${isHighRisk ? '1.5' : '0.5'}" rx="4"/><text x="${rightX}" y="${y + 3}" text-anchor="middle" fill="${isHighRisk ? '#fca5a5' : '#e2e8f0'}" font-size="7" font-weight="600">${n.length > 14 ? n.slice(0, 12) + '..' : n}</text>`;
+        })}
+        ${this._fundFlows.map(f => {
+          const fromY = leftPos[f.source] || midPos[f.source] || 0;
+          const toY = midPos[f.target] || rightPos[f.target] || 0;
+          const fromX = leftPos[f.source] ? leftX + 40 : midX + 40;
+          const toX = midPos[f.target] ? midX - 40 : rightX - 40;
+          const midY = (fromY + toY) / 2;
+          const c = riskColors[f.risk] || '#94a3b8';
+          return html`<path d="M ${fromX} ${fromY} C ${fromX + (toX - fromX) * 0.5} ${fromY}, ${fromX + (toX - fromX) * 0.5} ${toY}, ${toX} ${toY}" fill="none" stroke="${c}" stroke-width="${Math.max(1, Math.min(4, f.amount / 50000))}" opacity="0.6"/>`;
+        })}
+        <text x="${leftX}" y="16" text-anchor="middle" fill="#6b7280" font-size="8">Sources</text>
+        <text x="${midX}" y="16" text-anchor="middle" fill="#6b7280" font-size="8">Intermediaries</text>
+        <text x="${rightX}" y="16" text-anchor="middle" fill="#6b7280" font-size="8">Destinations</text>
+      </svg>
+      <div style="display:flex;gap:12px;margin-top:6px;font-size:9px;color:#6b7280;justify-content:center">
+        ${Object.entries(riskColors).map(([k, v]) => html`<span><span style="display:inline-block;width:10px;height:2px;background:${v};margin-right:3px;vertical-align:middle"></span>${k}</span>`)}
+      </div>
+    </div>`;
+  }
+
+  // --- Team Workload ---
+  private _renderFraudTeam(): any {
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Investigation Team Workload</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px">
+        ${this._fraudTeam.map(m => html`<div style="background:#0f1117;border-radius:8px;padding:10px;display:flex;gap:10px;align-items:center">
+          <div style="width:36px;height:36px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0">${m.avatar}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:600">${m.name}</div>
+            <div style="font-size:9px;color:#6b7280">${m.role}</div>
+            <div style="display:flex;gap:8px;margin-top:3px;font-size:9px">
+              <span style="color:#f59e0b">${m.active} active</span>
+              <span style="color:#22c55e">${m.resolved} resolved</span>
+            </div>
+            <div style="height:4px;background:#2a2d3a;border-radius:2px;overflow:hidden;margin-top:3px">
+              <div style="width:${(m.active / 5) * 100}%;height:100%;background:${m.active >= 4 ? '#ef4444' : m.active >= 3 ? '#f59e0b' : '#22c55e'};border-radius:2px"></div>
+            </div>
+          </div>
+        </div>`)}
+      </div>
+      <div style="font-size:11px;font-weight:600;margin-bottom:6px">Activity Feed</div>
+      ${[
+        { user: 'Sarah Mitchell', action: 'confirmed fraud pattern for', target: 'Vendor Alpha', time: '12m ago', color: '#ef4444' },
+        { user: 'Emily Zhang', action: 'generated anomaly report for', target: 'Q2 2026', time: '45m ago', color: '#22c55e' },
+        { user: 'James Wilson', action: 'flagged transaction cluster in', target: 'Account-7742', time: '1h ago', color: '#3b82f6' },
+        { user: 'Michael Brown', action: 'escalated case', target: 'Ghost Employee investigation', time: '2h ago', color: '#f59e0b' },
+      ].map(a => html`<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid #2a2d3a;font-size:11px">
+        <div style="width:5px;height:5px;border-radius:50%;background:${a.color};margin-top:6px;flex-shrink:0"></div>
+        <div style="flex:1"><span style="font-weight:600;color:#e2e8f0">${a.user}</span> <span style="color:#9ca3af">${a.action}</span> <span style="color:#e2e8f0">${a.target}</span></div>
+        <span style="font-size:9px;color:#6b7280;white-space:nowrap">${a.time}</span>
+      </div>`)}
+    </div>`;
+  }
+
+  // --- Trend Analysis ---
+  private _renderFraudTrends(): any {
+    const data = this._monthlyTrends;
+    const W = 460, H = 140, padL = 40, padB = 25, padT = 10;
+    const chartW = W - padL - padB, chartH = H - padT - padB;
+    const maxAlerts = Math.max(...data.map(d => d.alerts));
+    const maxLoss = Math.max(...data.map(d => d.loss));
+    const toYAlerts = (v: number) => padT + chartH - (v / maxAlerts) * chartH;
+    const toYLoss = (v: number) => padT + chartH - (v / maxLoss) * chartH;
+    const toX = (i: number) => padL + (i / (data.length - 1)) * chartW;
+    const alertPts = data.map((d, i) => `${toX(i)},${toYAlerts(d.alerts)}`).join(' ');
+    const lossPts = data.map((d, i) => `${toX(i)},${toYLoss(d.loss / 1000)}`).join(' ');
+
+    // Linear regression for alerts
+    const n = data.length;
+    const sumX = n * (n - 1) / 2;
+    const sumY = data.reduce((s, d) => s + d.alerts, 0);
+    const sumXY = data.reduce((s, d, i) => s + i * d.alerts, 0);
+    const sumX2 = data.reduce((s, _, i) => s + i * i, 0);
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    const predNext = Math.max(0, Math.round(slope * n + intercept));
+
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Fraud Trend Analysis</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:${slope > 0 ? '#ef4444' : '#22c55e'}">${slope > 0 ? '+' : ''}${slope.toFixed(1)}</div>
+          <div style="font-size:9px;color:#6b7280">Alerts/month trend</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:#f59e0b">${predNext}</div>
+          <div style="font-size:9px;color:#6b7280">Predicted next month</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:#3b82f6">$${(data.reduce((s, d) => s + d.loss, 0) / 1000).toFixed(0)}K</div>
+          <div style="font-size:9px;color:#6b7280">Total loss (6mo)</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:16px;font-weight:700;color:#22c55e">${Math.round((data.reduce((s, d) => s + d.recovered, 0) / data.reduce((s, d) => s + d.loss, 0)) * 100)}%</div>
+          <div style="font-size:9px;color:#6b7280">Recovery rate</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:480px">
+        ${data.map((_, i) => html`<line x1="${toX(i)}" y1="${padT}" x2="${toX(i)}" y2="${H - padB}" stroke="#2a2d3a" stroke-width="0.3"/>`)}
+        <polyline points="${alertPts}" fill="none" stroke="#ef4444" stroke-width="2"/>
+        ${data.map((d, i) => html`<circle cx="${toX(i)}" cy="${toYAlerts(d.alerts)}" r="3" fill="#ef4444"/>`)}
+        ${data.map((d, i) => html`<circle cx="${toX(i)}" cy="${toYLoss(d.loss / 1000)}" r="3" fill="#3b82f6"/>`)}
+        <polyline points="${data.map((d, i) => `${toX(i)},${toYLoss(d.loss / 1000)}`).join(' ')}" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,2"/>
+        ${data.map((_, i) => html`<text x="${toX(i)}" y="${H - padB + 14}" text-anchor="middle" fill="#6b7280" font-size="7">${data[i].month}</text>`)}
+        <text x="${toX(data.length - 0.5)}" y="${toYAlerts(predNext) - 6}" text-anchor="middle" fill="#f59e0b" font-size="7">${predNext} pred</text>
+        <circle cx="${toX(data.length - 0.5)}" cy="${toYAlerts(predNext)}" r="3" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2,2"/>
+        <line x1="${padL}" y1="${H - padB}" x2="${W - padB}" y2="${H - padB}" stroke="#2a2d3a" stroke-width="1"/>
+      </svg>
+      <div style="display:flex;gap:16px;margin-top:6px;font-size:9px;color:#6b7280">
+        <span><span style="display:inline-block;width:10px;height:2px;background:#ef4444;margin-right:3px;vertical-align:middle"></span>Alerts</span>
+        <span><span style="display:inline-block;width:10px;height:2px;background:#3b82f6;margin-right:3px;vertical-align:middle;border-top:1px dashed #3b82f6"></span>Loss ($K)</span>
+        <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;border:1.5px dashed #f59e0b;margin-right:3px;vertical-align:middle"></span>Predicted</span>
+      </div>
+    </div>`;
+  }
+
+  // --- SLA Breach Prediction ---
+  private _renderSLAPrediction(): any {
+    const cases = this._cases;
+    const avgTimeToInvestigate = cases.length ? Math.round(cases.filter(c => c.status === 'investigating' || c.status === 'resolved').reduce((s, c) => s + ((new Date(c.updated).getTime() - new Date(c.created).getTime()) / 60000), 0) / Math.max(1, cases.filter(c => c.status === 'investigating' || c.status === 'resolved').length)) : 0;
+    const slaHours = this._slaTarget;
+    const slaMinutes = slaHours * 60;
+    const breachRisk = avgTimeToInvestigate > slaMinutes * 0.8 ? 'critical' : avgTimeToInvestigate > slaMinutes * 0.5 ? 'high' : avgTimeToInvestigate > slaMinutes * 0.3 ? 'medium' : 'low';
+    const riskColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+    return html`<div style="background:#1a1d27;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">SLA Breach Prediction</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+        <div style="background:#0f1117;border-radius:6px;padding:10px;text-align:center;border-top:3px solid ${riskColors[breachRisk]}">
+          <div style="font-size:18px;font-weight:700;color:${riskColors[breachRisk]}">${breachRisk.toUpperCase()}</div>
+          <div style="font-size:9px;color:#6b7280">Breach Risk Level</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#e2e8f0">${avgTimeToInvestigate}m</div>
+          <div style="font-size:9px;color:#6b7280">Avg Investigation Time</div>
+        </div>
+        <div style="background:#0f1117;border-radius:6px;padding:10px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#f59e0b">${slaHours}h</div>
+          <div style="font-size:9px;color:#6b7280">SLA Target</div>
+        </div>
+      </div>
+      <div style="height:8px;background:#2a2d3a;border-radius:4px;overflow:hidden;margin-bottom:8px">
+        <div style="width:${Math.min(100, (avgTimeToInvestigate / slaMinutes) * 100)}%;height:100%;background:${riskColors[breachRisk]};border-radius:4px"></div>
+      </div>
+      <div style="font-size:10px;color:#6b7280">${avgTimeToInvestigate > 0 ? `At current rate, ${Math.max(0, Math.round(slaMinutes - avgTimeToInvestigate))} minutes of SLA buffer remaining.` : 'No active investigations to predict.'}</div>
+    </div>`;
+  }
+
+  private _renderAnalyticsTab(): any {
+    return html`
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #2a2d3a;padding-bottom:8px;flex-wrap:wrap">
+        <button class="tab ${this._analyticsSubTab === 'benford' ? 'active' : ''}" @click=${() => { this._analyticsSubTab = 'benford'; }}>Benford's Law</button>
+        <button class="tab ${this._analyticsSubTab === 'anomaly' ? 'active' : ''}" @click=${() => { this._analyticsSubTab = 'anomaly'; }}>Anomaly Detection</button>
+        <button class="tab ${this._analyticsSubTab === 'sankey' ? 'active' : ''}" @click=${() => { this._analyticsSubTab = 'sankey'; }}>Fund Flows</button>
+        <button class="tab ${this._analyticsSubTab === 'team' ? 'active' : ''}" @click=${() => { this._analyticsSubTab = 'team'; }}>Team</button>
+        <button class="tab ${this._analyticsSubTab === 'trends' ? 'active' : ''}" @click=${() => { this._analyticsSubTab = 'trends'; }}>Trends</button>
+        <button class="tab ${this._analyticsSubTab === 'prediction' ? 'active' : ''}" @click=${() => { this._analyticsSubTab = 'prediction'; }}>SLA Predict</button>
+      </div>
+      ${this._analyticsSubTab === 'benford' ? this._renderBenfordLaw() : ''}
+      ${this._analyticsSubTab === 'anomaly' ? this._renderAnomalyDetection() : ''}
+      ${this._analyticsSubTab === 'sankey' ? this._renderFundFlowSankey() : ''}
+      ${this._analyticsSubTab === 'team' ? this._renderFraudTeam() : ''}
+      ${this._analyticsSubTab === 'trends' ? this._renderFraudTrends() : ''}
+      ${this._analyticsSubTab === 'prediction' ? html`${this._renderSLAPrediction()}${this._renderRiskGauge()}` : ''}
+    `;
   }
 }

@@ -440,6 +440,362 @@ export class ScAttackPathDiscovery extends LitElement {
     URL.revokeObjectURL(url);
   }
 
+  // --- CVSS-like Path Severity Calculator ---
+  private _calculatePathCVSS(path: any): { baseScore: number; impact: number; exploitability: number; severity: string } {
+    const vulnSeverities: Record<string, number> = { critical: 10, high: 7.5, medium: 5, low: 2.5 };
+    const vulns = path.vulns || [];
+    const maxVuln = vulns.length > 0 ? Math.max(...vulns.map((v: any) => vulnSeverities[v.severity] || 5)) : 0;
+    const avgVuln = vulns.length > 0 ? vulns.reduce((s: number, v: any) => s + (vulnSeverities[v.severity] || 5), 0) / vulns.length : 0;
+    const impact = Math.min(10, maxVuln * 0.6 + avgVuln * 0.4);
+    const accessVector = path.needsAuth ? 0.6 : 0.85;
+    const complexity = path.exploitComplexity === 'low' ? 0.9 : path.exploitComplexity === 'medium' ? 0.7 : 0.4;
+    const privileges = path.needsPrivEsc ? 0.5 : 0.85;
+    const userInteraction = path.needsUserInteraction ? 0.6 : 0.85;
+    const exploitability = 8.22 * accessVector * complexity * privileges * userInteraction;
+    const baseScore = Math.min(10, (impact === 0 ? 0 : Math.round(((0.6 * impact) + (0.4 * exploitability) - 1.5) * 10) / 10));
+    const severity = baseScore >= 9 ? 'critical' : baseScore >= 7 ? 'high' : baseScore >= 4 ? 'medium' : 'low';
+    return { baseScore: Math.max(0, baseScore), impact: Math.round(impact * 10) / 10, exploitability: Math.round(exploitability * 10) / 10, severity };
+  }
+
+  // --- Multi-Path Comparison Matrix ---
+  private _pathComparisonMatrix(): { pathId: string; pathName: string; cvss: number; hops: number; vulns: number; risk: number; time: number }[] {
+    return this._discoveredPaths.slice(0, 8).map((p: any) => {
+      const cvssData = this._calculatePathCVSS(p);
+      return {
+        pathId: p.id || 'unknown',
+        pathName: p.name || 'Unnamed Path',
+        cvss: cvssData.baseScore,
+        hops: p.hops || p.steps?.length || 0,
+        vulns: (p.vulns || []).length,
+        risk: this._computePathRisk(p),
+        time: p.estimatedTime || Math.floor(Math.random() * 120) + 10,
+      };
+    });
+  }
+
+  private _renderPathComparison(): any {
+    const matrix = this._pathComparisonMatrix();
+    if (matrix.length === 0) return nothing;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Path Comparison Matrix</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead><tr style="background:#0f172a;color:#94a3b8">
+              <th style="padding:6px 8px;text-align:left">Path</th>
+              <th style="padding:6px 8px;text-align:center">CVSS</th>
+              <th style="padding:6px 8px;text-align:center">Hops</th>
+              <th style="padding:6px 8px;text-align:center">Vulns</th>
+              <th style="padding:6px 8px;text-align:center">Risk</th>
+              <th style="padding:6px 8px;text-align:center">ETA</th>
+            </tr></thead>
+            <tbody>
+              ${matrix.map(m => html`<tr style="border-bottom:1px solid #1f2937">
+                <td style="padding:6px 8px;color:#e2e8f0">${m.pathName}</td>
+                <td style="padding:6px 8px;text-align:center;color:${m.cvss >= 9 ? '#ef4444' : m.cvss >= 7 ? '#f97316' : m.cvss >= 4 ? '#eab308' : '#22c55e'};font-weight:700">${m.cvss.toFixed(1)}</td>
+                <td style="padding:6px 8px;text-align:center">${m.hops}</td>
+                <td style="padding:6px 8px;text-align:center">${m.vulns}</td>
+                <td style="padding:6px 8px;text-align:center">
+                  <div style="height:6px;background:#0f172a;border-radius:3px;overflow:hidden;max-width:60px;margin:0 auto">
+                    <div style="height:100%;width:${m.risk}%;background:${m.risk > 75 ? '#ef4444' : m.risk > 50 ? '#f97316' : m.risk > 25 ? '#eab308' : '#22c55e'};border-radius:3px"></div>
+                  </div>
+                </td>
+                <td style="padding:6px 8px;text-align:center;color:#9ca3af">${m.time}min</td>
+              </tr>`)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Anomaly Detection for Network Paths ---
+  private _networkAnomalies: { id: string; type: string; description: string; severity: string; asset: string; detectedAt: string }[] = [
+    { id: 'an1', type: 'Unusual Protocol', description: 'RDP traffic detected from DMZ to internal database server', severity: 'high', asset: 'DB-SRV-01', detectedAt: new Date(Date.now() - 1800000).toISOString() },
+    { id: 'an2', type: 'Port Scan', description: 'Sequential port scan from workstation WS-042 targeting subnet 10.0.3.0/24', severity: 'medium', asset: 'WS-042', detectedAt: new Date(Date.now() - 3600000).toISOString() },
+    { id: 'an3', type: 'Data Volume Spike', description: '300% increase in outbound traffic from App-SRV-03 to external IP', severity: 'critical', asset: 'App-SRV-03', detectedAt: new Date(Date.now() - 7200000).toISOString() },
+    { id: 'an4', type: 'Auth Anomaly', description: '5 failed login attempts followed by success on DC-01 within 60 seconds', severity: 'high', asset: 'DC-01', detectedAt: new Date(Date.now() - 5400000).toISOString() },
+  ];
+
+  private _renderAnomalyPanel(): any {
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <span>Network Anomalies</span>
+          <span style="background:#450a0a;color:#fca5a5;font-size:10px;padding:1px 6px;border-radius:4px">${this._networkAnomalies.length}</span>
+        </div>
+        ${this._networkAnomalies.map(a => html`
+          <div style="background:#1f2937;border-radius:6px;padding:8px;margin-bottom:4px;border-left:3px solid ${a.severity === 'critical' ? '#ef4444' : a.severity === 'high' ? '#f97316' : '#eab308'}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600;font-size:11px;color:#e2e8f0">${a.type}</span>
+              <span style="font-size:9px;color:#6b7280">${new Date(a.detectedAt).toLocaleTimeString()}</span>
+            </div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:2px">${a.description}</div>
+            <div style="font-size:9px;color:#6b7280;margin-top:2px">Asset: ${a.asset}</div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Panel Configuration ---
+  @state() private _panelConfig: { autoRefresh: boolean; refreshInterval: number; showTopology: boolean; showSankey: boolean; showAnomalies: boolean; compactView: boolean } = {
+    autoRefresh: false, refreshInterval: 30, showTopology: true, showSankey: true, showAnomalies: true, compactView: false,
+  };
+
+  // --- Risk Heatmap SVG ---
+  private _riskHeatmapSVG(): string {
+    const w = 400, h = 200;
+    const zones = ['DMZ', 'Internal', 'Core', 'Cloud', 'IoT'];
+    const metrics = ['Vulns', 'Exploit', 'Access', 'Exfil', 'Impact'];
+    const data = zones.map(z => metrics.map(m => Math.floor(Math.random() * 100)));
+    const cellW = (w - 60) / metrics.length, cellH = (h - 40) / zones.length;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    metrics.forEach((m, i) => {
+      svg += `<text x="${60 + i * cellW + cellW / 2}" y="15" fill="#9ca3af" font-size="8" text-anchor="middle">${m}</text>`;
+    });
+    zones.forEach((z, zi) => {
+      svg += `<text x="50" y="${30 + zi * cellH + cellH / 2 + 3}" fill="#9ca3af" font-size="8" text-anchor="end">${z}</text>`;
+      metrics.forEach((m, mi) => {
+        const val = data[zi][mi];
+        const x = 60 + mi * cellW, y = 30 + zi * cellH;
+        const color = val > 75 ? '#ef4444' : val > 50 ? '#f97316' : val > 25 ? '#eab308' : '#22c55e';
+        svg += `<rect x="${x + 1}" y="${y + 1}" width="${cellW - 2}" height="${cellH - 2}" rx="3" fill="${color}" opacity="0.3" stroke="${color}" stroke-width="0.5"/>`;
+        svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 + 3}" fill="#e2e8f0" font-size="10" text-anchor="middle" font-weight="600">${val}</text>`;
+      });
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Trend Prediction for Attack Paths ---
+  private _predictPathTrends(): { direction: 'increasing' | 'stable' | 'decreasing'; confidence: number; reason: string }[] {
+    const trends: { direction: 'increasing' | 'stable' | 'decreasing'; confidence: number; reason: string }[] = [];
+    const totalPaths = this._discoveredPaths.length;
+    const exploitable = this._discoveredPaths.filter((p: any) => p.status === 'exploitable').length;
+    if (exploitable > totalPaths * 0.5) {
+      trends.push({ direction: 'increasing', confidence: 0.85, reason: 'Majority of paths are exploitable. Risk trajectory is upward.' });
+    } else if (exploitable > 2) {
+      trends.push({ direction: 'stable', confidence: 0.6, reason: 'Exploitable paths exist but are contained. Monitor for changes.' });
+    } else {
+      trends.push({ direction: 'decreasing', confidence: 0.7, reason: 'Few exploitable paths. Attack surface is well-managed.' });
+    }
+    return trends;
+  }
+
+  private _renderPanelConfig(): any {
+    const cfg = this._panelConfig;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Panel Configuration</div>
+        ${[
+          { key: 'showTopology', label: 'Network Topology', desc: 'Show attack path topology diagram' },
+          { key: 'showSankey', label: 'Flow Sankey', desc: 'Show attack flow sankey diagram' },
+          { key: 'showAnomalies', label: 'Anomaly Panel', desc: 'Show network anomaly detections' },
+          { key: 'compactView', label: 'Compact View', desc: 'Reduce spacing for more data density' },
+        ].map(item => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1f2937">
+            <div><div style="font-size:11px;font-weight:600">${item.label}</div><div style="font-size:9px;color:#6b7280">${item.desc}</div></div>
+            <div style="width:36px;height:20px;border-radius:10px;background:${(cfg as any)[item.key] ? '#22c55e' : '#374151'};cursor:pointer;position:relative" @click=${() => { this._panelConfig = { ...cfg, [item.key]: !(cfg as any)[item.key] }; }}>
+              <div style="width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:2px;left:${(cfg as any)[item.key] ? '18px' : '2px'};transition:left 0.2s"></div>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Attack Path Risk Scoring Engine ---
+  private _pathRiskFactors: Record<string, { weight: number; label: string }> = {
+    vulnCount: { weight: 0.25, label: 'Vulnerability Density' },
+    pathLength: { weight: 0.15, label: 'Path Length (hops)' },
+    assetCriticality: { weight: 0.25, label: 'Target Asset Criticality' },
+    exploitComplexity: { weight: 0.20, label: 'Exploit Complexity' },
+    lateralMoveRisk: { weight: 0.15, label: 'Lateral Movement Risk' },
+  };
+
+  private _computePathRisk(path: any): number {
+    const vulnScore = Math.min(100, (path.vulns || []).length * 20);
+    const lengthScore = Math.min(100, (path.hops || 3) * 15);
+    const critScore = path.targetCriticality === 'critical' ? 100 : path.targetCriticality === 'high' ? 75 : 50;
+    const exploitScore = path.exploitComplexity === 'low' ? 100 : path.exploitComplexity === 'medium' ? 60 : 30;
+    const lateralScore = Math.min(100, (path.lateralMoves || 0) * 25);
+    const factors = [
+      { score: vulnScore, weight: this._pathRiskFactors.vulnCount.weight },
+      { score: lengthScore, weight: this._pathRiskFactors.pathLength.weight },
+      { score: critScore, weight: this._pathRiskFactors.assetCriticality.weight },
+      { score: exploitScore, weight: this._pathRiskFactors.exploitComplexity.weight },
+      { score: lateralScore, weight: this._pathRiskFactors.lateralMoveRisk.weight },
+    ];
+    return Math.round(factors.reduce((s, f) => s + f.score * f.weight, 0));
+  }
+
+  // --- MITRE ATT&CK Attack Path Correlation ---
+  private _mitrePathMap: Record<string, { tactic: string; techniqueId: string; techniqueName: string }> = {
+    'credential-access': { tactic: 'Credential Access', techniqueId: 'T1110', techniqueName: 'Brute Force' },
+    'lateral-movement': { tactic: 'Lateral Movement', techniqueId: 'T1021', techniqueName: 'Remote Services' },
+    'privilege-escalation': { tactic: 'Privilege Escalation', techniqueId: 'T1068', techniqueName: 'Exploitation for Privilege Escalation' },
+    'persistence': { tactic: 'Persistence', techniqueId: 'T1053', techniqueName: 'Scheduled Task/Job' },
+    'defense-evasion': { tactic: 'Defense Evasion', techniqueId: 'T1070', techniqueName: 'Indicator Removal' },
+    'exfiltration': { tactic: 'Exfiltration', techniqueId: 'T1048', techniqueName: 'Exfiltration Over Alternative Protocol' },
+    'command-control': { tactic: 'Command and Control', techniqueId: 'T1071', techniqueName: 'Application Layer Protocol' },
+    'discovery': { tactic: 'Discovery', techniqueId: 'T1046', techniqueName: 'Network Service Discovery' },
+  };
+
+  private _correlatePathMitre(path: any): { tactic: string; techniques: { id: string; name: string }[] }[] {
+    const tactics: Record<string, { id: string; name: string }[]> = {};
+    for (const [key, mitre] of Object.entries(this._mitrePathMap)) {
+      if (path.steps && path.steps.some((s: any) => s.type && s.type.toLowerCase().includes(key))) {
+        if (!tactics[mitre.tactic]) tactics[mitre.tactic] = [];
+        tactics[mitre.tactic].push({ id: mitre.techniqueId, name: mitre.techniqueName });
+      }
+    }
+    return Object.entries(tactics).map(([tactic, techniques]) => ({ tactic, techniques }));
+  }
+
+  // --- Attack Path Topology SVG ---
+  private _pathTopologySVG(): string {
+    const w = 800, h = 300;
+    const nodes = [
+      { id: 'entry', x: 80, y: 150, label: 'Entry Point', type: 'external', color: '#ef4444' },
+      { id: 'dmz', x: 220, y: 100, label: 'DMZ Web Server', type: 'server', color: '#f97316' },
+      { id: 'dmz-db', x: 220, y: 200, label: 'DMZ Database', type: 'database', color: '#f97316' },
+      { id: 'fw1', x: 360, y: 150, label: 'Firewall', type: 'firewall', color: '#6366f1' },
+      { id: 'app', x: 500, y: 80, label: 'App Server', type: 'server', color: '#eab308' },
+      { id: 'ad', x: 500, y: 150, label: 'Domain Controller', type: 'ad', color: '#ef4444' },
+      { id: 'db', x: 500, y: 220, label: 'Core Database', type: 'database', color: '#ef4444' },
+      { id: 'target', x: 660, y: 150, label: 'Crown Jewels', type: 'server', color: '#dc2626' },
+    ];
+    const edges = [
+      { from: 'entry', to: 'dmz', risk: 'high' }, { from: 'entry', to: 'dmz-db', risk: 'medium' },
+      { from: 'dmz', to: 'fw1', risk: 'high' }, { from: 'dmz-db', to: 'fw1', risk: 'medium' },
+      { from: 'fw1', to: 'app', risk: 'medium' }, { from: 'fw1', to: 'ad', risk: 'high' },
+      { from: 'fw1', to: 'db', risk: 'low' }, { from: 'ad', to: 'target', risk: 'critical' },
+      { from: 'app', to: 'db', risk: 'medium' }, { from: 'app', to: 'target', risk: 'high' },
+    ];
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    // Edges
+    edges.forEach(e => {
+      const from = nodes.find(n => n.id === e.from)!;
+      const to = nodes.find(n => n.id === e.to)!;
+      const riskColor = e.risk === 'critical' ? '#ef4444' : e.risk === 'high' ? '#f97316' : e.risk === 'medium' ? '#eab308' : '#22c55e';
+      svg += `<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="${riskColor}" stroke-width="2" opacity="0.6"/>`;
+      const mx = (from.x + to.x) / 2, my = (from.y + to.y) / 2;
+      svg += `<circle cx="${mx}" cy="${my}" r="3" fill="${riskColor}"/>`;
+    });
+    // Nodes
+    nodes.forEach(n => {
+      svg += `<rect x="${n.x - 35}" y="${n.y - 18}" width="70" height="36" rx="6" fill="#1f2937" stroke="${n.color}" stroke-width="2"/>`;
+      svg += `<text x="${n.x}" y="${n.y + 1}" fill="#e2e8f0" font-size="9" text-anchor="middle" dominant-baseline="middle">${n.label}</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Attack Path Sankey Diagram ---
+  private _pathSankeySVG(): string {
+    const w = 700, h = 200;
+    const stages = ['Entry', 'DMZ', 'Internal', 'Target'];
+    const flows = [
+      { from: 0, to: 1, value: 8, label: 'Web Exploit', color: '#ef4444' },
+      { from: 0, to: 1, value: 5, label: 'Phishing', color: '#f97316' },
+      { from: 1, to: 2, value: 6, label: 'Pivot', color: '#eab308' },
+      { from: 1, to: 2, value: 4, label: 'SQLi', color: '#f97316' },
+      { from: 2, to: 3, value: 3, label: 'Lateral Move', color: '#ef4444' },
+      { from: 2, to: 3, value: 2, label: 'Priv Esc', color: '#dc2626' },
+    ];
+    const stageX = stages.map((_, i) => 60 + (i / (stages.length - 1)) * (w - 120));
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    stages.forEach((s, i) => {
+      svg += `<text x="${stageX[i]}" y="20" fill="#e2e8f0" font-size="11" text-anchor="middle" font-weight="600">${s}</text>`;
+      svg += `<line x1="${stageX[i]}" y1="28" x2="${stageX[i]}" y2="${h - 10}" stroke="#374151" stroke-width="1"/>`;
+    });
+    let yOffset = 35;
+    flows.forEach(f => {
+      const x1 = stageX[f.from], x2 = stageX[f.to];
+      const bw = f.value * 4;
+      const midX = (x1 + x2) / 2;
+      svg += `<path d="M${x1},${yOffset} C${midX},${yOffset} ${midX},${yOffset} ${x2},${yOffset}" fill="none" stroke="${f.color}" stroke-width="${bw}" opacity="0.5"/>`;
+      svg += `<text x="${midX}" y="${yOffset - bw / 2 - 3}" fill="#9ca3af" font-size="8" text-anchor="middle">${f.label}</text>`;
+      yOffset += bw + 6;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Collaboration ---
+  @state() private _teamMembers: { id: string; name: string; role: string; status: string }[] = [
+    { id: 't1', name: 'Red Team Lead', role: 'Offense', status: 'online' },
+    { id: 't2', name: 'Blue Team Lead', role: 'Defense', status: 'online' },
+    { id: 't3', name: 'Network Engineer', role: 'Infrastructure', status: 'busy' },
+    { id: 't4', name: 'Threat Analyst', role: 'Intelligence', status: 'offline' },
+  ];
+  @state() private _pathComments: { id: string; userId: string; pathId: string; text: string; timestamp: string }[] = [];
+  @state() private _newComment = '';
+
+  private _addPathComment(pathId: string) {
+    if (!this._newComment.trim()) return;
+    this._pathComments = [{ id: 'c' + Date.now(), userId: 'You', pathId, text: this._newComment.trim(), timestamp: new Date().toISOString() }, ...this._pathComments];
+    this._newComment = '';
+  }
+
+  private _renderTeamPanel(): any {
+    return html`
+      <div style="margin-top:16px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px">Path Analysis Team</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          ${this._teamMembers.map(m => html`
+            <div style="display:flex;align-items:center;gap:6px;background:#1f2937;border-radius:6px;padding:5px 10px">
+              <div style="width:8px;height:8px;border-radius:50%;background:${m.status === 'online' ? '#22c55e' : m.status === 'busy' ? '#eab308' : '#6b7280'}"></div>
+              <div><div style="font-size:11px;font-weight:600">${m.name}</div><div style="font-size:9px;color:#6b7280">${m.role}</div></div>
+            </div>
+          `)}
+        </div>
+        ${this._pathComments.length > 0 ? html`
+          <div style="max-height:80px;overflow-y:auto;margin-bottom:8px">
+            ${this._pathComments.slice(0, 5).map(c => html`
+              <div style="font-size:11px;padding:4px 0;border-bottom:1px solid #1f2937">
+                <span style="font-weight:600">${c.userId}</span>
+                <span style="color:#6b7280"> on ${c.pathId}:</span>
+                <span style="color:#9ca3af">${c.text}</span>
+                <span style="float:right;font-size:9px;color:#4b5563">${new Date(c.timestamp).toLocaleTimeString()}</span>
+              </div>
+            `)}
+          </div>
+        ` : ''}
+        <div style="display:flex;gap:6px">
+          <input style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:6px;padding:5px 8px;color:#e2e8f0;font-size:11px" placeholder="Comment on path..." .value=${this._newComment} @input=${(e: any) => this._newComment = e.target.value}>
+          <button style="background:#f59e0b;color:#111827;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer" @click=${() => this._addPathComment('general')}>Post</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Auto-Insights ---
+  private _generatePathInsights(): { icon: string; text: string; severity: string }[] {
+    const insights: { icon: string; text: string; severity: string }[] = [];
+    const totalPaths = this._discoveredPaths.length;
+    const exploitable = this._discoveredPaths.filter((p: any) => p.status === 'exploitable').length;
+    if (exploitable > 0) insights.push({ icon: '\uD83D\uDFE1', text: `${exploitable} exploitable paths to critical assets require immediate mitigation.`, severity: 'critical' });
+    if (totalPaths > 10) insights.push({ icon: '\uD83D\uDD0D', text: `High path complexity (${totalPaths} paths). Attack surface exceeds recommended thresholds.`, severity: 'high' });
+    if (this._discoveredPaths.some((p: any) => p.steps && p.steps.length > 5)) insights.push({ icon: '\uD83D\uDEE1\uFE0F', text: 'Multi-hop paths detected. Deep defense-in-depth review recommended.', severity: 'medium' });
+    return insights.length > 0 ? insights : [{ icon: '\u2705', text: 'No critical path risks detected.', severity: 'low' }];
+  }
+
+  private _renderPathInsights(): any {
+    const insights = this._generatePathInsights();
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Auto-Insights</div>
+        ${insights.map(i => html`
+          <div style="display:flex;gap:8px;padding:6px;margin-bottom:4px;background:#1f2937;border-radius:4px;font-size:11px;border-left:3px solid ${i.severity === 'critical' ? '#ef4444' : i.severity === 'high' ? '#f97316' : '#22c55e'}">
+            <span>${i.icon}</span><span style="color:#e2e8f0">${i.text}</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
   private _renderRiskGauge(): any {
     const riskDist = { critical: 0, high: 0, medium: 0, low: 0 };
     this._items.forEach((item: any) => { riskDist[item.risk] = (riskDist[item.risk] || 0) + 1; });
@@ -670,6 +1026,11 @@ export class ScAttackPathDiscovery extends LitElement {
           <div class="empty-state">Click "Discover Network & Paths" to start network analysis</div>
         `}
       </div>
+        ${this._renderPathComparison()}
+        ${this._renderAnomalyPanel()}
+        ${this._renderPanelConfig()}
+        ${this._renderTeamPanel()}
+        ${this._renderPathInsights()}
         ${this._renderRiskGauge()}
         ${this._renderFooter()}
       </div>

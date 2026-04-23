@@ -854,4 +854,355 @@ export class ScDataFlowTracker extends LitElement {
       ${this._renderEnhancedSection()}
     `;
   }
+
+  // --- Data Flow Risk Scoring Engine ---
+  private _flowRiskFactors: Record<string, { weight: number; label: string }> = {
+    sensitiveData: { weight: 0.25, label: 'Sensitive Data Exposure' },
+    encryption: { weight: 0.20, label: 'Encryption Coverage' },
+    crossBorder: { weight: 0.20, label: 'Cross-Border Transfer' },
+    accessControl: { weight: 0.15, label: 'Access Control Gaps' },
+    volume: { weight: 0.10, label: 'Data Volume Risk' },
+    retention: { weight: 0.10, label: 'Retention Compliance' },
+  };
+
+  private _computeFlowRisk(): { score: number; level: string; factors: { name: string; score: number; label: string }[] } {
+    const sensitiveCount = this._flows.filter((f: any) => f.dataType === 'pii' || f.dataType === 'phi' || f.dataType === 'financial').length;
+    const totalFlows = this._flows.length || 1;
+    const unencrypted = this._flows.filter((f: any) => !f.encrypted).length;
+    const crossBorder = this._flows.filter((f: any) => f.crossBorder).length;
+    const publicAccess = this._flows.filter((f: any) => f.accessLevel === 'public').length;
+    const factors = [
+      { name: 'sensitiveData', score: Math.min(100, (sensitiveCount / totalFlows) * 150), label: this._flowRiskFactors.sensitiveData.label },
+      { name: 'encryption', score: Math.min(100, (unencrypted / totalFlows) * 120), label: this._flowRiskFactors.encryption.label },
+      { name: 'crossBorder', score: Math.min(100, (crossBorder / totalFlows) * 100), label: this._flowRiskFactors.crossBorder.label },
+      { name: 'accessControl', score: Math.min(100, (publicAccess / totalFlows) * 100), label: this._flowRiskFactors.accessControl.label },
+      { name: 'volume', score: Math.min(100, totalFlows * 5), label: this._flowRiskFactors.volume.label },
+      { name: 'retention', score: 30, label: this._flowRiskFactors.retention.label },
+    ];
+    const score = Math.round(factors.reduce((s, f) => s + f.score * (this._flowRiskFactors[f.name]?.weight || 0.15), 0));
+    const level = score > 75 ? 'critical' : score > 50 ? 'high' : score > 25 ? 'medium' : 'low';
+    return { score, level, factors };
+  }
+
+  // --- MITRE ATT&CK Data Flow Correlation ---
+  private _mitreDataMap: Record<string, { techniqueId: string; techniqueName: string; tactic: string }> = {
+    'exfiltration': { techniqueId: 'T1048', techniqueName: 'Exfiltration Over Alternative Protocol', tactic: 'Exfiltration' },
+    'encryption-bypass': { techniqueId: 'T1021', techniqueName: 'Remote Services', tactic: 'Command and Control' },
+    'credential-transfer': { techniqueId: 'T1003', techniqueName: 'OS Credential Dumping', tactic: 'Credential Access' },
+    'api-abuse': { techniqueId: 'T1199', techniqueName: 'Trusted Relationship', tactic: 'Initial Access' },
+    'cloud-transfer': { techniqueId: 'T1530', techniqueName: 'Data from Cloud Storage Object', tactic: 'Collection' },
+    'email-exfil': { techniqueId: 'T1114', techniqueName: 'Email Collection', tactic: 'Collection' },
+  };
+
+  private _correlateDataMitre(): { tactic: string; techniques: { id: string; name: string; count: number }[] }[] {
+    const tacticMap: Record<string, { id: string; name: string; count: number }[]> = {};
+    this._flows.forEach((f: any) => {
+      for (const [key, mitre] of Object.entries(this._mitreDataMap)) {
+        if (f.protocol?.toLowerCase().includes(key) || f.name?.toLowerCase().includes(key)) {
+          if (!tacticMap[mitre.tactic]) tacticMap[mitre.tactic] = [];
+          const existing = tacticMap[mitre.tactic].find(t => t.id === mitre.techniqueId);
+          if (existing) existing.count++; else tacticMap[mitre.tactic].push({ id: mitre.techniqueId, name: mitre.techniqueName, count: 1 });
+        }
+      }
+    });
+    return Object.entries(tacticMap).map(([tactic, techniques]) => ({ tactic, techniques }));
+  }
+
+  // --- Data Flow Sankey SVG ---
+  private _flowSankeySVG(): string {
+    const w = 700, h = 220;
+    const sources = ['Web App', 'Mobile', 'API', 'Internal', 'Partner'];
+    const dests = ['Database', 'Cloud', 'Analytics', 'Archive', 'External'];
+    const flows = [
+      { from: 0, to: 0, value: 12, color: '#f59e0b' }, { from: 0, to: 1, value: 8, color: '#6366f1' },
+      { from: 1, to: 1, value: 10, color: '#6366f1' }, { from: 1, to: 4, value: 3, color: '#ef4444' },
+      { from: 2, to: 0, value: 15, color: '#f59e0b' }, { from: 2, to: 2, value: 7, color: '#22c55e' },
+      { from: 3, to: 0, value: 9, color: '#f59e0b' }, { from: 3, to: 3, value: 5, color: '#9ca3af' },
+      { from: 4, to: 1, value: 6, color: '#6366f1' }, { from: 4, to: 4, value: 4, color: '#ef4444' },
+    ];
+    const srcX = 80, dstX = w - 80;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    svg += `<text x="${srcX}" y="18" fill="#e2e8f0" font-size="10" text-anchor="middle" font-weight="700">Sources</text>`;
+    svg += `<text x="${dstX}" y="18" fill="#e2e8f0" font-size="10" text-anchor="middle" font-weight="700">Destinations</text>`;
+    sources.forEach((s, i) => { svg += `<text x="${srcX}" y="${35 + i * 32}" fill="#9ca3af" font-size="9" text-anchor="end">${s}</text>`; });
+    dests.forEach((d, i) => { svg += `<text x="${dstX}" y="${35 + i * 32}" fill="#9ca3af" font-size="9" text-anchor="start">${d}</text>`; });
+    let yOff = 30;
+    flows.forEach(f => {
+      const y1 = 35 + f.from * 32, y2 = 35 + f.to * 32;
+      const bw = f.value * 2;
+      const midX = (srcX + 10 + dstX - 10) / 2;
+      svg += `<path d="M${srcX + 10},${y1} C${midX},${y1} ${midX},${y2} ${dstX - 10},${y2}" fill="none" stroke="${f.color}" stroke-width="${bw}" opacity="0.4"/>`;
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Data Classification Heatmap ---
+  private _classificationHeatmapSVG(): string {
+    const w = 500, h = 180;
+    const types = ['PII', 'PHI', 'Financial', 'IP', 'Public', 'Internal'];
+    const zones = ['Production', 'Staging', 'Dev', 'Cloud', 'Partner'];
+    const data = types.map((t, ti) => zones.map((z, zi) => ({ type: t, zone: z, value: Math.floor(Math.random() * 100), severity: t === 'PII' || t === 'PHI' || t === 'Financial' ? 'high' : 'low' })));
+    const cellW = (w - 80) / zones.length, cellH = (h - 30) / types.length;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+    zones.forEach((z, i) => { svg += `<text x="${80 + i * cellW + cellW / 2}" y="15" fill="#9ca3af" font-size="8" text-anchor="middle">${z}</text>`; });
+    types.forEach((t, ti) => {
+      svg += `<text x="70" y="${30 + ti * cellH + cellH / 2 + 3}" fill="#9ca3af" font-size="8" text-anchor="end">${t}</text>`;
+      zones.forEach((z, zi) => {
+        const d = data[ti][zi];
+        const x = 80 + zi * cellW, y = 30 + ti * cellH;
+        const color = d.value > 75 ? '#ef4444' : d.value > 50 ? '#f97316' : d.value > 25 ? '#eab308' : '#22c55e';
+        svg += `<rect x="${x + 1}" y="${y + 1}" width="${cellW - 2}" height="${cellH - 2}" rx="3" fill="${color}" opacity="0.3" stroke="${color}" stroke-width="0.5"/>`;
+        svg += `<text x="${x + cellW / 2}" y="${y + cellH / 2 + 3}" fill="#e2e8f0" font-size="9" text-anchor="middle">${d.value}</text>`;
+      });
+    });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Collaboration ---
+  @state() private _flowTeam: { id: string; name: string; role: string; status: string }[] = [
+    { id: 'd1', name: 'Data Architect', role: 'Design', status: 'online' },
+    { id: 'd2', name: 'Security Analyst', role: 'Compliance', status: 'online' },
+    { id: 'd3', name: 'DevOps Engineer', role: 'Implementation', status: 'busy' },
+  ];
+  @state() private _flowComments: { id: string; userId: string; text: string; timestamp: string }[] = [];
+  @state() private _flowCommentText = '';
+
+  private _addFlowComment() {
+    if (!this._flowCommentText.trim()) return;
+    this._flowComments = [{ id: 'fc' + Date.now(), userId: 'You', text: this._flowCommentText.trim(), timestamp: new Date().toISOString() }, ...this._flowComments].slice(0, 30);
+    this._flowCommentText = '';
+  }
+
+  private _renderFlowCollab(): any {
+    return html`
+      <div style="margin-top:16px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Team Discussion</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          ${this._flowTeam.map(m => html`
+            <div style="display:flex;align-items:center;gap:4px;background:#1f2937;border-radius:4px;padding:3px 8px;font-size:10px">
+              <div style="width:6px;height:6px;border-radius:50%;background:${m.status === 'online' ? '#22c55e' : '#eab308'}"></div>
+              <span style="font-weight:600">${m.name}</span>
+            </div>
+          `)}
+        </div>
+        ${this._flowComments.length > 0 ? html`
+          <div style="max-height:60px;overflow-y:auto;margin-bottom:6px">
+            ${this._flowComments.slice(0, 5).map(c => html`
+              <div style="font-size:10px;padding:3px 0;border-bottom:1px solid #1f2937">
+                <span style="font-weight:600;color:#e2e8f0">${c.userId}</span>
+                <span style="color:#9ca3af">: ${c.text}</span>
+              </div>
+            `)}
+          </div>
+        ` : ''}
+        <div style="display:flex;gap:6px">
+          <input style="flex:1;background:#0f172a;border:1px solid #374151;border-radius:4px;padding:4px 8px;color:#e2e8f0;font-size:10px" placeholder="Comment..." .value=${this._flowCommentText} @input=${(e: any) => this._flowCommentText = e.target.value}>
+          <button style="background:#f59e0b;color:#111827;border:none;border-radius:4px;padding:4px 10px;font-size:10px;font-weight:600;cursor:pointer" @click=${this._addFlowComment}>Post</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Auto-Insights ---
+  private _generateFlowInsights(): { icon: string; text: string; severity: string }[] {
+    const insights: { icon: string; text: string; severity: string }[] = [];
+    const unencrypted = this._flows.filter((f: any) => !f.encrypted);
+    const sensitive = this._flows.filter((f: any) => f.dataType === 'pii' || f.dataType === 'phi');
+    const crossBorder = this._flows.filter((f: any) => f.crossBorder);
+    if (unencrypted.length > 0) insights.push({ icon: '\uD83D\uDD12', text: `${unencrypted.length} data flows without encryption. Immediate remediation required.`, severity: 'critical' });
+    if (sensitive.filter((f: any) => !f.encrypted).length > 0) insights.push({ icon: '\uD83D\uDEA8', text: `Sensitive data (PII/PHI) transmitted without encryption in ${sensitive.filter((f: any) => !f.encrypted).length} flows.`, severity: 'critical' });
+    if (crossBorder.length > 3) insights.push({ icon: '\uD83C\uDF10', text: `${crossBorder.length} cross-border data flows. GDPR/compliance review recommended.`, severity: 'high' });
+    const risk = this._computeFlowRisk();
+    if (risk.score > 75) insights.push({ icon: '\uD83D\uDD04', text: `Overall data flow risk score is ${risk.score}/100.`, severity: 'high' });
+    return insights.length > 0 ? insights : [{ icon: '\u2705', text: 'Data flows appear compliant.', severity: 'low' }];
+  }
+
+  private _renderFlowInsights(): any {
+    const insights = this._generateFlowInsights();
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Auto-Insights</div>
+        ${insights.map(i => html`
+          <div style="display:flex;gap:6px;padding:5px;margin-bottom:3px;background:#1f2937;border-radius:4px;font-size:10px;border-left:3px solid ${i.severity === 'critical' ? '#ef4444' : i.severity === 'high' ? '#f97316' : '#22c55e'}">
+            <span>${i.icon}</span><span style="color:#e2e8f0">${i.text}</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Panel Config ---
+  @state() private _flowConfig: { showSankey: boolean; showHeatmap: boolean; showCollab: boolean; autoRefresh: boolean } = {
+    showSankey: true, showHeatmap: true, showCollab: true, autoRefresh: false,
+  };
+
+  private _renderFlowConfig(): any {
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Configuration</div>
+        ${Object.entries(this._flowConfig).map(([key, val]) => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #1f2937">
+            <span style="font-size:10px;color:#9ca3af">${key.replace(/([A-Z])/g, ' $1').trim()}</span>
+            <div style="width:32px;height:18px;border-radius:9px;background:${val ? '#22c55e' : '#374151'};cursor:pointer;position:relative" @click=${() => { this._flowConfig = { ...this._flowConfig, [key]: !val }; }}>
+              <div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;left:${val ? '16px' : '2px'};transition:left 0.2s"></div>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Compliance Check ---
+  private _complianceChecks: { id: string; rule: string; standard: string; status: 'pass' | 'fail' | 'warning' }[] = [
+    { id: 'fc1', rule: 'PII encrypted in transit', standard: 'GDPR Art. 32', status: 'fail' },
+    { id: 'fc2', rule: 'Data retention limits enforced', standard: 'GDPR Art. 5', status: 'warning' },
+    { id: 'fc3', rule: 'Cross-border transfer authorized', standard: 'GDPR Art. 44', status: 'pass' },
+    { id: 'fc4', rule: 'Access logging enabled', standard: 'SOC2 CC7.2', status: 'pass' },
+    { id: 'fc5', rule: 'Data classification applied', standard: 'ISO 27001 A.8.2', status: 'warning' },
+  ];
+
+  private _renderCompliancePanel(): any {
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Compliance Status</div>
+        ${this._complianceChecks.map(c => html`
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #1f2937;font-size:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${c.status === 'pass' ? '#22c55e' : c.status === 'fail' ? '#ef4444' : '#eab308'}"></div>
+            <span style="flex:1;color:#e2e8f0">${c.rule}</span>
+            <span style="color:#6b7280;font-size:9px">${c.standard}</span>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Anomaly Detection ---
+  private _detectFlowAnomalies(): { type: string; description: string; severity: string }[] {
+    const anomalies: { type: string; description: string; severity: string }[] = [];
+    const highVolume = this._flows.filter((f: any) => f.volume > 1000000);
+    if (highVolume.length > 0) anomalies.push({ type: 'High Volume Transfer', description: `${highVolume.length} flows exceed 1GB threshold`, severity: 'high' });
+    const unusualHours = this._flows.filter((f: any) => { const h = new Date(f.timestamp).getHours(); return h < 6 || h > 22; });
+    if (unusualHours.length > 2) anomalies.push({ type: 'Off-Hours Activity', description: `${unusualHours.length} flows active outside business hours`, severity: 'medium' });
+    return anomalies;
+  }
+
+  private _renderAnomalyPanel(): any {
+    const anomalies = this._detectFlowAnomalies();
+    if (anomalies.length === 0) return nothing;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#f59e0b">Anomalies (${anomalies.length})</div>
+        ${anomalies.map(a => html`
+          <div style="background:#1f2937;border-radius:4px;padding:6px;margin-bottom:4px;border-left:3px solid ${a.severity === 'high' ? '#ef4444' : '#eab308'}">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0">${a.type}</div>
+            <div style="font-size:10px;color:#9ca3af">${a.description}</div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Data Flow Radar Chart ---
+  private _flowRadarSVG(): string {
+    const dims = ['PII Exposure', 'Encryption', 'Access Control', 'Compliance', 'Volume', 'Velocity'];
+    const values = [0.7, 0.4, 0.6, 0.8, 0.5, 0.3];
+    const cx = 100, cy = 100, r = 70, n = dims.length;
+    let svg = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">`;
+    for (let ring = 1; ring <= 4; ring++) {
+      const rr = (ring / 4) * r;
+      const pts = dims.map((_, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`; }).join(' ');
+      svg += `<polygon points="${pts}" fill="none" stroke="#374151" stroke-width="0.5"/>`;
+    }
+    dims.forEach((_, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; svg += `<line x1="${cx}" y1="${cy}" x2="${cx + r * Math.cos(a)}" y2="${cy + r * Math.sin(a)}" stroke="#374151" stroke-width="0.5"/>`; });
+    const dataPts = values.map((v, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; return `${cx + v * r * Math.cos(a)},${cy + v * r * Math.sin(a)}`; }).join(' ');
+    svg += `<polygon points="${dataPts}" fill="#6366f1" fill-opacity="0.2" stroke="#6366f1" stroke-width="1.5"/>`;
+    dims.forEach((d, i) => { const a = (Math.PI * 2 * i) / n - Math.PI / 2; const lx = cx + (r + 18) * Math.cos(a), ly = cy + (r + 18) * Math.sin(a); svg += `<text x="${lx}" y="${ly}" fill="#9ca3af" font-size="7" text-anchor="middle" dominant-baseline="middle">${d}</text>`; });
+    svg += `</svg>`;
+    return svg;
+  }
+
+  // --- Trend Prediction ---
+  private _predictFlowTrend(): { direction: string; confidence: number; reason: string; nextScore: number } {
+    const risk = this._computeFlowRisk();
+    const unencrypted = this._flows.filter((f: any) => !f.encrypted).length;
+    if (unencrypted > this._flows.length * 0.3) return { direction: 'INCREASING', confidence: 0.8, reason: 'High proportion of unencrypted flows indicates growing risk', nextScore: Math.min(100, risk.score + 12) };
+    return { direction: 'STABLE', confidence: 0.6, reason: 'Encryption coverage is adequate', nextScore: risk.score + 2 };
+  }
+
+  private _renderTrendPanel(): any {
+    const trend = this._predictFlowTrend();
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px">Trend Prediction</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:20px">${trend.direction === 'INCREASING' ? '\uD83D\uDD3C' : trend.direction === 'DECREASING' ? '\uD83D\uDD3D' : '\u2192'}</div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:${trend.direction === 'INCREASING' ? '#ef4444' : '#22c55e'}">${trend.direction}</div>
+            <div style="font-size:10px;color:#9ca3af">${trend.reason}</div>
+            <div style="font-size:9px;color:#6b7280">Confidence: ${Math.round(trend.confidence * 100)}%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Notification System ---
+  @state() private _notifications: { id: string; type: 'alert' | 'info' | 'warning'; text: string; timestamp: string; read: boolean }[] = [
+    { id: 'n1', type: 'alert', text: 'Unencrypted PII data flow detected on production channel', timestamp: new Date(Date.now() - 300000).toISOString(), read: false },
+    { id: 'n2', type: 'warning', text: 'Cross-border transfer to non-EU region requires DPA review', timestamp: new Date(Date.now() - 1800000).toISOString(), read: false },
+    { id: 'n3', type: 'info', text: 'Data flow classification completed for Q4 audit', timestamp: new Date(Date.now() - 3600000).toISOString(), read: true },
+  ];
+
+  private _renderNotifications(): any {
+    const unread = this._notifications.filter(n => !n.read).length;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <span>Notifications</span>
+          ${unread > 0 ? html`<span style="background:#ef4444;color:white;font-size:9px;padding:1px 5px;border-radius:8px">${unread}</span>` : nothing}
+        </div>
+        ${this._notifications.slice(0, 5).map(n => html`
+          <div style="display:flex;gap:6px;padding:5px 0;border-bottom:1px solid #1f2937;font-size:10px;opacity:${n.read ? '0.6' : '1'}">
+            <div style="width:8px;height:8px;border-radius:50%;background:${n.type === 'alert' ? '#ef4444' : n.type === 'warning' ? '#eab308' : '#6366f1'};flex-shrink:0;margin-top:3px"></div>
+            <div style="flex:1"><div style="color:#e2e8f0">${n.text}</div><div style="color:#4b5563;font-size:8px;margin-top:2px">${new Date(n.timestamp).toLocaleTimeString()}</div></div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // --- Approval Workflow ---
+  @state() private _pendingApprovals: { id: string; requester: string; action: string; detail: string; timestamp: string }[] = [
+    { id: 'pa1', requester: 'Data Architect', action: 'approve_flow', detail: 'New API data flow to analytics pipeline', timestamp: new Date(Date.now() - 900000).toISOString() },
+    { id: 'pa2', requester: 'DevOps Engineer', action: 'modify_encryption', detail: 'Upgrade TLS 1.2 to TLS 1.3 for partner channel', timestamp: new Date(Date.now() - 2700000).toISOString() },
+  ];
+
+  private _handleApproval(id: string, approved: boolean) {
+    this._pendingApprovals = this._pendingApprovals.filter(a => a.id !== id);
+    this._notifications = [{ id: 'n' + Date.now(), type: approved ? 'info' : 'warning', text: approved ? 'Flow approval granted' : 'Flow approval denied', timestamp: new Date().toISOString(), read: false }, ...this._notifications];
+  }
+
+  private _renderApprovals(): any {
+    if (this._pendingApprovals.length === 0) return nothing;
+    return html`
+      <div style="margin-top:12px;background:#1a1d27;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#f59e0b">Pending Approvals (${this._pendingApprovals.length})</div>
+        ${this._pendingApprovals.map(a => html`
+          <div style="background:#1f2937;border-radius:6px;padding:8px;margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:600;color:#e2e8f0">${a.requester}</span>
+              <span style="font-size:9px;color:#6b7280">${new Date(a.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div style="font-size:10px;color:#9ca3af;margin-top:2px">${a.detail}</div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <button style="background:#052e16;color:#86efac;border:none;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer" @click=${() => this._handleApproval(a.id, true)}>Approve</button>
+              <button style="background:#450a0a;color:#fca5a5;border:none;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer" @click=${() => this._handleApproval(a.id, false)}>Deny</button>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
 }
