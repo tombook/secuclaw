@@ -709,7 +709,200 @@ export class ScAttackPathDiscovery extends LitElement {
           </table>
         </div>
       </div>
-    `;
+    
+    /* ─── Enhanced Data Cards ─── */
+    .enhanced-card {
+      background: #0a0e17;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 14px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .enhanced-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(124, 58, 237, 0.12), rgba(0, 212, 255, 0.04));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .enhanced-card:hover {
+      background: #111827;
+      border-color: rgba(0, 212, 255, 0.15);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      transform: translateY(-1px);
+    }
+
+    /* ─── Stat Display ─── */
+    .stat-display {
+      text-align: center;
+      padding: 12px;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+
+    .stat-text {
+      font-size: 10px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* ─── Status Indicator Enhanced ─── */
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-chip.critical { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .status-chip.critical .dot { background: #ef4444; box-shadow: 0 0 4px #ef4444; }
+    .status-chip.high { background: rgba(249, 115, 22, 0.12); color: #f97316; }
+    .status-chip.high .dot { background: #f97316; box-shadow: 0 0 4px #f97316; }
+    .status-chip.medium { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .status-chip.medium .dot { background: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
+    .status-chip.low { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+    .status-chip.low .dot { background: #22c55e; box-shadow: 0 0 4px #22c55e; }
+    .status-chip.info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+    .status-chip.info .dot { background: #3b82f6; box-shadow: 0 0 4px #3b82f6; }
+
+    /* ─── Timeline Connector ─── */
+    .timeline-connector {
+      position: relative;
+      padding-left: 22px;
+    }
+
+    .timeline-connector::before {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, #00d4ff, #374151, transparent);
+    }
+
+    .timeline-connector .tl-item {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .timeline-connector .tl-item::before {
+      content: '';
+      position: absolute;
+      left: -22px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #0a0e17;
+      border: 2px solid #00d4ff;
+      z-index: 1;
+    }
+
+    /* ─── Responsive Grid ─── */
+    .responsive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    /* ─── Multi-line Truncation ─── */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ─── Skeleton Placeholder ─── */
+    .skel-placeholder {
+      background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+      background-size: 200% 100%;
+      animation: skel-pulse 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes skel-pulse {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ─── Icon-only Button ─── */
+    .icon-only-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid #374151;
+      border-radius: 6px;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .icon-only-btn:hover {
+      background: rgba(0, 212, 255, 0.1);
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+
+    /* ─── Scroll Fade Container ─── */
+    .scroll-fade {
+      overflow-y: auto;
+      max-height: 500px;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 20px, black calc(100% - 20px), transparent 100%);
+    }
+
+    /* ─── Stacked Progress Bar ─── */
+    .stacked-progress {
+      display: flex;
+      height: 6px;
+      border-radius: 3px;
+      overflow: hidden;
+      background: #1f2937;
+    }
+
+    .stacked-progress .seg {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+  `;
   }
 
   // --- Anomaly Detection for Network Paths ---

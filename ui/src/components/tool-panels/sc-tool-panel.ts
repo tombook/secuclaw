@@ -392,6 +392,131 @@ export class ScToolPanel extends LitElement {
     .chip-info { background: rgba(59,130,246,0.15); color: #3b82f6; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* ─── Skeleton Loading State ─── */
+    .skeleton-loading {
+      padding: 16px 18px;
+    }
+
+    .skeleton-loading .skel-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .skeleton-loading .skel-bar {
+      height: 14px;
+      flex: 1;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: skel-shimmer 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-loading .skel-bar.short { max-width: 60%; }
+    .skeleton-loading .skel-bar.shorter { max-width: 40%; }
+    .skeleton-loading .skel-card {
+      height: 80px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: skel-shimmer 1.5s ease-in-out infinite;
+      margin-bottom: 10px;
+    }
+
+    .skeleton-loading .skel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    @keyframes skel-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ─── Panel Body Scroll Shadow ─── */
+    .panel-body-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+      position: relative;
+    }
+
+    .panel-body-scroll.scrolled-top::before {
+      content: '';
+      position: sticky;
+      top: 0;
+      display: block;
+      height: 20px;
+      background: linear-gradient(180deg, var(--bg-primary, #0f172a) 0%, transparent 100%);
+      z-index: 10;
+      pointer-events: none;
+      margin: 0 -18px;
+      padding: 0 18px;
+    }
+
+    .panel-body-scroll.scrolled-bottom::after {
+      content: '';
+      position: sticky;
+      bottom: 0;
+      display: block;
+      height: 20px;
+      background: linear-gradient(0deg, var(--bg-primary, #0f172a) 0%, transparent 100%);
+      z-index: 10;
+      pointer-events: none;
+      margin: 0 -18px;
+      padding: 0 18px;
+    }
+
+    .panel-body-scroll::-webkit-scrollbar { width: 4px; }
+    .panel-body-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+
+    /* ─── Tab Indicator Animation ─── */
+    .panel-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .panel-tab {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      transition: color 150ms ease;
+      position: relative;
+    }
+
+    .panel-tab:hover { color: #94a3b8; }
+
+    .panel-tab.active {
+      color: var(--accent-color, #3b82f6);
+      font-weight: 600;
+    }
+
+    .panel-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-color, #3b82f6);
+      border-radius: 2px 2px 0 0;
+      animation: tab-indicator-slide 0.2s ease-out;
+    }
+
+    @keyframes tab-indicator-slide {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
   `;
 
   @property({ type: Boolean, reflect: true }) open = false;
