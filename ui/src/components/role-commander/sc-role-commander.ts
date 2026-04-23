@@ -1424,21 +1424,41 @@ export class ScRoleCommander extends LitElement {
     `;
   }
 
-  // ─── Tool Guide (inline, always visible — CISO layout) ──────────
+  // ─── Tool Guide (inline, always visible — actual tool links from ROLE_TOOL_CONFIGS) ──────────
   private _renderToolGuideInline(roleId: string) {
-    const guides = ScRoleCommander.TOOL_GUIDES[roleId];
-    if (!guides || guides.length === 0) return nothing;
+    const config = ROLE_TOOL_CONFIGS[roleId]
+    if (!config) return nothing
+    const allTools = [...config.coreTools, ...config.secondaryTools]
+    const staticIds = new Set(allTools.map(t => t.id))
+    const storePlugins = pluginStore.getState().getToolsByRole(roleId)
+    for (const m of storePlugins) {
+      if (!staticIds.has(m.meta.id)) {
+        allTools.push({ id: m.meta.id, label: m.meta.name, icon: m.meta.icon, priority: 0 })
+        staticIds.add(m.meta.id)
+      }
+    }
+    const tools = allTools.filter(t => {
+      const plugin = pluginStore.getState().getPlugin(t.id)
+      return plugin ? plugin.enabled : true
+    })
+    if (tools.length === 0) return nothing
+
     return html`
       <div class="ciso-divider"></div>
-      <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:8px;">📖 工具使用指南</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;">
-        ${guides.map(g => html`
-          <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-              <span style="font-size:11px;color:#e2e8f0;font-weight:600;">${g.tool}</span>
-              <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:#1e293b;color:#64748b;">${g.category}</span>
-            </div>
-            <div style="font-size:10px;color:#94a3b8;line-height:1.4;">${g.guide}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:11px;font-weight:600;color:#94a3b8;">🛠️ 工具列表</span>
+        <span style="font-size:10px;color:#475569;">${tools.length} 个工具</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;">
+        ${tools.map(tool => html`
+          <div
+            style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;cursor:pointer;transition:all 0.15s;font-size:11px;color:#e2e8f0;"
+            @click=${() => this._openToolPanel(tool.id)}
+            @mouseover=${(e: Event) => { (e.target as HTMLElement).style.borderColor = 'var(--sc-primary-color)'; (e.target as HTMLElement).style.background = 'var(--sc-primary-alpha-10, rgba(59,130,246,0.1))'; }}
+            @mouseout=${(e: Event) => { (e.target as HTMLElement).style.borderColor = '#1e293b'; (e.target as HTMLElement).style.background = '#0f172a'; }}
+          >
+            <span style="width:6px;height:6px;border-radius:50%;background:${this._getToolStatusColor(tool.id)};flex-shrink:0;"></span>
+            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this._resolveIcon(tool.icon)} ${tool.label}</span>
           </div>
         `)}
       </div>
