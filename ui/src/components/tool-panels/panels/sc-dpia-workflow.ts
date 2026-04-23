@@ -3098,5 +3098,239 @@ private _executionHistory: ExecutionRecord[] = [
       </div>`;
   }
 
+
+  // === Zero Trust Architecture Module ===
+  @state() private _ztMaturityLevel: number = 3;
+  @state() private _ztMaturityLevels = [
+    { level: 1, name: 'Initial', desc: 'Ad-hoc security, no formal ZT policy', color: '#ef4444', score: 15 },
+    { level: 2, name: 'Developing', desc: 'Basic identity verification, perimeter-focused', color: '#f97316', score: 35 },
+    { level: 3, name: 'Defined', desc: 'Micro-segmentation pilot, policy-based access', color: '#f59e0b', score: 55 },
+    { level: 4, name: 'Managed', desc: 'Continuous verification, adaptive policies', color: '#22c55e', score: 78 },
+    { level: 5, name: 'Optimized', desc: 'Full ZT maturity, AI-driven trust decisions', color: '#06b6d4', score: 95 },
+  ];
+  @state() private _ztEntities: Array<{ id: string; name: string; type: 'user' | 'device' | 'service' | 'network'; trustScore: number; lastVerified: string; riskFactors: string[]; policies: string[] }> = [
+    { id: 'zt-e001', name: 'admin@corp.com', type: 'user', trustScore: 92, lastVerified: '2026-04-23T09:45:00Z', riskFactors: ['privileged'], policies: ['mfa-required', 'session-timeout-30m', 'ip-whitelist'] },
+    { id: 'zt-e002', name: 'laptop-alice', type: 'device', trustScore: 78, lastVerified: '2026-04-23T09:30:00Z', riskFactors: [' BYOD', 'os-outdated'], policies: ['eds-check', 'disk-encryption', 'vpn-required'] },
+    { id: 'zt-e003', name: 'api-gateway-prod', type: 'service', trustScore: 95, lastVerified: '2026-04-23T09:50:00Z', riskFactors: [], policies: ['mtls', 'rate-limit', 'jwt-validation'] },
+    { id: 'zt-e004', name: '10.0.0.0/8', type: 'network', trustScore: 65, lastVerified: '2026-04-23T08:00:00Z', riskFactors: ['flat-network', 'legacy-systems'], policies: ['micro-seg-pilot', 'east-west-firewall'] },
+    { id: 'zt-e005', name: 'contractor@vendor.com', type: 'user', trustScore: 42, lastVerified: '2026-04-22T18:00:00Z', riskFactors: ['external', 'shared-creds', 'no-mfa'], policies: ['restrict-data-access', 'session-record'] },
+  ];
+  @state() private _ztFilterType: string = 'all';
+  @state() private _ztExceptions: Array<{ id: string; entity: string; reason: string; approvedBy: string; expiresAt: string; status: 'active' | 'expired' | 'revoked' }> = [
+    { id: 'zt-x001', entity: 'legacy-db-01', reason: 'Cannot support mTLS, migration planned Q3', approvedBy: 'ciso@corp.com', expiresAt: '2026-09-30T23:59:59Z', status: 'active' },
+    { id: 'zt-x002', entity: 'svc-batch-etl', reason: 'Long-running job exceeds session timeout', approvedBy: 'sec-lead@corp.com', expiresAt: '2026-06-15T23:59:59Z', status: 'active' },
+  ];
+
+  private _renderZeroTrustModule(): any {
+    const currentLevel = this._ztMaturityLevels[this._ztMaturityLevel - 1];
+    const filteredEntities = this._ztEntities.filter(e => this._ztFilterType === 'all' || e.type === this._ztFilterType);
+    const entityTypes = ['user', 'device', 'service', 'network'] as const;
+    const typeIcons: Record<string, string> = { user: '\u{1F464}', device: '\u{1F4BB}', service: '\u{2699}\uFE0F', network: '\u{1F310}' };
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">\u{1F6E1}\uFE0F Zero Trust Architecture</span>
+          <span style="font-size:9px;color:${currentLevel.color};background:${currentLevel.color}18;padding:2px 8px;border-radius:10px">Level ${currentLevel.level}: ${currentLevel.name}</span>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:10px">
+          ${this._ztMaturityLevels.map(l => html`
+            <div style="flex:1;text-align:center;padding:4px 2px;background:${l.level === this._ztMaturityLevel ? l.color + '22' : '#111827'};border-radius:4px;border:1px solid ${l.level === this._ztMaturityLevel ? l.color + '55' : '#1f2937'};cursor:pointer" @click=${() => { this._ztMaturityLevel = l.level; }}>
+              <div style="font-size:10px;font-weight:700;color:${l.color}">L${l.level}</div>
+              <div style="font-size:7px;color:#9ca3af">${l.name}</div>
+              <div style="font-size:8px;color:#6b7280;margin-top:2px">${l.score}%</div>
+            </div>
+          `)}
+        </div>
+        <div style="font-size:9px;color:#9ca3af;margin-bottom:8px;padding:4px 8px;background:#111827;border-radius:4px">${currentLevel.desc}</div>
+        <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" style="font-size:8px;padding:2px 5px;background:${this._ztFilterType === 'all' ? '#1e3a5f' : '#111827'};color:${this._ztFilterType === 'all' ? '#60a5fa' : '#6b7280'}" @click=${() => { this._ztFilterType = 'all'; }}>All (${this._ztEntities.length})</button>
+          ${entityTypes.map(t => html`
+            <button class="btn btn-sm" style="font-size:8px;padding:2px 5px;background:${this._ztFilterType === t ? '#1e3a5f' : '#111827'};color:${this._ztFilterType === t ? '#60a5fa' : '#6b7280'}" @click=${() => { this._ztFilterType = t; }}>${typeIcons[t]} ${t} (${this._ztEntities.filter(e => e.type === t).length})</button>
+          `)}
+        </div>
+        ${filteredEntities.map(e => html`
+          <div style="padding:5px 8px;background:#111827;border-radius:4px;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="font-size:11px">${typeIcons[e.type]}</span>
+              <div>
+                <div style="font-weight:600;color:#e2e8f0;font-size:10px">${e.name}</div>
+                <div style="font-size:8px;color:#6b7280">${e.riskFactors.length > 0 ? e.riskFactors.join(', ') : 'No risk factors'}</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:10px;font-weight:700;color:${e.trustScore >= 80 ? '#22c55e' : e.trustScore >= 60 ? '#f59e0b' : '#ef4444'}">${e.trustScore}/100</div>
+              <div style="font-size:7px;color:#4b5563">${e.lastVerified.split('T')[1]?.slice(0, 5) || ''}</div>
+            </div>
+          </div>
+        `)}
+        <div style="margin-top:8px;padding:6px 8px;background:#111827;border-radius:4px">
+          <div style="font-size:10px;font-weight:600;color:#e2e8f0;margin-bottom:4px">Policy Exceptions (${this._ztExceptions.filter(x => x.status === 'active').length})</div>
+          ${this._ztExceptions.filter(x => x.status === 'active').map(x => html`
+            <div style="padding:3px 6px;background:#0a0c10;border-radius:3px;margin-bottom:2px;font-size:8px;color:#9ca3af;border-left:2px solid #f59e0b">
+              ${x.entity}: ${x.reason} | Approved: ${x.approvedBy} | Expires: ${x.expiresAt.split('T')[0]}
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+
+  // === Cloud Security Posture Module ===
+  @state() private _cloudProviders: Array<{ id: string; name: string; icon: string; resources: number; compliant: number; nonCompliant: number; severity: { critical: number; high: number; medium: number; low: number }; lastScan: string }> = [
+    { id: 'aws', name: 'AWS', icon: '\u2601', resources: 1847, compliant: 1623, nonCompliant: 224, severity: { critical: 12, high: 45, medium: 98, low: 69 }, lastScan: '2026-04-23T09:00:00Z' },
+    { id: 'azure', name: 'Azure', icon: '\u{1F4A1}', resources: 923, compliant: 845, nonCompliant: 78, severity: { critical: 5, high: 18, medium: 32, low: 23 }, lastScan: '2026-04-23T08:45:00Z' },
+    { id: 'gcp', name: 'GCP', icon: '\u{1F535}', resources: 412, compliant: 389, nonCompliant: 23, severity: { critical: 2, high: 7, medium: 9, low: 5 }, lastScan: '2026-04-23T08:30:00Z' },
+  ];
+  @state() private _cloudSelectedProvider: string = 'aws';
+  @state() private _cloudFindings: Array<{ id: string; provider: string; resource: string; region: string; finding: string; severity: 'critical' | 'high' | 'medium' | 'low'; status: 'open' | 'remediating' | 'resolved'; remediation: string; detectedAt: string }> = [
+    { id: 'cf-001', provider: 'aws', resource: 's3-prod-data-bucket', region: 'us-east-1', finding: 'S3 Bucket allows public read access', severity: 'critical', status: 'open', remediation: 'Apply bucket policy to deny public access', detectedAt: '2026-04-22T14:30:00Z' },
+    { id: 'cf-002', provider: 'aws', resource: 'rds-prod-postgres', region: 'us-east-1', finding: 'RDS instance not encrypted at rest', severity: 'high', status: 'remediating', remediation: 'Enable encryption via snapshot restore', detectedAt: '2026-04-22T12:00:00Z' },
+    { id: 'cf-003', provider: 'aws', resource: 'ec2-prod-web-01', region: 'us-west-2', finding: 'Security group allows SSH from 0.0.0.0/0', severity: 'high', status: 'open', remediation: 'Restrict SSH source to bastion IP', detectedAt: '2026-04-21T09:00:00Z' },
+    { id: 'cf-004', provider: 'aws', resource: 'iam-role-lambda-prod', region: 'us-east-1', finding: 'IAM role has excessive permissions (AdministratorAccess)', severity: 'critical', status: 'open', remediation: 'Apply least-privilege policy', detectedAt: '2026-04-20T16:00:00Z' },
+    { id: 'cf-005', provider: 'aws', resource: 'vpc-prod-default', region: 'us-east-1', finding: 'VPC flow logs disabled', severity: 'medium', status: 'remediating', remediation: 'Enable VPC flow logs to CloudWatch', detectedAt: '2026-04-19T11:00:00Z' },
+    { id: 'cf-006', provider: 'azure', resource: 'storage-acct-prod', region: 'eastus', finding: 'Storage account allows HTTP traffic', severity: 'high', status: 'open', remediation: 'Enable HTTPS-only transfer', detectedAt: '2026-04-22T10:00:00Z' },
+    { id: 'cf-007', provider: 'gcp', resource: 'gke-prod-cluster', region: 'us-central1', finding: 'Workload Identity not enabled', severity: 'medium', status: 'open', remediation: 'Enable Workload Identity and migrate service accounts', detectedAt: '2026-04-21T15:00:00Z' },
+  ];
+  @state() private _cloudDriftAlerts: Array<{ id: string; resource: string; field: string; expected: string; actual: string; detectedAt: string }> = [
+    { id: 'cd-001', resource: 'sg-prod-api', field: 'ingress.0.cidr', expected: '10.0.0.0/16', actual: '0.0.0.0/0', detectedAt: '2026-04-23T08:15:00Z' },
+    { id: 'cd-002', resource: 's3-config-bucket', field: 'versioning', expected: 'Enabled', actual: 'Suspended', detectedAt: '2026-04-23T07:30:00Z' },
+  ];
+
+  private _renderCloudPostureModule(): any {
+    const selected = this._cloudProviders.find(p => p.id === this._cloudSelectedProvider) || this._cloudProviders[0];
+    const findings = this._cloudFindings.filter(f => f.provider === this._cloudSelectedProvider);
+    const driftAlerts = this._cloudDriftAlerts.filter(d => findings.some(f => f.resource === d.resource));
+    const sevColors: Record<string, string> = { critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#6b7280' };
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">\u2601 Cloud Security Posture</span>
+          <div style="display:flex;gap:3px">
+            ${this._cloudProviders.map(p => html`
+              <button class="btn btn-sm" style="font-size:8px;padding:3px 6px;background:${this._cloudSelectedProvider === p.id ? '#1e3a5f' : '#111827'};color:${this._cloudSelectedProvider === p.id ? '#60a5fa' : '#6b7280'};border:1px solid ${this._cloudSelectedProvider === p.id ? '#1e3a5f' : '#1f2937'}" @click=${() => { this._cloudSelectedProvider = p.id; }}>
+                ${p.icon} ${p.name} (${p.nonCompliant})
+              </button>
+            `)}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
+          <div style="padding:6px;background:#111827;border-radius:4px;text-align:center"><div style="font-size:14px;font-weight:700;color:#e2e8f0">${selected.resources}</div><div style="font-size:7px;color:#6b7280">Resources</div></div>
+          <div style="padding:6px;background:#111827;border-radius:4px;text-align:center"><div style="font-size:14px;font-weight:700;color:#22c55e">${selected.compliant}</div><div style="font-size:7px;color:#6b7280">Compliant</div></div>
+          <div style="padding:6px;background:#111827;border-radius:4px;text-align:center"><div style="font-size:14px;font-weight:700;color:#ef4444">${selected.nonCompliant}</div><div style="font-size:7px;color:#6b7280">Non-Compliant</div></div>
+          <div style="padding:6px;background:#111827;border-radius:4px;text-align:center"><div style="font-size:14px;font-weight:700;color:#f59e0b">${Math.round(selected.compliant / selected.resources * 100)}%</div><div style="font-size:7px;color:#6b7280">Compliance</div></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          ${Object.entries(selected.severity).map(([sev, count]) => html`
+            <div style="display:flex;align-items:center;gap:3px;font-size:8px"><div style="width:6px;height:6px;border-radius:50%;background:${sevColors[sev]}"></div><span style="color:#9ca3af;text-transform:uppercase">${sev}:</span><span style="color:#e2e8f0;font-weight:600">${count}</span></div>
+          `)}
+        </div>
+        ${findings.map(f => html`
+          <div style="padding:5px 8px;background:#111827;border-radius:4px;margin-bottom:3px;border-left:3px solid ${sevColors[f.severity]}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:600;color:#e2e8f0;font-size:10px">${f.finding}</span>
+              <span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${f.status === 'open' ? '#ef444422' : '#3b82f622'};color:${f.status === 'open' ? '#ef4444' : '#3b82f6'}">${f.status}</span>
+            </div>
+            <div style="font-size:8px;color:#6b7280;margin-top:2px">${f.resource} (${f.region}) | ${f.remediation}</div>
+          </div>
+        `)}
+        ${driftAlerts.length > 0 ? html`
+          <div style="margin-top:6px;padding:6px 8px;background:#1a0a0a;border-radius:4px;border:1px solid #ef444433">
+            <div style="font-size:10px;font-weight:600;color:#ef4444;margin-bottom:4px">\u26A0 Configuration Drift Detected (${driftAlerts.length})</div>
+            ${driftAlerts.map(d => html`
+              <div style="font-size:8px;color:#9ca3af;padding:2px 0">${d.resource}: ${d.field} expected="${d.expected}" actual="${d.actual}"</div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>`;
+  }
+
+
+  // === Data Classification Engine ===
+  @state() private _dataClassificationLevels = [
+    { level: 'public', label: 'Public', color: '#22c55e', icon: '\u{1F7E2}', desc: 'No restrictions, freely distributable', count: 2847 },
+    { level: 'internal', label: 'Internal', color: '#3b82f6', icon: '\u{1F535}', desc: 'Internal use only, not for external sharing', count: 1523 },
+    { level: 'confidential', label: 'Confidential', color: '#f59e0b', icon: '\u{1F7E1}', desc: 'Restricted to authorized personnel with NDA', count: 389 },
+    { level: 'restricted', label: 'Restricted', color: '#ef4444', icon: '\u{1F534}', desc: 'Highly sensitive, need-to-know basis only', count: 67 },
+  ];
+  @state() private _dlpRules: Array<{ id: string; name: string; condition: string; action: 'block' | 'alert' | 'encrypt' | 'quarantine'; enabled: boolean; matchCount: number; lastTriggered: string }> = [
+    { id: 'dlp-001', name: 'SSN Pattern Detection', condition: 'regex: \b\d{3}-\d{2}-\d{4}\b', action: 'block', enabled: true, matchCount: 23, lastTriggered: '2026-04-22T16:30:00Z' },
+    { id: 'dlp-002', name: 'Credit Card Numbers', condition: 'regex: \b4\d{12}(?:\d{3})?\b', action: 'block', enabled: true, matchCount: 15, lastTriggered: '2026-04-22T14:15:00Z' },
+    { id: 'dlp-003', name: 'Source Code Exfil', condition: 'extension: .java,.py,.go AND size > 5MB', action: 'quarantine', enabled: true, matchCount: 3, lastTriggered: '2026-04-21T09:00:00Z' },
+    { id: 'dlp-004', name: 'PII in Email Subject', condition: 'email-subject contains SSN or DOB pattern', action: 'alert', enabled: true, matchCount: 8, lastTriggered: '2026-04-23T08:00:00Z' },
+    { id: 'dlp-005', name: 'Healthcare Data (HIPAA)', condition: 'content matches ICD-10 codes or patient IDs', action: 'encrypt', enabled: true, matchCount: 12, lastTriggered: '2026-04-22T11:00:00Z' },
+  ];
+  @state() private _dataFlows: Array<{ id: string; source: string; dest: string; dataClass: string; volume: string; encrypted: boolean; compliant: boolean }> = [
+    { id: 'df-001', source: 'CRM System', dest: 'Analytics DW', dataClass: 'confidential', volume: '2.3 GB/day', encrypted: true, compliant: true },
+    { id: 'df-002', source: 'HR Database', dest: 'Payroll SaaS', dataClass: 'restricted', volume: '150 MB/day', encrypted: true, compliant: false },
+    { id: 'df-003', source: 'Customer Portal', dest: 'Support Ticketing', dataClass: 'internal', volume: '800 MB/day', encrypted: true, compliant: true },
+    { id: 'df-004', source: 'Dev Environment', dest: 'External API', dataClass: 'public', volume: '50 MB/day', encrypted: false, compliant: true },
+  ];
+  @state() private _retentionPolicies: Array<{ id: string; dataClass: string; retentionMonths: number; storageLocation: string; autoDelete: boolean; lastAudit: string }> = [
+    { id: 'rp-001', dataClass: 'public', retentionMonths: 36, storageLocation: 'Standard S3', autoDelete: true, lastAudit: '2026-04-15' },
+    { id: 'rp-002', dataClass: 'internal', retentionMonths: 24, storageLocation: 'Standard S3', autoDelete: true, lastAudit: '2026-04-15' },
+    { id: 'rp-003', dataClass: 'confidential', retentionMonths: 12, storageLocation: 'Encrypted Vault', autoDelete: false, lastAudit: '2026-04-15' },
+    { id: 'rp-004', dataClass: 'restricted', retentionMonths: 6, storageLocation: 'HSM-Backed Vault', autoDelete: true, lastAudit: '2026-04-15' },
+  ];
+
+  private _renderDataClassificationModule(): any {
+    const classColors: Record<string, string> = { public: '#22c55e', internal: '#3b82f6', confidential: '#f59e0b', restricted: '#ef4444' };
+    const totalItems = this._dataClassificationLevels.reduce((s, l) => s + l.count, 0);
+    return html`
+      <div style="padding:12px;background:#0a0c10;border-radius:8px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">\u{1F4CA} Data Classification Engine</span>
+          <span style="font-size:9px;color:#6b7280">${totalItems.toLocaleString()} total data items</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
+          ${this._dataClassificationLevels.map(l => html`
+            <div style="padding:6px;background:#111827;border-radius:4px;text-align:center;border-top:2px solid ${l.color}">
+              <div style="font-size:14px;font-weight:700;color:${l.color}">${l.count.toLocaleString()}</div>
+              <div style="font-size:8px;color:#e2e8f0;font-weight:600">${l.icon} ${l.label}</div>
+              <div style="font-size:7px;color:#6b7280;margin-top:1px">${Math.round(l.count / totalItems * 100)}%</div>
+            </div>
+          `)}
+        </div>
+        <div style="font-size:10px;font-weight:600;color:#e2e8f0;margin-bottom:4px">DLP Policy Rules (${this._dlpRules.filter(r => r.enabled).length}/${this._dlpRules.length})</div>
+        ${this._dlpRules.map(r => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-weight:600;color:#e2e8f0;font-size:9px">${r.name}</span>
+              <span style="font-size:7px;color:#6b7280;margin-left:4px">${r.condition.slice(0, 40)}...</span>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <span style="font-size:7px;padding:1px 4px;border-radius:2px;background:${r.action === 'block' ? '#ef444422' : r.action === 'quarantine' ? '#f59e0b22' : '#3b82f622'};color:${r.action === 'block' ? '#ef4444' : r.action === 'quarantine' ? '#f59e0b' : '#3b82f6'}">${r.action}</span>
+              <span style="font-size:7px;color:#6b7280">${r.matchCount} hits</span>
+            </div>
+          </div>
+        `)}
+        <div style="margin-top:6px;font-size:10px;font-weight:600;color:#e2e8f0;margin-bottom:4px">Data Flow Map</div>
+        ${this._dataFlows.map(f => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;align-items:center;gap:4px;font-size:8px">
+            <span style="color:#e2e8f0">${f.source}</span>
+            <span style="color:#6b7280">\u2192</span>
+            <span style="color:#e2e8f0">${f.dest}</span>
+            <span style="padding:1px 4px;border-radius:2px;background:${classColors[f.dataClass]}22;color:${classColors[f.dataClass]};font-size:7px">${f.dataClass}</span>
+            <span style="color:#6b7280">${f.volume}</span>
+            <span style="color:${f.encrypted ? '#22c55e' : '#ef4444'}">${f.encrypted ? '\u{1F512}' : '\u26A0'}</span>
+            ${!f.compliant ? html`<span style="color:#ef4444;font-weight:700">NON-COMPLIANT</span>` : nothing}
+          </div>
+        `)}
+        <div style="margin-top:6px;font-size:10px;font-weight:600;color:#e2e8f0;margin-bottom:4px">Retention Policies</div>
+        ${this._retentionPolicies.map(rp => html`
+          <div style="padding:4px 8px;background:#111827;border-radius:3px;margin-bottom:2px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="padding:1px 4px;border-radius:2px;background:${classColors[rp.dataClass]}22;color:${classColors[rp.dataClass]}">${rp.dataClass}</span>
+              <span style="color:#e2e8f0">${rp.retentionMonths} months</span>
+              <span style="color:#6b7280">${rp.storageLocation}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px">
+              <span style="color:${rp.autoDelete ? '#22c55e' : '#f59e0b'}">${rp.autoDelete ? 'Auto-delete' : 'Manual'}</span>
+              <span style="color:#4b5563">Audit: ${rp.lastAudit}</span>
+            </div>
+          </div>
+        `)}
+      </div>`;
+  }
+
   }
 declare global { interface HTMLElementTagNameMap { 'sc-dpia-workflow': ScDpiaWorkflow; } }
