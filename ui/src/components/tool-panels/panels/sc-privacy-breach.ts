@@ -2035,6 +2035,11 @@ export class ScPrivacyBreach extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this._initThreatModel();
+    this._initPipeline();
+    this._initPlaybooks();
+    this._initMetrics();
+    this._initIntegration();
     this._pbInitScenarios();
     this._pbInitTrendData();
     this._pbInitPermissions();
@@ -2048,6 +2053,669 @@ export class ScPrivacyBreach extends LitElement {
 
   // === TAB INTEGRATION FOR EXTENDED FEATURES ===
   @state() private _pbActiveSubTab: string = 'scenario';
+
+
+
+  // === Advanced Threat Modeling (STRIDE/DREAD/Attack Tree) ===
+  @state() private _threatModelEnabled = false;
+  @state() private _threatCategories: Array<{
+    id: string;
+    category: string;
+    threats: Array<{
+      id: string;
+      name: string;
+      stride: string;
+      likelihood: number;
+      impact: number;
+      dreadScore: number;
+      status: string;
+      mitigations: string[];
+      assignedTo: string;
+      discoveredDate: string;
+      lastReviewed: string;
+    }>;
+    totalCount: number;
+    criticalCount: number;
+    mitigatedCount: number;
+  }> = [];
+  @state() private _selectedThreatCategory = '';
+  @state() private _threatViewMode: 'matrix' | 'tree' | 'canvas' | 'comparison' = 'matrix';
+  @state() private _threatModelVersion = 'v1.0';
+  @state() private _threatModelHistory: Array<{ version: string; date: string; changes: string; author: string }> = [];
+
+  private _initThreatModel() {
+    const categories = [
+      { id: 'tc1', category: 'Spoofing', threats: [
+        { id: 't1', name: 'Credential theft via phishing', stride: 'S', likelihood: 8, impact: 9, dreadScore: 7.2, status: 'open', mitigations: ['MFA enforcement', 'Security awareness training'], assignedTo: 'Security Team', discoveredDate: '2024-01-10', lastReviewed: '2024-02-15' },
+        { id: 't2', name: 'Session hijacking', stride: 'S', likelihood: 6, impact: 8, dreadScore: 6.5, status: 'mitigated', mitigations: ['Session rotation', 'Binding tokens'], assignedTo: 'Platform Team', discoveredDate: '2024-01-12', lastReviewed: '2024-02-20' },
+        { id: 't3', name: 'Token forgery attack', stride: 'S', likelihood: 4, impact: 9, dreadScore: 5.8, status: 'in-progress', mitigations: ['Token signing', 'Short TTL'], assignedTo: 'Auth Team', discoveredDate: '2024-01-15', lastReviewed: '2024-02-18' },
+      ], totalCount: 3, criticalCount: 1, mitigatedCount: 1 },
+      { id: 'tc2', category: 'Tampering', threats: [
+        { id: 't4', name: 'Data injection in privacy protection', stride: 'T', likelihood: 7, impact: 8, dreadScore: 7.0, status: 'open', mitigations: ['Input validation', 'WAF rules'], assignedTo: 'Dev Team', discoveredDate: '2024-01-08', lastReviewed: '2024-02-10' },
+        { id: 't5', name: 'Configuration drift', stride: 'T', likelihood: 5, impact: 6, dreadScore: 5.2, status: 'mitigated', mitigations: ['Config management', 'Drift detection'], assignedTo: 'SRE Team', discoveredDate: '2024-01-20', lastReviewed: '2024-02-22' },
+      ], totalCount: 2, criticalCount: 1, mitigatedCount: 1 },
+      { id: 'tc3', category: 'Repudiation', threats: [
+        { id: 't6', name: 'Log tampering evidence loss', stride: 'R', likelihood: 5, impact: 7, dreadScore: 5.8, status: 'in-progress', mitigations: ['Immutable logs', 'Log forwarding'], assignedTo: 'SOC Team', discoveredDate: '2024-01-22', lastReviewed: '2024-02-25' },
+      ], totalCount: 1, criticalCount: 0, mitigatedCount: 0 },
+      { id: 'tc4', category: 'Info Disclosure', threats: [
+        { id: 't7', name: 'Sensitive data exposure in API', stride: 'I', likelihood: 8, impact: 9, dreadScore: 8.2, status: 'open', mitigations: ['Data masking', 'Field-level encryption'], assignedTo: 'API Team', discoveredDate: '2024-01-05', lastReviewed: '2024-02-12' },
+        { id: 't8', name: 'Cloud storage misconfiguration', stride: 'I', likelihood: 6, impact: 8, dreadScore: 6.8, status: 'mitigated', mitigations: ['Storage policies', 'Access reviews'], assignedTo: 'Cloud Team', discoveredDate: '2024-01-18', lastReviewed: '2024-02-20' },
+        { id: 't9', name: 'Error message information leak', stride: 'I', likelihood: 7, impact: 4, dreadScore: 5.0, status: 'mitigated', mitigations: ['Generic error pages', 'Stack trace filter'], assignedTo: 'Dev Team', discoveredDate: '2024-01-25', lastReviewed: '2024-02-28' },
+      ], totalCount: 3, criticalCount: 1, mitigatedCount: 2 },
+      { id: 'tc5', category: 'Denial of Service', threats: [
+        { id: 't10', name: 'Resource exhaustion attack', stride: 'D', likelihood: 7, impact: 8, dreadScore: 7.2, status: 'open', mitigations: ['Rate limiting', 'Circuit breaker'], assignedTo: 'Infra Team', discoveredDate: '2024-01-14', lastReviewed: '2024-02-16' },
+        { id: 't11', name: 'API abuse amplification', stride: 'D', likelihood: 5, impact: 6, dreadScore: 5.4, status: 'in-progress', mitigations: ['API gateway throttling', 'Request quotas'], assignedTo: 'API Team', discoveredDate: '2024-01-28', lastReviewed: '2024-03-01' },
+      ], totalCount: 2, criticalCount: 1, mitigatedCount: 0 },
+      { id: 'tc6', category: 'Elevation of Privilege', threats: [
+        { id: 't12', name: 'Privilege escalation via misconfig', stride: 'E', likelihood: 6, impact: 10, dreadScore: 7.8, status: 'open', mitigations: ['Least privilege', 'RBAC audit'], assignedTo: 'IAM Team', discoveredDate: '2024-01-06', lastReviewed: '2024-02-08' },
+        { id: 't13', name: 'Container breakout exploit', stride: 'E', likelihood: 3, impact: 10, dreadScore: 5.8, status: 'mitigated', mitigations: ['Runtime security', 'Seccomp profiles'], assignedTo: 'Platform Team', discoveredDate: '2024-01-30', lastReviewed: '2024-03-02' },
+      ], totalCount: 2, criticalCount: 1, mitigatedCount: 1 },
+      { id: 'tc7', category: 'Supply Chain', threats: [
+        { id: 't14', name: 'Dependency compromise', stride: 'E', likelihood: 5, impact: 8, dreadScore: 6.2, status: 'in-progress', mitigations: ['SBOM scanning', 'Lock files'], assignedTo: 'DevSecOps', discoveredDate: '2024-02-01', lastReviewed: '2024-03-05' },
+      ], totalCount: 1, criticalCount: 1, mitigatedCount: 0 },
+      { id: 'tc8', category: 'Physical / Social', threats: [
+        { id: 't15', name: 'Tailgating access breach', stride: 'S', likelihood: 4, impact: 7, dreadScore: 5.2, status: 'open', mitigations: ['Badge access', 'Security cameras'], assignedTo: 'Physical Security', discoveredDate: '2024-02-03', lastReviewed: '2024-03-08' },
+      ], totalCount: 1, criticalCount: 0, mitigatedCount: 0 },
+    ];
+    this._threatCategories = categories;
+    this._threatModelHistory = [
+      { version: 'v1.0', date: '2024-01-01', changes: 'Initial threat model created', author: 'Security Lead' },
+      { version: 'v1.1', date: '2024-02-01', changes: 'Added supply chain threats, updated DREAD scores', author: 'Security Analyst' },
+    ];
+    this._threatModelEnabled = true;
+  }
+
+  private _getThreatColor(score: number): string {
+    if (score >= 7) return '#f87171';
+    if (score >= 5) return '#fbbf24';
+    if (score >= 3) return '#34d399';
+    return '#60a5fa';
+  }
+
+  private _renderThreatModelPanel(): any {
+    if (!this._threatModelEnabled) return nothing;
+    const totalThreats = this._threatCategories.reduce((s, c) => s + c.totalCount, 0);
+    const criticalThreats = this._threatCategories.reduce((s, c) => s + c.criticalCount, 0);
+    const mitigatedThreats = this._threatCategories.reduce((s, c) => s + c.mitigatedCount, 0);
+    return html`
+      <div style="margin-top:12px;padding:12px;background:#111827;border:1px solid #374151;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:700;font-size:13px;color:#f9fafb">Threat Model (STRIDE/DREAD)</div>
+          <div style="display:flex;gap:6px">
+            ${['matrix', 'tree', 'canvas', 'comparison'].map(m => html`
+              <button class="btn btn-sm" style="padding:3px 10px;font-size:10px;${this._threatViewMode === m ? 'background:#1e40af;color:#fff' : 'background:#1f2937;color:#9ca3af'}" @click=${() => { this._threatViewMode = m as any; }}>${m.charAt(0).toUpperCase() + m.slice(1)}</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1;padding:8px;background:#1f2937;border-radius:6px;text-align:center">
+            <div style="font-size:20px;font-weight:700;color:#f9fafb">${totalThreats}</div>
+            <div style="font-size:10px;color:#9ca3af">Total Threats</div>
+          </div>
+          <div style="flex:1;padding:8px;background:#1f2937;border-radius:6px;text-align:center">
+            <div style="font-size:20px;font-weight:700;color:#f87171">${criticalThreats}</div>
+            <div style="font-size:10px;color:#9ca3af">Critical</div>
+          </div>
+          <div style="flex:1;padding:8px;background:#1f2937;border-radius:6px;text-align:center">
+            <div style="font-size:20px;font-weight:700;color:#34d399">${mitigatedThreats}</div>
+            <div style="font-size:10px;color:#9ca3af">Mitigated</div>
+          </div>
+          <div style="flex:1;padding:8px;background:#1f2937;border-radius:6px;text-align:center">
+            <div style="font-size:20px;font-weight:700;color:#fbbf24">${this._threatModelVersion}</div>
+            <div style="font-size:10px;color:#9ca3af">Version</div>
+          </div>
+        </div>
+        ${this._threatViewMode === 'matrix' ? html`
+          <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:4px;font-size:10px;margin-bottom:8px">
+            <div style="padding:4px;text-align:center;color:#6b7280;border-bottom:1px solid #374151">Low Impact</div>
+            <div style="padding:4px;text-align:center;color:#6b7280;border-bottom:1px solid #374151">Medium Impact</div>
+            <div style="padding:4px;text-align:center;color:#6b7280;border-bottom:1px solid #374151">High Impact</div>
+            <div style="padding:4px;text-align:center;color:#6b7280;border-bottom:1px solid #374151">Critical Impact</div>
+            ${[0,1,2,3].map(row => html`
+              <div style="padding:4px;text-align:center;color:#6b7280;background:#111827">${row === 0 ? 'Unlikely' : row === 1 ? 'Possible' : row === 2 ? 'Likely' : 'Almost Certain'}</div>
+              ${[0,1,2,3].map(col => {
+                const impact = (col + 1) * 2.5;
+                const likelihood = (row + 1) * 2.5;
+                const threats = this._threatCategories.flatMap(c => c.threats).filter(t => t.likelihood >= likelihood - 1.25 && t.likelihood < likelihood + 1.25 && t.impact >= impact - 1.25 && t.impact < impact + 1.25);
+                const bgColor = (row + col) >= 4 ? 'rgba(239,68,68,0.15)' : (row + col) >= 2 ? 'rgba(251,191,36,0.15)' : 'rgba(52,211,153,0.15)';
+                return html`<div style="padding:4px;text-align:center;background:${bgColor};border-radius:4px;cursor:pointer;font-size:9px;color:#d1d5db" title="${threats.map(t => t.name).join(', ')}">${threats.length}</div>`;
+              })}
+            `)}
+          </div>
+        ` : this._threatViewMode === 'canvas' ? html`
+          <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px">
+            ${this._threatCategories.map(cat => html`
+              <div style="padding:8px;background:#1f2937;border-radius:6px;border-left:3px solid ${this._getThreatColor(cat.threats.reduce((s, t) => s + t.dreadScore, 0) / cat.totalCount)}">
+                <div style="font-size:11px;font-weight:600;color:#f9fafb;margin-bottom:4px">${cat.category}</div>
+                <div style="font-size:9px;color:#9ca3af">${cat.totalCount} threats (span style="color:#f87171">${cat.criticalCount} critical</span>)</div>
+                <div style="margin-top:6px">${cat.threats.slice(0, 2).map(t => html`
+                  <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:9px">
+                    <span style="color:#d1d5db">${t.name.substring(0, 20)}</span>
+                    <span style="color:${this._getThreatColor(t.dreadScore)}">${t.dreadScore}</span>
+                  </div>
+                `)}</div>
+              </div>
+            `)}
+          </div>
+        ` : this._threatViewMode === 'tree' ? html`
+          <div style="max-height:200px;overflow-y:auto">
+            ${this._threatCategories.map(cat => html`
+              <div style="margin-bottom:6px">
+                <div style="padding:4px 8px;background:#1e3a5f;border-radius:4px 4px 0 0;font-size:11px;font-weight:600;color:#60a5fa">${cat.category} (${cat.totalCount})</div>
+                ${cat.threats.map(t => html`
+                  <div style="display:flex;align-items:center;padding:3px 8px 3px 24px;background:#111827;border-left:2px solid #374151;font-size:10px">
+                    <span style="flex:1;color:#d1d5db">${t.name}</span>
+                    <span style="color:${this._getThreatColor(t.dreadScore)};font-weight:600;margin-right:8px">${t.dreadScore}</span>
+                    <span style="padding:1px 6px;border-radius:3px;font-size:8px;background:${t.status === 'mitigated' ? '#064e3b' : t.status === 'in-progress' ? '#78350f' : '#7f1d1d'};color:${t.status === 'mitigated' ? '#34d399' : t.status === 'in-progress' ? '#fbbf24' : '#f87171'}">${t.status}</span>
+                  </div>
+                `)}
+              </div>
+            `)}
+          </div>
+        ` : html`
+          <div style="font-size:10px;color:#9ca3af;padding:8px;text-align:center">
+            <div style="font-weight:600;color:#d1d5db;margin-bottom:6px">Threat Model Version History</div>
+            ${this._threatModelHistory.map(h => html`
+              <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1f2937">
+                <span style="color:#60a5fa">${h.version}</span>
+                <span>${h.date}</span>
+                <span style="color:#d1d5db">${h.author}</span>
+                <span style="color:#9ca3af">${h.changes}</span>
+              </div>
+            `)}
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+
+  // === Data Pipeline Visualization (DAG) ===
+  @state() private _pipelineEnabled = false;
+  @state() private _pipelineStages: Array<{
+    id: string;
+    name: string;
+    type: string;
+    status: 'running' | 'completed' | 'failed' | 'pending' | 'warning';
+    inputRecords: number;
+    outputRecords: number;
+    errorRate: number;
+    latencyMs: number;
+    throughput: number;
+    qualityScore: number;
+    startTime: string;
+    endTime: string;
+    dependencies: string[];
+    bottlenecks: string[];
+  }> = [];
+  @state() private _pipelineViewMode: 'dag' | 'timeline' | 'metrics' = 'dag';
+  @state() private _pipelineSelectedStage = '';
+  @state() private _pipelineAutoRefresh = false;
+
+  private _initPipeline() {
+    this._pipelineStages = [
+      { id: 's1', name: 'Data Ingestion', type: 'source', status: 'completed', inputRecords: 0, outputRecords: 125000, errorRate: 0.01, latencyMs: 120, throughput: 5200, qualityScore: 98.5, startTime: '00:00:00', endTime: '00:00:48', dependencies: [], bottlenecks: [] },
+      { id: 's2', name: 'Schema Validation', type: 'transform', status: 'completed', inputRecords: 125000, outputRecords: 124500, errorRate: 0.4, latencyMs: 85, throughput: 4800, qualityScore: 99.6, startTime: '00:00:48', endTime: '00:01:14', dependencies: ['s1'], bottlenecks: [] },
+      { id: 's3', name: 'Enrichment Engine', type: 'enrichment', status: 'running', inputRecords: 124500, outputRecords: 98200, errorRate: 2.1, latencyMs: 340, throughput: 2900, qualityScore: 92.3, startTime: '00:01:14', endTime: '', dependencies: ['s2'], bottlenecks: ['High latency on geolocation lookup', 'External API rate limiting'] },
+      { id: 's4', name: 'Deduplication', type: 'transform', status: 'pending', inputRecords: 98200, outputRecords: 0, errorRate: 0, latencyMs: 0, throughput: 0, qualityScore: 0, startTime: '', endTime: '', dependencies: ['s3'], bottlenecks: [] },
+      { id: 's5', name: 'Threat Correlation', type: 'analysis', status: 'pending', inputRecords: 0, outputRecords: 0, errorRate: 0, latencyMs: 0, throughput: 0, qualityScore: 0, startTime: '', endTime: '', dependencies: ['s3', 's4'], bottlenecks: [] },
+      { id: 's6', name: 'Scoring Engine', type: 'scoring', status: 'pending', inputRecords: 0, outputRecords: 0, errorRate: 0, latencyMs: 0, throughput: 0, qualityScore: 0, startTime: '', endTime: '', dependencies: ['s5'], bottlenecks: [] },
+      { id: 's7', name: 'Alert Generation', type: 'sink', status: 'pending', inputRecords: 0, outputRecords: 0, errorRate: 0, latencyMs: 0, throughput: 0, qualityScore: 0, startTime: '', endTime: '', dependencies: ['s6'], bottlenecks: [] },
+      { id: 's8', name: 'Archive Storage', type: 'sink', status: 'pending', inputRecords: 0, outputRecords: 0, errorRate: 0, latencyMs: 0, throughput: 0, qualityScore: 0, startTime: '', endTime: '', dependencies: ['s6'], bottlenecks: [] },
+    ];
+    this._pipelineEnabled = true;
+  }
+
+  private _getPipelineStatusColor(status: string): string {
+    switch (status) {
+      case 'completed': return '#34d399';
+      case 'running': return '#60a5fa';
+      case 'failed': return '#f87171';
+      case 'warning': return '#fbbf24';
+      default: return '#6b7280';
+    }
+  }
+
+  private _getPipelineStatusIcon(status: string): string {
+    switch (status) {
+      case 'completed': return '✓';
+      case 'running': return '●';
+      case 'failed': return '✗';
+      case 'warning': return '⚠';
+      default: return '○';
+    }
+  }
+
+  private _renderPipelineVisualization(): any {
+    if (!this._pipelineEnabled) return nothing;
+    const completedCount = this._pipelineStages.filter(s => s.status === 'completed').length;
+    const runningCount = this._pipelineStages.filter(s => s.status === 'running').length;
+    const totalRecords = this._pipelineStages.reduce((s, p) => s + p.outputRecords, 0);
+    return html`
+      <div style="margin-top:12px;padding:12px;background:#111827;border:1px solid #374151;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:700;font-size:13px;color:#f9fafb">Data Pipeline (DAG)</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:#9ca3af">${completedCount}/${this._pipelineStages.length} stages</span>
+            <span style="font-size:10px;color:#60a5fa">${totalRecords.toLocaleString()} records</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          ${['dag', 'timeline', 'metrics'].map(v => html`
+            <button class="btn btn-sm" style="padding:3px 10px;font-size:10px;${this._pipelineViewMode === v ? 'background:#1e40af;color:#fff' : 'background:#1f2937;color:#9ca3af'}" @click=${() => { this._pipelineViewMode = v as any; }}>${v === 'dag' ? 'Flow Graph' : v === 'timeline' ? 'Timeline' : 'Metrics'}</button>
+          `)}
+        </div>
+        ${this._pipelineViewMode === 'dag' ? html`
+          <div style="position:relative;padding:8px">
+            ${this._pipelineStages.map((stage, i) => html`
+              <div style="display:flex;align-items:center;margin-bottom:4px;position:relative">
+                <div style="width:16px;height:16px;border-radius:50%;background:${this._getPipelineStatusColor(stage.status)};display:flex;align-items:center;justify-content:center;font-size:8px;color:#111827;font-weight:700;z-index:1;flex-shrink:0">${this._getPipelineStatusIcon(stage.status)}</div>
+                ${i < this._pipelineStages.length - 1 ? html`<div style="position:absolute;left:7px;top:16px;width:2px;height:20px;background:#374151"></div>` : nothing}
+                <div style="margin-left:12px;flex:1;padding:6px 10px;background:#1f2937;border-radius:6px;border-left:3px solid ${this._getPipelineStatusColor(stage.status)};cursor:pointer" @click=${() => { this._pipelineSelectedStage = this._pipelineSelectedStage === stage.id ? '' : stage.id; }}>
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:11px;font-weight:600;color:#f9fafb">${stage.name}</span>
+                    <span style="font-size:9px;color:#9ca3af">${stage.type}</span>
+                  </div>
+                  ${this._pipelineSelectedStage === stage.id ? html`
+                    <div style="margin-top:6px;display:grid;grid-template-columns:repeat(3, 1fr);gap:4px;font-size:9px">
+                      <div style="color:#9ca3af">In: <span style="color:#60a5fa">${stage.inputRecords.toLocaleString()}</span></div>
+                      <div style="color:#9ca3af">Out: <span style="color:#34d399">${stage.outputRecords.toLocaleString()}</span></div>
+                      <div style="color:#9ca3af">Errors: <span style="color:${stage.errorRate > 1 ? '#f87171' : '#fbbf24'}">${stage.errorRate}%</span></div>
+                      <div style="color:#9ca3af">Latency: <span style="color:#d1d5db">${stage.latencyMs}ms</span></div>
+                      <div style="color:#9ca3af">Throughput: <span style="color:#d1d5db">${stage.throughput}/s</span></div>
+                      <div style="color:#9ca3af">Quality: <span style="color:${stage.qualityScore >= 95 ? '#34d399' : stage.qualityScore >= 80 ? '#fbbf24' : '#f87171'}">${stage.qualityScore}%</span></div>
+                    </div>
+                    ${stage.bottlenecks.length > 0 ? html`
+                      <div style="margin-top:4px;padding:4px 6px;background:#7f1d1d;border-radius:4px;font-size:9px;color:#fca5a5">
+                        Bottleneck: ${stage.bottlenecks.join('; ')}
+                      </div>
+                    ` : nothing}
+                  ` : html`
+                    <div style="font-size:9px;color:#6b7280;margin-top:2px">${stage.status === 'running' ? `Processing... ${stage.outputRecords.toLocaleString()} records` : stage.status === 'completed' ? `${stage.outputRecords.toLocaleString()} records processed` : 'Waiting for dependencies'}</div>
+                  `}
+                </div>
+              </div>
+            `)}
+          </div>
+        ` : this._pipelineViewMode === 'timeline' ? html`
+          <div style="overflow-x:auto">
+            <div style="display:flex;gap:2px;min-width:600px">
+              ${this._pipelineStages.map(stage => {
+                const totalSpan = 300;
+                const startOffset = stage.startTime ? this._timeToOffset(stage.startTime) : 0;
+                const endOffset = stage.endTime ? this._timeToOffset(stage.endTime) : this._timeToOffset('00:02:30');
+                const width = Math.max(endOffset - startOffset, 8);
+                return html`
+                  <div style="flex-shrink:0;width:${width}px;margin-left:${startOffset}px;padding:4px;background:${this._getPipelineStatusColor(stage.status)}22;border:1px solid ${this._getPipelineStatusColor(stage.status)}44;border-radius:3px;font-size:8px;color:#d1d5db;overflow:hidden">
+                    <div style="font-weight:600;white-space:nowrap">${stage.name}</div>
+                    <div style="color:#9ca3af">${stage.startTime} - ${stage.endTime || '...'}</div>
+                  </div>
+                `;
+              })}
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:8px;color:#6b7280;margin-top:4px">
+              <span>00:00</span><span>00:30</span><span>01:00</span><span>01:30</span><span>02:00</span><span>02:30</span>
+            </div>
+          </div>
+        ` : html`
+          <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px">
+            ${this._pipelineStages.filter(s => s.status !== 'pending').map(stage => html`
+              <div style="padding:8px;background:#1f2937;border-radius:6px;text-align:center">
+                <div style="font-size:10px;font-weight:600;color:#f9fafb;margin-bottom:4px">${stage.name}</div>
+                <div style="font-size:16px;font-weight:700;color:${this._getPipelineStatusColor(stage.status)}">${stage.qualityScore}%</div>
+                <div style="font-size:8px;color:#9ca3af">Quality Score</div>
+                <div style="margin-top:4px;height:3px;background:#374151;border-radius:2px;overflow:hidden">
+                  <div style="height:100%;width:${stage.qualityScore}%;background:${this._getPipelineStatusColor(stage.status)};border-radius:2px"></div>
+                </div>
+              </div>
+            `)}
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  private _timeToOffset(time: string): number {
+    const parts = time.split(':').map(Number);
+    return Math.round((parts[0] * 3600 + parts[1] * 60 + parts[2]) / 5);
+  }
+
+
+  // === Playbook System (Runbooks) ===
+  @state() private _playbookEnabled = false;
+  @state() private _playbooks: Array<{
+    id: string;
+    name: string;
+    type: 'incident-response' | 'containment' | 'eradication' | 'recovery' | 'forensic' | 'communication';
+    severity: string;
+    steps: Array<{
+      id: string;
+      title: string;
+      description: string;
+      condition?: string;
+      completed: boolean;
+      assignedTo: string;
+      estimatedMinutes: number;
+      tools: string[];
+    }>;
+    totalSteps: number;
+    completedSteps: number;
+    status: 'not-started' | 'in-progress' | 'completed' | 'paused';
+    startedAt: string;
+    estimatedDuration: number;
+    currentStepIndex: number;
+    version: string;
+    lastModified: string;
+  }> = [];
+  @state() private _activePlaybookId = '';
+  @state() private _playbookTimer = 0;
+  @state() private _playbookTimerInterval: ReturnType<typeof setInterval> | null = null;
+
+  private _initPlaybooks() {
+    this._playbooks = [
+      { id: 'pb1', name: 'Ransomware Incident Response', type: 'incident-response', severity: 'critical', steps: [
+        { id: 's1', title: 'Isolate affected systems', description: 'Immediately disconnect compromised systems from the network to prevent lateral movement', completed: true, assignedTo: 'SOC Tier 2', estimatedMinutes: 5, tools: ['EDR Console', 'Network ACLs'] },
+        { id: 's2', title: 'Preserve volatile evidence', description: 'Capture memory dumps and running process lists before shutdown', completed: true, assignedTo: 'Forensic Team', estimatedMinutes: 15, tools: ['Volatility', 'FTK Imager'] },
+        { id: 's3', title: 'Identify ransomware variant', description: 'Analyze ransom note, encrypted file extensions, and behavioral indicators', completed: false, assignedTo: 'Malware Analyst', estimatedMinutes: 30, tools: ['VirusTotal', 'IDA Pro', 'ANY.RUN'] },
+        { id: 's4', title: 'Check for data exfiltration', description: 'Review network logs for outbound data transfers during the attack window', completed: false, assignedTo: 'SOC Analyst', estimatedMinutes: 20, tools: ['SIEM', 'NetFlow Analyzer'] },
+        { id: 's5', title: 'Assess backup integrity', description: 'Verify that clean backups exist and are not encrypted', condition: 'If backups are available', completed: false, assignedTo: 'Backup Admin', estimatedMinutes: 10, tools: ['Veeam', 'Backup Dashboard'] },
+        { id: 's6', title: 'Report to leadership', description: 'Notify CISO and executive team with initial assessment and timeline', completed: false, assignedTo: 'Incident Commander', estimatedMinutes: 15, tools: ['Slack', 'Email'] },
+        { id: 's7', title: 'Engage legal counsel', description: 'Contact legal team for regulatory notification requirements', completed: false, assignedTo: 'Legal Team', estimatedMinutes: 10, tools: ['Phone', 'Secure Email'] },
+      ], totalSteps: 7, completedSteps: 2, status: 'in-progress', startedAt: '2024-02-15T14:30:00', estimatedDuration: 105, currentStepIndex: 2, version: 'v2.3', lastModified: '2024-02-10' },
+      { id: 'pb2', name: 'Credential Compromise Containment', type: 'containment', severity: 'high', steps: [
+        { id: 's1', title: 'Force password reset for affected users', description: 'Initiate password reset for all accounts with detected compromise indicators', completed: false, assignedTo: 'IAM Team', estimatedMinutes: 10, tools: ['ADUC', 'Okta Admin'] },
+        { id: 's2', title: 'Revoke active sessions', description: 'Terminate all active sessions for compromised accounts across all systems', completed: false, assignedTo: 'IAM Team', estimatedMinutes: 5, tools: ['Session Manager', 'WAF'] },
+        { id: 's3', title: 'Enable enhanced monitoring', description: 'Add additional logging and alerting for affected accounts', completed: false, assignedTo: 'SOC Team', estimatedMinutes: 15, tools: ['SIEM', 'UEBA'] },
+        { id: 's4', title: 'Review privileged access', description: 'Audit any privilege escalation that occurred during compromise', completed: false, assignedTo: 'Security Architect', estimatedMinutes: 30, tools: ['PAM Console', 'Audit Logs'] },
+        { id: 's5', title: 'Update firewall rules', description: 'Block known malicious IPs associated with the credential abuse', completed: false, assignedTo: 'Network Team', estimatedMinutes: 10, tools: ['Firewall Manager', 'Threat Intel'] },
+      ], totalSteps: 5, completedSteps: 0, status: 'not-started', startedAt: '', estimatedDuration: 70, currentStepIndex: 0, version: 'v1.5', lastModified: '2024-02-08' },
+      { id: 'pb3', name: 'Data Breach Eradication', type: 'eradication', severity: 'critical', steps: [
+        { id: 's1', title: 'Identify all compromised endpoints', description: 'Scan entire fleet for indicators of compromise', completed: false, assignedTo: 'EDR Team', estimatedMinutes: 20, tools: ['CrowdStrike', 'SentinelOne'] },
+        { id: 's2', title: 'Remove malicious persistence', description: 'Erase backdoors, scheduled tasks, and registry modifications', completed: false, assignedTo: 'Incident Response', estimatedMinutes: 30, tools: ['Autoruns', 'YARA'] },
+        { id: 's3', title: 'Patch exploited vulnerabilities', description: 'Apply security patches for all known entry points', completed: false, assignedTo: 'Patch Team', estimatedMinutes: 45, tools: ['WSUS', 'Chef'] },
+        { id: 's4', title: 'Rotate all compromised credentials', description: 'Systematic rotation of all potentially exposed secrets', completed: false, assignedTo: 'Secrets Team', estimatedMinutes: 25, tools: ['Vault', 'Key Management'] },
+      ], totalSteps: 4, completedSteps: 0, status: 'not-started', startedAt: '', estimatedDuration: 120, currentStepIndex: 0, version: 'v1.2', lastModified: '2024-01-28' },
+      { id: 'pb4', name: 'Service Recovery Procedure', type: 'recovery', severity: 'medium', steps: [
+        { id: 's1', title: 'Restore from clean backup', description: 'Restore affected systems from verified clean backups', completed: false, assignedTo: 'Backup Team', estimatedMinutes: 60, tools: ['Veeam', 'AWS Backup'] },
+        { id: 's2', title: 'Validate system integrity', description: 'Run baseline scans to confirm clean state', completed: false, assignedTo: 'Security Team', estimatedMinutes: 30, tools: ['Baseline Scanner', 'FIM'] },
+        { id: 's3', title: 'Gradual service restoration', description: 'Bring systems online in phases with monitoring', completed: false, assignedTo: 'SRE Team', estimatedMinutes: 45, tools: ['Load Balancer', 'Monitoring'] },
+      ], totalSteps: 3, completedSteps: 0, status: 'not-started', startedAt: '', estimatedDuration: 135, currentStepIndex: 0, version: 'v1.0', lastModified: '2024-02-01' },
+      { id: 'pb5', name: 'Phishing Triage and Response', type: 'incident-response', severity: 'low', steps: [
+        { id: 's1', title: 'Collect phishing report details', description: 'Document the phishing email headers, body, and attachments', completed: false, assignedTo: 'SOC Tier 1', estimatedMinutes: 5, tools: ['Ticket System'] },
+        { id: 's2', title: 'Identify all recipients', description: 'Search mail logs for all users who received the phishing email', completed: false, assignedTo: 'Email Admin', estimatedMinutes: 10, tools: ['Exchange Admin', 'Google Workspace'] },
+        { id: 's3', title: 'Block sender and URLs', description: 'Add malicious sender and URLs to blocklists', completed: false, assignedTo: 'Security Ops', estimatedMinutes: 5, tools: ['Email Gateway', 'Web Proxy'] },
+        { id: 's4', title: 'Notify affected users', description: 'Send security advisory to all recipients', completed: false, assignedTo: 'Communications', estimatedMinutes: 10, tools: ['Email', 'Slack'] },
+      ], totalSteps: 4, completedSteps: 0, status: 'not-started', startedAt: '', estimatedDuration: 30, currentStepIndex: 0, version: 'v3.1', lastModified: '2024-02-12' },
+    ];
+    this._playbookEnabled = true;
+  }
+
+  private _renderPlaybookSystem(): any {
+    if (!this._playbookEnabled) return nothing;
+    return html`
+      <div style="margin-top:12px;padding:12px;background:#111827;border:1px solid #374151;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:700;font-size:13px;color:#f9fafb">Playbooks & Runbooks</div>
+          <div style="display:flex;gap:4px;font-size:9px;color:#9ca3af">
+            <span>${this._playbooks.filter(p => p.status === 'in-progress').length} active</span>
+            <span>|</span>
+            <span>${this._playbooks.filter(p => p.status === 'completed').length} done</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto">
+          ${this._playbooks.map(pb => {
+            const progress = pb.totalSteps > 0 ? Math.round((pb.completedSteps / pb.totalSteps) * 100) : 0;
+            const statusColor = pb.status === 'completed' ? '#34d399' : pb.status === 'in-progress' ? '#60a5fa' : pb.status === 'paused' ? '#fbbf24' : '#6b7280';
+            const severityColor = pb.severity === 'critical' ? '#f87171' : pb.severity === 'high' ? '#fb923c' : '#fbbf24';
+            return html`
+              <div style="padding:8px;background:#1f2937;border-radius:6px;border-left:3px solid ${statusColor};cursor:pointer" @click=${() => { this._activePlaybookId = this._activePlaybookId === pb.id ? '' : pb.id; }}>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <span style="font-size:11px;font-weight:600;color:#f9fafb">${pb.name}</span>
+                  <span style="display:flex;gap:4px;align-items:center">
+                    <span style="padding:1px 6px;border-radius:3px;font-size:8px;background:${severityColor}22;color:${severityColor}">${pb.severity}</span>
+                    <span style="font-size:9px;color:#9ca3af">${pb.version}</span>
+                  </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="flex:1;height:4px;background:#374151;border-radius:2px;overflow:hidden">
+                    <div style="height:100%;width:${progress}%;background:${statusColor};border-radius:2px;transition:width 0.3s"></div>
+                  </div>
+                  <span style="font-size:9px;color:#9ca3af">${pb.completedSteps}/${pb.totalSteps} (${progress}%)</span>
+                  <span style="font-size:9px;color:#6b7280">${pb.estimatedDuration}min</span>
+                </div>
+                ${this._activePlaybookId === pb.id ? html`
+                  <div style="margin-top:8px;padding-top:8px;border-top:1px solid #374151">
+                    ${pb.steps.map((step, i) => html`
+                      <div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;${i < pb.steps.length - 1 ? 'border-bottom:1px solid #111827' : ''}">
+                        <div style="width:16px;height:16px;border-radius:50%;border:2px solid ${step.completed ? '#34d399' : i === pb.currentStepIndex ? '#60a5fa' : '#374151'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;background:${step.completed ? '#34d399' : 'transparent'}">
+                          ${step.completed ? html`<span style="font-size:9px;color:#111827">✓</span>` : i === pb.currentStepIndex ? html`<div style="width:6px;height:6px;border-radius:50%;background:#60a5fa"></div>` : nothing}
+                        </div>
+                        <div style="flex:1">
+                          <div style="font-size:10px;font-weight:${step.completed ? '400' : '600'};color:${step.completed ? '#6b7280' : '#f9fafb'};${step.completed ? 'text-decoration:line-through' : ''}">${step.title}</div>
+                          <div style="font-size:9px;color:#6b7280;margin-top:1px">${step.description.substring(0, 60)}${step.description.length > 60 ? '...' : ''}</div>
+                          ${step.condition ? html`<div style="font-size:8px;color:#fbbf24;margin-top:2px;font-style:italic">${step.condition}</div>` : nothing}
+                          <div style="font-size:8px;color:#4b5563;margin-top:2px">${step.assignedTo} · ${step.estimatedMinutes}min · ${step.tools.join(', ')}</div>
+                        </div>
+                      </div>
+                    `)}
+                  </div>
+                ` : nothing}
+              </div>
+            `;
+          })}
+        </div>
+      </div>
+    `;
+  }
+
+
+  // === Metrics Dashboard (KPIs) ===
+  @state() private _metricsEnabled = false;
+  @state() private _kpis: Array<{
+    id: string;
+    name: string;
+    value: number;
+    previousValue: number;
+    unit: string;
+    threshold: { warning: number; critical: number; direction: 'above' | 'below' };
+    trend: Array<number>;
+    status: 'normal' | 'warning' | 'critical';
+    alertEnabled: boolean;
+    category: string;
+  }> = [];
+  @state() private _metricsPeriod: '1h' | '6h' | '24h' | '7d' = '24h';
+  @state() private _metricsAutoRefresh = true;
+
+  private _initMetrics() {
+    const genTrend = (base: number, variance: number, len: number = 12): number[] =>
+      Array.from({ length: len }, (_, i) => Math.round(base + (Math.random() - 0.5) * variance * 2));
+    this._kpis = [
+      { id: 'k1', name: 'MTTD (Mean Time to Detect)', value: 4.2, previousValue: 5.1, unit: 'min', threshold: { warning: 10, critical: 15, direction: 'above' }, trend: genTrend(4.5, 1.2), status: 'normal', alertEnabled: true, category: 'Detection' },
+      { id: 'k2', name: 'MTTR (Mean Time to Respond)', value: 12.8, previousValue: 14.2, unit: 'min', threshold: { warning: 20, critical: 30, direction: 'above' }, trend: genTrend(13, 3), status: 'normal', alertEnabled: true, category: 'Response' },
+      { id: 'k3', name: 'False Positive Rate', value: 8.3, previousValue: 9.1, unit: '%', threshold: { warning: 10, critical: 15, direction: 'above' }, trend: genTrend(8.5, 2), status: 'normal', alertEnabled: true, category: 'Accuracy' },
+      { id: 'k4', name: 'Threat Coverage', value: 94.7, previousValue: 92.3, unit: '%', threshold: { warning: 85, critical: 75, direction: 'below' }, trend: genTrend(93, 3), status: 'normal', alertEnabled: true, category: 'Coverage' },
+      { id: 'k5', name: 'Patch Compliance', value: 87.2, previousValue: 84.5, unit: '%', threshold: { warning: 90, critical: 80, direction: 'below' }, trend: genTrend(86, 4), status: 'warning', alertEnabled: true, category: 'Compliance' },
+      { id: 'k6', name: 'Active Incidents', value: 3, previousValue: 5, unit: '', threshold: { warning: 5, critical: 10, direction: 'above' }, trend: genTrend(4, 2), status: 'normal', alertEnabled: true, category: 'Operations' },
+      { id: 'k7', name: 'Vulnerability Backlog', value: 127, previousValue: 145, unit: '', threshold: { warning: 100, critical: 200, direction: 'above' }, trend: genTrend(130, 20), status: 'warning', alertEnabled: true, category: 'Risk' },
+      { id: 'k8', name: 'Security Score', value: 82, previousValue: 79, unit: '/100', threshold: { warning: 70, critical: 50, direction: 'below' }, trend: genTrend(80, 5), status: 'normal', alertEnabled: true, category: 'Overall' },
+    ];
+    this._metricsEnabled = true;
+  }
+
+  private _getKpiStatus(kpi: any): string {
+    if (kpi.threshold.direction === 'above') {
+      if (kpi.value >= kpi.threshold.critical) return 'critical';
+      if (kpi.value >= kpi.threshold.warning) return 'warning';
+    } else {
+      if (kpi.value <= kpi.threshold.critical) return 'critical';
+      if (kpi.value <= kpi.threshold.warning) return 'warning';
+    }
+    return 'normal';
+  }
+
+  private _getKpiColor(status: string): string {
+    switch (status) {
+      case 'critical': return '#f87171';
+      case 'warning': return '#fbbf24';
+      default: return '#34d399';
+    }
+  }
+
+  private _renderSparkline(data: number[], width: number = 60, height: number = 20): string {
+    if (data.length < 2) return '';
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+    const pts: string[] = [];
+    for (let i = 0; i < data.length; i++) {
+      const x = ((i / (data.length - 1)) * width).toFixed(1);
+      const y = (height - ((data[i] - min) / range) * height).toFixed(1);
+      pts.push(x + ',' + y);
+    }
+    const points = pts.join(' ');
+    return '<svg width="' + width + '" height="' + height + '" style="display:block"><polyline points="' + points + '" fill="none" stroke="#60a5fa" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>';
+  }
+
+  private _renderMetricsDashboard(): any {
+    if (!this._metricsEnabled) return nothing;
+    return html`
+      <div style="margin-top:12px;padding:12px;background:#111827;border:1px solid #374151;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:700;font-size:13px;color:#f9fafb">Security KPIs</div>
+          <div style="display:flex;gap:4px">
+            ${(['1h', '6h', '24h', '7d'] as const).map(p => html`
+              <button class="btn btn-sm" style="padding:2px 8px;font-size:9px;${this._metricsPeriod === p ? 'background:#1e40af;color:#fff' : 'background:#1f2937;color:#9ca3af'}" @click=${() => { this._metricsPeriod = p; }}>${p}</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px">
+          ${this._kpis.map(kpi => {
+            const status = this._getKpiStatus(kpi);
+            const color = this._getKpiColor(status);
+            const change = kpi.previousValue > 0 ? (((kpi.value - kpi.previousValue) / kpi.previousValue) * 100).toFixed(1) : '0';
+            const changePositive = kpi.name.includes('Backlog') || kpi.name.includes('Time') ? parseFloat(change) < 0 : parseFloat(change) > 0;
+            return html`
+              <div style="padding:8px;background:#1f2937;border-radius:6px;border-top:2px solid ${color}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                  <div style="font-size:9px;color:#9ca3af;text-transform:uppercase">${kpi.name}</div>
+                  <div style="display:flex;align-items:center;gap:2px;font-size:8px;color:${changePositive ? '#34d399' : '#f87171'}">
+                    ${parseFloat(change) > 0 ? html`▲` : html`▼`} ${Math.abs(parseFloat(change))}%
+                  </div>
+                </div>
+                <div style="font-size:22px;font-weight:700;color:#f9fafb;margin:4px 0">${kpi.value}<span style="font-size:10px;color:#6b7280;font-weight:400">${kpi.unit}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:8px;color:#6b7280">Prev: ${kpi.previousValue}${kpi.unit}</span>
+                  <span innerHTML=${this._renderSparkline(kpi.trend, 50, 16)}></span>
+                </div>
+                <div style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;font-size:8px">
+                  <span style="color:#6b7280">${kpi.category}</span>
+                  <span style="padding:1px 4px;border-radius:2px;background:${color}22;color:${color}">${status}</span>
+                </div>
+              </div>
+            `;
+          })}
+        </div>
+      </div>
+    `;
+  }
+
+
+  // === Cross-Panel Integration (Event Bus) ===
+  @state() private _integrationEnabled = false;
+  @state() private _eventLog: Array<{
+    id: string;
+    source: string;
+    target: string;
+    eventType: string;
+    payload: string;
+    timestamp: string;
+    status: 'delivered' | 'pending' | 'failed';
+  }> = [];
+  @state() private _sharedStateKeys: string[] = [];
+  @state() private _integrationNavLinks: Array<{
+    panel: string;
+    label: string;
+    description: string;
+    icon: string;
+  }> = [];
+
+  private _initIntegration() {
+    this._sharedStateKeys = [
+      'selectedThreats', 'activeIncidentId', 'riskScore',
+      'complianceStatus', 'assetFilter', 'timeRange',
+      'userContext', 'severityFilter', 'teamAssignments',
+      'pipelineStatus', 'alertCorrelationId', 'vulnerabilityScope',
+    ];
+    this._integrationNavLinks = [
+      { panel: 'threat-model', label: 'Threat Model', description: 'View STRIDE analysis', icon: '🛡' },
+      { panel: 'incident-response', label: 'Incident Timeline', description: 'Active incidents', icon: '📅' },
+      { panel: 'vulnerability-mgmt', label: 'Vulnerability Scanner', description: 'Scan results', icon: '🔍' },
+      { panel: 'compliance-dashboard', label: 'Compliance Map', description: 'Framework coverage', icon: '✅' },
+      { panel: 'soc-workflow', label: 'SOC Workflow', description: 'Analyst queue', icon: '📋' },
+      { panel: 'risk-dashboard', label: 'Risk Register', description: 'Risk assessment', icon: '⚠' },
+    ];
+    this._eventLog = [
+      { id: 'e1', source: 'Alert System', target: 'Incident Timeline', eventType: 'alert.created', payload: 'New critical alert detected', timestamp: '2024-02-15T14:32:00', status: 'delivered' },
+      { id: 'e2', source: 'Threat Intel', target: 'Alert Correlation', eventType: 'ioc.matched', payload: '3 IOCs matched active alerts', timestamp: '2024-02-15T14:31:00', status: 'delivered' },
+      { id: 'e3', source: 'Vulnerability Scanner', target: 'Risk Dashboard', eventType: 'vuln.critical', payload: 'New CVE-2024-XXXX detected', timestamp: '2024-02-15T14:30:00', status: 'pending' },
+      { id: 'e4', source: 'Pipeline', target: 'Metrics Dashboard', eventType: 'pipeline.completed', payload: 'Data ingestion pipeline completed', timestamp: '2024-02-15T14:28:00', status: 'delivered' },
+      { id: 'e5', source: 'Compliance Check', target: 'Board Report', eventType: 'compliance.drift', payload: 'CIS benchmark drift detected', timestamp: '2024-02-15T14:25:00', status: 'failed' },
+    ];
+    this._integrationEnabled = true;
+  }
+
+  private _publishEvent(source: string, target: string, eventType: string, payload: string) {
+    const event = {
+      id: 'e' + (this._eventLog.length + 1),
+      source, target, eventType, payload,
+      timestamp: new Date().toISOString(),
+      status: 'delivered' as const,
+    };
+    this._eventLog = [event, ...this._eventLog].slice(0, 20);
+  }
+
+  private _renderIntegrationPanel(): any {
+    if (!this._integrationEnabled) return nothing;
+    return html`
+      <div style="margin-top:12px;padding:12px;background:#111827;border:1px solid #374151;border-radius:8px">
+        <div style="font-weight:700;font-size:13px;color:#f9fafb;margin-bottom:10px">Cross-Panel Integration</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="padding:8px;background:#1f2937;border-radius:6px">
+            <div style="font-size:10px;font-weight:600;color:#60a5fa;margin-bottom:6px">Navigation Links</div>
+            ${this._integrationNavLinks.map(link => html`
+              <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:10px;cursor:pointer" @click=${() => this._publishEvent(this.panelId, link.panel, 'nav.requested', link.description)}>
+                <span>${link.icon}</span>
+                <div>
+                  <div style="color:#f9fafb;font-weight:500">${link.label}</div>
+                  <div style="color:#6b7280;font-size:8px">${link.description}</div>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div style="padding:8px;background:#1f2937;border-radius:6px">
+            <div style="font-size:10px;font-weight:600;color:#60a5fa;margin-bottom:6px">Event Stream</div>
+            ${this._eventLog.slice(0, 5).map(ev => html`
+              <div style="display:flex;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #111827;font-size:9px">
+                <span style="width:6px;height:6px;border-radius:50%;background:${ev.status === 'delivered' ? '#34d399' : ev.status === 'pending' ? '#fbbf24' : '#f87171'}"></span>
+                <span style="color:#60a5fa">${ev.source}</span>
+                <span style="color:#4b5563">→</span>
+                <span style="color:#d1d5db">${ev.target}</span>
+                <span style="color:#6b7280;margin-left:auto">${ev.eventType}</span>
+              </div>
+            `)}
+          </div>
+        </div>
+        <div style="margin-top:8px;padding:6px;background:#1f2937;border-radius:6px">
+          <div style="font-size:10px;font-weight:600;color:#60a5fa;margin-bottom:4px">Shared State (${this._sharedStateKeys.length} keys)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${this._sharedStateKeys.map(key => html`
+              <span style="padding:2px 8px;background:#111827;border-radius:4px;font-size:8px;color:#9ca3af;border:1px solid #374151">${key}</span>
+            `)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   private _pbGetAllSubTabs(): {key:string;label:string}[] {
     return [
