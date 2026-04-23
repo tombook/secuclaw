@@ -4854,6 +4854,432 @@ export class ScAttackSurfaceDashboard extends LitElement {
     return {totalTracked: this._killChainMetrics.totalTrackedTracked, interruptionRate, mostCommonStopStage:'Delivery', fullChainRate: 0.34, topActiveAttack: this._killChainAttacks.sort((a,b) => b.progress - a.progress)[0]?.name || ''};
   }
 
+
+  private _riskAssessmentSteps = [
+    {step: 1, name: 'Scope Definition', desc: 'Define assessment boundaries, assets in scope, and threat landscape context', status: 'completed' as const, owner: 'Risk Lead', duration: '2h'},
+    {step: 2, name: 'Asset Identification', desc: 'Catalog all assets within scope including infrastructure, applications, data stores, and third-party services', status: 'completed' as const, owner: 'Asset Manager', duration: '4h'},
+    {step: 3, name: 'Threat Identification', desc: 'Identify potential threat actors, attack vectors, and threat scenarios relevant to the asset landscape', status: 'completed' as const, owner: 'Threat Intel', duration: '6h'},
+    {step: 4, name: 'Vulnerability Assessment', desc: 'Map known and suspected vulnerabilities against identified assets and threat vectors', status: 'in_progress' as const, owner: 'Vuln Team', duration: '8h'},
+    {step: 5, name: 'Impact Analysis', desc: 'Evaluate potential business impact for each threat-vulnerability combination including financial and operational', status: 'pending' as const, owner: 'Business Analyst', duration: '4h'},
+    {step: 6, name: 'Likelihood Estimation', desc: 'Assess probability of each risk scenario based on threat intelligence and historical incident data', status: 'pending' as const, owner: 'Risk Analyst', duration: '3h'},
+    {step: 7, name: 'Risk Scoring', desc: 'Apply 5x5 risk matrix to calculate composite risk scores for each identified risk item', status: 'pending' as const, owner: 'Risk Lead', duration: '2h'},
+    {step: 8, name: 'Treatment Planning', desc: 'Define risk treatment strategies: avoid, mitigate, transfer, or accept for each risk item', status: 'pending' as const, owner: 'CISO', duration: '3h'},
+    {step: 9, name: 'Control Mapping', desc: 'Map existing and planned security controls to identified risks and treatment strategies', status: 'pending' as const, owner: 'Controls Team', duration: '4h'},
+    {step: 10, name: 'Sign-off and Register', desc: 'Obtain stakeholder approval, update risk register, and schedule next review cycle', status: 'pending' as const, owner: 'CISO', duration: '2h'}
+  ];
+
+  private _riskScoringMatrix = [
+    {likelihood: 'Rare', impact1: 1, impact2: 2, impact3: 3, impact4: 4, impact5: 5},
+    {likelihood: 'Unlikely', impact1: 2, impact2: 4, impact3: 6, impact4: 8, impact5: 10},
+    {likelihood: 'Possible', impact1: 3, impact2: 6, impact3: 9, impact4: 12, impact5: 15},
+    {likelihood: 'Likely', impact1: 4, impact2: 8, impact3: 12, impact4: 16, impact5: 20},
+    {likelihood: 'Almost Certain', impact1: 5, impact2: 10, impact3: 15, impact4: 20, impact5: 25}
+  ];
+
+  private _riskTreatmentOptions = [
+    {id: 'RT-001', riskId: 'RSK-042', riskName: 'Ransomware Attack on Critical Infrastructure', currentScore: 20, treatment: 'Mitigate', strategy: 'Deploy EDR with behavioral detection, implement network segmentation, establish offline backup rotation', residualScore: 6, costEstimate: '$450K annually', timeline: 'Q3 2026', owner: 'Infrastructure Lead', status: 'approved' as const},
+    {id: 'RT-002', riskId: 'RSK-018', riskName: 'Insider Data Exfiltration via Cloud Storage', currentScore: 15, treatment: 'Mitigate', strategy: 'Implement DLP policies for cloud apps, enable UEBA analytics, restrict USB and personal cloud access', residualScore: 5, costEstimate: '$180K annually', timeline: 'Q2 2026', owner: 'Data Protection Lead', status: 'approved' as const},
+    {id: 'RT-003', riskId: 'RSK-067', riskName: 'Supply Chain Compromise via Third-Party Library', currentScore: 12, treatment: 'Transfer', strategy: 'Procure software supply chain insurance, require SCA scanning in vendor contracts, establish SBOM requirements', residualScore: 8, costEstimate: '$95K annually', timeline: 'Q4 2026', owner: 'Procurement', status: 'in_review' as const},
+    {id: 'RT-004', riskId: 'RSK-033', riskName: 'Phishing-Driven Credential Theft', currentScore: 16, treatment: 'Mitigate', strategy: 'Deploy advanced email filtering with AI, mandatory phishing simulation quarterly, enforce MFA everywhere', residualScore: 4, costEstimate: '$120K annually', timeline: 'Q2 2026', owner: 'Awareness Lead', status: 'approved' as const},
+    {id: 'RT-005', riskId: 'RSK-091', riskName: 'Zero-Day Exploit in Public-Facing Web Application', currentScore: 10, treatment: 'Accept', strategy: 'Maintain WAF with virtual patching, implement RASP for runtime protection, establish 4-hour incident response SLA', residualScore: 8, costEstimate: '$60K annually', timeline: 'Ongoing', owner: 'AppSec Lead', status: 'accepted' as const},
+    {id: 'RT-006', riskId: 'RSK-055', riskName: 'Regulatory Non-Compliance (GDPR Article 32)', currentScore: 15, treatment: 'Mitigate', strategy: 'Hire dedicated DPO, implement automated compliance monitoring, conduct quarterly DPIA reviews', residualScore: 4, costEstimate: '$220K annually', timeline: 'Q3 2026', owner: 'Compliance Officer', status: 'approved' as const}
+  ];
+
+  private _riskChecklistItems = [
+    {category: 'Technical', items: ['Network architecture reviewed for segmentation adequacy', 'All externally facing assets inventoried with ownership', 'Encryption standards verified for data at rest and in transit', 'Patch management SLA compliance confirmed', 'Identity and access management controls validated', 'Logging and monitoring coverage gaps identified', 'Backup and recovery procedures tested', 'Vulnerability scan results incorporated into risk profile']},
+    {category: 'Organizational', items: ['Security policies reviewed and updated within last 12 months', 'Roles and responsibilities for risk management confirmed', 'Incident response plan tested within last 6 months', 'Third-party risk assessments completed for critical vendors', 'Security awareness training completion rate verified', 'Regulatory requirement mapping validated against current operations', 'Board-level risk reporting cadence established']},
+    {category: 'Physical', items: ['Data center access controls reviewed', 'Remote work security controls assessed', 'Hardware disposal procedures verified', 'Physical security monitoring coverage confirmed']}
+  ];
+
+  private _getRiskAssessmentProgress(): number {
+    const completed = this._riskAssessmentSteps.filter(s => s.status === 'completed').length;
+    return Math.round((completed / this._riskAssessmentSteps.length) * 100);
+  }
+
+  private _getRiskTreatmentSummary(): {total: number; approved: number; inReview: number; pending: number; avgRiskReduction: number} {
+    const approved = this._riskTreatmentOptions.filter(r => r.status === 'approved').length;
+    const inReview = this._riskTreatmentOptions.filter(r => r.status === 'in_review').length;
+    const pending = this._riskTreatmentOptions.filter(r => r.status === 'pending').length;
+    const avgReduction = this._riskTreatmentOptions.reduce((sum, r) => sum + ((r.currentScore - r.residualScore) / r.currentScore * 100), 0) / this._riskTreatmentOptions.length;
+    return {total: this._riskTreatmentOptions.length, approved, inReview, pending, avgRiskReduction: Math.round(avgReduction)};
+  }
+
+
+  private _asdRiskSteps = [
+    {step: 1, name: 'Scope Definition and Context Establishment', desc: 'Define assessment boundaries including organizational scope, asset coverage, threat landscape context, and regulatory requirements that apply', status: 'completed' as const, owner: 'Risk Assessment Lead', duration: '2h', deliverable: 'Assessment scope document with stakeholder sign-off', artifacts: ['scope-document.pdf', 'stakeholder-register.xlsx']},
+    {step: 2, name: 'Asset Inventory and Criticality Classification', desc: 'Catalog all assets within scope including infrastructure components, applications, data repositories, third-party integrations, and classify by criticality', status: 'completed' as const, owner: 'Asset Management Team', duration: '4h', deliverable: 'Complete asset inventory with business criticality ratings', artifacts: ['asset-inventory.csv', 'criticality-matrix.xlsx']},
+    {step: 3, name: 'Threat Landscape Analysis and Modeling', desc: 'Identify relevant threat actors, attack vectors, and threat scenarios based on current intelligence, industry trends, and historical incident data', status: 'completed' as const, owner: 'Threat Intelligence Team', duration: '6h', deliverable: 'Threat model document with actor profiles and TTP mapping', artifacts: ['threat-model.pdf', 'actor-profiles.json']},
+    {step: 4, name: 'Vulnerability Assessment and Gap Analysis', desc: 'Map known and suspected vulnerabilities against identified assets and threat vectors using automated scanning and manual testing results', status: 'completed' as const, owner: 'Vulnerability Management', duration: '8h', deliverable: 'Vulnerability assessment report with CVSS scoring and trending', artifacts: ['vuln-report.pdf', 'scan-results.xml']},
+    {step: 5, name: 'Business Impact Analysis and Quantification', desc: 'Evaluate potential business impact for each threat-vulnerability combination including financial loss, operational disruption, and regulatory penalties', status: 'in_progress' as const, owner: 'Business Continuity Team', duration: '4h', deliverable: 'Impact assessment matrix with quantified risk scenarios', artifacts: ['bia-matrix.xlsx', 'impact-scenarios.pdf']},
+    {step: 6, name: 'Likelihood Estimation and Calibration', desc: 'Assess probability of each risk scenario based on threat intelligence, historical incident frequency, control effectiveness, and environmental factors', status: 'pending' as const, owner: 'Senior Risk Analyst', duration: '3h', deliverable: 'Calibrated likelihood ratings with supporting evidence base', artifacts: ['likelihood-analysis.xlsx', 'evidence-log.pdf']},
+    {step: 7, name: 'Risk Scoring and Prioritization', desc: 'Apply 5x5 risk scoring matrix to calculate composite risk scores, prioritize by severity, and identify top risks for immediate attention', status: 'pending' as const, owner: 'Risk Assessment Lead', duration: '2h', deliverable: 'Risk heat map and prioritized risk register extract', artifacts: ['risk-heatmap.png', 'risk-register.xlsx']},
+    {step: 8, name: 'Risk Treatment Strategy Development', desc: 'Define treatment strategies for each risk including avoid, mitigate, transfer, or accept with specific control recommendations', status: 'pending' as const, owner: 'CISO and Risk Committee', duration: '3h', deliverable: 'Treatment plan with cost-benefit analysis per risk item', artifacts: ['treatment-plan.pdf', 'cost-benefit.xlsx']},
+    {step: 9, name: 'Control Mapping and Gap Remediation Planning', desc: 'Map existing security controls to identified risks, identify control gaps, and define remediation roadmaps with timelines and ownership', status: 'pending' as const, owner: 'GRC Team', duration: '4h', deliverable: 'Control-to-risk mapping matrix and remediation roadmap', artifacts: ['control-mapping.xlsx', 'remediation-roadmap.pdf']},
+    {step: 10, name: 'Executive Review and Risk Register Update', desc: 'Present findings to executive stakeholders, obtain sign-off on ratings and treatment plans, update risk register, and schedule review', status: 'pending' as const, owner: 'CISO', duration: '2h', deliverable: 'Executive summary presentation and updated risk register', artifacts: ['exec-summary.pptx', 'risk-register-v3.xlsx']}
+  ];
+
+  private _asdRiskMatrix = [
+    {impact: 'Negligible', rare: 1, unlikely: 2, possible: 3, likely: 4, certain: 5},
+    {impact: 'Minor', rare: 2, unlikely: 4, possible: 6, likely: 8, certain: 10},
+    {impact: 'Moderate', rare: 3, unlikely: 6, possible: 9, likely: 12, certain: 15},
+    {impact: 'Major', rare: 4, unlikely: 8, possible: 12, likely: 16, certain: 20},
+    {impact: 'Catastrophic', rare: 5, unlikely: 10, possible: 15, likely: 20, certain: 25}
+  ];
+
+  private _asdTreatmentRecords = [
+    {id: 'asd-RT-001', riskId: 'RSK-042', riskName: 'Ransomware Attack on Critical Infrastructure', currentScore: 20, treatment: 'Mitigate', strategy: 'Deploy next-gen EDR with behavioral detection, implement zero-trust micro-segmentation, establish immutable offline backup rotation', residualScore: 6, costEstimate: '$450K annually', timeline: 'Q3 2026', owner: 'Infrastructure Security Lead', status: 'approved' as const, controls: ['EDR behavioral detection', 'Network micro-segmentation', 'Immutable backups', 'IR retainer']},
+    {id: 'asd-RT-002', riskId: 'RSK-018', riskName: 'Insider Data Exfiltration via Cloud Storage', currentScore: 15, treatment: 'Mitigate', strategy: 'Implement comprehensive DLP policies for cloud apps, enable UEBA analytics, restrict USB and personal cloud access at endpoint', residualScore: 5, costEstimate: '$180K annually', timeline: 'Q2 2026', owner: 'Data Protection Lead', status: 'approved' as const, controls: ['Cloud DLP policies', 'UEBA analytics', 'Endpoint restrictions', 'CASB integration']},
+    {id: 'asd-RT-003', riskId: 'RSK-067', riskName: 'Supply Chain Compromise via Third-Party Library', currentScore: 12, treatment: 'Transfer', strategy: 'Procure software supply chain insurance, require SCA scanning in vendor contracts, establish SBOM requirements and monitoring', residualScore: 8, costEstimate: '$95K annually', timeline: 'Q4 2026', owner: 'Procurement and Legal', status: 'in_review' as const, controls: ['Supply chain insurance', 'SCA in contracts', 'SBOM requirements', 'Vendor assessments']},
+    {id: 'asd-RT-004', riskId: 'RSK-033', riskName: 'Phishing-Driven Credential Theft Campaign', currentScore: 16, treatment: 'Mitigate', strategy: 'Deploy AI-powered email filtering, mandatory monthly phishing simulations, enforce hardware MFA for all users', residualScore: 4, costEstimate: '$120K annually', timeline: 'Q2 2026', owner: 'Security Awareness Lead', status: 'approved' as const, controls: ['AI email filtering', 'Phishing simulations', 'Hardware MFA', 'Passwordless auth']},
+    {id: 'asd-RT-005', riskId: 'RSK-091', riskName: 'Zero-Day Exploit in Public-Facing Application', currentScore: 10, treatment: 'Accept', strategy: 'Maintain WAF with virtual patching, implement RASP for runtime protection, establish 4-hour incident response SLA', residualScore: 8, costEstimate: '$60K annually', timeline: 'Ongoing', owner: 'Application Security Lead', status: 'accepted' as const, controls: ['WAF virtual patching', 'RASP runtime protection', 'IR retainer SLA', 'Bug bounty program']}
+  ];
+
+  private _asdChecklist = [
+    {category: 'Technical Controls', items: ['Network architecture reviewed for segmentation adequacy and zero-trust compliance', 'All externally facing assets inventoried with assigned ownership and business justification', 'Encryption standards verified for data at rest, in transit, and in processing', 'Patch management SLA compliance confirmed with no critical patches overdue beyond SLA', 'Identity and access management controls validated with quarterly access review completion', 'Logging and monitoring coverage gaps identified with documented remediation plan', 'Backup and recovery procedures tested with documented restore time objectives met', 'Vulnerability scan results incorporated into risk profile with false positive rate tracked']},
+    {category: 'Organizational Controls', items: ['Security policies reviewed and updated within the last 12-month review cycle', 'Roles and responsibilities for risk management confirmed with RACI matrix documentation', 'Incident response plan tested via tabletop exercise within the last 6 months', 'Third-party risk assessments completed for all critical and high-risk vendor relationships', 'Security awareness training completion rate verified above organizational threshold', 'Regulatory requirement mapping validated against current operations and technology stack', 'Board-level risk reporting cadence established with defined escalation criteria and formats']},
+    {category: 'Physical Controls', items: ['Data center physical access controls reviewed with audit log verification and badge tracking', 'Remote work security controls assessed including endpoint hardening and VPN compliance', 'Hardware disposal and decommissioning procedures verified with certificate of destruction tracking', 'Physical security monitoring coverage confirmed with no identified blind spots or gaps']}
+  ];
+
+  private _getasdRiskProgress(): number {
+    const completed = this._asdRiskSteps.filter(s => s.status === 'completed').length;
+    return Math.round((completed / this._asdRiskSteps.length) * 100);
+  }
+
+  private _getasdTreatmentSummary(): {total: number; approved: number; inReview: number; avgReduction: number; totalInvestment: string} {
+    const approved = this._asdTreatmentRecords.filter(r => r.status === 'approved').length;
+    const inReview = this._asdTreatmentRecords.filter(r => r.status === 'in_review').length;
+    const avgRed = this._asdTreatmentRecords.reduce((s, r) => s + ((r.currentScore - r.residualScore) / r.currentScore * 100), 0) / this._asdTreatmentRecords.length;
+    return {total: this._asdTreatmentRecords.length, approved, inReview, avgReduction: Math.round(avgRed), totalInvestment: '$905K annually'};
+  }
+
+  private _asdAutoRules = [
+    {id: 'asd-CAR-001', name: 'Password Policy Compliance Check', framework: 'NIST 800-53 IA-5', desc: 'Verify all user accounts meet minimum password complexity requirements including length, character diversity, and rotation', enabled: true as const, frequency: 'Daily', lastRun: '2026-04-22T14:00:00Z', lastResult: 'pass' as const, passRate: 94.2, violations: 12, autoRemediate: true as const, remediation: 'Force password reset on non-compliant accounts within 24h', history: [{d: '2026-04-22', r: 'pass', v: 12}, {d: '2026-04-21', r: 'pass', v: 14}, {d: '2026-04-20', r: 'fail', v: 18}]},
+    {id: 'asd-CAR-002', name: 'MFA Enrollment Verification', framework: 'NIST 800-53 IA-2', desc: 'Ensure all privileged and standard accounts have multi-factor authentication properly enrolled and actively used', enabled: true as const, frequency: 'Daily', lastRun: '2026-04-22T14:00:00Z', lastResult: 'fail' as const, passRate: 87.5, violations: 34, autoRemediate: true as const, remediation: 'Send mandatory MFA enrollment notification with 48h deadline', history: [{d: '2026-04-22', r: 'fail', v: 34}, {d: '2026-04-21', r: 'fail', v: 31}, {d: '2026-04-20', r: 'fail', v: 28}]},
+    {id: 'asd-CAR-003', name: 'Inactive Account Lifecycle Review', framework: 'NIST 800-53 AC-2', desc: 'Identify and disable accounts inactive for more than 90 days with automatic escalation at 120 days', enabled: true as const, frequency: 'Weekly', lastRun: '2026-04-21T00:00:00Z', lastResult: 'pass' as const, passRate: 96.8, violations: 5, autoRemediate: true as const, remediation: 'Auto-disable accounts exceeding 120-day threshold with manager notification', history: [{d: '2026-04-21', r: 'pass', v: 5}, {d: '2026-04-14', r: 'pass', v: 7}, {d: '2026-04-07', r: 'pass', v: 9}]},
+    {id: 'asd-CAR-004', name: 'Encryption Standards Verification', framework: 'NIST 800-53 SC-28', desc: 'Verify all storage volumes use approved encryption standards with valid and non-expired certificates', enabled: true as const, frequency: 'Daily', lastRun: '2026-04-22T14:00:00Z', lastResult: 'pass' as const, passRate: 99.1, violations: 2, autoRemediate: false as const, remediation: 'Create priority ticket for manual encryption remediation', history: [{d: '2026-04-22', r: 'pass', v: 2}, {d: '2026-04-21', r: 'pass', v: 2}, {d: '2026-04-20', r: 'pass', v: 3}]},
+    {id: 'asd-CAR-005', name: 'Firewall Rule Baseline Compliance', framework: 'NIST 800-53 SC-7', desc: 'Validate firewall rules against approved baseline to detect unauthorized modifications or configuration drift', enabled: true as const, frequency: 'Daily', lastRun: '2026-04-22T06:00:00Z', lastResult: 'fail' as const, passRate: 91.3, violations: 18, autoRemediate: true as const, remediation: 'Automatically revert non-compliant rules to approved baseline', history: [{d: '2026-04-22', r: 'fail', v: 18}, {d: '2026-04-21', r: 'pass', v: 12}, {d: '2026-04-20', r: 'pass', v: 15}]},
+    {id: 'asd-CAR-006', name: 'Critical Patch SLA Compliance', framework: 'CIS Benchmark Level 2', desc: 'Check all systems against critical and high patch SLA requirements and flag overdue patches', enabled: true as const, frequency: 'Daily', lastRun: '2026-04-22T08:00:00Z', lastResult: 'pass' as const, passRate: 97.6, violations: 8, autoRemediate: false as const, remediation: 'Escalate overdue patches for expedited deployment', history: [{d: '2026-04-22', r: 'pass', v: 8}, {d: '2026-04-21', r: 'pass', v: 10}, {d: '2026-04-20', r: 'pass', v: 12}]},
+    {id: 'asd-CAR-007', name: 'Data Classification Label Enforcement', framework: 'GDPR Article 30', desc: 'Verify all databases and file shares have appropriate data classification labels applied', enabled: true as const, frequency: 'Weekly', lastRun: '2026-04-20T00:00:00Z', lastResult: 'fail' as const, passRate: 82.4, violations: 45, autoRemediate: false as const, remediation: 'Generate classification review tasks for data owners', history: [{d: '2026-04-20', r: 'fail', v: 45}, {d: '2026-04-13', r: 'fail', v: 42}, {d: '2026-04-06', r: 'fail', v: 38}]},
+    {id: 'asd-CAR-008', name: 'Privileged Access Recertification', framework: 'SOX ITGC AC-6', desc: 'Review and validate all privileged access assignments on quarterly recertification schedule', enabled: true as const, frequency: 'Monthly', lastRun: '2026-04-01T00:00:00Z', lastResult: 'pass' as const, passRate: 93.7, violations: 22, autoRemediate: false as const, remediation: 'Initiate access recertification workflow with manager approval', history: [{d: '2026-04-01', r: 'pass', v: 22}, {d: '2026-03-01', r: 'pass', v: 25}, {d: '2026-02-01', r: 'pass', v: 28}]},
+    {id: 'asd-CAR-009', name: 'SIEM Log Source Coverage Audit', framework: 'NIST 800-53 AU-2', desc: 'Verify all critical systems have logging enabled and forwarding events to SIEM platform', enabled: true as const, frequency: 'Weekly', lastRun: '2026-04-21T12:00:00Z', lastResult: 'pass' as const, passRate: 95.5, violations: 7, autoRemediate: true as const, remediation: 'Deploy missing log collection agents via config management', history: [{d: '2026-04-21', r: 'pass', v: 7}, {d: '2026-04-14', r: 'pass', v: 9}, {d: '2026-04-07', r: 'pass', v: 11}]},
+    {id: 'asd-CAR-010', name: 'TLS Certificate Expiry Monitoring', framework: 'NIST 800-53 SC-13', desc: 'Monitor all TLS/SSL certificates for upcoming expiry within configurable warning windows', enabled: true as const, frequency: 'Daily', lastRun: '2026-04-22T14:00:00Z', lastResult: 'pass' as const, passRate: 98.9, violations: 3, autoRemediate: true as const, remediation: 'Trigger automated certificate renewal via ACME protocol', history: [{d: '2026-04-22', r: 'pass', v: 3}, {d: '2026-04-21', r: 'pass', v: 3}, {d: '2026-04-20', r: 'pass', v: 4}]}
+  ];
+
+  private _asdDriftAlerts = [
+    {ruleId: 'asd-CAR-007', ruleName: 'Data Classification Label Enforcement', direction: 'regression' as const, prevRate: 86.1, currRate: 82.4, delta: -3.7, severity: 'warning' as const, detected: '2026-04-20T12:00:00Z', rootCause: 'New file shares created during Q1 cloud migration lacked classification labels', remediation: 'Bulk classification task scheduled for data owners with 2-week deadline'},
+    {ruleId: 'asd-CAR-002', ruleName: 'MFA Enrollment Verification', direction: 'regression' as const, prevRate: 89.2, currRate: 87.5, delta: -1.7, severity: 'info' as const, detected: '2026-04-21T08:00:00Z', rootCause: '12 new contractor accounts onboarded without MFA due to HR process gap', remediation: 'HR onboarding checklist updated to include MFA as mandatory step'},
+    {ruleId: 'asd-CAR-005', ruleName: 'Firewall Rule Baseline Compliance', direction: 'improvement' as const, prevRate: 89.8, currRate: 91.3, delta: 1.5, severity: 'info' as const, detected: '2026-04-22T06:00:00Z', rootCause: 'Automated remediation workflow cleaned up orphaned firewall rules', remediation: 'Continue automated cleanup on weekly schedule'},
+    {ruleId: 'asd-CAR-011', ruleName: 'Endpoint Detection Status', direction: 'improvement' as const, prevRate: 95.1, currRate: 96.2, delta: 1.1, severity: 'info' as const, detected: '2026-04-22T10:00:00Z', rootCause: 'RMM integration enabled bulk EDR reinstallation on offline endpoints', remediation: 'No action needed, improvement trend expected to continue'}
+  ];
+
+  private _getasdRuleSummary(): {total: number; enabled: number; passing: number; failing: number; avgPassRate: number; autoRemRate: number; totalVulns: number} {
+    const enabled = this._asdAutoRules.filter(r => r.enabled).length;
+    const passing = this._asdAutoRules.filter(r => r.lastResult === 'pass').length;
+    const failing = this._asdAutoRules.filter(r => r.lastResult === 'fail').length;
+    const avgRate = this._asdAutoRules.reduce((s, r) => s + r.passRate, 0) / this._asdAutoRules.length;
+    const autoRate = this._asdAutoRules.filter(r => r.autoRemediate).length / this._asdAutoRules.length * 100;
+    const totalVulns = this._asdAutoRules.reduce((s, r) => s + r.violations, 0);
+    return {total: this._asdAutoRules.length, enabled, passing, failing, avgPassRate: Math.round(avgRate * 10) / 10, autoRemRate: Math.round(autoRate), totalVulns};
+  }
+
+  private _getasdEffectiveness(): {autoRemSuccessRate: number; avgRemTime: string; falsePositiveRate: number; coverageScore: number; costSavings: string} {
+    return {autoRemSuccessRate: 87.3, avgRemTime: '23 minutes', falsePositiveRate: 2.1, coverageScore: 92, costSavings: '$340K annually vs manual compliance'};
+  }
+
+  private _asdOpenPositions = [
+    {id: 'asd-P-001', title: 'Senior Penetration Tester', dept: 'Red Team', level: 'Senior', location: 'Remote US', salary: '$165K-$195K', posted: '2026-03-15', applicants: 23, pipeline: 8, interviews: 4, offers: 1, status: 'active' as const, urgency: 'high' as const, manager: 'Alex Chen', recruiter: 'Sarah Kim', skills: ['Burp Suite', 'Metasploit', 'Cobalt Strike', 'Python', 'OWASP Top 10'], niceToHave: ['OSCP/OSCE', 'Bug bounty', 'Cloud pentesting']},
+    {id: 'asd-P-002', title: 'Cloud Security Engineer', dept: 'Cloud Security', level: 'Mid-Senior', location: 'SF / Remote', salary: '$155K-$180K', posted: '2026-03-20', applicants: 45, pipeline: 12, interviews: 6, offers: 2, status: 'active' as const, urgency: 'high' as const, manager: 'Mike Johnson', recruiter: 'Sarah Kim', skills: ['AWS/Azure/GCP', 'Terraform', 'Kubernetes', 'IAM', 'CSPM'], niceToHave: ['CCSP', 'CKS', 'Serverless security']},
+    {id: 'asd-P-003', title: 'SOC Analyst Level 2', dept: 'Security Operations', level: 'Mid', location: 'Austin TX', salary: '$105K-$130K', posted: '2026-04-01', applicants: 67, pipeline: 18, interviews: 8, offers: 0, status: 'active' as const, urgency: 'medium' as const, manager: 'Lisa Park', recruiter: 'Tom Wilson', skills: ['SIEM', 'Incident triage', 'Malware analysis', 'TCP/IP', 'Log analysis'], niceToHave: ['GCIA', 'SOAR', 'Kill chain knowledge']},
+    {id: 'asd-P-004', title: 'Staff Security Architect', dept: 'Architecture', level: 'Staff', location: 'Remote US', salary: '$200K-$240K', posted: '2026-02-28', applicants: 12, pipeline: 3, interviews: 2, offers: 0, status: 'active' as const, urgency: 'critical' as const, manager: 'David Lee', recruiter: 'Sarah Kim', skills: ['Enterprise arch', 'Zero trust', 'Risk frameworks', 'Cloud security', 'Board comms'], niceToHave: ['CISSP+SABSA', 'Team building', 'Speaker']},
+    {id: 'asd-P-005', title: 'GRC Analyst', dept: 'Governance Risk Compliance', level: 'Mid', location: 'NY / Remote', salary: '$110K-$135K', posted: '2026-04-05', applicants: 34, pipeline: 9, interviews: 3, offers: 1, status: 'active' as const, urgency: 'medium' as const, manager: 'Rachel Green', recruiter: 'Tom Wilson', skills: ['ISO 27001', 'SOC 2', 'Risk assessment', 'Policy development', 'Audit'], niceToHave: ['CRISC', 'CISA', 'GDPR expertise']},
+    {id: 'asd-P-006', title: 'Threat Intelligence Analyst', dept: 'Threat Intel', level: 'Mid-Senior', location: 'Remote US', salary: '$140K-$170K', posted: '2026-03-25', applicants: 19, pipeline: 5, interviews: 2, offers: 0, status: 'active' as const, urgency: 'low' as const, manager: 'James Wilson', recruiter: 'Sarah Kim', skills: ['MITRE ATT&CK', 'OSINT', 'Threat modeling', 'Reverse engineering', 'Intel reporting'], niceToHave: ['CTIA', 'Nation-state', 'Dark web']},
+    {id: 'asd-P-007', title: 'Application Security Engineer', dept: 'AppSec', level: 'Senior', location: 'Seattle / Remote', salary: '$160K-$190K', posted: '2026-04-10', applicants: 28, pipeline: 7, interviews: 3, offers: 0, status: 'active' as const, urgency: 'medium' as const, manager: 'Emily Zhang', recruiter: 'Tom Wilson', skills: ['SAST/DAST/SCA', 'Secure SDLC', 'Code review', 'CI/CD security', 'Threat modeling'], niceToHave: ['CSSLP', 'Buffer overflow', 'Mobile security']},
+    {id: 'asd-P-008', title: 'IAM Engineer', dept: 'Identity and Access Mgmt', level: 'Mid', location: 'Remote US', salary: '$135K-$160K', posted: '2026-04-08', applicants: 31, pipeline: 10, interviews: 5, offers: 1, status: 'active' as const, urgency: 'medium' as const, manager: 'Chris Martinez', recruiter: 'Sarah Kim', skills: ['Okta/Azure AD', 'SAML/OIDC', 'PAM', 'RBAC/ABAC', 'Directory services'], niceToHave: ['CISSP', 'Zero trust IAM', 'Identity governance']}
+  ];
+
+  private _asdInterviewTemplate = [
+    {category: 'Technical Proficiency', weight: 40, criteria: [
+      {name: 'Core Security Knowledge Depth', maxScore: 10, desc: 'Understanding of security fundamentals, frameworks, and best practices'},
+      {name: 'Hands-on Technical Execution', maxScore: 10, desc: 'Practical ability with security tools, scripting, and problem-solving'},
+      {name: 'Domain-Specific Expertise', maxScore: 10, desc: 'Depth of knowledge in the specific role domain area'},
+      {name: 'Incident Analysis and Response', maxScore: 10, desc: 'Ability to analyze incidents and propose effective response strategies'}
+    ]},
+    {category: 'Communication Skills', weight: 20, criteria: [
+      {name: 'Technical Explanation Clarity', maxScore: 10, desc: 'Ability to explain complex concepts to technical and non-technical audiences'},
+      {name: 'Written Documentation Quality', maxScore: 10, desc: 'Ability to produce clear and actionable security documentation'}
+    ]},
+    {category: 'Cultural Alignment', weight: 20, criteria: [
+      {name: 'Cross-functional Collaboration', maxScore: 10, desc: 'Track record of working with development, operations, and business teams'},
+      {name: 'Continuous Learning Mindset', maxScore: 10, desc: 'Commitment to professional development and knowledge sharing'}
+    ]},
+    {category: 'Experience and Credentials', weight: 20, criteria: [
+      {name: 'Relevant Industry Experience', maxScore: 10, desc: 'Quality and relevance of past work in security roles'},
+      {name: 'Certifications and Education', maxScore: 10, desc: 'Relevant certifications and academic background'}
+    ]}
+  ];
+
+  private _asdOnboardingChecklist = [
+    {id: 'asd-OB-001', item: 'Provision laptop, monitors, peripherals, and hardened workstation image', cat: 'IT Setup', day: 'Day 1', owner: 'IT Ops'},
+    {id: 'asd-OB-002', item: 'Create AD account, email, Slack, VPN, SSO, and application access', cat: 'Access', day: 'Day 1', owner: 'IAM Team'},
+    {id: 'asd-OB-003', item: 'Grant security tooling access: SIEM, EDR, vuln scanner, pentest platforms', cat: 'Tools', day: 'Day 1-2', owner: 'SOC Manager'},
+    {id: 'asd-OB-004', item: 'Complete MFA enrollment, security awareness onboarding, and AUP', cat: 'Security', day: 'Day 1', owner: 'Awareness Team'},
+    {id: 'asd-OB-005', item: 'Sign NDA, employment agreement, IP assignment, and code of conduct', cat: 'HR', day: 'Day 1', owner: 'HR'},
+    {id: 'asd-OB-006', item: 'Team introduction meetings with direct team and key stakeholders', cat: 'Integration', day: 'Week 1', owner: 'Hiring Manager'},
+    {id: 'asd-OB-007', item: 'Security architecture overview, tooling walkthrough, and runbook review', cat: 'Training', day: 'Week 1-2', owner: 'Security Architect'},
+    {id: 'asd-OB-008', item: 'Shadow experienced team member on active incident response and threat hunting', cat: 'Mentoring', day: 'Week 2-3', owner: 'SOC Team Lead'},
+    {id: 'asd-OB-009', item: 'Set up individual certification study plan aligned with career goals', cat: 'Development', day: 'Week 2', owner: 'Hiring Manager'},
+    {id: 'asd-OB-010', item: 'Establish 30-60-90 day goals and first performance review checkpoint', cat: 'Goals', day: 'Week 1', owner: 'Hiring Manager'}
+  ];
+
+  private _asdRetentionRisks = [
+    {indicator: 'Tenure exceeds 3 years without promotion or role change', weight: 15, threshold: 'High', flagged: 4, action: 'Schedule career development discussion'},
+    {indicator: 'Team voluntary attrition in past 6 months exceeds 15 percent', weight: 20, threshold: 'Medium', flagged: 2, action: 'Conduct stay interviews with remaining members'},
+    {indicator: 'Engagement survey score below team or company average', weight: 10, threshold: 'Medium', flagged: 6, action: 'Manager reviews engagement drivers and creates action plan'},
+    {indicator: 'No certification or training completed in past 12 months', weight: 10, threshold: 'Low', flagged: 8, action: 'Discuss training budget and development priorities'},
+    {indicator: 'Compensation below 75th percentile of market rate for role', weight: 25, threshold: 'High', flagged: 3, action: 'Submit compensation adjustment request to HR'},
+    {indicator: 'Declining productivity metrics over two consecutive quarters', weight: 10, threshold: 'Medium', flagged: 2, action: 'Schedule 1:1 to understand root cause'},
+    {indicator: 'Pattern of missed or rescheduled 1:1 meetings with manager', weight: 10, threshold: 'Low', flagged: 5, action: 'Reinforce 1:1 importance and calendar blocking policy'}
+  ];
+
+  private _getasdPipelineSummary(): {total: number; applicants: number; inPipeline: number; interviewing: number; offers: number; critical: number; avgFillDays: number} {
+    const total = this._asdOpenPositions.length;
+    const apps = this._asdOpenPositions.reduce((s, p) => s + p.applicants, 0);
+    const pipe = this._asdOpenPositions.reduce((s, p) => s + p.pipeline, 0);
+    const ints = this._asdOpenPositions.reduce((s, p) => s + p.interviews, 0);
+    const offs = this._asdOpenPositions.reduce((s, p) => s + p.offers, 0);
+    const crit = this._asdOpenPositions.filter(p => p.urgency === 'critical').length;
+    return {total, applicants: apps, inPipeline: pipe, interviewing: ints, offers: offs, critical: crit, avgFillDays: 47};
+  }
+
+  private _asdMetricDetails = [
+    {id: 'asd-M-001', name: 'Mean Time to Detect (MTTD)', value: '4.2 hours', trend: 'improving' as const, target: '< 4 hours', unit: 'hours', source: 'SIEM - Splunk', methodology: 'Median time from first alert to analyst acknowledgment in SOAR platform', owner: 'SOC Manager', sla: '4 hours', prev: '5.1 hours', sparkData: [5.8, 5.4, 5.1, 4.9, 4.7, 4.5, 4.3, 4.2], period: 'Last 8 weeks', breakdown: [{src: 'Network IDS', pct: '35%', avg: '3.8h'}, {src: 'Endpoint EDR', pct: '28%', avg: '4.1h'}, {src: 'Email Gateway', pct: '22%', avg: '3.5h'}, {src: 'Cloud Security', pct: '10%', avg: '5.2h'}, {src: 'User Reports', pct: '5%', avg: '6.8h'}]},
+    {id: 'asd-M-002', name: 'Mean Time to Respond (MTTR)', value: '2.8 hours', trend: 'stable' as const, target: '< 3 hours', unit: 'hours', source: 'SOAR - Cortex XSOAR', methodology: 'Median time from analyst acknowledgment to first containment action executed', owner: 'IR Lead', sla: '3 hours', prev: '2.7 hours', sparkData: [3.2, 3.0, 2.9, 2.8, 2.8, 2.9, 2.8, 2.8], period: 'Last 8 weeks', breakdown: [{src: 'Automated Playbooks', pct: '42%', avg: '1.2h'}, {src: 'Semi-automated', pct: '33%', avg: '2.5h'}, {src: 'Manual Investigation', pct: '20%', avg: '5.1h'}, {src: 'L3 Escalation', pct: '5%', avg: '8.3h'}]},
+    {id: 'asd-M-003', name: 'Patch Compliance Rate', value: '97.6%', trend: 'improving' as const, target: '> 95%', unit: 'percent', source: 'Tenable.io', methodology: 'Percentage of critical/high vulns patched within SLA windows', owner: 'Vuln Manager', sla: '95%', prev: '96.1%', sparkData: [93.2, 94.1, 94.8, 95.3, 95.9, 96.4, 97.0, 97.6], period: 'Last 8 weeks', breakdown: [{src: 'Critical (7d SLA)', pct: '40%', rate: '99.2%'}, {src: 'High (30d SLA)', pct: '35%', rate: '97.8%'}, {src: 'Medium (90d SLA)', pct: '20%', rate: '95.1%'}, {src: 'Low (180d SLA)', pct: '5%', rate: '89.4%'}]},
+    {id: 'asd-M-004', name: 'Phishing Click Rate', value: '3.2%', trend: 'improving' as const, target: '< 5%', unit: 'percent', source: 'KnowBe4 + Proofpoint', methodology: 'Percentage of users clicking links in simulated phishing campaigns', owner: 'Awareness Lead', sla: '5%', prev: '4.1%', sparkData: [6.8, 6.2, 5.5, 5.1, 4.6, 4.1, 3.6, 3.2], period: 'Last 8 months', breakdown: [{src: 'Spear Phishing', pct: '35%', rate: '5.1%'}, {src: 'Generic Phishing', pct: '30%', rate: '2.8%'}, {src: 'BEC Simulation', pct: '20%', rate: '3.5%'}, {src: 'SMS Phishing', pct: '15%', rate: '1.9%'}]},
+    {id: 'asd-M-005', name: 'Security Posture Score', value: '784', trend: 'improving' as const, target: '> 750', unit: 'score', source: 'SecurityScorecard + Internal', methodology: 'Composite: external rating 30%, compliance 25%, vuln mgmt 25%, config 20%', owner: 'CISO', sla: '> 750', prev: '771', sparkData: [748, 752, 758, 762, 768, 773, 778, 784], period: 'Last 8 weeks', breakdown: [{src: 'External Rating', pct: '30%', score: '791'}, {src: 'Compliance Score', pct: '25%', score: '812'}, {src: 'Vuln Management', pct: '25%', score: '745'}, {src: 'Config Hardening', pct: '20%', score: '769'}]},
+    {id: 'asd-M-006', name: 'Vulnerability Backlog', value: '142', trend: 'improving' as const, target: '< 150', unit: 'count', source: 'Tenable + Qualys', methodology: 'Total open vulns across all scanned assets tracked weekly', owner: 'Vuln Manager', sla: '< 150', prev: '168', sparkData: [210, 198, 185, 175, 165, 158, 150, 142], period: 'Last 8 weeks', breakdown: [{src: 'Critical (CVSS 9+)', pct: '8%', count: '11'}, {src: 'High (CVSS 7-8)', pct: '22%', count: '31'}, {src: 'Medium (CVSS 4-6)', pct: '45%', count: '64'}, {src: 'Low (CVSS 0-3)', pct: '25%', count: '36'}]}
+  ];
+
+  private _getasdMetricTrends(): {improving: number; stable: number; declining: number; total: number} {
+    const imp = this._asdMetricDetails.filter(m => m.trend === 'improving').length;
+    const stb = this._asdMetricDetails.filter(m => m.trend === 'stable').length;
+    const dec = this._asdMetricDetails.filter(m => m.trend === 'declining').length;
+    return {improving: imp, stable: stb, declining: dec, total: this._asdMetricDetails.length};
+  }
+
+  private _asdArchChecklist = [
+    {id: 'asd-A-001', cat: 'Network Architecture', item: 'Network segmentation between trust zones with dedicated firewalls and granular ACLs', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'Micro-segmentation via NSX across all production zones'},
+    {id: 'asd-A-002', cat: 'Network Architecture', item: 'DMZ architecture isolates public-facing services from internal network', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'Dual-firewall DMZ with WAF and reverse proxy'},
+    {id: 'asd-A-003', cat: 'Network Architecture', item: 'Traffic flows enforce least-privilege with deny-by-default policies', sev: 'high' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'Explicit allow rules with quarterly review cycle'},
+    {id: 'asd-A-004', cat: 'Network Architecture', item: 'External communications encrypted with IPSec or TLS 1.3 with PFS', sev: 'high' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'IKEv2 with PFS, TLS 1.3 for external APIs'},
+    {id: 'asd-A-005', cat: 'Identity and Access', item: 'Centralized IdP manages all accounts with SSO and automated provisioning', sev: 'critical' as const, status: 'pass' as const, reviewer: 'IAM Lead', notes: 'Okta SSO SAML 2.0 for 247 apps with SCIM'},
+    {id: 'asd-A-006', cat: 'Identity and Access', item: 'RBAC with quarterly access reviews and automated deprovisioning', sev: 'critical' as const, status: 'pass' as const, reviewer: 'IAM Lead', notes: 'Quarterly recertification with JIT admin access'},
+    {id: 'asd-A-007', cat: 'Identity and Access', item: 'PAM controls all administrative and service accounts with session recording', sev: 'high' as const, status: 'fail' as const, reviewer: 'IAM Lead', notes: '3 legacy accounts pending CyberArk enrollment'},
+    {id: 'asd-A-008', cat: 'Identity and Access', item: 'MFA enforced for all users, hardware tokens for privileged access', sev: 'critical' as const, status: 'pass' as const, reviewer: 'IAM Lead', notes: 'FIDO2 for admins, push MFA for users, 99.8% enrollment'},
+    {id: 'asd-A-009', cat: 'Data Protection', item: 'Data classification enforced with automated labeling on all repos', sev: 'high' as const, status: 'partial' as const, reviewer: 'Data Protection Lead', notes: 'Framework defined, gaps on 4 legacy file shares'},
+    {id: 'asd-A-010', cat: 'Data Protection', item: 'AES-256 encryption at rest for all sensitive data stores', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Data Protection Lead', notes: 'Full-disk, TDE on DBs, SSE-KMS on cloud storage'},
+    {id: 'asd-A-011', cat: 'Data Protection', item: 'DLP controls monitor and prevent unauthorized data exfiltration', sev: 'high' as const, status: 'pass' as const, reviewer: 'Data Protection Lead', notes: 'DLP active on email, endpoint, cloud, and network'},
+    {id: 'asd-A-012', cat: 'Data Protection', item: 'Encrypted off-site backups with quarterly tested restore procedures', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Infrastructure Lead', notes: '3-2-1 strategy with immutable backups'},
+    {id: 'asd-A-013', cat: 'Application Security', item: 'Secure SDLC with mandatory SAST, DAST, SCA in all CI/CD pipelines', sev: 'high' as const, status: 'pass' as const, reviewer: 'AppSec Lead', notes: '34 pipelines with security gates and PR blocking'},
+    {id: 'asd-A-014', cat: 'Application Security', item: 'API gateway with auth, rate limiting, and schema validation', sev: 'high' as const, status: 'pass' as const, reviewer: 'AppSec Lead', notes: 'Kong with OAuth2, rate limits, OpenAPI validation'},
+    {id: 'asd-A-015', cat: 'Application Security', item: 'Container security with image scanning, runtime protection, network policies', sev: 'high' as const, status: 'partial' as const, reviewer: 'Cloud Security Lead', notes: 'Trivy scanning, Falco runtime in 80% of clusters'},
+    {id: 'asd-A-016', cat: 'Monitoring', item: 'SIEM collects from all critical systems with real-time correlation', sev: 'critical' as const, status: 'pass' as const, reviewer: 'SOC Manager', notes: 'Splunk 98% coverage with 1200+ correlation rules'},
+    {id: 'asd-A-017', cat: 'Monitoring', item: 'EDR with behavioral detection on all managed endpoints', sev: 'high' as const, status: 'pass' as const, reviewer: 'SOC Manager', notes: 'CrowdStrike on 99.2% endpoints with 24/7 MDR'},
+    {id: 'asd-A-018', cat: 'Monitoring', item: 'Executive dashboards with real-time posture visibility', sev: 'medium' as const, status: 'pass' as const, reviewer: 'SOC Manager', notes: 'PowerBI dashboards with weekly executive summaries'},
+    {id: 'asd-A-019', cat: 'Cloud Security', item: 'CSPM monitors and remediates cloud misconfigurations continuously', sev: 'high' as const, status: 'pass' as const, reviewer: 'Cloud Security Lead', notes: 'Prisma Cloud with 450+ checks and auto-remediation'},
+    {id: 'asd-A-020', cat: 'Cloud Security', item: 'IaC templates scanned for misconfigurations before deployment', sev: 'high' as const, status: 'partial' as const, reviewer: 'Cloud Security Lead', notes: 'Checkov for Terraform, cfn-nag for CloudFormation pending'}
+  ];
+
+  private _asdDesignPatterns = [
+    {pattern: 'Defense in Depth', adherence: 'strong' as const, score: 92, desc: 'Multiple independent security layers provide redundant protection', examples: ['WAF+IPS+EDR', 'MFA+PAM+RBAC', 'Encryption rest+transit+processing']},
+    {pattern: 'Zero Trust Architecture', adherence: 'moderate' as const, score: 71, desc: 'Never trust always verify with continuous verification', examples: ['Micro-segmentation production', 'UEBA continuous', 'Legacy flat staging']},
+    {pattern: 'Least Privilege Access', adherence: 'strong' as const, score: 88, desc: 'Minimum necessary permissions with JIT provisioning', examples: ['JIT admin access', 'Quarterly reviews', 'Service account inventory']},
+    {pattern: 'Secure by Default', adherence: 'moderate' as const, score: 76, desc: 'Secure configs at deployment with automated compliance', examples: ['CIS benchmarks', 'Default credential rotation', 'Legacy hardening backlog']}
+  ];
+
+  private _getasdArchSummary(): {total: number; passed: number; failed: number; partial: number; criticalFails: number; score: number} {
+    const p = this._asdArchChecklist.filter(c => c.status === 'pass').length;
+    const f = this._asdArchChecklist.filter(c => c.status === 'fail').length;
+    const pa = this._asdArchChecklist.filter(c => c.status === 'partial').length;
+    const cf = this._asdArchChecklist.filter(c => c.status === 'fail' && c.sev === 'critical').length;
+    return {total: this._asdArchChecklist.length, passed: p, failed: f, partial: pa, criticalFails: cf, score: Math.round((p / this._asdArchChecklist.length) * 100)};
+  }
+
+  private _getasdApprovalStatus(): {stage: string; approvers: Array<{name: string; role: string; status: string}>; nextAction: string} {
+    return {stage: 'Final Review', approvers: [
+      {name: 'Alex Chen', role: 'Security Architect', status: 'approved'},
+      {name: 'Sarah Kim', role: 'CISO', status: 'approved'},
+      {name: 'Mike Johnson', role: 'VP Engineering', status: 'pending'},
+      {name: 'Board Risk Committee', role: 'Governance', status: 'pending'}
+    ], nextAction: 'Awaiting VP Engineering review and governance sign-off'};
+  }
+
+
+  private _937RiskAssessmentWorkflow = [
+    {step: 1, name: 'Scope and Boundary Definition', desc: 'Define the assessment scope including organizational boundaries, asset coverage, regulatory context, and engagement parameters with all stakeholder agreement documented', status: 'completed' as const, owner: 'Risk Lead', effort: '2h', output: 'Scope document with boundary diagram and stakeholder register', evidence: ['scope-doc.pdf', 'boundary-diagram.png']},
+    {step: 2, name: 'Comprehensive Asset Discovery', desc: 'Discover and catalog all assets within scope including infrastructure, applications, data stores, APIs, and third-party integrations with criticality and sensitivity ratings', status: 'completed' as const, owner: 'Asset Team', effort: '4h', output: 'Complete asset inventory with business impact ratings and data classification', evidence: ['asset-inventory.xlsx', 'data-classification-map.pdf']},
+    {step: 3, name: 'Threat Intelligence Integration', desc: 'Integrate current threat intelligence feeds, industry-specific threat reports, MITRE ATT&CK mappings, and historical incident data to build comprehensive threat landscape model', status: 'completed' as const, owner: 'Threat Intel', effort: '6h', output: 'Threat landscape model with actor profiles, TTP library, and scenario catalog', evidence: ['threat-model.pdf', 'ttp-library.json', 'actor-profiles.xlsx']},
+    {step: 4, name: 'Vulnerability and Control Assessment', desc: 'Assess vulnerabilities against assets using automated scanning, manual testing, configuration audits, and control effectiveness measurements from all available sources', status: 'in_progress' as const, owner: 'Vuln Team', effort: '8h', output: 'Vulnerability assessment report with CVSS scoring and control gap analysis', evidence: ['vuln-report.pdf', 'control-gaps.xlsx', 'cvss-trends.png']},
+    {step: 5, name: 'Impact Quantification and Financial Modeling', desc: 'Quantify business impact for each risk scenario including direct financial loss, operational disruption, reputational damage, regulatory penalties, and third-party liability', status: 'pending' as const, owner: 'Business Analysis', effort: '4h', output: 'Financial impact model with scenario-based loss estimates and probability distributions', evidence: ['financial-model.xlsx', 'impact-scenarios.pdf']},
+    {step: 6, name: 'Likelihood Calibration and Validation', desc: 'Calibrate likelihood estimates using historical data, threat intelligence confidence levels, control effectiveness metrics, and peer benchmarking from industry sources', status: 'pending' as const, owner: 'Risk Analyst', effort: '3h', output: 'Calibrated likelihood ratings with confidence intervals and supporting evidence matrix', evidence: ['likelihood-calibration.xlsx', 'evidence-matrix.pdf']},
+    {step: 7, name: 'Composite Risk Scoring and Heat Map', desc: 'Calculate composite risk scores using 5x5 matrix, generate risk heat maps by category and business unit, and identify top risks for executive attention and resource allocation', status: 'pending' as const, owner: 'Risk Lead', effort: '2h', output: 'Risk heat maps, prioritized risk register, and executive risk dashboard data', evidence: ['risk-heatmap.png', 'risk-register.xlsx', 'exec-dashboard.pdf']},
+    {step: 8, name: 'Treatment Strategy and Resource Planning', desc: 'Develop treatment strategies for each risk with detailed implementation plans, resource requirements, cost-benefit analysis, timeline estimates, and expected residual risk levels', status: 'pending' as const, owner: 'CISO', effort: '3h', output: 'Treatment strategy document with implementation roadmap and budget requirements', evidence: ['treatment-strategy.pdf', 'roadmap.xlsx', 'budget-estimate.xlsx']},
+    {step: 9, name: 'Control Architecture and Remediation Planning', desc: 'Map existing controls to risk register using NIST CSF taxonomy, identify control gaps, design remediation plans with architectural diagrams and integration points', status: 'pending' as const, owner: 'GRC Team', effort: '4h', output: 'Control architecture diagram, gap analysis report, and prioritized remediation plan', evidence: ['control-arch.png', 'gap-analysis.pdf', 'remediation-plan.xlsx']},
+    {step: 10, name: 'Executive Briefing and Register Finalization', desc: 'Present findings to executive leadership, obtain formal risk acceptance decisions, update enterprise risk register, and schedule continuous monitoring and next review cycle', status: 'pending' as const, owner: 'CISO', effort: '2h', output: 'Executive briefing presentation, finalized risk register, and monitoring schedule', evidence: ['exec-briefing.pptx', 'risk-register-final.xlsx', 'monitoring-schedule.pdf']}
+  ];
+
+  private _937RiskMatrix5x5 = [
+    {impact: 'Negligible', likelihood: 'Rare', score: 1, color: 'green', desc: 'Minimal business impact, easily absorbed by normal operations', example: 'Minor policy violation with no data exposure'},
+    {impact: 'Negligible', likelihood: 'Almost Certain', score: 5, color: 'yellow', desc: 'Frequent minor incidents that cumulatively may indicate systemic issues', example: 'Repeated low-severity scan findings on non-critical systems'},
+    {impact: 'Minor', likelihood: 'Rare', score: 2, color: 'green', desc: 'Small operational inconvenience with minimal financial impact', example: 'Temporary service degradation on non-critical application'},
+    {impact: 'Minor', likelihood: 'Likely', score: 8, color: 'yellow', desc: 'Regular occurrence of minor incidents affecting business operations', example: 'Recurring phishing clicks by small number of users'},
+    {impact: 'Moderate', likelihood: 'Possible', score: 9, color: 'yellow', desc: 'Notable business disruption with measurable financial impact requiring management attention', example: 'Ransomware infection on departmental file server with backup recovery'},
+    {impact: 'Major', likelihood: 'Unlikely', score: 8, color: 'yellow', desc: 'Significant business impact with substantial financial and operational consequences', example: 'Data breach affecting customer PII with regulatory notification required'},
+    {impact: 'Major', likelihood: 'Likely', score: 16, color: 'orange', desc: 'Severe and recurring impact threatening key business operations and stakeholder confidence', example: 'Persistent insider threat exfiltrating sensitive data over extended period'},
+    {impact: 'Catastrophic', likelihood: 'Possible', score: 15, color: 'orange', desc: 'Existential threat to business continuity with potential for permanent damage', example: 'Critical infrastructure compromise causing extended operational shutdown'},
+    {impact: 'Catastrophic', likelihood: 'Likely', score: 20, color: 'red', desc: 'Critical and imminent threat requiring immediate executive intervention and crisis management', example: 'Active ransomware campaign encrypting all production systems simultaneously'},
+    {impact: 'Catastrophic', likelihood: 'Almost Certain', score: 25, color: 'red', desc: 'Maximum risk level requiring immediate all-hands response and potential business closure consideration', example: 'Zero-day exploit in core platform with active exploitation and no available patch'}
+  ];
+
+  private _937TreatmentOptions = [
+    {id: '937-T-001', riskId: 'RSK-042', risk: 'Ransomware Attack on Critical Infrastructure', before: 20, after: 6, strategy: 'Mitigate', controls: ['Next-gen EDR with behavioral detection and automated response', 'Zero-trust network micro-segmentation isolating critical assets', 'Immutable offline backup rotation with quarterly recovery testing', 'Incident response retainer with 1-hour response SLA'], cost: '$450K/yr', roi: '78% reduction vs $2.8M potential loss', timeline: 'Q3 2026', status: 'approved' as const},
+    {id: '937-T-002', riskId: 'RSK-018', risk: 'Insider Data Exfiltration via Cloud Storage', before: 15, after: 5, strategy: 'Mitigate', controls: ['Comprehensive DLP policies for all cloud applications and endpoints', 'UEBA behavioral analytics for anomalous access pattern detection', 'Endpoint restrictions on USB and personal cloud storage services', 'CASB integration for shadow IT discovery and policy enforcement'], cost: '$180K/yr', roi: '67% reduction vs $1.2M potential loss', timeline: 'Q2 2026', status: 'approved' as const},
+    {id: '937-T-003', riskId: 'RSK-067', risk: 'Supply Chain Compromise via Third-Party Component', before: 12, after: 8, strategy: 'Transfer', controls: ['Software supply chain insurance policy covering vendor incidents', 'SCA scanning requirements in all vendor procurement contracts', 'SBOM requirements and continuous monitoring for third-party components', 'Vendor security assessment program with annual re-evaluation'], cost: '$95K/yr', roi: '33% reduction vs $800K potential loss', timeline: 'Q4 2026', status: 'in_review' as const},
+    {id: '937-T-004', riskId: 'RSK-033', risk: 'Phishing-Driven Credential Theft Campaign', before: 16, after: 4, strategy: 'Mitigate', controls: ['AI-powered email filtering with real-time threat intelligence feeds', 'Monthly mandatory phishing simulations with targeted follow-up training', 'Hardware MFA enforcement across all users with passwordless transition', 'Security awareness program with role-specific training tracks'], cost: '$120K/yr', roi: '75% reduction vs $1.5M potential loss', timeline: 'Q2 2026', status: 'approved' as const},
+    {id: '937-T-005', riskId: 'RSK-091', risk: 'Zero-Day Exploit on Public-Facing Application', before: 10, after: 8, strategy: 'Accept', controls: ['WAF with virtual patching capability and rapid rule deployment', 'RASP runtime application self-protection on all production web apps', 'Incident response retainer with 4-hour response SLA commitment', 'Bug bounty program for proactive vulnerability discovery'], cost: '$60K/yr', roi: '20% reduction vs $500K potential loss', timeline: 'Ongoing', status: 'accepted' as const},
+    {id: '937-T-006', riskId: 'RSK-055', risk: 'GDPR Regulatory Non-Compliance Penalty', before: 15, after: 4, strategy: 'Mitigate', controls: ['Dedicated Data Protection Officer with quarterly board reporting', 'Automated compliance monitoring platform with real-time dashboards', 'Quarterly DPIA reviews for all high-risk processing activities', 'Privacy by design framework integrated into product development lifecycle'], cost: '$220K/yr', roi: '73% reduction vs $4M+ potential regulatory penalty', timeline: 'Q3 2026', status: 'approved' as const}
+  ];
+
+  private _937ComplianceRules = [
+    {id: '937-C-001', name: 'Password Policy Compliance', framework: 'NIST 800-53 IA-5', desc: 'Verify all accounts meet minimum password complexity, length, diversity, and rotation requirements defined in the security policy', enabled: true as const, freq: 'Daily', lastRun: '2026-04-22T14:00Z', result: 'pass' as const, passRate: 94.2, violations: 12, autoFix: true as const, fix: 'Force password reset within 24h', history: [{d: '04-22', r: 'pass', v: 12}, {d: '04-21', r: 'pass', v: 14}, {d: '04-20', r: 'fail', v: 18}, {d: '04-19', r: 'pass', v: 15}, {d: '04-18', r: 'pass', v: 13}]},
+    {id: '937-C-002', name: 'MFA Enrollment Verification', framework: 'NIST 800-53 IA-2', desc: 'Ensure all privileged and standard user accounts have multi-factor authentication properly enrolled and actively enforced', enabled: true as const, freq: 'Daily', lastRun: '2026-04-22T14:00Z', result: 'fail' as const, passRate: 87.5, violations: 34, autoFix: true as const, fix: 'Send mandatory enrollment notice with 48h deadline', history: [{d: '04-22', r: 'fail', v: 34}, {d: '04-21', r: 'fail', v: 31}, {d: '04-20', r: 'fail', v: 28}, {d: '04-19', r: 'fail', v: 25}, {d: '04-18', r: 'fail', v: 22}]},
+    {id: '937-C-003', name: 'Inactive Account Review', framework: 'NIST 800-53 AC-2', desc: 'Identify and disable accounts inactive for more than 90 days with automatic escalation at the 120-day threshold', enabled: true as const, freq: 'Weekly', lastRun: '2026-04-21T00:00Z', result: 'pass' as const, passRate: 96.8, violations: 5, autoFix: true as const, fix: 'Auto-disable at 120 days with manager notification', history: [{d: '04-21', r: 'pass', v: 5}, {d: '04-14', r: 'pass', v: 7}, {d: '04-07', r: 'pass', v: 9}, {d: '03-31', r: 'pass', v: 11}, {d: '03-24', r: 'pass', v: 13}]},
+    {id: '937-C-004', name: 'Encryption Standards Check', framework: 'NIST 800-53 SC-28', desc: 'Verify all production storage volumes use AES-256 or equivalent encryption with valid non-expired certificates', enabled: true as const, freq: 'Daily', lastRun: '2026-04-22T14:00Z', result: 'pass' as const, passRate: 99.1, violations: 2, autoFix: false as const, fix: 'Create priority ticket for manual remediation', history: [{d: '04-22', r: 'pass', v: 2}, {d: '04-21', r: 'pass', v: 2}, {d: '04-20', r: 'pass', v: 3}, {d: '04-19', r: 'pass', v: 3}, {d: '04-18', r: 'pass', v: 4}]},
+    {id: '937-C-005', name: 'Firewall Baseline Compliance', framework: 'NIST 800-53 SC-7', desc: 'Validate firewall rules against approved baseline to detect unauthorized modifications, drift, or orphaned rules', enabled: true as const, freq: 'Daily', lastRun: '2026-04-22T06:00Z', result: 'fail' as const, passRate: 91.3, violations: 18, autoFix: true as const, fix: 'Auto-revert non-compliant rules to baseline', history: [{d: '04-22', r: 'fail', v: 18}, {d: '04-21', r: 'pass', v: 12}, {d: '04-20', r: 'pass', v: 15}, {d: '04-19', r: 'pass', v: 14}, {d: '04-18', r: 'fail', v: 20}]},
+    {id: '937-C-006', name: 'Patch SLA Compliance', framework: 'CIS Benchmark L2', desc: 'Check all production systems against critical and high patch SLA requirements with overdue flagging', enabled: true as const, freq: 'Daily', lastRun: '2026-04-22T08:00Z', result: 'pass' as const, passRate: 97.6, violations: 8, autoFix: false as const, fix: 'Escalate overdue patches for expedited deployment', history: [{d: '04-22', r: 'pass', v: 8}, {d: '04-21', r: 'pass', v: 10}, {d: '04-20', r: 'pass', v: 12}, {d: '04-19', r: 'pass', v: 11}, {d: '04-18', r: 'pass', v: 14}]},
+    {id: '937-C-007', name: 'Data Classification Labels', framework: 'GDPR Art. 30', desc: 'Verify all databases, file shares, and cloud repositories have appropriate classification labels applied', enabled: true as const, freq: 'Weekly', lastRun: '2026-04-20T00:00Z', result: 'fail' as const, passRate: 82.4, violations: 45, autoFix: false as const, fix: 'Generate review tasks for data owners', history: [{d: '04-20', r: 'fail', v: 45}, {d: '04-13', r: 'fail', v: 42}, {d: '04-06', r: 'fail', v: 38}, {d: '03-30', r: 'fail', v: 35}, {d: '03-23', r: 'pass', v: 30}]},
+    {id: '937-C-008', name: 'Privileged Access Review', framework: 'SOX AC-6', desc: 'Review and validate all privileged access assignments on quarterly recertification schedule', enabled: true as const, freq: 'Monthly', lastRun: '2026-04-01T00:00Z', result: 'pass' as const, passRate: 93.7, violations: 22, autoFix: false as const, fix: 'Initiate recertification workflow with approvals', history: [{d: '04-01', r: 'pass', v: 22}, {d: '03-01', r: 'pass', v: 25}, {d: '02-01', r: 'pass', v: 28}, {d: '01-01', r: 'pass', v: 30}, {d: '12-01', r: 'pass', v: 32}]},
+    {id: '937-C-009', name: 'SIEM Log Coverage', framework: 'NIST 800-53 AU-2', desc: 'Verify all critical systems have logging enabled and actively forwarding to the centralized SIEM platform', enabled: true as const, freq: 'Weekly', lastRun: '2026-04-21T12:00Z', result: 'pass' as const, passRate: 95.5, violations: 7, autoFix: true as const, fix: 'Deploy missing log agents via config management', history: [{d: '04-21', r: 'pass', v: 7}, {d: '04-14', r: 'pass', v: 9}, {d: '04-07', r: 'pass', v: 11}, {d: '03-31', r: 'pass', v: 10}, {d: '03-24', r: 'pass', v: 13}]},
+    {id: '937-C-010', name: 'Certificate Expiry Monitor', framework: 'NIST 800-53 SC-13', desc: 'Monitor all TLS/SSL certificates for upcoming expiry within 30-day warning windows', enabled: true as const, freq: 'Daily', lastRun: '2026-04-22T14:00Z', result: 'pass' as const, passRate: 98.9, violations: 3, autoFix: true as const, fix: 'Trigger auto-renewal via ACME protocol', history: [{d: '04-22', r: 'pass', v: 3}, {d: '04-21', r: 'pass', v: 3}, {d: '04-20', r: 'pass', v: 4}, {d: '04-19', r: 'pass', v: 4}, {d: '04-18', r: 'pass', v: 5}]}
+  ];
+
+  private _937TalentPositions = [
+    {id: '937-H-001', title: 'Senior Penetration Tester', dept: 'Red Team', level: 'Senior', loc: 'Remote US', salary: '$165K-$195K', posted: '2026-03-15', applicants: 23, pipeline: 8, interviews: 4, offers: 1, urgency: 'high' as const, manager: 'Alex Chen', skills: ['Burp Suite', 'Metasploit', 'Cobalt Strike', 'Python', 'OWASP Top 10'], nice: ['OSCP/OSCE', 'Bug bounty', 'Cloud pentest']},
+    {id: '937-H-002', title: 'Cloud Security Engineer', dept: 'Cloud Security', level: 'Mid-Senior', loc: 'SF/Remote', salary: '$155K-$180K', posted: '2026-03-20', applicants: 45, pipeline: 12, interviews: 6, offers: 2, urgency: 'high' as const, manager: 'Mike Johnson', skills: ['AWS/Azure/GCP', 'Terraform', 'Kubernetes', 'IAM', 'CSPM'], nice: ['CCSP', 'CKS', 'Serverless']},
+    {id: '937-H-003', title: 'SOC Analyst L2', dept: 'Security Operations', level: 'Mid', loc: 'Austin TX', salary: '$105K-$130K', posted: '2026-04-01', applicants: 67, pipeline: 18, interviews: 8, offers: 0, urgency: 'medium' as const, manager: 'Lisa Park', skills: ['SIEM', 'Incident triage', 'Malware analysis', 'TCP/IP'], nice: ['GCIA', 'SOAR', 'Kill chain']},
+    {id: '937-H-004', title: 'Staff Security Architect', dept: 'Architecture', level: 'Staff', loc: 'Remote US', salary: '$200K-$240K', posted: '2026-02-28', applicants: 12, pipeline: 3, interviews: 2, offers: 0, urgency: 'critical' as const, manager: 'David Lee', skills: ['Enterprise arch', 'Zero trust', 'Risk frameworks', 'Board comms'], nice: ['CISSP+SABSA', 'Team building', 'Speaker']},
+    {id: '937-H-005', title: 'GRC Analyst', dept: 'GRC', level: 'Mid', loc: 'NY/Remote', salary: '$110K-$135K', posted: '2026-04-05', applicants: 34, pipeline: 9, interviews: 3, offers: 1, urgency: 'medium' as const, manager: 'Rachel Green', skills: ['ISO 27001', 'SOC 2', 'Risk assessment', 'Audit'], nice: ['CRISC', 'CISA', 'GDPR']},
+    {id: '937-H-006', title: 'Threat Intel Analyst', dept: 'Threat Intel', level: 'Mid-Senior', loc: 'Remote US', salary: '$140K-$170K', posted: '2026-03-25', applicants: 19, pipeline: 5, interviews: 2, offers: 0, urgency: 'low' as const, manager: 'James Wilson', skills: ['MITRE ATT&CK', 'OSINT', 'Threat modeling', 'Reverse eng'], nice: ['CTIA', 'Nation-state', 'Dark web']},
+    {id: '937-H-007', title: 'AppSec Engineer', dept: 'AppSec', level: 'Senior', loc: 'Seattle/Remote', salary: '$160K-$190K', posted: '2026-04-10', applicants: 28, pipeline: 7, interviews: 3, offers: 0, urgency: 'medium' as const, manager: 'Emily Zhang', skills: ['SAST/DAST/SCA', 'Secure SDLC', 'Code review', 'CI/CD'], nice: ['CSSLP', 'Mobile security']},
+    {id: '937-H-008', title: 'IAM Engineer', dept: 'IAM', level: 'Mid', loc: 'Remote US', salary: '$135K-$160K', posted: '2026-04-08', applicants: 31, pipeline: 10, interviews: 5, offers: 1, urgency: 'medium' as const, manager: 'Chris Martinez', skills: ['Okta/Azure AD', 'SAML/OIDC', 'PAM', 'RBAC'], nice: ['CISSP', 'Zero trust IAM']}
+  ];
+
+  private _937InterviewScorecard = [
+    {category: 'Technical Proficiency', weight: 40, criteria: [
+      {name: 'Core Security Knowledge', max: 10, desc: 'Understanding of security fundamentals, NIST/ISO frameworks, and industry best practices across multiple domains'},
+      {name: 'Hands-on Technical Skills', max: 10, desc: 'Practical ability with security tools, scripting languages, and technical problem-solving under pressure'},
+      {name: 'Domain-Specific Expertise', max: 10, desc: 'Depth of knowledge and practical experience in the specific role domain being hired for'},
+      {name: 'Incident Response Thinking', max: 10, desc: 'Systematic approach to analyzing security incidents and proposing effective response strategies'}
+    ]},
+    {category: 'Communication', weight: 20, criteria: [
+      {name: 'Technical Explanation Clarity', max: 10, desc: 'Ability to explain complex security concepts to both technical and non-technical audiences effectively'},
+      {name: 'Written Documentation', max: 10, desc: 'Quality of security documentation, reports, and written analysis demonstrated during the process'}
+    ]},
+    {category: 'Cultural Fit', weight: 20, criteria: [
+      {name: 'Cross-functional Collaboration', max: 10, desc: 'Track record of working effectively with development, operations, and business stakeholders'},
+      {name: 'Growth Mindset', max: 10, desc: 'Commitment to continuous learning, professional development, and proactive knowledge sharing'}
+    ]},
+    {category: 'Experience', weight: 20, criteria: [
+      {name: 'Relevant Experience', max: 10, desc: 'Quality, breadth, and relevance of past security industry work experience at comparable organizations'},
+      {name: 'Certifications', max: 10, desc: 'Relevant industry certifications and academic background supporting the role requirements'}
+    ]}
+  ];
+
+  private _937OnboardingSteps = [
+    {id: '937-OB-01', item: 'Provision security-hardened laptop, monitors, peripherals, and configured workstation image with all required security tools', cat: 'IT Setup', day: 'Day 1', owner: 'IT Operations'},
+    {id: '937-OB-02', item: 'Create AD account, email, Slack, VPN, SSO enrollment, and all required application access accounts', cat: 'Access', day: 'Day 1', owner: 'IAM Team'},
+    {id: '937-OB-03', item: 'Grant security tooling access: SIEM console, EDR dashboard, vuln scanner, pentest platforms, SOAR', cat: 'Tools', day: 'Day 1-2', owner: 'SOC Manager'},
+    {id: '937-OB-04', item: 'Complete MFA enrollment, security awareness onboarding course, and acceptable use policy acknowledgment', cat: 'Security', day: 'Day 1', owner: 'Awareness Team'},
+    {id: '937-OB-05', item: 'Sign NDA, employment agreement, IP assignment, and code of conduct documents with HR', cat: 'HR', day: 'Day 1', owner: 'Human Resources'},
+    {id: '937-OB-06', item: 'Introduction meetings with direct team members and key cross-functional stakeholders', cat: 'Integration', day: 'Week 1', owner: 'Hiring Manager'},
+    {id: '937-OB-07', item: 'Security architecture overview, tooling walkthrough, and operational runbook review sessions', cat: 'Training', day: 'Week 1-2', owner: 'Security Architect'},
+    {id: '937-OB-08', item: 'Shadow experienced team member on active incident response and threat hunting investigations', cat: 'Mentoring', day: 'Week 2-3', owner: 'SOC Lead'},
+    {id: '937-OB-09', item: 'Set up individual certification study plan aligned with role requirements and career goals', cat: 'Development', day: 'Week 2', owner: 'Hiring Manager'},
+    {id: '937-OB-10', item: 'Establish 30-60-90 day goals, define success metrics, and schedule first performance checkpoint', cat: 'Goals', day: 'Week 1', owner: 'Hiring Manager'}
+  ];
+
+  private _937MetricsDashboard = [
+    {id: '937-MTD-001', name: 'Mean Time to Detect (MTTD)', value: '4.2 hours', trend: 'improving' as const, target: '< 4 hours', source: 'SIEM - Splunk', method: 'Median time from first alert to analyst acknowledgment', owner: 'SOC Manager', sla: '4 hours', prev: '5.1 hours', spark: [5.8, 5.4, 5.1, 4.9, 4.7, 4.5, 4.3, 4.2], breakdown: [{src: 'Network IDS', pct: '35%', avg: '3.8h'}, {src: 'Endpoint EDR', pct: '28%', avg: '4.1h'}, {src: 'Email Gateway', pct: '22%', avg: '3.5h'}, {src: 'Cloud Security', pct: '10%', avg: '5.2h'}, {src: 'User Reports', pct: '5%', avg: '6.8h'}]},
+    {id: '937-MTD-002', name: 'Mean Time to Respond (MTTR)', value: '2.8 hours', trend: 'stable' as const, target: '< 3 hours', source: 'SOAR - XSOAR', method: 'Median time from acknowledgment to first containment action', owner: 'IR Lead', sla: '3 hours', prev: '2.7 hours', spark: [3.2, 3.0, 2.9, 2.8, 2.8, 2.9, 2.8, 2.8], breakdown: [{src: 'Auto Playbooks', pct: '42%', avg: '1.2h'}, {src: 'Semi-Auto', pct: '33%', avg: '2.5h'}, {src: 'Manual', pct: '20%', avg: '5.1h'}, {src: 'L3 Escalation', pct: '5%', avg: '8.3h'}]},
+    {id: '937-MTD-003', name: 'Patch Compliance Rate', value: '97.6%', trend: 'improving' as const, target: '> 95%', source: 'Tenable.io', method: 'Pct of critical/high vulns patched within SLA windows', owner: 'Vuln Manager', sla: '95%', prev: '96.1%', spark: [93.2, 94.1, 94.8, 95.3, 95.9, 96.4, 97.0, 97.6], breakdown: [{src: 'Critical (7d)', pct: '40%', rate: '99.2%'}, {src: 'High (30d)', pct: '35%', rate: '97.8%'}, {src: 'Medium (90d)', pct: '20%', rate: '95.1%'}, {src: 'Low (180d)', pct: '5%', rate: '89.4%'}]},
+    {id: '937-MTD-004', name: 'Phishing Click Rate', value: '3.2%', trend: 'improving' as const, target: '< 5%', source: 'KnowBe4 + Proofpoint', method: 'Pct of users clicking simulated phishing links monthly', owner: 'Awareness Lead', sla: '5%', prev: '4.1%', spark: [6.8, 6.2, 5.5, 5.1, 4.6, 4.1, 3.6, 3.2], breakdown: [{src: 'Spear Phishing', pct: '35%', rate: '5.1%'}, {src: 'Generic Phishing', pct: '30%', rate: '2.8%'}, {src: 'BEC Sim', pct: '20%', rate: '3.5%'}, {src: 'SMS Phishing', pct: '15%', rate: '1.9%'}]},
+    {id: '937-MTD-005', name: 'Security Posture Score', value: '784', trend: 'improving' as const, target: '> 750', source: 'SecurityScorecard', method: 'Composite: external 30%, compliance 25%, vuln 25%, config 20%', owner: 'CISO', sla: '> 750', prev: '771', spark: [748, 752, 758, 762, 768, 773, 778, 784], breakdown: [{src: 'External Rating', pct: '30%', score: '791'}, {src: 'Compliance', pct: '25%', score: '812'}, {src: 'Vuln Mgmt', pct: '25%', score: '745'}, {src: 'Config', pct: '20%', score: '769'}]},
+    {id: '937-MTD-006', name: 'Vulnerability Backlog', value: '142', trend: 'improving' as const, target: '< 150', source: 'Tenable + Qualys', method: 'Total open vulns across all scanned assets tracked weekly', owner: 'Vuln Manager', sla: '< 150', prev: '168', spark: [210, 198, 185, 175, 165, 158, 150, 142], breakdown: [{src: 'Critical', pct: '8%', count: '11'}, {src: 'High', pct: '22%', count: '31'}, {src: 'Medium', pct: '45%', count: '64'}, {src: 'Low', pct: '25%', count: '36'}]}
+  ];
+
+  private _937ArchReview = [
+    {id: '937-AR-001', cat: 'Network', item: 'Network segmentation between trust zones with dedicated firewalls and granular ACLs', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'Micro-segmentation via NSX across all production zones'},
+    {id: '937-AR-002', cat: 'Network', item: 'DMZ architecture isolating public services from internal network', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'Dual-firewall DMZ with WAF and DDoS mitigation'},
+    {id: '937-AR-003', cat: 'Network', item: 'Least-privilege traffic flows with deny-by-default and quarterly review', sev: 'high' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'Explicit allow rules with automated drift detection'},
+    {id: '937-AR-004', cat: 'Network', item: 'Encrypted external communications with IPSec/TLS 1.3 and PFS', sev: 'high' as const, status: 'pass' as const, reviewer: 'Network Architect', notes: 'IKEv2 with PFS, TLS 1.3 for all external APIs'},
+    {id: '937-AR-005', cat: 'Identity', item: 'Centralized IdP with SSO and automated SCIM provisioning', sev: 'critical' as const, status: 'pass' as const, reviewer: 'IAM Lead', notes: 'Okta SSO SAML 2.0 for 247 apps with SCIM'},
+    {id: '937-AR-006', cat: 'Identity', item: 'RBAC with quarterly reviews and automated deprovisioning', sev: 'critical' as const, status: 'pass' as const, reviewer: 'IAM Lead', notes: 'Quarterly recertification with JIT admin access'},
+    {id: '937-AR-007', cat: 'Identity', item: 'PAM controlling all admin and service accounts with session recording', sev: 'high' as const, status: 'fail' as const, reviewer: 'IAM Lead', notes: '3 legacy accounts pending CyberArk enrollment'},
+    {id: '937-AR-008', cat: 'Identity', item: 'MFA enforced for all users, hardware tokens for privileged access', sev: 'critical' as const, status: 'pass' as const, reviewer: 'IAM Lead', notes: 'FIDO2 for admins, push MFA for users, 99.8% enrollment'},
+    {id: '937-AR-009', cat: 'Data', item: 'Data classification enforced with automated labeling on all repos', sev: 'high' as const, status: 'partial' as const, reviewer: 'Data Protection Lead', notes: 'Framework deployed, gaps on 4 legacy file shares'},
+    {id: '937-AR-010', cat: 'Data', item: 'AES-256 encryption at rest for all sensitive data stores', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Data Protection Lead', notes: 'Full-disk, TDE on DBs, SSE-KMS on cloud storage'},
+    {id: '937-AR-011', cat: 'Data', item: 'DLP monitoring and preventing unauthorized data exfiltration', sev: 'high' as const, status: 'pass' as const, reviewer: 'Data Protection Lead', notes: 'DLP active on email, endpoint, cloud, and network'},
+    {id: '937-AR-012', cat: 'Data', item: 'Encrypted off-site backups with quarterly restore testing', sev: 'critical' as const, status: 'pass' as const, reviewer: 'Infrastructure Lead', notes: '3-2-1 strategy with immutable backups'},
+    {id: '937-AR-013', cat: 'AppSec', item: 'Secure SDLC with SAST, DAST, SCA in all CI/CD pipelines', sev: 'high' as const, status: 'pass' as const, reviewer: 'AppSec Lead', notes: '34 pipelines with security gates and PR blocking'},
+    {id: '937-AR-014', cat: 'AppSec', item: 'API gateway with auth, rate limiting, schema validation', sev: 'high' as const, status: 'pass' as const, reviewer: 'AppSec Lead', notes: 'Kong with OAuth2, rate limits, OpenAPI validation'},
+    {id: '937-AR-015', cat: 'AppSec', item: 'Container security with image scanning and runtime protection', sev: 'high' as const, status: 'partial' as const, reviewer: 'Cloud Security Lead', notes: 'Trivy scanning, Falco runtime in 80% of clusters'},
+    {id: '937-AR-016', cat: 'Monitoring', item: 'SIEM collecting from all critical systems with correlation rules', sev: 'critical' as const, status: 'pass' as const, reviewer: 'SOC Manager', notes: 'Splunk 98% coverage with 1200+ correlation rules'},
+    {id: '937-AR-017', cat: 'Monitoring', item: 'EDR with behavioral detection on all managed endpoints', sev: 'high' as const, status: 'pass' as const, reviewer: 'SOC Manager', notes: 'CrowdStrike on 99.2% endpoints with 24/7 MDR'},
+    {id: '937-AR-018', cat: 'Monitoring', item: 'Executive dashboards with real-time posture visibility', sev: 'medium' as const, status: 'pass' as const, reviewer: 'SOC Manager', notes: 'PowerBI dashboards with weekly exec summaries'},
+    {id: '937-AR-019', cat: 'Cloud', item: 'CSPM monitoring and remediating cloud misconfigurations', sev: 'high' as const, status: 'pass' as const, reviewer: 'Cloud Security Lead', notes: 'Prisma Cloud 450+ checks with auto-remediation'},
+    {id: '937-AR-020', cat: 'Cloud', item: 'IaC templates scanned before deployment to production', sev: 'high' as const, status: 'partial' as const, reviewer: 'Cloud Security Lead', notes: 'Checkov for Terraform, cfn-nag for CloudFormation pending'}
+  ];
+
+  private _get937RiskProgress(): number {
+    return Math.round(this._937RiskAssessmentWorkflow.filter(s => s.status === 'completed').length / this._937RiskAssessmentWorkflow.length * 100);
+  }
+
+  private _get937TreatmentSummary(): {total: number; approved: number; avgReduction: number; investment: string} {
+    const a = this._937TreatmentOptions.filter(r => r.status === 'approved').length;
+    const avg = this._937TreatmentOptions.reduce((s, r) => s + ((r.before - r.after) / r.before * 100), 0) / this._937TreatmentOptions.length;
+    return {total: this._937TreatmentOptions.length, approved: a, avgReduction: Math.round(avg), investment: '$1.125M annually'};
+  }
+
+  private _get937RuleSummary(): {total: number; passing: number; failing: number; avgRate: number; violations: number} {
+    const p = this._937ComplianceRules.filter(r => r.result === 'pass').length;
+    const f = this._937ComplianceRules.filter(r => r.result === 'fail').length;
+    const avg = this._937ComplianceRules.reduce((s, r) => s + r.passRate, 0) / this._937ComplianceRules.length;
+    const v = this._937ComplianceRules.reduce((s, r) => s + r.violations, 0);
+    return {total: this._937ComplianceRules.length, passing: p, failing: f, avgRate: Math.round(avg * 10) / 10, violations: v};
+  }
+
+  private _get937PipelineStats(): {positions: number; applicants: number; interviewing: number; offers: number; critical: number} {
+    const t = this._937TalentPositions.length;
+    const a = this._937TalentPositions.reduce((s, p) => s + p.applicants, 0);
+    const i = this._937TalentPositions.reduce((s, p) => s + p.interviews, 0);
+    const o = this._937TalentPositions.reduce((s, p) => s + p.offers, 0);
+    const c = this._937TalentPositions.filter(x => x.urgency === 'critical').length;
+    return {positions: t, applicants: a, interviewing: i, offers: o, critical: c};
+  }
+
+  private _get937MetricTrends(): {improving: number; stable: number; total: number} {
+    const imp = this._937MetricsDashboard.filter(m => m.trend === 'improving').length;
+    const stb = this._937MetricsDashboard.filter(m => m.trend === 'stable').length;
+    return {improving: imp, stable: stb, total: this._937MetricsDashboard.length};
+  }
+
+  private _get937ArchScore(): {total: number; passed: number; failed: number; partial: number; score: number} {
+    const p = this._937ArchReview.filter(c => c.status === 'pass').length;
+    const f = this._937ArchReview.filter(c => c.status === 'fail').length;
+    const pa = this._937ArchReview.filter(c => c.status === 'partial').length;
+    return {total: this._937ArchReview.length, passed: p, failed: f, partial: pa, score: Math.round((p / this._937ArchReview.length) * 100)};
+  }
+
   render() {
     const totalAssets = this._exposedAssets.length;
     const criticalExposures = this._exposedAssets.filter(a => a.exposure === 'critical').length;
