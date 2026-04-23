@@ -1527,5 +1527,452 @@ private _executionHistory: ExecutionRecord[] = [
     </div>`;
   }
 
-}
+
+  // === SCENARIO SIMULATION ENGINE ===
+  @state() private _esScenarios: {id:string;name:string;attackType:string;target:string;method:string;impactLow:number;impactHigh:number;confidence:number;mitigation:string;status:string}[] = [];
+  @state() private _esScenarioForm: {attackType:string;target:string;method:string} = {attackType:'',target:'',method:''};
+  @state() private _esScenarioCompare: boolean = false;
+  @state() private _esScenarioSelected: string[] = [];
+
+  private _esInitScenarios(): void {
+    const saved = localStorage.getItem('es_scenarios');
+    if (saved) { try { this._esScenarios = JSON.parse(saved); } catch { /* ignore */ } }
+    if (this._esScenarios.length === 0) {
+      this._esScenarios = [
+        {id:'es-s1',name:'Baseline Threat',attackType:'Phishing',target:'Employees',method:'Spear Email',impactLow:45,impactHigh:78,confidence:72,mitigation:'Security awareness training + email filtering',status:'active'},
+        {id:'es-s2',name:'Escalated Attack',attackType:'Ransomware',target:'Endpoints',method:'Drive-by Download',impactLow:65,impactHigh:95,confidence:58,mitigation:'EDR deployment + network segmentation',status:'saved'},
+        {id:'es-s3',name:'Insider Threat',attackType:'Data Exfiltration',target:'Databases',method:'SQL Injection',impactLow:55,impactHigh:88,confidence:65,mitigation:'DLP policies + query monitoring',status:'draft'},
+      ];
+    }
+  }
+
+  private _esSaveScenarios(): void {
+    localStorage.setItem('es_scenarios', JSON.stringify(this._esScenarios));
+  }
+
+  private _esAddScenario(): void {
+    const f = this._esScenarioForm;
+    if (!f.attackType || !f.target) return;
+    this._esScenarios = [...this._esScenarios, {
+      id: 'es-s' + (this._esScenarios.length + 1),
+      name: f.attackType + ' vs ' + f.target,
+      attackType: f.attackType,
+      target: f.target,
+      method: f.method || 'Unknown',
+      impactLow: Math.floor(Math.random() * 40 + 20),
+      impactHigh: Math.floor(Math.random() * 30 + 70),
+      confidence: Math.floor(Math.random() * 30 + 50),
+      mitigation: 'Review and implement appropriate controls',
+      status: 'draft',
+    }];
+    this._esScenarioForm = {attackType:'',target:'',method:''};
+    this._esSaveScenarios();
+  }
+
+  private _esRenderScenarioEngine(): any {
+    const attackTypes = ['Phishing','Ransomware','DDoS','SQL Injection','XSS','Privilege Escalation','Supply Chain','Zero-Day'];
+    const targets = ['Employees','Endpoints','Servers','Databases','Network','Cloud','APIs','Mobile'];
+    const methods = ['Spear Email','Drive-by Download','Brute Force','Social Engineering','Exploit Kit','Watering Hole','Malware','Misconfiguration'];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Scenario Simulation Engine</span>
+          <button class="tab" @click=${() => { this._esScenarioCompare = !this._esScenarioCompare; }}>${this._esScenarioCompare ? 'List View' : 'Compare'}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._esScenarioForm = {...this._esScenarioForm, attackType: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Attack Type</option>
+            ${attackTypes.map(a => html`<option value=${a} ${this._esScenarioForm.attackType === a ? 'selected' : ''}>${a}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._esScenarioForm = {...this._esScenarioForm, target: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Target</option>
+            ${targets.map(t => html`<option value=${t} ${this._esScenarioForm.target === t ? 'selected' : ''}>${t}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._esScenarioForm = {...this._esScenarioForm, method: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Method</option>
+            ${methods.map(m => html`<option value=${m} ${this._esScenarioForm.method === m ? 'selected' : ''}>${m}</option>`)}
+          </select>
+        </div>
+        <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 12px;color:#fff;font-size:11px;cursor:pointer" @click=${this._esAddScenario}>Run Simulation</button>
+      </div>
+      ${this._esScenarioCompare && this._esScenarios.length >= 2 ? html`
+        <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Side-by-Side Comparison</div>
+          <div style="display:grid;grid-template-columns:repeat(${Math.min(3, this._esScenarios.length)},1fr);gap:8px">
+            ${this._esScenarios.slice(0,3).map(s => html`
+              <div style="background:#1a1d2e;border-radius:6px;padding:8px;border:1px solid #2a2d3a">
+                <div style="font-weight:600;font-size:11px;color:#60a5fa;margin-bottom:4px">${s.name}</div>
+                <div style="font-size:10px;color:#9ca3af">${s.attackType} / ${s.target}</div>
+                <div style="margin-top:6px;font-size:10px">
+                  <div>Impact: ${s.impactLow}-${s.impactHigh}%</div>
+                  <div>Confidence: ${s.confidence}%</div>
+                  <div style="margin-top:4px;color:#f59e0b">${s.mitigation}</div>
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+      ` : ''}
+      <div style="background:#0f1117;border-radius:8px;padding:12px">
+        <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Saved Scenarios (${this._esScenarios.length})</div>
+        ${this._esScenarios.map(s => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a1d2e">
+            <div>
+              <span style="font-size:11px;color:#e2e8f0">${s.name}</span>
+              <span style="font-size:9px;color:#6b7280;margin-left:6px">${s.attackType}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${s.impactHigh > 80 ? '#dc262620' : '#f59e0b20'};color:${s.impactHigh > 80 ? '#ef4444' : '#f59e0b'}">${s.impactLow}-${s.impactHigh}%</span>
+              <span style="font-size:9px;color:#6b7280">${s.confidence}% conf</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // === TIME-SERIES ANALYSIS ===
+  @state() private _esTrendData: {day:number;value:number;anomaly:boolean}[] = [];
+  @state() private _esTrendZoom: {start:number;end:number} | null = null;
+  @state() private _esTrendMA: number = 7;
+
+  private _esInitTrendData(): void {
+    const data: {day:number;value:number;anomaly:boolean}[] = [];
+    let base = 50 + Math.random() * 30;
+    for (let i = 0; i < 90; i++) {
+      base += (Math.random() - 0.48) * 8;
+      base = Math.max(10, Math.min(100, base));
+      const anomaly = Math.random() < 0.05;
+      data.push({ day: i, value: anomaly ? base + (Math.random() > 0.5 ? 25 : -20) : base, anomaly });
+    }
+    this._esTrendData = data;
+  }
+
+  private _esCalcMA(window: number): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < this._esTrendData.length; i++) {
+      const start = Math.max(0, i - window + 1);
+      const slice = this._esTrendData.slice(start, i + 1);
+      result.push(slice.reduce((s, d) => s + d.value, 0) / slice.length);
+    }
+    return result;
+  }
+
+  private _esGetStats(): {mean:number;median:number;stddev:number;trend:string} {
+    const vals = this._esTrendData.map(d => d.value);
+    const n = vals.length;
+    const mean = vals.reduce((a,b) => a+b, 0) / n;
+    const sorted = [...vals].sort((a,b) => a-b);
+    const median = n % 2 === 0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+    const variance = vals.reduce((s,v) => s + (v-mean)*(v-mean), 0) / n;
+    const stddev = Math.sqrt(variance);
+    const firstHalf = vals.slice(0, Math.floor(n/2));
+    const secondHalf = vals.slice(Math.floor(n/2));
+    const firstMean = firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length;
+    const secondMean = secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length;
+    const trend = secondMean > firstMean + stddev*0.5 ? 'Increasing' : secondMean < firstMean - stddev*0.5 ? 'Decreasing' : 'Stable';
+    return {mean: Math.round(mean*10)/10, median: Math.round(median*10)/10, stddev: Math.round(stddev*10)/10, trend};
+  }
+
+  private _esRenderTimeSeries(): any {
+    const stats = this._esGetStats();
+    const filtered = this._esTrendZoom ? this._esTrendData.filter(d => d.day >= this._esTrendZoom.start && d.day <= this._esTrendZoom.end) : this._esTrendData;
+    const maxVal = Math.max(...filtered.map(d => d.value));
+    const minVal = Math.min(...filtered.map(d => d.value));
+    const range = maxVal - minVal || 1;
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">90-Day Trend Analysis</span>
+          <div style="display:flex;gap:4px">
+            <button class="tab ${this._esTrendMA === 7 ? 'active' : ''}" @click=${() => { this._esTrendMA = 7; }}>7D MA</button>
+            <button class="tab ${this._esTrendMA === 30 ? 'active' : ''}" @click=${() => { this._esTrendMA = 30; }}>30D MA</button>
+            <button class="tab" @click=${() => { this._esTrendZoom = null; }}>Reset Zoom</button>
+          </div>
+        </div>
+        <div style="position:relative;height:120px;background:#1a1d2e;border-radius:6px;overflow:hidden;margin-bottom:8px;cursor:crosshair" @click=${(e: any) => {
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const ratio = x / rect.width;
+          const center = Math.floor(ratio * 90);
+          this._esTrendZoom = { start: Math.max(0, center - 10), end: Math.min(89, center + 10) };
+        }}>
+          ${filtered.map((d, i) => html`
+            <div style="position:absolute;left:${(d.day / 89) * 100}%;bottom:${((d.value - minVal) / range) * 100}%;width:2px;height:${(d.value - minVal) / range * 100}%;background:${d.anomaly ? '#ef4444' : '#3b82f6'};opacity:0.7"></div>
+            ${d.anomaly ? html`<div style="position:absolute;left:${(d.day / 89) * 100 - 2}%;top:0;width:4px;height:100%;background:#ef444620;border-left:1px dashed #ef4444"></div>` : nothing}
+          `)}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#60a5fa">${stats.mean}</div>
+            <div style="font-size:9px;color:#6b7280">Mean</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#34d399">${stats.median}</div>
+            <div style="font-size:9px;color:#6b7280">Median</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#f59e0b">${stats.stddev}</div>
+            <div style="font-size:9px;color:#6b7280">Std Dev</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:${stats.trend === 'Increasing' ? '#ef4444' : stats.trend === 'Decreasing' ? '#22c55e' : '#6b7280'}">${stats.trend}</div>
+            <div style="font-size:9px;color:#6b7280">Trend</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === ACCESS CONTROL MATRIX ===
+  @state() private _esRoles: string[] = ['Admin','Analyst','Operator','Viewer','Auditor'];
+  @state() private _esActions: string[] = ['Create','Read','Update','Delete','Export','Approve'];
+  @state() private _esPermissions: { [role: string]: { [action: string]: boolean } } = {};
+  @state() private _esPermAudit: {role:string;action:string;changedBy:string;timestamp:string;oldVal:boolean;newVal:boolean}[] = [];
+  @state() private _esPermCompare: string[] = [];
+
+  private _esInitPermissions(): void {
+    const perms: Record<string, Record<string, boolean>> = {};
+    const defaults: Record<string, boolean[]> = {
+      Admin: [true,true,true,true,true,true],
+      Analyst: [true,true,true,false,true,false],
+      Operator: [true,true,true,false,false,false],
+      Viewer: [false,true,false,false,false,false],
+      Auditor: [false,true,false,false,true,false],
+    };
+    for (const role of this._esRoles) {
+      perms[role] = {};
+      this._esActions.forEach((a, i) => { perms[role][a] = defaults[role]?.[i] ?? false; });
+    }
+    this._esPermissions = perms;
+  }
+
+  private _esTogglePermission(role: string, action: string): void {
+    const old = this._esPermissions[role][action];
+    this._esPermissions = {...this._esPermissions, [role]: {...this._esPermissions[role], [action]: !old}};
+    this._esPermAudit.unshift({role,action,changedBy:'current_user',timestamp:new Date().toISOString(),oldVal:old,newVal:!old});
+  }
+
+  private _esRenderRBAC(): any {
+    const compareRoles = this._esPermCompare.map(r => this._esPermissions[r]).filter(Boolean);
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">RBAC Permission Matrix</span>
+          <div style="display:flex;gap:4px">
+            ${this._esRoles.map(r => html`
+              <button class="tab ${this._esPermCompare.includes(r) ? 'active' : ''}" @click=${() => {
+                this._esPermCompare = this._esPermCompare.includes(r) ? this._esPermCompare.filter(x => x !== r) : [...this._esPermCompare, r];
+              }}>${r}</button>
+            `)}
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a">Role \ Action</th>
+                ${this._esActions.map(a => html`<th style="padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a;text-align:center">${a}</th>`)}
+              </tr>
+            </thead>
+            <tbody>
+              ${this._esRoles.map(role => html`
+                <tr style="border-bottom:1px solid #1a1d2e">
+                  <td style="padding:6px;color:#e2e8f0;font-weight:600">${role}</td>
+                  ${this._esActions.map(action => html`
+                    <td style="text-align:center;padding:6px">
+                      <button style="width:28px;height:20px;border-radius:3px;border:1px solid #2a2d3a;background:${this._esPermissions[role][action] ? '#22c55e' : '#1a1d2e'};cursor:pointer;color:#fff;font-size:10px" @click=${() => this._esTogglePermission(role, action)}>${this._esPermissions[role][action] ? 'Y' : 'N'}</button>
+                    </td>
+                  `)}
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        </div>
+        ${compareRoles.length >= 2 ? html`
+          <div style="margin-top:10px;padding:8px;background:#1a1d2e;border-radius:6px">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Role Diff: ${this._esPermCompare.join(' vs ')}</div>
+            ${this._esActions.map(action => {
+              const vals = compareRoles.map(r => r[action]);
+              const allSame = vals.every(v => v === vals[0]);
+              return allSame ? nothing : html`
+                <div style="display:flex;gap:8px;padding:3px 0;font-size:10px">
+                  <span style="color:#6b7280;width:60px">${action}:</span>
+                  ${compareRoles.map((r, i) => html`<span style="color:${r[action] ? '#22c55e' : '#ef4444'}">${this._esPermCompare[i]}=${r[action] ? 'Y' : 'N'}</span>`)}
+                </div>
+              `;
+            })}
+          </div>
+        ` : nothing}
+        ${this._esPermAudit.length > 0 ? html`
+          <div style="margin-top:8px;font-size:9px;color:#6b7280">Recent: ${this._esPermAudit.slice(0,3).map(a => html`<span style="margin-right:8px">${a.role}.${a.action}: ${a.oldVal ? 'Y' : 'N'}->${a.newVal ? 'Y' : 'N'}</span>`)}
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === REPORTING SUITE ===
+  @state() private _esReportTemplate: string = 'executive';
+  @state() private _esReportSchedule: string = 'weekly';
+  @state() private _esReportDistList: string[] = ['security-team@company.com','ciso@company.com'];
+  @state() private _esReportHistory: {id:string;template:string;generatedAt:string;status:string}[] = [];
+
+  private _esGenerateReport(): void {
+    const id = 'rpt-' + Date.now();
+    this._esReportHistory.unshift({id,template:this._esReportTemplate,generatedAt:new Date().toISOString(),status:'sent'});
+  }
+
+  private _esRenderReporting(): any {
+    const templates = [{key:'executive',label:'Executive Summary',desc:'High-level overview for leadership'},{key:'technical',label:'Technical Report',desc:'Detailed findings for engineers'},{key:'compliance',label:'Compliance Audit',desc:'Regulatory compliance evidence'}];
+    const schedules = [{key:'daily',label:'Daily'},{key:'weekly',label:'Weekly'},{key:'monthly',label:'Monthly'}];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:8px">Report Generator</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Template</div>
+            ${templates.map(t => html`
+              <div style="padding:6px;background:${this._esReportTemplate === t.key ? '#1e3a5f' : '#1a1d2e'};border:1px solid ${this._esReportTemplate === t.key ? '#3b82f6' : '#2a2d3a'};border-radius:4px;margin-bottom:4px;cursor:pointer" @click=${() => { this._esReportTemplate = t.key; }}>
+                <div style="font-size:11px;color:#e2e8f0">${t.label}</div>
+                <div style="font-size:9px;color:#6b7280">${t.desc}</div>
+              </div>
+            `)}
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Schedule</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px">
+              ${schedules.map(s => html`<button class="tab ${this._esReportSchedule === s.key ? 'active' : ''}" @click=${() => { this._esReportSchedule = s.key; }}>${s.label}</button>`)}
+            </div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Distribution</div>
+            <div style="font-size:10px;color:#9ca3af">${this._esReportDistList.map(d => html`<div>${d}</div>`)}</div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 10px;color:#fff;font-size:10px;cursor:pointer" @click=${this._esGenerateReport}>Generate</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">PDF</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">CSV</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">JSON</button>
+            </div>
+          </div>
+        </div>
+        ${this._esReportHistory.length > 0 ? html`
+          <div style="border-top:1px solid #2a2d3a;padding-top:8px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Recent Reports</div>
+            ${this._esReportHistory.slice(0,3).map(r => html`
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px">
+                <span style="color:#e2e8f0">${r.template}</span>
+                <span style="color:${r.status === 'sent' ? '#22c55e' : r.status === 'failed' ? '#ef4444' : '#f59e0b'}">${r.status}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === KEYBOARD SHORTCUTS & ACCESSIBILITY ===
+  @state() private _esHighContrast: boolean = false;
+  @state() private _esA11yAnnounce: string = '';
+  @state() private _esShortcutsVisible: boolean = false;
+  @state() private _esFocusTrap: boolean = false;
+
+  private _esShortcuts: Record<string, string> = {
+    'Escape': 'Close dialogs / Cancel',
+    'Ctrl+Shift+S': 'Toggle scenario simulation',
+    'Ctrl+Shift+T': 'Toggle time-series view',
+    'Ctrl+Shift+R': 'Open report generator',
+    'Ctrl+Shift+A': 'Toggle accessibility panel',
+    'Ctrl+Shift+H': 'Toggle high contrast',
+    'Tab': 'Navigate between sections',
+    'Enter/Space': 'Activate focused button',
+  };
+
+  private _esHandleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._esFocusTrap) { this._esFocusTrap = false; this._esAnnounce('Dialog closed'); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'H') { e.preventDefault(); this._esHighContrast = !this._esHighContrast; this._esAnnounce('High contrast ' + (this._esHighContrast ? 'enabled' : 'disabled')); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') { e.preventDefault(); this._esShortcutsVisible = !this._esShortcutsVisible; }
+  }
+
+  private _esAnnounce(msg: string): void {
+    this._esA11yAnnounce = msg;
+    setTimeout(() => { this._esA11yAnnounce = ''; }, 2000);
+  }
+
+  private _esRenderAccessibility(): any {
+    return html`
+      <div role="region" aria-label="Accessibility Controls" style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0" role="heading" aria-level="3">Accessibility</span>
+          <button class="tab ${this._esShortcutsVisible ? 'active' : ''}" @click=${() => { this._esShortcutsVisible = !this._esShortcutsVisible; }} aria-expanded=${this._esShortcutsVisible}>Shortcuts</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer">
+            <input type="checkbox" .checked=${this._esHighContrast} @change=${() => { this._esHighContrast = !this._esHighContrast; }} aria-label="Toggle high contrast mode">
+            High Contrast
+          </label>
+        </div>
+        ${this._esShortcutsVisible ? html`
+          <div role="list" aria-label="Keyboard shortcuts" style="background:#1a1d2e;border-radius:6px;padding:8px">
+            ${Object.entries(this._esShortcuts).map(([key, desc]) => html`
+              <div role="listitem" style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px">
+                <kbd style="background:#2a2d3a;padding:1px 6px;border-radius:3px;color:#60a5fa;font-family:monospace">${key}</kbd>
+                <span style="color:#9ca3af">${desc}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        <div role="status" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px">${this._esA11yAnnounce}</div>
+      </div>
+    `;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this._esInitScenarios();
+    this._esInitTrendData();
+    this._esInitPermissions();
+    document.addEventListener('keydown', this._esHandleKeydown.bind(this));
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    document.removeEventListener('keydown', this._esHandleKeydown.bind(this));
+  }
+
+  // === TAB INTEGRATION FOR EXTENDED FEATURES ===
+  @state() private _esActiveSubTab: string = 'scenario';
+
+  private _esGetAllSubTabs(): {key:string;label:string}[] {
+    return [
+      {key:'scenario', label:'Simulation'},
+      {key:'timeseries', label:'Trends'},
+      {key:'rbac', label:'Access Control'},
+      {key:'reporting', label:'Reports'},
+      {key:'a11y', label:'Accessibility'},
+    ];
+  }
+
+  private _esRenderSubPanel(): any {
+    switch (this._esActiveSubTab) {
+      case 'scenario': return this._esRenderScenarioEngine();
+      case 'timeseries': return this._esRenderTimeSeries();
+      case 'rbac': return this._esRenderRBAC();
+      case 'reporting': return this._esRenderReporting();
+      case 'a11y': return this._esRenderAccessibility();
+      default: return nothing;
+    }
+  }
+
+  private _esRenderTabBar(): any {
+    return html`
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #2a2d3a;padding-bottom:8px;flex-wrap:wrap" role="tablist" aria-label="Extended panel features">
+        ${this._esGetAllSubTabs().map(t => html`
+          <button class="tab ${this._esActiveSubTab === t.key ? 'active' : ''}" @click=${() => { this._esActiveSubTab = t.key; }} role="tab" aria-selected=${this._esActiveSubTab === t.key}>${t.label}</button>
+        `)}
+      </div>
+      <div role="tabpanel" aria-labelledby="es-tab-${this._esActiveSubTab}">
+        ${this._esRenderSubPanel()}
+      </div>
+    `;
+  }
+
+  }
 declare global { interface HTMLElementTagNameMap { 'sc-email-security': ScEmailSecurity; } }

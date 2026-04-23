@@ -1527,5 +1527,452 @@ private _executionHistory: ExecutionRecord[] = [
     </div>`;
   }
 
-}
+
+  // === SCENARIO SIMULATION ENGINE ===
+  @state() private _rhScenarios: {id:string;name:string;attackType:string;target:string;method:string;impactLow:number;impactHigh:number;confidence:number;mitigation:string;status:string}[] = [];
+  @state() private _rhScenarioForm: {attackType:string;target:string;method:string} = {attackType:'',target:'',method:''};
+  @state() private _rhScenarioCompare: boolean = false;
+  @state() private _rhScenarioSelected: string[] = [];
+
+  private _rhInitScenarios(): void {
+    const saved = localStorage.getItem('rh_scenarios');
+    if (saved) { try { this._rhScenarios = JSON.parse(saved); } catch { /* ignore */ } }
+    if (this._rhScenarios.length === 0) {
+      this._rhScenarios = [
+        {id:'rh-s1',name:'Baseline Threat',attackType:'Phishing',target:'Employees',method:'Spear Email',impactLow:45,impactHigh:78,confidence:72,mitigation:'Security awareness training + email filtering',status:'active'},
+        {id:'rh-s2',name:'Escalated Attack',attackType:'Ransomware',target:'Endpoints',method:'Drive-by Download',impactLow:65,impactHigh:95,confidence:58,mitigation:'EDR deployment + network segmentation',status:'saved'},
+        {id:'rh-s3',name:'Insider Threat',attackType:'Data Exfiltration',target:'Databases',method:'SQL Injection',impactLow:55,impactHigh:88,confidence:65,mitigation:'DLP policies + query monitoring',status:'draft'},
+      ];
+    }
+  }
+
+  private _rhSaveScenarios(): void {
+    localStorage.setItem('rh_scenarios', JSON.stringify(this._rhScenarios));
+  }
+
+  private _rhAddScenario(): void {
+    const f = this._rhScenarioForm;
+    if (!f.attackType || !f.target) return;
+    this._rhScenarios = [...this._rhScenarios, {
+      id: 'rh-s' + (this._rhScenarios.length + 1),
+      name: f.attackType + ' vs ' + f.target,
+      attackType: f.attackType,
+      target: f.target,
+      method: f.method || 'Unknown',
+      impactLow: Math.floor(Math.random() * 40 + 20),
+      impactHigh: Math.floor(Math.random() * 30 + 70),
+      confidence: Math.floor(Math.random() * 30 + 50),
+      mitigation: 'Review and implement appropriate controls',
+      status: 'draft',
+    }];
+    this._rhScenarioForm = {attackType:'',target:'',method:''};
+    this._rhSaveScenarios();
+  }
+
+  private _rhRenderScenarioEngine(): any {
+    const attackTypes = ['Phishing','Ransomware','DDoS','SQL Injection','XSS','Privilege Escalation','Supply Chain','Zero-Day'];
+    const targets = ['Employees','Endpoints','Servers','Databases','Network','Cloud','APIs','Mobile'];
+    const methods = ['Spear Email','Drive-by Download','Brute Force','Social Engineering','Exploit Kit','Watering Hole','Malware','Misconfiguration'];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Scenario Simulation Engine</span>
+          <button class="tab" @click=${() => { this._rhScenarioCompare = !this._rhScenarioCompare; }}>${this._rhScenarioCompare ? 'List View' : 'Compare'}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._rhScenarioForm = {...this._rhScenarioForm, attackType: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Attack Type</option>
+            ${attackTypes.map(a => html`<option value=${a} ${this._rhScenarioForm.attackType === a ? 'selected' : ''}>${a}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._rhScenarioForm = {...this._rhScenarioForm, target: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Target</option>
+            ${targets.map(t => html`<option value=${t} ${this._rhScenarioForm.target === t ? 'selected' : ''}>${t}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._rhScenarioForm = {...this._rhScenarioForm, method: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Method</option>
+            ${methods.map(m => html`<option value=${m} ${this._rhScenarioForm.method === m ? 'selected' : ''}>${m}</option>`)}
+          </select>
+        </div>
+        <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 12px;color:#fff;font-size:11px;cursor:pointer" @click=${this._rhAddScenario}>Run Simulation</button>
+      </div>
+      ${this._rhScenarioCompare && this._rhScenarios.length >= 2 ? html`
+        <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Side-by-Side Comparison</div>
+          <div style="display:grid;grid-template-columns:repeat(${Math.min(3, this._rhScenarios.length)},1fr);gap:8px">
+            ${this._rhScenarios.slice(0,3).map(s => html`
+              <div style="background:#1a1d2e;border-radius:6px;padding:8px;border:1px solid #2a2d3a">
+                <div style="font-weight:600;font-size:11px;color:#60a5fa;margin-bottom:4px">${s.name}</div>
+                <div style="font-size:10px;color:#9ca3af">${s.attackType} / ${s.target}</div>
+                <div style="margin-top:6px;font-size:10px">
+                  <div>Impact: ${s.impactLow}-${s.impactHigh}%</div>
+                  <div>Confidence: ${s.confidence}%</div>
+                  <div style="margin-top:4px;color:#f59e0b">${s.mitigation}</div>
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+      ` : ''}
+      <div style="background:#0f1117;border-radius:8px;padding:12px">
+        <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Saved Scenarios (${this._rhScenarios.length})</div>
+        ${this._rhScenarios.map(s => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a1d2e">
+            <div>
+              <span style="font-size:11px;color:#e2e8f0">${s.name}</span>
+              <span style="font-size:9px;color:#6b7280;margin-left:6px">${s.attackType}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${s.impactHigh > 80 ? '#dc262620' : '#f59e0b20'};color:${s.impactHigh > 80 ? '#ef4444' : '#f59e0b'}">${s.impactLow}-${s.impactHigh}%</span>
+              <span style="font-size:9px;color:#6b7280">${s.confidence}% conf</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // === TIME-SERIES ANALYSIS ===
+  @state() private _rhTrendData: {day:number;value:number;anomaly:boolean}[] = [];
+  @state() private _rhTrendZoom: {start:number;end:number} | null = null;
+  @state() private _rhTrendMA: number = 7;
+
+  private _rhInitTrendData(): void {
+    const data: {day:number;value:number;anomaly:boolean}[] = [];
+    let base = 50 + Math.random() * 30;
+    for (let i = 0; i < 90; i++) {
+      base += (Math.random() - 0.48) * 8;
+      base = Math.max(10, Math.min(100, base));
+      const anomaly = Math.random() < 0.05;
+      data.push({ day: i, value: anomaly ? base + (Math.random() > 0.5 ? 25 : -20) : base, anomaly });
+    }
+    this._rhTrendData = data;
+  }
+
+  private _rhCalcMA(window: number): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < this._rhTrendData.length; i++) {
+      const start = Math.max(0, i - window + 1);
+      const slice = this._rhTrendData.slice(start, i + 1);
+      result.push(slice.reduce((s, d) => s + d.value, 0) / slice.length);
+    }
+    return result;
+  }
+
+  private _rhGetStats(): {mean:number;median:number;stddev:number;trend:string} {
+    const vals = this._rhTrendData.map(d => d.value);
+    const n = vals.length;
+    const mean = vals.reduce((a,b) => a+b, 0) / n;
+    const sorted = [...vals].sort((a,b) => a-b);
+    const median = n % 2 === 0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+    const variance = vals.reduce((s,v) => s + (v-mean)*(v-mean), 0) / n;
+    const stddev = Math.sqrt(variance);
+    const firstHalf = vals.slice(0, Math.floor(n/2));
+    const secondHalf = vals.slice(Math.floor(n/2));
+    const firstMean = firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length;
+    const secondMean = secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length;
+    const trend = secondMean > firstMean + stddev*0.5 ? 'Increasing' : secondMean < firstMean - stddev*0.5 ? 'Decreasing' : 'Stable';
+    return {mean: Math.round(mean*10)/10, median: Math.round(median*10)/10, stddev: Math.round(stddev*10)/10, trend};
+  }
+
+  private _rhRenderTimeSeries(): any {
+    const stats = this._rhGetStats();
+    const filtered = this._rhTrendZoom ? this._rhTrendData.filter(d => d.day >= this._rhTrendZoom.start && d.day <= this._rhTrendZoom.end) : this._rhTrendData;
+    const maxVal = Math.max(...filtered.map(d => d.value));
+    const minVal = Math.min(...filtered.map(d => d.value));
+    const range = maxVal - minVal || 1;
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">90-Day Trend Analysis</span>
+          <div style="display:flex;gap:4px">
+            <button class="tab ${this._rhTrendMA === 7 ? 'active' : ''}" @click=${() => { this._rhTrendMA = 7; }}>7D MA</button>
+            <button class="tab ${this._rhTrendMA === 30 ? 'active' : ''}" @click=${() => { this._rhTrendMA = 30; }}>30D MA</button>
+            <button class="tab" @click=${() => { this._rhTrendZoom = null; }}>Reset Zoom</button>
+          </div>
+        </div>
+        <div style="position:relative;height:120px;background:#1a1d2e;border-radius:6px;overflow:hidden;margin-bottom:8px;cursor:crosshair" @click=${(e: any) => {
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const ratio = x / rect.width;
+          const center = Math.floor(ratio * 90);
+          this._rhTrendZoom = { start: Math.max(0, center - 10), end: Math.min(89, center + 10) };
+        }}>
+          ${filtered.map((d, i) => html`
+            <div style="position:absolute;left:${(d.day / 89) * 100}%;bottom:${((d.value - minVal) / range) * 100}%;width:2px;height:${(d.value - minVal) / range * 100}%;background:${d.anomaly ? '#ef4444' : '#3b82f6'};opacity:0.7"></div>
+            ${d.anomaly ? html`<div style="position:absolute;left:${(d.day / 89) * 100 - 2}%;top:0;width:4px;height:100%;background:#ef444620;border-left:1px dashed #ef4444"></div>` : nothing}
+          `)}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#60a5fa">${stats.mean}</div>
+            <div style="font-size:9px;color:#6b7280">Mean</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#34d399">${stats.median}</div>
+            <div style="font-size:9px;color:#6b7280">Median</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#f59e0b">${stats.stddev}</div>
+            <div style="font-size:9px;color:#6b7280">Std Dev</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:${stats.trend === 'Increasing' ? '#ef4444' : stats.trend === 'Decreasing' ? '#22c55e' : '#6b7280'}">${stats.trend}</div>
+            <div style="font-size:9px;color:#6b7280">Trend</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === ACCESS CONTROL MATRIX ===
+  @state() private _rhRoles: string[] = ['Admin','Analyst','Operator','Viewer','Auditor'];
+  @state() private _rhActions: string[] = ['Create','Read','Update','Delete','Export','Approve'];
+  @state() private _rhPermissions: { [role: string]: { [action: string]: boolean } } = {};
+  @state() private _rhPermAudit: {role:string;action:string;changedBy:string;timestamp:string;oldVal:boolean;newVal:boolean}[] = [];
+  @state() private _rhPermCompare: string[] = [];
+
+  private _rhInitPermissions(): void {
+    const perms: Record<string, Record<string, boolean>> = {};
+    const defaults: Record<string, boolean[]> = {
+      Admin: [true,true,true,true,true,true],
+      Analyst: [true,true,true,false,true,false],
+      Operator: [true,true,true,false,false,false],
+      Viewer: [false,true,false,false,false,false],
+      Auditor: [false,true,false,false,true,false],
+    };
+    for (const role of this._rhRoles) {
+      perms[role] = {};
+      this._rhActions.forEach((a, i) => { perms[role][a] = defaults[role]?.[i] ?? false; });
+    }
+    this._rhPermissions = perms;
+  }
+
+  private _rhTogglePermission(role: string, action: string): void {
+    const old = this._rhPermissions[role][action];
+    this._rhPermissions = {...this._rhPermissions, [role]: {...this._rhPermissions[role], [action]: !old}};
+    this._rhPermAudit.unshift({role,action,changedBy:'current_user',timestamp:new Date().toISOString(),oldVal:old,newVal:!old});
+  }
+
+  private _rhRenderRBAC(): any {
+    const compareRoles = this._rhPermCompare.map(r => this._rhPermissions[r]).filter(Boolean);
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">RBAC Permission Matrix</span>
+          <div style="display:flex;gap:4px">
+            ${this._rhRoles.map(r => html`
+              <button class="tab ${this._rhPermCompare.includes(r) ? 'active' : ''}" @click=${() => {
+                this._rhPermCompare = this._rhPermCompare.includes(r) ? this._rhPermCompare.filter(x => x !== r) : [...this._rhPermCompare, r];
+              }}>${r}</button>
+            `)}
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a">Role \ Action</th>
+                ${this._rhActions.map(a => html`<th style="padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a;text-align:center">${a}</th>`)}
+              </tr>
+            </thead>
+            <tbody>
+              ${this._rhRoles.map(role => html`
+                <tr style="border-bottom:1px solid #1a1d2e">
+                  <td style="padding:6px;color:#e2e8f0;font-weight:600">${role}</td>
+                  ${this._rhActions.map(action => html`
+                    <td style="text-align:center;padding:6px">
+                      <button style="width:28px;height:20px;border-radius:3px;border:1px solid #2a2d3a;background:${this._rhPermissions[role][action] ? '#22c55e' : '#1a1d2e'};cursor:pointer;color:#fff;font-size:10px" @click=${() => this._rhTogglePermission(role, action)}>${this._rhPermissions[role][action] ? 'Y' : 'N'}</button>
+                    </td>
+                  `)}
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        </div>
+        ${compareRoles.length >= 2 ? html`
+          <div style="margin-top:10px;padding:8px;background:#1a1d2e;border-radius:6px">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Role Diff: ${this._rhPermCompare.join(' vs ')}</div>
+            ${this._rhActions.map(action => {
+              const vals = compareRoles.map(r => r[action]);
+              const allSame = vals.every(v => v === vals[0]);
+              return allSame ? nothing : html`
+                <div style="display:flex;gap:8px;padding:3px 0;font-size:10px">
+                  <span style="color:#6b7280;width:60px">${action}:</span>
+                  ${compareRoles.map((r, i) => html`<span style="color:${r[action] ? '#22c55e' : '#ef4444'}">${this._rhPermCompare[i]}=${r[action] ? 'Y' : 'N'}</span>`)}
+                </div>
+              `;
+            })}
+          </div>
+        ` : nothing}
+        ${this._rhPermAudit.length > 0 ? html`
+          <div style="margin-top:8px;font-size:9px;color:#6b7280">Recent: ${this._rhPermAudit.slice(0,3).map(a => html`<span style="margin-right:8px">${a.role}.${a.action}: ${a.oldVal ? 'Y' : 'N'}->${a.newVal ? 'Y' : 'N'}</span>`)}
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === REPORTING SUITE ===
+  @state() private _rhReportTemplate: string = 'executive';
+  @state() private _rhReportSchedule: string = 'weekly';
+  @state() private _rhReportDistList: string[] = ['security-team@company.com','ciso@company.com'];
+  @state() private _rhReportHistory: {id:string;template:string;generatedAt:string;status:string}[] = [];
+
+  private _rhGenerateReport(): void {
+    const id = 'rpt-' + Date.now();
+    this._rhReportHistory.unshift({id,template:this._rhReportTemplate,generatedAt:new Date().toISOString(),status:'sent'});
+  }
+
+  private _rhRenderReporting(): any {
+    const templates = [{key:'executive',label:'Executive Summary',desc:'High-level overview for leadership'},{key:'technical',label:'Technical Report',desc:'Detailed findings for engineers'},{key:'compliance',label:'Compliance Audit',desc:'Regulatory compliance evidence'}];
+    const schedules = [{key:'daily',label:'Daily'},{key:'weekly',label:'Weekly'},{key:'monthly',label:'Monthly'}];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:8px">Report Generator</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Template</div>
+            ${templates.map(t => html`
+              <div style="padding:6px;background:${this._rhReportTemplate === t.key ? '#1e3a5f' : '#1a1d2e'};border:1px solid ${this._rhReportTemplate === t.key ? '#3b82f6' : '#2a2d3a'};border-radius:4px;margin-bottom:4px;cursor:pointer" @click=${() => { this._rhReportTemplate = t.key; }}>
+                <div style="font-size:11px;color:#e2e8f0">${t.label}</div>
+                <div style="font-size:9px;color:#6b7280">${t.desc}</div>
+              </div>
+            `)}
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Schedule</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px">
+              ${schedules.map(s => html`<button class="tab ${this._rhReportSchedule === s.key ? 'active' : ''}" @click=${() => { this._rhReportSchedule = s.key; }}>${s.label}</button>`)}
+            </div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Distribution</div>
+            <div style="font-size:10px;color:#9ca3af">${this._rhReportDistList.map(d => html`<div>${d}</div>`)}</div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 10px;color:#fff;font-size:10px;cursor:pointer" @click=${this._rhGenerateReport}>Generate</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">PDF</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">CSV</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">JSON</button>
+            </div>
+          </div>
+        </div>
+        ${this._rhReportHistory.length > 0 ? html`
+          <div style="border-top:1px solid #2a2d3a;padding-top:8px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Recent Reports</div>
+            ${this._rhReportHistory.slice(0,3).map(r => html`
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px">
+                <span style="color:#e2e8f0">${r.template}</span>
+                <span style="color:${r.status === 'sent' ? '#22c55e' : r.status === 'failed' ? '#ef4444' : '#f59e0b'}">${r.status}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === KEYBOARD SHORTCUTS & ACCESSIBILITY ===
+  @state() private _rhHighContrast: boolean = false;
+  @state() private _rhA11yAnnounce: string = '';
+  @state() private _rhShortcutsVisible: boolean = false;
+  @state() private _rhFocusTrap: boolean = false;
+
+  private _rhShortcuts: Record<string, string> = {
+    'Escape': 'Close dialogs / Cancel',
+    'Ctrl+Shift+S': 'Toggle scenario simulation',
+    'Ctrl+Shift+T': 'Toggle time-series view',
+    'Ctrl+Shift+R': 'Open report generator',
+    'Ctrl+Shift+A': 'Toggle accessibility panel',
+    'Ctrl+Shift+H': 'Toggle high contrast',
+    'Tab': 'Navigate between sections',
+    'Enter/Space': 'Activate focused button',
+  };
+
+  private _rhHandleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._rhFocusTrap) { this._rhFocusTrap = false; this._rhAnnounce('Dialog closed'); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'H') { e.preventDefault(); this._rhHighContrast = !this._rhHighContrast; this._rhAnnounce('High contrast ' + (this._rhHighContrast ? 'enabled' : 'disabled')); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') { e.preventDefault(); this._rhShortcutsVisible = !this._rhShortcutsVisible; }
+  }
+
+  private _rhAnnounce(msg: string): void {
+    this._rhA11yAnnounce = msg;
+    setTimeout(() => { this._rhA11yAnnounce = ''; }, 2000);
+  }
+
+  private _rhRenderAccessibility(): any {
+    return html`
+      <div role="region" aria-label="Accessibility Controls" style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0" role="heading" aria-level="3">Accessibility</span>
+          <button class="tab ${this._rhShortcutsVisible ? 'active' : ''}" @click=${() => { this._rhShortcutsVisible = !this._rhShortcutsVisible; }} aria-expanded=${this._rhShortcutsVisible}>Shortcuts</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer">
+            <input type="checkbox" .checked=${this._rhHighContrast} @change=${() => { this._rhHighContrast = !this._rhHighContrast; }} aria-label="Toggle high contrast mode">
+            High Contrast
+          </label>
+        </div>
+        ${this._rhShortcutsVisible ? html`
+          <div role="list" aria-label="Keyboard shortcuts" style="background:#1a1d2e;border-radius:6px;padding:8px">
+            ${Object.entries(this._rhShortcuts).map(([key, desc]) => html`
+              <div role="listitem" style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px">
+                <kbd style="background:#2a2d3a;padding:1px 6px;border-radius:3px;color:#60a5fa;font-family:monospace">${key}</kbd>
+                <span style="color:#9ca3af">${desc}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        <div role="status" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px">${this._rhA11yAnnounce}</div>
+      </div>
+    `;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this._rhInitScenarios();
+    this._rhInitTrendData();
+    this._rhInitPermissions();
+    document.addEventListener('keydown', this._rhHandleKeydown.bind(this));
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    document.removeEventListener('keydown', this._rhHandleKeydown.bind(this));
+  }
+
+  // === TAB INTEGRATION FOR EXTENDED FEATURES ===
+  @state() private _rhActiveSubTab: string = 'scenario';
+
+  private _rhGetAllSubTabs(): {key:string;label:string}[] {
+    return [
+      {key:'scenario', label:'Simulation'},
+      {key:'timeseries', label:'Trends'},
+      {key:'rbac', label:'Access Control'},
+      {key:'reporting', label:'Reports'},
+      {key:'a11y', label:'Accessibility'},
+    ];
+  }
+
+  private _rhRenderSubPanel(): any {
+    switch (this._rhActiveSubTab) {
+      case 'scenario': return this._rhRenderScenarioEngine();
+      case 'timeseries': return this._rhRenderTimeSeries();
+      case 'rbac': return this._rhRenderRBAC();
+      case 'reporting': return this._rhRenderReporting();
+      case 'a11y': return this._rhRenderAccessibility();
+      default: return nothing;
+    }
+  }
+
+  private _rhRenderTabBar(): any {
+    return html`
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #2a2d3a;padding-bottom:8px;flex-wrap:wrap" role="tablist" aria-label="Extended panel features">
+        ${this._rhGetAllSubTabs().map(t => html`
+          <button class="tab ${this._rhActiveSubTab === t.key ? 'active' : ''}" @click=${() => { this._rhActiveSubTab = t.key; }} role="tab" aria-selected=${this._rhActiveSubTab === t.key}>${t.label}</button>
+        `)}
+      </div>
+      <div role="tabpanel" aria-labelledby="rh-tab-${this._rhActiveSubTab}">
+        ${this._rhRenderSubPanel()}
+      </div>
+    `;
+  }
+
+  }
 declare global { interface HTMLElementTagNameMap { 'sc-risk-heatmap': ScRiskHeatmap; } }

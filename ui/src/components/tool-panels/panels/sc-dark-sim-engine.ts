@@ -1755,7 +1755,442 @@ export class ScDarkSimEngine extends LitElement {
       </div>`;
   }
 
-}
+
+  // === SCENARIO SIMULATION ENGINE ===
+  @state() private _darScenarios: {id:string;name:string;attackType:string;target:string;method:string;impactLow:number;impactHigh:number;confidence:number;mitigation:string;status:string}[] = [];
+  @state() private _darScenarioForm: {attackType:string;target:string;method:string} = {attackType:'',target:'',method:''};
+  @state() private _darScenarioCompare: boolean = false;
+  @state() private _darScenarioSelected: string[] = [];
+
+  private _darInitScenarios(): void {
+    const saved = localStorage.getItem('dar_scenarios');
+    if (saved) { try { this._darScenarios = JSON.parse(saved); } catch { /* ignore */ } }
+    if (this._darScenarios.length === 0) {
+      this._darScenarios = [
+        {id:'dar-s1',name:'Baseline Threat',attackType:'Phishing',target:'Employees',method:'Spear Email',impactLow:45,impactHigh:78,confidence:72,mitigation:'Security awareness training + email filtering',status:'active'},
+        {id:'dar-s2',name:'Escalated Attack',attackType:'Ransomware',target:'Endpoints',method:'Drive-by Download',impactLow:65,impactHigh:95,confidence:58,mitigation:'EDR deployment + network segmentation',status:'saved'},
+        {id:'dar-s3',name:'Insider Threat',attackType:'Data Exfiltration',target:'Databases',method:'SQL Injection',impactLow:55,impactHigh:88,confidence:65,mitigation:'DLP policies + query monitoring',status:'draft'},
+      ];
+    }
+  }
+
+  private _darSaveScenarios(): void {
+    localStorage.setItem('dar_scenarios', JSON.stringify(this._darScenarios));
+  }
+
+  private _darAddScenario(): void {
+    const f = this._darScenarioForm;
+    if (!f.attackType || !f.target) return;
+    this._darScenarios = [...this._darScenarios, {
+      id: 'dar-s' + (this._darScenarios.length + 1),
+      name: f.attackType + ' vs ' + f.target,
+      attackType: f.attackType,
+      target: f.target,
+      method: f.method || 'Unknown',
+      impactLow: Math.floor(Math.random() * 40 + 20),
+      impactHigh: Math.floor(Math.random() * 30 + 70),
+      confidence: Math.floor(Math.random() * 30 + 50),
+      mitigation: 'Review and implement appropriate controls',
+      status: 'draft',
+    }];
+    this._darScenarioForm = {attackType:'',target:'',method:''};
+    this._darSaveScenarios();
+  }
+
+  private _darRenderScenarioEngine(): any {
+    const attackTypes = ['Phishing','Ransomware','DDoS','SQL Injection','XSS','Privilege Escalation','Supply Chain','Zero-Day'];
+    const targets = ['Employees','Endpoints','Servers','Databases','Network','Cloud','APIs','Mobile'];
+    const methods = ['Spear Email','Drive-by Download','Brute Force','Social Engineering','Exploit Kit','Watering Hole','Malware','Misconfiguration'];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Scenario Simulation Engine</span>
+          <button class="tab" @click=${() => { this._darScenarioCompare = !this._darScenarioCompare; }}>${this._darScenarioCompare ? 'List View' : 'Compare'}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._darScenarioForm = {...this._darScenarioForm, attackType: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Attack Type</option>
+            ${attackTypes.map(a => html`<option value=${a} ${this._darScenarioForm.attackType === a ? 'selected' : ''}>${a}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._darScenarioForm = {...this._darScenarioForm, target: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Target</option>
+            ${targets.map(t => html`<option value=${t} ${this._darScenarioForm.target === t ? 'selected' : ''}>${t}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._darScenarioForm = {...this._darScenarioForm, method: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Method</option>
+            ${methods.map(m => html`<option value=${m} ${this._darScenarioForm.method === m ? 'selected' : ''}>${m}</option>`)}
+          </select>
+        </div>
+        <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 12px;color:#fff;font-size:11px;cursor:pointer" @click=${this._darAddScenario}>Run Simulation</button>
+      </div>
+      ${this._darScenarioCompare && this._darScenarios.length >= 2 ? html`
+        <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Side-by-Side Comparison</div>
+          <div style="display:grid;grid-template-columns:repeat(${Math.min(3, this._darScenarios.length)},1fr);gap:8px">
+            ${this._darScenarios.slice(0,3).map(s => html`
+              <div style="background:#1a1d2e;border-radius:6px;padding:8px;border:1px solid #2a2d3a">
+                <div style="font-weight:600;font-size:11px;color:#60a5fa;margin-bottom:4px">${s.name}</div>
+                <div style="font-size:10px;color:#9ca3af">${s.attackType} / ${s.target}</div>
+                <div style="margin-top:6px;font-size:10px">
+                  <div>Impact: ${s.impactLow}-${s.impactHigh}%</div>
+                  <div>Confidence: ${s.confidence}%</div>
+                  <div style="margin-top:4px;color:#f59e0b">${s.mitigation}</div>
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+      ` : ''}
+      <div style="background:#0f1117;border-radius:8px;padding:12px">
+        <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Saved Scenarios (${this._darScenarios.length})</div>
+        ${this._darScenarios.map(s => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a1d2e">
+            <div>
+              <span style="font-size:11px;color:#e2e8f0">${s.name}</span>
+              <span style="font-size:9px;color:#6b7280;margin-left:6px">${s.attackType}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${s.impactHigh > 80 ? '#dc262620' : '#f59e0b20'};color:${s.impactHigh > 80 ? '#ef4444' : '#f59e0b'}">${s.impactLow}-${s.impactHigh}%</span>
+              <span style="font-size:9px;color:#6b7280">${s.confidence}% conf</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // === TIME-SERIES ANALYSIS ===
+  @state() private _darTrendData: {day:number;value:number;anomaly:boolean}[] = [];
+  @state() private _darTrendZoom: {start:number;end:number} | null = null;
+  @state() private _darTrendMA: number = 7;
+
+  private _darInitTrendData(): void {
+    const data: {day:number;value:number;anomaly:boolean}[] = [];
+    let base = 50 + Math.random() * 30;
+    for (let i = 0; i < 90; i++) {
+      base += (Math.random() - 0.48) * 8;
+      base = Math.max(10, Math.min(100, base));
+      const anomaly = Math.random() < 0.05;
+      data.push({ day: i, value: anomaly ? base + (Math.random() > 0.5 ? 25 : -20) : base, anomaly });
+    }
+    this._darTrendData = data;
+  }
+
+  private _darCalcMA(window: number): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < this._darTrendData.length; i++) {
+      const start = Math.max(0, i - window + 1);
+      const slice = this._darTrendData.slice(start, i + 1);
+      result.push(slice.reduce((s, d) => s + d.value, 0) / slice.length);
+    }
+    return result;
+  }
+
+  private _darGetStats(): {mean:number;median:number;stddev:number;trend:string} {
+    const vals = this._darTrendData.map(d => d.value);
+    const n = vals.length;
+    const mean = vals.reduce((a,b) => a+b, 0) / n;
+    const sorted = [...vals].sort((a,b) => a-b);
+    const median = n % 2 === 0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+    const variance = vals.reduce((s,v) => s + (v-mean)*(v-mean), 0) / n;
+    const stddev = Math.sqrt(variance);
+    const firstHalf = vals.slice(0, Math.floor(n/2));
+    const secondHalf = vals.slice(Math.floor(n/2));
+    const firstMean = firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length;
+    const secondMean = secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length;
+    const trend = secondMean > firstMean + stddev*0.5 ? 'Increasing' : secondMean < firstMean - stddev*0.5 ? 'Decreasing' : 'Stable';
+    return {mean: Math.round(mean*10)/10, median: Math.round(median*10)/10, stddev: Math.round(stddev*10)/10, trend};
+  }
+
+  private _darRenderTimeSeries(): any {
+    const stats = this._darGetStats();
+    const filtered = this._darTrendZoom ? this._darTrendData.filter(d => d.day >= this._darTrendZoom.start && d.day <= this._darTrendZoom.end) : this._darTrendData;
+    const maxVal = Math.max(...filtered.map(d => d.value));
+    const minVal = Math.min(...filtered.map(d => d.value));
+    const range = maxVal - minVal || 1;
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">90-Day Trend Analysis</span>
+          <div style="display:flex;gap:4px">
+            <button class="tab ${this._darTrendMA === 7 ? 'active' : ''}" @click=${() => { this._darTrendMA = 7; }}>7D MA</button>
+            <button class="tab ${this._darTrendMA === 30 ? 'active' : ''}" @click=${() => { this._darTrendMA = 30; }}>30D MA</button>
+            <button class="tab" @click=${() => { this._darTrendZoom = null; }}>Reset Zoom</button>
+          </div>
+        </div>
+        <div style="position:relative;height:120px;background:#1a1d2e;border-radius:6px;overflow:hidden;margin-bottom:8px;cursor:crosshair" @click=${(e: any) => {
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const ratio = x / rect.width;
+          const center = Math.floor(ratio * 90);
+          this._darTrendZoom = { start: Math.max(0, center - 10), end: Math.min(89, center + 10) };
+        }}>
+          ${filtered.map((d, i) => html`
+            <div style="position:absolute;left:${(d.day / 89) * 100}%;bottom:${((d.value - minVal) / range) * 100}%;width:2px;height:${(d.value - minVal) / range * 100}%;background:${d.anomaly ? '#ef4444' : '#3b82f6'};opacity:0.7"></div>
+            ${d.anomaly ? html`<div style="position:absolute;left:${(d.day / 89) * 100 - 2}%;top:0;width:4px;height:100%;background:#ef444620;border-left:1px dashed #ef4444"></div>` : nothing}
+          `)}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#60a5fa">${stats.mean}</div>
+            <div style="font-size:9px;color:#6b7280">Mean</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#34d399">${stats.median}</div>
+            <div style="font-size:9px;color:#6b7280">Median</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#f59e0b">${stats.stddev}</div>
+            <div style="font-size:9px;color:#6b7280">Std Dev</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:${stats.trend === 'Increasing' ? '#ef4444' : stats.trend === 'Decreasing' ? '#22c55e' : '#6b7280'}">${stats.trend}</div>
+            <div style="font-size:9px;color:#6b7280">Trend</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === ACCESS CONTROL MATRIX ===
+  @state() private _darRoles: string[] = ['Admin','Analyst','Operator','Viewer','Auditor'];
+  @state() private _darActions: string[] = ['Create','Read','Update','Delete','Export','Approve'];
+  @state() private _darPermissions: { [role: string]: { [action: string]: boolean } } = {};
+  @state() private _darPermAudit: {role:string;action:string;changedBy:string;timestamp:string;oldVal:boolean;newVal:boolean}[] = [];
+  @state() private _darPermCompare: string[] = [];
+
+  private _darInitPermissions(): void {
+    const perms: Record<string, Record<string, boolean>> = {};
+    const defaults: Record<string, boolean[]> = {
+      Admin: [true,true,true,true,true,true],
+      Analyst: [true,true,true,false,true,false],
+      Operator: [true,true,true,false,false,false],
+      Viewer: [false,true,false,false,false,false],
+      Auditor: [false,true,false,false,true,false],
+    };
+    for (const role of this._darRoles) {
+      perms[role] = {};
+      this._darActions.forEach((a, i) => { perms[role][a] = defaults[role]?.[i] ?? false; });
+    }
+    this._darPermissions = perms;
+  }
+
+  private _darTogglePermission(role: string, action: string): void {
+    const old = this._darPermissions[role][action];
+    this._darPermissions = {...this._darPermissions, [role]: {...this._darPermissions[role], [action]: !old}};
+    this._darPermAudit.unshift({role,action,changedBy:'current_user',timestamp:new Date().toISOString(),oldVal:old,newVal:!old});
+  }
+
+  private _darRenderRBAC(): any {
+    const compareRoles = this._darPermCompare.map(r => this._darPermissions[r]).filter(Boolean);
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">RBAC Permission Matrix</span>
+          <div style="display:flex;gap:4px">
+            ${this._darRoles.map(r => html`
+              <button class="tab ${this._darPermCompare.includes(r) ? 'active' : ''}" @click=${() => {
+                this._darPermCompare = this._darPermCompare.includes(r) ? this._darPermCompare.filter(x => x !== r) : [...this._darPermCompare, r];
+              }}>${r}</button>
+            `)}
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a">Role \ Action</th>
+                ${this._darActions.map(a => html`<th style="padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a;text-align:center">${a}</th>`)}
+              </tr>
+            </thead>
+            <tbody>
+              ${this._darRoles.map(role => html`
+                <tr style="border-bottom:1px solid #1a1d2e">
+                  <td style="padding:6px;color:#e2e8f0;font-weight:600">${role}</td>
+                  ${this._darActions.map(action => html`
+                    <td style="text-align:center;padding:6px">
+                      <button style="width:28px;height:20px;border-radius:3px;border:1px solid #2a2d3a;background:${this._darPermissions[role][action] ? '#22c55e' : '#1a1d2e'};cursor:pointer;color:#fff;font-size:10px" @click=${() => this._darTogglePermission(role, action)}>${this._darPermissions[role][action] ? 'Y' : 'N'}</button>
+                    </td>
+                  `)}
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        </div>
+        ${compareRoles.length >= 2 ? html`
+          <div style="margin-top:10px;padding:8px;background:#1a1d2e;border-radius:6px">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Role Diff: ${this._darPermCompare.join(' vs ')}</div>
+            ${this._darActions.map(action => {
+              const vals = compareRoles.map(r => r[action]);
+              const allSame = vals.every(v => v === vals[0]);
+              return allSame ? nothing : html`
+                <div style="display:flex;gap:8px;padding:3px 0;font-size:10px">
+                  <span style="color:#6b7280;width:60px">${action}:</span>
+                  ${compareRoles.map((r, i) => html`<span style="color:${r[action] ? '#22c55e' : '#ef4444'}">${this._darPermCompare[i]}=${r[action] ? 'Y' : 'N'}</span>`)}
+                </div>
+              `;
+            })}
+          </div>
+        ` : nothing}
+        ${this._darPermAudit.length > 0 ? html`
+          <div style="margin-top:8px;font-size:9px;color:#6b7280">Recent: ${this._darPermAudit.slice(0,3).map(a => html`<span style="margin-right:8px">${a.role}.${a.action}: ${a.oldVal ? 'Y' : 'N'}->${a.newVal ? 'Y' : 'N'}</span>`)}
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === REPORTING SUITE ===
+  @state() private _darReportTemplate: string = 'executive';
+  @state() private _darReportSchedule: string = 'weekly';
+  @state() private _darReportDistList: string[] = ['security-team@company.com','ciso@company.com'];
+  @state() private _darReportHistory: {id:string;template:string;generatedAt:string;status:string}[] = [];
+
+  private _darGenerateReport(): void {
+    const id = 'rpt-' + Date.now();
+    this._darReportHistory.unshift({id,template:this._darReportTemplate,generatedAt:new Date().toISOString(),status:'sent'});
+  }
+
+  private _darRenderReporting(): any {
+    const templates = [{key:'executive',label:'Executive Summary',desc:'High-level overview for leadership'},{key:'technical',label:'Technical Report',desc:'Detailed findings for engineers'},{key:'compliance',label:'Compliance Audit',desc:'Regulatory compliance evidence'}];
+    const schedules = [{key:'daily',label:'Daily'},{key:'weekly',label:'Weekly'},{key:'monthly',label:'Monthly'}];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:8px">Report Generator</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Template</div>
+            ${templates.map(t => html`
+              <div style="padding:6px;background:${this._darReportTemplate === t.key ? '#1e3a5f' : '#1a1d2e'};border:1px solid ${this._darReportTemplate === t.key ? '#3b82f6' : '#2a2d3a'};border-radius:4px;margin-bottom:4px;cursor:pointer" @click=${() => { this._darReportTemplate = t.key; }}>
+                <div style="font-size:11px;color:#e2e8f0">${t.label}</div>
+                <div style="font-size:9px;color:#6b7280">${t.desc}</div>
+              </div>
+            `)}
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Schedule</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px">
+              ${schedules.map(s => html`<button class="tab ${this._darReportSchedule === s.key ? 'active' : ''}" @click=${() => { this._darReportSchedule = s.key; }}>${s.label}</button>`)}
+            </div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Distribution</div>
+            <div style="font-size:10px;color:#9ca3af">${this._darReportDistList.map(d => html`<div>${d}</div>`)}</div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 10px;color:#fff;font-size:10px;cursor:pointer" @click=${this._darGenerateReport}>Generate</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">PDF</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">CSV</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">JSON</button>
+            </div>
+          </div>
+        </div>
+        ${this._darReportHistory.length > 0 ? html`
+          <div style="border-top:1px solid #2a2d3a;padding-top:8px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Recent Reports</div>
+            ${this._darReportHistory.slice(0,3).map(r => html`
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px">
+                <span style="color:#e2e8f0">${r.template}</span>
+                <span style="color:${r.status === 'sent' ? '#22c55e' : r.status === 'failed' ? '#ef4444' : '#f59e0b'}">${r.status}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === KEYBOARD SHORTCUTS & ACCESSIBILITY ===
+  @state() private _darHighContrast: boolean = false;
+  @state() private _darA11yAnnounce: string = '';
+  @state() private _darShortcutsVisible: boolean = false;
+  @state() private _darFocusTrap: boolean = false;
+
+  private _darShortcuts: Record<string, string> = {
+    'Escape': 'Close dialogs / Cancel',
+    'Ctrl+Shift+S': 'Toggle scenario simulation',
+    'Ctrl+Shift+T': 'Toggle time-series view',
+    'Ctrl+Shift+R': 'Open report generator',
+    'Ctrl+Shift+A': 'Toggle accessibility panel',
+    'Ctrl+Shift+H': 'Toggle high contrast',
+    'Tab': 'Navigate between sections',
+    'Enter/Space': 'Activate focused button',
+  };
+
+  private _darHandleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._darFocusTrap) { this._darFocusTrap = false; this._darAnnounce('Dialog closed'); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'H') { e.preventDefault(); this._darHighContrast = !this._darHighContrast; this._darAnnounce('High contrast ' + (this._darHighContrast ? 'enabled' : 'disabled')); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') { e.preventDefault(); this._darShortcutsVisible = !this._darShortcutsVisible; }
+  }
+
+  private _darAnnounce(msg: string): void {
+    this._darA11yAnnounce = msg;
+    setTimeout(() => { this._darA11yAnnounce = ''; }, 2000);
+  }
+
+  private _darRenderAccessibility(): any {
+    return html`
+      <div role="region" aria-label="Accessibility Controls" style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0" role="heading" aria-level="3">Accessibility</span>
+          <button class="tab ${this._darShortcutsVisible ? 'active' : ''}" @click=${() => { this._darShortcutsVisible = !this._darShortcutsVisible; }} aria-expanded=${this._darShortcutsVisible}>Shortcuts</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer">
+            <input type="checkbox" .checked=${this._darHighContrast} @change=${() => { this._darHighContrast = !this._darHighContrast; }} aria-label="Toggle high contrast mode">
+            High Contrast
+          </label>
+        </div>
+        ${this._darShortcutsVisible ? html`
+          <div role="list" aria-label="Keyboard shortcuts" style="background:#1a1d2e;border-radius:6px;padding:8px">
+            ${Object.entries(this._darShortcuts).map(([key, desc]) => html`
+              <div role="listitem" style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px">
+                <kbd style="background:#2a2d3a;padding:1px 6px;border-radius:3px;color:#60a5fa;font-family:monospace">${key}</kbd>
+                <span style="color:#9ca3af">${desc}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        <div role="status" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px">${this._darA11yAnnounce}</div>
+      </div>
+    `;
+  }
+
+
+  // === TAB INTEGRATION FOR EXTENDED FEATURES ===
+  @state() private _darActiveSubTab: string = 'scenario';
+
+  private _darGetAllSubTabs(): {key:string;label:string}[] {
+    return [
+      {key:'scenario', label:'Simulation'},
+      {key:'timeseries', label:'Trends'},
+      {key:'rbac', label:'Access Control'},
+      {key:'reporting', label:'Reports'},
+      {key:'a11y', label:'Accessibility'},
+    ];
+  }
+
+  private _darRenderSubPanel(): any {
+    switch (this._darActiveSubTab) {
+      case 'scenario': return this._darRenderScenarioEngine();
+      case 'timeseries': return this._darRenderTimeSeries();
+      case 'rbac': return this._darRenderRBAC();
+      case 'reporting': return this._darRenderReporting();
+      case 'a11y': return this._darRenderAccessibility();
+      default: return nothing;
+    }
+  }
+
+  private _darRenderTabBar(): any {
+    return html`
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #2a2d3a;padding-bottom:8px;flex-wrap:wrap" role="tablist" aria-label="Extended panel features">
+        ${this._darGetAllSubTabs().map(t => html`
+          <button class="tab ${this._darActiveSubTab === t.key ? 'active' : ''}" @click=${() => { this._darActiveSubTab = t.key; }} role="tab" aria-selected=${this._darActiveSubTab === t.key}>${t.label}</button>
+        `)}
+      </div>
+      <div role="tabpanel" aria-labelledby="dar-tab-${this._darActiveSubTab}">
+        ${this._darRenderSubPanel()}
+      </div>
+    `;
+  }
+
+  }
 
 declare global {
   interface HTMLElementTagNameMap {

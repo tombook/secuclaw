@@ -1527,5 +1527,452 @@ private _executionHistory: ExecutionRecord[] = [
     </div>`;
   }
 
-}
+
+  // === SCENARIO SIMULATION ENGINE ===
+  @state() private _ptScenarios: {id:string;name:string;attackType:string;target:string;method:string;impactLow:number;impactHigh:number;confidence:number;mitigation:string;status:string}[] = [];
+  @state() private _ptScenarioForm: {attackType:string;target:string;method:string} = {attackType:'',target:'',method:''};
+  @state() private _ptScenarioCompare: boolean = false;
+  @state() private _ptScenarioSelected: string[] = [];
+
+  private _ptInitScenarios(): void {
+    const saved = localStorage.getItem('pt_scenarios');
+    if (saved) { try { this._ptScenarios = JSON.parse(saved); } catch { /* ignore */ } }
+    if (this._ptScenarios.length === 0) {
+      this._ptScenarios = [
+        {id:'pt-s1',name:'Baseline Threat',attackType:'Phishing',target:'Employees',method:'Spear Email',impactLow:45,impactHigh:78,confidence:72,mitigation:'Security awareness training + email filtering',status:'active'},
+        {id:'pt-s2',name:'Escalated Attack',attackType:'Ransomware',target:'Endpoints',method:'Drive-by Download',impactLow:65,impactHigh:95,confidence:58,mitigation:'EDR deployment + network segmentation',status:'saved'},
+        {id:'pt-s3',name:'Insider Threat',attackType:'Data Exfiltration',target:'Databases',method:'SQL Injection',impactLow:55,impactHigh:88,confidence:65,mitigation:'DLP policies + query monitoring',status:'draft'},
+      ];
+    }
+  }
+
+  private _ptSaveScenarios(): void {
+    localStorage.setItem('pt_scenarios', JSON.stringify(this._ptScenarios));
+  }
+
+  private _ptAddScenario(): void {
+    const f = this._ptScenarioForm;
+    if (!f.attackType || !f.target) return;
+    this._ptScenarios = [...this._ptScenarios, {
+      id: 'pt-s' + (this._ptScenarios.length + 1),
+      name: f.attackType + ' vs ' + f.target,
+      attackType: f.attackType,
+      target: f.target,
+      method: f.method || 'Unknown',
+      impactLow: Math.floor(Math.random() * 40 + 20),
+      impactHigh: Math.floor(Math.random() * 30 + 70),
+      confidence: Math.floor(Math.random() * 30 + 50),
+      mitigation: 'Review and implement appropriate controls',
+      status: 'draft',
+    }];
+    this._ptScenarioForm = {attackType:'',target:'',method:''};
+    this._ptSaveScenarios();
+  }
+
+  private _ptRenderScenarioEngine(): any {
+    const attackTypes = ['Phishing','Ransomware','DDoS','SQL Injection','XSS','Privilege Escalation','Supply Chain','Zero-Day'];
+    const targets = ['Employees','Endpoints','Servers','Databases','Network','Cloud','APIs','Mobile'];
+    const methods = ['Spear Email','Drive-by Download','Brute Force','Social Engineering','Exploit Kit','Watering Hole','Malware','Misconfiguration'];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">Scenario Simulation Engine</span>
+          <button class="tab" @click=${() => { this._ptScenarioCompare = !this._ptScenarioCompare; }}>${this._ptScenarioCompare ? 'List View' : 'Compare'}</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._ptScenarioForm = {...this._ptScenarioForm, attackType: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Attack Type</option>
+            ${attackTypes.map(a => html`<option value=${a} ${this._ptScenarioForm.attackType === a ? 'selected' : ''}>${a}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._ptScenarioForm = {...this._ptScenarioForm, target: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Target</option>
+            ${targets.map(t => html`<option value=${t} ${this._ptScenarioForm.target === t ? 'selected' : ''}>${t}</option>`)}
+          </select>
+          <select style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 6px;color:#e2e8f0;font-size:11px" @change=${(e: any) => { this._ptScenarioForm = {...this._ptScenarioForm, method: (e.target as HTMLSelectElement).value}; }}>
+            <option value="">Method</option>
+            ${methods.map(m => html`<option value=${m} ${this._ptScenarioForm.method === m ? 'selected' : ''}>${m}</option>`)}
+          </select>
+        </div>
+        <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 12px;color:#fff;font-size:11px;cursor:pointer" @click=${this._ptAddScenario}>Run Simulation</button>
+      </div>
+      ${this._ptScenarioCompare && this._ptScenarios.length >= 2 ? html`
+        <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Side-by-Side Comparison</div>
+          <div style="display:grid;grid-template-columns:repeat(${Math.min(3, this._ptScenarios.length)},1fr);gap:8px">
+            ${this._ptScenarios.slice(0,3).map(s => html`
+              <div style="background:#1a1d2e;border-radius:6px;padding:8px;border:1px solid #2a2d3a">
+                <div style="font-weight:600;font-size:11px;color:#60a5fa;margin-bottom:4px">${s.name}</div>
+                <div style="font-size:10px;color:#9ca3af">${s.attackType} / ${s.target}</div>
+                <div style="margin-top:6px;font-size:10px">
+                  <div>Impact: ${s.impactLow}-${s.impactHigh}%</div>
+                  <div>Confidence: ${s.confidence}%</div>
+                  <div style="margin-top:4px;color:#f59e0b">${s.mitigation}</div>
+                </div>
+              </div>
+            `)}
+          </div>
+        </div>
+      ` : ''}
+      <div style="background:#0f1117;border-radius:8px;padding:12px">
+        <div style="font-weight:600;font-size:12px;color:#e2e8f0;margin-bottom:8px">Saved Scenarios (${this._ptScenarios.length})</div>
+        ${this._ptScenarios.map(s => html`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a1d2e">
+            <div>
+              <span style="font-size:11px;color:#e2e8f0">${s.name}</span>
+              <span style="font-size:9px;color:#6b7280;margin-left:6px">${s.attackType}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${s.impactHigh > 80 ? '#dc262620' : '#f59e0b20'};color:${s.impactHigh > 80 ? '#ef4444' : '#f59e0b'}">${s.impactLow}-${s.impactHigh}%</span>
+              <span style="font-size:9px;color:#6b7280">${s.confidence}% conf</span>
+            </div>
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  // === TIME-SERIES ANALYSIS ===
+  @state() private _ptTrendData: {day:number;value:number;anomaly:boolean}[] = [];
+  @state() private _ptTrendZoom: {start:number;end:number} | null = null;
+  @state() private _ptTrendMA: number = 7;
+
+  private _ptInitTrendData(): void {
+    const data: {day:number;value:number;anomaly:boolean}[] = [];
+    let base = 50 + Math.random() * 30;
+    for (let i = 0; i < 90; i++) {
+      base += (Math.random() - 0.48) * 8;
+      base = Math.max(10, Math.min(100, base));
+      const anomaly = Math.random() < 0.05;
+      data.push({ day: i, value: anomaly ? base + (Math.random() > 0.5 ? 25 : -20) : base, anomaly });
+    }
+    this._ptTrendData = data;
+  }
+
+  private _ptCalcMA(window: number): number[] {
+    const result: number[] = [];
+    for (let i = 0; i < this._ptTrendData.length; i++) {
+      const start = Math.max(0, i - window + 1);
+      const slice = this._ptTrendData.slice(start, i + 1);
+      result.push(slice.reduce((s, d) => s + d.value, 0) / slice.length);
+    }
+    return result;
+  }
+
+  private _ptGetStats(): {mean:number;median:number;stddev:number;trend:string} {
+    const vals = this._ptTrendData.map(d => d.value);
+    const n = vals.length;
+    const mean = vals.reduce((a,b) => a+b, 0) / n;
+    const sorted = [...vals].sort((a,b) => a-b);
+    const median = n % 2 === 0 ? (sorted[n/2-1]+sorted[n/2])/2 : sorted[Math.floor(n/2)];
+    const variance = vals.reduce((s,v) => s + (v-mean)*(v-mean), 0) / n;
+    const stddev = Math.sqrt(variance);
+    const firstHalf = vals.slice(0, Math.floor(n/2));
+    const secondHalf = vals.slice(Math.floor(n/2));
+    const firstMean = firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length;
+    const secondMean = secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length;
+    const trend = secondMean > firstMean + stddev*0.5 ? 'Increasing' : secondMean < firstMean - stddev*0.5 ? 'Decreasing' : 'Stable';
+    return {mean: Math.round(mean*10)/10, median: Math.round(median*10)/10, stddev: Math.round(stddev*10)/10, trend};
+  }
+
+  private _ptRenderTimeSeries(): any {
+    const stats = this._ptGetStats();
+    const filtered = this._ptTrendZoom ? this._ptTrendData.filter(d => d.day >= this._ptTrendZoom.start && d.day <= this._ptTrendZoom.end) : this._ptTrendData;
+    const maxVal = Math.max(...filtered.map(d => d.value));
+    const minVal = Math.min(...filtered.map(d => d.value));
+    const range = maxVal - minVal || 1;
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">90-Day Trend Analysis</span>
+          <div style="display:flex;gap:4px">
+            <button class="tab ${this._ptTrendMA === 7 ? 'active' : ''}" @click=${() => { this._ptTrendMA = 7; }}>7D MA</button>
+            <button class="tab ${this._ptTrendMA === 30 ? 'active' : ''}" @click=${() => { this._ptTrendMA = 30; }}>30D MA</button>
+            <button class="tab" @click=${() => { this._ptTrendZoom = null; }}>Reset Zoom</button>
+          </div>
+        </div>
+        <div style="position:relative;height:120px;background:#1a1d2e;border-radius:6px;overflow:hidden;margin-bottom:8px;cursor:crosshair" @click=${(e: any) => {
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const ratio = x / rect.width;
+          const center = Math.floor(ratio * 90);
+          this._ptTrendZoom = { start: Math.max(0, center - 10), end: Math.min(89, center + 10) };
+        }}>
+          ${filtered.map((d, i) => html`
+            <div style="position:absolute;left:${(d.day / 89) * 100}%;bottom:${((d.value - minVal) / range) * 100}%;width:2px;height:${(d.value - minVal) / range * 100}%;background:${d.anomaly ? '#ef4444' : '#3b82f6'};opacity:0.7"></div>
+            ${d.anomaly ? html`<div style="position:absolute;left:${(d.day / 89) * 100 - 2}%;top:0;width:4px;height:100%;background:#ef444620;border-left:1px dashed #ef4444"></div>` : nothing}
+          `)}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#60a5fa">${stats.mean}</div>
+            <div style="font-size:9px;color:#6b7280">Mean</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#34d399">${stats.median}</div>
+            <div style="font-size:9px;color:#6b7280">Median</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:#f59e0b">${stats.stddev}</div>
+            <div style="font-size:9px;color:#6b7280">Std Dev</div>
+          </div>
+          <div style="background:#1a1d2e;border-radius:4px;padding:6px;text-align:center">
+            <div style="font-size:14px;font-weight:700;color:${stats.trend === 'Increasing' ? '#ef4444' : stats.trend === 'Decreasing' ? '#22c55e' : '#6b7280'}">${stats.trend}</div>
+            <div style="font-size:9px;color:#6b7280">Trend</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // === ACCESS CONTROL MATRIX ===
+  @state() private _ptRoles: string[] = ['Admin','Analyst','Operator','Viewer','Auditor'];
+  @state() private _ptActions: string[] = ['Create','Read','Update','Delete','Export','Approve'];
+  @state() private _ptPermissions: { [role: string]: { [action: string]: boolean } } = {};
+  @state() private _ptPermAudit: {role:string;action:string;changedBy:string;timestamp:string;oldVal:boolean;newVal:boolean}[] = [];
+  @state() private _ptPermCompare: string[] = [];
+
+  private _ptInitPermissions(): void {
+    const perms: Record<string, Record<string, boolean>> = {};
+    const defaults: Record<string, boolean[]> = {
+      Admin: [true,true,true,true,true,true],
+      Analyst: [true,true,true,false,true,false],
+      Operator: [true,true,true,false,false,false],
+      Viewer: [false,true,false,false,false,false],
+      Auditor: [false,true,false,false,true,false],
+    };
+    for (const role of this._ptRoles) {
+      perms[role] = {};
+      this._ptActions.forEach((a, i) => { perms[role][a] = defaults[role]?.[i] ?? false; });
+    }
+    this._ptPermissions = perms;
+  }
+
+  private _ptTogglePermission(role: string, action: string): void {
+    const old = this._ptPermissions[role][action];
+    this._ptPermissions = {...this._ptPermissions, [role]: {...this._ptPermissions[role], [action]: !old}};
+    this._ptPermAudit.unshift({role,action,changedBy:'current_user',timestamp:new Date().toISOString(),oldVal:old,newVal:!old});
+  }
+
+  private _ptRenderRBAC(): any {
+    const compareRoles = this._ptPermCompare.map(r => this._ptPermissions[r]).filter(Boolean);
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0">RBAC Permission Matrix</span>
+          <div style="display:flex;gap:4px">
+            ${this._ptRoles.map(r => html`
+              <button class="tab ${this._ptPermCompare.includes(r) ? 'active' : ''}" @click=${() => {
+                this._ptPermCompare = this._ptPermCompare.includes(r) ? this._ptPermCompare.filter(x => x !== r) : [...this._ptPermCompare, r];
+              }}>${r}</button>
+            `)}
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:10px">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a">Role \ Action</th>
+                ${this._ptActions.map(a => html`<th style="padding:6px;color:#6b7280;border-bottom:1px solid #2a2d3a;text-align:center">${a}</th>`)}
+              </tr>
+            </thead>
+            <tbody>
+              ${this._ptRoles.map(role => html`
+                <tr style="border-bottom:1px solid #1a1d2e">
+                  <td style="padding:6px;color:#e2e8f0;font-weight:600">${role}</td>
+                  ${this._ptActions.map(action => html`
+                    <td style="text-align:center;padding:6px">
+                      <button style="width:28px;height:20px;border-radius:3px;border:1px solid #2a2d3a;background:${this._ptPermissions[role][action] ? '#22c55e' : '#1a1d2e'};cursor:pointer;color:#fff;font-size:10px" @click=${() => this._ptTogglePermission(role, action)}>${this._ptPermissions[role][action] ? 'Y' : 'N'}</button>
+                    </td>
+                  `)}
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        </div>
+        ${compareRoles.length >= 2 ? html`
+          <div style="margin-top:10px;padding:8px;background:#1a1d2e;border-radius:6px">
+            <div style="font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Role Diff: ${this._ptPermCompare.join(' vs ')}</div>
+            ${this._ptActions.map(action => {
+              const vals = compareRoles.map(r => r[action]);
+              const allSame = vals.every(v => v === vals[0]);
+              return allSame ? nothing : html`
+                <div style="display:flex;gap:8px;padding:3px 0;font-size:10px">
+                  <span style="color:#6b7280;width:60px">${action}:</span>
+                  ${compareRoles.map((r, i) => html`<span style="color:${r[action] ? '#22c55e' : '#ef4444'}">${this._ptPermCompare[i]}=${r[action] ? 'Y' : 'N'}</span>`)}
+                </div>
+              `;
+            })}
+          </div>
+        ` : nothing}
+        ${this._ptPermAudit.length > 0 ? html`
+          <div style="margin-top:8px;font-size:9px;color:#6b7280">Recent: ${this._ptPermAudit.slice(0,3).map(a => html`<span style="margin-right:8px">${a.role}.${a.action}: ${a.oldVal ? 'Y' : 'N'}->${a.newVal ? 'Y' : 'N'}</span>`)}
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === REPORTING SUITE ===
+  @state() private _ptReportTemplate: string = 'executive';
+  @state() private _ptReportSchedule: string = 'weekly';
+  @state() private _ptReportDistList: string[] = ['security-team@company.com','ciso@company.com'];
+  @state() private _ptReportHistory: {id:string;template:string;generatedAt:string;status:string}[] = [];
+
+  private _ptGenerateReport(): void {
+    const id = 'rpt-' + Date.now();
+    this._ptReportHistory.unshift({id,template:this._ptReportTemplate,generatedAt:new Date().toISOString(),status:'sent'});
+  }
+
+  private _ptRenderReporting(): any {
+    const templates = [{key:'executive',label:'Executive Summary',desc:'High-level overview for leadership'},{key:'technical',label:'Technical Report',desc:'Detailed findings for engineers'},{key:'compliance',label:'Compliance Audit',desc:'Regulatory compliance evidence'}];
+    const schedules = [{key:'daily',label:'Daily'},{key:'weekly',label:'Weekly'},{key:'monthly',label:'Monthly'}];
+    return html`
+      <div style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:8px">Report Generator</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Template</div>
+            ${templates.map(t => html`
+              <div style="padding:6px;background:${this._ptReportTemplate === t.key ? '#1e3a5f' : '#1a1d2e'};border:1px solid ${this._ptReportTemplate === t.key ? '#3b82f6' : '#2a2d3a'};border-radius:4px;margin-bottom:4px;cursor:pointer" @click=${() => { this._ptReportTemplate = t.key; }}>
+                <div style="font-size:11px;color:#e2e8f0">${t.label}</div>
+                <div style="font-size:9px;color:#6b7280">${t.desc}</div>
+              </div>
+            `)}
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Schedule</div>
+            <div style="display:flex;gap:4px;margin-bottom:8px">
+              ${schedules.map(s => html`<button class="tab ${this._ptReportSchedule === s.key ? 'active' : ''}" @click=${() => { this._ptReportSchedule = s.key; }}>${s.label}</button>`)}
+            </div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Distribution</div>
+            <div style="font-size:10px;color:#9ca3af">${this._ptReportDistList.map(d => html`<div>${d}</div>`)}</div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              <button style="background:#3b82f6;border:none;border-radius:4px;padding:4px 10px;color:#fff;font-size:10px;cursor:pointer" @click=${this._ptGenerateReport}>Generate</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">PDF</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">CSV</button>
+              <button style="background:#1a1d2e;border:1px solid #2a2d3a;border-radius:4px;padding:4px 10px;color:#9ca3af;font-size:10px;cursor:pointer">JSON</button>
+            </div>
+          </div>
+        </div>
+        ${this._ptReportHistory.length > 0 ? html`
+          <div style="border-top:1px solid #2a2d3a;padding-top:8px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:4px">Recent Reports</div>
+            ${this._ptReportHistory.slice(0,3).map(r => html`
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px">
+                <span style="color:#e2e8f0">${r.template}</span>
+                <span style="color:${r.status === 'sent' ? '#22c55e' : r.status === 'failed' ? '#ef4444' : '#f59e0b'}">${r.status}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+  // === KEYBOARD SHORTCUTS & ACCESSIBILITY ===
+  @state() private _ptHighContrast: boolean = false;
+  @state() private _ptA11yAnnounce: string = '';
+  @state() private _ptShortcutsVisible: boolean = false;
+  @state() private _ptFocusTrap: boolean = false;
+
+  private _ptShortcuts: Record<string, string> = {
+    'Escape': 'Close dialogs / Cancel',
+    'Ctrl+Shift+S': 'Toggle scenario simulation',
+    'Ctrl+Shift+T': 'Toggle time-series view',
+    'Ctrl+Shift+R': 'Open report generator',
+    'Ctrl+Shift+A': 'Toggle accessibility panel',
+    'Ctrl+Shift+H': 'Toggle high contrast',
+    'Tab': 'Navigate between sections',
+    'Enter/Space': 'Activate focused button',
+  };
+
+  private _ptHandleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._ptFocusTrap) { this._ptFocusTrap = false; this._ptAnnounce('Dialog closed'); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'H') { e.preventDefault(); this._ptHighContrast = !this._ptHighContrast; this._ptAnnounce('High contrast ' + (this._ptHighContrast ? 'enabled' : 'disabled')); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'A') { e.preventDefault(); this._ptShortcutsVisible = !this._ptShortcutsVisible; }
+  }
+
+  private _ptAnnounce(msg: string): void {
+    this._ptA11yAnnounce = msg;
+    setTimeout(() => { this._ptA11yAnnounce = ''; }, 2000);
+  }
+
+  private _ptRenderAccessibility(): any {
+    return html`
+      <div role="region" aria-label="Accessibility Controls" style="background:#0f1117;border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-weight:700;font-size:13px;color:#e2e8f0" role="heading" aria-level="3">Accessibility</span>
+          <button class="tab ${this._ptShortcutsVisible ? 'active' : ''}" @click=${() => { this._ptShortcutsVisible = !this._ptShortcutsVisible; }} aria-expanded=${this._ptShortcutsVisible}>Shortcuts</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer">
+            <input type="checkbox" .checked=${this._ptHighContrast} @change=${() => { this._ptHighContrast = !this._ptHighContrast; }} aria-label="Toggle high contrast mode">
+            High Contrast
+          </label>
+        </div>
+        ${this._ptShortcutsVisible ? html`
+          <div role="list" aria-label="Keyboard shortcuts" style="background:#1a1d2e;border-radius:6px;padding:8px">
+            ${Object.entries(this._ptShortcuts).map(([key, desc]) => html`
+              <div role="listitem" style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px">
+                <kbd style="background:#2a2d3a;padding:1px 6px;border-radius:3px;color:#60a5fa;font-family:monospace">${key}</kbd>
+                <span style="color:#9ca3af">${desc}</span>
+              </div>
+            `)}
+          </div>
+        ` : nothing}
+        <div role="status" aria-live="polite" aria-atomic="true" style="position:absolute;left:-9999px">${this._ptA11yAnnounce}</div>
+      </div>
+    `;
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this._ptInitScenarios();
+    this._ptInitTrendData();
+    this._ptInitPermissions();
+    document.addEventListener('keydown', this._ptHandleKeydown.bind(this));
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    document.removeEventListener('keydown', this._ptHandleKeydown.bind(this));
+  }
+
+  // === TAB INTEGRATION FOR EXTENDED FEATURES ===
+  @state() private _ptActiveSubTab: string = 'scenario';
+
+  private _ptGetAllSubTabs(): {key:string;label:string}[] {
+    return [
+      {key:'scenario', label:'Simulation'},
+      {key:'timeseries', label:'Trends'},
+      {key:'rbac', label:'Access Control'},
+      {key:'reporting', label:'Reports'},
+      {key:'a11y', label:'Accessibility'},
+    ];
+  }
+
+  private _ptRenderSubPanel(): any {
+    switch (this._ptActiveSubTab) {
+      case 'scenario': return this._ptRenderScenarioEngine();
+      case 'timeseries': return this._ptRenderTimeSeries();
+      case 'rbac': return this._ptRenderRBAC();
+      case 'reporting': return this._ptRenderReporting();
+      case 'a11y': return this._ptRenderAccessibility();
+      default: return nothing;
+    }
+  }
+
+  private _ptRenderTabBar(): any {
+    return html`
+      <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid #2a2d3a;padding-bottom:8px;flex-wrap:wrap" role="tablist" aria-label="Extended panel features">
+        ${this._ptGetAllSubTabs().map(t => html`
+          <button class="tab ${this._ptActiveSubTab === t.key ? 'active' : ''}" @click=${() => { this._ptActiveSubTab = t.key; }} role="tab" aria-selected=${this._ptActiveSubTab === t.key}>${t.label}</button>
+        `)}
+      </div>
+      <div role="tabpanel" aria-labelledby="pt-tab-${this._ptActiveSubTab}">
+        ${this._ptRenderSubPanel()}
+      </div>
+    `;
+  }
+
+  }
 declare global { interface HTMLElementTagNameMap { 'sc-patch-tracker': ScPatchTracker; } }
