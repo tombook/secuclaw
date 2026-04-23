@@ -566,7 +566,172 @@ export class ScRegTracker extends LitElement {
   .layout-grid-2, .layout-grid-3 { grid-template-columns: 1fr; }
   .layout-stats { grid-template-columns: repeat(2, 1fr); }
 }
-`;
+
+/* === CISO EXECUTIVE LAYOUT === */
+.ciso-exec-summary {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+.ciso-metric-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.ciso-metric-card {
+  flex: 1;
+  min-width: 160px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 212, 255, 0.02));
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: all 0.2s ease;
+}
+.ciso-metric-card:hover {
+  border-color: rgba(0, 212, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1);
+  transform: translateY(-2px);
+}
+.ciso-metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.ciso-metric-label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.ciso-metric-trend {
+  font-size: 12px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ciso-metric-trend.up { color: #22c55e; }
+.ciso-metric-trend.down { color: #ef4444; }
+.ciso-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.ciso-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ciso-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ciso-section-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(180deg, #00d4ff, #8b5cf6);
+  border-radius: 2px;
+}
+.ciso-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.ciso-detail-item {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.ciso-detail-label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.ciso-detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.ciso-chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.ciso-chart-container {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+.ciso-chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 12px;
+}
+.ciso-status-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+.ciso-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ciso-status-dot.green { background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
+.ciso-status-dot.yellow { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+.ciso-status-dot.red { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+.ciso-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  margin: 16px 0;
+}
+.ciso-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 4px;
+}
+.ciso-tag.critical { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.ciso-tag.high { background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+.ciso-tag.medium { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.ciso-tag.low { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+.ciso-tag.info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.ciso-text-sm { font-size: 12px; color: #94a3b8; line-height: 1.6; }
+.ciso-text-md { font-size: 14px; color: #cbd5e1; line-height: 1.5; }
+.ciso-text-lg { font-size: 16px; color: #e2e8f0; font-weight: 600; }
+@media (max-width: 900px) {
+  .ciso-exec-summary { grid-template-columns: 1fr; }
+  .ciso-chart-row { grid-template-columns: 1fr; }
+}`;
 
   @state() private _searchQuery = '';
   @state() private _severityFilter: Severity | 'all' = 'all';
@@ -8857,12 +9022,12 @@ private _executionHistory: ExecutionRecord[] = [
         </div>
         ${this._activeTab === 'overview' ? html`
           ${this._renderDonut()}
-          <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <div class="ciso-metric-row">
             ${this._renderGauge(open, this._items.length, 'Open Items', open > high ? '#f97316' : '#22c55e')}
             ${this._renderGauge(resolved, this._items.length, 'Resolved', '#22c55e')}
             ${this._renderGauge(crit, this._items.length, 'Critical', '#ef4444')}
           </div>
-          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Recent Items</div>
+          <div class="ciso-section-title">Recent Items</div>
           <div class="list">
             ${items.slice(0, 5).map(i => html`
               <div class="item" @click=${() => this._toggle(i.id)}>
@@ -8880,7 +9045,7 @@ private _executionHistory: ExecutionRecord[] = [
                 <div class="item-meta">${i.description.substring(0, 120)}${i.description.length > 120 ? '...' : ''}</div>
                 ${this._expandedId === i.id ? html`
                   <div class="item-detail">
-                    <div style="font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:10px;">${i.description}</div>
+                    <div class="ciso-text-sm">${i.description}</div>
                     <div class="detail-grid">
                       <div class="score-card"><div class="score-val" style="font-size:14px;">${i.category}</div><div class="score-lbl">Category</div></div>
                       <div class="score-card"><div class="score-val" style="font-size:14px;">${i.source}</div><div class="score-lbl">Source</div></div>
