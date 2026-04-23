@@ -1995,6 +1995,646 @@ export class ScSocMetrics extends LitElement {
 
 
 
+
+  // === Round 17: Risk Quantification Framework ===
+  @state() private _smFairModel: any = null;
+  @state() private _smRiskHeatMap: any = null;
+  @state() private _smRiskAppetite: any = null;
+  @state() private _smMonteCarlo: any = null;
+  @state() private _smRiskRegister: any = null;
+  @state() private _smRiskTrend: any = null;
+
+  private smInitRiskQuant() {
+    this._smFairModel = {
+      scenarios: [
+        { name: "Ransomware Attack", lef: 0.15, primaryLoss: 2500000, secondaryLoss: 800000, productivityLoss: 120000 },
+        { name: "Data Breach (PII)", lef: 0.25, primaryLoss: 4800000, secondaryLoss: 1500000, productivityLoss: 200000 },
+        { name: "Insider Threat", lef: 0.08, primaryLoss: 1800000, secondaryLoss: 600000, productivityLoss: 90000 },
+        { name: "Supply Chain Compromise", lef: 0.05, primaryLoss: 3200000, secondaryLoss: 1100000, productivityLoss: 300000 },
+        { name: "Cloud Misconfiguration", lef: 0.35, primaryLoss: 900000, secondaryLoss: 300000, productivityLoss: 60000 },
+        { name: "Phishing Campaign", lef: 0.45, primaryLoss: 500000, secondaryLoss: 150000, productivityLoss: 40000 },
+        { name: "Zero-Day Exploit", lef: 0.02, primaryLoss: 5500000, secondaryLoss: 2000000, productivityLoss: 500000 },
+        { name: "DDoS Attack", lef: 0.20, primaryLoss: 700000, secondaryLoss: 200000, productivityLoss: 80000 }
+      ],
+      totalAlec: 8750000,
+      riskCapacity: 12000000,
+      toleranceThreshold: 75
+    };
+    this._smRiskHeatMap = ((): any[] => {
+      const grid: any[] = [];
+      const labels = ["Rare","Unlikely","Possible","Likely","Almost Certain"];
+      const impacts = ["Negligible","Minor","Moderate","Major","Catastrophic"];
+      const data = [
+        [1,2,3,4,5],[2,4,6,8,10],[3,6,9,12,15],[4,8,12,16,20],[5,10,15,20,25]
+      ];
+      for (let i = 0; i < 5; i++) {
+        for (let j = 0; j < 5; j++) {
+          const score = data[i][j];
+          grid.push({ likelihood: labels[i], impact: impacts[j], score, risk: score <= 4 ? "Low" : score <= 9 ? "Medium" : score <= 15 ? "High" : "Critical", color: score <= 4 ? "#4caf50" : score <= 9 ? "#ff9800" : score <= 15 ? "#f44336" : "#9c27b0" });
+        }
+      }
+      return grid;
+    })();
+    this._smRiskAppetite = {
+      maxAcceptable: 5000000,
+      boardApproved: 8000000,
+      currentExposure: 6200000,
+      categories: [
+        { category: "Financial", appetite: 3000000, exposure: 2100000 },
+        { category: "Reputational", appetite: 2000000, exposure: 1500000 },
+        { category: "Operational", appetite: 1500000, exposure: 1200000 },
+        { category: "Regulatory", appetite: 1000000, exposure: 800000 },
+        { category: "Legal", appetite: 500000, exposure: 600000 }
+      ]
+    };
+    this._smMonteCarlo = ((): any[] => {
+      const results: any[] = [];
+      for (let i = 0; i < 20; i++) {
+        const seed = (i + 1) * 7919;
+        const r1 = ((seed * 16807) % 2147483647) / 2147483647;
+        const r2 = ((seed * 48271) % 2147483647) / 2147483647;
+        const baseLoss = 2000000 + r1 * 6000000;
+        const variance = baseLoss * (r2 - 0.5) * 0.4;
+        results.push({ iteration: i + 1, loss: Math.round(baseLoss + variance), percentile: 0 });
+      }
+      results.sort((a, b) => a.loss - b.loss);
+      results.forEach((r, i) => { r.percentile = Math.round(((i + 1) / results.length) * 100); });
+      return results;
+    })();
+    this._smRiskRegister = [
+      { id: "RSK-001", name: "Credential Stuffing", owner: "IAM Team", likelihood: 4, impact: 3, score: 12, status: "Mitigating", trend: "improving" },
+      { id: "RSK-002", name: "Cloud Data Exposure", owner: "Cloud Sec", likelihood: 3, impact: 5, score: 15, status: "Open", trend: "stable" },
+      { id: "RSK-003", name: "Third-Party Breach", owner: "GRC Team", likelihood: 3, impact: 4, score: 12, status: "Mitigating", trend: "worsening" },
+      { id: "RSK-004", name: "Insider Data Theft", owner: "HR + SecOps", likelihood: 2, impact: 4, score: 8, status: "Monitoring", trend: "stable" },
+      { id: "RSK-005", name: "Ransomware", owner: "SecOps", likelihood: 4, impact: 5, score: 20, status: "Mitigating", trend: "improving" },
+      { id: "RSK-006", name: "API Security Flaw", owner: "AppSec", likelihood: 3, impact: 3, score: 9, status: "Open", trend: "worsening" },
+      { id: "RSK-007", name: "Compliance Violation", owner: "GRC Team", likelihood: 2, impact: 5, score: 10, status: "Mitigating", trend: "improving" },
+      { id: "RSK-008", name: "Social Engineering", owner: "SecAwareness", likelihood: 5, impact: 2, score: 10, status: "Monitoring", trend: "stable" }
+    ];
+    this._smRiskTrend = [
+      { month: "Oct", critical: 3, high: 8, medium: 15, low: 22 },
+      { month: "Nov", critical: 2, high: 7, medium: 14, low: 24 },
+      { month: "Dec", critical: 4, high: 9, medium: 16, low: 20 },
+      { month: "Jan", critical: 3, high: 8, medium: 13, low: 21 },
+      { month: "Feb", critical: 2, high: 6, medium: 12, low: 23 },
+      { month: "Mar", critical: 1, high: 5, medium: 11, low: 25 }
+    ];
+  }
+
+  private smRenderRiskQuant() {
+    const fm = this._smFairModel;
+    if (!fm) return nothing;
+    const fmt = (n: number) => n >= 1000000 ? (n / 1000000).toFixed(1) + "M" : (n / 1000).toFixed(0) + "K";
+    const sevColor = (s: number) => s <= 4 ? "#4caf50" : s <= 9 ? "#ff9800" : s <= 15 ? "#f44336" : "#9c27b0";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Risk Quantification Framework (FAIR)</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:#1a1d27;border-radius:4px;padding:8px">
+            <div style="color:#aaa;font-size:9px;margin-bottom:4px">Annual Loss Expectancy</div>
+            <div style="color:#48f;font-size:18px;font-weight:bold">${fmt(fm.totalAlec)}</div>
+            <div style="color:#888;font-size:8px">Capacity: ${fmt(fm.riskCapacity)}</div>
+          </div>
+          <div style="background:#1a1d27;border-radius:4px;padding:8px">
+            <div style="color:#aaa;font-size:9px;margin-bottom:4px">Risk Tolerance</div>
+            <div style="color:#f84;font-size:18px;font-weight:bold">${fm.toleranceThreshold}%</div>
+            <div style="background:#1a1d27;border-radius:3px;height:6px;margin-top:4px;overflow:hidden">
+              <div style="height:100%;width:${Math.round((fm.totalAlec / fm.riskCapacity) * 100)}%;background:${fm.totalAlec / fm.riskCapacity > 0.75 ? "#f44" : "#48f"}"></div>
+            </div>
+          </div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin-bottom:6px">FAIR Model Scenarios</div>
+        ${fm.scenarios.map((s: any) => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:9px">
+            <span style="color:#ccc;width:130px;flex-shrink:0">${s.name}</span>
+            <span style="color:#888;width:40px">LEF ${(s.lef * 100).toFixed(0)}%</span>
+            <div style="flex:1;background:#1a1d27;border-radius:3px;height:5px;overflow:hidden">
+              <div style="height:100%;width:${Math.min(100, (s.primaryLoss / 6000000) * 100)}%;background:${s.primaryLoss > 3000000 ? "#f44" : s.primaryLoss > 1500000 ? "#f84" : "#4caf50"}"></div>
+            </div>
+            <span style="color:#ddd;width:50px;text-align:right">${fmt(s.primaryLoss)}</span>
+          </div>`)}
+        <div style="color:#aaa;font-size:10px;margin:8px 0 6px">Risk Heat Map (5x5)</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;font-size:8px">
+          ${this._smRiskHeatMap.map((c: any) => html`<div style="background:${c.color}22;border:1px solid ${c.color}44;border-radius:2px;padding:3px;text-align:center;color:${c.color}">
+              <div>${c.score}</div>
+            </div>`)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Monte Carlo Simulation (20 iterations)</div>
+            ${this._smMonteCarlo.slice(0, 10).map((r: any) => html`<div style="display:flex;gap:4px;font-size:8px;margin-bottom:1px">
+                <span style="color:#888;width:20px">#${r.iteration}</span>
+                <div style="flex:1;background:#1a1d27;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${(r.loss / 8000000) * 100}%;background:${r.loss > 5000000 ? "#f44" : r.loss > 3000000 ? "#f84" : "#4caf50"}"></div>
+                </div>
+                <span style="color:#ccc;width:40px;text-align:right">${fmt(r.loss)}</span>
+              </div>`)}
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Risk Register (Top 8)</div>
+            ${this._smRiskRegister.map((r: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+                <span style="color:${sevColor(r.score)};font-weight:bold;width:16px">${r.score}</span>
+                <span style="color:#ccc;flex:1">${r.name}</span>
+                <span style="color:${r.trend === "improving" ? "#4caf50" : r.trend === "worsening" ? "#f44" : "#888"};font-size:7px">${r.trend}</span>
+              </div>`)}
+          </div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin:8px 0 4px">Risk Trend (6 months)</div>
+        <div style="display:flex;gap:4px;align-items:flex-end;height:50px">
+          ${this._smRiskTrend.map((t: any) => html`<div style="flex:1;display:flex;flex-direction:column;gap:1px;align-items:center">
+              <div style="display:flex;gap:1px;align-items:flex-end;height:40px">
+                <div style="width:8px;height:${(t.critical / 25) * 40}px;background:#f44;border-radius:1px"></div>
+                <div style="width:8px;height:${(t.high / 25) * 40}px;background:#f84;border-radius:1px"></div>
+                <div style="width:8px;height:${(t.medium / 25) * 40}px;background:#ff8;border-radius:1px"></div>
+                <div style="width:8px;height:${(t.low / 25) * 40}px;background:#4caf50;border-radius:1px"></div>
+              </div>
+              <span style="color:#888;font-size:7px">${t.month}</span>
+            </div>`)}
+        </div>
+      </div>`;
+  }
+
+  // === Round 17: Security Program Management ===
+  @state() private _smOkrs: any = null;
+  @state() private _smInitiatives: any = null;
+  @state() private _smResourceAlloc: any = null;
+  @state() private _smHeadcount: any = null;
+  @state() private _smMilestones: any = null;
+  @state() private _smBudget: any = null;
+
+  private smInitSecProgram() {
+    this._smOkrs = [
+      { objective: "Reduce Mean Time to Detect", keyResults: [{ kr: "MTTD < 24 hours", progress: 72 }, { kr: "Deploy EDR to 100% endpoints", progress: 89 }, { kr: "SIEM coverage 95%+", progress: 81 }], overallProgress: 81 },
+      { objective: "Eliminate Critical Vulnerabilities in 7 days", keyResults: [{ kr: "Patch SLA compliance > 95%", progress: 67 }, { kr: "Zero critical vulns > 30 days", progress: 45 }, { kr: "Automated patching 80%+", progress: 58 }], overallProgress: 57 },
+      { objective: "Achieve Zero Trust Architecture", keyResults: [{ kr: "Micro-segment 90% workloads", progress: 63 }, { kr: "ZTNA adoption 100%", progress: 78 }, { kr: "Continuous verification deployed", progress: 54 }], overallProgress: 65 },
+      { objective: "Build Security-First Culture", keyResults: [{ kr: "Phishing click rate < 3%", progress: 85 }, { kr: "Security training 100%", progress: 92 }, { kr: "DevSecOps maturity L3+", progress: 48 }], overallProgress: 75 }
+    ];
+    this._smInitiatives = [
+      { name: "Zero Trust Migration", phase: "Phase 2", status: "On Track", owner: "ZT Program", budget: 1200000, spent: 680000, completion: 45, priority: "P0" },
+      { name: "Cloud Security Posture", phase: "Phase 3", status: "At Risk", owner: "Cloud Sec", budget: 800000, spent: 750000, completion: 72, priority: "P0" },
+      { name: "SOC Modernization", phase: "Phase 2", status: "On Track", owner: "SOC Lead", budget: 1500000, spent: 520000, completion: 35, priority: "P0" },
+      { name: "AppSec Program", phase: "Phase 1", status: "On Track", owner: "AppSec Lead", budget: 600000, spent: 180000, completion: 25, priority: "P1" },
+      { name: "Identity Governance", phase: "Phase 2", status: "Delayed", owner: "IAM Team", budget: 400000, spent: 380000, completion: 60, priority: "P1" },
+      { name: "Threat Intelligence", phase: "Phase 1", status: "On Track", owner: "CTI Team", budget: 350000, spent: 120000, completion: 30, priority: "P1" },
+      { name: "Vendor Risk Program", phase: "Phase 1", status: "On Track", owner: "GRC Team", budget: 250000, spent: 80000, completion: 20, priority: "P2" },
+      { name: "Data Classification", phase: "Phase 2", status: "At Risk", owner: "Data Sec", budget: 300000, spent: 220000, completion: 55, priority: "P1" },
+      { name: "Security Automation", phase: "Phase 2", status: "On Track", owner: "SecOps", budget: 500000, spent: 280000, completion: 40, priority: "P0" },
+      { name: "Incident Response Upgrade", phase: "Phase 1", status: "On Track", owner: "IR Lead", budget: 200000, spent: 60000, completion: 22, priority: "P1" },
+      { name: "Compliance Automation", phase: "Phase 1", status: "Delayed", owner: "GRC Team", budget: 450000, spent: 200000, completion: 35, priority: "P2" },
+      { name: "Security Metrics Platform", phase: "Phase 1", status: "On Track", owner: "SecEng", budget: 300000, spent: 90000, completion: 28, priority: "P1" }
+    ];
+    this._smResourceAlloc = [
+      { domain: "Security Operations", allocated: 35, used: 31, budget: 2800000 },
+      { domain: "Identity & Access", allocated: 12, used: 11, budget: 960000 },
+      { domain: "Application Security", allocated: 10, used: 8, budget: 800000 },
+      { domain: "Cloud Security", allocated: 8, used: 9, budget: 640000 },
+      { domain: "GRC & Compliance", allocated: 8, used: 7, budget: 640000 },
+      { domain: "Threat Intelligence", allocated: 5, used: 4, budget: 400000 },
+      { domain: "Security Engineering", allocated: 7, used: 6, budget: 560000 }
+    ];
+    this._smHeadcount = {
+      total: 85, filled: 72, open: 13, budget: 10200000,
+      byLevel: [{ level: "L3 (Senior)", count: 28, target: 32 }, { level: "L4 (Staff)", count: 18, target: 20 }, { level: "L5 (Principal)", count: 8, target: 10 }, { level: "L2 (Mid)", count: 14, target: 15 }, { level: "L1 (Junior)", count: 4, target: 8 }],
+      criticalRoles: ["Cloud Security Architect", "Senior Threat Hunter", "AppSec Engineer", "SOC Analyst L2"]
+    };
+    this._smMilestones = [
+      { initiative: "Zero Trust", milestone: "Micro-seg Phase 2 complete", due: "2026-03-31", status: "On Track", rag: "green" },
+      { initiative: "SOC Mod", milestone: "SOAR platform deployed", due: "2026-04-15", status: "At Risk", rag: "amber" },
+      { initiative: "Cloud Sec", milestone: "CSPM full coverage", due: "2026-05-01", status: "Behind", rag: "red" },
+      { initiative: "AppSec", milestone: "SAST in all CI/CD", due: "2026-06-30", status: "On Track", rag: "green" },
+      { initiative: "IAM", milestone: "PAM deployment complete", due: "2026-04-30", status: "Delayed", rag: "red" },
+      { initiative: "Automation", milestone: "50% alert triage automated", due: "2026-05-15", status: "On Track", rag: "green" }
+    ];
+    this._smBudget = {
+      total: 10200000, allocated: 9650000, spent: 5480000, remaining: 4170000,
+      quarterly: [{ q: "Q1", allocated: 2412500, spent: 2412500 }, { q: "Q2", allocated: 2412500, spent: 1950000 }, { q: "Q3", allocated: 2412500, spent: 1117500 }, { q: "Q4", allocated: 2412500, spent: 0 }],
+      byCategory: [{ cat: "Personnel", pct: 68 }, { cat: "Tools & Licenses", pct: 18 }, { cat: "Services", pct: 9 }, { cat: "Training", pct: 5 }]
+    };
+  }
+
+  private smRenderSecProgram() {
+    const okrs = this._smOkrs;
+    if (!okrs) return nothing;
+    const fmt = (n: number) => n >= 1000000 ? (n / 1000000).toFixed(1) + "M" : (n / 1000).toFixed(0) + "K";
+    const ragColor = (r: string) => r === "green" ? "#4caf50" : r === "amber" ? "#ff9800" : "#f44";
+    const statusColor = (s: string) => s === "On Track" ? "#4caf50" : s === "At Risk" ? "#ff9800" : "#f44";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Security Program Management</h4>
+        <div style="color:#aaa;font-size:10px;margin-bottom:6px">OKR Tracking</div>
+        ${okrs.map((o: any) => html`<div style="margin-bottom:8px;background:#1a1d27;border-radius:4px;padding:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="color:#e0e0e0;font-size:10px;font-weight:bold">${o.objective}</span>
+              <span style="color:${o.overallProgress >= 75 ? "#4caf50" : o.overallProgress >= 50 ? "#ff9800" : "#f44"};font-size:10px;font-weight:bold">${o.overallProgress}%</span>
+            </div>
+            <div style="background:#111;border-radius:3px;height:6px;overflow:hidden;margin-bottom:4px">
+              <div style="height:100%;width:${o.overallProgress}%;background:${o.overallProgress >= 75 ? "#4caf50" : o.overallProgress >= 50 ? "#ff9800" : "#f44"};transition:width 0.3s"></div>
+            </div>
+            ${o.keyResults.map((kr: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#888;width:12px">${kr.progress >= 75 ? "\u2713" : kr.progress >= 50 ? "\u25CB" : "\u25CB"}</span>
+                <span style="color:#bbb;flex:1">${kr.kr}</span>
+                <span style="color:#aaa;width:24px;text-align:right">${kr.progress}%</span>
+              </div>`)}
+          </div>`)}
+        <div style="color:#aaa;font-size:10px;margin:6px 0 4px">Initiative Roadmap (12 initiatives)</div>
+        <div style="max-height:120px;overflow-y:auto">
+          ${this._smInitiatives.map((i: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+              <span style="color:${i.priority === "P0" ? "#f44" : i.priority === "P1" ? "#f84" : "#888"};font-weight:bold;width:16px">${i.priority}</span>
+              <span style="color:#ccc;flex:1">${i.name}</span>
+              <span style="color:${statusColor(i.status)};width:50px">${i.status}</span>
+              <span style="color:#888;width:24px;text-align:right">${i.completion}%</span>
+            </div>`)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Resource Allocation</div>
+            ${this._smResourceAlloc.slice(0, 5).map((r: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#ccc;width:90px">${r.domain}</span>
+                <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${(r.used / r.allocated) * 100}%;background:${r.used > r.allocated ? "#f44" : "#48f"}"></div>
+                </div>
+                <span style="color:#888">${r.used}/${r.allocated}</span>
+              </div>`)}
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Budget Utilization</div>
+            <div style="font-size:9px;color:#ccc;margin-bottom:4px">Total: ${fmt(this._smBudget.total)} | Spent: ${fmt(this._smBudget.spent)}</div>
+            ${this._smBudget.quarterly.map((q: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#888;width:16px">${q.q}</span>
+                <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${(q.spent / q.allocated) * 100}%;background:#48f"></div>
+                </div>
+                <span style="color:#aaa">${fmt(q.spent)}</span>
+              </div>`)}
+          </div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin:6px 0 4px">Milestone Tracker</div>
+        ${this._smMilestones.map((m: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+            <div style="width:6px;height:6px;border-radius:50%;background:${ragColor(m.rag)}"></div>
+            <span style="color:#ccc;width:60px">${m.initiative}</span>
+            <span style="color:#bbb;flex:1">${m.milestone}</span>
+            <span style="color:#888">${m.due}</span>
+          </div>`)}
+      </div>`;
+  }
+
+  // === Round 17: Third-Party Risk Assessment ===
+  @state() private _smVendorTiers: any = null;
+  @state() private _smDueDiligence: any = null;
+  @state() private _smContractClauses: any = null;
+  @state() private _smVendorScorecard: any = null;
+  @state() private _smSubProcessors: any = null;
+  @state() private _smVendorIncidents: any = null;
+
+  private smInitThirdParty() {
+    this._smVendorTiers = [
+      { tier: "Critical", count: 8, vendors: ["AWS", "Azure AD", "CrowdStrike", "Okta", "ServiceNow", "Salesforce", "Workday", "Datadog"] },
+      { tier: "High", count: 14, vendors: ["Slack", "GitHub", "Jenkins", "Terraform", "Artifactory", "Snyk", "Palo Alto", "Zscaler"] },
+      { tier: "Medium", count: 32, vendors: ["Figma", "Confluence", "Zoom", "Dropbox", "Notion", "Linear"] },
+      { tier: "Low", count: 67, vendors: ["Various SaaS tools", "Utilities", "Dev tools"] }
+    ];
+    this._smDueDiligence = [
+      { item: "SOC 2 Type II Report", required: true, passRate: 0.78 },
+      { item: "ISO 27001 Certification", required: true, passRate: 0.65 },
+      { item: "Penetration Test Results", required: true, passRate: 0.72 },
+      { item: "Data Processing Agreement", required: true, passRate: 0.91 },
+      { item: "Sub-processor List", required: true, passRate: 0.85 },
+      { item: "Incident Response Plan", required: true, passRate: 0.68 },
+      { item: "Business Continuity Plan", required: false, passRate: 0.58 },
+      { item: "Encryption Standards", required: true, passRate: 0.88 },
+      { item: "Access Control Policy", required: true, passRate: 0.76 },
+      { item: "Vulnerability Management", required: true, passRate: 0.71 },
+      { item: "Data Retention Policy", required: false, passRate: 0.64 },
+      { item: "Privacy Impact Assessment", required: false, passRate: 0.52 },
+      { item: "Insurance Coverage", required: true, passRate: 0.45 },
+      { item: "Right to Audit Clause", required: true, passRate: 0.82 },
+      { item: "Breach Notification SLA", required: true, passRate: 0.90 }
+    ];
+    this._smContractClauses = [
+      { clause: "Data Breach Notification", vendors: 98, compliant: 89, gap: 9 },
+      { clause: "Right to Audit", vendors: 85, compliant: 72, gap: 13 },
+      { clause: "Data Return on Termination", vendors: 92, compliant: 78, gap: 14 },
+      { clause: "Liability Cap", vendors: 90, compliant: 65, gap: 25 },
+      { clause: "Sub-processor Restrictions", vendors: 88, compliant: 80, gap: 8 },
+      { clause: "Encryption Requirements", vendors: 95, compliant: 91, gap: 4 },
+      { clause: "Incident Response SLA", vendors: 86, compliant: 74, gap: 12 },
+      { clause: "Data Residency", vendors: 78, compliant: 62, gap: 16 }
+    ];
+    this._smVendorScorecard = [
+      { vendor: "AWS", security: 92, compliance: 95, reliability: 98, risk: "Low", overall: 95 },
+      { vendor: "CrowdStrike", security: 94, compliance: 90, reliability: 96, risk: "Low", overall: 93 },
+      { vendor: "Okta", security: 85, compliance: 92, reliability: 90, risk: "Low", overall: 89 },
+      { vendor: "GitHub", security: 82, compliance: 78, reliability: 94, risk: "Medium", overall: 85 },
+      { vendor: "Slack", security: 78, compliance: 80, reliability: 92, risk: "Medium", overall: 83 },
+      { vendor: "Figma", security: 75, compliance: 72, reliability: 88, risk: "Medium", overall: 78 },
+      { vendor: "Linear", security: 70, compliance: 65, reliability: 90, risk: "Medium", overall: 75 },
+      { vendor: "StartupAI Inc", security: 55, compliance: 48, reliability: 72, risk: "High", overall: 58 }
+    ];
+    this._smSubProcessors = [
+      { vendor: "AWS", subProcessors: ["CloudFront", "S3 (US-East)", "DynamoDB", "Lambda"], reviewed: "2026-01" },
+      { vendor: "CrowdStrike", subProcessors: ["AWS (hosting)", "Snowflake (analytics)"], reviewed: "2026-02" },
+      { vendor: "Okta", subProcessors: ["AWS", "MongoDB Atlas"], reviewed: "2026-01" },
+      { vendor: "Salesforce", subProcessors: ["AWS", "Heroku", "MuleSoft"], reviewed: "2025-11" },
+      { vendor: "Datadog", subProcessors: ["GCP", "AWS"], reviewed: "2026-03" }
+    ];
+    this._smVendorIncidents = [
+      { vendor: "Okta", date: "2026-01-15", severity: "Medium", description: "Support access breach", resolved: true, ourImpact: "None" },
+      { vendor: "Cloudflare", date: "2026-02-20", severity: "Low", description: "Config exposure", resolved: true, ourImpact: "Minimal" },
+      { vendor: "GitHub", date: "2026-03-05", severity: "Low", description: "Dependency confusion", resolved: true, ourImpact: "None" },
+      { vendor: "StartupAI Inc", date: "2026-03-18", severity: "High", description: "Data exposure incident", resolved: false, ourImpact: "Under review" }
+    ];
+  }
+
+  private smRenderThirdParty() {
+    const tiers = this._smVendorTiers;
+    if (!tiers) return nothing;
+    const tierColor = (t: string) => t === "Critical" ? "#f44" : t === "High" ? "#f84" : t === "Medium" ? "#ff8" : "#888";
+    const sevColor = (s: string) => s === "High" ? "#f44" : s === "Medium" ? "#f84" : "#888";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Third-Party Risk Assessment</h4>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+          ${tiers.map((t: any) => html`<div style="background:#1a1d27;border-radius:4px;padding:8px;text-align:center;border-top:2px solid ${tierColor(t.tier)}">
+              <div style="color:${tierColor(t.tier)};font-size:18px;font-weight:bold">${t.count}</div>
+              <div style="color:#aaa;font-size:9px">${t.tier}</div>
+            </div>`)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Due Diligence Pass Rate</div>
+            ${this._smDueDiligence.slice(0, 8).map((d: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:${d.required ? "#f44" : "#888"};width:8px">${d.required ? "*" : ""}</span>
+                <span style="color:#ccc;flex:1">${d.item}</span>
+                <div style="width:40px;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${d.passRate * 100}%;background:${d.passRate > 0.8 ? "#4caf50" : d.passRate > 0.6 ? "#ff9800" : "#f44"}"></div>
+                </div>
+                <span style="color:#888;width:28px;text-align:right">${(d.passRate * 100).toFixed(0)}%</span>
+              </div>`)}
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Contract Clause Compliance</div>
+            ${this._smContractClauses.map((c: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#ccc;flex:1">${c.clause}</span>
+                <span style="color:${c.gap > 15 ? "#f44" : c.gap > 8 ? "#f84" : "#4caf50"};width:28px;text-align:right">${c.gap} gap</span>
+              </div>`)}
+          </div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin-bottom:4px">Vendor Security Scorecard</div>
+        ${this._smVendorScorecard.map((v: any) => html`<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;font-size:8px">
+            <span style="color:#ccc;width:80px;flex-shrink:0">${v.vendor}</span>
+            <div style="display:flex;gap:2px;flex:1">
+              <div title="Security" style="width:30px;background:#111;border-radius:2px;height:6px;overflow:hidden"><div style="height:100%;width:${v.security}%;background:#48f"></div></div>
+              <div title="Compliance" style="width:30px;background:#111;border-radius:2px;height:6px;overflow:hidden"><div style="height:100%;width:${v.compliance}%;background:#4caf50"></div></div>
+              <div title="Reliability" style="width:30px;background:#111;border-radius:2px;height:6px;overflow:hidden"><div style="height:100%;width:${v.reliability}%;background:#ff9800"></div></div>
+            </div>
+            <span style="color:${tierColor(v.risk)};font-weight:bold;width:40px;text-align:right">${v.overall}</span>
+          </div>`)}
+        <div style="color:#aaa;font-size:10px;margin:8px 0 4px">Vendor Incidents (Recent)</div>
+        ${this._smVendorIncidents.map((i: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+            <div style="width:6px;height:6px;border-radius:50%;background:${sevColor(i.severity)}"></div>
+            <span style="color:#ccc;width:70px">${i.vendor}</span>
+            <span style="color:#bbb;flex:1">${i.description}</span>
+            <span style="color:${i.resolved ? "#4caf50" : "#f44"}">${i.resolved ? "Resolved" : "Open"}</span>
+          </div>`)}
+      </div>`;
+  }
+
+  // === Round 17: Data Loss Prevention ===
+  @state() private _smDlpRules: any = null;
+  @state() private _smDataMovement: any = null;
+  @state() private _smDataDiscovery: any = null;
+  @state() private _smDlpIncidents: any = null;
+  @state() private _smEncryptionMatrix: any = null;
+
+  private smInitDLP() {
+    this._smDlpRules = [
+      { rule: "PII Detection (SSN)", type: "Content", channel: "Email+Cloud", enabled: true, matches: 234, blocked: 218, severity: "Critical" },
+      { rule: "Credit Card Numbers", type: "Pattern", channel: "All", enabled: true, matches: 156, blocked: 148, severity: "Critical" },
+      { rule: "Source Code Export", type: "Fingerprint", channel: "USB+Cloud", enabled: true, matches: 89, blocked: 85, severity: "High" },
+      { rule: "Healthcare Records", type: "Content", channel: "Email", enabled: true, matches: 45, blocked: 42, severity: "Critical" },
+      { rule: "Financial Reports", type: "Label", channel: "Email+Cloud", enabled: true, matches: 178, blocked: 165, severity: "High" },
+      { rule: "API Key Detection", type: "Pattern", channel: "All", enabled: true, matches: 312, blocked: 301, severity: "High" },
+      { rule: "Bulk Data Transfer", type: "Behavioral", channel: "Network", enabled: true, matches: 67, blocked: 58, severity: "Medium" },
+      { rule: "Credential in Code", type: "Pattern", channel: "Git+Chat", enabled: true, matches: 445, blocked: 438, severity: "High" },
+      { rule: "Encrypted Archive Upload", type: "Behavioral", channel: "Cloud", enabled: false, matches: 23, blocked: 0, severity: "Medium" },
+      { rule: "Off-hours Data Access", type: "Behavioral", channel: "All", enabled: true, matches: 92, blocked: 78, severity: "Medium" }
+    ];
+    this._smDataMovement = {
+      totalEvents: 15847, monitored: 12456, blocked: 1533, allowed: 10923,
+      byChannel: [{ channel: "Email", events: 5234, blocked: 892 }, { channel: "Cloud Upload", events: 4123, blocked: 345 }, { channel: "USB", events: 1234, blocked: 198 }, { channel: "Network", events: 3890, blocked: 67 }, { channel: "Print", events: 1366, blocked: 31 }],
+      bySensitivity: [{ level: "Confidential", pct: 35 }, { level: "Internal", pct: 45 }, { level: "Public", pct: 20 }]
+    };
+    this._smDataDiscovery = [
+      { location: "SharePoint", total: 245000, sensitive: 12300, unclassified: 45000, lastScan: "2026-04-20" },
+      { location: "S3 Buckets", total: 189000, sensitive: 8900, unclassified: 32000, lastScan: "2026-04-21" },
+      { location: "Database Servers", total: 3400, sensitive: 2100, unclassified: 800, lastScan: "2026-04-19" },
+      { location: "File Shares", total: 156000, sensitive: 6700, unclassified: 28000, lastScan: "2026-04-18" },
+      { location: "Endpoints", total: 89000, sensitive: 3400, unclassified: 15000, lastScan: "2026-04-21" }
+    ];
+    this._smDlpIncidents = [
+      { id: "DLP-001", type: "PII Exposure", status: "Resolved", severity: "Critical", assignee: "SecOps", time: "2h" },
+      { id: "DLP-002", type: "Source Code Leak", status: "Investigating", severity: "High", assignee: "AppSec", time: "4h" },
+      { id: "DLP-003", type: "Credential Commit", status: "Resolved", severity: "High", assignee: "DevSecOps", time: "1h" },
+      { id: "DLP-004", type: "Bulk Export", status: "Monitoring", severity: "Medium", assignee: "SOC", time: "8h" },
+      { id: "DLP-005", type: "API Key in Log", status: "Resolved", severity: "Medium", assignee: "SecOps", time: "30m" }
+    ];
+    this._smEncryptionMatrix = [
+      { data: "PII at Rest", algorithm: "AES-256-GCM", coverage: 98, keyMgmt: "KMS" },
+      { data: "PII in Transit", algorithm: "TLS 1.3", coverage: 100, keyMgmt: "Auto" },
+      { data: "Source Code", algorithm: "AES-256-CBC", coverage: 85, keyMgmt: "Git Crypt" },
+      { data: "Database", algorithm: "AES-256", coverage: 95, keyMgmt: "KMS" },
+      { data: "Backups", algorithm: "AES-256-GCM", coverage: 92, keyMgmt: "KMS" },
+      { data: "Email", algorithm: "TLS 1.2+", coverage: 88, keyMgmt: "S/MIME" },
+      { data: "File Shares", algorithm: "BitLocker", coverage: 76, keyMgmt: "AD CS" },
+      { data: "Cloud Storage", algorithm: "SSE-KMS", coverage: 94, keyMgmt: "Cloud KMS" }
+    ];
+  }
+
+  private smRenderDLP() {
+    const rules = this._smDlpRules;
+    if (!rules) return nothing;
+    const sevColor = (s: string) => s === "Critical" ? "#f44" : s === "High" ? "#f84" : "#ff8";
+    const statusColor = (s: string) => s === "Resolved" ? "#4caf50" : s === "Investigating" ? "#f84" : "#ff8";
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Data Loss Prevention</h4>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+          ${[["Monitored",this._smDataMovement.monitored.toLocaleString(),"#48f"],["Blocked",this._smDataMovement.blocked.toLocaleString(),"#f44"],["Rules",rules.length,"#ff8"],["Incidents",this._smDlpIncidents.length,"#f84"]].map(([l,v,c]) => html`<div style="background:#1a1d27;border-radius:4px;padding:6px;text-align:center">
+              <div style="color:${c};font-size:16px;font-weight:bold">${v}</div>
+              <div style="color:#888;font-size:8px">${l}</div>
+            </div>`)}
+        </div>
+        <div style="color:#aaa;font-size:10px;margin-bottom:4px">DLP Policy Rules (10 active)</div>
+        ${rules.slice(0, 6).map((r: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+            <div style="width:6px;height:6px;border-radius:50%;background:${r.enabled ? "#4f4" : "#666"}"></div>
+            <span style="color:#ccc;flex:1">${r.rule}</span>
+            <span style="color:${sevColor(r.severity)};width:40px;text-align:right">${r.blocked}/${r.matches}</span>
+          </div>`)}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Data Movement by Channel</div>
+            ${this._smDataMovement.byChannel.map((c: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#ccc;width:60px">${c.channel}</span>
+                <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${(c.events / 5500) * 100}%;background:#48f"></div>
+                </div>
+                <span style="color:#888;width:30px;text-align:right">${c.blocked}</span>
+              </div>`)}
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Encryption Coverage</div>
+            ${this._smEncryptionMatrix.map((e: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#ccc;width:60px">${e.data}</span>
+                <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${e.coverage}%;background:${e.coverage >= 95 ? "#4caf50" : e.coverage >= 85 ? "#ff9800" : "#f44"}"></div>
+                </div>
+                <span style="color:#888;width:28px;text-align:right">${e.coverage}%</span>
+              </div>`)}
+          </div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin:6px 0 4px">DLP Incident Response</div>
+        ${this._smDlpIncidents.map((i: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+            <span style="color:${statusColor(i.status)};width:70px">${i.status}</span>
+            <span style="color:#ccc;flex:1">${i.type}</span>
+            <span style="color:${sevColor(i.severity)}">${i.severity}</span>
+            <span style="color:#888">${i.time}</span>
+          </div>`)}
+      </div>`;
+  }
+
+  // === Round 17: Security Automation Metrics ===
+  @state() private _smAutoMetrics: any = null;
+  @state() private _smAutoTimeSaved: any = null;
+  @state() private _smAutoReliability: any = null;
+  @state() private _smAutoComparison: any = null;
+  @state() private _smAutoROI: any = null;
+  @state() private _smAutoCandidates: any = null;
+
+  private smInitAutomation() {
+    this._smAutoMetrics = {
+      totalPlaybooks: 48, activePlaybooks: 42, triggered: 12847, successful: 12156, failed: 691,
+      coverage: 67, targetCoverage: 85, mttrReduction: 58, falsePositiveRate: 3.2
+    };
+    this._smAutoTimeSaved = [
+      { task: "Alert Triage", manualMin: 15, autoMin: 0.5, daily: 120, savedHours: 2920 },
+      { task: "Vuln Scanning", manualMin: 60, autoMin: 5, daily: 8, savedHours: 2730 },
+      { task: "Patch Deployment", manualMin: 45, autoMin: 10, daily: 15, savedHours: 2555 },
+      { task: "User Provisioning", manualMin: 30, autoMin: 2, daily: 25, savedHours: 1825 },
+      { task: "Compliance Reporting", manualMin: 120, autoMin: 15, daily: 1, savedHours: 639 },
+      { task: "Incident Escalation", manualMin: 10, autoMin: 1, daily: 45, savedHours: 2737 },
+      { task: "Log Analysis", manualMin: 90, autoMin: 8, daily: 3, savedHours: 1277 },
+      { task: "Threat Intel Enrichment", manualMin: 20, autoMin: 3, daily: 60, savedHours: 1972 }
+    ];
+    this._smAutoReliability = [
+      { playbook: "Phishing Auto-Block", success: 98.5, executions: 4521, avgTime: "1.2s" },
+      { playbook: "Vuln Auto-Scan", success: 97.2, executions: 2340, avgTime: "4.5m" },
+      { playbook: "User Offboard", success: 99.1, executions: 156, avgTime: "30s" },
+      { playbook: "Alert Enrichment", success: 96.8, executions: 8945, avgTime: "3.1s" },
+      { playbook: "Malware Isolate", success: 95.4, executions: 89, avgTime: "8.2s" },
+      { playbook: "Compliance Check", success: 94.7, executions: 365, avgTime: "2.1m" }
+    ];
+    this._smAutoComparison = [
+      { process: "Vulnerability Management", manual: 45, automated: 12, reduction: 73 },
+      { process: "Incident Response", manual: 180, automated: 65, reduction: 64 },
+      { process: "Access Reviews", manual: 30, automated: 5, reduction: 83 },
+      { process: "Compliance Audits", manual: 120, automated: 45, reduction: 63 },
+      { process: "Threat Detection", manual: 60, automated: 8, reduction: 87 },
+      { process: "Configuration Drift", manual: 40, automated: 10, reduction: 75 }
+    ];
+    this._smAutoROI = {
+      investment: 850000, annualSavings: 2100000, roi: 147,
+      costAvoidance: 1200000, efficiencyGain: 900000, headcountSaved: 4.5
+    };
+    this._smAutoCandidates = [
+      { task: "Security Questionnaire Response", complexity: "Medium", savings: "120 hrs/yr", priority: "High" },
+      { task: "Certificate Rotation", complexity: "Low", savings: "80 hrs/yr", priority: "High" },
+      { task: "Firewall Rule Review", complexity: "High", savings: "200 hrs/yr", priority: "Medium" },
+      { task: "Data Classification Tagging", complexity: "Medium", savings: "150 hrs/yr", priority: "High" },
+      { task: "Vendor Risk Scoring", complexity: "Medium", savings: "90 hrs/yr", priority: "Medium" },
+      { task: "Security Awareness Campaigns", complexity: "Low", savings: "60 hrs/yr", priority: "Low" }
+    ];
+  }
+
+  private smRenderAutomation() {
+    const m = this._smAutoMetrics;
+    if (!m) return nothing;
+    return html`<div class="card" style="padding:14px;margin-bottom:8px">
+        <h4 style="margin:0 0 10px;color:#e0e0e0;font-size:13px">Security Automation Metrics</h4>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+          ${[["Coverage",m.coverage + "%","#48f"],["Playbooks",m.activePlaybooks,"#4caf50"],["MTTR Reduction",m.mttrReduction + "%","#f84"],["False + Rate",m.falsePositiveRate + "%","#ff8"]].map(([l,v,c]) => html`<div style="background:#1a1d27;border-radius:4px;padding:6px;text-align:center">
+              <div style="color:${c};font-size:16px;font-weight:bold">${v}</div>
+              <div style="color:#888;font-size:8px">${l}</div>
+            </div>`)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Time Saved by Task (annual hours)</div>
+            ${this._smAutoTimeSaved.slice(0, 5).map((t: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#ccc;width:90px">${t.task}</span>
+                <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${(t.savedHours / 3000) * 100}%;background:#48f"></div>
+                </div>
+                <span style="color:#888;width:40px;text-align:right">${t.savedHours}h</span>
+              </div>`)}
+          </div>
+          <div>
+            <div style="color:#aaa;font-size:10px;margin-bottom:4px">Playbook Reliability</div>
+            ${this._smAutoReliability.map((p: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+                <span style="color:#ccc;width:90px">${p.playbook}</span>
+                <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+                  <div style="height:100%;width:${p.success}%;background:${p.success >= 97 ? "#4caf50" : p.success >= 95 ? "#ff9800" : "#f44"}"></div>
+                </div>
+                <span style="color:#888;width:35px;text-align:right">${p.success}%</span>
+              </div>`)}
+          </div>
+        </div>
+        <div style="background:#1a1d27;border-radius:4px;padding:8px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="color:#aaa;font-size:9px">Automation ROI</div>
+              <div style="color:#4caf50;font-size:16px;font-weight:bold">${this._smAutoROI.roi}%</div>
+            </div>
+            <div style="text-align:center">
+              <div style="color:#aaa;font-size:9px">Annual Savings</div>
+              <div style="color:#48f;font-size:16px;font-weight:bold">${(this._smAutoROI.annualSavings / 1000000).toFixed(1)}M</div>
+            </div>
+            <div style="text-align:center">
+              <div style="color:#aaa;font-size:9px">Headcount Saved</div>
+              <div style="color:#ff8;font-size:16px;font-weight:bold">${this._smAutoROI.headcountSaved}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="color:#aaa;font-size:9px">Investment</div>
+              <div style="color:#ccc;font-size:16px;font-weight:bold">${(this._smAutoROI.investment / 1000).toFixed(0)}K</div>
+            </div>
+          </div>
+        </div>
+        <div style="color:#aaa;font-size:10px;margin-bottom:4px">Manual vs Automated (hours/process)</div>
+        ${this._smAutoComparison.map((c: any) => html`<div style="display:flex;align-items:center;gap:4px;font-size:8px;margin-bottom:2px">
+            <span style="color:#ccc;width:90px">${c.process}</span>
+            <span style="color:#f84;width:30px;text-align:right">${c.manual}h</span>
+            <span style="color:#888;width:15px;text-align:center">\u2192</span>
+            <span style="color:#4caf50;width:30px;text-align:right">${c.automated}h</span>
+            <div style="flex:1;background:#111;border-radius:2px;height:4px;overflow:hidden">
+              <div style="height:100%;width:${c.reduction}%;background:#48f"></div>
+            </div>
+            <span style="color:#888;width:30px;text-align:right">-${c.reduction}%</span>
+          </div>`)}
+        <div style="color:#aaa;font-size:10px;margin:6px 0 4px">Next Automation Candidates</div>
+        ${this._smAutoCandidates.map((c: any) => html`<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;font-size:8px">
+            <span style="color:${c.priority === "High" ? "#f44" : c.priority === "Medium" ? "#f84" : "#888"};font-weight:bold;width:40px">${c.priority}</span>
+            <span style="color:#ccc;flex:1">${c.task}</span>
+            <span style="color:#888">${c.savings}</span>
+          </div>`)}
+      </div>`;
+  }
+
+  // Round 17 initialization
+  private smInitRound17() {
+    this.smInitRiskQuant();
+    this.smInitSecProgram();
+    this.smInitThirdParty();
+    this.smInitDLP();
+    this.smInitAutomation();
+  }
+
+  private smRenderRound17() {
+    return html`${this.smRenderRiskQuant()}${this.smRenderSecProgram()}${this.smRenderThirdParty()}${this.smRenderDLP()}${this.smRenderAutomation()}`;
+  }
   render() {    if (this._socRules.length === 0) { this._initSocRules(); this._initSocCvss(); this._runSocAnomalyDetection(); this._generateSocPredictions(); this._initSocApprovals(); this._initSocActivity(); this._initSocNotifications(); }
 
     const items = this._getFiltered();
@@ -2950,6 +3590,7 @@ export class ScSocMetrics extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.smInitRound17();
     this._initThreatModel();
     this._initPipeline();
     this._initPlaybooks();
