@@ -5785,6 +5785,624 @@ private _executionHistory: ExecutionRecord[] = [
     return this._securityDataQualityMetrics.filter(m => m.overallScore < 80).length;
   }
 
+  // === SECTION A: Security Metrics Benchmarking Hub ===
+  private _bmIndustryMetrics: Array<{name: string; current: number; benchmark: number; bestInClass: number; peerAvg: number; gap: number; trend: string; source: string}> = [];
+  private _bmPeerOrgs: Array<{name: string; overallScore: number; riskPosture: number; maturityLevel: number; industry: string; size: string}> = [];
+  private _bmHistoricalTrends: Array<{month: string; mtd: number; mtt: number; mtp: number; mta: number; vulnerabilityCoverage: number; patchCompliance: number; incidentResponse: number}> = [];
+  private _bmGapAnalysis: Array<{metric: string; currentGap: number; targetGap: number; projectedClose: string; actionPlan: string; owner: string; priority: string; estimatedROI: number}> = [];
+  private _bmSelectedBenchmark: string = 'nist_csf';
+  private _bmTimeRange: string = '12m';
+  private _bmComparisonMode: string = 'industry';
+
+  private _initBmIndustryMetrics() {
+    const benchmarks = {
+      nist_csf: { mtd: 85, mtt: 72, mtp: 78, mta: 82, vc: 90, pc: 88, ir: 76, sa: 70 },
+      iso27001: { mtd: 80, mtt: 68, mtp: 82, mta: 78, vc: 88, pc: 85, ir: 80, sa: 72 },
+      cis_controls: { mtd: 88, mtt: 75, mtp: 80, mta: 85, vc: 92, pc: 90, ir: 78, sa: 68 },
+      soc2: { mtd: 82, mtt: 70, mtp: 76, mta: 80, vc: 86, pc: 84, ir: 74, sa: 66 },
+    };
+    const selected = benchmarks[this._bmSelectedBenchmark] || benchmarks.nist_csf;
+    this._bmIndustryMetrics = [
+      { name: 'Mean Time to Detect (MTD)', current: 68, benchmark: selected.mtd, bestInClass: selected.mtd + 12, peerAvg: selected.mtd - 8, gap: selected.mtd - 68, trend: 'improving', source: 'NIST CSF Benchmark 2025' },
+      { name: 'Mean Time to Triage (MTT)', current: 45, benchmark: selected.mtt, bestInClass: selected.mtt + 10, peerAvg: selected.mtt - 6, gap: selected.mtt - 45, trend: 'stable', source: 'SANS IR Survey 2025' },
+      { name: 'Mean Time to Patch (MTP)', current: 62, benchmark: selected.mtp, bestInClass: selected.mtp + 8, peerAvg: selected.mtp - 10, gap: selected.mtp - 62, trend: 'improving', source: 'Patch Management Benchmark' },
+      { name: 'Mean Time to Acknowledge (MTA)', current: 15, benchmark: selected.mta, bestInClass: selected.mta + 5, peerAvg: selected.mta - 3, gap: selected.mta - 15, trend: 'improving', source: 'SOC Performance Metrics' },
+      { name: 'Vulnerability Coverage', current: 82, benchmark: selected.vc, bestInClass: selected.vc + 6, peerAvg: selected.vc - 8, gap: selected.vc - 82, trend: 'improving', source: 'Vulnerability Mgmt Benchmark' },
+      { name: 'Patch Compliance Rate', current: 78, benchmark: selected.pc, bestInClass: selected.pc + 7, peerAvg: selected.pc - 12, gap: selected.pc - 78, trend: 'stable', source: 'Configuration Mgmt Benchmark' },
+      { name: 'Incident Response Score', current: 65, benchmark: selected.ir, bestInClass: selected.ir + 15, peerAvg: selected.ir - 10, gap: selected.ir - 65, trend: 'declining', source: 'IR Capability Assessment' },
+      { name: 'Security Awareness Score', current: 58, benchmark: selected.sa, bestInClass: selected.sa + 18, peerAvg: selected.sa - 5, gap: selected.sa - 58, trend: 'stable', source: 'Security Awareness Benchmark' },
+    ];
+  }
+
+  private _initBmPeerOrganizations() {
+    this._bmPeerOrgs = [
+      { name: 'TechCorp Global', overallScore: 82, riskPosture: 78, maturityLevel: 4, industry: 'Technology', size: 'Enterprise' },
+      { name: 'FinanceFirst Inc', overallScore: 88, riskPosture: 85, maturityLevel: 5, industry: 'Financial Services', size: 'Enterprise' },
+      { name: 'HealthSecure Ltd', overallScore: 75, riskPosture: 70, maturityLevel: 3, industry: 'Healthcare', size: 'Mid-Market' },
+      { name: 'CloudNet Systems', overallScore: 85, riskPosture: 82, maturityLevel: 4, industry: 'Technology', size: 'Enterprise' },
+      { name: 'RetailGuard Corp', overallScore: 72, riskPosture: 68, maturityLevel: 3, industry: 'Retail', size: 'Mid-Market' },
+      { name: 'ManufacturaSafe', overallScore: 70, riskPosture: 65, maturityLevel: 2, industry: 'Manufacturing', size: 'Enterprise' },
+      { name: 'GovShield Agency', overallScore: 90, riskPosture: 88, maturityLevel: 5, industry: 'Government', size: 'Large' },
+      { name: 'EduProtect Uni', overallScore: 68, riskPosture: 62, maturityLevel: 2, industry: 'Education', size: 'Mid-Market' },
+    ];
+  }
+
+  private _initBmHistoricalTrends() {
+    const months = ['2025-01', '2025-02', '2025-03', '2025-04', '2025-05', '2025-06', '2025-07', '2025-08', '2025-09', '2025-10', '2025-11', '2025-12'];
+    this._bmHistoricalTrends = months.map((month, i) => ({
+      month, mtd: 45 + i * 2.5 + Math.floor(Math.random() * 5), mtt: 30 + i * 1.8 + Math.floor(Math.random() * 3),
+      mtp: 40 + i * 2.2 + Math.floor(Math.random() * 4), mta: 10 + i * 0.5 + Math.floor(Math.random() * 2),
+      vulnerabilityCoverage: 65 + i * 1.8 + Math.floor(Math.random() * 3), patchCompliance: 55 + i * 2.1 + Math.floor(Math.random() * 4),
+      incidentResponse: 50 + i * 1.5 + Math.floor(Math.random() * 3), sa: 40 + i * 1.6 + Math.floor(Math.random() * 2),
+    }));
+  }
+
+  private _initBmGapAnalysis() {
+    this._bmGapAnalysis = [
+      { metric: 'MTD', currentGap: 17, targetGap: 0, projectedClose: '2026-Q2', actionPlan: 'Deploy EDR with automated detection rules', owner: 'SOC Team Lead', priority: 'High', estimatedROI: 250000 },
+      { metric: 'Patch Compliance', currentGap: 10, targetGap: 0, projectedClose: '2026-Q3', actionPlan: 'Implement automated patch management pipeline', owner: 'IT Ops Manager', priority: 'High', estimatedROI: 180000 },
+      { metric: 'IR Score', currentGap: 11, targetGap: 5, projectedClose: '2026-Q4', actionPlan: 'Conduct tabletop exercises and update playbooks', owner: 'IR Manager', priority: 'Critical', estimatedROI: 320000 },
+      { metric: 'Security Awareness', currentGap: 12, targetGap: 3, projectedClose: '2026-Q3', actionPlan: 'Launch gamified training program with monthly phishing sims', owner: 'CISO', priority: 'Medium', estimatedROI: 150000 },
+    ];
+  }
+
+  private _renderBmIndustryComparison() {
+    const headerStyle = 'display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 80px;gap:4px;padding:6px 8px;background:#1a2332;border-radius:6px 6px 0 0;font-weight:600;font-size:12px;color:#8899aa;';
+    const rowStyle = 'display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 80px;gap:4px;padding:5px 8px;border-bottom:1px solid #1e2d3d;font-size:12px;align-items:center;';
+    return html`
+      <div style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Industry Benchmark Comparison</span>
+          <select style="background:#1a2332;color:#c0c0c0;border:1px solid #2a3a4a;border-radius:4px;padding:3px 8px;font-size:11px;" .value=${this._bmSelectedBenchmark} @change=${this._onBmBenchmarkChange}>
+            <option value="nist_csf">NIST CSF</option><option value="iso27001">ISO 27001</option>
+            <option value="cis_controls">CIS Controls</option><option value="soc2">SOC 2</option>
+          </select>
+        </div>
+        <div style="${headerStyle}"><span>Metric</span><span>Current</span><span>Benchmark</span><span>Best-in-Class</span><span>Peer Avg</span><span>Trend</span></div>
+        ${this._bmIndustryMetrics.map(m => html`
+          <div style="${rowStyle}">
+            <span style="color:#c0c0c0;">${m.name}</span>
+            <span style="color:${m.current >= m.benchmark ? '#4caf50' : '#ff9800'};">${m.current}%</span>
+            <span style="color:#8899aa;">${m.benchmark}%</span>
+            <span style="color:#64b5f6;">${m.bestInClass}%</span>
+            <span style="color:#8899aa;">${m.peerAvg}%</span>
+            <span style="color:${m.trend === 'improving' ? '#4caf50' : m.trend === 'declining' ? '#f44336' : '#ff9800'};font-size:11px;">${m.trend}</span>
+          </div>
+        `)}
+      </div>`;
+  }
+
+  private _renderBmPeerComparison() {
+    const cardStyle = 'background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;min-width:180px;';
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Peer Organization Comparison</span>
+        <div style="display:flex;gap:10px;overflow-x:auto;padding:10px 0;">
+          ${this._bmPeerOrgs.map(p => html`
+            <div style="${cardStyle}">
+              <div style="font-weight:600;color:#e0e0e0;font-size:12px;margin-bottom:6px;">${p.name}</div>
+              <div style="font-size:11px;color:#8899aa;margin-bottom:4px;">${p.industry} | ${p.size}</div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;">
+                <span style="color:#4caf50;">Score: ${p.overallScore}</span>
+                <span style="color:#64b5f6;">ML: ${p.maturityLevel}</span>
+              </div>
+              <div style="margin-top:4px;height:4px;background:#0d1520;border-radius:2px;">
+                <div style="height:100%;width:${p.riskPosture}%;background:${p.riskPosture > 80 ? '#4caf50' : p.riskPosture > 60 ? '#ff9800' : '#f44336'};border-radius:2px;"></div>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  private _renderBmGapAnalysis() {
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Gap-to-Benchmark Analysis</span>
+        <div style="margin-top:8px;">
+          ${this._bmGapAnalysis.map(g => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:600;color:#e0e0e0;font-size:12px;">${g.metric} Gap Analysis</span>
+                <span style="padding:2px 8px;border-radius:10px;font-size:10px;background:${g.priority === 'Critical' ? '#f44336' : g.priority === 'High' ? '#ff9800' : '#2196f3'};color:white;">${g.priority}</span>
+              </div>
+              <div style="display:flex;gap:20px;margin-top:6px;font-size:11px;">
+                <span style="color:#ff9800;">Current Gap: ${g.currentGap}%</span>
+                <span style="color:#4caf50;">Target: ${g.targetGap}%</span>
+                <span style="color:#64b5f6;">Close: ${g.projectedClose}</span>
+                <span style="color:#e0e0e0;">ROI: $${g.estimatedROI.toLocaleString()}</span>
+              </div>
+              <div style="font-size:11px;color:#8899aa;margin-top:4px;">${g.actionPlan} (Owner: ${g.owner})</div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // === SECTION B: Security Third-Party Risk Dashboard ===
+  private _tprVendors: Array<{id: string; name: string; category: string; riskScore: number; tier: string; assessmentDue: string; questionnaireStatus: string; incidents: number; slaCompliance: number; lastReview: string; dataAccess: string; criticality: string}> = [];
+  private _tprSelectedVendor: string = '';
+  private _tprFilterTier: string = 'all';
+  private _tprSortField: string = 'riskScore';
+  private _tprIncidentHistory: Array<{vendorId: string; date: string; type: string; severity: string; status: string; description: string}> = [];
+  private _tprMitigationActions: Array<{id: string; vendorId: string; action: string; priority: string; dueDate: string; status: string; assignee: string}> = [];
+
+  private _initTprVendors() {
+    this._tprVendors = [
+      { id: 'v001', name: 'CloudFlare CDN', category: 'Infrastructure', riskScore: 22, tier: 'Low', assessmentDue: '2026-06-15', questionnaireStatus: 'Complete', incidents: 0, slaCompliance: 99.8, lastReview: '2026-01-10', dataAccess: 'Traffic metadata only', criticality: 'Operational' },
+      { id: 'v002', name: 'AWS Cloud Services', category: 'Cloud Provider', riskScore: 35, tier: 'Medium', assessmentDue: '2026-05-20', questionnaireStatus: 'Complete', incidents: 1, slaCompliance: 99.5, lastReview: '2026-02-15', dataAccess: 'Full infrastructure access', criticality: 'Critical' },
+      { id: 'v003', name: 'Okta IAM Platform', category: 'Identity', riskScore: 28, tier: 'Low', assessmentDue: '2026-07-01', questionnaireStatus: 'In Progress', incidents: 0, slaCompliance: 99.9, lastReview: '2026-01-20', dataAccess: 'Identity data, SSO tokens', criticality: 'Critical' },
+      { id: 'v004', name: 'Datadog Monitoring', category: 'Observability', riskScore: 30, tier: 'Medium', assessmentDue: '2026-04-30', questionnaireStatus: 'Complete', incidents: 2, slaCompliance: 99.2, lastReview: '2025-12-15', dataAccess: 'Application logs, metrics', criticality: 'High' },
+      { id: 'v005', name: 'CrowdStrike EDR', category: 'Endpoint Security', riskScore: 18, tier: 'Low', assessmentDue: '2026-08-10', questionnaireStatus: 'Complete', incidents: 0, slaCompliance: 99.7, lastReview: '2026-03-01', dataAccess: 'Endpoint telemetry', criticality: 'High' },
+      { id: 'v006', name: 'Jira Service Desk', category: 'IT Service', riskScore: 40, tier: 'High', assessmentDue: '2026-04-15', questionnaireStatus: 'Overdue', incidents: 3, slaCompliance: 98.5, lastReview: '2025-11-20', dataAccess: 'Project data, tickets', criticality: 'Operational' },
+      { id: 'v007', name: 'GitHub Enterprise', category: 'Development', riskScore: 32, tier: 'Medium', assessmentDue: '2026-05-01', questionnaireStatus: 'In Progress', incidents: 1, slaCompliance: 99.3, lastReview: '2026-02-01', dataAccess: 'Source code, CI/CD pipelines', criticality: 'Critical' },
+      { id: 'v008', name: 'Salesforce CRM', category: 'Business App', riskScore: 55, tier: 'Critical', assessmentDue: '2026-04-10', questionnaireStatus: 'Overdue', incidents: 5, slaCompliance: 97.2, lastReview: '2025-10-15', dataAccess: 'Customer PII, revenue data', criticality: 'Critical' },
+      { id: 'v009', name: 'Slack Communications', category: 'Collaboration', riskScore: 45, tier: 'High', assessmentDue: '2026-04-25', questionnaireStatus: 'In Progress', incidents: 2, slaCompliance: 98.8, lastReview: '2025-12-01', dataAccess: 'Internal communications, files', criticality: 'High' },
+      { id: 'v010', name: 'Workday HR Platform', category: 'HR Systems', riskScore: 50, tier: 'Critical', assessmentDue: '2026-04-05', questionnaireStatus: 'Overdue', incidents: 4, slaCompliance: 97.8, lastReview: '2025-09-20', dataAccess: 'Employee PII, payroll data', criticality: 'Critical' },
+      { id: 'v011', name: 'Terraform Cloud', category: 'Infrastructure', riskScore: 25, tier: 'Low', assessmentDue: '2026-06-30', questionnaireStatus: 'Complete', incidents: 0, slaCompliance: 99.6, lastReview: '2026-01-25', dataAccess: 'Infrastructure configs', criticality: 'High' },
+      { id: 'v012', name: 'Zoom Video Conferencing', category: 'Collaboration', riskScore: 38, tier: 'Medium', assessmentDue: '2026-05-15', questionnaireStatus: 'Complete', incidents: 1, slaCompliance: 99.1, lastReview: '2026-02-20', dataAccess: 'Meeting metadata, recordings', criticality: 'Operational' },
+    ];
+    this._tprIncidentHistory = [
+      { vendorId: 'v008', date: '2026-03-15', type: 'Data Breach', severity: 'High', status: 'Investigating', description: 'Unauthorized access to customer records via API misconfiguration' },
+      { vendorId: 'v010', date: '2026-02-28', type: 'Compliance Violation', severity: 'Medium', status: 'Remediated', description: 'GDPR data retention policy violation detected in HR module' },
+      { vendorId: 'v006', date: '2026-02-10', type: 'Service Outage', severity: 'Medium', status: 'Resolved', description: 'Extended downtime affecting ticket processing for 8 hours' },
+      { vendorId: 'v009', date: '2026-01-20', type: 'Data Exposure', severity: 'High', status: 'Remediated', description: 'Shared channel configuration exposed files to unauthorized workspace' },
+      { vendorId: 'v002', date: '2026-01-05', type: 'Configuration Issue', severity: 'Low', status: 'Resolved', description: 'S3 bucket policy misconfiguration detected and corrected' },
+    ];
+    this._tprMitigationActions = [
+      { id: 'ma001', vendorId: 'v008', action: 'Complete SIG Lite assessment and review data handling practices', priority: 'Critical', dueDate: '2026-04-20', status: 'In Progress', assignee: 'Vendor Risk Manager' },
+      { id: 'ma002', vendorId: 'v010', action: 'Audit data retention policies and implement automated compliance checks', priority: 'Critical', dueDate: '2026-04-15', status: 'Pending', assignee: 'Privacy Officer' },
+      { id: 'ma003', vendorId: 'v006', action: 'Review SLA terms and establish backup service desk procedures', priority: 'High', dueDate: '2026-05-01', status: 'Pending', assignee: 'IT Operations Lead' },
+      { id: 'ma004', vendorId: 'v009', action: 'Implement DLP controls for sensitive file sharing and review channel configs', priority: 'High', dueDate: '2026-04-30', status: 'In Progress', assignee: 'Security Architect' },
+      { id: 'ma005', vendorId: 'v007', action: 'Review supply chain security and validate dependency scanning coverage', priority: 'Medium', dueDate: '2026-05-15', status: 'Pending', assignee: 'DevSecOps Lead' },
+    ];
+  }
+
+  private _renderTprVendorList() {
+    const filtered = this._tprFilterTier === 'all' ? this._tprVendors : this._tprVendors.filter(v => v.tier === this._tprFilterTier);
+    const sorted = [...filtered].sort((a: any, b: any) => b[this._tprSortField] - a[this._tprSortField]);
+    const tierColor = (t: string) => t === 'Critical' ? '#f44336' : t === 'High' ? '#ff9800' : t === 'Medium' ? '#2196f3' : '#4caf50';
+    const qsColor = (s: string) => s === 'Complete' ? '#4caf50' : s === 'In Progress' ? '#2196f3' : '#f44336';
+    return html`
+      <div style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Third-Party Vendor Risk Dashboard</span>
+          <div style="display:flex;gap:8px;">
+            <select style="background:#1a2332;color:#c0c0c0;border:1px solid #2a3a4a;border-radius:4px;padding:3px 8px;font-size:11px;" .value=${this._tprFilterTier} @change=${this._onTprFilterChange}>
+              <option value="all">All Tiers</option><option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;">
+          ${sorted.map(v => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;cursor:pointer;border-left:3px solid ${tierColor(v.tier)};" @click=${() => { this._tprSelectedVendor = v.id; this.requestUpdate(); }}>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:600;color:#e0e0e0;font-size:12px;">${v.name}</span>
+                <span style="padding:2px 6px;border-radius:10px;font-size:9px;background:${tierColor(v.tier)};color:white;">${v.tier}</span>
+              </div>
+              <div style="font-size:11px;color:#8899aa;margin-top:4px;">${v.category} | Risk Score: <span style="color:${v.riskScore > 45 ? '#f44336' : v.riskScore > 30 ? '#ff9800' : '#4caf50'};">${v.riskScore}</span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;">
+                <span style="color:${qsColor(v.questionnaireStatus)};">${v.questionnaireStatus}</span>
+                <span style="color:#8899aa;">Due: ${v.assessmentDue}</span>
+                <span style="color:#8899aa;">Incidents: ${v.incidents}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  private _renderTprMitigationActions() {
+    const statusColor = (s: string) => s === 'In Progress' ? '#2196f3' : s === 'Pending' ? '#ff9800' : '#4caf50';
+    const prioColor = (p: string) => p === 'Critical' ? '#f44336' : p === 'High' ? '#ff9800' : '#2196f3';
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Risk Mitigation Action Items</span>
+        <div style="margin-top:8px;">
+          ${this._tprMitigationActions.map(a => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#e0e0e0;font-size:12px;">${a.action}</span>
+                <div style="display:flex;gap:6px;">
+                  <span style="padding:2px 6px;border-radius:10px;font-size:9px;background:${prioColor(a.priority)};color:white;">${a.priority}</span>
+                  <span style="padding:2px 6px;border-radius:10px;font-size:9px;background:${statusColor(a.status)};color:white;">${a.status}</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:4px;font-size:10px;color:#8899aa;">
+                <span>Vendor: ${this._tprVendors.find(v => v.id === a.vendorId)?.name || a.vendorId}</span>
+                <span>Due: ${a.dueDate}</span>
+                <span>Assignee: ${a.assignee}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // === SECTION C: Security Automation ROI Tracker ===
+  private _autoProcesses: Array<{id: string; name: string; category: string; manualHours: number; automatedHours: number; costSaved: number; fteSaved: number; coverage: number; roi: number; status: string; implemented: string; nextUpgrade: string}> = [];
+  private _autoRoadmap: Array<{phase: string; name: string; priority: string; estimatedSavings: number; targetDate: string; dependencies: string; progress: number}> = [];
+  private _autoCoverageByCategory: Array<{category: string; total: number; automated: number; coverage: number; potential: number}> = [];
+
+  private _initAutoProcesses() {
+    this._autoProcesses = [
+      { id: 'ap001', name: 'Vulnerability Scanning', category: 'Detection', manualHours: 160, automatedHours: 8, costSaved: 76000, fteSaved: 0.88, coverage: 95, roi: 850, status: 'Active', implemented: '2025-06-15', nextUpgrade: '2026-06-01' },
+      { id: 'ap002', name: 'Patch Deployment', category: 'Remediation', manualHours: 200, automatedHours: 20, costSaved: 90000, fteSaved: 1.0, coverage: 82, roi: 720, status: 'Active', implemented: '2025-07-01', nextUpgrade: '2026-07-15' },
+      { id: 'ap003', name: 'Log Analysis & SIEM Alerting', category: 'Detection', manualHours: 320, automatedHours: 40, costSaved: 140000, fteSaved: 1.6, coverage: 88, roi: 680, status: 'Active', implemented: '2025-05-10', nextUpgrade: '2026-05-20' },
+      { id: 'ap004', name: 'User Provisioning/Deprovisioning', category: 'IAM', manualHours: 120, automatedHours: 5, costSaved: 57500, fteSaved: 0.65, coverage: 92, roi: 920, status: 'Active', implemented: '2025-08-01', nextUpgrade: '2026-08-10' },
+      { id: 'ap005', name: 'Compliance Evidence Collection', category: 'Compliance', manualHours: 240, automatedHours: 30, costSaved: 105000, fteSaved: 1.2, coverage: 78, roi: 620, status: 'Active', implemented: '2025-09-15', nextUpgrade: '2026-09-01' },
+      { id: 'ap006', name: 'Phishing Campaign Execution', category: 'Awareness', manualHours: 80, automatedHours: 12, costSaved: 34000, fteSaved: 0.38, coverage: 70, roi: 480, status: 'Active', implemented: '2025-10-01', nextUpgrade: '2026-10-15' },
+      { id: 'ap007', name: 'Incident Triage & Classification', category: 'Response', manualHours: 280, automatedHours: 56, costSaved: 112000, fteSaved: 1.28, coverage: 75, roi: 550, status: 'Active', implemented: '2025-11-01', nextUpgrade: '2026-11-10' },
+      { id: 'ap008', name: 'Security Report Generation', category: 'Reporting', manualHours: 60, automatedHours: 4, costSaved: 28000, fteSaved: 0.32, coverage: 90, roi: 1050, status: 'Active', implemented: '2025-12-01', nextUpgrade: '2026-12-15' },
+      { id: 'ap009', name: 'Firewall Rule Management', category: 'Network', manualHours: 100, automatedHours: 15, costSaved: 42500, fteSaved: 0.48, coverage: 65, roi: 520, status: 'Partial', implemented: '2026-01-15', nextUpgrade: '2026-07-01' },
+      { id: 'ap010', name: 'Secrets Rotation', category: 'Security', manualHours: 40, automatedHours: 2, costSaved: 19000, fteSaved: 0.22, coverage: 85, roi: 1200, status: 'Active', implemented: '2026-02-01', nextUpgrade: '2027-02-01' },
+    ];
+    this._autoRoadmap = [
+      { phase: 'Phase 1', name: 'Automated Incident Response Playbooks', priority: 'Critical', estimatedSavings: 180000, targetDate: '2026-Q2', dependencies: 'SIEM integration complete', progress: 45 },
+      { phase: 'Phase 2', name: 'AI-Powered Threat Detection', priority: 'High', estimatedSavings: 250000, targetDate: '2026-Q3', dependencies: 'ML model training complete', progress: 20 },
+      { phase: 'Phase 3', name: 'Automated Compliance Auditing', priority: 'High', estimatedSavings: 150000, targetDate: '2026-Q3', dependencies: 'Policy engine deployment', progress: 30 },
+      { phase: 'Phase 4', name: 'Self-Healing Infrastructure', priority: 'Medium', estimatedSavings: 200000, targetDate: '2026-Q4', dependencies: 'IaC maturity level 4', progress: 10 },
+      { phase: 'Phase 5', name: 'Zero-Trust Policy Automation', priority: 'Medium', estimatedSavings: 120000, targetDate: '2027-Q1', dependencies: 'ZT architecture phase 2', progress: 5 },
+    ];
+    this._autoCoverageByCategory = [
+      { category: 'Detection', total: 480, automated: 48, coverage: 90, potential: 430 },
+      { category: 'Remediation', total: 200, automated: 20, coverage: 82, potential: 175 },
+      { category: 'IAM', total: 120, automated: 5, coverage: 92, potential: 110 },
+      { category: 'Compliance', total: 240, automated: 30, coverage: 78, potential: 200 },
+      { category: 'Response', total: 280, automated: 56, coverage: 75, potential: 220 },
+      { category: 'Reporting', total: 60, automated: 4, coverage: 90, potential: 55 },
+    ];
+  }
+
+  private _renderAutoRoiTracker() {
+    const totalSaved = this._autoProcesses.reduce((s, p) => s + p.costSaved, 0);
+    const totalFTE = this._autoProcesses.reduce((s, p) => s + p.fteSaved, 0);
+    const avgROI = Math.round(this._autoProcesses.reduce((s, p) => s + p.roi, 0) / this._autoProcesses.length);
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Automation ROI Tracker</span>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;color:#4caf50;">$${totalSaved.toLocaleString()}</div>
+            <div style="font-size:11px;color:#8899aa;">Annual Cost Savings</div>
+          </div>
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;color:#64b5f6;">${totalFTE.toFixed(1)} FTE</div>
+            <div style="font-size:11px;color:#8899aa;">Equivalent Saved</div>
+          </div>
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;font-weight:700;color:#ff9800;">${avgROI}%</div>
+            <div style="font-size:11px;color:#8899aa;">Average ROI</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          ${this._autoProcesses.map(p => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:8px;margin-bottom:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#e0e0e0;font-size:12px;font-weight:600;">${p.name}</span>
+                <span style="color:#4caf50;font-size:11px;">${p.roi}% ROI</span>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:4px;font-size:10px;color:#8899aa;">
+                <span>Manual: ${p.manualHours}h/mo</span>
+                <span>Auto: ${p.automatedHours}h/mo</span>
+                <span>Saved: ${p.fteSaved} FTE</span>
+                <span>Coverage: ${p.coverage}%</span>
+                <span style="color:#4caf50;">$${p.costSaved.toLocaleString()}/yr</span>
+              </div>
+              <div style="margin-top:4px;height:3px;background:#0d1520;border-radius:2px;">
+                <div style="height:100%;width:${p.coverage}%;background:${p.coverage > 85 ? '#4caf50' : p.coverage > 70 ? '#2196f3' : '#ff9800'};border-radius:2px;"></div>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  private _renderAutoRoadmap() {
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Automation Roadmap</span>
+        <div style="margin-top:8px;">
+          ${this._autoRoadmap.map(r => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;margin-bottom:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <span style="color:#8899aa;font-size:10px;">${r.phase}</span>
+                  <span style="color:#e0e0e0;font-size:12px;font-weight:600;margin-left:8px;">${r.name}</span>
+                </div>
+                <span style="color:#4caf50;font-size:11px;">$${r.estimatedSavings.toLocaleString()}/yr</span>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:4px;font-size:10px;color:#8899aa;">
+                <span>Target: ${r.targetDate}</span><span>Dep: ${r.dependencies}</span>
+              </div>
+              <div style="margin-top:6px;height:6px;background:#0d1520;border-radius:3px;">
+                <div style="height:100%;width:${r.progress}%;background:linear-gradient(90deg,#2196f3,#4caf50);border-radius:3px;transition:width 0.3s;"></div>
+              </div>
+              <div style="font-size:10px;color:#8899aa;margin-top:2px;">${r.progress}% complete</div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // === SECTION D: Security Knowledge Graph Explorer ===
+  private _kgNodes: Array<{id: string; label: string; type: string; risk: number; connections: number; lastUpdated: string; status: string}> = [];
+  private _kgEdges: Array<{source: string; target: string; type: string; strength: number; discovered: string}> = [];
+  private _kgStats: {totalNodes: number; totalEdges: number; avgConnectivity: number; graphHealth: number; isolatedNodes: number; criticalPaths: number} = { totalNodes: 0, totalEdges: 0, avgConnectivity: 0, graphHealth: 0, isolatedNodes: 0, criticalPaths: 0 };
+  private _kgQueryInput: string = '';
+  private _kgQueryResults: Array<{query: string; resultNodes: number; resultEdges: number; executionTime: string}> = [];
+  private _kgSelectedEntityType: string = 'all';
+  private _kgPathStart: string = '';
+  private _kgPathEnd: string = '';
+  private _kgPathResult: Array<string> = [];
+
+  private _initKnowledgeGraph() {
+    this._kgNodes = [
+      { id: 'n001', label: 'APT29 Cozy Bear', type: 'threat', risk: 95, connections: 18, lastUpdated: '2026-04-22', status: 'active' },
+      { id: 'n002', label: 'SolarWinds Orion', type: 'vulnerability', risk: 90, connections: 12, lastUpdated: '2026-04-20', status: 'patched' },
+      { id: 'n003', label: 'Active Directory', type: 'asset', risk: 78, connections: 25, lastUpdated: '2026-04-22', status: 'monitored' },
+      { id: 'n004', label: 'Admin User Group', type: 'user', risk: 85, connections: 15, lastUpdated: '2026-04-21', status: 'active' },
+      { id: 'n005', label: 'MFA Implementation', type: 'control', risk: 20, connections: 22, lastUpdated: '2026-04-22', status: 'enforced' },
+      { id: 'n006', label: 'Lateral Movement Tactic', type: 'threat', risk: 88, connections: 14, lastUpdated: '2026-04-19', status: 'active' },
+      { id: 'n007', label: 'Email Gateway', type: 'asset', risk: 45, connections: 10, lastUpdated: '2026-04-22', status: 'monitored' },
+      { id: 'n008', label: 'Phishing Simulation', type: 'control', risk: 15, connections: 8, lastUpdated: '2026-04-18', status: 'active' },
+      { id: 'n009', label: 'Ransomware-as-a-Service', type: 'threat', risk: 92, connections: 20, lastUpdated: '2026-04-22', status: 'active' },
+      { id: 'n010', label: 'Cloud Infrastructure', type: 'asset', risk: 65, connections: 18, lastUpdated: '2026-04-21', status: 'monitored' },
+      { id: 'n011', label: 'SOC Analyst Team', type: 'user', risk: 10, connections: 12, lastUpdated: '2026-04-22', status: 'active' },
+      { id: 'n012', label: 'Network Segmentation', type: 'control', risk: 25, connections: 16, lastUpdated: '2026-04-20', status: 'enforced' },
+    ];
+    this._kgEdges = [
+      { source: 'n001', target: 'n002', type: 'exploits', strength: 95, discovered: '2025-12-15' },
+      { source: 'n001', target: 'n003', type: 'targets', strength: 85, discovered: '2026-01-10' },
+      { source: 'n001', target: 'n006', type: 'uses', strength: 90, discovered: '2026-01-15' },
+      { source: 'n003', target: 'n004', type: 'contains', strength: 80, discovered: '2025-10-01' },
+      { source: 'n005', target: 'n003', type: 'protects', strength: 75, discovered: '2025-11-01' },
+      { source: 'n006', target: 'n003', type: 'targets', strength: 88, discovered: '2026-01-20' },
+      { source: 'n009', target: 'n010', type: 'targets', strength: 82, discovered: '2026-02-15' },
+      { source: 'n008', target: 'n007', type: 'protects', strength: 70, discovered: '2026-01-25' },
+      { source: 'n012', target: 'n010', type: 'protects', strength: 72, discovered: '2026-02-01' },
+      { source: 'n011', target: 'n005', type: 'manages', strength: 60, discovered: '2026-01-05' },
+      { source: 'n009', target: 'n006', type: 'uses', strength: 78, discovered: '2026-03-01' },
+      { source: 'n002', target: 'n010', type: 'affects', strength: 88, discovered: '2026-01-12' },
+    ];
+    this._kgStats = {
+      totalNodes: this._kgNodes.length, totalEdges: this._kgEdges.length,
+      avgConnectivity: Math.round(this._kgNodes.reduce((s, n) => s + n.connections, 0) / this._kgNodes.length),
+      graphHealth: 82, isolatedNodes: 0, criticalPaths: 5,
+    };
+    this._kgQueryResults = [
+      { query: 'threats targeting Active Directory', resultNodes: 3, resultEdges: 4, executionTime: '45ms' },
+      { query: 'controls protecting cloud assets', resultNodes: 2, resultEdges: 2, executionTime: '32ms' },
+      { query: 'attack paths to admin access', resultNodes: 4, resultEdges: 5, executionTime: '67ms' },
+    ];
+  }
+
+  private _renderKgExplorer() {
+    const typeColor = (t: string) => t === 'threat' ? '#f44336' : t === 'asset' ? '#2196f3' : t === 'control' ? '#4caf50' : t === 'user' ? '#ff9800' : '#9c27b0';
+    const riskColor = (r: number) => r > 80 ? '#f44336' : r > 50 ? '#ff9800' : '#4caf50';
+    const filtered = this._kgSelectedEntityType === 'all' ? this._kgNodes : this._kgNodes.filter(n => n.type === this._kgSelectedEntityType);
+    return html`
+      <div style="margin-top:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Knowledge Graph Explorer</span>
+          <div style="display:flex;gap:6px;">
+            ${['all', 'threat', 'asset', 'control', 'user'].map(t => html`
+              <button style="padding:3px 10px;border-radius:12px;font-size:10px;border:1px solid ${this._kgSelectedEntityType === t ? typeColor(t) : '#2a3a4a'};background:${this._kgSelectedEntityType === t ? typeColor(t) + '22' : 'transparent'};color:${this._kgSelectedEntityType === t ? typeColor(t) : '#8899aa'};cursor:pointer;" @click=${() => this._setKgEntityType(t)}>${t}</button>
+            `)}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:#64b5f6;">${this._kgStats.totalNodes}</div>
+            <div style="font-size:10px;color:#8899aa;">Total Nodes</div>
+          </div>
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:#4caf50;">${this._kgStats.totalEdges}</div>
+            <div style="font-size:10px;color:#8899aa;">Total Edges</div>
+          </div>
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:#ff9800;">${this._kgStats.avgConnectivity}</div>
+            <div style="font-size:10px;color:#8899aa;">Avg Connectivity</div>
+          </div>
+          <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:#e0e0e0;">${this._kgStats.graphHealth}%</div>
+            <div style="font-size:10px;color:#8899aa;">Graph Health</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;">
+          ${filtered.map(n => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:8px;border-left:3px solid ${typeColor(n.type)};">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:#e0e0e0;font-size:11px;font-weight:600;">${n.label}</span>
+                <span style="font-size:9px;padding:1px 6px;border-radius:8px;background:${typeColor(n.type)};color:white;">${n.type}</span>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:4px;font-size:10px;">
+                <span style="color:${riskColor(n.risk)};">Risk: ${n.risk}</span>
+                <span style="color:#8899aa;">Links: ${n.connections}</span>
+                <span style="color:#8899aa;">${n.status}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  private _renderKgQueryHistory() {
+    return html`
+      <div style="margin-top:12px;">
+        <span style="font-weight:600;font-size:13px;color:#e0e0e0;">Recent Graph Queries</span>
+        <div style="margin-top:6px;">
+          ${this._kgQueryResults.map(q => html`
+            <div style="display:flex;justify-content:space-between;align-items:center;background:#1a2332;border:1px solid #2a3a4a;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:11px;">
+              <span style="color:#c0c0c0;">"${q.query}"</span>
+              <div style="display:flex;gap:10px;">
+                <span style="color:#64b5f6;">${q.resultNodes} nodes</span>
+                <span style="color:#4caf50;">${q.resultEdges} edges</span>
+                <span style="color:#8899aa;">${q.executionTime}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+  // === SECTION E: Security Executive Briefing Generator ===
+  private _ebTemplates: Array<{id: string; name: string; description: string; audience: string; sections: number; lastUsed: string; usageCount: number}> = [];
+  private _ebGeneratedBriefing: {title: string; date: string; sections: Array<{heading: string; content: string; priority: string; metrics: string[]; }>; } = { title: '', date: '', sections: [] };
+  private _ebSelectedTemplate: string = '';
+  private _ebSchedule: Array<{date: string; type: string; audience: string; status: string; presenter: string}> = [];
+  private _ebKeyRisks: Array<{risk: string; severity: string; trend: string; owner: string; mitigation: string; deadline: string}> = [];
+  private _ebTrends: Array<{area: string; direction: string; change: number; period: string; impact: string}> = [];
+
+  private _initEbBriefingGenerator() {
+    this._ebTemplates = [
+      { id: 't001', name: 'Monthly Security Posture Report', description: 'Comprehensive overview of security posture, key metrics, and strategic initiatives for senior leadership.', audience: 'C-Suite', sections: 8, lastUsed: '2026-03-28', usageCount: 12 },
+      { id: 't002', name: 'Quarterly Board Security Briefing', description: 'Board-level summary of cybersecurity risk, compliance status, and investment recommendations.', audience: 'Board of Directors', sections: 6, lastUsed: '2026-03-15', usageCount: 4 },
+      { id: 't003', name: 'Incident Response Summary', description: 'Post-incident analysis with timeline, impact assessment, root cause, and lessons learned.', audience: 'Executive Team', sections: 7, lastUsed: '2026-04-10', usageCount: 8 },
+      { id: 't004', name: 'Risk Committee Update', description: 'Focused risk assessment update with heat map, trend analysis, and mitigation progress.', audience: 'Risk Committee', sections: 5, lastUsed: '2026-04-05', usageCount: 6 },
+      { id: 't005', name: 'Compliance Status Report', description: 'Regulatory compliance dashboard with audit findings, remediation progress, and upcoming deadlines.', audience: 'Legal & Compliance', sections: 9, lastUsed: '2026-04-01', usageCount: 10 },
+    ];
+    this._ebSchedule = [
+      { date: '2026-04-25', type: 'Monthly Posture', audience: 'C-Suite', status: 'Scheduled', presenter: 'CISO' },
+      { date: '2026-05-15', type: 'Board Briefing', audience: 'Board of Directors', status: 'Draft', presenter: 'CISO + CTO' },
+      { date: '2026-06-25', type: 'Monthly Posture', audience: 'C-Suite', status: 'Pending', presenter: 'CISO' },
+      { date: '2026-07-15', type: 'Board Briefing', audience: 'Board of Directors', status: 'Pending', presenter: 'CISO + CTO' },
+    ];
+    this._ebKeyRisks = [
+      { risk: 'Ransomware attack on critical infrastructure', severity: 'Critical', trend: 'Increasing', owner: 'CISO', mitigation: 'Deploy advanced EDR, implement network segmentation, enhance backup strategy', deadline: '2026-Q2' },
+      { risk: 'Third-party vendor data breach', severity: 'High', trend: 'Stable', owner: 'Vendor Risk Manager', mitigation: 'Complete vendor assessments, implement continuous monitoring, enforce DPA requirements', deadline: '2026-Q3' },
+      { risk: 'Insider threat from privileged accounts', severity: 'High', trend: 'Increasing', owner: 'IAM Lead', mitigation: 'Implement PAM solution, enhance UEBA capabilities, quarterly access reviews', deadline: '2026-Q2' },
+      { risk: 'Cloud misconfiguration exposure', severity: 'Medium', trend: 'Decreasing', owner: 'Cloud Security Lead', mitigation: 'Deploy CSPM tools, automate compliance checks, infrastructure-as-code validation', deadline: '2026-Q2' },
+    ];
+    this._ebTrends = [
+      { area: 'Phishing Attacks', direction: 'up', change: 23, period: 'Q1 2026', impact: 'High' },
+      { area: 'Vulnerability Remediation', direction: 'down', change: 15, period: 'Q1 2026', impact: 'Positive' },
+      { area: 'Security Awareness Score', direction: 'up', change: 8, period: 'Q1 2026', impact: 'Positive' },
+      { area: 'Mean Time to Detect', direction: 'down', change: 18, period: 'Q1 2026', impact: 'Positive' },
+      { area: 'Third-Party Incidents', direction: 'up', change: 12, period: 'Q1 2026', impact: 'High' },
+    ];
+    this._ebGeneratedBriefing = {
+      title: 'April 2026 Security Executive Briefing',
+      date: '2026-04-23',
+      sections: [
+        { heading: 'Executive Summary', content: 'Overall security posture improved by 12% this quarter. Key achievements include EDR deployment completion and automated patch management launch. Two critical risks require immediate attention.', priority: 'Critical', metrics: ['Posture Score: 78/100', 'MTTD improved 18%', 'Zero critical breaches'] },
+        { heading: 'Top Risk Summary', content: 'Four key risks identified with ransomware and insider threats requiring priority action. Third-party vendor risk remains elevated with two overdue assessments.', priority: 'Critical', metrics: ['4 active risks', '2 critical', '1 high', '1 medium'] },
+        { heading: 'Key Metrics Dashboard', content: 'All primary KPIs trending positively. MTTD reduced from 68 to 52 minutes. Patch compliance at 82%, target 90% by Q3.', priority: 'High', metrics: ['MTTD: 52min', 'MTTR: 4.2h', 'Patch: 82%', 'Phishing Click Rate: 3.2%'] },
+        { heading: 'Action Items & Recommendations', content: 'Five priority actions recommended for next quarter. Budget allocation of $450K requested for automation initiatives.', priority: 'High', metrics: ['5 actions', '$450K requested', '3 owners assigned'] },
+      ],
+    };
+  }
+
+  private _renderEbBriefingGenerator() {
+    const severityColor = (s: string) => s === 'Critical' ? '#f44336' : s === 'High' ? '#ff9800' : '#2196f3';
+    const dirColor = (d: string) => d === 'up' ? '#f44336' : '#4caf50';
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Executive Briefing Generator</span>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px;">
+          ${this._ebTemplates.map(t => html`
+            <div style="background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;padding:10px;cursor:pointer;${this._ebSelectedTemplate === t.id ? 'border-color:#4caf50;' : ''}" @click=${() => { this._ebSelectedTemplate = t.id; this.requestUpdate(); }}>
+              <div style="font-weight:600;color:#e0e0e0;font-size:11px;">${t.name}</div>
+              <div style="font-size:10px;color:#8899aa;margin-top:4px;">${t.audience} | ${t.sections} sections</div>
+              <div style="font-size:9px;color:#666;margin-top:2px;">Used ${t.usageCount}x | Last: ${t.lastUsed}</div>
+            </div>
+          `)}
+        </div>
+        ${this._ebSelectedTemplate ? html`
+          <div style="margin-top:12px;background:#0d1520;border:1px solid #1e2d3d;border-radius:8px;padding:16px;">
+            <div style="font-size:16px;font-weight:700;color:#e0e0e0;margin-bottom:4px;">${this._ebGeneratedBriefing.title}</div>
+            <div style="font-size:11px;color:#8899aa;margin-bottom:12px;">Generated: ${this._ebGeneratedBriefing.date}</div>
+            ${this._ebGeneratedBriefing.sections.map(s => html`
+              <div style="background:#1a2332;border-radius:6px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-weight:600;color:#e0e0e0;font-size:13px;">${s.heading}</span>
+                  <span style="padding:2px 8px;border-radius:10px;font-size:9px;background:${severityColor(s.priority)};color:white;">${s.priority}</span>
+                </div>
+                <p style="font-size:11px;color:#c0c0c0;margin:6px 0 4px 0;line-height:1.5;">${s.content}</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  ${s.metrics.map(m => html`<span style="font-size:10px;padding:2px 8px;background:#0d1520;border-radius:10px;color:#64b5f6;">${m}</span>`)}
+                </div>
+              </div>
+            `)}
+          </div>
+        ` : ''}
+      </div>`;
+  }
+
+  private _renderEbRiskTrends() {
+    const dirColor = (d: string) => d === 'up' ? '#f44336' : '#4caf50';
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Risk Trends & Key Risks</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
+          <div>
+            <div style="font-size:12px;color:#8899aa;margin-bottom:6px;">Trending Indicators</div>
+            ${this._ebTrends.map(t => html`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#1a2332;border-radius:4px;margin-bottom:3px;">
+                <span style="color:#c0c0c0;font-size:11px;">${t.area}</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="color:${dirColor(t.direction)};font-size:11px;">${t.direction === 'up' ? '&#9650;' : '&#9660;'} ${t.change}%</span>
+                  <span style="font-size:10px;color:#8899aa;">${t.period}</span>
+                </div>
+              </div>
+            `)}
+          </div>
+          <div>
+            <div style="font-size:12px;color:#8899aa;margin-bottom:6px;">Key Risks</div>
+            ${this._ebKeyRisks.map(r => html`
+              <div style="background:#1a2332;border-radius:4px;padding:6px 8px;margin-bottom:3px;border-left:3px solid ${r.severity === 'Critical' ? '#f44336' : r.severity === 'High' ? '#ff9800' : '#2196f3'};">
+                <div style="display:flex;justify-content:space-between;">
+                  <span style="color:#e0e0e0;font-size:11px;">${r.risk}</span>
+                  <span style="color:#8899aa;font-size:10px;">${r.owner}</span>
+                </div>
+                <div style="font-size:10px;color:#8899aa;margin-top:2px;">Deadline: ${r.deadline}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  private _renderEbSchedule() {
+    const statusColor = (s: string) => s === 'Scheduled' ? '#4caf50' : s === 'Draft' ? '#2196f3' : '#ff9800';
+    return html`
+      <div style="margin-top:16px;">
+        <span style="font-weight:600;font-size:14px;color:#e0e0e0;">Briefing Schedule</span>
+        <div style="margin-top:8px;">
+          ${this._ebSchedule.map(s => html`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#1a2332;border:1px solid #2a3a4a;border-radius:6px;margin-bottom:4px;">
+              <div>
+                <span style="color:#e0e0e0;font-size:12px;font-weight:600;">${s.type}</span>
+                <span style="color:#8899aa;font-size:11px;margin-left:8px;">${s.audience}</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:center;">
+                <span style="color:#8899aa;font-size:11px;">${s.date}</span>
+                <span style="padding:2px 8px;border-radius:10px;font-size:9px;background:${statusColor(s.status)};color:white;">${s.status}</span>
+                <span style="color:#c0c0c0;font-size:10px;">${s.presenter}</span>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>`;
+  }
+
+
+  private _onBmBenchmarkChange(e: Event) {
+    this._bmSelectedBenchmark = (e.target as HTMLSelectElement).value;
+    this._initBmIndustryMetrics();
+    this.requestUpdate();
+  }
+
+  private _onTprFilterChange(e: Event) {
+    this._tprFilterTier = (e.target as HTMLSelectElement).value;
+    this.requestUpdate();
+  }
+
+  private _setKgEntityType(t: string) {
+    this._kgSelectedEntityType = t;
+    this.requestUpdate();
+  }
+
   render() {    if (this._dcRules.length === 0) { this._initDcRules(); this._initDcCvss(); this._runDcAnomalyDetection(); this._generateDcPredictions(); this._initDcApprovals(); this._initDcActivity(); this._initDcNotifications(); }
 
     const items = this._getFiltered();
