@@ -969,113 +969,160 @@ export class ScRoleCommander extends LitElement {
   private _renderDarkZone(roleId: string) {
     const caps = ScRoleCommander.DARK_CAPS[roleId];
     if (!caps || caps.length === 0) return nothing;
+
     const sims = ScRoleCommander.DARK_SIMULATIONS[roleId] || {};
     const sevColors: Record<string, string> = { high: '#ef4444', medium: '#f59e0b', low: '#64748b' };
     const sevLabels: Record<string, string> = { high: '高危', medium: '中危', low: '低危' };
+    const simCount = Object.keys(sims).length;
+    const highCount = caps.filter(c => c.severity === 'high').length;
 
     return html`
-      <div class="zone zone-dark" style="background:linear-gradient(135deg,#0a0a0a 0%,#1a0a0a 100%);border:1px solid #3b1111;border-radius:8px;margin:0 14px 8px;">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;" @click=${() => { this._darkExpanded = !this._darkExpanded; }}>
-          <span style="font-size:12px;font-weight:600;color:#ef4444;">⚔️ Dark Side 攻防模拟</span>
-          <span style="font-size:10px;color:#64748b;">${caps.length} 项攻击模拟 · ${Object.keys(sims).length} 项可执行</span>
-          <span style="margin-left:auto;font-size:10px;color:#475569;">${this._darkExpanded ? '▾ 收起' : '▸ 展开'}</span>
+      <div class="ciso-panel" style="padding:0;">
+        <!-- Header -->
+        <div class="ciso-panel-header" style="background:linear-gradient(90deg,#1a0808 0%,#0f172a 100%);border-bottom:1px solid #3b1111;">
+          <span class="ciso-panel-title"><span class="icon">⚔️</span> Dark Side 攻防模拟</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:10px;color:#ef444480;">${simCount} 项可执行模拟</span>
+            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#ef444415;color:#ef4444;border:1px solid #ef444433;font-weight:600;">🔴 ${highCount} 高危</span>
+          </span>
         </div>
-        ${this._darkExpanded ? html`
-          <!-- Attack simulation tabs -->
-          <div style="display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 6px;">
-            ${caps.map(c => {
-              const hasSim = !!sims[c.label];
-              return html`<button
-                style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;border:1px solid ${this._darkActiveCap === c.label ? sevColors[c.severity] : `${sevColors[c.severity]}33`};background:${this._darkActiveCap === c.label ? `${sevColors[c.severity]}22` : `${sevColors[c.severity]}11`};color:#e2e8f0;font-size:11px;cursor:pointer;transition:all 0.15s;${hasSim ? 'font-weight:600;' : ''}"
-                @click=${(e: Event) => { e.stopPropagation(); this._darkActiveCap = this._darkActiveCap === c.label ? null : c.label; this._darkSimResult = null; }}
-              >
-                <span style="width:6px;height:6px;border-radius:50%;background:${sevColors[c.severity]};"></span>
-                ${c.label}
-                ${hasSim ? html`<span style="font-size:9px;color:#22c55e;">▶</span>` : ''}
-              </button>`;
-            })}
+
+        <!-- Attack scenario grid: all simulations always visible -->
+        <div style="padding:14px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
+          ${caps.map(c => {
+            const hasSim = !!sims[c.label];
+            const isActive = this._darkActiveCap === c.label;
+            return html`
+              <div style="background:${isActive ? `${sevColors[c.severity]}0d` : '#0f172a'};border:1px solid ${isActive ? sevColors[c.severity] : '#1e293b'};border-radius:8px;padding:10px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;"
+                @click=${(e: Event) => { e.stopPropagation(); this._darkActiveCap = this._darkActiveCap === c.label ? null : c.label; this._darkSimResult = null; }}>
+                <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:${sevColors[c.severity]};"></div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;padding-left:4px;">
+                  <span style="font-size:11px;font-weight:600;color:#e2e8f0;">${c.label}</span>
+                  ${hasSim ? html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#22c55e15;color:#22c55e;border:1px solid #22c55e33;">▶ 可执行</span>` : html`<span style="font-size:9px;color:#475569;">工具面板</span>`}
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;padding-left:4px;">
+                  <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${sevColors[c.severity]}15;color:${sevColors[c.severity]};font-weight:600;">${sevLabels[c.severity]}</span>
+                  <span style="font-size:9px;color:#64748b;">${c.toolId}</span>
+                </div>
+              </div>
+            `;
+          })}
+        </div>
+
+        <!-- Active simulation detail -->
+        ${this._darkActiveCap && sims[this._darkActiveCap] ? html`
+          <div class="ciso-divider" style="margin:0 20px;"></div>
+          <div style="padding:14px 20px 18px;">
+            ${(() => {
+              const sim = sims[this._darkActiveCap];
+              const phaseColors: Record<string, string> = { pass: '#22c55e', warn: '#f59e0b', fail: '#ef4444' };
+              const phaseLabels: Record<string, string> = { pass: '通过', warn: '警告', fail: '失败' };
+              const sevBadgeColors: Record<string, string> = { critical: '#dc2626', high: '#ef4444', medium: '#f59e0b', low: '#64748b' };
+              const totalFindings = sim.findings.length;
+              const critFindings = sim.findings.filter((f: any) => f.severity === 'critical' || f.severity === 'high').length;
+
+              return html`
+                <!-- Simulation header -->
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <span style="font-size:15px;font-weight:700;color:#ef4444;">${sim.name}</span>
+                  <span style="font-size:11px;color:#94a3b8;">${sim.desc}</span>
+                  <button ?disabled=${this._darkSimRunning} style="margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid #ef4444;background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};color:#fff;font-size:11px;cursor:${this._darkSimRunning ? 'wait' : 'pointer'};font-weight:600;"
+                    @click=${(e: Event) => { e.stopPropagation(); this._runDarkSimulation(this._darkActiveCap!); }}>
+                    ${this._darkSimRunning ? html`<span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span> 执行中...` : '🚀 执行模拟'}
+                  </button>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                  <!-- Left: Kill chain + MITRE + CIA -->
+                  <div>
+                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">攻击链阶段</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+                      ${sim.phases.map((p: any, i: number) => html`
+                        <div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:5px;background:${phaseColors[p.status]}12;border:1px solid ${phaseColors[p.status]}35;">
+                          <span style="font-size:11px;">${p.icon}</span>
+                          <span style="font-size:10px;color:${phaseColors[p.status]};font-weight:600;">${p.label}</span>
+                          <span style="font-size:8px;color:${phaseColors[p.status]}80;">${phaseLabels[p.status]}</span>
+                        </div>
+                        ${i < sim.phases.length - 1 ? html`<span style="color:#334155;font-size:9px;">→</span>` : ''}
+                      `)}
+                    </div>
+
+                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">MITRE ATT&CK 映射</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+                      ${sim.mitre.map((m: string) => html`<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:#1e293b;color:#94a3b8;border:1px solid #334155;">${m}</span>`)}
+                    </div>
+
+                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">CIA 影响评估</div>
+                    <div style="display:flex;gap:10px;">
+                      <div style="flex:1;background:#0f172a;border-radius:6px;padding:8px 10px;">
+                        <div style="font-size:9px;color:#64748b;">机密性 (C)</div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;margin:4px 0;"><div style="height:100%;width:${sim.impact.confidentiality}%;background:#ef4444;border-radius:2px;"></div></div>
+                        <div style="font-size:13px;font-weight:700;color:#ef4444;">${sim.impact.confidentiality}%</div>
+                      </div>
+                      <div style="flex:1;background:#0f172a;border-radius:6px;padding:8px 10px;">
+                        <div style="font-size:9px;color:#64748b;">完整性 (I)</div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;margin:4px 0;"><div style="height:100%;width:${sim.impact.integrity}%;background:#f59e0b;border-radius:2px;"></div></div>
+                        <div style="font-size:13px;font-weight:700;color:#f59e0b;">${sim.impact.integrity}%</div>
+                      </div>
+                      <div style="flex:1;background:#0f172a;border-radius:6px;padding:8px 10px;">
+                        <div style="font-size:9px;color:#64748b;">可用性 (A)</div>
+                        <div style="height:4px;background:#1e293b;border-radius:2px;margin:4px 0;"><div style="height:100%;width:${sim.impact.availability}%;background:#3b82f6;border-radius:2px;"></div></div>
+                        <div style="font-size:13px;font-weight:700;color:#3b82f6;">${sim.impact.availability}%</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right: Findings + Result -->
+                  <div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                      <span style="font-size:11px;font-weight:600;color:#94a3b8;">风险发现</span>
+                      <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#ef444415;color:#ef4444;font-weight:600;">${totalFindings} 项 · ${critFindings} 高危</span>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+                      ${sim.findings.map((f: any) => html`
+                        <div style="padding:8px 10px;border-radius:6px;background:${sevBadgeColors[f.severity]}08;border-left:3px solid ${sevBadgeColors[f.severity]};">
+                          <div style="font-size:11px;color:#e2e8f0;font-weight:600;">${f.title} <span style="font-size:9px;color:${sevBadgeColors[f.severity]};text-transform:uppercase;font-weight:700;">${f.severity}</span></div>
+                          <div style="font-size:10px;color:#94a3b8;margin-top:2px;line-height:1.4;">${f.detail}</div>
+                        </div>
+                      `)}
+                    </div>
+
+                    ${this._darkSimRunning ? html`
+                      <div style="margin-top:10px;padding:14px;text-align:center;background:#1a0808;border-radius:6px;border:1px solid #3b1111;">
+                        <span style="display:inline-block;animation:spin 1s linear infinite;">⚙️</span>
+                        <span style="color:#ef4444;font-size:12px;margin-left:6px;">攻击模拟执行中...</span>
+                      </div>
+                    ` : this._darkSimResult && this._darkSimResult.key === this._darkActiveCap ? html`
+                      <div style="margin-top:10px;padding:12px 14px;background:#0a1a0a;border-radius:6px;border:1px solid #1a3a1a;">
+                        <div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:4px;">✅ 模拟完成</div>
+                        <div style="font-size:11px;color:#e2e8f0;line-height:1.5;">${this._darkSimResult.mockResult}</div>
+                      </div>
+                    ` : nothing}
+                  </div>
+                </div>
+              `;
+            })()}
           </div>
-          <!-- Simulation panel -->
-          ${this._darkActiveCap && sims[this._darkActiveCap] ? html`
-            <div style="margin:0 12px 10px;background:#111;border-radius:6px;border:1px solid #2a1515;overflow:hidden;">
-              ${(() => {
-                const sim = sims[this._darkActiveCap];
-                const phaseColors: Record<string, string> = { pass: '#22c55e', warn: '#f59e0b', fail: '#ef4444' };
-                const phaseLabels: Record<string, string> = { pass: '通过', warn: '警告', fail: '失败' };
-                const sevBadgeColors: Record<string, string> = { critical: '#dc2626', high: '#ef4444', medium: '#f59e0b', low: '#64748b' };
-                return html`
-                  <!-- Header -->
-                  <div style="padding:8px 12px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:13px;font-weight:700;color:#ef4444;">${sim.name}</span>
-                    <span style="font-size:10px;color:#94a3b8;">${sim.desc}</span>
-                    <button ?disabled=${this._darkSimRunning} style="margin-left:auto;padding:4px 12px;border-radius:4px;border:1px solid #ef4444;background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};color:#fff;font-size:11px;cursor:${this._darkSimRunning ? 'wait' : 'pointer'};"
-                      @click=${(e: Event) => { e.stopPropagation(); this._runDarkSimulation(this._darkActiveCap!); }}>
-                      ${this._darkSimRunning ? html`<span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span> 执行中...` : '🚀 执行模拟'}
-                    </button>
-                  </div>
-                  <!-- Kill Chain Phase -->
-                  <div style="padding:8px 12px;display:flex;gap:4px;align-items:center;">
-                    ${sim.phases.map((p, i) => html`
-                      <div style="display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:4px;background:${phaseColors[p.status]}15;border:1px solid ${phaseColors[p.status]}40;">
-                        <span style="font-size:10px;">${p.icon}</span>
-                        <span style="font-size:9px;color:${phaseColors[p.status]};font-weight:600;">${p.label}</span>
-                        <span style="font-size:8px;color:${phaseColors[p.status]}80;">${phaseLabels[p.status]}</span>
-                      </div>
-                      ${i < sim.phases.length - 1 ? html`<span style="color:#333;font-size:8px;">→</span>` : ''}
-                    `)}
-                  </div>
-                  <!-- MITRE ATT&CK -->
-                  <div style="padding:4px 12px;display:flex;flex-wrap:wrap;gap:3px;">
-                    <span style="font-size:9px;color:#64748b;width:100%;margin-bottom:2px;">MITRE ATT&CK 映射:</span>
-                    ${sim.mitre.map(m => html`<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:#1e293b;color:#94a3b8;border:1px solid #334155;">${m}</span>`)}
-                  </div>
-                  <!-- CIA Impact Bars -->
-                  <div style="padding:6px 12px;display:flex;gap:12px;">
-                    <div style="flex:1;"><span style="font-size:9px;color:#64748b;">机密性</span><div style="height:4px;background:#1e293b;border-radius:2px;margin-top:2px;"><div style="height:100%;width:${sim.impact.confidentiality}%;background:#ef4444;border-radius:2px;"></div></div><span style="font-size:8px;color:#ef4444;">${sim.impact.confidentiality}%</span></div>
-                    <div style="flex:1;"><span style="font-size:9px;color:#64748b;">完整性</span><div style="height:4px;background:#1e293b;border-radius:2px;margin-top:2px;"><div style="height:100%;width:${sim.impact.integrity}%;background:#f59e0b;border-radius:2px;"></div></div><span style="font-size:8px;color:#f59e0b;">${sim.impact.integrity}%</span></div>
-                    <div style="flex:1;"><span style="font-size:9px;color:#64748b;">可用性</span><div style="height:4px;background:#1e293b;border-radius:2px;margin-top:2px;"><div style="height:100%;width:${sim.impact.availability}%;background:#3b82f6;border-radius:2px;"></div></div><span style="font-size:8px;color:#3b82f6;">${sim.impact.availability}%</span></div>
-                  </div>
-                  <!-- Findings -->
-                  <div style="padding:4px 12px 6px;">
-                    <span style="font-size:9px;color:#64748b;">发现项 (${sim.findings.length}):</span>
-                    ${sim.findings.map(f => html`
-                      <div style="margin-top:3px;padding:4px 8px;border-radius:4px;background:${sevBadgeColors[f.severity]}10;border-left:2px solid ${sevBadgeColors[f.severity]};">
-                        <div style="font-size:10px;color:#e2e8f0;font-weight:600;">${f.title} <span style="font-size:8px;color:${sevBadgeColors[f.severity]};text-transform:uppercase;">${f.severity}</span></div>
-                        <div style="font-size:9px;color:#94a3b8;">${f.detail}</div>
-                      </div>
-                    `)}
-                  </div>
-                  <!-- Simulation Result -->
-                  ${this._darkSimRunning ? html`
-                    <div style="padding:12px;text-align:center;color:#ef4444;font-size:12px;">
-                      <span style="display:inline-block;animation:spin 1s linear infinite;">⚙️</span> 攻击模拟执行中...
-                    </div>
-                  ` : this._darkSimResult && this._darkSimResult.key === this._darkActiveCap ? html`
-                    <div style="padding:8px 12px;margin:0 12px 8px;background:#0a1a0a;border-radius:4px;border:1px solid #1a3a1a;">
-                      <div style="font-size:10px;color:#22c55e;font-weight:600;margin-bottom:4px;">✅ 模拟完成</div>
-                      <div style="font-size:11px;color:#e2e8f0;line-height:1.5;">${this._darkSimResult.mockResult}</div>
-                    </div>
-                  ` : html`
-                    <div style="padding:8px 12px;text-align:center;color:#475569;font-size:10px;">
-                      点击「执行模拟」启动攻击场景
-                    </div>
-                  `}
-                `;
-              })()}
+        ` : this._darkActiveCap && !sims[this._darkActiveCap] ? html`
+          <div style="padding:16px 20px;text-align:center;">
+            <span style="font-size:11px;color:#475569;">该场景尚无交互模拟</span>
+            <button style="margin-left:8px;padding:4px 12px;border-radius:4px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:11px;cursor:pointer;"
+              @click=${() => { const c = caps.find(x => x.label === this._darkActiveCap); if (c) this._openToolPanel(c.toolId); }}>
+              🔧 打开工具面板
+            </button>
+          </div>
+        ` : html`
+          <div style="padding:10px 20px 14px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0f172a;border-radius:6px;border:1px solid #1e293b;">
+              <span style="font-size:11px;color:#64748b;">👆 点击上方攻击场景查看详情和执行模拟</span>
+              <span style="margin-left:auto;font-size:10px;color:#475569;">通过模拟攻击识别当前角色的安全风险</span>
             </div>
-          ` : this._darkActiveCap && !sims[this._darkActiveCap] ? html`
-            <div style="margin:0 12px 10px;padding:12px;background:#111;border-radius:6px;border:1px solid #2a1515;text-align:center;">
-              <span style="font-size:10px;color:#475569;">该能力尚无交互模拟，点击可打开关联工具面板</span>
-              <button style="display:block;margin:6px auto 0;padding:4px 12px;border-radius:4px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:11px;cursor:pointer;"
-                @click=${() => { const c = caps.find(x => x.label === this._darkActiveCap); if (c) this._openToolPanel(c.toolId); }}>
-                🔧 打开 ${(() => { const c = caps.find(x => x.label === this._darkActiveCap); return c ? c.toolId : ''; })()} 面板
-              </button>
-            </div>
-          ` : nothing}
-        ` : nothing}
+          </div>
+        `}
       </div>
     `;
   }
+
 
   // ─── 决策矩阵可视化（风险×合规×业务影响） ───
 
@@ -1952,9 +1999,7 @@ export class ScRoleCommander extends LitElement {
         ${this._renderCisoPosturePanel()}
 
         <!-- ── Row 2: Dark Side Simulation (full width) ── -->
-        <div class="ciso-panel">
-          ${this._renderDarkZone('ciso')}
-        </div>
+        ${this._renderDarkZone('ciso')}
 
         <!-- ── Row 3: Event Timeline (full width) ── -->
         <div class="ciso-panel">
@@ -2188,7 +2233,7 @@ export class ScRoleCommander extends LitElement {
           ${this._renderToolGuideInline('secuclaw-commander')}
         </div>
         ${this._renderPosturePanel('secuclaw-commander')}
-        <div class="ciso-panel">${this._renderDarkZone('secuclaw-commander')}</div>
+        ${this._renderDarkZone('secuclaw-commander')}
         <div class="ciso-panel">${this._renderTimelineZone('secuclaw-commander')}</div>
       </div>
     `
@@ -2211,7 +2256,7 @@ export class ScRoleCommander extends LitElement {
           ${this._renderToolGuideInline('security-ops')}
         </div>
         ${this._renderPosturePanel('security-ops')}
-        <div class="ciso-panel">${this._renderDarkZone('security-ops')}</div>
+        ${this._renderDarkZone('security-ops')}
         <div class="ciso-panel">${this._renderTimelineZone('security-ops')}</div>
       </div>
     `
@@ -2233,7 +2278,7 @@ export class ScRoleCommander extends LitElement {
           ${this._renderToolGuideInline('security-expert')}
         </div>
         ${this._renderPosturePanel('security-expert')}
-        <div class="ciso-panel">${this._renderDarkZone('security-expert')}</div>
+        ${this._renderDarkZone('security-expert')}
         <div class="ciso-panel">${this._renderTimelineZone('security-expert')}</div>
       </div>
     `
@@ -2260,7 +2305,7 @@ export class ScRoleCommander extends LitElement {
         <div class="ciso-panel">
           ${this._renderPrivacyTechZone()}
         </div>
-        <div class="ciso-panel">${this._renderDarkZone('privacy-officer')}</div>
+        ${this._renderDarkZone('privacy-officer')}
         <div class="ciso-panel">${this._renderTimelineZone('privacy-officer')}</div>
       </div>
     `
@@ -2288,7 +2333,7 @@ export class ScRoleCommander extends LitElement {
           ${this._renderToolGuideInline('security-architect')}
         </div>
         ${this._renderPosturePanel('security-architect')}
-        <div class="ciso-panel">${this._renderDarkZone('security-architect')}</div>
+        ${this._renderDarkZone('security-architect')}
         <div class="ciso-panel">${this._renderTimelineZone('security-architect')}</div>
       </div>
     `
@@ -2313,7 +2358,7 @@ export class ScRoleCommander extends LitElement {
           ${this._renderToolGuideInline('business-security-officer')}
         </div>
         ${this._renderPosturePanel('business-security-officer')}
-        <div class="ciso-panel">${this._renderDarkZone('business-security-officer')}</div>
+        ${this._renderDarkZone('business-security-officer')}
         <div class="ciso-panel">${this._renderTimelineZone('business-security-officer')}</div>
       </div>
     `
@@ -2341,7 +2386,7 @@ export class ScRoleCommander extends LitElement {
           ${this._renderToolGuideInline('supply-chain-security')}
         </div>
         ${this._renderPosturePanel('supply-chain-security')}
-        <div class="ciso-panel">${this._renderDarkZone('supply-chain-security')}</div>
+        ${this._renderDarkZone('supply-chain-security')}
         <div class="ciso-panel">${this._renderTimelineZone('supply-chain-security')}</div>
       </div>
     `
