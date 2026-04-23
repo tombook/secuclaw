@@ -70,7 +70,7 @@ export class LiveClock extends LitElement {
   render() { return html`<span class="clock">${this.time}</span>`; }
 }
 
-declare global { interface HTMLElementTagNameMap { 'severity-badge': SeverityBadge; 'progress-ring': ProgressRing; 'status-indicator': StatusIndicator; 'live-clock': LiveClock; 'svg-gauge': SvgGauge; 'sparkline-chart': SparklineChart; 'mini-bar-chart': MiniBarChart; 'status-dot': StatusDot; } }
+declare global { interface HTMLElementTagNameMap { 'severity-badge': SeverityBadge; 'progress-ring': ProgressRing; 'status-indicator': StatusIndicator; 'live-clock': LiveClock; 'svg-gauge': SvgGauge; 'sparkline-chart': SparklineChart; 'mini-bar-chart': MiniBarChart; 'status-dot': StatusDot; 'heatmap-grid': HeatmapGrid; 'donut-chart': DonutChart; } }
 
 /**
  * SVG Gauge Component - Half-circle arc gauge with value display
@@ -269,5 +269,205 @@ export class StatusDot extends LitElement {
         <span class="dot dot-${this.size} dot-${this.status}"></span>
       </div>
       ${this.label ? html`<span class="label">${this.label}</span>` : nothing}`;
+  }
+}
+
+/**
+ * Heatmap Grid - Security heatmap visualization for activity/frequency data
+ */
+@customElement('heatmap-grid')
+export class HeatmapGrid extends LitElement {
+  static styles = css`
+    :host { display: block; }
+    .heatmap-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .heatmap-header { display: flex; justify-content: space-between; align-items: center; }
+    .heatmap-title { font-size: 12px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .heatmap-legend { display: flex; gap: 4px; align-items: center; }
+    .legend-cell { width: 12px; height: 12px; border-radius: 2px; }
+    .legend-label { font-size: 10px; color: #6b7280; margin: 0 2px; }
+    .heatmap-grid {
+      display: grid;
+      gap: 2px;
+    }
+    .heatmap-cell {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .heatmap-cell:hover {
+      transform: scale(1.6);
+      z-index: 2;
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+    }
+    .heatmap-row-labels { display: flex; flex-direction: column; gap: 2px; margin-right: 6px; }
+    .heatmap-col-labels { display: flex; gap: 2px; margin-bottom: 4px; }
+    .row-label, .col-label { font-size: 10px; color: #6b7280; display: flex; align-items: center; justify-content: center; }
+    .row-label { height: 14px; }
+    .col-label { width: 14px; }
+    .tooltip-box {
+      position: fixed;
+      padding: 6px 10px;
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 11px;
+      border-radius: 6px;
+      border: 1px solid #374151;
+      pointer-events: none;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+  `;
+
+  @property({ type: Array }) data: number[][] = [];
+  @property({ type: Array }) rowLabels: string[] = [];
+  @property({ type: Array }) colLabels: string[] = [];
+  @property({ type: Number }) max = 100;
+  @property({ type: String }) title = '';
+  @property({ type: String }) color = '#00d4ff';
+
+  @state() private _tooltipX = 0;
+  @state() private _tooltipY = 0;
+  @state() private _tooltipText = '';
+  @state() private _showTooltip = false;
+
+  private getHeatLevel(value: number): number {
+    if (value <= 0) return 0;
+    const pct = value / (this.max || 1);
+    if (pct < 0.2) return 1;
+    if (pct < 0.4) return 2;
+    if (pct < 0.65) return 3;
+    return 4;
+  }
+
+  private getHeatColor(level: number): string {
+    const alpha = [0.05, 0.2, 0.4, 0.6, 0.85][level] || 0.05;
+    return this.color.replace('#', '');
+    const hex = this.color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
+  private _cellEnter(e: MouseEvent, value: number, row: number, col: number) {
+    const rLabel = this.rowLabels[row] || ('Row ' + row);
+    const cLabel = this.colLabels[col] || ('Col ' + col);
+    this._tooltipText = rLabel + ' / ' + cLabel + ': ' + value;
+    this._tooltipX = e.clientX + 12;
+    this._tooltipY = e.clientY - 30;
+    this._showTooltip = true;
+  }
+
+  private _cellLeave() { this._showTooltip = false; }
+
+  render() {
+    const cols = this.data[0] ? this.data[0].length : 0;
+    return html`
+      <div class="heatmap-wrap">
+        ${this.title ? html`<div class="heatmap-header"><span class="heatmap-title">${this.title}</span>
+          <div class="heatmap-legend">
+            <span class="legend-label">Less</span>
+            <span class="legend-cell" style="background:rgba(0,212,255,0.05)"></span>
+            <span class="legend-cell" style="background:rgba(0,212,255,0.2)"></span>
+            <span class="legend-cell" style="background:rgba(0,212,255,0.4)"></span>
+            <span class="legend-cell" style="background:rgba(0,212,255,0.6)"></span>
+            <span class="legend-cell" style="background:rgba(0,212,255,0.85)"></span>
+            <span class="legend-label">More</span>
+          </div>
+        </div>` : nothing}
+        <div style="display:flex;">
+          ${this.rowLabels.length ? html`<div class="heatmap-row-labels">
+            ${this.rowLabels.map(l => html`<span class="row-label">${l}</span>`)}
+          </div>` : nothing}
+          <div>
+            ${this.colLabels.length ? html`<div class="heatmap-col-labels">
+              ${this.colLabels.map(l => html`<span class="col-label">${l}</span>`)}
+            </div>` : nothing}
+            <div class="heatmap-grid" style="grid-template-columns:repeat(${cols}, 14px);">
+              ${this.data.map((row, ri) => row.map((val, ci) => {
+                const lvl = this.getHeatLevel(val);
+                const alpha = [0.05, 0.2, 0.4, 0.6, 0.85][lvl];
+                return html`<div class="heatmap-cell"
+                  style="background:rgba(0,212,255,${alpha})"
+                  @mouseenter=${(e: MouseEvent) => this._cellEnter(e, val, ri, ci)}
+                  @mouseleave=${() => this._cellLeave()}></div>`;
+              }))}
+            </div>
+          </div>
+        </div>
+        ${this._showTooltip ? html`<div class="tooltip-box" style="left:${this._tooltipX}px;top:${this._tooltipY}px;">${this._tooltipText}</div>` : nothing}
+      </div>`;
+  }
+}
+
+/**
+ * Donut Chart - Percentage ring with segments for security dashboards
+ */
+@customElement('donut-chart')
+export class DonutChart extends LitElement {
+  static styles = css`
+    :host { display: inline-block; }
+    .donut-wrap { position: relative; display: inline-flex; flex-direction: column; align-items: center; }
+    .donut-svg { transform: rotate(-90deg); }
+    .donut-segment { transition: stroke-dashoffset 0.8s ease-out; }
+    .donut-center { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-value { font-size: 22px; font-weight: 800; color: #f9fafb; line-height: 1; }
+    .donut-label { font-size: 10px; color: #6b7280; margin-top: 2px; }
+    .donut-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; justify-content: center; }
+    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #9ca3af; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  `;
+
+  @property({ type: Array }) segments: Array<{ value: number; color: string; label: string }> = [];
+  @property({ type: Number }) size = 120;
+  @property({ type: Number }) strokeWidth = 12;
+  @property({ type: String }) centerValue = '';
+  @property({ type: String }) centerLabel = '';
+
+  render() {
+    if (this.segments.length === 0) return nothing;
+    const total = this.segments.reduce((s, seg) => s + seg.value, 0);
+    if (total === 0) return nothing;
+    const r = (this.size - this.strokeWidth) / 2;
+    const c = 2 * Math.PI * r;
+    const cx = this.size / 2;
+    const cy = this.size / 2;
+
+    let offset = 0;
+    const arcs = this.segments.map(seg => {
+      const segLen = (seg.value / total) * c;
+      const gap = 2;
+      const arc = {
+        dasharray: (segLen - gap) + ' ' + (c - segLen + gap),
+        dashoffset: -offset,
+        color: seg.color,
+        label: seg.label,
+        pct: Math.round((seg.value / total) * 100),
+      };
+      offset += segLen;
+      return arc;
+    });
+
+    return html`
+      <div class="donut-wrap">
+        <div style="position:relative;width:${this.size}px;height:${this.size}px;">
+          <svg class="donut-svg" width="${this.size}" height="${this.size}" viewBox="0 0 ${this.size} ${this.size}">
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1f2937" stroke-width="${this.strokeWidth}" />
+            ${arcs.map(a => html`<circle class="donut-segment" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+              stroke="${a.color}" stroke-width="${this.strokeWidth}"
+              stroke-dasharray="${a.dasharray}" stroke-dashoffset="${a.dashoffset}" />`)}
+          </svg>
+          <div class="donut-center">
+            <span class="donut-value">${this.centerValue || (arcs[0] ? arcs[0].pct + '%' : '0%')}</span>
+            ${this.centerLabel ? html`<span class="donut-label">${this.centerLabel}</span>` : nothing}
+          </div>
+        </div>
+        <div class="donut-legend">
+          ${arcs.map(a => html`<span class="legend-item"><span class="legend-dot" style="background:${a.color}"></span>${a.label} ${a.pct}%</span>`)}
+        </div>
+      </div>`;
   }
 }

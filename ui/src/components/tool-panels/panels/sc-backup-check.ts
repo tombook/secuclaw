@@ -396,6 +396,23 @@ export class ScBackupCheck extends LitElement {
     .pb-severity.Critical { color: #ef4444; }
     .pb-severity.High { color: #f59e0b; }
     .pb-severity.Medium { color: #3b82f6; }
+    /* ─── R2 Design Enhancement ─── */
+    .enhanced-card { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 16px; transition: all 0.2s ease; }
+    .enhanced-card:hover { border-color: rgba(0, 212, 255, 0.15); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); }
+    .stat-display { display: flex; flex-direction: column; align-items: center; padding: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; transition: all 0.2s ease; }
+    .stat-display:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
+    .stat-number { font-size: 26px; font-weight: 800; line-height: 1.2; }
+    .stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+    .glass-panel { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; }
+    .glow-border { box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.1), 0 0 20px rgba(0, 212, 255, 0.05); }
+    .gradient-text { background: linear-gradient(135deg, #00d4ff, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .modern-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent); margin: 16px 0; }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+    .compact-row { padding: 8px 12px; border-radius: 6px; transition: background 0.15s ease; }
+    .compact-row:hover { background: rgba(31, 41, 55, 0.5); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.3s ease-out; }
 `;
 
   @state() private _searchQuery = '';
