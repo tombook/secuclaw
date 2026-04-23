@@ -3604,6 +3604,116 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // ─── Security Process Optimization Engine ───
+  private _processSteps = [
+    {id:"ps-01",name:"Vulnerability Assessment",avgDuration:4.2,throughput:28,targetDuration:3.0,automationLevel:45,owner:"Scanner Team",sla:24,backlog:42},
+    {id:"ps-02",name:"Vulnerability Triage",avgDuration:2.1,throughput:55,targetDuration:1.5,automationLevel:60,owner:"SOC L1",sla:8,backlog:18},
+    {id:"ps-03",name:"Remediation Planning",avgDuration:6.8,throughput:12,targetDuration:4.0,automationLevel:20,owner:"Dev Teams",sla:72,backlog:35},
+    {id:"ps-04",name:"Patch Development",avgDuration:8.5,throughput:8,targetDuration:5.0,automationLevel:15,owner:"Engineering",sla:168,backlog:52},
+    {id:"ps-05",name:"Patch Testing",avgDuration:3.2,throughput:18,targetDuration:2.0,automationLevel:55,owner:"QA Team",sla:48,backlog:28},
+    {id:"ps-06",name:"Patch Deployment",avgDuration:1.8,throughput:42,targetDuration:1.0,automationLevel:70,owner:"SRE Team",sla:24,backlog:15},
+    {id:"ps-07",name:"Verification Scan",avgDuration:2.5,throughput:32,targetDuration:1.5,automationLevel:75,owner:"Scanner Team",sla:24,backlog:22},
+    {id:"ps-08",name:"Incident Detection",avgDuration:0.3,throughput:180,targetDuration:0.1,automationLevel:85,owner:"SOC L1",sla:0.25,backlog:5},
+    {id:"ps-09",name:"Incident Analysis",avgDuration:3.5,throughput:22,targetDuration:2.0,automationLevel:35,owner:"SOC L2",sla:4,backlog:14},
+    {id:"ps-10",name:"Incident Containment",avgDuration:1.2,throughput:48,targetDuration:0.5,automationLevel:40,owner:"SOC L2",sla:2,backlog:8},
+    {id:"ps-11",name:"Compliance Check",avgDuration:5.0,throughput:15,targetDuration:3.0,automationLevel:50,owner:"GRC Team",sla:72,backlog:38},
+    {id:"ps-12",name:"Report Generation",avgDuration:2.0,throughput:35,targetDuration:1.0,automationLevel:65,owner:"GRC Team",sla:48,backlog:20}
+  ];
+
+  private _getProcessBottlenecks(): Array<{step:string;waitTime:number;utilization:number;bottleneckScore:number;recommendation:string}> {
+    return this._processSteps.map(s => {
+      const waitTime = s.backlog / s.throughput * 24;
+      const utilization = (s.avgDuration / s.sla) * 100;
+      const bottleneckScore = Math.round(waitTime * 0.4 + (utilization > 100 ? (utilization - 100) * 0.6 : 0));
+      let recommendation = "Monitor";
+      if (bottleneckScore > 50) recommendation = "Critical: Add resources or automate";
+      else if (bottleneckScore > 25) recommendation = "Warning: Optimize workflow";
+      else if (bottleneckScore > 10) recommendation = "Review: Minor improvements needed";
+      return {step: s.name, waitTime: Math.round(waitTime * 10) / 10, utilization: Math.round(utilization), bottleneckScore, recommendation};
+    }).sort((a, b) => b.bottleneckScore - a.bottleneckScore);
+  }
+
+  private _getProcessEfficiencyScores(): Array<{process:string;efficiency:number;trend:string;target:number;gap:number}> {
+    return this._processSteps.map(s => {
+      const efficiency = Math.round((s.targetDuration / s.avgDuration) * 100);
+      const trend = efficiency > 70 ? "improving" : efficiency > 40 ? "stable" : "declining";
+      return {process: s.name, efficiency, trend, target: 100, gap: 100 - efficiency};
+    }).sort((a, b) => a.efficiency - b.efficiency);
+  }
+
+  private _getAutomationOpportunities(): Array<{process:string;currentAuto:number;potentialAuto:number;effort:string;impact:string;roi:number}> {
+    return this._processSteps.map(s => {
+      const potential = Math.min(95, s.automationLevel + 30 + Math.floor(Math.random() * 20));
+      const effort = potential - s.automationLevel > 40 ? "high" : potential - s.automationLevel > 20 ? "medium" : "low";
+      const impact = s.throughput < 15 ? "high" : s.throughput < 30 ? "medium" : "low";
+      const hoursSaved = Math.round((s.avgDuration * s.throughput * (potential - s.automationLevel) / 100) * 52 / 12);
+      const cost = effort === "high" ? 40000 : effort === "medium" ? 15000 : 5000;
+      const roi = Math.round((hoursSaved * 75 / cost) * 100);
+      return {process: s.name, currentAuto: s.automationLevel, potentialAuto: potential, effort, impact, roi};
+    }).sort((a, b) => b.roi - a.roi).slice(0, 8);
+  }
+
+  private _getImprovementRoadmap(): Array<{phase:string;actions:string[];timeline:string;expectedGain:number}> {
+    return [
+      {phase:"Quick Wins",actions:["Automate verification scan reporting","Enable auto-triage for known CVE patterns","Deploy pre-approved patch catalog"],timeline:"Month 1-2",expectedGain:15},
+      {phase:"Process Redesign",actions:["Implement parallel patch testing tracks","Add risk-based prioritization to triage","Streamline compliance evidence collection"],timeline:"Month 3-4",expectedGain:25},
+      {phase:"Advanced Automation",actions:["AI-assisted remediation planning","Automated containment playbooks","Continuous compliance monitoring"],timeline:"Month 5-8",expectedGain:35},
+      {phase:"Optimization",actions:["Predictive bottleneck detection","Self-healing security controls","Fully automated patch lifecycle"],timeline:"Month 9-12",expectedGain:45}
+    ];
+  }
+
+
+  // ─── Incident Prediction Engine ───
+  private _predictionFactors = [
+    {name:"Vulnerability Density",weight:0.18,currentValue:72,baseline:65,trend:"increasing",riskContribution:0.22},
+    {name:"Patch Compliance Gap",weight:0.15,currentValue:18,baseline:12,trend:"stable",riskContribution:0.15},
+    {name:"Threat Intelligence Volume",weight:0.12,currentValue:145,baseline:120,trend:"increasing",riskContribution:0.18},
+    {name:"Phishing Susceptibility",weight:0.10,currentValue:8.5,baseline:10,trend:"decreasing",riskContribution:0.08},
+    {name:"Configuration Drift Score",weight:0.08,currentValue:35,baseline:28,trend:"increasing",riskContribution:0.12},
+    {name:"Third-Party Risk Index",weight:0.07,currentValue:42,baseline:38,trend:"stable",riskContribution:0.09},
+    {name:"Insider Threat Indicators",weight:0.06,currentValue:15,baseline:12,trend:"increasing",riskContribution:0.10},
+    {name:"Asset Criticality Exposure",weight:0.05,currentValue:28,baseline:25,trend:"stable",riskContribution:0.06},
+    {name:"Regulatory Change Velocity",weight:0.04,currentValue:5,baseline:3,trend:"increasing",riskContribution:0.04},
+    {name:"Security Staffing Gap",weight:0.03,currentValue:22,baseline:20,trend:"stable",riskContribution:0.03}
+  ];
+
+  private _getIncidentProbabilityScore(): number {
+    let score = 0;
+    for (const f of this._predictionFactors) {
+      const normalized = f.currentValue / (f.baseline * 1.5);
+      score += normalized * f.weight * 100;
+    }
+    return Math.min(100, Math.round(score));
+  }
+
+  private _getRiskForecast(days: number): Array<{day:string;probability:number;confidence:number;factors:string[]}> {
+    const forecast: Array<{day:string;probability:number;confidence:number;factors:string[]}> = [];
+    let base = this._getIncidentProbabilityScore();
+    for (let i = 1; i <= days; i++) {
+      const variance = (Math.random() - 0.5) * 8;
+      const dayFactor = i > 5 ? 2 : 0;
+      const prob = Math.min(95, Math.max(5, base + variance + dayFactor));
+      const conf = Math.max(40, 90 - i * 3);
+      const topFactors = this._predictionFactors
+        .filter(f => f.trend === "increasing")
+        .sort((a, b) => b.riskContribution - a.riskContribution)
+        .slice(0, 3)
+        .map(f => f.name);
+      const d = new Date(); d.setDate(d.getDate() + i);
+      forecast.push({day: d.toISOString().split("T")[0], probability: Math.round(prob), confidence: conf, factors: topFactors});
+    }
+    return forecast;
+  }
+
+  private _getPredictiveAlerts(): Array<{type:string;description:string;probability:number;timeHorizon:string;recommendedActions:string[];severity:string}> {
+    return [
+      {type:"Vulnerability Exploitation",description:"High-severity unpatched CVEs likely to be exploited within 14 days based on threat intel",probability:72,timeHorizon:"14 days",recommendedActions:["Prioritize patching CVE-2024-3891","Implement virtual patching on WAF","Monitor dark web for exploit code"],severity:"high"},
+      {type:"Insider Data Exfiltration",description:"Anomalous data access patterns detected for 3 privileged accounts",probability:45,timeHorizon:"7 days",recommendedActions:["Review access logs for flagged accounts","Enable additional DLP rules","Initiate PAM session recording"],severity:"medium"},
+      {type:"Supply Chain Compromise",description:"Critical vendor software component has known vulnerability with no patch available",probability:58,timeHorizon:"30 days",recommendedActions:["Identify all systems using affected component","Implement network segmentation","Prepare contingency plan"],severity:"high"}
+    ];
+  }
+
   render() {    if (this._ztdRules.length === 0) { this._initZtdRules(); this._initZtdCvss(); this._runZtdAnomalyDetection(); this._generateZtdPredictions(); this._initZtdApprovals(); this._initZtdActivity(); this._initZtdNotifications(); }
 
     const items = this._getFiltered();

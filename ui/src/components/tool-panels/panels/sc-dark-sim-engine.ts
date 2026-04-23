@@ -3398,6 +3398,46 @@ export class ScDarkSimEngine extends LitElement {
       </div>
     `;
   }
+
+  // ─── Security Posture Regression Detection ───
+  private _postureSnapshots = [
+    {date:"2024-07-01",overall:82,network:88,endpoint:76,application:85,data:78,cloud:80,identity:84},
+    {date:"2024-07-02",overall:83,network:88,endpoint:77,application:86,data:79,cloud:80,identity:85},
+    {date:"2024-07-03",overall:81,network:87,endpoint:76,application:85,data:78,cloud:79,identity:83},
+    {date:"2024-07-04",overall:82,network:88,endpoint:77,application:85,data:79,cloud:80,identity:84},
+    {date:"2024-07-05",overall:80,network:86,endpoint:75,application:84,data:77,cloud:78,identity:82},
+    {date:"2024-07-06",overall:81,network:87,endpoint:76,application:85,data:78,cloud:79,identity:83},
+    {date:"2024-07-07",overall:82,network:88,endpoint:77,application:86,data:79,cloud:80,identity:84},
+    {date:"2024-07-08",overall:83,network:89,endpoint:78,application:86,data:80,cloud:81,identity:85},
+    {date:"2024-07-09",overall:82,network:88,endpoint:77,application:85,data:79,cloud:80,identity:84},
+    {date:"2024-07-10",overall:81,network:87,endpoint:76,application:84,data:78,cloud:79,identity:83}
+  ];
+
+  private _detectRegressions(): Array<{dimension:string;current:number;previous:number;change:number;severity:string;trend:string}> {
+    const dims = ["network","endpoint","application","data","cloud","identity"];
+    return dims.map(d => {
+      const current = this._postureSnapshots[this._postureSnapshots.length - 1][d as keyof typeof this._postureSnapshots[0]] as number;
+      const previous = this._postureSnapshots[this._postureSnapshots.length - 3][d as keyof typeof this._postureSnapshots[0]] as number;
+      const change = current - previous;
+      const severity = change <= -3 ? "critical" : change <= -1 ? "warning" : change >= 1 ? "improving" : "stable";
+      return {dimension: d, current, previous, change, severity, trend: change > 0 ? "up" : change < 0 ? "down" : "flat"};
+    });
+  }
+
+  private _getPosturePrediction(days: number): Array<{date:string;predicted:number;confidence:number;lower:number;upper:number}> {
+    const predictions: Array<{date:string;predicted:number;confidence:number;lower:number;upper:number}> = [];
+    let base = this._postureSnapshots[this._postureSnapshots.length - 1].overall;
+    for (let i = 1; i <= days; i++) {
+      const variance = (Math.random() - 0.45) * 2;
+      const predicted = Math.min(100, Math.max(50, base + variance));
+      const confidence = Math.max(60, 95 - i * 2);
+      const d = new Date(); d.setDate(d.getDate() + i);
+      predictions.push({date: d.toISOString().split("T")[0], predicted: Math.round(predicted), confidence, lower: Math.round(predicted - 3 - i * 0.2), upper: Math.round(predicted + 3 + i * 0.2)});
+      base = predicted;
+    }
+    return predictions;
+  }
+
   render() {
     return html`
       <div class="sim-engine">

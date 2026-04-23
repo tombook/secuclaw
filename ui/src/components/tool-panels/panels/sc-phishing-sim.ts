@@ -3408,6 +3408,118 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // ─── Security Asset Lifecycle Manager ───
+  private _lifecycleStages = ["procurement","deployment","active","maintenance","decommissioned","disposed"] as const;
+  private _stageColors: Record<string,string> = {procurement:"#8b5cf6",deployment:"#3b82f6",active:"#10b981",maintenance:"#f59e0b",decommissioned:"#ef4444",disposed:"#6b7280"};
+  private _secAssets = [
+    {id:"ast-001",name:"Primary WAF",type:"Network Security",stage:"active",age:36,maxAge:60,utilization:87,cost:24000,depreciation:48,health:92},
+    {id:"ast-002",name:"SIEM Platform",type:"Monitoring",stage:"active",age:24,maxAge:48,utilization:78,cost:180000,depreciation:50,health:88},
+    {id:"ast-003",name:"EDR Solution",type:"Endpoint Security",stage:"maintenance",age:42,maxAge:48,utilization:95,cost:85000,depreciation:88,health:65},
+    {id:"ast-004",name:"Legacy Firewall",type:"Network Security",stage:"decommissioned",age:72,maxAge:60,utilization:12,cost:15000,depreciation:100,health:25},
+    {id:"ast-005",name:"DLP Suite",type:"Data Protection",stage:"active",age:18,maxAge:48,utilization:72,cost:95000,depreciation:38,health:91},
+    {id:"ast-006",name:"PAM System",type:"Access Management",stage:"active",age:12,maxAge:60,utilization:68,cost:120000,depreciation:20,health:95},
+    {id:"ast-007",name:"Vuln Scanner",type:"Assessment",stage:"deployment",age:3,maxAge:36,utilization:45,cost:65000,depreciation:8,health:98},
+    {id:"ast-008",name:"Email Gateway",type:"Communication Security",stage:"active",age:30,maxAge:48,utilization:91,cost:45000,depreciation:63,health:82},
+    {id:"ast-009",name:"Token MFA System",type:"Authentication",stage:"decommissioned",age:60,maxAge:48,utilization:8,cost:35000,depreciation:100,health:15},
+    {id:"ast-010",name:"Container Security Platform",type:"Cloud Security",stage:"active",age:6,maxAge:36,utilization:55,cost:110000,depreciation:17,health:96}
+  ];
+
+  private _getAssetAgeDistribution(): Array<{range:string;count:number;percentage:number}> {
+    const ranges = [{label:"0-6 months",min:0,max:6},{label:"6-12 months",min:6,max:12},{label:"1-2 years",min:12,max:24},{label:"2-3 years",min:24,max:36},{label:"3-5 years",min:36,max:60},{label:"5+ years",min:60,max:999}];
+    const total = this._secAssets.length;
+    return ranges.map(r => {
+      const count = this._secAssets.filter(a => a.age >= r.min && a.age < r.max).length;
+      return {range: r.label, count, percentage: Math.round(count / total * 100)};
+    });
+  }
+
+  private _getEndOfLifeAssets(): Array<{name:string;age:number;maxAge:number;remainingMonths:number;health:number;recommendation:string}> {
+    return this._secAssets.filter(a => a.age >= a.maxAge * 0.8).map(a => ({
+      name: a.name, age: a.age, maxAge: a.maxAge, remainingMonths: Math.round(a.maxAge - a.age), health: a.health,
+      recommendation: a.health < 50 ? "Replace immediately" : a.health < 75 ? "Plan replacement within 3 months" : "Monitor and schedule replacement"
+    })).sort((a, b) => a.remainingMonths - b.remainingMonths);
+  }
+
+  private _getAssetUtilizationMetrics(): Array<{name:string;utilization:number;efficiency:string;costEfficiency:number}> {
+    return this._secAssets.map(a => ({
+      name: a.name, utilization: a.utilization,
+      efficiency: a.utilization > 85 ? "optimal" : a.utilization > 60 ? "adequate" : a.utilization > 40 ? "underutilized" : "critical",
+      costEfficiency: Math.round(a.utilization * a.health / (a.cost / 10000) * 10) / 10
+    })).sort((a, b) => b.costEfficiency - a.costEfficiency);
+  }
+
+  private _getReplacementCalendar(): Array<{quarter:string;assets:string[];budget:number;priority:string}> {
+    const eolAssets = this._secAssets.filter(a => a.age >= a.maxAge * 0.75);
+    const q3 = eolAssets.filter(a => a.age >= a.maxAge * 0.95).map(a => a.name);
+    const q4 = eolAssets.filter(a => a.age >= a.maxAge * 0.85 && a.age < a.maxAge * 0.95).map(a => a.name);
+    const q1 = eolAssets.filter(a => a.age >= a.maxAge * 0.75 && a.age < a.maxAge * 0.85).map(a => a.name);
+    return [
+      {quarter:"Q3 2024",assets:q3,budget:q3.length * 80000,priority:"critical"},
+      {quarter:"Q4 2024",assets:q4,budget:q4.length * 80000,priority:"high"},
+      {quarter:"Q1 2025",assets:q1,budget:q1.length * 80000,priority:"medium"}
+    ].filter(q => q.assets.length > 0);
+  }
+
+  private _getDepreciationSchedule(): Array<{name:string;purchaseCost:number;currentValue:number;annualDepreciation:number;remainingLife:number}> {
+    return this._secAssets.filter(a => a.stage !== "disposed").map(a => {
+      const currentValue = Math.max(0, a.cost * (1 - a.depreciation / 100));
+      const annualDep = a.cost / a.maxAge;
+      const remainingLife = Math.max(0, a.maxAge - a.age);
+      return {name: a.name, purchaseCost: a.cost, currentValue: Math.round(currentValue), annualDepreciation: Math.round(annualDep), remainingLife};
+    }).sort((a, b) => a.remainingLife - b.remainingLife);
+  }
+
+
+  // ─── Security Budget Optimizer ───
+  private _budgetCategories = [
+    {id:"bg-01",name:"Personnel",allocated:850000,spent:612000,remaining:238000,utilization:72,fyForecast:880000,variance:3.5},
+    {id:"bg-02",name:"Software Licenses",allocated:420000,spent:315000,remaining:105000,utilization:75,fyForecast:440000,variance:4.8},
+    {id:"bg-03",name:"Hardware and Infrastructure",allocated:280000,spent:198000,remaining:82000,utilization:71,fyForecast:270000,variance:-3.6},
+    {id:"bg-04",name:"Professional Services",allocated:180000,spent:142000,remaining:38000,utilization:79,fyForecast:195000,variance:8.3},
+    {id:"bg-05",name:"Training and Awareness",allocated:95000,spent:52000,remaining:43000,utilization:55,fyForecast:88000,variance:-7.4},
+    {id:"bg-06",name:"Incident Response Retainer",allocated:120000,spent:45000,remaining:75000,utilization:38,fyForecast:115000,variance:-4.2},
+    {id:"bg-07",name:"Compliance and Audit",allocated:150000,spent:98000,remaining:52000,utilization:65,fyForecast:155000,variance:3.3},
+    {id:"bg-08",name:"Research and Innovation",allocated:75000,spent:38000,remaining:37000,utilization:51,fyForecast:72000,variance:-4.0}
+  ];
+
+  private _getBudgetSummary(): {totalAllocated:number;totalSpent;number;totalRemaining:number;overallUtilization:number;fyForecast:number;totalVariance:number} {
+    const totals = this._budgetCategories.reduce((acc, c) => ({
+      totalAllocated: acc.totalAllocated + c.allocated, totalSpent: acc.totalSpent + c.spent,
+      totalRemaining: acc.totalRemaining + c.remaining, fyForecast: acc.fyForecast + c.fyForecast
+    }), {totalAllocated:0,totalSpent:0,totalRemaining:0,fyForecast:0});
+    return {
+      ...totals, totalSpent: totals.totalSpent, totalRemaining: totals.totalRemaining,
+      overallUtilization: Math.round(totals.totalSpent / totals.totalAllocated * 100),
+      totalVariance: Math.round(this._budgetCategories.reduce((s, c) => s + c.variance, 0) / this._budgetCategories.length * 10) / 10
+    };
+  }
+
+  private _getCostPerProtectedAsset(): number {
+    const totalSpend = this._budgetCategories.reduce((s, c) => s + c.spent, 0);
+    const protectedAssets = 1250;
+    return Math.round(totalSpend / protectedAssets);
+  }
+
+  private _getBudgetOptimizationRecommendations(): Array<{category:string;current:number;recommended:number;saving:number;impact:string;confidence:number}> {
+    return [
+      {category:"Software Licenses",current:420000,recommended:395000,saving:25000,impact:"Consolidate overlapping tools",confidence:85},
+      {category:"Professional Services",current:180000,recommended:165000,saving:15000,impact:"Bring more assessments in-house",confidence:72},
+      {category:"Training and Awareness",current:95000,recommended:110000,saving:-15000,impact:"Increase to reduce phishing click rate",confidence:90},
+      {category:"Research and Innovation",current:75000,recommended:90000,saving:-15000,impact:"Invest in automation to reduce future costs",confidence:78},
+      {category:"Incident Response Retainer",current:120000,recommended:105000,saving:15000,impact:"Renegotiate contract terms",confidence:68}
+    ];
+  }
+
+  private _getSpendTrend(): Array<{month:string;planned:number;actual:number;variance:number}> {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul"];
+    return months.map((m, i) => {
+      const planned = 180000 + Math.floor(Math.random() * 40000);
+      const actual = planned + Math.floor((Math.random() - 0.5) * 30000);
+      return {month: m, planned, actual, variance: Math.round((actual - planned) / planned * 100)};
+    });
+  }
+
   render() {    if (this._psRules.length === 0) { this._initPsRules(); this._initPsCvss(); this._runPsAnomalyDetection(); this._generatePsPredictions(); this._initPsApprovals(); this._initPsActivity(); this._initPsNotifications(); }
 
     const items = this._getFiltered();

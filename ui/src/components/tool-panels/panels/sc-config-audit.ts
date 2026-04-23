@@ -3481,6 +3481,81 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // ─── Security Metrics Correlation Matrix ───
+  private _metricNames = ["MTTR","MTTD","Vuln Backlog","Patch Coverage","Phish Click Rate","Training Score","Incident Count","Risk Score","Compliance Pct","Threat Intel Hits"];
+  private _correlationMatrix: number[][] = [
+    [1.00,-0.35, 0.42,-0.58, 0.28,-0.61, 0.55, 0.48,-0.52, 0.33],
+    [-0.35, 1.00,-0.28, 0.31,-0.22, 0.44,-0.68,-0.42, 0.38,-0.55],
+    [ 0.42,-0.28, 1.00,-0.72, 0.18,-0.33, 0.61, 0.54,-0.65, 0.41],
+    [-0.58, 0.31,-0.72, 1.00,-0.15, 0.48,-0.52,-0.47, 0.71,-0.38],
+    [ 0.28,-0.22, 0.18,-0.15, 1.00,-0.82, 0.35, 0.29,-0.31, 0.21],
+    [-0.61, 0.44,-0.33, 0.48,-0.82, 1.00,-0.41,-0.38, 0.55,-0.27],
+    [ 0.55,-0.68, 0.61,-0.52, 0.35,-0.41, 1.00, 0.72,-0.58, 0.63],
+    [ 0.48,-0.42, 0.54,-0.47, 0.29,-0.38, 0.72, 1.00,-0.62, 0.58],
+    [-0.52, 0.38,-0.65, 0.71,-0.31, 0.55,-0.58,-0.62, 1.00,-0.45],
+    [ 0.33,-0.55, 0.41,-0.38, 0.21,-0.27, 0.63, 0.58,-0.45, 1.00]
+  ];
+  private _metricTypes: Record<string,"leading"|"lagging"|"both"> = {
+    "MTTR":"lagging","MTTD":"lagging","Vuln Backlog":"lagging","Patch Coverage":"leading",
+    "Phish Click Rate":"leading","Training Score":"leading","Incident Count":"lagging",
+    "Risk Score":"both","Compliance Pct":"leading","Threat Intel Hits":"leading"
+  };
+  private _metricThresholds: Record<string,{good:number;warn:number;bad:number}> = {
+    "MTTR":{good:60, warn:180, bad:480}, "MTTD":{good:30, warn:120, bad:360},
+    "Vuln Backlog":{good:50, warn:200, bad:500}, "Patch Coverage":{good:95, warn:85, bad:70},
+    "Phish Click Rate":{good:2, warn:8, bad:15}, "Training Score":{good:90, warn:75, bad:60},
+    "Incident Count":{good:5, warn:15, bad:30}, "Risk Score":{good:30, warn:55, bad:75},
+    "Compliance Pct":{good:98, warn:90, bad:80}, "Threat Intel Hits":{good:10, warn:50, bad:100}
+  };
+
+  private _getCorrelationColor(val: number): string {
+    if (val >= 0.7) return "#dc2626";
+    if (val >= 0.4) return "#f97316";
+    if (val >= 0.1) return "#fbbf24";
+    if (val >= -0.1) return "#e5e7eb";
+    if (val >= -0.4) return "#60a5fa";
+    if (val >= -0.7) return "#3b82f6";
+    return "#1d4ed8";
+  }
+
+  private _getCompositeSecurityScore(currentValues: number[]): number {
+    if (currentValues.length !== this._metricNames.length) return 0;
+    const weights = [0.15, 0.12, 0.10, 0.13, 0.08, 0.10, 0.10, 0.12, 0.05, 0.05];
+    const normalized = currentValues.map((v, i) => {
+      const thresholds = this._metricThresholds[this._metricNames[i]];
+      if (!thresholds) return 50;
+      if (v <= thresholds.good) return 100;
+      if (v <= thresholds.warn) return 100 - ((v - thresholds.good) / (thresholds.warn - thresholds.good)) * 40;
+      if (v <= thresholds.bad) return 60 - ((v - thresholds.warn) / (thresholds.bad - thresholds.warn)) * 40;
+      return Math.max(0, 20 - ((v - thresholds.bad) / thresholds.bad) * 20);
+    });
+    return Math.round(normalized.reduce((s, v, i) => s + v * weights[i], 0));
+  }
+
+  private _getAnomalyCorrelationAlerts(): Array<{metric1:string;metric2:string;correlation:number;expected:number;actual:number;severity:string}> {
+    const alerts: Array<{metric1:string;metric2:string;correlation:number;expected:number;actual:number;severity:string}> = [];
+    for (let i = 0; i < this._metricNames.length; i++) {
+      for (let j = i + 1; j < this._metricNames.length; j++) {
+        const corr = this._correlationMatrix[i][j];
+        if (Math.abs(corr) > 0.5) {
+          const deviation = Math.abs(corr) * 0.12;
+          alerts.push({metric1: this._metricNames[i], metric2: this._metricNames[j], correlation: corr, expected: Math.round(corr * 100), actual: Math.round((corr + deviation) * 100), severity: "warning"});
+        }
+      }
+    }
+    return alerts.slice(0, 8);
+  }
+
+  private _getMetricDependencyGraph(): Array<{from:string;to:string;strength:number;direction:string}> {
+    const deps: Array<{from:string;to:string;strength:number;direction:string}> = [];
+    const pairs = [[0,1],[0,6],[2,3],[4,5],[6,7],[7,8],[9,6],[3,7],[5,4],[8,2]];
+    for (const [i, j] of pairs) {
+      deps.push({from: this._metricNames[i], to: this._metricNames[j], strength: Math.abs(this._correlationMatrix[i][j]), direction: this._correlationMatrix[i][j] > 0 ? "positive" : "negative"});
+    }
+    return deps.sort((a, b) => b.strength - a.strength);
+  }
+
   render() {    if (this._caRules.length === 0) { this._initCaRules(); this._initCaCvss(); this._runCaAnomalyDetection(); this._generateCaPredictions(); this._initCaApprovals(); this._initCaActivity(); this._initCaNotifications(); }
 
     const items = this._getFiltered();

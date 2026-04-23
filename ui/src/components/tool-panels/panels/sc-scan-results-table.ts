@@ -3814,6 +3814,98 @@ export class ScScanResultsTable extends LitElement {
       </div>
     `;
   }
+
+  // ─── Security Communication Hub ───
+  private _commStakeholders = [
+    {id:"sh-01",name:"Board of Directors",role:"Governance",channel:"Quarterly Report",frequency:"quarterly",lastContact:"2024-06-15",engagement:85},
+    {id:"sh-02",name:"C-Suite Executives",role:"Strategic Oversight",channel:"Monthly Briefing",frequency:"monthly",lastContact:"2024-07-01",engagement:92},
+    {id:"sh-03",name:"Engineering Leadership",role:"Technical Decisions",channel:"Bi-weekly Sync",frequency:"biweekly",lastContact:"2024-07-08",engagement:88},
+    {id:"sh-04",name:"Dev Teams",role:"Implementation",channel:"Slack Channel",frequency:"continuous",lastContact:"2024-07-10",engagement:72},
+    {id:"sh-05",name:"Legal and Compliance",role:"Regulatory",channel:"Monthly Review",frequency:"monthly",lastContact:"2024-07-05",engagement:78},
+    {id:"sh-06",name:"HR Department",role:"Policy Enforcement",channel:"Email Digest",frequency:"monthly",lastContact:"2024-07-03",engagement:65},
+    {id:"sh-07",name:"External Auditors",role:"Assessment",channel:"Formal Reports",frequency:"quarterly",lastContact:"2024-06-20",engagement:90},
+    {id:"sh-08",name:"Third-Party Vendors",role:"Supply Chain",channel:"Portal Email",frequency:"asneeded",lastContact:"2024-07-09",engagement:55}
+  ];
+
+  private _commTemplates = [
+    {id:"tpl-01",name:"Security Incident Notification",type:"incident",lastUsed:"2024-07-08",usageCount:12,avgResponseTime:"4.2h"},
+    {id:"tpl-02",name:"Monthly Security Report",type:"report",lastUsed:"2024-07-01",usageCount:6,avgResponseTime:"24h"},
+    {id:"tpl-03",name:"Vulnerability Advisory",type:"advisory",lastUsed:"2024-07-10",usageCount:34,avgResponseTime:"2.1h"},
+    {id:"tpl-04",name:"Policy Update Announcement",type:"policy",lastUsed:"2024-06-28",usageCount:8,avgResponseTime:"48h"},
+    {id:"tpl-05",name:"Training Completion Reminder",type:"training",lastUsed:"2024-07-05",usageCount:15,avgResponseTime:"72h"},
+    {id:"tpl-06",name:"Audit Preparation Checklist",type:"compliance",lastUsed:"2024-06-15",usageCount:3,avgResponseTime:"168h"},
+    {id:"tpl-07",name:"Executive Risk Summary",type:"executive",lastUsed:"2024-07-01",usageCount:6,avgResponseTime:"12h"},
+    {id:"tpl-08",name:"Vendor Security Assessment Request",type:"vendor",lastUsed:"2024-07-09",usageCount:22,avgResponseTime:"336h"}
+  ];
+
+  private _getCommEffectivenessMetrics(): Record<string,number> {
+    const avgEngagement = Math.round(this._commStakeholders.reduce((s, sh) => s + sh.engagement, 0) / this._commStakeholders.length);
+    const totalCommunications = this._commTemplates.reduce((s, t) => s + t.usageCount, 0);
+    const templateUtilization = this._commTemplates.filter(t => t.usageCount > 5).length / this._commTemplates.length * 100;
+    const responseRate = Math.round(85 + Math.random() * 10);
+    return {avgEngagement, totalCommunications, templateUtilization: Math.round(templateUtilization), responseRate};
+  }
+
+  private _getUpcomingCommunications(): Array<{date:string;type:string;audience:string;template:string;status:string}> {
+    return [
+      {date:"2024-07-15",type:"Monthly Security Report",audience:"C-Suite",template:"Monthly Security Report",status:"scheduled"},
+      {date:"2024-07-18",type:"Vulnerability Patch Advisory",audience:"Engineering",template:"Vulnerability Advisory",status:"draft"},
+      {date:"2024-07-22",type:"Q3 Compliance Review",audience:"Legal and Compliance",template:"Audit Preparation Checklist",status:"pending"},
+      {date:"2024-07-25",type:"Security Training Push",audience:"All Staff",template:"Training Completion Reminder",status:"scheduled"},
+      {date:"2024-08-01",type:"Board Security Brief",audience:"Board",template:"Executive Risk Summary",status:"planning"}
+    ];
+  }
+
+  private _getFeedbackSummary(): Array<{category:string;positive:number;neutral:number;negative:number;avgScore:number}> {
+    return [
+      {category:"Report Clarity",positive:42,neutral:8,negative:3,avgScore:4.2},
+      {category:"Timeliness",positive:35,neutral:12,negative:6,avgScore:3.8},
+      {category:"Actionability",positive:28,neutral:15,negative:10,avgScore:3.5},
+      {category:"Completeness",positive:38,neutral:10,negative:5,avgScore:4.0},
+      {category:"Format Preference",positive:30,neutral:18,negative:5,avgScore:3.9}
+    ];
+  }
+
+
+  // ─── Security Posture Regression Detection ───
+  private _postureSnapshots = [
+    {date:"2024-07-01",overall:82,network:88,endpoint:76,application:85,data:78,cloud:80,identity:84},
+    {date:"2024-07-02",overall:83,network:88,endpoint:77,application:86,data:79,cloud:80,identity:85},
+    {date:"2024-07-03",overall:81,network:87,endpoint:76,application:85,data:78,cloud:79,identity:83},
+    {date:"2024-07-04",overall:82,network:88,endpoint:77,application:85,data:79,cloud:80,identity:84},
+    {date:"2024-07-05",overall:80,network:86,endpoint:75,application:84,data:77,cloud:78,identity:82},
+    {date:"2024-07-06",overall:81,network:87,endpoint:76,application:85,data:78,cloud:79,identity:83},
+    {date:"2024-07-07",overall:82,network:88,endpoint:77,application:86,data:79,cloud:80,identity:84},
+    {date:"2024-07-08",overall:83,network:89,endpoint:78,application:86,data:80,cloud:81,identity:85},
+    {date:"2024-07-09",overall:82,network:88,endpoint:77,application:85,data:79,cloud:80,identity:84},
+    {date:"2024-07-10",overall:81,network:87,endpoint:76,application:84,data:78,cloud:79,identity:83}
+  ];
+
+  private _detectRegressions(): Array<{dimension:string;current:number;previous:number;change:number;severity:string;trend:string}> {
+    const dims = ["network","endpoint","application","data","cloud","identity"];
+    return dims.map(d => {
+      const current = this._postureSnapshots[this._postureSnapshots.length - 1][d as keyof typeof this._postureSnapshots[0]] as number;
+      const previous = this._postureSnapshots[this._postureSnapshots.length - 3][d as keyof typeof this._postureSnapshots[0]] as number;
+      const change = current - previous;
+      const severity = change <= -3 ? "critical" : change <= -1 ? "warning" : change >= 1 ? "improving" : "stable";
+      return {dimension: d, current, previous, change, severity, trend: change > 0 ? "up" : change < 0 ? "down" : "flat"};
+    });
+  }
+
+  private _getPosturePrediction(days: number): Array<{date:string;predicted:number;confidence:number;lower:number;upper:number}> {
+    const predictions: Array<{date:string;predicted:number;confidence:number;lower:number;upper:number}> = [];
+    let base = this._postureSnapshots[this._postureSnapshots.length - 1].overall;
+    for (let i = 1; i <= days; i++) {
+      const variance = (Math.random() - 0.45) * 2;
+      const predicted = Math.min(100, Math.max(50, base + variance));
+      const confidence = Math.max(60, 95 - i * 2);
+      const d = new Date(); d.setDate(d.getDate() + i);
+      predictions.push({date: d.toISOString().split("T")[0], predicted: Math.round(predicted), confidence, lower: Math.round(predicted - 3 - i * 0.2), upper: Math.round(predicted + 3 + i * 0.2)});
+      base = predicted;
+    }
+    return predictions;
+  }
+
   render() {    if (this._srtRules.length === 0) { this._initSrtRules(); this._initSrtCvss(); this._runSrtAnomalyDetection(); this._generateSrtPredictions(); this._initSrtApprovals(); this._initSrtActivity(); this._initSrtNotifications(); }
 
     const items = this._getFiltered();

@@ -3455,6 +3455,58 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // ─── Security Communication Hub ───
+  private _commStakeholders = [
+    {id:"sh-01",name:"Board of Directors",role:"Governance",channel:"Quarterly Report",frequency:"quarterly",lastContact:"2024-06-15",engagement:85},
+    {id:"sh-02",name:"C-Suite Executives",role:"Strategic Oversight",channel:"Monthly Briefing",frequency:"monthly",lastContact:"2024-07-01",engagement:92},
+    {id:"sh-03",name:"Engineering Leadership",role:"Technical Decisions",channel:"Bi-weekly Sync",frequency:"biweekly",lastContact:"2024-07-08",engagement:88},
+    {id:"sh-04",name:"Dev Teams",role:"Implementation",channel:"Slack Channel",frequency:"continuous",lastContact:"2024-07-10",engagement:72},
+    {id:"sh-05",name:"Legal and Compliance",role:"Regulatory",channel:"Monthly Review",frequency:"monthly",lastContact:"2024-07-05",engagement:78},
+    {id:"sh-06",name:"HR Department",role:"Policy Enforcement",channel:"Email Digest",frequency:"monthly",lastContact:"2024-07-03",engagement:65},
+    {id:"sh-07",name:"External Auditors",role:"Assessment",channel:"Formal Reports",frequency:"quarterly",lastContact:"2024-06-20",engagement:90},
+    {id:"sh-08",name:"Third-Party Vendors",role:"Supply Chain",channel:"Portal Email",frequency:"asneeded",lastContact:"2024-07-09",engagement:55}
+  ];
+
+  private _commTemplates = [
+    {id:"tpl-01",name:"Security Incident Notification",type:"incident",lastUsed:"2024-07-08",usageCount:12,avgResponseTime:"4.2h"},
+    {id:"tpl-02",name:"Monthly Security Report",type:"report",lastUsed:"2024-07-01",usageCount:6,avgResponseTime:"24h"},
+    {id:"tpl-03",name:"Vulnerability Advisory",type:"advisory",lastUsed:"2024-07-10",usageCount:34,avgResponseTime:"2.1h"},
+    {id:"tpl-04",name:"Policy Update Announcement",type:"policy",lastUsed:"2024-06-28",usageCount:8,avgResponseTime:"48h"},
+    {id:"tpl-05",name:"Training Completion Reminder",type:"training",lastUsed:"2024-07-05",usageCount:15,avgResponseTime:"72h"},
+    {id:"tpl-06",name:"Audit Preparation Checklist",type:"compliance",lastUsed:"2024-06-15",usageCount:3,avgResponseTime:"168h"},
+    {id:"tpl-07",name:"Executive Risk Summary",type:"executive",lastUsed:"2024-07-01",usageCount:6,avgResponseTime:"12h"},
+    {id:"tpl-08",name:"Vendor Security Assessment Request",type:"vendor",lastUsed:"2024-07-09",usageCount:22,avgResponseTime:"336h"}
+  ];
+
+  private _getCommEffectivenessMetrics(): Record<string,number> {
+    const avgEngagement = Math.round(this._commStakeholders.reduce((s, sh) => s + sh.engagement, 0) / this._commStakeholders.length);
+    const totalCommunications = this._commTemplates.reduce((s, t) => s + t.usageCount, 0);
+    const templateUtilization = this._commTemplates.filter(t => t.usageCount > 5).length / this._commTemplates.length * 100;
+    const responseRate = Math.round(85 + Math.random() * 10);
+    return {avgEngagement, totalCommunications, templateUtilization: Math.round(templateUtilization), responseRate};
+  }
+
+  private _getUpcomingCommunications(): Array<{date:string;type:string;audience:string;template:string;status:string}> {
+    return [
+      {date:"2024-07-15",type:"Monthly Security Report",audience:"C-Suite",template:"Monthly Security Report",status:"scheduled"},
+      {date:"2024-07-18",type:"Vulnerability Patch Advisory",audience:"Engineering",template:"Vulnerability Advisory",status:"draft"},
+      {date:"2024-07-22",type:"Q3 Compliance Review",audience:"Legal and Compliance",template:"Audit Preparation Checklist",status:"pending"},
+      {date:"2024-07-25",type:"Security Training Push",audience:"All Staff",template:"Training Completion Reminder",status:"scheduled"},
+      {date:"2024-08-01",type:"Board Security Brief",audience:"Board",template:"Executive Risk Summary",status:"planning"}
+    ];
+  }
+
+  private _getFeedbackSummary(): Array<{category:string;positive:number;neutral:number;negative:number;avgScore:number}> {
+    return [
+      {category:"Report Clarity",positive:42,neutral:8,negative:3,avgScore:4.2},
+      {category:"Timeliness",positive:35,neutral:12,negative:6,avgScore:3.8},
+      {category:"Actionability",positive:28,neutral:15,negative:10,avgScore:3.5},
+      {category:"Completeness",positive:38,neutral:10,negative:5,avgScore:4.0},
+      {category:"Format Preference",positive:30,neutral:18,negative:5,avgScore:3.9}
+    ];
+  }
+
   render() {    if (this._biaRules.length === 0) { this._initBiaRules(); this._initBiaCvss(); this._runBiaAnomalyDetection(); this._generateBiaPredictions(); this._initBiaApprovals(); this._initBiaActivity(); this._initBiaNotifications(); }
 
     const items = this._getFiltered();

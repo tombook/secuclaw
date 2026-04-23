@@ -3600,6 +3600,65 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // ─── Security Process Optimization Engine ───
+  private _processSteps = [
+    {id:"ps-01",name:"Vulnerability Assessment",avgDuration:4.2,throughput:28,targetDuration:3.0,automationLevel:45,owner:"Scanner Team",sla:24,backlog:42},
+    {id:"ps-02",name:"Vulnerability Triage",avgDuration:2.1,throughput:55,targetDuration:1.5,automationLevel:60,owner:"SOC L1",sla:8,backlog:18},
+    {id:"ps-03",name:"Remediation Planning",avgDuration:6.8,throughput:12,targetDuration:4.0,automationLevel:20,owner:"Dev Teams",sla:72,backlog:35},
+    {id:"ps-04",name:"Patch Development",avgDuration:8.5,throughput:8,targetDuration:5.0,automationLevel:15,owner:"Engineering",sla:168,backlog:52},
+    {id:"ps-05",name:"Patch Testing",avgDuration:3.2,throughput:18,targetDuration:2.0,automationLevel:55,owner:"QA Team",sla:48,backlog:28},
+    {id:"ps-06",name:"Patch Deployment",avgDuration:1.8,throughput:42,targetDuration:1.0,automationLevel:70,owner:"SRE Team",sla:24,backlog:15},
+    {id:"ps-07",name:"Verification Scan",avgDuration:2.5,throughput:32,targetDuration:1.5,automationLevel:75,owner:"Scanner Team",sla:24,backlog:22},
+    {id:"ps-08",name:"Incident Detection",avgDuration:0.3,throughput:180,targetDuration:0.1,automationLevel:85,owner:"SOC L1",sla:0.25,backlog:5},
+    {id:"ps-09",name:"Incident Analysis",avgDuration:3.5,throughput:22,targetDuration:2.0,automationLevel:35,owner:"SOC L2",sla:4,backlog:14},
+    {id:"ps-10",name:"Incident Containment",avgDuration:1.2,throughput:48,targetDuration:0.5,automationLevel:40,owner:"SOC L2",sla:2,backlog:8},
+    {id:"ps-11",name:"Compliance Check",avgDuration:5.0,throughput:15,targetDuration:3.0,automationLevel:50,owner:"GRC Team",sla:72,backlog:38},
+    {id:"ps-12",name:"Report Generation",avgDuration:2.0,throughput:35,targetDuration:1.0,automationLevel:65,owner:"GRC Team",sla:48,backlog:20}
+  ];
+
+  private _getProcessBottlenecks(): Array<{step:string;waitTime:number;utilization:number;bottleneckScore:number;recommendation:string}> {
+    return this._processSteps.map(s => {
+      const waitTime = s.backlog / s.throughput * 24;
+      const utilization = (s.avgDuration / s.sla) * 100;
+      const bottleneckScore = Math.round(waitTime * 0.4 + (utilization > 100 ? (utilization - 100) * 0.6 : 0));
+      let recommendation = "Monitor";
+      if (bottleneckScore > 50) recommendation = "Critical: Add resources or automate";
+      else if (bottleneckScore > 25) recommendation = "Warning: Optimize workflow";
+      else if (bottleneckScore > 10) recommendation = "Review: Minor improvements needed";
+      return {step: s.name, waitTime: Math.round(waitTime * 10) / 10, utilization: Math.round(utilization), bottleneckScore, recommendation};
+    }).sort((a, b) => b.bottleneckScore - a.bottleneckScore);
+  }
+
+  private _getProcessEfficiencyScores(): Array<{process:string;efficiency:number;trend:string;target:number;gap:number}> {
+    return this._processSteps.map(s => {
+      const efficiency = Math.round((s.targetDuration / s.avgDuration) * 100);
+      const trend = efficiency > 70 ? "improving" : efficiency > 40 ? "stable" : "declining";
+      return {process: s.name, efficiency, trend, target: 100, gap: 100 - efficiency};
+    }).sort((a, b) => a.efficiency - b.efficiency);
+  }
+
+  private _getAutomationOpportunities(): Array<{process:string;currentAuto:number;potentialAuto:number;effort:string;impact:string;roi:number}> {
+    return this._processSteps.map(s => {
+      const potential = Math.min(95, s.automationLevel + 30 + Math.floor(Math.random() * 20));
+      const effort = potential - s.automationLevel > 40 ? "high" : potential - s.automationLevel > 20 ? "medium" : "low";
+      const impact = s.throughput < 15 ? "high" : s.throughput < 30 ? "medium" : "low";
+      const hoursSaved = Math.round((s.avgDuration * s.throughput * (potential - s.automationLevel) / 100) * 52 / 12);
+      const cost = effort === "high" ? 40000 : effort === "medium" ? 15000 : 5000;
+      const roi = Math.round((hoursSaved * 75 / cost) * 100);
+      return {process: s.name, currentAuto: s.automationLevel, potentialAuto: potential, effort, impact, roi};
+    }).sort((a, b) => b.roi - a.roi).slice(0, 8);
+  }
+
+  private _getImprovementRoadmap(): Array<{phase:string;actions:string[];timeline:string;expectedGain:number}> {
+    return [
+      {phase:"Quick Wins",actions:["Automate verification scan reporting","Enable auto-triage for known CVE patterns","Deploy pre-approved patch catalog"],timeline:"Month 1-2",expectedGain:15},
+      {phase:"Process Redesign",actions:["Implement parallel patch testing tracks","Add risk-based prioritization to triage","Streamline compliance evidence collection"],timeline:"Month 3-4",expectedGain:25},
+      {phase:"Advanced Automation",actions:["AI-assisted remediation planning","Automated containment playbooks","Continuous compliance monitoring"],timeline:"Month 5-8",expectedGain:35},
+      {phase:"Optimization",actions:["Predictive bottleneck detection","Self-healing security controls","Fully automated patch lifecycle"],timeline:"Month 9-12",expectedGain:45}
+    ];
+  }
+
   render() {    if (this._csRules.length === 0) { this._initCsRules(); this._initCsCvss(); this._runCsAnomalyDetection(); this._generateCsPredictions(); this._initCsApprovals(); this._initCsActivity(); this._initCsNotifications(); }
 
     const items = this._getFiltered();

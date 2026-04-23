@@ -3301,6 +3301,71 @@ private _executionHistory: ExecutionRecord[] = [
       </div>
     `;
   }
+
+  // ─── Security Architecture Decision Records (ADR) Catalog ───
+  private _adrCatalog: Array<{id:string;title:string;status:string;context:string;decision:string;consequences:string;date:string;author:string;reviewer:string;impactLevel:string;supersededBy:string|null;relatedAdrs:string[];tags:string[]}> = [
+    {id:"ADR-001",title:"Adopt Zero Trust Network Architecture",status:"accepted",context:"Legacy perimeter-based security model insufficient for hybrid cloud workforce",decision:"Implement Zero Trust with micro-segmentation and continuous verification",consequences:"Reduced lateral movement attack surface; requires investment in identity infrastructure",date:"2024-01-15",author:"Security Architect",reviewer:"CTO",impactLevel:"high",supersededBy:null,relatedAdrs:["ADR-003","ADR-007"],tags:["architecture","network","identity"]},
+    {id:"ADR-002",title:"Migrate SIEM to Cloud-Native Platform",status:"accepted",context:"On-premise SIEM at capacity with 18-month data retention requirement",decision:"Deploy cloud-native SIEM with 12-month hot storage and 6-year cold archive",consequences:"Improved scalability; ongoing SaaS costs; faster deployment of detection rules",date:"2024-02-20",author:"SOC Manager",reviewer:"CISO",impactLevel:"high",supersededBy:null,relatedAdrs:["ADR-005"],tags:["siem","cloud","monitoring"]},
+    {id:"ADR-003",title:"Implement Passwordless Authentication",status:"accepted",context:"Password-related incidents account for 34% of helpdesk tickets and 22% of breaches",decision:"Deploy FIDO2/WebAuthn across all user populations with phased rollout",consequences:"Reduced credential theft risk; requires hardware token procurement; user training needed",date:"2024-03-10",author:"IAM Lead",reviewer:"Security Architect",impactLevel:"high",supersededBy:null,relatedAdrs:["ADR-001","ADR-006"],tags:["iam","authentication","mfa"]},
+    {id:"ADR-004",title:"Adopt Shift-Left Security in CI/CD",status:"accepted",context:"Late-stage vulnerability discovery causing release delays averaging 3.2 days",decision:"Integrate SAST/DAST/SCA gates at build, test, and deploy pipeline stages",consequences:"Earlier vulnerability detection; initial pipeline slowdown; developer training required",date:"2024-04-05",author:"DevSecOps Lead",reviewer:"VP Engineering",impactLevel:"medium",supersededBy:null,relatedAdrs:["ADR-008"],tags:["devsecops","pipeline","sast"]},
+    {id:"ADR-005",title:"Centralize Log Aggregation with Kafka",status:"accepted",context:"Siloed logging across 14 systems with inconsistent formats and retention",decision:"Deploy Kafka-based log pipeline with unified schema and 90-day retention",consequences:"Consistent log format; improved incident response; infrastructure cost increase",date:"2024-05-18",author:"Platform Engineer",reviewer:"SOC Manager",impactLevel:"medium",supersededBy:null,relatedAdrs:["ADR-002"],tags:["logging","infrastructure","kafka"]},
+    {id:"ADR-006",title:"Implement Just-In-Time Privileged Access",status:"proposed",context:"Standing privileged accounts represent 67% of high-risk exposure in recent audit",decision:"Deploy JIT PAM with approval workflows and session recording for all admin access",consequences:"Elimination of standing privileges; potential friction for emergency response; audit trail improvement",date:"2024-06-22",author:"IAM Lead",reviewer:"CISO",impactLevel:"high",supersededBy:null,relatedAdrs:["ADR-003"],tags:["pam","privilege","access"]},
+    {id:"ADR-007",title:"Deploy Runtime Application Self-Protection",status:"proposed",context:"WAF bypass incidents increased 40% year-over-year despite signature updates",decision:"Implement RASP agents on all production application servers for in-app threat detection",consequences:"Defense in depth improvement; performance overhead 2-5 percent; agent management complexity",date:"2024-07-14",author:"App Security Lead",reviewer:"Security Architect",impactLevel:"medium",supersededBy:null,relatedAdrs:["ADR-001","ADR-004"],tags:["rasp","application","runtime"]},
+    {id:"ADR-008",title:"Automate Compliance Evidence Collection",status:"deprecated",context:"Manual compliance evidence collection consuming 240 person-hours per audit cycle",decision:"Build automated evidence collection framework integrated with GRC platform",consequences:"80% reduction in manual effort; superseded by continuous compliance approach in ADR-012",date:"2024-03-28",author:"GRC Analyst",reviewer:"Compliance Director",impactLevel:"medium",supersededBy:"ADR-012",relatedAdrs:["ADR-004"],tags:["compliance","automation","grc"]}
+  ];
+
+  private _adrStatusOptions = ["proposed","accepted","deprecated","superseded"];
+  private _adrStatusColors: Record<string,string> = {proposed:"#f59e0b",accepted:"#10b981",deprecated:"#ef4444",superseded:"#6b7280"};
+  private _adrImpactLevels = ["low","medium","high","critical"];
+  private _adrSearchQuery = "";
+  private _adrFilterStatus = "";
+  private _adrFilterImpact = "";
+  private _adrSortField = "date";
+  private _adrSortDir = "desc" as const;
+
+  private _getFilteredAdrs() {
+    let adrs = [...this._adrCatalog];
+    if (this._adrSearchQuery) {
+      const q = this._adrSearchQuery.toLowerCase();
+      adrs = adrs.filter(a => a.title.toLowerCase().includes(q) || a.context.toLowerCase().includes(q) || a.tags.some(t => t.includes(q)));
+    }
+    if (this._adrFilterStatus) adrs = adrs.filter(a => a.status === this._adrFilterStatus);
+    if (this._adrFilterImpact) adrs = adrs.filter(a => a.impactLevel === this._adrFilterImpact);
+    adrs.sort((a, b) => {
+      const dir = this._adrSortDir === "asc" ? 1 : -1;
+      if (this._adrSortField === "date") return dir * (new Date(a.date).getTime() - new Date(b.date).getTime());
+      if (this._adrSortField === "impact") return dir * (this._adrImpactLevels.indexOf(b.impactLevel) - this._adrImpactLevels.indexOf(a.impactLevel));
+      return dir * a.title.localeCompare(b.title);
+    });
+    return adrs;
+  }
+
+  private _getAdrStats() {
+    const total = this._adrCatalog.length;
+    const byStatus = this._adrCatalog.reduce((acc, a) => { acc[a.status] = (acc[a.status] || 0) + 1; return acc; }, {} as Record<string,number>);
+    const byImpact = this._adrCatalog.reduce((acc, a) => { acc[a.impactLevel] = (acc[a.impactLevel] || 0) + 1; return acc; }, {} as Record<string,number>);
+    const avgAge = this._adrCatalog.reduce((s, a) => s + (Date.now() - new Date(a.date).getTime()) / 86400000, 0) / total;
+    const superseded = this._adrCatalog.filter(a => a.supersededBy).length;
+    const highImpact = this._adrCatalog.filter(a => a.impactLevel === "high" || a.impactLevel === "critical").length;
+    return { total, byStatus, byImpact, avgAge: Math.round(avgAge), superseded, highImpact };
+  }
+
+  private _getAdrEvolutionTimeline() {
+    const sorted = [...this._adrCatalog].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return sorted.map(a => ({quarter: "Q" + (Math.floor(new Date(a.date).getMonth() / 3) + 1) + " " + new Date(a.date).getFullYear(), id: a.id, title: a.title, status: a.status, impact: a.impactLevel}));
+  }
+
+  private _getAdrStakeholderMatrix() {
+    const stakeholders: Record<string,{authored:number;reviewed:number;affected:number}> = {};
+    for (const a of this._adrCatalog) {
+      if (!stakeholders[a.author]) stakeholders[a.author] = {authored:0,reviewed:0,affected:0};
+      stakeholders[a.author].authored++;
+      if (!stakeholders[a.reviewer]) stakeholders[a.reviewer] = {authored:0,reviewed:0,affected:0};
+      stakeholders[a.reviewer].reviewed++;
+    }
+    return stakeholders;
+  }
+
   render() {    if (this._rhRules.length === 0) { this._initRhRules(); this._initRhCvss(); this._runRhAnomalyDetection(); this._generateRhPredictions(); this._initRhApprovals(); this._initRhActivity(); this._initRhNotifications(); }
 
     const items = this._getFiltered();
