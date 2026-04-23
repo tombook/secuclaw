@@ -6100,7 +6100,827 @@ export class ScBlueteamDefenseSimulator extends LitElement {
     return 'Insufficient - immediate coverage increase recommended';
   }
 
+    // ========== Vulnerability Management Lifecycle ==========
+  private _renderVulnDiscoveryPipeline() {
+    const pipelines = [
+      { id: 'p1', name: 'Nessus Weekly Scan', type: 'scanner', status: 'active', schedule: 'Weekly Sun 02:00', lastRun: '2026-04-20 02:03:12', findings: 47, critical: 3, high: 12, medium: 22, low: 10 },
+      { id: 'p2', name: 'GitHub Dependabot', type: 'scanner', status: 'active', schedule: 'On Push', lastRun: '2026-04-23 11:45:00', findings: 23, critical: 1, high: 5, medium: 11, low: 6 },
+      { id: 'p3', name: 'Snyk Container Scan', type: 'scanner', status: 'active', schedule: 'Daily 03:00', lastRun: '2026-04-23 03:01:45', findings: 15, critical: 0, high: 4, medium: 7, low: 4 },
+      { id: 'p4', name: 'Manual Pen Test', type: 'manual', status: 'completed', schedule: 'Quarterly', lastRun: '2026-04-15 09:00:00', findings: 8, critical: 2, high: 3, medium: 2, low: 1 },
+      { id: 'p5', name: 'OWASP ZAP DAST', type: 'scanner', status: 'active', schedule: 'On Deploy', lastRun: '2026-04-22 18:30:00', findings: 31, critical: 1, high: 8, medium: 14, low: 8 },
+      { id: 'p6', name: 'Security Research Team', type: 'researcher', status: 'active', schedule: 'Continuous', lastRun: '2026-04-23 10:15:00', findings: 5, critical: 1, high: 2, medium: 1, low: 1 },
+      { id: 'p7', name: 'Developer Self-Report', type: 'coder', status: 'active', schedule: 'On Demand', lastRun: '2026-04-23 09:22:00', findings: 3, critical: 0, high: 1, medium: 2, low: 0 },
+      { id: 'p8', name: 'SonarQube SAST', type: 'scanner', status: 'active', schedule: 'On PR Merge', lastRun: '2026-04-23 11:30:00', findings: 19, critical: 0, high: 3, medium: 10, low: 6 },
+    ];
+    const statusColor = (s: string) => s === 'active' ? '#10b981' : s === 'completed' ? '#3b82f6' : '#f59e0b';
+    const typeIcon = (t: string) => t === 'scanner' ? '\\u{1F50D}' : t === 'manual' ? '\\u{1F3AF}' : t === 'researcher' ? '\\u{1F9E0}' : '\\u{1F4BB}';
+    return html`
+      <section class="vuln-discovery-pipeline">
+        <h4>Vulnerability Discovery Pipeline</h4>
+        <div class="pipeline-grid">
+          ${pipelines.map(p => html`
+            <div class="pipeline-card">
+              <div class="pipeline-header">
+                <span class="pipeline-type-icon">${typeIcon(p.type)}</span>
+                <span class="pipeline-name">${p.name}</span>
+                <span class="pipeline-badge" style="background:${statusColor(p.status)}20;color:${statusColor(p.status)}">${p.status}</span>
+              </div>
+              <div class="pipeline-meta">
+                <span>Schedule: ${p.schedule}</span>
+                <span>Last: ${p.lastRun}</span>
+              </div>
+              <div class="pipeline-findings">
+                <span class="sev-critical">${p.critical} Critical</span>
+                <span class="sev-high">${p.high} High</span>
+                <span class="sev-medium">${p.medium} Medium</span>
+                <span class="sev-low">${p.low} Low</span>
+              </div>
+              <div class="pipeline-total">Total: ${p.findings} findings</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
   }
+
+  private _renderVulnSLAClock() {
+    const slaConfig = [
+      { severity: 'Critical', maxHours: 24, warnPercent: 75, color: '#ef4444' },
+      { severity: 'High', maxHours: 72, warnPercent: 80, color: '#f97316' },
+      { severity: 'Medium', maxHours: 720, warnPercent: 85, color: '#eab308' },
+      { severity: 'Low', maxHours: 2160, warnPercent: 90, color: '#22c55e' },
+    ];
+    const activeVulns = [
+      { id: 'V-001', title: 'Apache Log4j RCE', severity: 'Critical', detected: '2026-04-21T14:00:00', remaining: 6.5, assignee: 'Alice Chen' },
+      { id: 'V-002', title: 'SQL Injection in /api/users', severity: 'Critical', detected: '2026-04-22T08:00:00', remaining: 22, assignee: 'Bob Smith' },
+      { id: 'V-003', title: 'Outdated OpenSSL 1.1.1', severity: 'High', detected: '2026-04-19T10:00:00', remaining: 48, assignee: 'Carol Wu' },
+      { id: 'V-004', title: 'XSS in Search Widget', severity: 'High', detected: '2026-04-20T16:00:00', remaining: 64, assignee: 'Dave Li' },
+      { id: 'V-005', title: 'Weak TLS 1.0 Support', severity: 'Medium', detected: '2026-04-10T09:00:00', remaining: 648, assignee: 'Eve Wang' },
+      { id: 'V-006', title: 'Missing CSP Header', severity: 'Medium', detected: '2026-04-15T11:00:00', remaining: 576, assignee: 'Frank Zhang' },
+      { id: 'V-007', title: 'Verbose Error Messages', severity: 'Low', detected: '2026-03-20T08:00:00', remaining: 2016, assignee: 'Grace Liu' },
+    ];
+    return html`
+      <section class="vuln-sla-clock">
+        <h4>Vulnerability SLA Clock</h4>
+        <div class="sla-config-bar">
+          ${slaConfig.map(s => html`
+            <div class="sla-badge" style="border-color:${s.color}">
+              <strong>${s.severity}</strong>: ${s.maxHours}h (${s.maxHours / 24}d) | Warn at ${s.warnPercent}%
+            </div>
+          `).join('')}
+        </div>
+        <div class="sla-vuln-list">
+          ${activeVulns.map(v => {
+            const cfg = slaConfig.find(s => s.severity === v.severity)!;
+            const pct = ((cfg.maxHours - v.remaining) / cfg.maxHours) * 100;
+            const isOverdue = v.remaining <= 0;
+            const isWarning = pct >= cfg.warnPercent && !isOverdue;
+            const barColor = isOverdue ? '#ef4444' : isWarning ? '#f59e0b' : cfg.color;
+            return html`
+              <div class="sla-vuln-row">
+                <div class="sla-vuln-info">
+                  <span class="sla-id">${v.id}</span>
+                  <span class="sla-title">${v.title}</span>
+                  <span class="sla-severity" style="color:${cfg.color}">${v.severity}</span>
+                  <span class="sla-assignee">${v.assignee}</span>
+                </div>
+                <div class="sla-progress-bar">
+                  <div class="sla-progress-fill" style="width:${Math.min(pct, 100)}%;background:${barColor}"></div>
+                </div>
+                <span class="sla-remaining" style="color:${barColor}">${isOverdue ? 'OVERDUE' : v.remaining + 'h left'}</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderPatchDeploymentStatus() {
+    const environments = [
+      { name: 'Development', status: 'deployed', patches: 42, pending: 0, failed: 1, lastDeploy: '2026-04-23 06:00' },
+      { name: 'Staging', status: 'deployed', patches: 38, pending: 4, failed: 0, lastDeploy: '2026-04-23 04:00' },
+      { name: 'Production US-East', status: 'partial', patches: 35, pending: 7, failed: 0, lastDeploy: '2026-04-22 22:00' },
+      { name: 'Production EU-West', status: 'pending', patches: 30, pending: 12, failed: 0, lastDeploy: '2026-04-22 20:00' },
+      { name: 'Production AP-South', status: 'failed', patches: 28, pending: 14, failed: 2, lastDeploy: '2026-04-21 18:00' },
+    ];
+    const statusMap: Record<string, { color: string; label: string }> = {
+      deployed: { color: '#10b981', label: 'Deployed' },
+      partial: { color: '#f59e0b', label: 'Partial' },
+      pending: { color: '#3b82f6', label: 'Pending' },
+      failed: { color: '#ef4444', label: 'Failed' },
+    };
+    return html`
+      <section class="patch-deployment-status">
+        <h4>Patch Deployment Status</h4>
+        <div class="env-grid">
+          ${environments.map(e => {
+            const s = statusMap[e.status];
+            return html`
+              <div class="env-card" style="border-left:4px solid ${s.color}">
+                <div class="env-name">${e.name}</div>
+                <div class="env-status-badge" style="background:${s.color}20;color:${s.color}">${s.label}</div>
+                <div class="env-stats">
+                  <div class="stat"><span class="stat-val">${e.patches}</span><span class="stat-lbl">Deployed</span></div>
+                  <div class="stat"><span class="stat-val">${e.pending}</span><span class="stat-lbl">Pending</span></div>
+                  <div class="stat"><span class="stat-val">${e.failed}</span><span class="stat-lbl">Failed</span></div>
+                </div>
+                <div class="env-last-deploy">Last: ${e.lastDeploy}</div>
+              </div>`;
+          }).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderVulnAgingReport() {
+    const agingBuckets = [
+      { range: '0-7 days', count: 45, critical: 2, high: 8, medium: 20, low: 15, riskScore: 15 },
+      { range: '8-30 days', count: 32, critical: 1, high: 5, medium: 15, low: 11, riskScore: 38 },
+      { range: '31-90 days', count: 18, critical: 0, high: 3, medium: 10, low: 5, riskScore: 62 },
+      { range: '91-180 days', count: 8, critical: 0, high: 1, medium: 4, low: 3, riskScore: 78 },
+      { range: '181-365 days', count: 4, critical: 0, high: 0, medium: 2, low: 2, riskScore: 89 },
+      { range: '365+ days', count: 2, critical: 0, high: 0, medium: 1, low: 1, riskScore: 95 },
+    ];
+    return html`
+      <section class="vuln-aging-report">
+        <h4>Vulnerability Aging Report</h4>
+        <div class="aging-table">
+          <div class="aging-header">
+            <span>Age Range</span><span>Total</span><span>Critical</span><span>High</span><span>Medium</span><span>Low</span><span>Risk Score</span>
+          </div>
+          ${agingBuckets.map(b => html`
+            <div class="aging-row">
+              <span class="aging-range">${b.range}</span>
+              <span class="aging-count">${b.count}</span>
+              <span class="aging-sev-critical">${b.critical}</span>
+              <span class="aging-sev-high">${b.high}</span>
+              <span class="aging-sev-medium">${b.medium}</span>
+              <span class="aging-sev-low">${b.low}</span>
+              <span class="aging-risk" style="color:${b.riskScore > 70 ? '#ef4444' : b.riskScore > 40 ? '#f59e0b' : '#10b981'}">${b.riskScore}</span>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderSuppressionWorkflow() {
+    const suppressions = [
+      { id: 'SUP-001', vulnId: 'V-099', title: 'False Positive: Info Disclosure', requester: 'Alice Chen', approver: 'CISO Bob', status: 'approved', reason: 'Verified non-exploitable in context', expires: '2026-10-01' },
+      { id: 'SUP-002', vulnId: 'V-102', title: 'Accepted Risk: Legacy Protocol', requester: 'Dave Li', approver: null, status: 'pending', reason: 'Migration planned for Q3', expires: '2026-07-01' },
+      { id: 'SUP-003', vulnId: 'V-105', title: 'Compensating Control in Place', requester: 'Carol Wu', approver: 'CISO Bob', status: 'approved', reason: 'WAF rule blocks exploitation path', expires: '2026-12-31' },
+      { id: 'SUP-004', vulnId: 'V-108', title: 'Duplicate Finding', requester: 'Eve Wang', approver: null, status: 'rejected', reason: 'Not a duplicate - different endpoint', expires: null },
+    ];
+    const statusColor = (s: string) => s === 'approved' ? '#10b981' : s === 'pending' ? '#f59e0b' : '#ef4444';
+    return html`
+      <section class="suppression-workflow">
+        <h4>Suppression & Risk Acceptance Workflow</h4>
+        <div class="suppression-list">
+          ${suppressions.map(s => html`
+            <div class="suppression-card" style="border-left:4px solid ${statusColor(s.status)}">
+              <div class="supp-header">
+                <span class="supp-id">${s.id}</span>
+                <span class="supp-vuln">${s.vulnId}</span>
+                <span class="supp-status-badge" style="background:${statusColor(s.status)}20;color:${statusColor(s.status)}">${s.status.toUpperCase()}</span>
+              </div>
+              <div class="supp-title">${s.title}</div>
+              <div class="supp-details">
+                <span>Requester: ${s.requester}</span>
+                <span>Approver: ${s.approver || 'Pending'}</span>
+                ${s.expires ? html`<span>Expires: ${s.expires}</span>` : ''}
+              </div>
+              <div class="supp-reason"><strong>Reason:</strong> ${s.reason}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }  // ========== Identity Governance Suite ==========
+  private _renderAccessReviewCampaigns() {
+    const campaigns = [
+      { id: 'ARC-2026-Q2-001', name: 'Q2 Privileged Access Review', scope: 'All Admin Accounts', totalEntitlements: 342, reviewed: 218, certified: 195, revoked: 23, status: 'in_progress', owner: 'CISO Bob', deadline: '2026-05-31' },
+      { id: 'ARC-2026-Q2-002', name: 'Engineering Team Access', scope: 'Engineering Department', totalEntitlements: 1204, reviewed: 1204, certified: 1102, revoked: 102, status: 'completed', owner: 'VP Engineering', deadline: '2026-04-30' },
+      { id: 'ARC-2026-Q2-003', name: 'Contractor Access Audit', scope: 'All Contractors', totalEntitlements: 87, reviewed: 45, certified: 38, revoked: 7, status: 'in_progress', owner: 'HR Director', deadline: '2026-06-15' },
+      { id: 'ARC-2026-Q2-004', name: 'Cloud Resource Permissions', scope: 'AWS/GCP/Azure IAM', totalEntitlements: 567, reviewed: 0, certified: 0, revoked: 0, status: 'not_started', owner: 'Cloud Security Lead', deadline: '2026-07-31' },
+      { id: 'ARC-2026-Q2-005', name: 'Database Access Review', scope: 'All Production Databases', totalEntitlements: 156, reviewed: 156, certified: 140, revoked: 16, status: 'completed', owner: 'DBA Lead', deadline: '2026-04-15' },
+    ];
+    const statusColor = (s: string) => s === 'completed' ? '#10b981' : s === 'in_progress' ? '#3b82f6' : '#94a3b8';
+    const statusLabel = (s: string) => s === 'completed' ? 'Completed' : s === 'in_progress' ? 'In Progress' : 'Not Started';
+    return html`
+      <section class="access-review-campaigns">
+        <h4>Access Review Campaigns</h4>
+        <div class="campaign-list">
+          ${campaigns.map(c => {
+            const pct = c.totalEntitlements > 0 ? Math.round((c.reviewed / c.totalEntitlements) * 100) : 0;
+            return html`
+              <div class="campaign-card" style="border-left:4px solid ${statusColor(c.status)}">
+                <div class="campaign-header">
+                  <span class="campaign-id">${c.id}</span>
+                  <span class="campaign-status" style="color:${statusColor(c.status)}">${statusLabel(c.status)}</span>
+                </div>
+                <div class="campaign-name">${c.name}</div>
+                <div class="campaign-meta">
+                  <span>Scope: ${c.scope}</span>
+                  <span>Owner: ${c.owner}</span>
+                  <span>Deadline: ${c.deadline}</span>
+                </div>
+                <div class="campaign-progress">
+                  <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${statusColor(c.status)}"></div></div>
+                  <span class="progress-text">${c.reviewed}/${c.totalEntitlements} reviewed (${pct}%)</span>
+                </div>
+                <div class="campaign-results">
+                  <span class="certified">${c.certified} Certified</span>
+                  <span class="revoked">${c.revoked} Revoked</span>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderRoleMining() {
+    const roles = [
+      { name: 'Engineering Lead', currentUsers: 12, suggestedUsers: 15, confidence: 92, entitlements: 34, overlaps: 3, optimization: 'Merge 3 overlapping roles into 1' },
+      { name: 'Junior Developer', currentUsers: 45, suggestedUsers: 42, confidence: 88, entitlements: 18, overlaps: 2, optimization: 'Remove 3 unnecessary entitlements' },
+      { name: 'Security Analyst', currentUsers: 8, suggestedUsers: 10, confidence: 85, entitlements: 52, overlaps: 1, optimization: 'Split into Tier 1 and Tier 2 roles' },
+      { name: 'DevOps Engineer', currentUsers: 6, suggestedUsers: 8, confidence: 79, entitlements: 67, overlaps: 5, optimization: 'High overlap with SRE - consider unified role' },
+      { name: 'Product Manager', currentUsers: 15, suggestedUsers: 14, confidence: 91, entitlements: 12, overlaps: 0, optimization: 'Well-defined role, no changes needed' },
+      { name: 'Contractor Limited', currentUsers: 30, suggestedUsers: 28, confidence: 76, entitlements: 8, overlaps: 2, optimization: '2 users have excessive permissions' },
+    ];
+    return html`
+      <section class="role-mining">
+        <h4>Role Mining & Optimization</h4>
+        <div class="role-grid">
+          ${roles.map(r => html`
+            <div class="role-card">
+              <div class="role-name">${r.name}</div>
+              <div class="role-users">Users: ${r.currentUsers} current / ${r.suggestedUsers} suggested</div>
+              <div class="role-confidence">
+                <span>Confidence:</span>
+                <div class="confidence-bar"><div class="confidence-fill" style="width:${r.confidence}%;background:${r.confidence > 85 ? '#10b981' : r.confidence > 75 ? '#f59e0b' : '#ef4444'}"></div></div>
+                <span>${r.confidence}%</span>
+              </div>
+              <div class="role-stats">
+                <span>${r.entitlements} Entitlements</span>
+                <span>${r.overlaps} Overlaps</span>
+              </div>
+              <div class="role-suggestion">OPT: ${r.optimization}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderEntitlementCreep() {
+    const creepAlerts = [
+      { user: 'alice.chen', role: 'Engineering Lead', baseEntitlements: 34, currentEntitlements: 47, addedOverTime: 13, riskLevel: 'medium', topAdditions: ['prod-db-write', 's3-admin', 'k8s-cluster-admin'] },
+      { user: 'bob.smith', role: 'DevOps Engineer', baseEntitlements: 67, currentEntitlements: 89, addedOverTime: 22, riskLevel: 'high', topAdditions: ['iam-full-admin', 'billing-access', 'security-log-read'] },
+      { user: 'carol.wu', role: 'Security Analyst', baseEntitlements: 52, currentEntitlements: 58, addedOverTime: 6, riskLevel: 'low', topAdditions: ['jira-admin', 'confluence-admin'] },
+      { user: 'dave.li', role: 'Junior Developer', baseEntitlements: 18, currentEntitlements: 31, addedOverTime: 13, riskLevel: 'critical', topAdditions: ['prod-root-ssh', 'vault-secrets-read', 'ci-cd-admin'] },
+      { user: 'eve.wang', role: 'Contractor', baseEntitlements: 8, currentEntitlements: 19, addedOverTime: 11, riskLevel: 'high', topAdditions: ['github-org-admin', 'slack-admin', 'vpn-full'] },
+    ];
+    const riskColor = (r: string) => r === 'critical' ? '#ef4444' : r === 'high' ? '#f97316' : r === 'medium' ? '#eab308' : '#22c55e';
+    return html`
+      <section class="entitlement-creep">
+        <h4>Entitlement Creep Detection</h4>
+        <div class="creep-list">
+          ${creepAlerts.map(c => html`
+            <div class="creep-card" style="border-left:4px solid ${riskColor(c.riskLevel)}">
+              <div class="creep-header">
+                <span class="creep-user">${c.user}</span>
+                <span class="creep-role">${c.role}</span>
+                <span class="creep-risk" style="color:${riskColor(c.riskLevel)}">${c.riskLevel.toUpperCase()}</span>
+              </div>
+              <div class="creep-stats">
+                <span>Base: ${c.baseEntitlements}</span>
+                <span>-></span>
+                <span>Current: <strong>${c.currentEntitlements}</strong></span>
+                <span>(+${c.addedOverTime} creep)</span>
+              </div>
+              <div class="creep-additions">
+                ${c.topAdditions.map(a => html`<span class="creep-tag">${a}</span>`).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderJMLWorkflow() {
+    const events = [
+      { type: 'joiner', user: 'new.hire.2026', date: '2026-04-23', department: 'Engineering', manager: 'Alice Chen', status: 'in_progress', tasks: ['Create AD account', 'Assign base role', 'Provision laptop', 'Grant repo access'], completedTasks: 2 },
+      { type: 'mover', user: 'bob.smith', date: '2026-04-20', department: 'Engineering -> Security', manager: 'CISO Bob', status: 'in_progress', tasks: ['Remove old role entitlements', 'Assign new role', 'Transfer data ownership', 'Update group memberships'], completedTasks: 1 },
+      { type: 'leaver', user: 'departing.user', date: '2026-04-18', department: 'Marketing', manager: 'VP Marketing', status: 'completed', tasks: ['Disable all accounts', 'Revoke VPN access', 'Transfer data ownership', 'Archive mailbox', 'Collect equipment'], completedTasks: 5 },
+      { type: 'joiner', user: 'contractor.q2', date: '2026-04-22', department: 'Finance', manager: 'CFO', status: 'pending', tasks: ['Create temporary account', 'Assign contractor role', 'Set expiration date', 'Notify manager'], completedTasks: 0 },
+      { type: 'mover', user: 'carol.wu', date: '2026-04-25', department: 'Security -> Engineering', manager: 'VP Engineering', status: 'scheduled', tasks: ['Plan transition', 'Identify access changes', 'Schedule downtime', 'Execute access transfer'], completedTasks: 0 },
+    ];
+    const typeIcon = (t: string) => t === 'joiner' ? 'JOIN' : t === 'mover' ? 'MOVE' : 'LEAVE';
+    const statusColor = (s: string) => s === 'completed' ? '#10b981' : s === 'in_progress' ? '#3b82f6' : s === 'scheduled' ? '#8b5cf6' : '#94a3b8';
+    return html`
+      <section class="jml-workflow">
+        <h4>Joiner / Mover / Leaver Workflow</h4>
+        <div class="jml-list">
+          ${events.map(e => {
+            const pct = e.tasks.length > 0 ? Math.round((e.completedTasks / e.tasks.length) * 100) : 0;
+            return html`
+              <div class="jml-card" style="border-left:4px solid ${statusColor(e.status)}">
+                <div class="jml-header">
+                  <span class="jml-icon">${typeIcon(e.type)}</span>
+                  <span class="jml-user">${e.user}</span>
+                  <span class="jml-type">${e.type.toUpperCase()}</span>
+                  <span class="jml-status" style="color:${statusColor(e.status)}">${e.status.replace('_', ' ').toUpperCase()}</span>
+                </div>
+                <div class="jml-meta">
+                  <span>${e.department}</span><span>Manager: ${e.manager}</span><span>${e.date}</span>
+                </div>
+                <div class="jml-tasks">
+                  <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${statusColor(e.status)}"></div></div>
+                  <span>${e.completedTasks}/${e.tasks.length} tasks</span>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderSODConflicts() {
+    const conflicts = [
+      { user: 'bob.smith', role1: 'DevOps Engineer', role2: 'Security Auditor', conflictType: 'SoD Violation', severity: 'high', description: 'Same user can deploy code and audit deployments', recommendation: 'Reassign audit role to separate team member' },
+      { user: 'alice.chen', role1: 'Engineering Lead', role2: 'Change Approver', conflictType: 'SoD Violation', severity: 'medium', description: 'Can submit and approve change requests', recommendation: 'Implement four-eyes principle for approvals' },
+      { user: 'finance.admin', role1: 'Accounts Payable', role2: 'Bank Reconciliation', conflictType: 'SoD Violation', severity: 'critical', description: 'Can create payments and reconcile bank statements', recommendation: 'Immediately separate these roles' },
+      { user: 'procurement.lead', role1: 'Purchase Requisition', role2: 'Vendor Approval', conflictType: 'SoD Violation', severity: 'high', description: 'Can request purchases and approve vendors', recommendation: 'Route vendor approvals to finance team' },
+    ];
+    const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : '#eab308';
+    return html`
+      <section class="sod-conflicts">
+        <h4>Segregation of Duties Conflict Matrix</h4>
+        <div class="sod-list">
+          ${conflicts.map(c => html`
+            <div class="sod-card" style="border-left:4px solid ${sevColor(c.severity)}">
+              <div class="sod-header">
+                <span class="sod-user">${c.user}</span>
+                <span class="sod-severity" style="color:${sevColor(c.severity)}">${c.severity.toUpperCase()}</span>
+              </div>
+              <div class="sod-roles">
+                <span class="sod-role1">${c.role1}</span>
+                <span class="sod-vs">VS</span>
+                <span class="sod-role2">${c.role2}</span>
+              </div>
+              <div class="sod-desc">${c.description}</div>
+              <div class="sod-rec">REC: ${c.recommendation}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }  // ========== Security Testing Automation ==========
+  private _renderDASTScheduler() {
+    const scans = [
+      { id: 'DAST-001', target: 'https://api.example.com', schedule: 'Daily 06:00', status: 'completed', lastRun: '2026-04-23 06:02:15', findings: { critical: 0, high: 2, medium: 5, low: 8 }, duration: '4m 32s', scanner: 'OWASP ZAP 2.14' },
+      { id: 'DAST-002', target: 'https://app.example.com', schedule: 'Daily 07:00', status: 'running', lastRun: '2026-04-23 07:00:01', findings: { critical: 0, high: 0, medium: 0, low: 0 }, duration: 'In progress...', scanner: 'Burp Suite Enterprise' },
+      { id: 'DAST-003', target: 'https://admin.example.com', schedule: 'Weekly Mon 08:00', status: 'scheduled', lastRun: '2026-04-21 08:01:30', findings: { critical: 1, high: 3, medium: 7, low: 12 }, duration: '12m 18s', scanner: 'OWASP ZAP 2.14' },
+      { id: 'DAST-004', target: 'https://mobile-api.example.com', schedule: 'On Deploy', status: 'failed', lastRun: '2026-04-22 18:05:00', findings: { critical: 0, high: 0, medium: 0, low: 0 }, duration: 'Error: TLS handshake failed', scanner: 'Nuclei' },
+      { id: 'DAST-005', target: 'https://staging.example.com', schedule: 'On PR Merge', status: 'completed', lastRun: '2026-04-23 11:30:00', findings: { critical: 0, high: 1, medium: 3, low: 4 }, duration: '6m 15s', scanner: 'OWASP ZAP 2.14' },
+    ];
+    const statusColor = (s: string) => s === 'completed' ? '#10b981' : s === 'running' ? '#3b82f6' : s === 'failed' ? '#ef4444' : '#94a3b8';
+    return html`
+      <section class="dast-scheduler">
+        <h4>DAST Scan Scheduler & Results</h4>
+        <div class="dast-list">
+          ${scans.map(s => html`
+            <div class="dast-card" style="border-left:4px solid ${statusColor(s.status)}">
+              <div class="dast-header">
+                <span class="dast-id">${s.id}</span>
+                <span class="dast-status" style="color:${statusColor(s.status)}">${s.status.toUpperCase()}</span>
+                <span class="dast-scanner">${s.scanner}</span>
+              </div>
+              <div class="dast-target">${s.target}</div>
+              <div class="dast-meta">
+                <span>Schedule: ${s.schedule}</span>
+                <span>Duration: ${s.duration}</span>
+                <span>Last: ${s.lastRun}</span>
+              </div>
+              <div class="dast-findings">
+                <span class="sev-critical">${s.findings.critical}C</span>
+                <span class="sev-high">${s.findings.high}H</span>
+                <span class="sev-medium">${s.findings.medium}M</span>
+                <span class="sev-low">${s.findings.low}L</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderSASTFindings() {
+    const findings = [
+      { id: 'SAST-001', file: 'src/api/users.ts', line: 142, rule: 'SQL Injection', severity: 'critical', status: 'open', tool: 'Semgrep', effort: '8h', cwe: 'CWE-89' },
+      { id: 'SAST-002', file: 'src/auth/token.ts', line: 87, rule: 'Hardcoded Secret', severity: 'critical', status: 'in_review', tool: 'SonarQube', effort: '2h', cwe: 'CWE-798' },
+      { id: 'SAST-003', file: 'src/utils/crypto.ts', line: 23, rule: 'Weak Hash Algorithm', severity: 'high', status: 'open', tool: 'CodeQL', effort: '4h', cwe: 'CWE-328' },
+      { id: 'SAST-004', file: 'src/middleware/cors.ts', line: 15, rule: 'Overly Permissive CORS', severity: 'high', status: 'fixed', tool: 'Semgrep', effort: '1h', cwe: 'CWE-942' },
+      { id: 'SAST-005', file: 'src/routes/upload.ts', line: 56, rule: 'Path Traversal', severity: 'high', status: 'open', tool: 'CodeQL', effort: '3h', cwe: 'CWE-22' },
+      { id: 'SAST-006', file: 'src/config/database.ts', line: 8, rule: 'Insecure Connection', severity: 'medium', status: 'wont_fix', tool: 'SonarQube', effort: '16h', cwe: 'CWE-319' },
+    ];
+    const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : '#eab308';
+    const statusColor = (s: string) => s === 'fixed' ? '#10b981' : s === 'in_review' ? '#3b82f6' : s === 'wont_fix' ? '#94a3b8' : '#f59e0b';
+    return html`
+      <section class="sast-findings">
+        <h4>SAST Findings Management</h4>
+        <div class="sast-list">
+          ${findings.map(f => html`
+            <div class="sast-card" style="border-left:4px solid ${sevColor(f.severity)}">
+              <div class="sast-header">
+                <span class="sast-id">${f.id}</span>
+                <span class="sast-severity" style="color:${sevColor(f.severity)}">${f.severity.toUpperCase()}</span>
+                <span class="sast-status" style="color:${statusColor(f.status)}">${f.status.replace('_', ' ').toUpperCase()}</span>
+              </div>
+              <div class="sast-location">${f.file}:${f.line}</div>
+              <div class="sast-rule">${f.rule} (${f.cwe})</div>
+              <div class="sast-meta">
+                <span>Tool: ${f.tool}</span>
+                <span>Effort: ${f.effort}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderSCATracking() {
+    const deps = [
+      { name: 'lodash', version: '4.17.20', latestSafe: '4.17.21', vulns: 1, severity: 'high', fixAvailable: true, affectedProjects: ['web-app', 'admin-portal', 'api-gateway'] },
+      { name: 'express', version: '4.17.1', latestSafe: '4.19.2', vulns: 3, severity: 'critical', fixAvailable: true, affectedProjects: ['api-gateway', 'auth-service'] },
+      { name: 'axios', version: '0.21.0', latestSafe: '1.6.0', vulns: 1, severity: 'medium', fixAvailable: true, affectedProjects: ['web-app', 'mobile-app'] },
+      { name: 'jsonwebtoken', version: '8.5.1', latestSafe: '9.0.2', vulns: 2, severity: 'high', fixAvailable: false, affectedProjects: ['auth-service', 'api-gateway'] },
+      { name: 'minimist', version: '1.2.0', latestSafe: '1.2.8', vulns: 1, severity: 'low', fixAvailable: true, affectedProjects: ['cli-tool', 'build-scripts'] },
+      { name: 'node-forge', version: '0.10.0', latestSafe: '1.3.1', vulns: 2, severity: 'critical', fixAvailable: true, affectedProjects: ['cert-manager', 'vpn-service'] },
+    ];
+    const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : s === 'medium' ? '#eab308' : '#22c55e';
+    return html`
+      <section class="sca-tracking">
+        <h4>SCA Dependency Vulnerability Tracking</h4>
+        <div class="sca-list">
+          ${deps.map(d => html`
+            <div class="sca-card" style="border-left:4px solid ${sevColor(d.severity)}">
+              <div class="sca-header">
+                <span class="sca-name">${d.name}</span>
+                <span class="sca-version">${d.version} -> ${d.latestSafe}</span>
+                <span class="sca-severity" style="color:${sevColor(d.severity)}">${d.vulns} ${d.severity.toUpperCase()}</span>
+                <span class="sca-fix" style="color:${d.fixAvailable ? '#10b981' : '#ef4444'}">${d.fixAvailable ? 'FIX AVAILABLE' : 'NO FIX'}</span>
+              </div>
+              <div class="sca-projects">
+                ${d.affectedProjects.map(p => html`<span class="sca-project-tag">${p}</span>`).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderContainerScanning() {
+    const images = [
+      { name: 'api-gateway:latest', registry: 'ECR', lastScan: '2026-04-23 05:00', vulns: { critical: 0, high: 1, medium: 4, low: 7 }, baseImage: 'node:18-alpine', size: '245MB', status: 'pass' },
+      { name: 'auth-service:v2.3.1', registry: 'ECR', lastScan: '2026-04-23 05:02', vulns: { critical: 1, high: 3, medium: 8, low: 12 }, baseImage: 'python:3.11-slim', size: '312MB', status: 'fail' },
+      { name: 'worker:latest', registry: 'GCR', lastScan: '2026-04-23 05:05', vulns: { critical: 0, high: 0, medium: 2, low: 5 }, baseImage: 'distroless/base', size: '89MB', status: 'pass' },
+      { name: 'frontend:prod-20260422', registry: 'ECR', lastScan: '2026-04-22 22:00', vulns: { critical: 0, high: 2, medium: 6, low: 9 }, baseImage: 'nginx:alpine', size: '156MB', status: 'warn' },
+      { name: 'sidecar-injector:v1.8', registry: 'GCR', lastScan: '2026-04-23 05:10', vulns: { critical: 0, high: 0, medium: 1, low: 3 }, baseImage: 'distroless/static', size: '23MB', status: 'pass' },
+    ];
+    const statusColor = (s: string) => s === 'pass' ? '#10b981' : s === 'warn' ? '#f59e0b' : '#ef4444';
+    return html`
+      <section class="container-scanning">
+        <h4>Container Image Scanning Dashboard</h4>
+        <div class="container-list">
+          ${images.map(i => html`
+            <div class="container-card" style="border-left:4px solid ${statusColor(i.status)}">
+              <div class="container-header">
+                <span class="container-name">${i.name}</span>
+                <span class="container-status" style="color:${statusColor(i.status)}">${i.status.toUpperCase()}</span>
+              </div>
+              <div class="container-meta">
+                <span>${i.registry}</span>
+                <span>${i.baseImage}</span>
+                <span>${i.size}</span>
+                <span>${i.lastScan}</span>
+              </div>
+              <div class="container-findings">
+                <span class="sev-critical">${i.vulns.critical}C</span>
+                <span class="sev-high">${i.vulns.high}H</span>
+                <span class="sev-medium">${i.vulns.medium}M</span>
+                <span class="sev-low">${i.vulns.low}L</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderIaCScanning() {
+    const results = [
+      { id: 'IAC-001', file: 'terraform/aws/rds.tf', line: 23, rule: 'RDS Public Access', severity: 'critical', status: 'open', cloud: 'AWS', tool: 'tfsec' },
+      { id: 'IAC-002', file: 'terraform/aws/s3.tf', line: 45, rule: 'S3 Bucket Not Encrypted', severity: 'high', status: 'fixed', cloud: 'AWS', tool: 'Checkov' },
+      { id: 'IAC-003', file: 'k8s/namespace-prod.yaml', line: 12, rule: 'No Network Policy', severity: 'high', status: 'open', cloud: 'K8s', tool: 'Trivy' },
+      { id: 'IAC-004', file: 'terraform/gcp/firewall.tf', line: 67, rule: 'Open Ingress 0.0.0.0/0', severity: 'critical', status: 'in_review', cloud: 'GCP', tool: 'tfsec' },
+      { id: 'IAC-005', file: 'ansible/playbook-db.yml', line: 89, rule: 'SSH Password Auth Enabled', severity: 'medium', status: 'open', cloud: 'On-Prem', tool: 'Ansible-lint' },
+    ];
+    const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : '#eab308';
+    const statusColor = (s: string) => s === 'fixed' ? '#10b981' : s === 'in_review' ? '#3b82f6' : '#f59e0b';
+    return html`
+      <section class="iac-scanning">
+        <h4>IaC Security Scanning Results</h4>
+        <div class="iac-list">
+          ${results.map(r => html`
+            <div class="iac-card" style="border-left:4px solid ${sevColor(r.severity)}">
+              <div class="iac-header">
+                <span class="iac-id">${r.id}</span>
+                <span class="iac-severity" style="color:${sevColor(r.severity)}">${r.severity.toUpperCase()}</span>
+                <span class="iac-status" style="color:${statusColor(r.status)}">${r.status.replace('_', ' ').toUpperCase()}</span>
+                <span class="iac-cloud">${r.cloud}</span>
+              </div>
+              <div class="iac-location">${r.file}:${r.line}</div>
+              <div class="iac-rule">${r.rule} <span class="iac-tool">[${r.tool}]</span></div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderFuzzingResults() {
+    const fuzzTests = [
+      { id: 'FUZZ-001', target: 'api/v1/users', method: 'REST API Fuzzing', status: 'completed', totalRequests: 50000, crashes: 0, uniqueBugs: 0, coverage: '87%', duration: '2h 15m', lastRun: '2026-04-22' },
+      { id: 'FUZZ-002', target: 'api/v1/upload', method: 'File Upload Fuzzing', status: 'completed', totalRequests: 12000, crashes: 3, uniqueBugs: 1, coverage: '72%', duration: '45m', lastRun: '2026-04-22' },
+      { id: 'FUZZ-003', target: 'api/v1/auth/login', method: 'Auth Protocol Fuzzing', status: 'running', totalRequests: 34000, crashes: 1, uniqueBugs: 0, coverage: '65%', duration: '1h 30m+', lastRun: '2026-04-23' },
+      { id: 'FUZZ-004', target: 'websocket/realtime', method: 'WebSocket Protocol Fuzzing', status: 'scheduled', totalRequests: 0, crashes: 0, uniqueBugs: 0, coverage: '0%', duration: '-', lastRun: '-' },
+      { id: 'FUZZ-005', target: 'grpc/payment-service', method: 'gRPC Mutation Fuzzing', status: 'completed', totalRequests: 28000, crashes: 2, uniqueBugs: 2, coverage: '78%', duration: '1h 50m', lastRun: '2026-04-21' },
+    ];
+    const statusColor = (s: string) => s === 'completed' ? '#10b981' : s === 'running' ? '#3b82f6' : '#94a3b8';
+    return html`
+      <section class="fuzzing-results">
+        <h4>Fuzzing Test Results Tracker</h4>
+        <div class="fuzz-list">
+          ${fuzzTests.map(f => html`
+            <div class="fuzz-card" style="border-left:4px solid ${statusColor(f.status)}">
+              <div class="fuzz-header">
+                <span class="fuzz-id">${f.id}</span>
+                <span class="fuzz-target">${f.target}</span>
+                <span class="fuzz-status" style="color:${statusColor(f.status)}">${f.status.toUpperCase()}</span>
+              </div>
+              <div class="fuzz-method">${f.method}</div>
+              <div class="fuzz-stats">
+                <span>Requests: ${f.totalRequests.toLocaleString()}</span>
+                <span style="color:${f.crashes > 0 ? '#ef4444' : '#10b981'}">Crashes: ${f.crashes}</span>
+                <span style="color:${f.uniqueBugs > 0 ? '#f97316' : '#10b981'}">Bugs: ${f.uniqueBugs}</span>
+                <span>Coverage: ${f.coverage}</span>
+              </div>
+              <div class="fuzz-meta">
+                <span>Duration: ${f.duration}</span>
+                <span>Last: ${f.lastRun}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }  // ========== Threat Intelligence Platform ==========
+  private _renderSTIXViewer() {
+    const objects = [
+      { id: 'STIX-001', type: 'indicator', name: 'Malicious IP 185.220.101.34', pattern: 'ipv4-addr:value = 185.220.101.34', confidence: 95, created: '2026-04-20', source: 'MISP Community', killChain: 'reconnaissance' },
+      { id: 'STIX-002', type: 'malware', name: 'Cobalt Strike Beacon v4.8', pattern: 'file:hashes.MD5 = a1b2c3d4e5f6', confidence: 98, created: '2026-04-19', source: 'MITRE ATT&CK', killChain: 'weaponization' },
+      { id: 'STIX-003', type: 'attack-pattern', name: 'T1059.001 - PowerShell', pattern: 'process:command_line MATCHES *-encodedcommand*', confidence: 90, created: '2026-04-18', source: 'Internal Analysis', killChain: 'execution' },
+      { id: 'STIX-004', type: 'threat-actor', name: 'APT29 (Cozy Bear)', pattern: 'threat-actor:name = APT29', confidence: 92, created: '2026-04-17', source: 'FBI/CISA Advisory', killChain: 'multiple' },
+      { id: 'STIX-005', type: 'vulnerability', name: 'CVE-2024-3400 - PAN-OS Command Injection', pattern: 'vulnerability:name = CVE-2024-3400', confidence: 100, created: '2026-04-15', source: 'NVD', killChain: 'initial-access' },
+      { id: 'STIX-006', type: 'identity', name: 'Suspicious Domain gate-secure.com', pattern: 'domain-name:value = gate-secure.com', confidence: 78, created: '2026-04-23', source: 'PassiveDNS', killChain: 'reconnaissance' },
+    ];
+    return html`
+      <section class="stix-viewer">
+        <h4>Structured Threat Information (STIX) Viewer</h4>
+        <div class="stix-grid">
+          ${objects.map(o => html`
+            <div class="stix-card">
+              <div class="stix-header">
+                <span class="stix-type">${o.type.toUpperCase()}</span>
+                <span class="stix-confidence" style="color:${o.confidence > 90 ? '#10b981' : o.confidence > 80 ? '#f59e0b' : '#ef4444'}">${o.confidence}%</span>
+              </div>
+              <div class="stix-name">${o.name}</div>
+              <div class="stix-pattern"><code>${o.pattern}</code></div>
+              <div class="stix-meta">
+                <span>Source: ${o.source}</span>
+                <span>Kill Chain: ${o.killChain}</span>
+                <span>${o.created}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderTAXIIFeeds() {
+    const feeds = [
+      { id: 'TAXII-01', name: 'MITRE ATT&CK Enterprise', url: 'https://cti-taxii.mitre.org/stix', status: 'connected', lastPoll: '2026-04-23 12:00', objectsReceived: 1245, collections: 3, protocol: 'TAXII 2.1' },
+      { id: 'TAXII-02', name: 'CISA Advisory Feed', url: 'https://www.cisa.gov/taxii', status: 'connected', lastPoll: '2026-04-23 11:30', objectsReceived: 87, collections: 2, protocol: 'TAXII 2.1' },
+      { id: 'TAXII-03', name: 'AlienVault OTX', url: 'https://otx.alienvault.com/taxii', status: 'connected', lastPoll: '2026-04-23 12:15', objectsReceived: 3421, collections: 8, protocol: 'TAXII 2.0' },
+      { id: 'TAXII-04', name: 'Anomali ThreatStream', url: 'https://threatstream.anomali.com/taxii', status: 'error', lastPoll: '2026-04-22 18:00', objectsReceived: 0, collections: 0, protocol: 'TAXII 2.1' },
+      { id: 'TAXII-05', name: 'Internal Intel Sharing', url: 'https://intel.internal.corp/taxii', status: 'connected', lastPoll: '2026-04-23 12:00', objectsReceived: 156, collections: 4, protocol: 'TAXII 2.1' },
+    ];
+    const statusColor = (s: string) => s === 'connected' ? '#10b981' : '#ef4444';
+    return html`
+      <section class="taxii-feeds">
+        <h4>TAXII Feed Management</h4>
+        <div class="taxii-list">
+          ${feeds.map(f => html`
+            <div class="taxii-card" style="border-left:4px solid ${statusColor(f.status)}">
+              <div class="taxii-header">
+                <span class="taxii-name">${f.name}</span>
+                <span class="taxii-status" style="color:${statusColor(f.status)}">${f.status.toUpperCase()}</span>
+              </div>
+              <div class="taxii-url"><code>${f.url}</code></div>
+              <div class="taxii-meta">
+                <span>Protocol: ${f.protocol}</span>
+                <span>Collections: ${f.collections}</span>
+                <span>Objects: ${f.objectsReceived.toLocaleString()}</span>
+                <span>Last Poll: ${f.lastPoll}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderIntelSharingWorkflow() {
+    const shares = [
+      { id: 'SHARE-001', direction: 'outbound', partner: 'Industry ISAC', classification: 'TLP:AMBER', objects: 12, status: 'approved', date: '2026-04-22' },
+      { id: 'SHARE-002', direction: 'inbound', partner: 'CISA', classification: 'TLP:CLEAR', objects: 45, status: 'received', date: '2026-04-23' },
+      { id: 'SHARE-003', direction: 'outbound', partner: 'Partner Org A', classification: 'TLP:GREEN', objects: 5, status: 'pending_review', date: '2026-04-23' },
+      { id: 'SHARE-004', direction: 'inbound', partner: 'FBI IC3', classification: 'TLP:AMBER+STRICT', objects: 3, status: 'received', date: '2026-04-21' },
+    ];
+    return html`
+      <section class="intel-sharing">
+        <h4>Intelligence Sharing Workflow</h4>
+        <div class="share-list">
+          ${shares.map(s => html`
+            <div class="share-card" style="border-left:4px solid ${s.direction === 'outbound' ? '#3b82f6' : '#8b5cf6'}">
+              <div class="share-header">
+                <span class="share-direction">${s.direction === 'outbound' ? 'OUTBOUND' : 'INBOUND'}</span>
+                <span class="share-partner">${s.partner}</span>
+                <span class="share-classification">${s.classification}</span>
+              </div>
+              <div class="share-meta">
+                <span>${s.objects} objects</span>
+                <span>${s.date}</span>
+                <span class="share-status">${s.status.replace('_', ' ').toUpperCase()}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }  // ========== Security Operations Workflow ==========
+  private _renderIncidentTriageMatrix() {
+    const matrix = [
+      { alertType: 'Malware Detection', criteria: 'Known malware hash + execution', autoSeverity: 'high', autoAction: 'Isolate endpoint + notify IR', sla: '15min', overrideAllowed: true },
+      { alertType: 'Brute Force', criteria: '>50 failed logins in 5min from single IP', autoSeverity: 'medium', autoAction: 'Block IP + alert SOC', sla: '30min', overrideAllowed: true },
+      { alertType: 'Data Exfiltration', criteria: '>500MB upload to external in 1hr', autoSeverity: 'critical', autoAction: 'Block transfer + page on-call', sla: '5min', overrideAllowed: false },
+      { alertType: 'Privilege Escalation', criteria: 'User added to admin group outside change window', autoSeverity: 'high', autoAction: 'Revert change + alert security team', sla: '10min', overrideAllowed: false },
+      { alertType: 'Phishing Report', criteria: 'User reported suspicious email', autoSeverity: 'low', autoAction: 'Quarantine email + analyze headers', sla: '60min', overrideAllowed: true },
+      { alertType: 'DDoS Indicator', criteria: '>10x normal request rate', autoSeverity: 'high', autoAction: 'Enable rate limiting + notify NOC', sla: '10min', overrideAllowed: true },
+      { alertType: 'Unauthorized Access', criteria: 'Login from impossible travel location', autoSeverity: 'critical', autoAction: 'Force MFA + lock account + page IR', sla: '5min', overrideAllowed: false },
+      { alertType: 'Configuration Drift', criteria: 'Security control disabled on production', autoSeverity: 'high', autoAction: 'Auto-remediate + notify change board', sla: '15min', overrideAllowed: true },
+    ];
+    const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : s === 'medium' ? '#eab308' : '#22c55e';
+    return html`
+      <section class="incident-triage-matrix">
+        <h4>Incident Severity Auto-Triage Matrix</h4>
+        <div class="triage-list">
+          ${matrix.map(m => html`
+            <div class="triage-card" style="border-left:4px solid ${sevColor(m.autoSeverity)}">
+              <div class="triage-header">
+                <span class="triage-type">${m.alertType}</span>
+                <span class="triage-severity" style="color:${sevColor(m.autoSeverity)}">${m.autoSeverity.toUpperCase()}</span>
+                <span class="triage-sla">SLA: ${m.sla}</span>
+              </div>
+              <div class="triage-criteria"><strong>Criteria:</strong> ${m.criteria}</div>
+              <div class="triage-action"><strong>Auto Action:</strong> ${m.autoAction}</div>
+              <div class="triage-override">Override: ${m.overrideAllowed ? 'ALLOWED' : 'NOT ALLOWED'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderRunbookTrigger() {
+    const runbooks = [
+      { id: 'RB-001', name: 'Malware Isolation Playbook', triggerAlert: 'Malware Detection', steps: 8, avgRunTime: '12min', lastExecuted: '2026-04-22 14:30', successRate: '95%', autoRun: true },
+      { id: 'RB-002', name: 'DDoS Mitigation Playbook', triggerAlert: 'DDoS Indicator', steps: 12, avgRunTime: '8min', lastExecuted: '2026-04-20 03:15', successRate: '88%', autoRun: true },
+      { id: 'RB-003', name: 'Credential Compromise Response', triggerAlert: 'Unauthorized Access', steps: 15, avgRunTime: '25min', lastExecuted: '2026-04-18 09:45', successRate: '92%', autoRun: false },
+      { id: 'RB-004', name: 'Data Leak Containment', triggerAlert: 'Data Exfiltration', steps: 10, avgRunTime: '18min', lastExecuted: '2026-04-15 16:20', successRate: '90%', autoRun: true },
+      { id: 'RB-005', name: 'Phishing Investigation', triggerAlert: 'Phishing Report', steps: 6, avgRunTime: '5min', lastExecuted: '2026-04-23 10:00', successRate: '98%', autoRun: true },
+    ];
+    return html`
+      <section class="runbook-trigger">
+        <h4>Runbook Auto-Trigger</h4>
+        <div class="runbook-list">
+          ${runbooks.map(r => html`
+            <div class="runbook-card">
+              <div class="runbook-header">
+                <span class="runbook-id">${r.id}</span>
+                <span class="runbook-name">${r.name}</span>
+                <span class="runbook-auto">${r.autoRun ? 'AUTO' : 'MANUAL'}</span>
+              </div>
+              <div class="runbook-meta">
+                <span>Trigger: ${r.triggerAlert}</span>
+                <span>Steps: ${r.steps}</span>
+                <span>Avg: ${r.avgRunTime}</span>
+                <span>Success: ${r.successRate}</span>
+              </div>
+              <div class="runbook-last">Last executed: ${r.lastExecuted}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderShiftHandoff() {
+    const checklist = [
+      { item: 'Review open incidents - confirm ownership transfer', completed: true, assignee: 'Night Shift' },
+      { item: 'Check active threat hunts - update status', completed: true, assignee: 'Night Shift' },
+      { item: 'Verify monitoring dashboards - no suppressed alerts', completed: false, assignee: 'Day Shift' },
+      { item: 'Review pending escalation requests', completed: false, assignee: 'Day Shift' },
+      { item: 'Update SOC metrics board', completed: true, assignee: 'Night Shift' },
+      { item: 'Check on-call rotation for next 24h', completed: false, assignee: 'Day Shift' },
+      { item: 'Document any anomalies or pattern changes', completed: true, assignee: 'Night Shift' },
+      { item: 'Verify backup and log shipping status', completed: false, assignee: 'Day Shift' },
+    ];
+    return html`
+      <section class="shift-handoff">
+        <h4>Shift Handoff Checklist</h4>
+        <div class="handoff-list">
+          ${checklist.map(c => html`
+            <div class="handoff-item ${c.completed ? 'completed' : 'pending'}">
+              <span class="handoff-check">${c.completed ? '[x]' : '[ ]'}</span>
+              <span class="handoff-text">${c.item}</span>
+              <span class="handoff-assignee">${c.assignee}</span>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderEscalationTree() {
+    const levels = [
+      { level: 1, name: 'Tier 1 SOC Analyst', criteria: 'All alerts initial triage', authority: 'Block IPs, quarantine emails, create tickets', escalateAfter: '15min unresolved', escalateTo: 'Tier 2' },
+      { level: 2, name: 'Tier 2 SOC Analyst', criteria: 'Confirmed threats, multi-vector attacks', authority: 'Isolate endpoints, disable accounts, engage IR', escalateAfter: '30min or critical severity', escalateTo: 'Tier 3 / IR Lead' },
+      { level: 3, name: 'IR Lead / Security Engineer', criteria: 'Active breaches, APT indicators', authority: 'Full system access, engage external partners, legal', escalateAfter: 'Confirmed data breach', escalateTo: 'CISO / Executive Team' },
+      { level: 4, name: 'CISO', criteria: 'Material breach, regulatory notification required', authority: 'Executive decisions, external communications, legal counsel', escalateAfter: 'Board notification threshold', escalateTo: 'Board / Legal' },
+    ];
+    const levelColor = (l: number) => l === 1 ? '#3b82f6' : l === 2 ? '#f59e0b' : l === 3 ? '#f97316' : '#ef4444';
+    return html`
+      <section class="escalation-tree">
+        <h4>Escalation Decision Tree</h4>
+        <div class="escalation-list">
+          ${levels.map(l => html`
+            <div class="escalation-card" style="border-left:4px solid ${levelColor(l.level)}">
+              <div class="escalation-header">
+                <span class="escalation-level" style="background:${levelColor(l.level)}20;color:${levelColor(l.level)}">L${l.level}</span>
+                <span class="escalation-name">${l.name}</span>
+              </div>
+              <div class="escalation-criteria"><strong>When:</strong> ${l.criteria}</div>
+              <div class="escalation-authority"><strong>Can:</strong> ${l.authority}</div>
+              <div class="escalation-escalate">Escalate after: ${l.escalateAfter} -> ${l.escalateTo}</div>
+            </div>
+          `).join('')}
+        </div>
+      </section>`;
+  }
+
+  private _renderPostIncidentTracker() {
+    const incidents = [
+      { id: 'INC-2026-042', title: 'Ransomware Attempt Blocked', severity: 'critical', closedDate: '2026-04-20', actions: 8, completed: 6, overdue: 1, rootCause: 'Phishing email bypassed spam filter' },
+      { id: 'INC-2026-039', title: 'AWS Credential Exposure', severity: 'high', closedDate: '2026-04-18', actions: 5, completed: 5, overdue: 0, rootCause: 'CI/CD pipeline misconfiguration' },
+      { id: 'INC-2026-035', title: 'DDoS Attack on API Gateway', severity: 'medium', closedDate: '2026-04-15', actions: 4, completed: 3, overdue: 1, rootCause: 'Insufficient rate limiting configuration' },
+      { id: 'INC-2026-031', title: 'Insider Data Access Anomaly', severity: 'high', closedDate: '2026-04-12', actions: 6, completed: 4, overdue: 2, rootCause: 'Excessive permissions granted during onboarding' },
+    ];
+    const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : '#eab308';
+    return html`
+      <section class="post-incident-tracker">
+        <h4>Post-Incident Action Item Tracker</h4>
+        <div class="incident-action-list">
+          ${incidents.map(i => {
+            const pct = Math.round((i.completed / i.actions) * 100);
+            return html`
+              <div class="incident-action-card" style="border-left:4px solid ${sevColor(i.severity)}">
+                <div class="ia-header">
+                  <span class="ia-id">${i.id}</span>
+                  <span class="ia-title">${i.title}</span>
+                  <span class="ia-severity" style="color:${sevColor(i.severity)}">${i.severity.toUpperCase()}</span>
+                </div>
+                <div class="ia-root-cause"><strong>Root Cause:</strong> ${i.rootCause}</div>
+                <div class="ia-progress">
+                  <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pct === 100 ? '#10b981' : '#3b82f6'}"></div></div>
+                  <span>${i.completed}/${i.actions} actions (${pct}%)</span>
+                </div>
+                <div class="ia-meta">
+                  <span>Closed: ${i.closedDate}</span>
+                  ${i.overdue > 0 ? html`<span class="ia-overdue" style="color:#ef4444">${i.overdue} OVERDUE</span>` : ''}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </section>`;
+  }
+  }
+
+
 
 
 declare global { interface HTMLElementTagNameMap { 'sc-blueteam-defense-simulator': ScBlueteamDefenseSimulator; } }
