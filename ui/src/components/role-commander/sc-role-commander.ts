@@ -1993,10 +1993,182 @@ export class ScRoleCommander extends LitElement {
   }
 
   // ─── 指挥官: 全域态势, AI调度, 事件管理, 风险评分板, 董事会报告 ───
+
+  // ─── Generic Posture Panel — adapts to available modules per role ───
+  private _renderPosturePanel(roleId: string) {
+    const hasDecision = !!ScRoleCommander.DECISION_CONFIGS[roleId];
+    const hasLegal = !!ScRoleCommander.LEGAL_CONFIGS[roleId];
+    const hasFramework = !!ScRoleCommander.FRAMEWORK_COVERAGE[roleId];
+    const hasViz = !!(ScRoleCommander as any)._vizConfigs?.[roleId] || roleId === 'ciso' || roleId === 'security-expert';
+    const hasDark = !!ScRoleCommander.DARK_CAPS[roleId];
+
+    const decCfg = hasDecision ? ScRoleCommander.DECISION_CONFIGS[roleId] : null;
+    const legalCfg = hasLegal ? ScRoleCommander.LEGAL_CONFIGS[roleId] : null;
+    const fwCfg = hasFramework ? ScRoleCommander.FRAMEWORK_COVERAGE[roleId] : null;
+    const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
+
+    const roleTitles: Record<string, string> = {
+      'secuclaw-commander': '指挥官态势总览',
+      'security-ops': '运营态势总览',
+      'security-expert': '专家态势总览',
+      'privacy-officer': '隐私态势总览',
+      'security-architect': '架构态势总览',
+      'business-security-officer': '业务安全态势总览',
+      'supply-chain-security': '供应链态势总览',
+    };
+    const panelTitle = roleTitles[roleId] || '态势总览';
+
+    // ── Decision Radar SVG ──
+    const radarSvg = decCfg ? (() => {
+      const size = 120, cx = size / 2, cy = size / 2, r = size / 2 - 16;
+      const n = decCfg.axes.length;
+      const angleStep = (2 * Math.PI) / n;
+      const startAngle = -Math.PI / 2;
+      const gridPaths = [0.25, 0.5, 0.75, 1.0].map(level => {
+        const pts = Array.from({ length: n }, (_, i) => {
+          const a = startAngle + i * angleStep;
+          return `${(cx + r * level * Math.cos(a)).toFixed(1)},${(cy + r * level * Math.sin(a)).toFixed(1)}`;
+        }).join(' ');
+        return `<polygon points="${pts}" fill="none" stroke="#1e293b" stroke-width="0.5"/>`;
+      }).join('');
+      const axisLines = Array.from({ length: n }, (_, i) => {
+        const a = startAngle + i * angleStep;
+        return `<line x1="${cx}" y1="${cy}" x2="${(cx + r * Math.cos(a)).toFixed(1)}" y2="${(cy + r * Math.sin(a)).toFixed(1)}" stroke="#1e293b" stroke-width="0.5"/>`;
+      }).join('');
+      const dataPoints = decCfg.axes.map((ax: any, i: number) => {
+        const a = startAngle + i * angleStep;
+        const v = (ax.value / ax.max) * r;
+        return { x: cx + v * Math.cos(a), y: cy + v * Math.sin(a), label: ax.label, color: ax.color, value: ax.value };
+      });
+      const dataPoly = dataPoints.map((p: any) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      const labelsSvg = dataPoints.map((p: any, i: number) => {
+        const a = startAngle + i * angleStep;
+        const lx = cx + (r + 14) * Math.cos(a);
+        const ly = cy + (r + 14) * Math.sin(a);
+        return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${p.color}" font-size="9" font-weight="600">${p.label}</text>`;
+      }).join('');
+      const valueLabels = dataPoints.map((p: any, i: number) => {
+        const a = startAngle + i * angleStep;
+        const lx = cx + (r + 26) * Math.cos(a);
+        const ly = cy + (r + 26) * Math.sin(a);
+        return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${p.color}" font-size="11" font-weight="700">${p.value}</text>`;
+      }).join('');
+      return `<svg width="${size + 52}" height="${size + 52}" viewBox="-26 -26 ${size + 52} ${size + 52}" xmlns="http://www.w3.org/2000/svg">
+        ${gridPaths}${axisLines}
+        <polygon points="${dataPoly}" fill="#3b82f618" stroke="#3b82f6" stroke-width="1.5"/>
+        ${dataPoints.map((p: any) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${p.color}" stroke="#0f172a" stroke-width="1"/>`).join('')}
+        ${labelsSvg}${valueLabels}
+      </svg>`;
+    })() : '';
+
+    // ── Framework percentages ──
+    const mitrePct = fwCfg ? Math.round((fwCfg.mitre.covered / fwCfg.mitre.total) * 100) : 0;
+    const scfPct = fwCfg ? Math.round((fwCfg.scf.covered / fwCfg.scf.total) * 100) : 0;
+
+    // Count available sections
+    const sectionCount = (hasDecision ? 1 : 0) + (hasLegal || hasFramework ? 1 : 0) + (hasViz ? 1 : 0);
+
+    return html`
+      <div class="ciso-panel" style="padding:0;">
+        ${hasDecision ? html`
+          <!-- Section A: Decision Center -->
+          <div style="padding:16px 20px 12px;display:flex;gap:16px;align-items:flex-start;">
+            <div style="flex:0 0 auto;">${unsafeSVG(radarSvg)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">🧭 ${panelTitle}</div>
+              <div style="font-size:11px;color:${decCfg.recColor};padding:6px 10px;background:${decCfg.recColor}11;border-radius:6px;border-left:3px solid ${decCfg.recColor};margin-bottom:10px;line-height:1.5;">
+                💡 ${decCfg.recommendation}
+              </div>
+              ${decCfg.pendingDecisions.length > 0 ? html`
+                <div style="font-size:10px;color:#64748b;margin-bottom:4px;">待决策事项</div>
+                ${decCfg.pendingDecisions.map((d: any) => html`
+                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #1e293b11;">
+                    <span style="width:7px;height:7px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
+                    <span style="font-size:11px;color:#e2e8f0;font-weight:500;">${d.title}</span>
+                    <span style="font-size:10px;color:#64748b;">${d.impact}</span>
+                    <span style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:4px;background:${d.urgencyColor}15;color:${d.urgencyColor};font-weight:600;">${d.urgency}</span>
+                  </div>
+                `)}
+              ` : nothing}
+            </div>
+          </div>
+          <div class="ciso-divider" style="margin:0 20px;"></div>
+        ` : html`
+          <!-- Panel header (no decision) -->
+          <div style="padding:14px 20px 10px;">
+            <div style="font-size:14px;font-weight:700;color:#f1f5f9;">🧭 ${panelTitle}</div>
+          </div>
+        `}
+
+        ${(hasLegal || hasFramework) ? html`
+          <!-- Section B: Compliance & Coverage -->
+          <div style="padding:12px 20px;display:grid;grid-template-columns:${hasLegal && hasFramework ? '1.2fr 0.8fr' : '1fr'};gap:16px;">
+            ${hasLegal && legalCfg ? html`
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#a78bfa;margin-bottom:8px;">⚖️ 合规状态</div>
+                <div style="display:grid;grid-template-columns:repeat(${legalCfg.regulations.length},1fr);gap:6px;margin-bottom:8px;">
+                  ${legalCfg.regulations.map((r: any) => html`
+                    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 6px;text-align:center;">
+                      <div style="font-size:9px;color:#64748b;margin-bottom:2px;">${statusIcon[r.status] || ''} ${r.name}</div>
+                      <div style="font-size:20px;font-weight:700;color:${r.color};line-height:1.2;">${r.score}%</div>
+                    </div>
+                  `)}
+                </div>
+                ${legalCfg.riskItems.length > 0 ? html`
+                  <div style="border-top:1px solid #1e293b;padding-top:6px;">
+                    ${legalCfg.riskItems.map((ri: any) => html`
+                      <div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0;">
+                        <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
+                        <span style="color:#e2e8f0;">${ri.desc}</span>
+                        <span style="margin-left:auto;font-size:9px;padding:1px 6px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;">${ri.level}</span>
+                      </div>
+                    `)}
+                  </div>
+                ` : nothing}
+              </div>
+            ` : nothing}
+            ${hasFramework && fwCfg ? html`
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 框架覆盖度</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
+                    <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
+                    <div style="font-size:24px;font-weight:700;color:#ef4444;line-height:1;">${mitrePct}%</div>
+                    <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg.mitre.covered}/${fwCfg.mitre.total} techniques</div>
+                    <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                      ${fwCfg.mitre.topGaps.map((g: string) => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444411;color:#f87171;border:1px solid #ef444422;">${g}</span>`)}
+                    </div>
+                  </div>
+                  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
+                    <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
+                    <div style="font-size:24px;font-weight:700;color:#3b82f6;line-height:1;">${scfPct}%</div>
+                    <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg.scf.covered}/${fwCfg.scf.total} controls</div>
+                    <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                      ${fwCfg.scf.topGaps.map((g: string) => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#3b82f611;color:#60a5fa;border:1px solid #3b82f622;">${g}</span>`)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` : nothing}
+          </div>
+          <div class="ciso-divider" style="margin:0 20px;"></div>
+        ` : nothing}
+
+        ${hasViz ? html`
+          <!-- Section C: Visual Analytics -->
+          <div style="padding:12px 20px 16px;">
+            <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;">📊 可视化分析</div>
+            ${this._renderVizZone(roleId)}
+          </div>
+        ` : nothing}
+      </div>
+    `;
+  }
+
+
   private _renderCommanderDashboard() {
     return html`
       <div class="ciso-role-grid">
-        <!-- Row 0: Metrics + Tool Guide -->
         <div class="ciso-panel">
           <div class="ciso-panel-header">
             <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
@@ -2015,21 +2187,12 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('secuclaw-commander')}
         </div>
-
-        <!-- Row 1: Decision | Dark Side | Framework -->
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderDecisionZone('secuclaw-commander')}</div>
-          <div class="ciso-panel">${this._renderDarkZone('secuclaw-commander')}</div>
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('secuclaw-commander')}</div>
-        </div>
-
-        <!-- Row 2: Timeline (full width) -->
+        ${this._renderPosturePanel('secuclaw-commander')}
+        <div class="ciso-panel">${this._renderDarkZone('secuclaw-commander')}</div>
         <div class="ciso-panel">${this._renderTimelineZone('secuclaw-commander')}</div>
       </div>
     `
   }
-
-  // ─── 安全运营 ───
   private _renderOpsDashboard() {
     return html`
       <div class="ciso-role-grid">
@@ -2047,19 +2210,12 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('security-ops')}
         </div>
-
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderDarkZone('security-ops')}</div>
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('security-ops')}</div>
-          <div class="ciso-panel" style="display:flex;flex-direction:column;gap:12px;">
-            ${this._renderTimelineZone('security-ops')}
-          </div>
-        </div>
+        ${this._renderPosturePanel('security-ops')}
+        <div class="ciso-panel">${this._renderDarkZone('security-ops')}</div>
+        <div class="ciso-panel">${this._renderTimelineZone('security-ops')}</div>
       </div>
     `
   }
-
-  // ─── 安全专家 ───
   private _renderExpertDashboard() {
     return html`
       <div class="ciso-role-grid">
@@ -2076,21 +2232,12 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('security-expert')}
         </div>
-
-        <div class="ciso-zone-ops">
-          <div class="ciso-panel">${this._renderVizZone('security-expert')}</div>
-          <div class="ciso-panel">${this._renderDarkZone('security-expert')}</div>
-        </div>
-
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('security-expert')}</div>
-          <div class="ciso-panel" style="grid-column:span 2;">${this._renderTimelineZone('security-expert')}</div>
-        </div>
+        ${this._renderPosturePanel('security-expert')}
+        <div class="ciso-panel">${this._renderDarkZone('security-expert')}</div>
+        <div class="ciso-panel">${this._renderTimelineZone('security-expert')}</div>
       </div>
     `
   }
-
-  // ─── 隐私官 ───
   private _renderPrivacyDashboard() {
     return html`
       <div class="ciso-role-grid">
@@ -2109,23 +2256,15 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('privacy-officer')}
         </div>
-
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderLegalZone('privacy-officer')}</div>
-          <div class="ciso-panel">${this._renderDarkZone('privacy-officer')}</div>
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('privacy-officer')}</div>
-        </div>
-
+        ${this._renderPosturePanel('privacy-officer')}
         <div class="ciso-panel">
           ${this._renderPrivacyTechZone()}
         </div>
-
+        <div class="ciso-panel">${this._renderDarkZone('privacy-officer')}</div>
         <div class="ciso-panel">${this._renderTimelineZone('privacy-officer')}</div>
       </div>
     `
   }
-
-  // ─── 架构师 ───
   private _renderArchitectDashboard() {
     return html`
       <div class="ciso-role-grid">
@@ -2148,19 +2287,12 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('security-architect')}
         </div>
-
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderDarkZone('security-architect')}</div>
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('security-architect')}</div>
-          <div class="ciso-panel" style="display:flex;flex-direction:column;gap:12px;">
-            ${this._renderTimelineZone('security-architect')}
-          </div>
-        </div>
+        ${this._renderPosturePanel('security-architect')}
+        <div class="ciso-panel">${this._renderDarkZone('security-architect')}</div>
+        <div class="ciso-panel">${this._renderTimelineZone('security-architect')}</div>
       </div>
     `
   }
-
-  // ─── 业务安全 ───
   private _renderBizSecDashboard() {
     return html`
       <div class="ciso-role-grid">
@@ -2180,19 +2312,12 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('business-security-officer')}
         </div>
-
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderDarkZone('business-security-officer')}</div>
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('business-security-officer')}</div>
-          <div class="ciso-panel" style="display:flex;flex-direction:column;gap:12px;">
-            ${this._renderTimelineZone('business-security-officer')}
-          </div>
-        </div>
+        ${this._renderPosturePanel('business-security-officer')}
+        <div class="ciso-panel">${this._renderDarkZone('business-security-officer')}</div>
+        <div class="ciso-panel">${this._renderTimelineZone('business-security-officer')}</div>
       </div>
     `
   }
-
-  // ─── 供应链 ───
   private _renderSupplyDashboard() {
     return html`
       <div class="ciso-role-grid">
@@ -2215,18 +2340,12 @@ export class ScRoleCommander extends LitElement {
           </div>
           ${this._renderToolGuideInline('supply-chain-security')}
         </div>
-
-        <div class="ciso-zone-3col">
-          <div class="ciso-panel">${this._renderLegalZone('supply-chain-security')}</div>
-          <div class="ciso-panel">${this._renderDarkZone('supply-chain-security')}</div>
-          <div class="ciso-panel">${this._renderFrameworkZoneExpanded('supply-chain-security')}</div>
-        </div>
-
+        ${this._renderPosturePanel('supply-chain-security')}
+        <div class="ciso-panel">${this._renderDarkZone('supply-chain-security')}</div>
         <div class="ciso-panel">${this._renderTimelineZone('supply-chain-security')}</div>
       </div>
     `
   }
-
   private _iconMap: Record<string, string> = {
     BellRing: '🔔', Play: '▶️', ScrollText: '📜', Siren: '🚨', Globe: '🌍', Bot: '🤖',
     BarChart3: '📊', ListChecks: '📋', Target: '🎯', PiggyBank: '💰', FileText: '📄',
