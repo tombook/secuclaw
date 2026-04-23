@@ -4594,6 +4594,314 @@ private _executionHistory: ExecutionRecord[] = [
     return {total: this._x1edComplianceFrameworks.length, fullyCompliant: full, mostlyCompliant: mostly, avgComplianceRate: Math.round(avgRate * 10) / 10};
   }
 
+  // === Security Program Health Scorecard (Round 36 - Block A) ===
+  private _hsScores: Array<{id: string; name: string; score: number; trend: string; weight: number}> = [];
+  private _hsOverall: number = 0;
+  private _hsHistory: Array<{month: string; score: number}> = [];
+  private _hsRecommendations: Array<{id: number; dimension: string; action: string; priority: string; effort: string}> = [];
+
+  private _initHsScorecard() {
+    const dims = ['Governance & Policy', 'Technical Controls', 'Threat Detection', 'Incident Response',
+      'Vulnerability Management', 'Compliance & Audit', 'Security Awareness', 'Third-Party Risk'];
+    const trends = ['improving', 'stable', 'declining', 'improving', 'stable', 'improving', 'declining', 'stable'];
+    const weights = [15, 20, 15, 12, 13, 10, 8, 7];
+    this._hsScores = dims.map((name, i) => ({
+      id: 'hs-dim-' + i, name, score: 55 + ((idx * 7 + i * 11) % 40),
+      trend: trends[i], weight: weights[i]
+    }));
+    const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    let base = 58 + (idx % 15);
+    this._hsHistory = months.map((m, i) => ({month: m, score: Math.min(100, base + i * 2 + (idx % 3))}));
+    this._hsOverall = Math.round(this._hsScores.reduce((s, d) => s + d.score * d.weight, 0) / 100);
+    this._hsRecommendations = [
+      {id: 1, dimension: dims[0], action: 'Update security policies to reflect current threat landscape', priority: 'high', effort: 'medium'},
+      {id: 2, dimension: dims[1], action: 'Deploy EDR solution across remaining endpoints', priority: 'high', effort: 'high'},
+      {id: 3, dimension: dims[2], action: 'Tune SIEM correlation rules to reduce false positives', priority: 'medium', effort: 'low'},
+      {id: 4, dimension: dims[3], action: 'Conduct tabletop exercise for ransomware scenarios', priority: 'high', effort: 'medium'},
+      {id: 5, dimension: dims[4], action: 'Reduce mean time to remediate critical vulnerabilities below 7 days', priority: 'medium', effort: 'medium'},
+      {id: 6, dimension: dims[5], action: 'Prepare evidence packages for upcoming SOC 2 audit', priority: 'high', effort: 'high'},
+      {id: 7, dimension: dims[6], action: 'Launch phishing simulation campaign for engineering teams', priority: 'medium', effort: 'low'},
+      {id: 8, dimension: dims[7], action: 'Complete security assessments for top 20 critical vendors', priority: 'medium', effort: 'high'},
+    ];
+  }
+
+  private _hsGetStatusColor(score: number): string {
+    if (score >= 80) return '#22c55e';
+    if (score >= 60) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  private _hsGetTrendIcon(trend: string): string {
+    if (trend === 'improving') return '\u2191';
+    if (trend === 'declining') return '\u2193';
+    return '\u2192';
+  }
+
+  private _hsCalculateRisk(): {level: string; score: number; factors: string[]} {
+    const lowScores = this._hsScores.filter(d => d.score < 60);
+    const declining = this._hsScores.filter(d => d.trend === 'declining');
+    const riskScore = Math.max(0, 100 - this._hsOverall + (lowScores.length * 5) + (declining.length * 8));
+    const level = riskScore > 60 ? 'critical' : riskScore > 35 ? 'elevated' : 'moderate';
+    const factors = [];
+    if (lowScores.length > 0) factors.push(lowScores.length + ' dimensions below 60');
+    if (declining.length > 0) factors.push(declining.length + ' dimensions declining');
+    if (this._hsOverall < 70) factors.push('Overall score below target');
+    return {level, score: Math.min(100, riskScore), factors};
+  }
+
+  private _hsGetRadarData(): Array<{dimension: string; current: number; target: number; gap: number}> {
+    return this._hsScores.map(d => ({
+      dimension: d.name, current: d.score, target: 85,
+      gap: 85 - d.score
+    }));
+  }
+
+  private _hsCompareWithIndustry(): {ours: number; industry: number; percentile: number} {
+    const industryAvg = 72 + (idx % 5);
+    const ours = this._hsOverall;
+    const percentile = Math.min(99, Math.max(1, Math.round(50 + (ours - industryAvg) * 3)));
+    return {ours, industryAvg, percentile};
+  }
+
+
+  // === Security Metrics Deep Dive (Round 36 - Pass 2 - Block C) ===
+
+  private _smKpis: Array<{id: string; name: string; value: number; unit: string; target: number;
+    status: string; trend: string; dataPoints: number[]}> = [];
+  private _smCategories: Array<{name: string; kpis: string[]; score: number; weight: number}> = [];
+
+  private _initSmMetrics() {
+    const kpis = [
+      {name: 'Mean Time to Detect', unit: 'hours', target: 4, status: 'warning'},
+      {name: 'Mean Time to Respond', unit: 'hours', target: 8, status: 'good'},
+      {name: 'Mean Time to Contain', unit: 'hours', target: 24, status: 'good'},
+      {name: 'Vulnerability Remediation SLA', unit: '%', target: 95, status: 'warning'},
+      {name: 'Patch Compliance Rate', unit: '%', target: 98, status: 'good'},
+      {name: 'Security Awareness Score', unit: '%', target: 85, status: 'critical'},
+      {name: 'Phishing Click Rate', unit: '%', target: 5, status: 'good'},
+      {name: 'Endpoint Protection Coverage', unit: '%', target: 100, status: 'good'},
+      {name: 'MFA Adoption Rate', unit: '%', target: 95, status: 'warning'},
+      {name: 'Incident Response Drills', unit: '/year', target: 4, status: 'good'},
+      {name: 'Policy Review Compliance', unit: '%', target: 100, status: 'good'},
+      {name: 'Third-Party Risk Assessments', unit: '%', target: 90, status: 'warning'},
+    ];
+    const trends = ['improving', 'stable', 'improving', 'stable', 'improving',
+      'declining', 'improving', 'stable', 'improving', 'stable', 'stable', 'improving'];
+    this._smKpis = kpis.map((kpi, i) => {
+      let value: number;
+      if (kpi.unit === 'hours') value = 2 + ((idx + i * 5) % 10);
+      else if (kpi.unit === '%') value = 70 + ((idx + i * 7) % 28);
+      else value = 1 + ((idx + i) % 4);
+      return {
+        id: 'sm-kpi-' + i, name: kpi.name, value, unit: kpi.unit, target: kpi.target,
+        status: kpi.status, trend: trends[i],
+        dataPoints: Array.from({length: 12}, (_, j) => value + ((j * 3 - 15 + (idx % 7)) % 10) - 5)
+      };
+    });
+    this._smCategories = [
+      {name: 'Detection & Response', kpis: ['Mean Time to Detect', 'Mean Time to Respond', 'Mean Time to Contain'], score: 72 + (idx % 15), weight: 30},
+      {name: 'Vulnerability Management', kpis: ['Vulnerability Remediation SLA', 'Patch Compliance Rate'], score: 78 + (idx % 12), weight: 25},
+      {name: 'People & Awareness', kpis: ['Security Awareness Score', 'Phishing Click Rate', 'MFA Adoption Rate'], score: 65 + (idx % 18), weight: 20},
+      {name: 'Governance & Risk', kpis: ['Policy Review Compliance', 'Third-Party Risk Assessments', 'Incident Response Drills'], score: 70 + (idx % 20), weight: 25},
+    ];
+  }
+
+  private _smGetOverallScore(): number {
+    const weighted = this._smCategories.reduce((s, c) => s + c.score * c.weight, 0);
+    return Math.round(weighted / 100);
+  }
+
+  private _smGetBreachedKpis(): Array<{name: string; value: number; target: number; gap: number}> {
+    return this._smKpis.filter(k => {
+      if (k.unit === 'hours') return k.value > k.target;
+      if (k.unit === '%') return k.value < k.target;
+      return k.value < k.target;
+    }).map(k => ({name: k.name, value: k.value, target: k.target, gap: Math.abs(k.value - k.target)}));
+  }
+
+  private _smGetMonthlyProgress(): Array<{month: string; score: number; target: number}> {
+    const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    let base = 65 + (idx % 10);
+    return months.map((m, i) => ({
+      month: m, score: Math.min(100, base + i * 2 + (idx % 3)), target: 85
+    }));
+  }
+
+
+  // === Risk Assessment Engine (Round 36 - Pass 3 - Block A) ===
+
+  private _raRisks: Array<{id: string; title: string; category: string; likelihood: number;
+    impact: number; riskScore: number; owner: string; status: string;
+    mitigationPlan: string; residualRisk: number; lastReview: string;
+    nextReview: string; relatedControls: string[]; notes: string}> = [];
+  private _raMatrix: Record<string, Record<string, number>> = {};
+  private _raCategories: string[] = ['Strategic', 'Operational', 'Financial', 'Compliance', 'Technology', 'Reputational'];
+
+  private _initRaRisks() {
+    const risks = [
+      {title: 'Ransomware attack on critical infrastructure', category: 'Technology', owner: 'CISO', mitigationPlan: 'Deploy advanced EDR, implement network segmentation, maintain offline backups'},
+      {title: 'Data breach due to insider threat', category: 'Operational', owner: 'HR Director', mitigationPlan: 'Implement DLP, conduct behavioral analytics, enforce least privilege'},
+      {title: 'Non-compliance with GDPR Article 33', category: 'Compliance', owner: 'DPO', mitigationPlan: 'Automate breach notification workflows, train incident responders'},
+      {title: 'Third-party vendor security failure', category: 'Operational', owner: 'Procurement', mitigationPlan: 'Implement vendor risk scoring, conduct regular assessments'},
+      {title: 'Cloud misconfiguration exposure', category: 'Technology', owner: 'Cloud Lead', mitigationPlan: 'Deploy CSPM, implement IaC scanning, enforce guardrails'},
+      {title: 'Phishing campaign targeting executives', category: 'Operational', owner: 'SOC Lead', mitigationPlan: 'Deploy anti-phishing tools, conduct regular simulations'},
+      {title: 'Supply chain compromise via dependencies', category: 'Technology', owner: 'AppSec Lead', mitigationPlan: 'Implement SCA, maintain SBOM, monitor vulnerability feeds'},
+      {title: 'Regulatory penalty for inadequate controls', category: 'Compliance', owner: 'CLO', mitigationPlan: 'Quarterly compliance reviews, gap remediation tracking'},
+      {title: 'Key person dependency in security team', category: 'Strategic', owner: 'CISO', mitigationPlan: 'Cross-training program, documentation, knowledge sharing'},
+      {title: 'Reputational damage from security incident', category: 'Reputational', owner: 'PR Director', mitigationPlan: 'Incident communication plan, media training, proactive disclosure'},
+    ];
+    const statuses = ['open', 'mitigating', 'accepted', 'open', 'mitigating', 'mitigating', 'open', 'mitigating', 'open', 'accepted'];
+    this._raRisks = risks.map((r, i) => {
+      const likelihood = 20 + ((idx * 7 + i * 13) % 70);
+      const impact = 30 + ((idx * 3 + i * 11) % 60);
+      const riskScore = Math.round(likelihood * impact / 100);
+      const residualRisk = Math.round(riskScore * (0.3 + ((idx + i) % 4) * 0.15));
+      return {
+        id: 'RA-' + String(2000 + idx * 10 + i),
+        title: r.title, category: r.category,
+        likelihood, impact, riskScore,
+        owner: r.owner, status: statuses[i],
+        mitigationPlan: r.mitigationPlan,
+        residualRisk,
+        lastReview: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+        nextReview: '2026-07-' + String(1 + (i * 3 % 20)).padStart(2, '0'),
+        relatedControls: ['Control-' + (i * 3 + 1), 'Control-' + (i * 3 + 2), 'Control-' + (i * 3 + 3)],
+        notes: i % 2 === 0 ? 'Requires board-level attention' : 'Within risk appetite'
+      };
+    });
+    const levels = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain'];
+    const impacts = ['Negligible', 'Minor', 'Moderate', 'Major', 'Severe'];
+    levels.forEach((l, li) => {
+      this._raMatrix[l] = {};
+      impacts.forEach((imp, ii) => {
+        this._raMatrix[l][imp] = (li + 1) * (ii + 1);
+      });
+    });
+  }
+
+  private _raGetRiskDistribution(): {critical: number; high: number; medium: number; low: number} {
+    const risks = this._raRisks;
+    return {
+      critical: risks.filter(r => r.riskScore >= 20).length,
+      high: risks.filter(r => r.riskScore >= 12 && r.riskScore < 20).length,
+      medium: risks.filter(r => r.riskScore >= 6 && r.riskScore < 12).length,
+      low: risks.filter(r => r.riskScore < 6).length,
+    };
+  }
+
+  private _raGetByCategory(): Array<{category: string; count: number; avgRisk: number; maxRisk: number}> {
+    const grouped: Record<string, number[]> = {};
+    this._raRisks.forEach(r => {
+      if (!grouped[r.category]) grouped[r.category] = [];
+      grouped[r.category].push(r.riskScore);
+    });
+    return Object.entries(grouped).map(([cat, scores]) => ({
+      category: cat, count: scores.length,
+      avgRisk: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      maxRisk: Math.max(...scores)
+    }));
+  }
+
+  private _raGetTopRisks(): Array<{title: string; score: number; owner: string; status: string}> {
+    return [...this._raRisks].sort((a, b) => b.riskScore - a.riskScore).slice(0, 5)
+      .map(r => ({title: r.title, score: r.riskScore, owner: r.owner, status: r.status}));
+  }
+
+  private _raGetRiskTrend(): Array<{month: string; avgScore: number; count: number}> {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr'];
+    let base = 12 + (idx % 5);
+    return months.map((m, i) => ({
+      month: m,
+      avgScore: Math.max(5, base - i + ((idx % 3) - 1)),
+      count: 8 + ((idx + i) % 5)
+    }));
+  }
+
+  private _raCalculateRiskAppetite(): {current: number; appetite: number; status: string} {
+    const avg = Math.round(this._raRisks.reduce((s, r) => s + r.residualRisk, 0) / this._raRisks.length);
+    const appetite = 10 + (idx % 5);
+    return {current: avg, appetite, status: avg > appetite ? 'exceeded' : 'within'};
+  }
+
+
+  // === Security Architecture Review (Round 36 - Pass 4) ===
+
+  private _sarComponents: Array<{id: string; name: string; type: string; layer: string;
+    securityLevel: number; complianceScore: number; lastReview: string;
+    reviewer: string; findings: number; criticalFindings: number;
+    recommendations: string[]; status: string; technology: string}> = [];
+
+  private _initSarReview() {
+    const components = [
+      {name: 'API Gateway', type: 'Perimeter', layer: 'Network', technology: 'Kong'},
+      {name: 'Web Application Firewall', type: 'Perimeter', layer: 'Application', technology: 'AWS WAF'},
+      {name: 'Identity Provider', type: 'Identity', layer: 'Authentication', technology: 'Okta'},
+      {name: 'SIEM Platform', type: 'Detection', layer: 'Monitoring', technology: 'Splunk'},
+      {name: 'EDR Solution', type: 'Endpoint', layer: 'Host', technology: 'CrowdStrike'},
+      {name: 'Secrets Vault', type: 'Credential', layer: 'Application', technology: 'HashiCorp Vault'},
+      {name: 'Container Registry', type: 'Container', layer: 'Infrastructure', technology: 'Harbor'},
+      {name: 'Database Encryption', type: 'Encryption', layer: 'Data', technology: 'AES-256'},
+      {name: 'Network Segmentation', type: 'Network', layer: 'Infrastructure', technology: 'VLAN/VXLAN'},
+      {name: 'DLP Engine', type: 'Data Protection', layer: 'Application', technology: 'Symantec DLP'},
+      {name: 'Patch Management', type: 'Vulnerability', layer: 'Host', technology: 'Qualys'},
+      {name: 'Backup System', type: 'Recovery', layer: 'Infrastructure', technology: 'Veeam'},
+    ];
+    const reviewers = ['Sec Architect', 'Cloud Architect', 'Network Engineer', 'AppSec Lead', 'IAM Lead', 'SOC Manager'];
+    this._sarComponents = components.map((c, i) => ({
+      id: 'SAR-' + (400 + i),
+      name: c.name, type: c.type, layer: c.layer, technology: c.technology,
+      securityLevel: 60 + ((idx * 7 + i * 11) % 35),
+      complianceScore: 55 + ((idx * 5 + i * 13) % 40),
+      lastReview: '2026-0' + (1 + (i % 4)) + '-' + String(1 + (i * 3 % 20)).padStart(2, '0'),
+      reviewer: reviewers[i % reviewers.length],
+      findings: 2 + ((idx + i * 3) % 8),
+      criticalFindings: i % 4 === 0 ? 1 + (idx % 2) : 0,
+      recommendations: i % 3 === 0
+        ? ['Upgrade to latest version', 'Implement additional monitoring', 'Review access controls']
+        : ['Enhance logging', 'Update configuration', 'Add redundancy'],
+      status: i % 5 === 0 ? 'needs-review' : 'compliant'
+    }));
+  }
+
+  private _sarGetSecurityPosture(): {overall: number; byLayer: Record<string, number>; weakest: string; strongest: string} {
+    const byLayer: Record<string, number> = {};
+    this._sarComponents.forEach(c => {
+      if (!byLayer[c.layer]) byLayer[c.layer] = [];
+      byLayer[c.layer].push(c.securityLevel);
+    });
+    const layerScores: Record<string, number> = {};
+    Object.entries(byLayer).forEach(([layer, scores]) => {
+      layerScores[layer] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    });
+    const overall = Math.round(this._sarComponents.reduce((s, c) => s + c.securityLevel, 0) / this._sarComponents.length);
+    const entries = Object.entries(layerScores).sort((a, b) => a[1] - b[1]);
+    return {overall, byLayer: layerScores, weakest: entries[0][0], strongest: entries[entries.length - 1][0]};
+  }
+
+  private _sarGetCriticalFindings(): Array<{component: string; title: string; severity: string; recommendation: string}> {
+    return this._sarComponents.filter(c => c.criticalFindings > 0).map(c => ({
+      component: c.name, title: 'Critical security gap identified',
+      severity: 'critical',
+      recommendation: c.recommendations[0]
+    }));
+  }
+
+  private _sarGetComplianceGaps(): {totalFindings: number; criticalCount: number; avgCompliance: number} {
+    return {
+      totalFindings: this._sarComponents.reduce((s, c) => s + c.findings, 0),
+      criticalCount: this._sarComponents.reduce((s, c) => s + c.criticalFindings, 0),
+      avgCompliance: Math.round(this._sarComponents.reduce((s, c) => s + c.complianceScore, 0) / this._sarComponents.length)
+    };
+  }
+
+  private _sarGetComponentMap(): Array<{name: string; type: string; layer: string; securityLevel: number; status: string}> {
+    return this._sarComponents.map(c => ({
+      name: c.name, type: c.type, layer: c.layer,
+      securityLevel: c.securityLevel, status: c.status
+    }));
+  }
+
+
   render() {    if (this._scfRules.length === 0) { this._initScfRules(); this._initScfCvss(); this._runScfAnomalyDetection(); this._generateScfPredictions(); this._initScfApprovals(); this._initScfActivity(); this._initScfNotifications(); }
 
     const items = this._getFiltered();

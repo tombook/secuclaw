@@ -4703,6 +4703,362 @@ private _executionHistory: ExecutionRecord[] = [
     return {total: this._xa7bComplianceFrameworks.length, fullyCompliant: full, mostlyCompliant: mostly, avgComplianceRate: Math.round(avgRate * 10) / 10};
   }
 
+  // === Security Program Health Scorecard (Round 36 - Block A) ===
+  private _hsScores: Array<{id: string; name: string; score: number; trend: string; weight: number}> = [];
+  private _hsOverall: number = 0;
+  private _hsHistory: Array<{month: string; score: number}> = [];
+  private _hsRecommendations: Array<{id: number; dimension: string; action: string; priority: string; effort: string}> = [];
+
+  private _initHsScorecard() {
+    const dims = ['Governance & Policy', 'Technical Controls', 'Threat Detection', 'Incident Response',
+      'Vulnerability Management', 'Compliance & Audit', 'Security Awareness', 'Third-Party Risk'];
+    const trends = ['improving', 'stable', 'declining', 'improving', 'stable', 'improving', 'declining', 'stable'];
+    const weights = [15, 20, 15, 12, 13, 10, 8, 7];
+    this._hsScores = dims.map((name, i) => ({
+      id: 'hs-dim-' + i, name, score: 55 + ((idx * 7 + i * 11) % 40),
+      trend: trends[i], weight: weights[i]
+    }));
+    const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    let base = 58 + (idx % 15);
+    this._hsHistory = months.map((m, i) => ({month: m, score: Math.min(100, base + i * 2 + (idx % 3))}));
+    this._hsOverall = Math.round(this._hsScores.reduce((s, d) => s + d.score * d.weight, 0) / 100);
+    this._hsRecommendations = [
+      {id: 1, dimension: dims[0], action: 'Update security policies to reflect current threat landscape', priority: 'high', effort: 'medium'},
+      {id: 2, dimension: dims[1], action: 'Deploy EDR solution across remaining endpoints', priority: 'high', effort: 'high'},
+      {id: 3, dimension: dims[2], action: 'Tune SIEM correlation rules to reduce false positives', priority: 'medium', effort: 'low'},
+      {id: 4, dimension: dims[3], action: 'Conduct tabletop exercise for ransomware scenarios', priority: 'high', effort: 'medium'},
+      {id: 5, dimension: dims[4], action: 'Reduce mean time to remediate critical vulnerabilities below 7 days', priority: 'medium', effort: 'medium'},
+      {id: 6, dimension: dims[5], action: 'Prepare evidence packages for upcoming SOC 2 audit', priority: 'high', effort: 'high'},
+      {id: 7, dimension: dims[6], action: 'Launch phishing simulation campaign for engineering teams', priority: 'medium', effort: 'low'},
+      {id: 8, dimension: dims[7], action: 'Complete security assessments for top 20 critical vendors', priority: 'medium', effort: 'high'},
+    ];
+  }
+
+  private _hsGetStatusColor(score: number): string {
+    if (score >= 80) return '#22c55e';
+    if (score >= 60) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  private _hsGetTrendIcon(trend: string): string {
+    if (trend === 'improving') return '\u2191';
+    if (trend === 'declining') return '\u2193';
+    return '\u2192';
+  }
+
+  private _hsCalculateRisk(): {level: string; score: number; factors: string[]} {
+    const lowScores = this._hsScores.filter(d => d.score < 60);
+    const declining = this._hsScores.filter(d => d.trend === 'declining');
+    const riskScore = Math.max(0, 100 - this._hsOverall + (lowScores.length * 5) + (declining.length * 8));
+    const level = riskScore > 60 ? 'critical' : riskScore > 35 ? 'elevated' : 'moderate';
+    const factors = [];
+    if (lowScores.length > 0) factors.push(lowScores.length + ' dimensions below 60');
+    if (declining.length > 0) factors.push(declining.length + ' dimensions declining');
+    if (this._hsOverall < 70) factors.push('Overall score below target');
+    return {level, score: Math.min(100, riskScore), factors};
+  }
+
+  private _hsGetRadarData(): Array<{dimension: string; current: number; target: number; gap: number}> {
+    return this._hsScores.map(d => ({
+      dimension: d.name, current: d.score, target: 85,
+      gap: 85 - d.score
+    }));
+  }
+
+  private _hsCompareWithIndustry(): {ours: number; industry: number; percentile: number} {
+    const industryAvg = 72 + (idx % 5);
+    const ours = this._hsOverall;
+    const percentile = Math.min(99, Math.max(1, Math.round(50 + (ours - industryAvg) * 3)));
+    return {ours, industryAvg, percentile};
+  }
+
+
+  // === Security Metrics Deep Dive (Round 36 - Pass 2 - Block C) ===
+
+  private _smKpis: Array<{id: string; name: string; value: number; unit: string; target: number;
+    status: string; trend: string; dataPoints: number[]}> = [];
+  private _smCategories: Array<{name: string; kpis: string[]; score: number; weight: number}> = [];
+
+  private _initSmMetrics() {
+    const kpis = [
+      {name: 'Mean Time to Detect', unit: 'hours', target: 4, status: 'warning'},
+      {name: 'Mean Time to Respond', unit: 'hours', target: 8, status: 'good'},
+      {name: 'Mean Time to Contain', unit: 'hours', target: 24, status: 'good'},
+      {name: 'Vulnerability Remediation SLA', unit: '%', target: 95, status: 'warning'},
+      {name: 'Patch Compliance Rate', unit: '%', target: 98, status: 'good'},
+      {name: 'Security Awareness Score', unit: '%', target: 85, status: 'critical'},
+      {name: 'Phishing Click Rate', unit: '%', target: 5, status: 'good'},
+      {name: 'Endpoint Protection Coverage', unit: '%', target: 100, status: 'good'},
+      {name: 'MFA Adoption Rate', unit: '%', target: 95, status: 'warning'},
+      {name: 'Incident Response Drills', unit: '/year', target: 4, status: 'good'},
+      {name: 'Policy Review Compliance', unit: '%', target: 100, status: 'good'},
+      {name: 'Third-Party Risk Assessments', unit: '%', target: 90, status: 'warning'},
+    ];
+    const trends = ['improving', 'stable', 'improving', 'stable', 'improving',
+      'declining', 'improving', 'stable', 'improving', 'stable', 'stable', 'improving'];
+    this._smKpis = kpis.map((kpi, i) => {
+      let value: number;
+      if (kpi.unit === 'hours') value = 2 + ((idx + i * 5) % 10);
+      else if (kpi.unit === '%') value = 70 + ((idx + i * 7) % 28);
+      else value = 1 + ((idx + i) % 4);
+      return {
+        id: 'sm-kpi-' + i, name: kpi.name, value, unit: kpi.unit, target: kpi.target,
+        status: kpi.status, trend: trends[i],
+        dataPoints: Array.from({length: 12}, (_, j) => value + ((j * 3 - 15 + (idx % 7)) % 10) - 5)
+      };
+    });
+    this._smCategories = [
+      {name: 'Detection & Response', kpis: ['Mean Time to Detect', 'Mean Time to Respond', 'Mean Time to Contain'], score: 72 + (idx % 15), weight: 30},
+      {name: 'Vulnerability Management', kpis: ['Vulnerability Remediation SLA', 'Patch Compliance Rate'], score: 78 + (idx % 12), weight: 25},
+      {name: 'People & Awareness', kpis: ['Security Awareness Score', 'Phishing Click Rate', 'MFA Adoption Rate'], score: 65 + (idx % 18), weight: 20},
+      {name: 'Governance & Risk', kpis: ['Policy Review Compliance', 'Third-Party Risk Assessments', 'Incident Response Drills'], score: 70 + (idx % 20), weight: 25},
+    ];
+  }
+
+  private _smGetOverallScore(): number {
+    const weighted = this._smCategories.reduce((s, c) => s + c.score * c.weight, 0);
+    return Math.round(weighted / 100);
+  }
+
+  private _smGetBreachedKpis(): Array<{name: string; value: number; target: number; gap: number}> {
+    return this._smKpis.filter(k => {
+      if (k.unit === 'hours') return k.value > k.target;
+      if (k.unit === '%') return k.value < k.target;
+      return k.value < k.target;
+    }).map(k => ({name: k.name, value: k.value, target: k.target, gap: Math.abs(k.value - k.target)}));
+  }
+
+  private _smGetMonthlyProgress(): Array<{month: string; score: number; target: number}> {
+    const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    let base = 65 + (idx % 10);
+    return months.map((m, i) => ({
+      month: m, score: Math.min(100, base + i * 2 + (idx % 3)), target: 85
+    }));
+  }
+
+
+  // === Security Training Platform (Round 36 - Pass 3 - Block C) ===
+
+  private _tpCourses: Array<{id: string; title: string; category: string; difficulty: string;
+    duration: number; enrolled: number; completed: number; avgScore: number;
+    passRate: number; rating: number; lastUpdated: string; mandatory: boolean;
+    modules: number; prerequisites: string[]}> = [];
+  private _tpLearners: Array<{id: string; name: string; department: string;
+    completedCourses: number; inProgress: number; avgScore: number;
+    lastActivity: string; riskLevel: string; certificationCount: number}> = [];
+
+  private _initTpTraining() {
+    const courses = [
+      {title: 'Security Fundamentals 101', category: 'Foundation', difficulty: 'beginner', mandatory: true, modules: 8},
+      {title: 'Phishing Awareness & Prevention', category: 'Awareness', difficulty: 'beginner', mandatory: true, modules: 5},
+      {title: 'Secure Coding Practices', category: 'Developer', difficulty: 'intermediate', mandatory: false, modules: 12},
+      {title: 'Cloud Security Architecture', category: 'Cloud', difficulty: 'advanced', mandatory: false, modules: 10},
+      {title: 'Incident Response Procedures', category: 'Operations', difficulty: 'intermediate', mandatory: true, modules: 7},
+      {title: 'GDPR & Data Privacy', category: 'Compliance', difficulty: 'intermediate', mandatory: true, modules: 6},
+      {title: 'Network Security Deep Dive', category: 'Technical', difficulty: 'advanced', mandatory: false, modules: 15},
+      {title: 'Identity & Access Management', category: 'IAM', difficulty: 'intermediate', mandatory: false, modules: 9},
+      {title: 'Red Team Methodology', category: 'Offensive', difficulty: 'advanced', mandatory: false, modules: 11},
+      {title: 'SOC Analyst Certification Prep', category: 'Career', difficulty: 'intermediate', mandatory: false, modules: 14},
+      {title: 'Container Security', category: 'DevSecOps', difficulty: 'intermediate', mandatory: false, modules: 8},
+      {title: 'Executive Security Briefing', category: 'Leadership', difficulty: 'beginner', mandatory: true, modules: 4},
+    ];
+    const prereqs: string[][] = [[], ['Security Fundamentals 101'], ['Security Fundamentals 101'],
+      ['Cloud Security Architecture'], ['Security Fundamentals 101', 'Phishing Awareness & Prevention'],
+      [], ['Network Security Deep Dive'], ['Security Fundamentals 101'],
+      ['Incident Response Procedures', 'Network Security Deep Dive'],
+      ['Incident Response Procedures'], ['Secure Coding Practices'], []];
+    this._tpCourses = courses.map((c, i) => ({
+      id: 'TP-C-' + (100 + i),
+      title: c.title, category: c.category, difficulty: c.difficulty,
+      duration: 30 + ((idx + i * 20) % 120),
+      enrolled: 20 + ((idx * 3 + i * 7) % 80),
+      completed: 15 + ((idx * 2 + i * 5) % 60),
+      avgScore: 65 + ((idx + i * 4) % 30),
+      passRate: 75 + ((idx + i * 3) % 20),
+      rating: 3.5 + ((idx + i) % 15) / 10,
+      lastUpdated: '2026-0' + (1 + (i % 4)) + '-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+      mandatory: c.mandatory, modules: c.modules,
+      prerequisites: prereqs[i]
+    }));
+    const depts = ['Engineering', 'Finance', 'HR', 'Legal', 'Marketing', 'Operations', 'Sales', 'Executive'];
+    this._tpLearners = depts.map((dept, i) => ({
+      id: 'TP-L-' + (200 + i), name: 'Learner ' + (i + 1), department: dept,
+      completedCourses: 3 + ((idx + i * 3) % 8),
+      inProgress: 1 + ((idx + i) % 3),
+      avgScore: 60 + ((idx * 5 + i * 7) % 35),
+      lastActivity: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+      riskLevel: i % 4 === 0 ? 'high' : i % 2 === 0 ? 'medium' : 'low',
+      certificationCount: i % 3 === 0 ? 2 + (idx % 3) : 0
+    }));
+  }
+
+  private _tpGetCompletionRate(): {overall: number; mandatory: number; voluntary: number} {
+    const mand = this._tpCourses.filter(c => c.mandatory);
+    const vol = this._tpCourses.filter(c => !c.mandatory);
+    const overall = this._tpCourses.reduce((s, c) => s + c.completed / c.enrolled, 0) / this._tpCourses.length;
+    const mandRate = mand.reduce((s, c) => s + c.completed / c.enrolled, 0) / Math.max(1, mand.length);
+    const volRate = vol.reduce((s, c) => s + c.completed / c.enrolled, 0) / Math.max(1, vol.length);
+    return {overall: Math.round(overall * 100), mandatory: Math.round(mandRate * 100), voluntary: Math.round(volRate * 100)};
+  }
+
+  private _tpGetAtRiskLearners(): Array<{name: string; department: string; risk: string; missedCourses: number}> {
+    return this._tpLearners.filter(l => l.riskLevel === 'high').map(l => ({
+      name: l.name, department: l.department, risk: l.riskLevel,
+      missedCourses: this._tpCourses.filter(c => c.mandatory).length - l.completedCourses
+    }));
+  }
+
+  private _tpGetTopCourses(): Array<{title: string; enrolled: number; avgScore: number; rating: number}> {
+    return [...this._tpCourses].sort((a, b) => b.enrolled - a.enrolled).slice(0, 5)
+      .map(c => ({title: c.title, enrolled: c.enrolled, avgScore: c.avgScore, rating: c.rating}));
+  }
+
+  private _tpGetSkillGaps(): Array<{department: string; missingSkills: string[]; recommendedCourses: string[]}> {
+    return this._tpLearners.filter(l => l.riskLevel !== 'low').slice(0, 5).map(l => ({
+      department: l.department,
+      missingSkills: ['Secure Coding', 'Cloud Security', 'Incident Response'].slice(0, 1 + (idx % 3)),
+      recommendedCourses: this._tpCourses.filter(c => !c.mandatory).slice(0, 2).map(c => c.title)
+    }));
+  }
+
+
+  // === Security Operations Center Analytics (Round 36 - Pass 4) ===
+
+  private _socQueue: Array<{id: string; alertId: string; source: string; severity: string;
+    status: string; assignedTo: string; created: string; slaDeadline: string;
+    slaRemaining: number; notes: string; enrichment: string[]}> = [];
+  private _socShifts: Array<{name: string; analysts: number; activeAlerts: number;
+    escalated: number; resolved: number; startTime: string; performance: number}> = [];
+
+  private _initSocCenter() {
+    const sources = ['SIEM', 'EDR', 'IDS/IPS', 'WAF', 'DLP', 'CloudTrail', 'Email GW', 'Auth Logs'];
+    const severities = ['critical', 'high', 'medium', 'low', 'critical', 'high', 'medium', 'low'];
+    const analysts = ['J.Smith', 'A.Johnson', 'M.Williams', 'R.Brown', 'K.Davis', 'S.Miller', 'T.Wilson', 'L.Moore'];
+    this._socQueue = Array.from({length: 12}, (_, i) => ({
+      id: 'SOC-Q-' + (500 + idx + i),
+      alertId: 'ALR-' + String(20000 + idx * 100 + i * 7),
+      source: sources[i % sources.length],
+      severity: severities[i % severities.length],
+      status: i % 4 === 0 ? 'investigating' : i % 3 === 0 ? 'escalated' : 'pending',
+      assignedTo: analysts[i % analysts.length],
+      created: '2026-04-23T' + String(8 + (i % 12)).padStart(2, '0') + ':00',
+      slaDeadline: '2026-04-23T' + String(10 + (i % 8)).padStart(2, '0') + ':30',
+      slaRemaining: 30 + ((idx + i * 17) % 180),
+      notes: i % 3 === 0 ? 'Potential false positive, requires validation' : '',
+      enrichment: i % 2 === 0 ? ['IOC matched', 'Threat intel enriched', 'Asset correlated'] : ['Asset identified']
+    }));
+    this._socShifts = ['Morning', 'Afternoon', 'Night'].map((shift, i) => ({
+      name: shift + ' Shift',
+      analysts: 3 + ((idx + i) % 4),
+      activeAlerts: 5 + ((idx * 3 + i * 7) % 20),
+      escalated: 1 + ((idx + i * 2) % 5),
+      resolved: 10 + ((idx * 5 + i * 11) % 25),
+      startTime: ['06:00', '14:00', '22:00'][i],
+      performance: 70 + ((idx * 7 + i * 13) % 25)
+    }));
+  }
+
+  private _socGetQueueMetrics(): {total: number; investigating: number; escalated: number; pending: number; criticalCount: number} {
+    return {
+      total: this._socQueue.length,
+      investigating: this._socQueue.filter(a => a.status === 'investigating').length,
+      escalated: this._socQueue.filter(a => a.status === 'escalated').length,
+      pending: this._socQueue.filter(a => a.status === 'pending').length,
+      criticalCount: this._socQueue.filter(a => a.severity === 'critical').length,
+    };
+  }
+
+  private _socGetSlaCompliance(): {inSla: number; atRisk: number; breached: number} {
+    const inSla = this._socQueue.filter(a => a.slaRemaining > 60).length;
+    const atRisk = this._socQueue.filter(a => a.slaRemaining > 15 && a.slaRemaining <= 60).length;
+    const breached = this._socQueue.filter(a => a.slaRemaining <= 15).length;
+    return {inSla, atRisk, breached};
+  }
+
+  private _socGetShiftPerformance(): {bestShift: string; worstShift: string; avgPerformance: number} {
+    const sorted = [...this._socShifts].sort((a, b) => b.performance - a.performance);
+    const avg = Math.round(this._socShifts.reduce((s, sh) => s + sh.performance, 0) / this._socShifts.length);
+    return {bestShift: sorted[0].name, worstShift: sorted[sorted.length - 1].name, avgPerformance: avg};
+  }
+
+  private _socGetSourceDistribution(): Array<{source: string; count: number; percentage: number}> {
+    const dist: Record<string, number> = {};
+    this._socQueue.forEach(a => { dist[a.source] = (dist[a.source] || 0) + 1; });
+    const total = this._socQueue.length;
+    return Object.entries(dist).map(([source, count]) => ({
+      source, count, percentage: Math.round(count / total * 100)
+    })).sort((a, b) => b.count - a.count);
+  }
+
+
+  // === Security Intelligence Feed (Round 36 - Pass 5) ===
+
+  private _sifFeeds: Array<{id: string; name: string; type: string; source: string;
+    frequency: string; iocCount: number; lastUpdate: string; confidence: number;
+    active: boolean; categories: string[]}> = [];
+  private _sifDigest: Array<{date: string; highThreats: number; newIocs: number;
+    analyzed: number; actioned: number}> = [];
+
+  private _initSifFeeds() {
+    const feeds = [
+      {name: 'MITRE ATT&CK Updates', type: 'Framework', source: 'MITRE', frequency: 'Weekly'},
+      {name: 'CISA Known Exploited Vulns', type: 'Vulnerability', source: 'CISA', frequency: 'Daily'},
+      {name: 'AlienVault OTX', type: 'Community', source: 'AT&T', frequency: 'Real-time'},
+      {name: 'Recorded Future', type: 'Commercial', source: 'RF', frequency: 'Real-time'},
+      {name: 'Abuse.ch ThreatFox', type: 'Malware IOC', source: 'Abuse.ch', frequency: 'Daily'},
+      {name: 'Shodan Monitor', type: 'Attack Surface', source: 'Shodan', frequency: 'Daily'},
+      {name: 'VirusTotal Intelligence', type: 'Malware', source: 'Google', frequency: 'Real-time'},
+      {name: 'GreyNoise Community', type: 'Internet Noise', source: 'GreyNoise', frequency: 'Real-time'},
+    ];
+    const categories = ['malware', 'phishing', 'c2', 'vulnerability', 'ransomware', 'credential-theft'];
+    this._sifFeeds = feeds.map((f, i) => ({
+      id: 'SIF-' + (600 + i),
+      name: f.name, type: f.type, source: f.source, frequency: f.frequency,
+      iocCount: 100 + ((i * 137) % 900),
+      lastUpdate: '2026-04-23T' + String(6 + (i % 12)).padStart(2, '0') + ':00',
+      confidence: 70 + ((i * 11) % 25),
+      active: i % 7 !== 0,
+      categories: categories.slice(0, 2 + (i % 4))
+    }));
+    this._sifDigest = ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23'].map((date, i) => ({
+      date,
+      highThreats: 5 + ((i * 3) % 10),
+      newIocs: 50 + ((i * 47) % 200),
+      analyzed: 40 + ((i * 37) % 150),
+      actioned: 20 + ((i * 23) % 80)
+    }));
+  }
+
+  private _sifGetFeedStats(): {total: number; active: number; totalIocs: number; avgConfidence: number} {
+    const active = this._sifFeeds.filter(f => f.active).length;
+    const totalIocs = this._sifFeeds.reduce((s, f) => s + f.iocCount, 0);
+    const avgConf = Math.round(this._sifFeeds.reduce((s, f) => s + f.confidence, 0) / this._sifFeeds.length);
+    return {total: this._sifFeeds.length, active, totalIocs, avgConfidence: avgConf};
+  }
+
+  private _sifGetDigestSummary(): {latestThreats: number; latestIocs: number; actionRate: number} {
+    const latest = this._sifDigest[this._sifDigest.length - 1];
+    return {
+      latestThreats: latest.highThreats,
+      latestIocs: latest.newIocs,
+      actionRate: Math.round(latest.actioned / latest.analyzed * 100)
+    };
+  }
+
+  private _sifGetTopCategories(): Array<{category: string; feedCount: number; iocCount: number}> {
+    const cats: Record<string, {feeds: number; iocs: number}> = {};
+    this._sifFeeds.forEach(f => {
+      f.categories.forEach(c => {
+        if (!cats[c]) cats[c] = {feeds: 0, iocs: 0};
+        cats[c].feeds++;
+        cats[c].iocs += Math.round(f.iocCount / f.categories.length);
+      });
+    });
+    return Object.entries(cats).map(([category, d]) => ({category, feedCount: d.feeds, iocCount: d.iocs}))
+      .sort((a, b) => b.iocCount - a.iocCount).slice(0, 5);
+  }
+
+
   render() {    if (this._arRules.length === 0) { this._initArRules(); this._initArCvss(); this._runArAnomalyDetection(); this._generateArPredictions(); this._initArApprovals(); this._initArActivity(); this._initArNotifications(); }
 
     const items = this._getFiltered();

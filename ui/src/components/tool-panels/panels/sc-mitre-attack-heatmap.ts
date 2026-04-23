@@ -4693,6 +4693,241 @@ export class ScMitreAttackHeatmap extends LitElement {
     return {total: this._7cfArchReview.length, passed: p, failed: f, partial: pa, score: Math.round((p / this._7cfArchReview.length) * 100)};
   }
 
+  // === Security External Dependency Map (Round 36 - Block E) ===
+  private _depServices: Array<{id: string; name: string; category: string; criticality: string;
+    sla: number; uptime: number; lastIncident: string; riskScore: number; owner: string;
+    contingency: string; singlePointOfFailure: boolean}> = [];
+  private _depConnections: Array<{from: string; to: string; type: string; encrypted: boolean; redundant: boolean}> = [];
+
+  private _initDepMap() {
+    const services = [
+      {name: 'CrowdStrike Falcon', category: 'Endpoint Protection', criticality: 'critical', owner: 'SOC Team'},
+      {name: 'Splunk Enterprise', category: 'SIEM', criticality: 'critical', owner: 'Security Ops'},
+      {name: 'Qualys VMDR', category: 'Vulnerability Scanning', criticality: 'high', owner: 'Vuln Mgmt'},
+      {name: 'Okta SSO', category: 'Identity Provider', criticality: 'critical', owner: 'IAM Team'},
+      {name: 'Cloudflare', category: 'DDoS Protection', criticality: 'high', owner: 'Network Sec'},
+      {name: 'DigiCert', category: 'Certificate Authority', criticality: 'medium', owner: 'PKI Team'},
+      {name: 'Abnormal Security', category: 'Email Security', criticality: 'high', owner: 'Sec Ops'},
+      {name: 'Wiz', category: 'CSPM', criticality: 'high', owner: 'Cloud Sec'},
+      {name: 'Recorded Future', category: 'Threat Intel', criticality: 'medium', owner: 'CTI Team'},
+      {name: 'ServiceNow SecOps', category: 'Ticketing', criticality: 'medium', owner: 'IT Ops'},
+      {name: 'HashiCorp Vault', category: 'Secrets Management', criticality: 'critical', owner: 'Platform'},
+      {name: 'Tenable.io', category: 'Asset Discovery', criticality: 'medium', owner: 'Vuln Mgmt'},
+    ];
+    const contingencies = [
+      'Failover to SentinelOne', 'Secondary SIEM (Azure Sentinel)',
+      'Manual Nessus scans', 'LDAP fallback', 'Akamai Prolexic',
+      'Let Encrypt emergency', 'Proofpoint backup', 'Prisma Cloud',
+      'MISP local instance', 'Jira Service Desk', 'AWS Secrets Manager',
+      'Lansweeper discovery'
+    ];
+    this._depServices = services.map((svc, i) => ({
+      id: 'dep-svc-' + i, name: svc.name, category: svc.category,
+      criticality: svc.criticality,
+      sla: svc.criticality === 'critical' ? 99.99 : svc.criticality === 'high' ? 99.9 : 99.5,
+      uptime: 99.5 + ((idx + i * 3) % 50) / 100,
+      lastIncident: '2026-0' + (1 + (i % 4)) + '-' + String(1 + (i % 20)).padStart(2, '0'),
+      riskScore: svc.criticality === 'critical' ? 15 + ((idx + i) % 20) : 5 + ((idx + i) % 25),
+      owner: svc.owner,
+      contingency: contingencies[i],
+      singlePointOfFailure: i % 4 === 0
+    }));
+    const connPairs = [[0,1],[1,4],[2,7],[3,5],[6,9],[8,0],[10,3],[11,2],[7,1],[4,6]];
+    this._depConnections = connPairs.map(([f, t]) => ({
+      from: 'dep-svc-' + f, to: 'dep-svc-' + t,
+      type: ['data', 'api', 'auth', 'log', 'event'][idx % 5],
+      encrypted: idx % 3 !== 0,
+      redundant: idx % 2 === 0
+    }));
+  }
+
+  private _depGetSlaCompliance(): {compliant: number; atRisk: number; breached: number} {
+    const compliant = this._depServices.filter(s => s.uptime >= s.sla).length;
+    const atRisk = this._depServices.filter(s => s.uptime >= s.sla - 0.5 && s.uptime < s.sla).length;
+    const breached = this._depServices.length - compliant - atRisk;
+    return {compliant, atRisk, breached};
+  }
+
+  private _depGetSinglePointsOfFailure(): Array<{service: string; category: string; impact: string}> {
+    return this._depServices.filter(s => s.singlePointOfFailure).map(s => ({
+      service: s.name, category: s.category,
+      impact: s.criticality === 'critical' ? 'Complete service disruption' : 'Degraded capability'
+    }));
+  }
+
+  private _depGetRiskMatrix(): Array<{service: string; likelihood: number; impact: number; risk: string}> {
+    return this._depServices.map(s => {
+      const likelihood = Math.round(s.riskScore / 3);
+      const impact = s.criticality === 'critical' ? 5 : s.criticality === 'high' ? 4 : 3;
+      const risk = likelihood * impact > 15 ? 'critical' : likelihood * impact > 8 ? 'high' : 'medium';
+      return {service: s.name, likelihood, impact, risk};
+    });
+  }
+
+
+  // === Threat Landscape Analysis (Round 36 - Pass 2 - Block B) ===
+
+  private _tlThreats: Array<{id: string; name: string; category: string; severity: string;
+    likelihood: number; impact: number; trend: string; actors: string[];
+    mitigations: string[]; lastSeen: string}> = [];
+  private _tlTrends: Array<{quarter: string; newThreats: number; resolved: number; active: number}> = [];
+
+  private _initTlLandscape() {
+    const threats = [
+      {name: 'Ransomware-as-a-Service', category: 'Malware', actors: ['LockBit', 'BlackCat', 'Cl0p']},
+      {name: 'Supply Chain Compromise', category: 'Software Supply Chain', actors: ['APT29', 'Northwind']},
+      {name: 'AI-Powered Phishing', category: 'Social Engineering', actors: ['Various TAs']},
+      {name: 'Cloud Misconfiguration', category: 'Cloud', actors: ['Automated Scanners']},
+      {name: 'Zero-Day Exploitation', category: 'Exploitation', actors: ['APT41', 'Lazarus']},
+      {name: 'Business Email Compromise', category: 'Social Engineering', actors: ['FIN7', 'Cobalt Spider']},
+      {name: 'IoT Botnet Expansion', category: 'Network', actors: ['Mozi', 'Mirai variants']},
+      {name: 'Data Extortion', category: 'Data Theft', actors: ['FIN11', 'Conti']},
+      {name: 'API Abuse', category: 'Application', actors: ['Automated', 'APT Groups']},
+      {name: 'Insider Threat', category: 'Insider', actors: ['Disgruntled Employees']},
+    ];
+    const severities = ['critical', 'high', 'high', 'medium', 'critical', 'high', 'medium', 'high', 'medium', 'medium'];
+    const trendDirs = ['increasing', 'increasing', 'stable', 'increasing', 'stable', 'increasing', 'stable', 'decreasing', 'increasing', 'stable'];
+    const mitigations = [
+      ['EDR + offline backups', 'Network segmentation', 'Incident response drills'],
+      ['SBOM analysis', 'Vendor security assessments', 'Code signing verification'],
+      ['AI detection tools', 'Security awareness training', 'DMARC/DKIM enforcement'],
+      ['CSPM tools', 'Infrastructure-as-code scanning', 'Cloud security training'],
+      ['Threat intelligence', 'Rapid patching', 'Virtual patching'],
+      ['MFA enforcement', 'Email authentication', 'Transaction verification'],
+      ['Network segmentation', 'IoT inventory management', 'Firmware updates'],
+      ['DLP controls', 'Encryption at rest', 'Access controls'],
+      ['API gateway security', 'Rate limiting', 'Input validation'],
+      ['UBA tools', 'Least privilege access', 'Exit procedures'],
+    ];
+    this._tlThreats = threats.map((t, i) => ({
+      id: 'tl-threat-' + i, name: t.name, category: t.category,
+      severity: severities[i],
+      likelihood: 40 + ((idx * 7 + i * 13) % 55),
+      impact: severities[i] === 'critical' ? 9 : severities[i] === 'high' ? 7 : 5,
+      trend: trendDirs[i], actors: t.actors, mitigations: mitigations[i],
+      lastSeen: '2026-04-' + String(1 + (i * 3 % 20)).padStart(2, '0')
+    }));
+    const quarters = ['Q3 2025', 'Q4 2025', 'Q1 2026', 'Q2 2026'];
+    this._tlTrends = quarters.map((q, i) => ({
+      quarter: q,
+      newThreats: 8 + ((idx + i * 3) % 12),
+      resolved: 5 + ((idx + i * 2) % 8),
+      active: 15 + ((idx + i) % 20)
+    }));
+  }
+
+  private _tlGetTopThreats(): Array<{name: string; riskScore: number; category: string}> {
+    return this._tlThreats
+      .map(t => ({name: t.name, riskScore: t.likelihood * t.impact / 10, category: t.category}))
+      .sort((a, b) => b.riskScore - a.riskScore)
+      .slice(0, 5);
+  }
+
+  private _tlGetByCategory(): Array<{category: string; count: number; avgSeverity: string}> {
+    const cats: Record<string, {count: number; totalSev: number}> = {};
+    this._tlThreats.forEach(t => {
+      if (!cats[t.category]) cats[t.category] = {count: 0, totalSev: 0};
+      cats[t.category].count++;
+      cats[t.category].totalSev += t.impact;
+    });
+    return Object.entries(cats).map(([cat, d]) => ({
+      category: cat, count: d.count,
+      avgSeverity: d.totalSev / d.count > 7 ? 'high' : 'medium'
+    }));
+  }
+
+  private _tlGetTrendingThreats(): Array<{name: string; trend: string; change: string}> {
+    return this._tlThreats.filter(t => t.trend === 'increasing').map(t => ({
+      name: t.name, trend: t.trend, change: '+' + (10 + (idx % 15)) + '% quarter over quarter'
+    }));
+  }
+
+
+  // === Security Training Platform (Round 36 - Pass 3 - Block C) ===
+
+  private _tpCourses: Array<{id: string; title: string; category: string; difficulty: string;
+    duration: number; enrolled: number; completed: number; avgScore: number;
+    passRate: number; rating: number; lastUpdated: string; mandatory: boolean;
+    modules: number; prerequisites: string[]}> = [];
+  private _tpLearners: Array<{id: string; name: string; department: string;
+    completedCourses: number; inProgress: number; avgScore: number;
+    lastActivity: string; riskLevel: string; certificationCount: number}> = [];
+
+  private _initTpTraining() {
+    const courses = [
+      {title: 'Security Fundamentals 101', category: 'Foundation', difficulty: 'beginner', mandatory: true, modules: 8},
+      {title: 'Phishing Awareness & Prevention', category: 'Awareness', difficulty: 'beginner', mandatory: true, modules: 5},
+      {title: 'Secure Coding Practices', category: 'Developer', difficulty: 'intermediate', mandatory: false, modules: 12},
+      {title: 'Cloud Security Architecture', category: 'Cloud', difficulty: 'advanced', mandatory: false, modules: 10},
+      {title: 'Incident Response Procedures', category: 'Operations', difficulty: 'intermediate', mandatory: true, modules: 7},
+      {title: 'GDPR & Data Privacy', category: 'Compliance', difficulty: 'intermediate', mandatory: true, modules: 6},
+      {title: 'Network Security Deep Dive', category: 'Technical', difficulty: 'advanced', mandatory: false, modules: 15},
+      {title: 'Identity & Access Management', category: 'IAM', difficulty: 'intermediate', mandatory: false, modules: 9},
+      {title: 'Red Team Methodology', category: 'Offensive', difficulty: 'advanced', mandatory: false, modules: 11},
+      {title: 'SOC Analyst Certification Prep', category: 'Career', difficulty: 'intermediate', mandatory: false, modules: 14},
+      {title: 'Container Security', category: 'DevSecOps', difficulty: 'intermediate', mandatory: false, modules: 8},
+      {title: 'Executive Security Briefing', category: 'Leadership', difficulty: 'beginner', mandatory: true, modules: 4},
+    ];
+    const prereqs: string[][] = [[], ['Security Fundamentals 101'], ['Security Fundamentals 101'],
+      ['Cloud Security Architecture'], ['Security Fundamentals 101', 'Phishing Awareness & Prevention'],
+      [], ['Network Security Deep Dive'], ['Security Fundamentals 101'],
+      ['Incident Response Procedures', 'Network Security Deep Dive'],
+      ['Incident Response Procedures'], ['Secure Coding Practices'], []];
+    this._tpCourses = courses.map((c, i) => ({
+      id: 'TP-C-' + (100 + i),
+      title: c.title, category: c.category, difficulty: c.difficulty,
+      duration: 30 + ((idx + i * 20) % 120),
+      enrolled: 20 + ((idx * 3 + i * 7) % 80),
+      completed: 15 + ((idx * 2 + i * 5) % 60),
+      avgScore: 65 + ((idx + i * 4) % 30),
+      passRate: 75 + ((idx + i * 3) % 20),
+      rating: 3.5 + ((idx + i) % 15) / 10,
+      lastUpdated: '2026-0' + (1 + (i % 4)) + '-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+      mandatory: c.mandatory, modules: c.modules,
+      prerequisites: prereqs[i]
+    }));
+    const depts = ['Engineering', 'Finance', 'HR', 'Legal', 'Marketing', 'Operations', 'Sales', 'Executive'];
+    this._tpLearners = depts.map((dept, i) => ({
+      id: 'TP-L-' + (200 + i), name: 'Learner ' + (i + 1), department: dept,
+      completedCourses: 3 + ((idx + i * 3) % 8),
+      inProgress: 1 + ((idx + i) % 3),
+      avgScore: 60 + ((idx * 5 + i * 7) % 35),
+      lastActivity: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+      riskLevel: i % 4 === 0 ? 'high' : i % 2 === 0 ? 'medium' : 'low',
+      certificationCount: i % 3 === 0 ? 2 + (idx % 3) : 0
+    }));
+  }
+
+  private _tpGetCompletionRate(): {overall: number; mandatory: number; voluntary: number} {
+    const mand = this._tpCourses.filter(c => c.mandatory);
+    const vol = this._tpCourses.filter(c => !c.mandatory);
+    const overall = this._tpCourses.reduce((s, c) => s + c.completed / c.enrolled, 0) / this._tpCourses.length;
+    const mandRate = mand.reduce((s, c) => s + c.completed / c.enrolled, 0) / Math.max(1, mand.length);
+    const volRate = vol.reduce((s, c) => s + c.completed / c.enrolled, 0) / Math.max(1, vol.length);
+    return {overall: Math.round(overall * 100), mandatory: Math.round(mandRate * 100), voluntary: Math.round(volRate * 100)};
+  }
+
+  private _tpGetAtRiskLearners(): Array<{name: string; department: string; risk: string; missedCourses: number}> {
+    return this._tpLearners.filter(l => l.riskLevel === 'high').map(l => ({
+      name: l.name, department: l.department, risk: l.riskLevel,
+      missedCourses: this._tpCourses.filter(c => c.mandatory).length - l.completedCourses
+    }));
+  }
+
+  private _tpGetTopCourses(): Array<{title: string; enrolled: number; avgScore: number; rating: number}> {
+    return [...this._tpCourses].sort((a, b) => b.enrolled - a.enrolled).slice(0, 5)
+      .map(c => ({title: c.title, enrolled: c.enrolled, avgScore: c.avgScore, rating: c.rating}));
+  }
+
+  private _tpGetSkillGaps(): Array<{department: string; missingSkills: string[]; recommendedCourses: string[]}> {
+    return this._tpLearners.filter(l => l.riskLevel !== 'low').slice(0, 5).map(l => ({
+      department: l.department,
+      missingSkills: ['Secure Coding', 'Cloud Security', 'Incident Response'].slice(0, 1 + (idx % 3)),
+      recommendedCourses: this._tpCourses.filter(c => !c.mandatory).slice(0, 2).map(c => c.title)
+    }));
+  }
+
+
   render() {
     const stats = this._getCoverageStats();
     const detectedCount = this._getDetectedTechniquesCount();

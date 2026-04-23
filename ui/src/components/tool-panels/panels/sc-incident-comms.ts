@@ -4614,6 +4614,280 @@ private _executionHistory: ExecutionRecord[] = [
     return {total: this._x61eComplianceFrameworks.length, fullyCompliant: full, mostlyCompliant: mostly, avgComplianceRate: Math.round(avgRate * 10) / 10};
   }
 
+  // === Security Change Management (Round 36 - Block B) ===
+  private _cmChanges: Array<{id: string; title: string; type: string; status: string; priority: string;
+    requester: string; impact: string; risk: string; created: string; targetDate: string;
+    approver: string; rollbackPlan: string; progress: number}> = [];
+  private _cmMetrics: {successRate: number; avgDuration: number; rollbackRate: number; emergencyCount: number} = {successRate: 0, avgDuration: 0, rollbackRate: 0, emergencyCount: 0};
+
+  private _initCmChanges() {
+    const types = ['Firewall Rule', 'Access Policy', 'Encryption Config', 'Patch Deployment',
+      'Tool Upgrade', 'Network Segment', 'Authentication Method', 'Monitoring Rule',
+      'Compliance Control', 'Architecture Change'];
+    const statuses = ['pending', 'approved', 'in-progress', 'pending', 'approved',
+      'pending-review', 'approved', 'pending', 'in-progress', 'pending'];
+    const impacts = ['high', 'medium', 'low', 'high', 'medium', 'low', 'high', 'medium', 'low', 'medium'];
+    const risks = ['medium', 'high', 'low', 'high', 'medium', 'low', 'medium', 'high', 'low', 'medium'];
+    const requesters = ['J.Chen', 'A.Patel', 'M.Garcia', 'S.Kim', 'R.Johnson',
+      'L.Williams', 'D.Brown', 'K.Taylor', 'P.Anderson', 'T.Martinez'];
+    this._cmChanges = types.map((type, i) => ({
+      id: 'CM-' + String(1000 + idx * 10 + i),
+      title: type + ' Update - Phase ' + (idx % 4 + 1),
+      type, status: statuses[i], priority: impacts[i],
+      requester: requesters[i], impact: impacts[i], risk: risks[i],
+      created: '2026-04-' + String(10 + (i % 15)).padStart(2, '0'),
+      targetDate: '2026-05-' + String(1 + (i % 20)).padStart(2, '0'),
+      approver: i % 3 === 0 ? 'CISO' : i % 3 === 1 ? 'Sec Lead' : 'IT Director',
+      rollbackPlan: i % 2 === 0 ? 'Automated rollback via IaC' : 'Manual reversion documented',
+      progress: statuses[i] === 'in-progress' ? 30 + (i * 15) : 0
+    }));
+    this._cmMetrics = {
+      successRate: 88 + (idx % 10),
+      avgDuration: 3 + (idx % 5),
+      rollbackRate: 4 + (idx % 4),
+      emergencyCount: 2 + (idx % 6)
+    };
+  }
+
+  private _cmGetByStatus(status: string): number {
+    return this._cmChanges.filter(c => c.status === status).length;
+  }
+
+  private _cmAssessImpact(changeId: string): {affected: string[]; downtime: string; risk: string} {
+    const change = this._cmChanges.find(c => c.id === changeId);
+    if (!change) return {affected: [], downtime: '0h', risk: 'none'};
+    const affected = ['Production Systems', 'Staging Environment', 'CI/CD Pipeline', 'Monitoring Stack'];
+    const downtime = change.impact === 'high' ? '2-4h' : change.impact === 'medium' ? '30min-1h' : '<15min';
+    return {affected: affected.slice(0, 2 + (idx % 3)), downtime, risk: change.risk};
+  }
+
+  private _cmGetTimeline(): Array<{week: string; planned: number; completed: number; failed: number}> {
+    const weeks = ['W1 Apr', 'W2 Apr', 'W3 Apr', 'W4 Apr', 'W1 May', 'W2 May'];
+    return weeks.map((w, i) => ({
+      week: w,
+      planned: 3 + (i % 3),
+      completed: 2 + ((i + idx) % 4),
+      failed: i % 5 === 0 ? 1 : 0
+    }));
+  }
+
+  private _cmGetApprovalQueue(): Array<{id: string; title: string; risk: string; urgency: string}> {
+    return this._cmChanges.filter(c => c.status === 'pending' || c.status === 'pending-review').map(c => ({
+      id: c.id, title: c.title, risk: c.risk,
+      urgency: c.priority === 'high' ? 'urgent' : 'normal'
+    }));
+  }
+
+
+  // === Incident Analytics Engine (Round 36 - Pass 2 - Block D) ===
+
+  private _iaIncidents: Array<{id: string; title: string; severity: string; category: string;
+    status: string; assignedTo: string; created: string; resolved: string;
+    mttd: number; mttr: number; rootCause: string; lessonsLearned: string}> = [];
+  private _iaPatterns: Array<{pattern: string; frequency: number; severity: string; recommendation: string}> = [];
+
+  private _initIaIncidents() {
+    const titles = ['Credential Theft via Phishing', 'Ransomware Attempt Blocked', 'Data Exfiltration Detected',
+      'Unauthorized Access to Cloud Console', 'Malware on Developer Workstation',
+      'DDoS Attack on Public API', 'Insider Data Download Anomaly', 'Supply Chain Alert - Dependency',
+      'Brute Force on VPN Gateway', 'Compliance Violation - Unencrypted Data',
+      'Zero-Day in Third-Party Library', 'Privilege Escalation Attempt'];
+    const categories = ['Social Engineering', 'Malware', 'Data Protection', 'Cloud Security',
+      'Endpoint', 'Network', 'Insider Threat', 'Supply Chain', 'Network', 'Compliance',
+      'Vulnerability', 'Access Control'];
+    const severities = ['critical', 'high', 'critical', 'high', 'medium', 'medium', 'high', 'high', 'medium', 'low', 'critical', 'high'];
+    const statuses = ['resolved', 'resolved', 'resolved', 'in-progress', 'resolved', 'resolved', 'investigating', 'resolved', 'resolved', 'resolved', 'in-progress', 'resolved'];
+    const assignees = ['SOC Tier 2', 'SOC Tier 3', 'DFIR Team', 'Cloud Sec', 'Endpoint Team',
+      'Network Ops', 'Insider Threat', 'Supply Chain', 'SOC Tier 1', 'GRC Team', 'AppSec', 'IAM Team'];
+    this._iaIncidents = titles.map((title, i) => ({
+      id: 'INC-2026-' + String(1000 + idx * 10 + i),
+      title, severity: severities[i], category: categories[i],
+      status: statuses[i], assignedTo: assignees[i],
+      created: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0') + 'T' + String(8 + (i % 12)).padStart(2, '0') + ':00',
+      resolved: statuses[i] === 'resolved' ? '2026-04-' + String(2 + (i * 2 % 20)).padStart(2, '0') + 'T14:00' : '',
+      mttd: 10 + ((idx + i * 7) % 120),
+      mttr: 60 + ((idx + i * 11) % 480),
+      rootCause: ['Credential phishing', 'Ransomware delivery', 'DLP rule violation',
+        'IAM misconfiguration', 'Drive-by download', 'Volumetric flood',
+        'Excessive data access', 'Vulnerable dependency', 'Credential stuffing',
+        'Policy violation', 'Known CVE exploit', 'Permission misassignment'][i],
+      lessonsLearned: i % 3 === 0 ? 'Enhanced monitoring required' : i % 3 === 1 ? 'Process improvement needed' : 'No major gaps identified'
+    }));
+    this._iaPatterns = [
+      {pattern: 'Recurring phishing targets finance team', frequency: 8 + idx % 5, severity: 'high', recommendation: 'Implement targeted awareness training and email filtering rules'},
+      {pattern: 'Cloud misconfiguration incidents increasing', frequency: 5 + idx % 4, severity: 'medium', recommendation: 'Deploy CSPM tooling and IaC validation in CI/CD'},
+      {pattern: 'After-hours access anomalies on weekends', frequency: 3 + idx % 3, severity: 'low', recommendation: 'Review and enforce just-in-time access policies'},
+      {pattern: 'Supply chain vulnerabilities in dependencies', frequency: 6 + idx % 4, severity: 'high', recommendation: 'Implement automated dependency scanning and SBOM management'},
+    ];
+  }
+
+  private _iaGetMetrics(): {total: number; mttd: number; mttr: number; resolvedRate: number} {
+    const resolved = this._iaIncidents.filter(i => i.status === 'resolved');
+    return {
+      total: this._iaIncidents.length,
+      mttd: Math.round(resolved.reduce((s, i) => s + i.mttd, 0) / resolved.length),
+      mttr: Math.round(resolved.reduce((s, i) => s + i.mttr, 0) / resolved.length),
+      resolvedRate: Math.round(resolved.length / this._iaIncidents.length * 100)
+    };
+  }
+
+  private _iaGetBySeverity(): {critical: number; high: number; medium: number; low: number} {
+    return {
+      critical: this._iaIncidents.filter(i => i.severity === 'critical').length,
+      high: this._iaIncidents.filter(i => i.severity === 'high').length,
+      medium: this._iaIncidents.filter(i => i.severity === 'medium').length,
+      low: this._iaIncidents.filter(i => i.severity === 'low').length,
+    };
+  }
+
+  private _iaGetActiveIncidents(): Array<{id: string; title: string; severity: string; age: string}> {
+    return this._iaIncidents.filter(i => i.status !== 'resolved').map(i => ({
+      id: i.id, title: i.title, severity: i.severity, age: '2-5 days'
+    }));
+  }
+
+
+  // === Security Reporting Module (Round 36 - Pass 3 - Block B) ===
+
+  private _srReports: Array<{id: string; name: string; type: string; frequency: string;
+    audience: string; lastGenerated: string; sections: number; autoGenerated: boolean;
+    status: string; recipients: number; deliveryMethod: string}> = [];
+  private _srTemplates: Array<{id: string; name: string; category: string;
+    description: string; variables: string[]; lastModified: string}> = [];
+
+  private _initSrReporting() {
+    const reports = [
+      {name: 'Weekly Security Summary', type: 'Operational', frequency: 'Weekly', audience: 'Security Team'},
+      {name: 'Monthly Executive Dashboard', type: 'Executive', frequency: 'Monthly', audience: 'C-Suite'},
+      {name: 'Quarterly Board Report', type: 'Board', frequency: 'Quarterly', audience: 'Board of Directors'},
+      {name: 'Incident Post-Mortem', type: 'Incident', frequency: 'On-demand', audience: 'Stakeholders'},
+      {name: 'Compliance Status Report', type: 'Compliance', frequency: 'Monthly', audience: 'GRC Team'},
+      {name: 'Vulnerability Trend Analysis', type: 'Technical', frequency: 'Weekly', audience: 'Security Ops'},
+      {name: 'Third-Party Risk Digest', type: 'Vendor', frequency: 'Monthly', audience: 'Procurement'},
+      {name: 'SOC Performance Metrics', type: 'Operational', frequency: 'Daily', audience: 'SOC Manager'},
+      {name: 'Threat Intelligence Brief', type: 'Intelligence', frequency: 'Daily', audience: 'CTI Team'},
+      {name: 'Annual Security Review', type: 'Strategic', frequency: 'Annual', audience: 'Board'},
+      {name: 'Penetration Test Results', type: 'Technical', frequency: 'Quarterly', audience: 'Engineering'},
+      {name: 'Data Protection Impact Assessment', type: 'Compliance', frequency: 'On-demand', audience: 'DPO'},
+    ];
+    const methods = ['Email', 'Slack', 'Confluence', 'SharePoint', 'Email'];
+    this._srReports = reports.map((r, i) => ({
+      id: 'SR-' + String(3000 + idx * 10 + i),
+      name: r.name, type: r.type, frequency: r.frequency,
+      audience: r.audience,
+      lastGenerated: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+      sections: 5 + ((idx + i * 3) % 15),
+      autoGenerated: i % 3 !== 2,
+      status: i % 5 === 0 ? 'draft' : 'active',
+      recipients: 3 + ((idx + i * 7) % 25),
+      deliveryMethod: methods[i % methods.length]
+    }));
+    this._srTemplates = [
+      {id: 'tmpl-1', name: 'Executive Summary Template', category: 'Executive', description: 'High-level security posture summary for leadership', variables: ['overallScore', 'criticalFindings', 'riskTrend', 'recommendations'], lastModified: '2026-03-15'},
+      {id: 'tmpl-2', name: 'Incident Report Template', category: 'Incident', description: 'Detailed incident timeline and impact analysis', variables: ['incidentId', 'timeline', 'impact', 'rootCause', 'lessonsLearned'], lastModified: '2026-04-01'},
+      {id: 'tmpl-3', name: 'Compliance Report Template', category: 'Compliance', description: 'Framework compliance status and gap analysis', variables: ['framework', 'controls', 'gaps', 'remediationPlan'], lastModified: '2026-03-20'},
+      {id: 'tmpl-4', name: 'Technical Deep-Dive Template', category: 'Technical', description: 'Detailed technical findings and evidence', variables: ['findings', 'evidence', 'cvssScores', 'remediationSteps'], lastModified: '2026-04-05'},
+    ];
+  }
+
+  private _srGetActiveReports(): number {
+    return this._srReports.filter(r => r.status === 'active').length;
+  }
+
+  private _srGetAutoGeneratedRatio(): {auto: number; manual: number; ratio: number} {
+    const auto = this._srReports.filter(r => r.autoGenerated).length;
+    const manual = this._srReports.length - auto;
+    return {auto, manual, ratio: Math.round(auto / this._srReports.length * 100)};
+  }
+
+  private _srGetReportSchedule(): Array<{name: string; frequency: string; nextRun: string; audience: string}> {
+    return this._srReports.filter(r => r.status === 'active').slice(0, 6).map(r => ({
+      name: r.name, frequency: r.frequency,
+      nextRun: '2026-04-' + String(25 + (idx % 5)).padStart(2, '0'),
+      audience: r.audience
+    }));
+  }
+
+  private _srGetDistributionStats(): {totalRecipients: number; byMethod: Record<string, number>} {
+    const byMethod: Record<string, number> = {};
+    let total = 0;
+    this._srReports.forEach(r => {
+      total += r.recipients;
+      byMethod[r.deliveryMethod] = (byMethod[r.deliveryMethod] || 0) + r.recipients;
+    });
+    return {totalRecipients: total, byMethod};
+  }
+
+
+  // === Security Operations Center Analytics (Round 36 - Pass 4) ===
+
+  private _socQueue: Array<{id: string; alertId: string; source: string; severity: string;
+    status: string; assignedTo: string; created: string; slaDeadline: string;
+    slaRemaining: number; notes: string; enrichment: string[]}> = [];
+  private _socShifts: Array<{name: string; analysts: number; activeAlerts: number;
+    escalated: number; resolved: number; startTime: string; performance: number}> = [];
+
+  private _initSocCenter() {
+    const sources = ['SIEM', 'EDR', 'IDS/IPS', 'WAF', 'DLP', 'CloudTrail', 'Email GW', 'Auth Logs'];
+    const severities = ['critical', 'high', 'medium', 'low', 'critical', 'high', 'medium', 'low'];
+    const analysts = ['J.Smith', 'A.Johnson', 'M.Williams', 'R.Brown', 'K.Davis', 'S.Miller', 'T.Wilson', 'L.Moore'];
+    this._socQueue = Array.from({length: 12}, (_, i) => ({
+      id: 'SOC-Q-' + (500 + idx + i),
+      alertId: 'ALR-' + String(20000 + idx * 100 + i * 7),
+      source: sources[i % sources.length],
+      severity: severities[i % severities.length],
+      status: i % 4 === 0 ? 'investigating' : i % 3 === 0 ? 'escalated' : 'pending',
+      assignedTo: analysts[i % analysts.length],
+      created: '2026-04-23T' + String(8 + (i % 12)).padStart(2, '0') + ':00',
+      slaDeadline: '2026-04-23T' + String(10 + (i % 8)).padStart(2, '0') + ':30',
+      slaRemaining: 30 + ((idx + i * 17) % 180),
+      notes: i % 3 === 0 ? 'Potential false positive, requires validation' : '',
+      enrichment: i % 2 === 0 ? ['IOC matched', 'Threat intel enriched', 'Asset correlated'] : ['Asset identified']
+    }));
+    this._socShifts = ['Morning', 'Afternoon', 'Night'].map((shift, i) => ({
+      name: shift + ' Shift',
+      analysts: 3 + ((idx + i) % 4),
+      activeAlerts: 5 + ((idx * 3 + i * 7) % 20),
+      escalated: 1 + ((idx + i * 2) % 5),
+      resolved: 10 + ((idx * 5 + i * 11) % 25),
+      startTime: ['06:00', '14:00', '22:00'][i],
+      performance: 70 + ((idx * 7 + i * 13) % 25)
+    }));
+  }
+
+  private _socGetQueueMetrics(): {total: number; investigating: number; escalated: number; pending: number; criticalCount: number} {
+    return {
+      total: this._socQueue.length,
+      investigating: this._socQueue.filter(a => a.status === 'investigating').length,
+      escalated: this._socQueue.filter(a => a.status === 'escalated').length,
+      pending: this._socQueue.filter(a => a.status === 'pending').length,
+      criticalCount: this._socQueue.filter(a => a.severity === 'critical').length,
+    };
+  }
+
+  private _socGetSlaCompliance(): {inSla: number; atRisk: number; breached: number} {
+    const inSla = this._socQueue.filter(a => a.slaRemaining > 60).length;
+    const atRisk = this._socQueue.filter(a => a.slaRemaining > 15 && a.slaRemaining <= 60).length;
+    const breached = this._socQueue.filter(a => a.slaRemaining <= 15).length;
+    return {inSla, atRisk, breached};
+  }
+
+  private _socGetShiftPerformance(): {bestShift: string; worstShift: string; avgPerformance: number} {
+    const sorted = [...this._socShifts].sort((a, b) => b.performance - a.performance);
+    const avg = Math.round(this._socShifts.reduce((s, sh) => s + sh.performance, 0) / this._socShifts.length);
+    return {bestShift: sorted[0].name, worstShift: sorted[sorted.length - 1].name, avgPerformance: avg};
+  }
+
+  private _socGetSourceDistribution(): Array<{source: string; count: number; percentage: number}> {
+    const dist: Record<string, number> = {};
+    this._socQueue.forEach(a => { dist[a.source] = (dist[a.source] || 0) + 1; });
+    const total = this._socQueue.length;
+    return Object.entries(dist).map(([source, count]) => ({
+      source, count, percentage: Math.round(count / total * 100)
+    })).sort((a, b) => b.count - a.count);
+  }
+
+
   render() {    if (this._icRules.length === 0) { this._initIcRules(); this._initIcCvss(); this._runIcAnomalyDetection(); this._generateIcPredictions(); this._initIcApprovals(); this._initIcActivity(); this._initIcNotifications(); }
 
     const items = this._getFiltered();

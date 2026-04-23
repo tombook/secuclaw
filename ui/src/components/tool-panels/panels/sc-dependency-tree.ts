@@ -4805,6 +4805,335 @@ private _executionHistory: ExecutionRecord[] = [
     return {total: this._x4edComplianceFrameworks.length, fullyCompliant: full, mostlyCompliant: mostly, avgComplianceRate: Math.round(avgRate * 10) / 10};
   }
 
+  // === Security Capacity Planning (Round 36 - Block C) ===
+  private _cpTeams: Array<{id: string; name: string; headcount: number; allocated: number; utilization: number;
+    skills: string[]; gapSkills: string[]; hiringPlan: number; trainingHours: number}> = [];
+  private _cpBudget: {current: number; projected: number; tools: number; personnel: number; services: number} = {current: 0, projected: 0, tools: 0, personnel: 0, services: 0};
+  private _cpLicenses: Array<{tool: string; total: number; used: number; expiring: number; cost: number}> = [];
+
+  private _initCpCapacity() {
+    const teams = ['SOC Operations', 'Threat Intelligence', 'Penetration Testing', 'GRC',
+      'Cloud Security', 'Application Security', 'Identity & Access', 'Security Architecture'];
+    const skills = [
+      ['SIEM', 'EDR', 'Threat Hunting', 'DFIR'],
+      ['OSINT', 'Malware Analysis', 'CTI Platforms', 'IOC Management'],
+      ['Web App Testing', 'Network Pentesting', 'Red Team', 'Social Engineering'],
+      ['ISO 27001', 'SOC 2', 'GDPR', 'Risk Assessment'],
+      ['AWS Security', 'Azure Security', 'Kubernetes', 'Terraform'],
+      ['SAST', 'DAST', 'Code Review', 'DevSecOps'],
+      ['PAM', 'SSO', 'LDAP', 'Zero Trust'],
+      ['Network Design', 'Microsegmentation', 'Cloud Architecture', 'Security Patterns']
+    ];
+    const gapSkills = [
+      ['Cloud Forensics', 'AI/ML Detection'],
+      ['Dark Web Monitoring', 'Threat Modeling'],
+      ['Mobile Pentesting', 'IoT Security'],
+      ['Privacy Engineering', 'AI Governance'],
+      ['Serverless Security', 'Service Mesh'],
+      ['API Security Testing', 'Supply Chain Security'],
+      ['Passwordless Auth', 'Identity Analytics'],
+      ['SASE Architecture', 'Zero Trust Networks']
+    ];
+    this._cpTeams = teams.map((name, i) => ({
+      id: 'cp-team-' + i, name,
+      headcount: 5 + ((idx + i * 3) % 12),
+      allocated: 4 + ((idx + i * 2) % 10),
+      utilization: 65 + ((idx * 7 + i * 13) % 30),
+      skills: skills[i], gapSkills: gapSkills[i],
+      hiringPlan: i % 3 === 0 ? 2 : i % 2 === 0 ? 1 : 0,
+      trainingHours: 20 + ((idx + i) % 30)
+    }));
+    this._cpBudget = {
+      current: 2500000 + idx * 50000,
+      projected: 2800000 + idx * 75000,
+      tools: 600000 + idx * 20000,
+      personnel: 1500000 + idx * 30000,
+      services: 400000 + idx * 10000
+    };
+    const tools = ['CrowdStrike', 'Splunk', 'Qualys', 'Veracode', 'Zscaler', 'Okta', 'Prisma Cloud', 'Wiz'];
+    this._cpLicenses = tools.map((tool, i) => ({
+      tool, total: 50 + ((idx + i * 7) % 100),
+      used: 40 + ((idx + i * 5) % 80),
+      expiring: i % 4 === 0 ? 5 + (idx % 3) : 0,
+      cost: 50000 + ((idx + i * 11) % 150000)
+    }));
+  }
+
+  private _cpGetUtilizationAvg(): number {
+    return Math.round(this._cpTeams.reduce((s, t) => s + t.utilization, 0) / this._cpTeams.length);
+  }
+
+  private _cpGetTotalGaps(): number {
+    return this._cpTeams.reduce((s, t) => s + t.gapSkills.length, 0);
+  }
+
+  private _cpGetHiringForecast(): Array<{quarter: string; planned: number; budget: number}> {
+    return ['Q2 2026', 'Q3 2026', 'Q4 2026'].map((q, i) => ({
+      quarter: q,
+      planned: 2 + ((idx + i) % 4),
+      budget: 180000 + (i * 20000) + (idx % 3) * 10000
+    }));
+  }
+
+  private _cpGetLicenseUtilization(): {totalTools: number; overUtilized: number; underUtilized: number; renewalCost: number} {
+    const over = this._cpLicenses.filter(l => (l.used / l.total) > 0.9).length;
+    const under = this._cpLicenses.filter(l => (l.used / l.total) < 0.5).length;
+    const renewal = this._cpLicenses.reduce((s, l) => s + (l.expiring > 0 ? l.cost : 0), 0);
+    return {totalTools: this._cpLicenses.length, overUtilized: over, underUtilized: under, renewalCost: renewal};
+  }
+
+
+  // === Security Automation Engine (Round 36 - Pass 2 - Block E) ===
+
+  private _saPlaybooks: Array<{id: string; name: string; category: string; triggers: number;
+    autoActions: number; manualSteps: number; avgRuntime: number; successRate: number;
+    lastRun: string; status: string}> = [];
+  private _saWorkflows: Array<{id: string; name: string; steps: number; automated: number;
+    integrations: string[]; schedule: string; enabled: boolean}> = [];
+
+  private _initSaAutomation() {
+    const playbooks = [
+      {name: 'Phishing Triage & Response', category: 'SOC', triggers: ['Email Alert', 'User Report']},
+      {name: 'Malware Containment', category: 'Endpoint', triggers: ['EDR Alert', 'AV Detection']},
+      {name: 'Vulnerability Auto-Remediation', category: 'Vuln Mgmt', triggers: ['Qualys Scan', 'Tenable Alert']},
+      {name: 'Cloud Security Incident', category: 'Cloud', triggers: ['GuardDuty', 'CloudTrail']},
+      {name: 'Access Review Automation', category: 'IAM', triggers: ['Scheduled', 'HR Event']},
+      {name: 'Compliance Evidence Collection', category: 'GRC', triggers: ['Scheduled', 'Audit Request']},
+      {name: 'DDoS Mitigation', category: 'Network', triggers: ['Traffic Threshold', 'WAF Alert']},
+      {name: 'Data Loss Prevention', category: 'DLP', triggers: ['DLP Alert', 'File Transfer']},
+      {name: 'Threat Intelligence Enrichment', category: 'CTI', triggers: ['IOC Match', 'Feed Update']},
+      {name: 'Incident Communication', category: 'Comms', triggers: ['Severity Threshold', 'Manual']},
+    ];
+    const integrations = [
+      ['Email Gateway', 'Ticketing System', 'SIEM'],
+      ['EDR Platform', 'Network Isolation', 'Forensics Tool'],
+      ['Patch Manager', 'CMDB', 'Change Management'],
+      ['AWS API', 'Azure API', 'GCP API'],
+      ['IdP API', 'HR System', 'Ticketing'],
+      ['GRC Platform', 'Document Store', 'SIEM'],
+      ['CDN API', 'Firewall', 'Traffic Analyzer'],
+      ['DLP Engine', 'File Share', 'Email Gateway'],
+      ['MISP', 'VirusTotal', 'Shodan'],
+      ['Slack', 'Email', 'Status Page'],
+    ];
+    this._saPlaybooks = playbooks.map((pb, i) => ({
+      id: 'sa-pb-' + i, name: pb.name, category: pb.category,
+      triggers: 50 + ((idx * 7 + i * 13) % 200),
+      autoActions: 3 + ((idx + i * 3) % 8),
+      manualSteps: 1 + ((idx + i) % 4),
+      avgRuntime: 5 + ((idx * 2 + i * 7) % 55),
+      successRate: 85 + ((idx + i * 5) % 14),
+      lastRun: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0') + 'T10:00',
+      status: i % 8 === 0 ? 'draft' : 'active'
+    }));
+    this._saWorkflows = playbooks.slice(0, 8).map((pb, i) => ({
+      id: 'sa-wf-' + i, name: pb.name + ' Workflow',
+      steps: 5 + ((idx + i * 3) % 10),
+      automated: 3 + ((idx + i * 2) % 7),
+      integrations: integrations[i],
+      schedule: i % 3 === 0 ? 'Daily 02:00' : i % 3 === 1 ? 'On-demand' : 'Weekly Monday 06:00',
+      enabled: i % 7 !== 0
+    }));
+  }
+
+  private _saGetAutomationCoverage(): {automated: number; semiAutomated: number; manual: number} {
+    const auto = this._saPlaybooks.filter(p => p.autoActions > p.manualSteps * 2).length;
+    const semi = this._saPlaybooks.filter(p => p.autoActions > p.manualSteps).length - auto;
+    const manual = this._saPlaybooks.length - auto - semi;
+    return {automated: auto, semiAutomated: semi, manual};
+  }
+
+  private _saGetTopPlaybooks(): Array<{name: string; triggers: number; successRate: number; efficiency: number}> {
+    return this._saPlaybooks
+      .sort((a, b) => b.triggers - a.triggers)
+      .slice(0, 5)
+      .map(p => ({name: p.name, triggers: p.triggers, successRate: p.successRate,
+        efficiency: Math.round(p.autoActions / (p.autoActions + p.manualSteps) * 100)}));
+  }
+
+  private _saGetIntegrationHealth(): Array<{name: string; status: string; latency: string; errorRate: number}> {
+    return this._saWorkflows.flatMap(w => w.integrations).filter((v, i, a) => a.indexOf(v) === i).map((name, i) => ({
+      name, status: i % 5 === 0 ? 'degraded' : 'healthy',
+      latency: (50 + (idx + i * 20) % 200) + 'ms',
+      errorRate: i % 5 === 0 ? 2 + (idx % 3) : 0.1 + (idx % 2) * 0.5
+    }));
+  }
+
+
+  // === Risk Assessment Engine (Round 36 - Pass 3 - Block A) ===
+
+  private _raRisks: Array<{id: string; title: string; category: string; likelihood: number;
+    impact: number; riskScore: number; owner: string; status: string;
+    mitigationPlan: string; residualRisk: number; lastReview: string;
+    nextReview: string; relatedControls: string[]; notes: string}> = [];
+  private _raMatrix: Record<string, Record<string, number>> = {};
+  private _raCategories: string[] = ['Strategic', 'Operational', 'Financial', 'Compliance', 'Technology', 'Reputational'];
+
+  private _initRaRisks() {
+    const risks = [
+      {title: 'Ransomware attack on critical infrastructure', category: 'Technology', owner: 'CISO', mitigationPlan: 'Deploy advanced EDR, implement network segmentation, maintain offline backups'},
+      {title: 'Data breach due to insider threat', category: 'Operational', owner: 'HR Director', mitigationPlan: 'Implement DLP, conduct behavioral analytics, enforce least privilege'},
+      {title: 'Non-compliance with GDPR Article 33', category: 'Compliance', owner: 'DPO', mitigationPlan: 'Automate breach notification workflows, train incident responders'},
+      {title: 'Third-party vendor security failure', category: 'Operational', owner: 'Procurement', mitigationPlan: 'Implement vendor risk scoring, conduct regular assessments'},
+      {title: 'Cloud misconfiguration exposure', category: 'Technology', owner: 'Cloud Lead', mitigationPlan: 'Deploy CSPM, implement IaC scanning, enforce guardrails'},
+      {title: 'Phishing campaign targeting executives', category: 'Operational', owner: 'SOC Lead', mitigationPlan: 'Deploy anti-phishing tools, conduct regular simulations'},
+      {title: 'Supply chain compromise via dependencies', category: 'Technology', owner: 'AppSec Lead', mitigationPlan: 'Implement SCA, maintain SBOM, monitor vulnerability feeds'},
+      {title: 'Regulatory penalty for inadequate controls', category: 'Compliance', owner: 'CLO', mitigationPlan: 'Quarterly compliance reviews, gap remediation tracking'},
+      {title: 'Key person dependency in security team', category: 'Strategic', owner: 'CISO', mitigationPlan: 'Cross-training program, documentation, knowledge sharing'},
+      {title: 'Reputational damage from security incident', category: 'Reputational', owner: 'PR Director', mitigationPlan: 'Incident communication plan, media training, proactive disclosure'},
+    ];
+    const statuses = ['open', 'mitigating', 'accepted', 'open', 'mitigating', 'mitigating', 'open', 'mitigating', 'open', 'accepted'];
+    this._raRisks = risks.map((r, i) => {
+      const likelihood = 20 + ((idx * 7 + i * 13) % 70);
+      const impact = 30 + ((idx * 3 + i * 11) % 60);
+      const riskScore = Math.round(likelihood * impact / 100);
+      const residualRisk = Math.round(riskScore * (0.3 + ((idx + i) % 4) * 0.15));
+      return {
+        id: 'RA-' + String(2000 + idx * 10 + i),
+        title: r.title, category: r.category,
+        likelihood, impact, riskScore,
+        owner: r.owner, status: statuses[i],
+        mitigationPlan: r.mitigationPlan,
+        residualRisk,
+        lastReview: '2026-04-' + String(1 + (i * 2 % 20)).padStart(2, '0'),
+        nextReview: '2026-07-' + String(1 + (i * 3 % 20)).padStart(2, '0'),
+        relatedControls: ['Control-' + (i * 3 + 1), 'Control-' + (i * 3 + 2), 'Control-' + (i * 3 + 3)],
+        notes: i % 2 === 0 ? 'Requires board-level attention' : 'Within risk appetite'
+      };
+    });
+    const levels = ['Rare', 'Unlikely', 'Possible', 'Likely', 'Almost Certain'];
+    const impacts = ['Negligible', 'Minor', 'Moderate', 'Major', 'Severe'];
+    levels.forEach((l, li) => {
+      this._raMatrix[l] = {};
+      impacts.forEach((imp, ii) => {
+        this._raMatrix[l][imp] = (li + 1) * (ii + 1);
+      });
+    });
+  }
+
+  private _raGetRiskDistribution(): {critical: number; high: number; medium: number; low: number} {
+    const risks = this._raRisks;
+    return {
+      critical: risks.filter(r => r.riskScore >= 20).length,
+      high: risks.filter(r => r.riskScore >= 12 && r.riskScore < 20).length,
+      medium: risks.filter(r => r.riskScore >= 6 && r.riskScore < 12).length,
+      low: risks.filter(r => r.riskScore < 6).length,
+    };
+  }
+
+  private _raGetByCategory(): Array<{category: string; count: number; avgRisk: number; maxRisk: number}> {
+    const grouped: Record<string, number[]> = {};
+    this._raRisks.forEach(r => {
+      if (!grouped[r.category]) grouped[r.category] = [];
+      grouped[r.category].push(r.riskScore);
+    });
+    return Object.entries(grouped).map(([cat, scores]) => ({
+      category: cat, count: scores.length,
+      avgRisk: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      maxRisk: Math.max(...scores)
+    }));
+  }
+
+  private _raGetTopRisks(): Array<{title: string; score: number; owner: string; status: string}> {
+    return [...this._raRisks].sort((a, b) => b.riskScore - a.riskScore).slice(0, 5)
+      .map(r => ({title: r.title, score: r.riskScore, owner: r.owner, status: r.status}));
+  }
+
+  private _raGetRiskTrend(): Array<{month: string; avgScore: number; count: number}> {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr'];
+    let base = 12 + (idx % 5);
+    return months.map((m, i) => ({
+      month: m,
+      avgScore: Math.max(5, base - i + ((idx % 3) - 1)),
+      count: 8 + ((idx + i) % 5)
+    }));
+  }
+
+  private _raCalculateRiskAppetite(): {current: number; appetite: number; status: string} {
+    const avg = Math.round(this._raRisks.reduce((s, r) => s + r.residualRisk, 0) / this._raRisks.length);
+    const appetite = 10 + (idx % 5);
+    return {current: avg, appetite, status: avg > appetite ? 'exceeded' : 'within'};
+  }
+
+
+  // === Security Architecture Review (Round 36 - Pass 4) ===
+
+  private _sarComponents: Array<{id: string; name: string; type: string; layer: string;
+    securityLevel: number; complianceScore: number; lastReview: string;
+    reviewer: string; findings: number; criticalFindings: number;
+    recommendations: string[]; status: string; technology: string}> = [];
+
+  private _initSarReview() {
+    const components = [
+      {name: 'API Gateway', type: 'Perimeter', layer: 'Network', technology: 'Kong'},
+      {name: 'Web Application Firewall', type: 'Perimeter', layer: 'Application', technology: 'AWS WAF'},
+      {name: 'Identity Provider', type: 'Identity', layer: 'Authentication', technology: 'Okta'},
+      {name: 'SIEM Platform', type: 'Detection', layer: 'Monitoring', technology: 'Splunk'},
+      {name: 'EDR Solution', type: 'Endpoint', layer: 'Host', technology: 'CrowdStrike'},
+      {name: 'Secrets Vault', type: 'Credential', layer: 'Application', technology: 'HashiCorp Vault'},
+      {name: 'Container Registry', type: 'Container', layer: 'Infrastructure', technology: 'Harbor'},
+      {name: 'Database Encryption', type: 'Encryption', layer: 'Data', technology: 'AES-256'},
+      {name: 'Network Segmentation', type: 'Network', layer: 'Infrastructure', technology: 'VLAN/VXLAN'},
+      {name: 'DLP Engine', type: 'Data Protection', layer: 'Application', technology: 'Symantec DLP'},
+      {name: 'Patch Management', type: 'Vulnerability', layer: 'Host', technology: 'Qualys'},
+      {name: 'Backup System', type: 'Recovery', layer: 'Infrastructure', technology: 'Veeam'},
+    ];
+    const reviewers = ['Sec Architect', 'Cloud Architect', 'Network Engineer', 'AppSec Lead', 'IAM Lead', 'SOC Manager'];
+    this._sarComponents = components.map((c, i) => ({
+      id: 'SAR-' + (400 + i),
+      name: c.name, type: c.type, layer: c.layer, technology: c.technology,
+      securityLevel: 60 + ((idx * 7 + i * 11) % 35),
+      complianceScore: 55 + ((idx * 5 + i * 13) % 40),
+      lastReview: '2026-0' + (1 + (i % 4)) + '-' + String(1 + (i * 3 % 20)).padStart(2, '0'),
+      reviewer: reviewers[i % reviewers.length],
+      findings: 2 + ((idx + i * 3) % 8),
+      criticalFindings: i % 4 === 0 ? 1 + (idx % 2) : 0,
+      recommendations: i % 3 === 0
+        ? ['Upgrade to latest version', 'Implement additional monitoring', 'Review access controls']
+        : ['Enhance logging', 'Update configuration', 'Add redundancy'],
+      status: i % 5 === 0 ? 'needs-review' : 'compliant'
+    }));
+  }
+
+  private _sarGetSecurityPosture(): {overall: number; byLayer: Record<string, number>; weakest: string; strongest: string} {
+    const byLayer: Record<string, number> = {};
+    this._sarComponents.forEach(c => {
+      if (!byLayer[c.layer]) byLayer[c.layer] = [];
+      byLayer[c.layer].push(c.securityLevel);
+    });
+    const layerScores: Record<string, number> = {};
+    Object.entries(byLayer).forEach(([layer, scores]) => {
+      layerScores[layer] = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    });
+    const overall = Math.round(this._sarComponents.reduce((s, c) => s + c.securityLevel, 0) / this._sarComponents.length);
+    const entries = Object.entries(layerScores).sort((a, b) => a[1] - b[1]);
+    return {overall, byLayer: layerScores, weakest: entries[0][0], strongest: entries[entries.length - 1][0]};
+  }
+
+  private _sarGetCriticalFindings(): Array<{component: string; title: string; severity: string; recommendation: string}> {
+    return this._sarComponents.filter(c => c.criticalFindings > 0).map(c => ({
+      component: c.name, title: 'Critical security gap identified',
+      severity: 'critical',
+      recommendation: c.recommendations[0]
+    }));
+  }
+
+  private _sarGetComplianceGaps(): {totalFindings: number; criticalCount: number; avgCompliance: number} {
+    return {
+      totalFindings: this._sarComponents.reduce((s, c) => s + c.findings, 0),
+      criticalCount: this._sarComponents.reduce((s, c) => s + c.criticalFindings, 0),
+      avgCompliance: Math.round(this._sarComponents.reduce((s, c) => s + c.complianceScore, 0) / this._sarComponents.length)
+    };
+  }
+
+  private _sarGetComponentMap(): Array<{name: string; type: string; layer: string; securityLevel: number; status: string}> {
+    return this._sarComponents.map(c => ({
+      name: c.name, type: c.type, layer: c.layer,
+      securityLevel: c.securityLevel, status: c.status
+    }));
+  }
+
+
   render() {    if (this._deptRules.length === 0) { this._initDeptRules(); this._initDeptCvss(); this._runDeptAnomalyDetection(); this._generateDeptPredictions(); this._initDeptApprovals(); this._initDeptActivity(); this._initDeptNotifications(); }
 
     const items = this._getFiltered();
