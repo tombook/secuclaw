@@ -188,3 +188,99 @@ export async function executeTool(toolId: string, roleId: RoleId, operation: str
     },
   };
 }
+
+// ─── Evolution API ──────────────────────────────────────────────
+
+export interface EvolutionMemoryContext {
+  role: string;
+  memoryCount: number;
+  userProfileCount: number;
+  nudge: {
+    turnsSinceMemory: number;
+    itersSinceSkill: number;
+    turnsSinceContextCheck: number;
+    lastMemoryReview: number;
+    lastSkillReview: number;
+  };
+}
+
+export async function fetchEvolutionStatus(roleId: RoleId): Promise<ApiResponse<EvolutionMemoryContext>> {
+  try {
+    const res = await fetch('http://127.0.0.1:21981/api/v1/evolution.status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: roleId }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return { data: (await res.json()) as EvolutionMemoryContext };
+  } catch {
+    // Gateway unreachable — return null status
+    return { data: null };
+  }
+}
+
+export interface EvolutionMemoryEntry {
+  id: string;
+  target: string;
+  role: string;
+  category: string;
+  content: string;
+  tags: string[];
+  confidence: number;
+  createdAt: number;
+  updatedAt: number;
+  lastUsedAt: number;
+  source: string;
+}
+
+export async function fetchEvolutionMemories(roleId: RoleId): Promise<ApiResponse<EvolutionMemoryEntry[]>> {
+  try {
+    const res = await fetch('http://127.0.0.1:21981/api/v1/evolution.memory.list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: roleId, includeContent: true }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return { data: (json.memories ?? json) as EvolutionMemoryEntry[] };
+  } catch {
+    return { data: [] };
+  }
+}
+
+export async function addEvolutionMemory(
+  target: 'memory' | 'user',
+  content: string,
+  roleId: RoleId
+): Promise<ApiResponse<{ success: boolean; entry?: EvolutionMemoryEntry }>> {
+  try {
+    const res = await fetch('http://127.0.0.1:21981/api/v1/evolution.memory.add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: roleId, target, content }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return { data: data as { success: boolean; entry?: EvolutionMemoryEntry } };
+  } catch {
+    return { data: { success: false } };
+  }
+}
+
+export async function triggerEvolutionReview(
+  type: 'memory' | 'skill' | 'combined',
+  roleId: RoleId
+): Promise<ApiResponse<{ triggered: boolean }>> {
+  try {
+    const res = await fetch('http://127.0.0.1:21981/api/v1/evolution.reviewPrompts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: roleId, type }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return { data: { triggered: !!data } };
+  } catch {
+    return { data: { triggered: false } };
+  }
+}

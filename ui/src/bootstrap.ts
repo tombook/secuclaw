@@ -92,6 +92,7 @@ import './components/tool-panels/panels/sc-log-query';
 import './components/tool-panels/panels/sc-malware-analysis';
 import './components/tool-panels/panels/sc-mdm-dashboard';
 import './components/tool-panels/panels/sc-metrics-export';
+import './components/tool-panels/panels/evolution-dashboard';
 import './components/tool-panels/panels/sc-mitre-navigator';
 import './components/tool-panels/panels/sc-network-topo';
 import './components/tool-panels/panels/sc-news-feed';

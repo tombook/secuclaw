@@ -17,6 +17,7 @@ import '../components/role-commander/sc-role-commander';
 import { settingsStore } from '../stores/settings-store';
 import { pluginStore } from '../plugins/index';
 import '../components/sc-command-palette';
+import '../components/tool-panels/panels/evolution-dashboard';
 import type { CommandAction } from '../components/sc-command-palette';
 
 @customElement('sc-app-shell')
@@ -658,7 +659,7 @@ export class ScAppShell extends LitElement {
 
   `;
 
-  @state() private _view: 'overview' | 'role' | 'market' = 'overview';
+  @state() private _view: 'overview' | 'role' | 'market' | 'evolution' = 'overview';
   @state() private _currentRoleId: RoleId | null = null;
   @state() private _time = this._fmtTime(new Date());
   @state() private _raciActive: 'R' | 'A' | 'C' | 'I' | null = null;
@@ -825,6 +826,10 @@ export class ScAppShell extends LitElement {
     } else if (hash && ALL_ROLE_IDS.includes(hash as RoleId)) {
       // 支持 #/{roleId} 直接跳转到角色指挥台
       this._switchToRole(hash as RoleId);
+    } else if (hash === 'evolution') {
+      this._view = 'evolution';
+    } else if (hash === 'market') {
+      this._view = 'market';
     }
   }
 
@@ -1142,11 +1147,20 @@ export class ScAppShell extends LitElement {
           <div
             class="nav-overview ${this._view === 'market' ? 'active' : ''}"
             tabindex="0" role="button"
-            @click=${() => { this._view = 'market'; }}
-            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') { this._view = 'market'; } }}
+            @click=${() => { this._view = 'market'; window.location.hash = '#/market'; }}
+            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') { this._view = 'market'; window.location.hash = '#/market'; } }}
           >
             <span class="icon">🧩</span>
             <span>工具市场</span>
+          </div>
+          <div
+            class="nav-overview ${this._view === 'evolution' ? 'active' : ''}"
+            tabindex="0" role="button"
+            @click=${() => { this._view = 'evolution'; window.location.hash = '#/evolution'; }}
+            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') { this._view = 'evolution'; window.location.hash = '#/evolution'; } }}
+          >
+            <span class="icon">🧬</span>
+            <span>自主进化</span>
           </div>
 
           <!-- RACI (common, always visible) -->
@@ -1282,8 +1296,8 @@ export class ScAppShell extends LitElement {
 
       <!-- Header -->
       <header class="header" style="border-bottom-color: ${activeTheme ? activeTheme.primary + '33' : '#1e293b'}">
-        <span class="header-title">${this._view === 'overview' ? '安全总览' : this._view === 'market' ? '工具市场' : `${activeLabel} 指挥台`}</span>
-        <span class="header-subtitle">${this._view === 'overview' ? '全域安全态势' : this._view === 'market' ? '安全工具统一接入平台' : activeTheme?.label ?? ''}</span>
+        <span class="header-title">${this._view === 'overview' ? '安全总览' : this._view === 'market' ? '工具市场' : this._view === 'evolution' ? '自主进化' : `${activeLabel} 指挥台`}</span>
+        <span class="header-subtitle">${this._view === 'overview' ? '全域安全态势' : this._view === 'market' ? '安全工具统一接入平台' : this._view === 'evolution' ? '角色能力自进化管理' : activeTheme?.label ?? ''}</span>
         <div class="header-right">
           <div class="header-kpi success"><span class="kpi-label">全域</span><span class="kpi-value">79</span></div>
           <div class="header-kpi danger"><span class="kpi-label">事件</span><span class="kpi-value">7</span></div>
@@ -1301,9 +1315,11 @@ export class ScAppShell extends LitElement {
         <div class="transition-wrapper ${this._transitionState === 'exiting' ? 'exiting' : ''} ${this._transitionState === 'entering' ? 'entering' : ''}">
           ${this._view === 'market'
             ? html`<sc-plugin-market></sc-plugin-market>`
-            : this._view === 'role'
-              ? html`<sc-role-commander .roleId=${this._currentRoleId!} .raciHighlightTask=${this._raciHighlightTask}></sc-role-commander>`
-              : html`<sc-overview @role-selected=${(e: CustomEvent) => this._switchToRole(e.detail.roleId)}></sc-overview>`
+            : this._view === 'evolution'
+              ? html`<evolution-dashboard></evolution-dashboard>`
+              : this._view === 'role'
+                ? html`<sc-role-commander .roleId=${this._currentRoleId!} .raciHighlightTask=${this._raciHighlightTask}></sc-role-commander>`
+                : html`<sc-overview @role-selected=${(e: CustomEvent) => this._switchToRole(e.detail.roleId)}></sc-overview>`
           }
         </div>
       </main>

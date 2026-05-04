@@ -480,6 +480,17 @@ export class CapabilitiesService {
     logger.info(`Deleted evidence: ${id}`);
   }
 
+  async deleteTask(id: string): Promise<void> {
+    const task = await this.repo.getTask(id);
+    if (!task) {
+      const error = new Error('Task not found');
+      (error as any).code = ErrorCodes.TASK_NOT_FOUND;
+      throw error;
+    }
+    await this.repo.deleteTask(id);
+    logger.info(`Deleted task: ${id}`);
+  }
+
   // ==================== Task Status Machine ====================
 
   /**

@@ -14,6 +14,8 @@ import { customElement, state } from 'lit/decorators.js';
 import { pluginStore } from '../plugins/index';
 import { validateManifest } from '../plugins/plugin-validator';
 import { getBackendState } from '../plugins/plugin-runtime';
+import { OPEN_SOURCE_TOOLS, getOpenSourceStats } from '../plugins/open-source-tools';
+import type { OpenSourceToolInfo } from '../plugins/open-source-tools';
 import type { ToolPluginManifest, ToolCategory } from '../plugins/types';
 import * as yaml from 'js-yaml';
 
@@ -250,6 +252,26 @@ export class ScPluginMarket extends LitElement {
     /* ─── Confirm dialog ─── */
     .confirm-text { font-size: 13px; color: #e2e8f0; margin-bottom: 12px; line-height: 1.5; }
     .confirm-name { color: #ef4444; font-weight: 700; }
+
+    /* ─── Open Source Column ─── */
+    .td-opensource {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .oss-name {
+      font-size: 11px; font-weight: 600; color: #e2e8f0;
+      cursor: pointer; transition: color 100ms;
+    }
+    .oss-name:hover { color: #3b82f6; }
+    .oss-name.has-link { text-decoration: underline; text-underline-offset: 2px; }
+    .oss-status {
+      font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .oss-status.available { color: #22c55e; background: #22c55e18; }
+    .oss-status.coming-soon { color: #64748b; background: #64748b18; }
+    .oss-stars {
+      font-size: 9px; color: #64748b; margin-left: 2px;
+    }
   `;
 
   @state() private _search = '';
@@ -261,6 +283,29 @@ export class ScPluginMarket extends LitElement {
   @state() private _form: PluginFormData = { ...EMPTY_FORM };
 
   // ─── Helpers ───
+
+  /** Open SecuHub tool page in a new tab */
+  private _openSecuHub(toolId: string) {
+    window.open(`https://secuhub.io/tool/${toolId}`, '_blank', 'noopener');
+  }
+
+  /** Render the open source tool info cell */
+  private _renderOpenSourceCell(toolId: string) {
+    const info: OpenSourceToolInfo | undefined = OPEN_SOURCE_TOOLS[toolId];
+    if (!info) return html`<span style="color:#475569;font-size:10px">-</span>`;
+
+    const nameClass = info.githubUrl ? 'oss-name has-link' : 'oss-name';
+    return html`
+      <div class="td-opensource">
+        <span class="${nameClass}" @click=${() => this._openSecuHub(toolId)} title=${`跳转到 SecuHub: ${toolId}`}>${info.name}</span>
+        ${info.status === 'available'
+          ? html`<span class="oss-status available">可用</span>`
+          : html`<span class="oss-status coming-soon">待AI开发</span>`
+        }
+        ${info.stars ? html`<span class="oss-stars">★${(info.stars / 1000).toFixed(1)}k</span>` : nothing}
+      </div>
+    `;
+  }
 
   private _getFilteredTools() {
     const state = pluginStore.getState();
@@ -430,6 +475,7 @@ export class ScPluginMarket extends LitElement {
     const enabled = allTools.filter(t => t.enabled).length;
     const categories = [...new Set(allTools.map(t => t.manifest.meta.category))];
     const bs = getBackendState();
+    const osStats = getOpenSourceStats();
 
     return html`
       <!-- Header -->
@@ -451,6 +497,8 @@ export class ScPluginMarket extends LitElement {
         <div class="stat"><span class="stat-num">${categories.length}</span><span class="stat-label">分类</span></div>
         <div class="stat"><span class="stat-num">${allTools.filter(t => t.manifest.meta.provider === 'built-in').length}</span><span class="stat-label">内置</span></div>
         <div class="stat"><span class="stat-num">${allTools.filter(t => t.manifest.meta.provider !== 'built-in').length}</span><span class="stat-label">第三方/自定义</span></div>
+        <div class="stat"><span class="stat-num" style="color:#22c55e">${osStats.available}</span><span class="stat-label">开源可用</span></div>
+        <div class="stat"><span class="stat-num" style="color:#64748b">${osStats.comingSoon}</span><span class="stat-label">待AI开发</span></div>
         <div class="stat" style="margin-left:auto">
           <span class="backend-dot ${bs}"></span>
           <span style="font-size:10px;color:#64748b">${bs === 'available' ? '后端已连接' : bs === 'unavailable' ? 'Mock 模式' : '检测中...'}</span>
@@ -485,6 +533,7 @@ export class ScPluginMarket extends LitElement {
               <tr>
                 <th style="width:160px">名称</th>
                 <th style="width:110px">URI</th>
+                <th style="width:140px">开源项目</th>
                 <th style="width:120px">归属角色</th>
                 <th>说明</th>
                 <th style="width:80px">分类</th>
@@ -507,6 +556,7 @@ export class ScPluginMarket extends LitElement {
                   <span class="td-uri" @click=${() => this._navigateToUri(m.meta.uri || `/tool/${m.meta.id}`)}
                     title="点击跳转到工具页面">${m.meta.uri || `/tool/${m.meta.id}`}</span>
                 </td>
+                <td>${this._renderOpenSourceCell(m.meta.id)}</td>
                 <td>
                   <div class="role-tags">
                     ${m.bindings.roles.map(r => html`

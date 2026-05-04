@@ -67,6 +67,13 @@ export function registerRaciTaskRoutes(
     return getEngine(deps).escalateTask(taskId as string, actor as string);
   });
 
+  handlers.set('raci.task.delete', async (params) => {
+    const { taskId } = params;
+    if (!taskId) throw new Error('Missing required parameter: taskId');
+    await getEngine(deps).deleteTask(taskId as string);
+    return { success: true, id: taskId };
+  });
+
   handlers.set('raci.task.createForEvent', async (params) => {
     const { eventType, eventId } = params;
     if (!eventType || !eventId) throw new Error('Missing required parameters: eventType, eventId');

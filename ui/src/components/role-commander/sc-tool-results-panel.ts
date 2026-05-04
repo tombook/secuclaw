@@ -9,6 +9,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import type { RoleId } from '../../config/role-tool-config';
 import { ROLE_TOOL_CONFIGS } from '../../config/role-tool-config';
 import { ROLE_THEMES } from '../../config/role-theme-config';
+import { pluginStore } from '../../plugins/index';
 
 export {};
 
@@ -135,6 +136,8 @@ export class ScToolResultsPanel extends LitElement {
       border-top: 1px solid var(--sc-border-color);
       background: var(--sc-bg-secondary);
       padding: 0;
+      max-height: 20vh;
+      overflow-y: auto;
     }
 
     .panel-header {
@@ -174,10 +177,73 @@ export class ScToolResultsPanel extends LitElement {
     .tab.active { background: var(--sc-primary-color); color: white; }
 
     .panel-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 0;
     }
+
+    /* Horizontal grouped layout */
+    .result-group-row {
+      display: flex;
+      gap: 0;
+    }
+    .result-group {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+    }
+    .result-group + .result-group {
+      border-left: 1px solid var(--sc-border-color);
+    }
+    .result-group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+    .result-group-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .result-group-count {
+      font-size: 8px;
+      color: var(--sc-text-muted);
+      margin-left: auto;
+    }
+    .result-group-items {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    .grouped-result-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: var(--sc-bg-tertiary);
+      cursor: pointer;
+      transition: all 100ms ease;
+      border: 1px solid transparent;
+      border-left: 2px solid transparent;
+    }
+    .grouped-result-row:hover {
+      border-color: var(--sc-primary-color);
+      background: var(--sc-bg-primary);
+    }
+    .grouped-result-row.status-error { border-left-color: #ef4444; }
+    .grouped-result-row.status-warning { border-left-color: #f59e0b; }
+    .grouped-result-row.status-success { border-left-color: #22c55e; }
+    .grouped-result-row.status-pending { border-left-color: #3b82f6; }
+    .grouped-result-icon { font-size: 12px; flex-shrink: 0; }
+    .grouped-result-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .grouped-result-title { font-size: 11px; font-weight: 600; color: var(--sc-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .grouped-result-desc { font-size: 9px; color: var(--sc-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .grouped-result-meta { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 
     .carousel-section {
       padding: 6px 8px 2px;
@@ -429,6 +495,71 @@ export class ScToolResultsPanel extends LitElement {
     .hidden-tag.dismissed { border-color: #ef444444; }
     .hidden-tag.hidden { border-color: #64748b44; }
 
+    /* Tool list section */
+    .tool-list-section {
+      padding: 6px 12px 10px;
+      border-top: 1px solid var(--sc-border-color);
+      background: var(--sc-bg-tertiary);
+    }
+    .tool-list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .tool-list-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--sc-text-muted);
+    }
+    .tool-list-count {
+      font-size: 10px; color: var(--sc-text-muted);
+    }
+    .tool-list-expand-btn {
+      font-size: 10px; padding: 2px 10px; border-radius: 4px;
+      border: 1px solid var(--sc-border-color); background: transparent;
+      color: var(--sc-text-muted); cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .tool-list-expand-btn:hover {
+      border-color: var(--sc-primary-color); color: var(--sc-text-primary);
+      background: var(--sc-bg-primary);
+    }
+    .tool-list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 6px;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .tool-list-grid.collapsed {
+      max-height: 42px;
+    }
+    .tool-list-grid.expanded {
+      max-height: 600px;
+    }
+    .tool-list-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; background: var(--sc-bg-secondary);
+      border: 1px solid var(--sc-border-color); border-radius: 6px;
+      cursor: pointer; transition: all 0.15s; font-size: 11px; color: var(--sc-text-primary);
+    }
+    .tool-list-item:hover {
+      border-color: var(--sc-primary-color);
+      background: var(--sc-bg-primary);
+    }
+    .tool-list-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .tool-list-name {
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tool-list-fade {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
+      background: linear-gradient(transparent, var(--sc-bg-tertiary));
+      pointer-events: none;
+    }
+    .tool-list-wrap {
+      position: relative;
+    }
+
     /* Scrollbar */
     .result-list::-webkit-scrollbar, .todo-list::-webkit-scrollbar { width: 3px; }
     .result-list::-webkit-scrollbar-thumb, .todo-list::-webkit-scrollbar-thumb { background: var(--sc-border-color); border-radius: 2px; }
@@ -438,6 +569,7 @@ export class ScToolResultsPanel extends LitElement {
 
   @state() private _dismissedIds = new Set<string>();
   @state() private _hiddenIds = new Set<string>();
+  @state() private _showAllTools = false;
 
   private _scrollCarousel(trackSelector: string, dir: 'left' | 'right') {
     const track = this.shadowRoot?.querySelector(trackSelector) as HTMLElement;
@@ -499,6 +631,83 @@ export class ScToolResultsPanel extends LitElement {
     }));
   }
 
+  private _getToolListForRole(): Array<{ id: string; label: string; icon: string }> {
+    const config = ROLE_TOOL_CONFIGS[this.roleId];
+    if (!config) return [];
+    const allTools = [...config.coreTools, ...config.secondaryTools];
+    const staticIds = new Set(allTools.map(t => t.id));
+    try {
+      const storePlugins = pluginStore.getState().getToolsByRole(this.roleId);
+      for (const m of storePlugins) {
+        if (!staticIds.has(m.meta.id)) {
+          allTools.push({ id: m.meta.id, label: m.meta.name, icon: m.meta.icon, priority: 0 });
+          staticIds.add(m.meta.id);
+        }
+      }
+    } catch { /* pluginStore may not be available */ }
+    return allTools.filter(t => {
+      try {
+        const plugin = pluginStore.getState().getPlugin(t.id);
+        return plugin ? plugin.enabled : true;
+      } catch { return true; }
+    });
+  }
+
+  private _resolveIcon(icon: string | undefined): string {
+    if (!icon) return '🔧';
+    if (icon.startsWith('<') || icon.startsWith('data:')) return icon;
+    return icon;
+  }
+
+  private _getToolStatusColor(toolId: string): string {
+    const results = this._getResults();
+    const r = results.find(x => x.toolId === toolId);
+    if (!r) return '#475569';
+    switch (r.status) {
+      case 'success': return '#22c55e';
+      case 'warning': return '#f59e0b';
+      case 'error': return '#ef4444';
+      case 'pending': return '#3b82f6';
+      default: return '#475569';
+    }
+  }
+
+  private _renderToolList() {
+    const tools = this._getToolListForRole();
+    if (tools.length === 0) return nothing;
+    const isCollapsed = !this._showAllTools;
+    const overflowCount = tools.length - 5;
+    return html`
+      <div class="tool-list-section">
+        <div class="tool-list-header">
+          <span class="tool-list-label">🛠️ 工具列表</span>
+          <button
+            class="tool-list-expand-btn"
+            @click=${() => { this._showAllTools = !this._showAllTools; }}
+          >
+            ${isCollapsed
+              ? html`展开更多 ▾${overflowCount > 0 ? html` (${overflowCount})` : nothing}`
+              : html`收起 ▴`}
+          </button>
+        </div>
+        <div class="tool-list-wrap">
+          <div class="tool-list-grid ${isCollapsed ? 'collapsed' : 'expanded'}">
+            ${tools.map(tool => html`
+              <div
+                class="tool-list-item"
+                @click=${() => this._openTool(tool.id)}
+              >
+                <span class="tool-list-dot" style="background:${this._getToolStatusColor(tool.id)}"></span>
+                <span class="tool-list-name">${this._resolveIcon(tool.icon)} ${tool.label}</span>
+              </div>
+            `)}
+          </div>
+          ${isCollapsed && overflowCount > 0 ? html`<div class="tool-list-fade"></div>` : nothing}
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     const results = this._getVisibleResults();
     const todos = this._getVisibleTodos();
@@ -524,85 +733,85 @@ export class ScToolResultsPanel extends LitElement {
       </div>
 
       <div class="panel-body">
-        <!-- Left column: 执行结果 carousel -->
-        <div class="carousel-section">
-          <div class="section-label">📊 执行结果${results.length > 0 ? ` (${results.length})` : ''}</div>
-          <div class="carousel-wrap">
-            <button class="carousel-arrow left" @click=${() => this._scrollCarousel('#track-results', 'left')}>‹</button>
-            <div class="carousel-track" id="track-results">
-              ${results.length > 0 ? results.map(r => {
-                const style = chipStyle(r.status);
-                return html`
-                  <div class="carousel-card">
-                    <div class="result-card status-${r.status}" @click=${() => this._openTool(r.toolId)}>
-                      <span class="result-icon">${r.toolIcon}</span>
-                      <div class="result-body">
-                        <div class="result-title">${r.toolName}</div>
-                        <div class="result-summary">${r.summary}</div>
-                        <div class="result-detail">${r.detail}</div>
-                        <div class="result-meta">
-                          ${r.priority ? html`
-                            <span class="priority-chip" style="background:${priorityColor(r.priority)}22;color:${priorityColor(r.priority)}">${r.priority}</span>
-                          ` : nothing}
-                          <span style="font-size:9px;color:${style.color}">
-                            ${r.status === 'success' ? '✓ 成功' : r.status === 'warning' ? '⚠ 警告' : r.status === 'error' ? '✕ 错误' : '◌ 待处理'}
-                          </span>
-                          <span class="time-badge">${r.time}</span>
-                        </div>
+        <!-- 执行结果: 横向分组 -->
+        <div class="result-group-row">
+          ${(() => {
+            const errors = results.filter(r => r.status === 'error');
+            const pendings = results.filter(r => r.status === 'pending');
+            const warnings = results.filter(r => r.status === 'warning');
+            const successes = results.filter(r => r.status === 'success');
+            const groups: Array<{ key: string; label: string; icon: string; color: string; items: ToolResultItem[] }> = [
+              { key: 'error', label: '错误', icon: '✕', color: '#ef4444', items: errors },
+              { key: 'pending', label: '待处理', icon: '◌', color: '#3b82f6', items: pendings },
+              { key: 'warning', label: '警告', icon: '⚠', color: '#f59e0b', items: warnings },
+              { key: 'success', label: '已完成', icon: '✓', color: '#22c55e', items: successes },
+            ].filter(g => g.items.length > 0);
+            return groups.map(g => html`
+              <div class="result-group">
+                <div class="result-group-header">
+                  <span style="color:${g.color}">${g.icon}</span>
+                  <span class="result-group-label" style="color:${g.color}">${g.label}</span>
+                  <span class="result-group-count">${g.items.length} 项</span>
+                </div>
+                <div class="result-group-items">
+                  ${g.items.map(r => html`
+                    <div class="grouped-result-row status-${r.status}" @click=${() => this._openTool(r.toolId)}>
+                      <span class="grouped-result-icon">${r.toolIcon}</span>
+                      <div class="grouped-result-body">
+                        <span class="grouped-result-title">${r.toolName}</span>
+                        <span class="grouped-result-desc">${r.summary}</span>
                       </div>
-                      <div class="item-actions" @click=${(e: Event) => e.stopPropagation()}>
-                        <button class="item-action-btn" title="关闭" @click=${() => this._dismiss(r.toolId)}>✕</button>
-                        <button class="item-action-btn" title="隐藏" @click=${() => this._hide(r.toolId)}>👁</button>
+                      <div class="grouped-result-meta">
+                        ${r.priority ? html`
+                          <span class="priority-chip" style="background:${priorityColor(r.priority)}22;color:${priorityColor(r.priority)}">${r.priority}</span>
+                        ` : nothing}
+                        <span class="time-badge">${r.time}</span>
                       </div>
                     </div>
-                  </div>
-                `;
-              }) : html`
-                <div class="empty-hint" style="flex:none;">
-                  <span class="icon">📭</span>
-                  暂无工具执行结果
+                  `)}
                 </div>
-              `}
-            </div>
-            <button class="carousel-arrow right" @click=${() => this._scrollCarousel('#track-results', 'right')}>›</button>
-          </div>
+              </div>
+            `);
+          })()}
         </div>
 
-        <!-- Right column: 待办事项 carousel -->
-        <div class="carousel-section">
-          <div class="section-label">⏱️ 待办事项${todos.length > 0 ? ` (${todos.length})` : ''}</div>
-          <div class="carousel-wrap">
-            <button class="carousel-arrow left" @click=${() => this._scrollCarousel('#track-todos', 'left')}>‹</button>
-            <div class="carousel-track" id="track-todos">
-              ${todos.length > 0 ? todos.map(t => html`
-                <div class="carousel-card">
-                  <div class="todo-item ${t.status === 'done' ? 'done' : ''}" @click=${() => this._openTool(t.toolId)}>
-                    <div class="todo-check">✓</div>
-                    <div class="todo-body">
-                      <div class="todo-title">${t.title}</div>
-                      <div class="todo-meta">
-                        <span class="priority-chip" style="background:${priorityColor(t.priority)}22;color:${priorityColor(t.priority)}">${t.priority}</span>
-                        <span class="todo-role" style="background:${t.roleColor}22;color:${t.roleColor}">${t.roleTag}</span>
+        <!-- 待办事项: 横向分组 -->
+        ${todos.length > 0 ? html`
+          <div class="result-group-row">
+            ${(() => {
+              const p1 = todos.filter(t => t.priority === 'P1');
+              const p2 = todos.filter(t => t.priority === 'P2');
+              const p3 = todos.filter(t => t.priority !== 'P1' && t.priority !== 'P2');
+              const todoGroups = [
+                { label: '🔴 P1 紧急', items: p1, color: '#ef4444' },
+                { label: '🟡 P2 重要', items: p2, color: '#f59e0b' },
+                { label: '🟢 P3 常规', items: p3, color: '#22c55e' },
+              ].filter(g => g.items.length > 0);
+              return todoGroups.map(g => html`
+                <div class="result-group">
+                  <div class="result-group-header">
+                    <span class="result-group-label" style="color:${g.color}">${g.label}</span>
+                    <span class="result-group-count">${g.items.length} 项</span>
+                  </div>
+                  <div class="result-group-items">
+                    ${g.items.map(t => html`
+                      <div class="grouped-result-row" @click=${() => this._openTool(t.toolId)}>
+                        <div class="todo-check">✓</div>
+                        <div class="grouped-result-body">
+                          <span class="grouped-result-title">${t.title}</span>
+                        </div>
+                        ${t.dueTime ? html`<span class="time-badge">${t.dueTime}</span>` : nothing}
                       </div>
-                    </div>
-                    ${t.dueTime ? html`<span class="todo-time">${t.dueTime}</span>` : nothing}
-                    <div class="item-actions" @click=${(e: Event) => e.stopPropagation()}>
-                      <button class="item-action-btn" title="关闭" @click=${() => this._dismiss(t.id)}>✕</button>
-                      <button class="item-action-btn" title="隐藏" @click=${() => this._hide(t.id)}>👁</button>
-                    </div>
+                    `)}
                   </div>
                 </div>
-              `) : html`
-                <div class="empty-hint" style="flex:none;">
-                  <span class="icon">✅</span>
-                  所有事项已处理
-                </div>
-              `}
-            </div>
-            <button class="carousel-arrow right" @click=${() => this._scrollCarousel('#track-todos', 'right')}>›</button>
+              `);
+            })()}
           </div>
-        </div>
+        ` : nothing}
       </div>
+
+      ${this._renderToolList()}
 
       ${hiddenCount > 0 ? html`
         <div class="hidden-bar">

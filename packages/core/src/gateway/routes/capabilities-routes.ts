@@ -40,6 +40,12 @@ export function registerCapabilitiesRoutes(router: Router): void {
     if (!id) throw new Error('Missing required parameter: id');
     return svc().updateTaskStatus({ id: id as string, status: 'in_progress', comment: comment as string });
   });
+  router.registerHandler('capabilities.tasks.delete', async (p: Record<string, unknown>) => {
+    const { id } = p;
+    if (!id) throw new Error('Missing required parameter: id');
+    await svc().deleteTask(id as string);
+    return { success: true, id };
+  });
   router.registerHandler('capabilities.approvals.create', async (p: Record<string, unknown>) => {
     const { taskId, requester, scope, ticketNo, expiresAt } = p;
     if (!taskId || !requester || !scope || !ticketNo || !expiresAt) throw new Error('Missing required parameters');

@@ -936,7 +936,49 @@ const thirdPartyRisk: ToolPluginManifest = {
   bindings: { roles: [{ roleId: 'supply-chain-security', priority: 1, group: 'core' }], metrics: [{ metricId: 'third-party-risk', delta: -3 }] },
 };
 
-// ─── 导出所有内置 manifest ────────────────────────────
+// ─── New tools (v3 expansion to 35) ──────────────────
+
+const cookieMgmt: ToolPluginManifest = {
+  meta: { id: 'cookie-mgmt', name: 'Cookie 合规管理', icon: 'Cookie', uri: '/tool/cookie-mgmt', version: '2.0.0', category: 'data-protection', provider: 'built-in', description: 'Cookie 横幅合规管理 + ePrivacy 审计 + 同意率追踪', enabled: true, createdAt: 1716134400000, updatedAt: 1716134400000 },
+  ui: { panelMode: 'slide', width: 400, form: [], result: { type: 'table', columns: [] } },
+  api: { endpoint: '/api/v1/cookie/mgmt', method: 'GET', adapter: 'default', auth: { type: 'none' }, timeout: 10000 },
+  schema: { input: { type: 'object', properties: {} }, output: { type: 'object', properties: {} } },
+  bindings: { roles: [{ roleId: 'privacy-officer', priority: 1, group: 'secondary' }] },
+};
+
+const consentMgmt: ToolPluginManifest = {
+  meta: { id: 'consent-mgmt', name: '同意管理', icon: 'CheckCircle', uri: '/tool/consent-mgmt', version: '2.0.0', category: 'data-protection', provider: 'built-in', description: '数据主体同意收集与生命周期管理 + PIPL/GDPR 合规', enabled: true, createdAt: 1716134400000, updatedAt: 1716134400000 },
+  ui: { panelMode: 'slide', width: 400, form: [], result: { type: 'table', columns: [] } },
+  api: { endpoint: '/api/v1/consent/mgmt', method: 'GET', adapter: 'default', auth: { type: 'none' }, timeout: 10000 },
+  schema: { input: { type: 'object', properties: {} }, output: { type: 'object', properties: {} } },
+  bindings: { roles: [{ roleId: 'privacy-officer', priority: 1, group: 'secondary' }] },
+};
+
+const dpaMgmt: ToolPluginManifest = {
+  meta: { id: 'dpa-mgmt', name: 'DPA 管理', icon: 'FileSignature', uri: '/tool/dpa-mgmt', version: '2.0.0', category: 'data-protection', provider: 'built-in', description: '数据处理协议 (DPA) 全生命周期管理 + 合规检查', enabled: true, createdAt: 1716134400000, updatedAt: 1716134400000 },
+  ui: { panelMode: 'slide', width: 400, form: [], result: { type: 'table', columns: [] } },
+  api: { endpoint: '/api/v1/dpa/mgmt', method: 'GET', adapter: 'default', auth: { type: 'none' }, timeout: 10000 },
+  schema: { input: { type: 'object', properties: {} }, output: { type: 'object', properties: {} } },
+  bindings: { roles: [{ roleId: 'privacy-officer', priority: 1, group: 'secondary' }, { roleId: 'supply-chain-security', priority: 2, group: 'secondary' }] },
+};
+
+const slaMgmt: ToolPluginManifest = {
+  meta: { id: 'sla-mgmt', name: 'SLA 管理', icon: 'Gauge', uri: '/tool/sla-mgmt', version: '2.0.0', category: 'governance', provider: 'built-in', description: '服务等级协议监控 + 违规检测 + 趋势报告', enabled: true, createdAt: 1716134400000, updatedAt: 1716134400000 },
+  ui: { panelMode: 'slide', width: 400, form: [], result: { type: 'table', columns: [] } },
+  api: { endpoint: '/api/v1/sla/mgmt', method: 'GET', adapter: 'default', auth: { type: 'none' }, timeout: 10000 },
+  schema: { input: { type: 'object', properties: {} }, output: { type: 'object', properties: {} } },
+  bindings: { roles: [{ roleId: 'business-security-officer', priority: 1, group: 'secondary' }] },
+};
+
+const supplyIntel: ToolPluginManifest = {
+  meta: { id: 'supply-intel', name: '供应链情报', icon: 'Link2', uri: '/tool/supply-intel', version: '2.0.0', category: 'supply-chain', provider: 'built-in', description: '供应链漏洞情报 + SBOM 关联分析 + 开源组件风险追踪', enabled: true, createdAt: 1716134400000, updatedAt: 1716134400000 },
+  ui: { panelMode: 'slide', width: 400, form: [], result: { type: 'table', columns: [] } },
+  api: { endpoint: '/api/v1/supply/intel', method: 'GET', adapter: 'default', auth: { type: 'none' }, timeout: 10000 },
+  schema: { input: { type: 'object', properties: {} }, output: { type: 'object', properties: {} } },
+  bindings: { roles: [{ roleId: 'supply-chain-security', priority: 1, group: 'core' }] },
+};
+
+// ─── Export all built-in manifests ────────────────────
 export const BUILT_IN_MANIFESTS: ToolPluginManifest[] = [
   alertQueue, soarExec, vulnScan, threatIntel, globalSituation,
   riskScore, boardReport, complianceChk, threatModel, bcpMgmt, sbomScan,
@@ -944,4 +986,5 @@ export const BUILT_IN_MANIFESTS: ToolPluginManifest[] = [
   aiDispatch, kpiTracking, incidentMgmt, logAnalysis, vendorEval,
   riskRegister, budgetDash, policyMgmt, dataMap, costCalc,
   patchMgmt, iamConfig, cloudSecurity, contractReview, thirdPartyRisk,
+  cookieMgmt, consentMgmt, dpaMgmt, slaMgmt, supplyIntel,
 ];

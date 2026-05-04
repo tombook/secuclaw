@@ -71,11 +71,62 @@ export class GatewayServer {
     this.wss = new WebSocketServer({ server: this.httpServer });
     this.router = new Router();
 
-    this.httpServer.on('request', (req, res) => {
-      if (req.url === '/health' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
+    this.httpServer.on('request', async (req, res) => {
+      // CORS preflight
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Max-Age': '86400',
+        });
+        res.end();
+        return;
       }
+
+      // Add CORS headers to all responses
+      const setCors = (statusCode: number, headers: Record<string, string> = {}) => {
+        res.writeHead(statusCode, {
+          'Access-Control-Allow-Origin': '*',
+          ...headers,
+        });
+      };
+
+      if (req.url === '/health' && req.method === 'GET') {
+        setCors(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
+        return;
+      }
+
+      // HTTP POST handler for /api/v1/* routes
+      if (req.method === 'POST' && req.url?.startsWith('/api/v1/')) {
+        const routeId = req.url.slice('/api/v1/'.length);
+        let body = '';
+        for await (const chunk of req) {
+          body += chunk;
+        }
+        let parsed: Record<string, unknown> = {};
+        try { parsed = JSON.parse(body); } catch { /* ignore */ }
+        const handler = this.router.handlers.get(routeId);
+        if (!handler) {
+          setCors(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Handler '${routeId}' not found` }));
+          return;
+        }
+        try {
+          const result = await handler(parsed);
+          setCors(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          setCors(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: String(err) }));
+        }
+        return;
+      }
+
+      // 404 for all other routes
+      setCors(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not found' }));
     });
   }
 

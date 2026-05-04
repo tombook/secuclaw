@@ -105,6 +105,7 @@ export const TOOL_PANELS: Record<string, ToolPanelDef> = {
   'sc-encryption-mgmt': { toolId: 'sc-encryption-mgmt', label: 'Encryption Mgmt', icon: '🔧', mode: 'slide' },
   'sc-endpoint-dash': { toolId: 'sc-endpoint-dash', label: 'Endpoint Dash', icon: '🔧', mode: 'slide' },
   'sc-evidence-collector': { toolId: 'sc-evidence-collector', label: 'Evidence Collector', icon: '🔧', mode: 'slide' },
+  'evolution-dashboard': { toolId: 'evolution-dashboard', label: '自主进化', icon: '🧬', mode: 'slide' },
   'sc-exfil-detection': { toolId: 'sc-exfil-detection', label: 'Exfil Detection', icon: '🔧', mode: 'slide' },
   'sc-exploit-predict': { toolId: 'sc-exploit-predict', label: 'Exploit Predict', icon: '🔧', mode: 'slide' },
   'sc-forensics-timeline': { toolId: 'sc-forensics-timeline', label: 'Forensics Timeline', icon: '🔧', mode: 'slide' },
@@ -1217,6 +1218,10 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
 
     case 'security-timeline': {
       return html`<sc-security-timeline></sc-security-timeline>`;
+    }
+
+    case 'evolution-dashboard': {
+      return html`<evolution-dashboard></evolution-dashboard>`;
     }
 
     default:

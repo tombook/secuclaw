@@ -241,4 +241,10 @@ export class TaskEngine {
   async listTasks(filters: { sessionId?: string; role?: RoleId; status?: TaskStatus }): Promise<RaciTask[]> {
     return this.taskRepo.query(filters);
   }
+
+  async deleteTask(taskId: string): Promise<boolean> {
+    const existing = await this.taskRepo.getById(taskId);
+    if (!existing) throw new Error(`Task ${taskId} not found`);
+    return this.taskRepo.delete(taskId);
+  }
 }

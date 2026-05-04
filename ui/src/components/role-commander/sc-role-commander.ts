@@ -3,6 +3,7 @@ import { customElement, state, property } from 'lit/decorators.js'
 
 // Tool results panel
 import './sc-tool-results-panel';
+import './sc-raci-panel';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 import type { RoleId } from '../../config/role-tool-config'
 import { ROLE_TOOL_CONFIGS } from '../../config/role-tool-config'
@@ -77,7 +78,7 @@ export class ScRoleCommander extends LitElement {
     .main-content {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: 8px;
     }
     .role-dash {
       width: 100%;
@@ -91,13 +92,17 @@ export class ScRoleCommander extends LitElement {
 
     /* ─── 通用区域区块（所有角色自动生效） ─── */
     .zone {
-      padding: 12px;
+      padding: 8px;
     }
     .zone-tools {
       background: linear-gradient(180deg, #0c1525 0%, #0f172a 100%);
       border-bottom: 1px solid #1e293b;
     }
     .zone-timeline {
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+    }
+    .zone-raci {
       background: #0f172a;
       border-bottom: 1px solid #1e293b;
     }
@@ -455,8 +460,8 @@ export class ScRoleCommander extends LitElement {
     .ciso-role-grid {
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      padding: 20px;
+      gap: 10px;
+      padding: 10px;
     }
     .ciso-zone-exec {
       display: flex;
@@ -484,28 +489,28 @@ export class ScRoleCommander extends LitElement {
     .ciso-panel {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 12px;
-      padding: 20px;
+      border-radius: 10px;
+      padding: 14px;
       overflow: hidden;
     }
     .ciso-panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .ciso-panel-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: #f1f5f9;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     .ciso-panel-title .icon {
-      font-size: 16px;
+      font-size: 14px;
     }
     .ciso-panel-badge {
       padding: 2px 8px;
@@ -514,12 +519,12 @@ export class ScRoleCommander extends LitElement {
       font-weight: 600;
     }
     .ciso-panel-body {
-      min-height: 120px;
+      min-height: 80px;
     }
     .ciso-divider {
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
-      margin: 12px 0;
+      margin: 8px 0;
     }
     @media (max-width: 1200px) {
       .ciso-zone-ops { grid-template-columns: 1fr; }
@@ -1877,15 +1882,34 @@ export class ScRoleCommander extends LitElement {
                 💡 ${decCfg.recommendation}
               </div>
               ${decCfg.pendingDecisions.length > 0 ? html`
-                <div style="font-size:10px;color:#64748b;margin-bottom:4px;">待决策事项</div>
-                ${decCfg.pendingDecisions.map(d => html`
-                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #1e293b11;">
-                    <span style="width:7px;height:7px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
-                    <span style="font-size:11px;color:#e2e8f0;font-weight:500;">${d.title}</span>
-                    <span style="font-size:10px;color:#64748b;">${d.impact}</span>
-                    <span style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:4px;background:${d.urgencyColor}15;color:${d.urgencyColor};font-weight:600;">${d.urgency}</span>
-                  </div>
-                `)}
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  ${(() => {
+                    const urgent = decCfg.pendingDecisions.filter(d => d.urgencyColor === '#ef4444');
+                    const high = decCfg.pendingDecisions.filter(d => d.urgencyColor === '#f59e0b');
+                    const normal = decCfg.pendingDecisions.filter(d => d.urgencyColor !== '#ef4444' && d.urgencyColor !== '#f59e0b');
+                    const groups = [
+                      { label: '🔴 紧急', items: urgent, color: '#ef4444' },
+                      { label: '🟡 高优先', items: high, color: '#f59e0b' },
+                      { label: '🔵 常规', items: normal, color: '#3b82f6' },
+                    ].filter(g => g.items.length > 0);
+                    return groups.map(g => html`
+                      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;overflow:hidden;">
+                        <div style="font-size:9px;font-weight:700;color:${g.color};padding:4px 8px;background:${g.color}0d;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:6px;">
+                          <span>${g.label}</span>
+                          <span style="margin-left:auto;font-size:8px;color:#64748b;">${g.items.length} 项</span>
+                        </div>
+                        ${g.items.map(d => html`
+                          <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid #1e293b11;">
+                            <span style="width:5px;height:5px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
+                            <span style="font-size:11px;color:#e2e8f0;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.title}</span>
+                            <span style="font-size:10px;color:#64748b;flex-shrink:0;">${d.impact}</span>
+                            <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${d.urgencyColor}15;color:${d.urgencyColor};font-weight:600;flex-shrink:0;">${d.urgency}</span>
+                          </div>
+                        `)}
+                      </div>
+                    `);
+                  })()}
+                </div>
               ` : nothing}
             ` : nothing}
           </div>
@@ -1895,33 +1919,52 @@ export class ScRoleCommander extends LitElement {
 
         <!-- ═══ Section B: 合规与覆盖 ═══ -->
         <div style="padding:12px 20px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;">
-          <!-- Legal 合规 -->
+          <!-- Legal 合规 — 横向3组 -->
           <div>
             <div style="font-size:12px;font-weight:600;color:#a78bfa;margin-bottom:8px;">⚖️ 合规状态</div>
-            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px;">
-              ${legalCfg ? legalCfg.regulations.map(r => html`
-                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 6px;text-align:center;">
-                  <div style="font-size:9px;color:#64748b;margin-bottom:2px;">${statusIcon[r.status] || ''} ${r.name}</div>
-                  <div style="font-size:20px;font-weight:700;color:${r.color};line-height:1.2;">${r.score}%</div>
-                </div>
-              `) : nothing}
-            </div>
-            ${legalCfg && legalCfg.riskItems.length > 0 ? html`
-              <div style="border-top:1px solid #1e293b;padding-top:6px;">
-                ${legalCfg.riskItems.map(ri => html`
-                  <div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0;">
-                    <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
-                    <span style="color:#e2e8f0;">${ri.desc}</span>
-                    <span style="margin-left:auto;font-size:9px;padding:1px 6px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;">${ri.level}</span>
+            <div style="display:flex;gap:6px;">
+              ${(() => {
+                if (!legalCfg) return nothing;
+                const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
+                const statusColor: Record<string, string> = { compliant: '#22c55e', partial: '#f59e0b', gap: '#ef4444' };
+                const groups = [
+                  { key: 'compliant', label: '已达标', items: legalCfg.regulations.filter(r => r.status === 'compliant'), color: '#22c55e' },
+                  { key: 'partial', label: '部分合规', items: legalCfg.regulations.filter(r => r.status === 'partial'), color: '#f59e0b' },
+                  { key: 'risk', label: '合规风险', items: legalCfg.riskItems.map(ri => ({ name: '', score: 0, color: ri.levelColor, detail: ri.desc, level: ri.level, levelColor: ri.levelColor })) as any[], color: '#ef4444' },
+                ].filter(g => g.items.length > 0);
+                return groups.map(g => html`
+                  <div style="flex:1;background:#0f172a;border:1px solid #1e293b;border-radius:6px;overflow:hidden;min-width:0;">
+                    <div style="font-size:9px;font-weight:700;color:${g.color};padding:4px 8px;background:${g.color}0d;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:4px;">
+                      <span>${g.key === 'risk' ? '⚠️' : statusIcon[g.key] || ''} ${g.label}</span>
+                      <span style="margin-left:auto;font-size:8px;color:#64748b;">${g.items.length} 项</span>
+                    </div>
+                    <div style="padding:5px 6px;max-height:110px;overflow-y:auto;">
+                      ${g.key === 'risk' ? g.items.map((ri: any) => html`
+                        <div style="display:flex;align-items:center;gap:4px;font-size:9px;padding:3px 0;border-bottom:1px solid #1e293b11;">
+                          <span style="width:4px;height:4px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
+                          <span style="color:#e2e8f0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ri.desc}</span>
+                          <span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;flex-shrink:0;">${ri.level}</span>
+                        </div>
+                      `) : g.items.map((r: any) => html`
+                        <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #1e293b11;">
+                          <div style="flex:1;min-width:0;">
+                            <div style="font-size:10px;color:#e2e8f0;font-weight:500;">${r.name}</div>
+                            <div style="font-size:8px;color:#475569;margin-top:1px;">${r.detail}</div>
+                          </div>
+                          <div style="font-size:16px;font-weight:700;color:${r.color};flex-shrink:0;">${r.score}%</div>
+                        </div>
+                      `)}
+                    </div>
                   </div>
-                `)}
-              </div>
-            ` : nothing}
+                `);
+              })()}
+            </div>
           </div>
 
           <!-- Framework 覆盖度 -->
           <div>
-            <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 框架覆盖度</div>
+            <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 安全控制覆盖度</div>
+            <div style="font-size:9px;color:#64748b;margin-bottom:6px;line-height:1.4;">基于 MITRE ATT&CK 与 SCF 标准来源评估当前角色的安全控制项覆盖范围</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
               <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
                 <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
@@ -1992,7 +2035,6 @@ export class ScRoleCommander extends LitElement {
               this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
             ]}
           </div>
-          ${this._renderToolGuideInline('ciso')}
         </div>
 
         <!-- ── Row 1: 安全态势总览 (Decision + Legal + Framework + SKILL Viz unified) ── -->
@@ -2001,7 +2043,14 @@ export class ScRoleCommander extends LitElement {
         <!-- ── Row 2: Dark Side Simulation (full width) ── -->
         ${this._renderDarkZone('ciso')}
 
-        <!-- ── Row 3: Event Timeline (full width) ── -->
+        <!-- ── Row 3: RACI Tasks ── -->
+        <div class="zone zone-raci">
+          <div style="padding: 8px 14px;">
+            <sc-raci-panel .roleId=${this.roleId}></sc-raci-panel>
+          </div>
+        </div>
+
+        <!-- ── Row 4: Event Timeline (full width) ── -->
         <div class="ciso-panel">
           ${this._renderTimelineZone('ciso')}
         </div>
@@ -2234,6 +2283,12 @@ export class ScRoleCommander extends LitElement {
         </div>
         ${this._renderPosturePanel('secuclaw-commander')}
         ${this._renderDarkZone('secuclaw-commander')}
+        <!-- ── RACI Tasks ── -->
+        <div class="zone zone-raci">
+          <div style="padding: 8px 14px;">
+            <sc-raci-panel .roleId=${this.roleId}></sc-raci-panel>
+          </div>
+        </div>
         <div class="ciso-panel">${this._renderTimelineZone('secuclaw-commander')}</div>
       </div>
     `
@@ -2505,18 +2560,165 @@ export class ScRoleCommander extends LitElement {
     }
   }
 
+  /** Per-role metric data extracted from dashboard definitions */
+  private static readonly ROLE_ANALYSIS_DATA: Record<string, Array<{
+    title: string; num: string; unit: string; badge?: string; badgeColor?: string;
+    delta: string; deltaColor: string; deltaLabel: string;
+  }>> = {
+    'ciso': [
+      { title: '风险评分板', num: '44', unit: '/100', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '近30天' },
+      { title: 'KPI 追踪', num: '85%', unit: '达成率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '较上季' },
+      { title: '董事会报告', num: '2', unit: '待提交', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: '预算仪表盘', num: '63%', unit: '使用率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+18%', deltaColor: '#f59e0b', deltaLabel: '本年度' },
+      { title: '合规检查', num: '91%', unit: '合规率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天' },
+    ],
+    'secuclaw-commander': [
+      { title: '全域态势', num: '58', unit: '/100 风险', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '本周' },
+      { title: 'AI 调度', num: '3', unit: '运行中', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+1', deltaColor: '#22c55e', deltaLabel: '较上周' },
+      { title: '事件管理', num: '4', unit: '活跃事件', badge: 'P1 重', badgeColor: '#ef4444', delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '近7天' },
+      { title: '风险评分板', num: '46', unit: '/100', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+2', deltaColor: '#f59e0b', deltaLabel: '近30天' },
+      { title: 'BCP 管理', num: '92%', unit: '覆盖率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '安全治理', num: '92%', unit: '治理覆盖率', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近季' },
+      { title: '投资决策', num: '340%', unit: '安全ROI', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+60%', deltaColor: '#22c55e', deltaLabel: '较上年' },
+      { title: '应急演练', num: '3', unit: '本季演练', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+1', deltaColor: '#22c55e', deltaLabel: '较上季' },
+      { title: 'DevSecOps', num: '87%', unit: '流水线覆盖率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '绩效管理', num: 'B+', unit: '安全团队评级', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+15', deltaColor: '#22c55e', deltaLabel: '年度' },
+    ],
+    'security-ops': [
+      { title: '告警队列', num: '8', unit: '活跃告警', badge: 'P1 重', badgeColor: '#ef4444', delta: '↓-30', deltaColor: '#22c55e', deltaLabel: '较昨日' },
+      { title: '事件管理', num: '4', unit: '待处理', badge: 'P1 重', badgeColor: '#ef4444', delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '近24h' },
+      { title: 'SOAR 剧本', num: '3', unit: '运行中', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '较昨日' },
+      { title: '日志分析', num: '65%', unit: '覆盖率', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+10%', deltaColor: '#22c55e', deltaLabel: '近90天' },
+      { title: '威胁情报', num: '12', unit: '新增情报', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '本周' },
+      { title: 'BCP 管理', num: '95%', unit: 'BCP覆盖', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+    ],
+    'security-expert': [
+      { title: '漏洞扫描', num: '65', unit: '个CVE', badge: 'P1 重', badgeColor: '#ef4444', delta: '↑+5', deltaColor: '#ef4444', deltaLabel: '本月新增' },
+      { title: '威胁情报', num: '12', unit: '新增CVE', badge: 'P1 重', badgeColor: '#ef4444', delta: '↑+4', deltaColor: '#ef4444', deltaLabel: '本周' },
+      { title: '渗透测试', num: '12', unit: '可利用漏洞', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本轮测试' },
+      { title: '事件管理', num: '3', unit: '待取证', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '近7天' },
+      { title: '补丁管理', num: '74%', unit: '高危覆盖', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+14%', deltaColor: '#22c55e', deltaLabel: '近90天' },
+    ],
+    'privacy-officer': [
+      { title: 'GDPR 审计', num: '87%', unit: '合规率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+9%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '合规检查', num: '91%', unit: '整体合规', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天' },
+      { title: '数据地图', num: '3', unit: '跨境数据流', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '本季度' },
+      { title: '策略管理', num: '2', unit: '待更新', badge: 'P1 重', badgeColor: '#ef4444', delta: '↑+1', deltaColor: '#ef4444', deltaLabel: '本月' },
+      { title: '供应商评估', num: '1', unit: '高风险', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: 'Cookie 管理', num: '94%', unit: '合规率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近月' },
+      { title: '同意管理', num: '96%', unit: '用户同意率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近月' },
+    ],
+    'security-architect': [
+      { title: '威胁建模', num: '23', unit: 'STRIDE威胁', badge: 'P1 重', badgeColor: '#ef4444', delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '较上季度' },
+      { title: '零信任评估', num: '3.2', unit: '/5 成熟度', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+0.4', deltaColor: '#22c55e', deltaLabel: '近90天' },
+      { title: 'IAM 配置', num: '5', unit: '高风险配置', badge: 'P1 重', badgeColor: '#ef4444', delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本月新增' },
+      { title: '云安全评估', num: '72', unit: '/100 云安全', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+7', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: '合规检查', num: '92%', unit: '等保合规率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+4%', deltaColor: '#22c55e', deltaLabel: '近30天' },
+      { title: '网络分段', num: '4', unit: '安全区域', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+2', deltaColor: '#22c55e', deltaLabel: '近季' },
+      { title: 'DMZ 配置', num: '85%', unit: 'DMZ覆盖率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '应用安全', num: '68', unit: '/100 AppSec', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+13', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: '数据安全架构', num: '92%', unit: '数据分类覆盖', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+14%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '容灾架构', num: '2h', unit: 'RPO 目标', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-6h', deltaColor: '#22c55e', deltaLabel: '较上年' },
+      { title: '架构治理', num: '100%', unit: '评审覆盖率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+20%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+    ],
+    'business-security-officer': [
+      { title: 'BCP 管理', num: '95%', unit: 'BCP覆盖', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '风险评分板', num: '48', unit: '/100 业务风险', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+6', deltaColor: '#ef4444', deltaLabel: '近30天' },
+      { title: '成本计算', num: '340%', unit: '安全ROI', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+60%', deltaColor: '#22c55e', deltaLabel: '较上年' },
+      { title: '供应商评估', num: '1', unit: '高风险', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: 'KPI 追踪', num: '87%', unit: 'BCP达成', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+9%', deltaColor: '#22c55e', deltaLabel: '近90天' },
+      { title: '安全意识培训', num: '82%', unit: '培训完成率', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+12%', deltaColor: '#22c55e', deltaLabel: '近季' },
+      { title: '灾难恢复', num: '4h', unit: 'RTO目标', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-4h', deltaColor: '#22c55e', deltaLabel: '较上年' },
+      { title: 'BIA 覆盖率', num: '88%', unit: '核心流程已分析', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+18%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+    ],
+    'supply-chain-security': [
+      { title: 'SBOM 扫描', num: '67%', unit: 'SBOM覆盖', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+22%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '供应商评估', num: '1', unit: 'D级高风险', badge: 'P1 重', badgeColor: '#ef4444', delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: '第三方风险', num: '12', unit: '高风险供应商', badge: 'P1 重', badgeColor: '#ef4444', delta: '↑+4', deltaColor: '#ef4444', deltaLabel: '年度变化' },
+      { title: '合同审查', num: '3', unit: '待审查', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '本月' },
+      { title: '合规检查', num: '88%', unit: '供应链合规', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+8%', deltaColor: '#22c55e', deltaLabel: '近90天' },
+      { title: '供应商审计', num: '5', unit: '待审计', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↓-3', deltaColor: '#22c55e', deltaLabel: '较上月' },
+      { title: 'DPA 管理', num: '12', unit: '有效DPA', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+4', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '供应商监控', num: '38', unit: '在线供应商', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+8', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: 'SLA 达成', num: '94%', unit: 'SLA 合规', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近半年' },
+      { title: '供应链情报', num: '7', unit: '活跃威胁', badge: 'P2 中', badgeColor: '#f59e0b', delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本周' },
+      { title: '物料追踪', num: '156', unit: '组件已追踪', badge: 'P3 轻', badgeColor: '#22c55e', delta: '↑+56', deltaColor: '#22c55e', deltaLabel: '近季' },
+    ],
+  }
+
+  private _analyzeMetrics(roleId: string): { summary: string; suggestions: string[]; risks: string[]; positives: string[] } {
+    const metrics = ScRoleCommander.ROLE_ANALYSIS_DATA[roleId] || []
+    const roleLabel = ROLE_THEME_CONFIGS[roleId]?.label || roleId
+
+    // Classify metrics
+    const criticals = metrics.filter(m => m.badge?.includes('P1'))
+    const warnings = metrics.filter(m => m.badge?.includes('P2'))
+    const degrading = metrics.filter(m => m.deltaColor === '#ef4444')
+    const improving = metrics.filter(m => m.deltaColor === '#22c55e')
+
+    // Build summary
+    const total = metrics.length
+    const healthyPct = Math.round(((total - criticals.length - warnings.length) / total) * 100)
+    let summary: string
+    if (criticals.length > 0) {
+      summary = `${roleLabel}当前存在 ${criticals.length} 个P1高风险指标、${warnings.length} 个P2中风险指标，整体健康度 ${healthyPct}%。需要优先关注：${criticals.map(m => `「${m.title}」(${m.num}${m.unit})`).join('、')}。`
+    } else if (warnings.length > 0) {
+      summary = `${roleLabel}态势总体可控，存在 ${warnings.length} 个P2中风险指标需关注。整体健康度 ${healthyPct}%，主要关注点：${warnings.map(m => `「${m.title}」(${m.num}${m.unit})`).join('、')}。`
+    } else {
+      summary = `${roleLabel}各项安全指标表现良好，无P1/P2风险项。整体健康度 ${healthyPct}%，共 ${total} 项指标均在正常范围。`
+    }
+
+    // Build suggestions based on critical/warning items
+    const suggestions: string[] = []
+    for (const m of criticals) {
+      if (m.title.includes('漏洞')) suggestions.push(`优先修复 ${m.title} 中的高危CVE（当前 ${m.num} 个），建议 72h 内完成关键补丁部署`)
+      else if (m.title.includes('告警') || m.title.includes('事件')) suggestions.push(`${m.title} 积压 ${m.num} 个待处理项，建议增派人手或启用自动响应剧本加速处置`)
+      else if (m.title.includes('IAM') || m.title.includes('配置')) suggestions.push(`${m.title} 存在 ${m.num} 个高风险项，建议立即审查权限策略，收紧过度授权`)
+      else if (m.title.includes('供应商') || m.title.includes('第三方')) suggestions.push(`${m.title} 有 ${m.num} 个高风险项，建议启动供应商风险评估流程并制定缓解计划`)
+      else if (m.title.includes('威胁')) suggestions.push(`${m.title} 检出 ${m.num} 项，建议更新检测规则并加强监控覆盖`)
+      else if (m.title.includes('策略') || m.title.includes('政策')) suggestions.push(`${m.title} 有 ${m.num} 项待更新，建议尽快完成策略评审和发布`)
+      else suggestions.push(`关注「${m.title}」（当前 ${m.num}${m.unit}），制定专项整改计划`)
+    }
+    for (const m of warnings) {
+      if (m.title.includes('风险')) suggestions.push(`${m.title} 为 ${m.num}${m.unit}，建议加强风险评估频率，建立动态风险追踪机制`)
+      else if (m.title.includes('合规')) suggestions.push(`${m.title} 合规率为 ${m.num}，建议对不合规项制定整改时间表`)
+      else if (m.title.includes('SBOM') || m.title.includes('物料')) suggestions.push(`${m.title} 覆盖率 ${m.num}，建议扩大组件扫描范围并建立持续监控`)
+      else if (m.title.includes('演练') || m.title.includes('DR')) suggestions.push(`${m.title} 频率 ${m.num}，建议增加演练频次并覆盖更多场景`)
+      else if (m.title.includes('BCP') || m.title.includes('BIA')) suggestions.push(`${m.title} 达标 ${m.num}，建议定期测试并更新业务影响分析`)
+      else if (m.title.includes('SLA') || m.title.includes('审计')) suggestions.push(`${m.title} 待处理 ${m.num} 项，建议按优先级排期并跟踪完成进度`)
+      else suggestions.push(`「${m.title}」（${m.num}${m.unit}）处于P2状态，建议持续跟踪并制定改进方案`)
+    }
+    if (degrading.length > 0 && criticals.length === 0) {
+      suggestions.push(`${degrading.length} 项指标呈恶化趋势（${degrading.map(m => m.title).join('、')}），建议排查根因并制定纠正措施`)
+    }
+
+    // Positives
+    const positives: string[] = []
+    for (const m of improving) {
+      positives.push(`${m.title} 持续改善（${m.delta}${m.deltaLabel}）`)
+    }
+    if (positives.length === 0) positives.push('各项指标保持稳定')
+
+    // Risks
+    const risks: string[] = []
+    for (const m of degrading) {
+      risks.push(`${m.title} 呈恶化趋势（${m.delta}${m.deltaLabel}）`)
+    }
+    if (criticals.length > 2) risks.push(`同时存在 ${criticals.length} 个P1高风险项，风险叠加效应需特别关注`)
+
+    return { summary, suggestions: suggestions.slice(0, 6), risks, positives }
+  }
+
   private async _runRoleAiAnalysis() {
     this._aiPanelLoading = true
     try {
-      // Simulate API call
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 800))
+      const analysis = this._analyzeMetrics(this.roleId)
       this._aiPanelResult = {
-        summary: `${this.roleId === 'ciso' ? '首席信息安全官' : ROLE_THEME_CONFIGS[this.roleId].label}安全态势良好，风险评分44/100，处于可控范围。`,
-        suggestions: [
-          '重点修复高风险漏洞，优先处理Critical级别漏洞',
-          '优化BCP预案，提升业务连续性保障能力',
-          '加强供应链安全管理，排查高风险供应商'
-        ]
+        summary: analysis.summary,
+        suggestions: analysis.suggestions,
+        risks: analysis.risks,
+        positives: analysis.positives,
       }
     } catch (e) {
       this._aiPanelResult = { error: '分析失败，请稍后重试' }
@@ -2527,27 +2729,39 @@ export class ScRoleCommander extends LitElement {
 
   private _renderAiPanel() {
     if (!this._aiPanelOpen) return ''
+    const r = this._aiPanelResult as any
     return html`
       <div class="ai-float-panel">
         <div class="ai-float-head">
           <span>🤖 AI 安全分析</span>
-          <div class="ai-float-close" @click=${this._toggleAiPanel}>✕</div>
+          <div class="ai-float-close" @click=${() => { this._aiPanelOpen = false; this._aiPanelResult = null; }}>✕</div>
         </div>
         <div class="ai-float-body">
-          ${this._aiPanelLoading ? html`<div style="text-align: center; padding: 32px;">分析中...</div>` : this._aiPanelResult?.error ? html`<div style="color: #ef4444;">${this._aiPanelResult.error}</div>` : html`
+          ${this._aiPanelLoading ? html`<div style="text-align: center; padding: 32px;">分析中...</div>` : r?.error ? html`<div style="color: #ef4444;">${r.error}</div>` : html`
             <div>
               <div style="font-weight: 600; margin-bottom: 12px;">📊 分析总结</div>
-              <p style="margin-bottom: 16px;">${this._aiPanelResult?.summary}</p>
-              <div style="font-weight: 600; margin-bottom: 12px;">💡 优化建议</div>
-              <ul style="margin: 0; padding-left: 20px;">
-                ${this._aiPanelResult?.suggestions.map((s: string) => html`<li style="margin-bottom: 8px;">${s}</li>`)}
-              </ul>
+              <p style="margin-bottom: 16px; line-height: 1.6; font-size: 12px;">${r?.summary}</p>
+              ${r?.risks?.length > 0 ? html`
+                <div style="font-weight: 600; margin-bottom: 8px; color: #ef4444;">⚠️ 风险预警</div>
+                <ul style="margin: 0 0 16px 0; padding-left: 18px; list-style: disc;">
+                  ${r.risks.map((s: string) => html`<li style="margin-bottom: 6px; font-size: 12px; color: #fca5a5;">${s}</li>`)}
+                </ul>
+              ` : nothing}
+              ${r?.positives?.length > 0 ? html`
+                <div style="font-weight: 600; margin-bottom: 8px; color: #22c55e;">✅ 正面趋势</div>
+                <ul style="margin: 0 0 16px 0; padding-left: 18px; list-style: disc;">
+                  ${r.positives.map((s: string) => html`<li style="margin-bottom: 6px; font-size: 12px; color: #86efac;">${s}</li>`)}
+                </ul>
+              ` : nothing}
+              <div style="font-weight: 600; margin-bottom: 8px;">💡 优化建议</div>
+              <ol style="margin: 0; padding-left: 18px;">
+                ${r?.suggestions?.map((s: string, i: number) => html`<li style="margin-bottom: 8px; font-size: 12px; line-height: 1.5;">${s}</li>`)}
+              </ol>
             </div>
           `}
         </div>
         <div class="ai-float-foot">
-          <button style="padding: 6px 12px; border: 1px solid var(--sc-border-color); background: var(--sc-bg-tertiary); border-radius: 4px; color: var(--sc-text-primary); cursor: pointer;">生成报告</button>
-          <button style="padding: 6px 12px; border: none; background: var(--sc-primary-color); color: white; border-radius: 4px; cursor: pointer;">重新分析</button>
+          <button style="padding: 6px 12px; border: 1px solid var(--sc-border-color); background: var(--sc-bg-tertiary); border-radius: 4px; color: var(--sc-text-primary); cursor: pointer;" @click=${() => { this._aiPanelResult = null; this._runRoleAiAnalysis(); }}>🔄 重新分析</button>
         </div>
       </div>
     `
@@ -2565,7 +2779,7 @@ export class ScRoleCommander extends LitElement {
         <div class="main-content">
           ${this._renderRoleDashboard()}
         </div>
-        ${this._renderToolSummary()}
+        ${nothing}
         ${this.roleId !== 'security-architect' && this._showToolResults ? html`
           <div class="zone zone-results">
             <sc-tool-results-panel .roleId=${this.roleId}></sc-tool-results-panel>
@@ -2579,6 +2793,11 @@ export class ScRoleCommander extends LitElement {
           </div>
         ` : nothing}
         ${this._renderAiPanel()}
+        <div
+          class="ai-float-toggle ${this._aiPanelOpen ? 'hidden' : ''}"
+          @click=${this._toggleAiPanel}
+          title="AI 安全分析助手"
+        >🤖</div>
         ${this._toast ? html`<div style="position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:3000;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44">⚠ ${this._toast}</div>` : nothing}
       </div>
     `

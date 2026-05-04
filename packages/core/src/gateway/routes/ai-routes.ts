@@ -5,6 +5,21 @@ import { LLMService } from '../../ai/llm-service.js';
 import { LLMConfig, LLMError, LLMErrorCode } from '../../ai/llm-types.js';
 import { RolePersonaManager } from '../../ai/role-persona.js';
 import { ChatContextAggregator } from '../../ai/chat-context.js';
+import {
+  getMemoryContext,
+  onUserMessage,
+  onTurnComplete,
+  addMemory,
+  readMemory,
+  getEvolutionStatus,
+  initEvolutionPersistence,
+  resetNudge,
+  evolutionStore,
+  REVIEW_PROMPTS,
+  chatHistoryBuffer,
+  triggerMemoryReview,
+  type RoleId,
+} from '../../evolution/index.js';
 
 const store = new JsonStore('./data/storage');
 const kpiService = new KpiService(store);
@@ -63,6 +78,10 @@ function initializeServices(deps: RouterDeps) {
   }
   if (!chatContextAggregator && deps.jsonStore) {
     chatContextAggregator = new ChatContextAggregator(deps.jsonStore);
+  }
+  // Initialize Evolution persistence so memories survive server restarts
+  if (deps.jsonStore) {
+    initEvolutionPersistence(deps.jsonStore);
   }
 }
 
@@ -138,6 +157,20 @@ export function registerAiRoutes(
     const req = p as unknown as ChatRequest;
     const { message, pageId = 'dashboard', pageTitle = 'Dashboard', roleId = 'security-expert', forceRefresh } = req;
 
+    // ─── Evolution: 用户消息进入，更新 nudge 计数 ───────────────
+    const safeRole = (roleId || 'security-expert') as RoleId;
+    onUserMessage(safeRole);
+
+    // ─── Evolution: 记录用户消息到对话历史 ───────────────────────
+    chatHistoryBuffer.push(safeRole, {
+      role: 'user',
+      content: message,
+      timestamp: Date.now(),
+    });
+
+    // ─── Evolution: 获取记忆上下文，注入 system prompt ──────────
+    const memoryContext = getMemoryContext(safeRole);
+
     if (!message) {
       throw new Error('message is required');
     }
@@ -185,8 +218,14 @@ export function registerAiRoutes(
         contextText = chatContextAggregator.formatContextForPrompt(contextData);
       }
 
+      // ─── Evolution: 将记忆上下文注入 system prompt ───────────
+      const fullSystemPrompt = [
+        systemPrompt.content,
+        memoryContext,
+      ].filter(Boolean).join('\n\n');
+
       const messages: import('../../ai/llm-types.js').LLMMessage[] = [
-        systemPrompt,
+        { role: 'system', content: fullSystemPrompt },
         {
           role: 'user' as const,
           content: `当前安全数据:\n${contextText}\n\n用户问题: ${message}`,
@@ -194,6 +233,34 @@ export function registerAiRoutes(
       ];
 
       const response = await llmService!.chat(messages);
+
+      // ─── Evolution: 记录助手回复到对话历史 ───────────────────────
+      chatHistoryBuffer.push(safeRole, {
+        role: 'assistant',
+        content: response.content,
+        timestamp: Date.now(),
+      });
+
+      // ─── Evolution: 轮次完成，检查 nudge 触发 ──────────────────
+      const { shouldReviewMemory, shouldReviewSkill } = onTurnComplete(safeRole, response.content);
+
+      // ─── Evolution: 真实触发 LLM 记忆沉淀审查 ───────────────────
+      if (shouldReviewMemory && llmService) {
+        // Fire-and-forget: run review in background, don't block the response
+        triggerMemoryReview(safeRole, llmService)
+          .then(result => {
+            // @ts-ignore Bun global
+            console.log('[Evolution] Memory review complete:', result.summary);
+          })
+          .catch(err => {
+            // @ts-ignore Bun global
+            console.error('[Evolution] Memory review error:', err);
+          });
+      }
+      if (shouldReviewSkill) {
+        // @ts-ignore Bun global
+        console.log('[Evolution] Skill review triggered for role:', safeRole);
+      }
 
       return {
         id: `msg_${Date.now()}`,
@@ -371,5 +438,49 @@ export function registerAiRoutes(
         error: 'KPI summary failed',
       };
     }
+  });
+
+  // ─── Evolution API ─────────────────────────────────────────
+
+  handlers.set('evolution.status', async (p) => {
+    const roleId = ((p as { role?: string }).role || 'security-expert') as RoleId;
+    return getEvolutionStatus(roleId);
+  });
+
+  handlers.set('evolution.memory.add', async (p) => {
+    const { target = 'memory', content, role = 'security-expert', category } = p as {
+      target?: string; content?: string; role?: string; category?: string;
+    };
+    if (!content) throw new Error('content is required');
+    const entry = addMemory(target as 'memory' | 'user', content, role as RoleId, category);
+    // Force sync to disk before returning response
+    evolutionStore.persistMemoriesNow(role as RoleId, target as 'memory' | 'user');
+    return { success: true, entry };
+  });
+
+  handlers.set('evolution.memory.read', async (p) => {
+    const { target = 'memory', role = 'security-expert' } = p as {
+      target?: string; role?: string;
+    };
+    const content = readMemory(target as 'memory' | 'user', role as RoleId);
+    return { content };
+  });
+
+  handlers.set('evolution.memory.getContext', async (p) => {
+    const roleId = ((p as { role?: string }).role || 'security-expert') as RoleId;
+    const context = getMemoryContext(roleId);
+    return { context };
+  });
+
+  handlers.set('evolution.memory.list', async (p) => {
+    const roleId = ((p as { role?: string }).role || 'security-expert') as RoleId;
+    const includeContent = !!(p as { includeContent?: boolean }).includeContent;
+    const { getEvolutionMemories } = await import('../../evolution/index.js');
+    const memories = getEvolutionMemories(roleId, includeContent);
+    return { memories };
+  });
+
+  handlers.set('evolution.reviewPrompts', async () => {
+    return REVIEW_PROMPTS;
   });
 }

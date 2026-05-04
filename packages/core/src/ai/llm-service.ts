@@ -29,6 +29,7 @@ export class LLMService {
       case 'ollama':
         return new OllamaProvider(config);
       case 'bigmodel':
+      case 'zhipu':
         return new BigModelProvider(config);
       case 'minimax':
         return new MiniMaxProvider(config);
