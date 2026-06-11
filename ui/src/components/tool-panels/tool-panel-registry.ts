@@ -233,7 +233,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <label class="form-label">处置备注</label>
           <textarea class="form-textarea" placeholder="描述处置措施和原因..."></textarea>
         </div>
-        <button class="exec-btn" style="background:#ef4444" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-red" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`处理中...` : html`🚨 执行处置`}
         </button>
         ${alert ? html`
@@ -262,7 +262,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <label class="form-label">目标资产</label>
           <input class="form-input" placeholder="输入 IP 或主机名" value="10.0.1.45" />
         </div>
-        <button class="exec-btn" style="background:#f97316" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-orange" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`剧本执行中...` : html`🤖 执行剧本`}
         </button>
         ${soarResult ? html`
@@ -296,8 +296,8 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <label class="form-label">严重级别过滤</label>
           <select class="form-select"><option>全部</option><option>Critical + High</option><option>Critical only</option></select>
         </div>
-        ${executing ? html`<div class="progress-bar"><div class="fill" style="width:60%;background:#3b82f6"></div></div><div style="font-size:11px;color:#64748b;text-align:center">扫描进行中... 已检测 67%</div>` : nothing}
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>
+        ${executing ? html`<div class="progress-bar"><div class="fill" style="width:60%;background:#3b82f6"></div></div><div class="text-muted-sm text-center">扫描进行中... 已检测 67%</div>` : nothing}
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`扫描中...` : html`🔍 开始扫描`}
         </button>
         ${vulns ? html`
@@ -307,10 +307,10 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
               <tr><th>CVE</th><th>CVSS</th><th>描述</th><th>资产</th><th>状态</th></tr>
               ${vulns.map(v => html`
                 <tr>
-                  <td style="font-weight:700">${v.cve}</td>
+                  <td class="text-bold">${v.cve}</td>
                   <td><span class="chip ${_cvssClass(v.cvss)}">${v.cvss}</span></td>
                   <td>${v.desc}</td>
-                  <td style="color:#64748b">${v.asset}</td>
+                  <td class="text-muted">${v.asset}</td>
                   <td><span class="chip ${v.status === '已修复' ? 'chip-pass' : 'chip-fail'}">${v.status}</span></td>
                 </tr>
               `)}
@@ -338,7 +338,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <select class="form-select"><option>全部源</option><option>微步在线</option><option>AlienVault</option><option>VirusTotal</option></select>
           </div>
         </div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`查询中...` : html`📡 查询情报`}
         </button>
         ${intel ? html`
@@ -359,31 +359,31 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     // ─── 安全指挥官：全域态势 ───
     case 'global-situation': {
       return html`
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-          <div style="text-align:center;padding:16px;background:#111827;border-radius:8px;border:1px solid #1e293b">
-            <div style="font-size:28px;font-weight:800;color:#ef4444">7</div>
-            <div style="font-size:10px;color:#64748b">活跃事件</div>
+        <div class="grid-3 mb-lg">
+          <div class="box-stat">
+            <div class="box-stat-value text-red">7</div>
+            <div class="text-muted-xs">活跃事件</div>
           </div>
-          <div style="text-align:center;padding:16px;background:#111827;border-radius:8px;border:1px solid #1e293b">
-            <div style="font-size:28px;font-weight:800;color:#f59e0b">12</div>
-            <div style="font-size:10px;color:#64748b">跨角色协作</div>
+          <div class="box-stat">
+            <div class="box-stat-value text-amber">12</div>
+            <div class="text-muted-xs">跨角色协作</div>
           </div>
-          <div style="text-align:center;padding:16px;background:#111827;border-radius:8px;border:1px solid #1e293b">
-            <div style="font-size:28px;font-weight:800;color:#22c55e">93%</div>
-            <div style="font-size:10px;color:#64748b">封堵率</div>
+          <div class="box-stat">
+            <div class="box-stat-value text-green">93%</div>
+            <div class="text-muted-xs">封堵率</div>
           </div>
         </div>
         <div class="result-title">各角色实时状态</div>
         <table class="result-table">
           <tr><th>角色</th><th>状态</th><th>关键指标</th><th>活跃任务</th></tr>
-          <tr><td style="color:#ef4444;font-weight:700">安全运营</td><td><span class="chip chip-critical">告警中</span></td><td>23 待处理</td><td>P1 横向移动响应</td></tr>
-          <tr><td style="color:#3b82f6;font-weight:700">安全专家</td><td><span class="chip chip-critical">注意</span></td><td>65 漏洞</td><td>CVE-2026-1234 验证</td></tr>
-          <tr><td style="color:#ef4444;font-weight:700">安全指挥官</td><td><span class="chip chip-high">协调中</span></td><td>241 告警</td><td>零信任迁移协调</td></tr>
-          <tr><td style="color:#a78bfa;font-weight:700">隐私官</td><td><span class="chip chip-pass">正常</span></td><td>93% 合规</td><td>GDPR 审计</td></tr>
-          <tr><td style="color:#06b6d4;font-weight:700">安全架构师</td><td><span class="chip chip-pass">正常</span></td><td>23 风险</td><td>微服务网关评审</td></tr>
-          <tr><td style="color:#10b981;font-weight:700">业务安全</td><td><span class="chip chip-pass">正常</span></td><td>89 连续性</td><td>BCP 演练</td></tr>
-          <tr><td style="color:#3b82f6;font-weight:700">CISO</td><td><span class="chip chip-pass">正常</span></td><td>44 风险分</td><td>Q2 战略报告</td></tr>
-          <tr><td style="color:#84cc16;font-weight:700">供应链</td><td><span class="chip chip-pass">正常</span></td><td>3 高风险</td><td>SBOM 扫描</td></tr>
+          <tr><td class="text-red text-bold">安全运营</td><td><span class="chip chip-critical">告警中</span></td><td>23 待处理</td><td>P1 横向移动响应</td></tr>
+          <tr><td class="text-blue text-bold">安全专家</td><td><span class="chip chip-critical">注意</span></td><td>65 漏洞</td><td>CVE-2026-1234 验证</td></tr>
+          <tr><td class="text-red text-bold">安全指挥官</td><td><span class="chip chip-high">协调中</span></td><td>241 告警</td><td>零信任迁移协调</td></tr>
+          <tr><td class="text-purple text-bold">隐私官</td><td><span class="chip chip-pass">正常</span></td><td>93% 合规</td><td>GDPR 审计</td></tr>
+          <tr><td class="text-cyan text-bold">安全架构师</td><td><span class="chip chip-pass">正常</span></td><td>23 风险</td><td>微服务网关评审</td></tr>
+          <tr><td class="text-teal text-bold">业务安全</td><td><span class="chip chip-pass">正常</span></td><td>89 连续性</td><td>BCP 演练</td></tr>
+          <tr><td class="text-blue text-bold">CISO</td><td><span class="chip chip-pass">正常</span></td><td>44 风险分</td><td>Q2 战略报告</td></tr>
+          <tr><td class="text-lime text-bold">供应链</td><td><span class="chip chip-pass">正常</span></td><td>3 高风险</td><td>SBOM 扫描</td></tr>
         </table>
       `;
     }
@@ -395,21 +395,21 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <label class="form-label">评估周期</label>
           <select class="form-select"><option>Q2 2026（当前）</option><option>Q1 2026</option><option>2025 年度</option></select>
         </div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`评估中...` : html`📊 重新评估`}
         </button>
         <div class="result-section">
           <div class="result-title">四维风险评估</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="grid-2">
             <div class="result-item"><div class="ri-header"><span class="ri-title">技术风险</span><span class="chip chip-high">38/100</span></div><div class="ri-desc">↓ 较上季降低 5 分</div></div>
             <div class="result-item"><div class="ri-header"><span class="ri-title">合规风险</span><span class="chip chip-medium">25/100</span></div><div class="ri-desc">↓ GDPR 合规率提升至 93%</div></div>
             <div class="result-item"><div class="ri-header"><span class="ri-title">运营风险</span><span class="chip chip-high">42/100</span></div><div class="ri-desc">↑ 告警数量环比增长 12%</div></div>
             <div class="result-item"><div class="ri-header"><span class="ri-title">战略风险</span><span class="chip chip-low">15/100</span></div><div class="ri-desc">→ 稳定，零信任推进中</div></div>
           </div>
-          <div class="result-item" style="margin-top:8px;text-align:center">
+          <div class="result-item mt-center">
             <span class="ri-title">综合风险评分</span>
-            <span style="font-size:24px;font-weight:800;color:#fbbf24;margin-left:8px">44</span>
-            <span style="font-size:11px;color:#64748b">/100</span>
+            <span class="score-lg" style="color:#fbbf24">44</span>
+            <span class="text-muted-sm">/100</span>
             <div class="ri-meta">同比 ↓8 | 环比 ↑3 | 趋势：需要关注运营风险</div>
           </div>
         </div>
@@ -429,21 +429,21 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <select class="form-select" multiple><option selected>风险评分</option><option selected>KPI 达成</option><option>事件统计</option><option>预算使用</option></select>
           </div>
         </div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`生成中...` : html`📝 生成报告`}
         </button>
         <div class="result-section">
           <div class="result-title">报告预览</div>
-          <div class="result-item" style="line-height:1.6">
-            <div style="font-size:14px;font-weight:700;margin-bottom:8px">2026 年 Q2 安全态势报告</div>
-            <div style="font-size:11px;color:#94a3b8">
+          <div class="result-item line-relaxed">
+            <div class="section-title">2026 年 Q2 安全态势报告</div>
+            <div class="text-muted-sec">
               <p><strong>一、总体态势</strong><br>全域安全评分 79/100，较上季度提升 3 分。活跃安全事件 7 起，其中 P1 级 2 起已处置。</p>
               <p><strong>二、风险评分</strong><br>综合风险 44/100（中低），技术风险下降明显，运营风险需持续关注。</p>
               <p><strong>三、KPI 达成</strong><br>8 项 KPI 达成率 85%，其中补丁覆盖率、SOAR 自动化率超额完成。</p>
             </div>
-            <div style="margin-top:8px;display:flex;gap:8px">
-              <button class="exec-btn" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:6px 12px;width:auto;font-size:11px">📄 导出 PDF</button>
-              <button class="exec-btn" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:6px 12px;width:auto;font-size:11px">📋 复制内容</button>
+            <div class="mt-flex">
+              <button class="exec-btn box-btn-secondary">📄 导出 PDF</button>
+              <button class="exec-btn box-btn-secondary">📋 复制内容</button>
             </div>
           </div>
         </div>
@@ -463,7 +463,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <select class="form-select"><option>全量检查</option><option>抽样检查</option></select>
           </div>
         </div>
-        <button class="exec-btn" style="background:#a78bfa" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-purple" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`检查中...` : html`✅ 开始合规检查`}
         </button>
         <div class="result-section">
@@ -477,9 +477,9 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <tr><td>DPO 任免与履职</td><td><span class="chip chip-pass">通过</span></td><td>DPO 已任命并备案</td></tr>
             <tr><td>隐私影响评估 (DPIA)</td><td><span class="chip chip-fail">不通过</span></td><td>3 个高风险处理活动未完成 DPIA</td></tr>
           </table>
-          <div class="result-item" style="margin-top:8px;text-align:center">
-            <span style="font-size:11px;color:#64748b">合规率</span>
-            <span style="font-size:22px;font-weight:800;color:#a78bfa;margin:0 6px">93%</span>
+          <div class="result-item mt-center">
+            <span class="text-muted-sm">合规率</span>
+            <span class="score-md text-purple">93%</span>
             <span class="chip chip-medium">2 项需整改</span>
           </div>
         </div>
@@ -495,15 +495,15 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
         </div>
         <div class="form-group">
           <label class="form-label">STRIDE 分析维度</label>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <div class="flex-wrap-sm mt-sm">
             ${['S-Spoofing', 'T-Tampering', 'R-Repudiation', 'I-Info Disclosure', 'D-DoS', 'E-Elevation'].map(d => html`
-              <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8;cursor:pointer">
+              <label class="stride-label">
                 <input type="checkbox" checked style="accent-color:#06b6d4" /> ${d}
               </label>
             `)}
           </div>
         </div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`分析中...` : html`⚠️ 执行 STRIDE 分析`}
         </button>
         <div class="result-section">
@@ -533,21 +533,21 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
         /* [Phase 1B] 防御纵深设计选项 */
         <div class="form-group">
           <label class="form-label">防御纵深设计 [Phase 1B]</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#06b6d4;margin-bottom:4px">🌐 网络分段</div>
+          <div class="grid-2-mt-sm">
+            <div class="box-input">
+              <div class="text-xs text-cyan mb-sm">🌐 网络分段</div>
               <select class="form-select"><option selected>已完成 VLAN 分段</option><option>微分段进行中</option><option>待规划</option></select>
             </div>
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#22c55e;margin-bottom:4px">🛡️ DMZ 区域</div>
+            <div class="box-input">
+              <div class="text-xs text-green mb-sm">🛡️ DMZ 区域</div>
               <select class="form-select"><option selected>标准 DMZ 已部署</option><option>云 DMZ 待规划</option><option>无 DMZ</option></select>
             </div>
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#f59e0b;margin-bottom:4px">🏢 安全区域</div>
+            <div class="box-input">
+              <div class="text-xs text-amber mb-sm">🏢 安全区域</div>
               <select class="form-select"><option selected>办公区/生产区隔离</option><option>零信任区域规划中</option><option>未分区</option></select>
             </div>
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#a78bfa;margin-bottom:4px">💻 应用层防护</div>
+            <div class="box-input">
+              <div class="text-xs text-purple mb-sm">💻 应用层防护</div>
               <select class="form-select"><option selected>WAF + RASP 已部署</option><option>仅 WAF</option><option>待部署</option></select>
             </div>
           </div>
@@ -562,7 +562,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <label class="form-label">参与部门</label>
           <input class="form-input" value="IT运维、客服、财务" />
         </div>
-        <button class="exec-btn" style="background:#10b981" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-teal" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`准备中...` : html`🛡️ 创建演练计划`}
         </button>
         <div class="result-section">
@@ -575,9 +575,9 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <tr><td>备用通信链路</td><td>≤ 10 min</td><td>8 min</td><td><span class="chip chip-pass">达标</span></td></tr>
             <tr><td>管理团队集结</td><td>≤ 20 min</td><td>15 min</td><td><span class="chip chip-pass">达标</span></td></tr>
           </table>
-          <div class="result-item" style="margin-top:8px;text-align:center">
-            <span style="font-size:11px;color:#64748b">RTO 达标率</span>
-            <span style="font-size:22px;font-weight:800;color:#10b981;margin:0 6px">96%</span>
+          <div class="result-item mt-center">
+            <span class="text-muted-sm">RTO 达标率</span>
+            <span class="score-md text-teal">96%</span>
             <span class="chip chip-medium">1 项需改进</span>
           </div>
         </div>
@@ -598,7 +598,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <select class="form-select"><option>浅层扫描</option><option selected>深度扫描</option><option>合规扫描</option></select>
           </div>
         </div>
-        <button class="exec-btn" style="background:#84cc16" ?disabled=${executing} @click=${onExecute}>
+        <button class="exec-btn exec-btn-lime" ?disabled=${executing} @click=${onExecute}>
           ${executing ? html`扫描中...` : html`📦 开始 SBOM 扫描`}
         </button>
         ${sbom ? html`
@@ -608,8 +608,8 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
               <tr><th>组件</th><th>版本</th><th>许可证</th><th>漏洞</th><th>风险</th></tr>
               ${sbom.map(c => html`
                 <tr>
-                  <td style="font-weight:700">${c.component}</td>
-                  <td style="color:#64748b">${c.version}</td>
+                  <td class="text-bold">${c.component}</td>
+                  <td class="text-muted">${c.version}</td>
                   <td>${c.license}</td>
                   <td>${c.vulns > 0 ? html`<span class="chip chip-critical">${c.vulns}</span>` : html`<span class="chip chip-pass">0</span>`}</td>
                   <td><span class="chip ${_riskClass(c.risk)}">${c.risk}</span></td>
@@ -629,7 +629,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">调度模式</label><select class="form-select"><option>自动响应</option><option>半自动审批</option><option>手动触发</option></select></div>
           <div class="form-group"><label class="form-label">优先级过滤</label><select class="form-select"><option>P0 仅</option><option selected>P0+P1</option><option>全部</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#f97316" ?disabled=${executing} @click=${onExecute}>${executing ? html`调度中...` : html`🤖 启动 AI 调度`}</button>
+        <button class="exec-btn exec-btn-orange" ?disabled=${executing} @click=${onExecute}>${executing ? html`调度中...` : html`🤖 启动 AI 调度`}</button>
         <div class="result-section">
           <div class="result-title">调度决策</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">P1 告警自动升级</span><span class="chip chip-high">已通知安全指挥官</span></div></div>
@@ -643,14 +643,14 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'budget-dash': {
       return html`
         <div class="form-group"><label class="form-label">预算周期</label><select class="form-select"><option>2026 年度</option><option>Q2 2026</option><option>Q1 2026</option></select></div>
-        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? html`刷新中...` : html`💰 刷新预算`}</button>
+        <button class="exec-btn exec-btn-violet" ?disabled=${executing} @click=${onExecute}>${executing ? html`刷新中...` : html`💰 刷新预算`}</button>
         <div class="result-section">
           <div class="result-title">预算执行概况</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">技术投入</span><span class="chip chip-medium">¥1,280万 / ¥1,600万 (80%)</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">人员培训</span><span class="chip chip-pass">¥85万 / ¥120万 (71%)</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">合规认证</span><span class="chip chip-pass">¥32万 / ¥45万 (71%)</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">应急储备</span><span class="chip chip-info">¥0 / ¥200万 (0%)</span></div></div>
-          <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">总预算使用率 63%，技术投入同比 ↑18%</div></div>
+          <div class="result-item mt-center"><div class="ri-desc text-muted-sec">总预算使用率 63%，技术投入同比 ↑18%</div></div>
         </div>
       `;
     }
@@ -662,7 +662,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">云平台</label><select class="form-select"><option>AWS</option><option>Azure</option><option>阿里云</option><option selected>全部</option></select></div>
           <div class="form-group"><label class="form-label">检查范围</label><select class="form-select"><option>IAM 配置</option><option>网络 ACL</option><option>存储策略</option><option selected>全面扫描</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? html`检查中...` : html`☁️ 开始检查`}</button>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>${executing ? html`检查中...` : html`☁️ 开始检查`}</button>
         <div class="result-section">
           <div class="result-title">云安全配置审计</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">S3 Bucket 公开访问</span><span class="chip chip-critical">3 个 Bucket 未启用 Block Public Access</span></div></div>
@@ -676,26 +676,26 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'contract-review': {
       return html`
         <div class="form-group"><label class="form-label">合同类型</label><select class="form-select"><option>数据处理协议 DPA</option><option>保密协议 NDA</option><option>服务级别协议 SLA</option><option selected>全面审查</option></select></div>
-        <button class="exec-btn" style="background:#84cc16" ?disabled=${executing} @click=${onExecute}>${executing ? html`审查中...` : html`📋 开始审查`}</button>
+        <button class="exec-btn exec-btn-lime" ?disabled=${executing} @click=${onExecute}>${executing ? html`审查中...` : html`📋 开始审查`}</button>
         </div>
         /* [Phase 1B] DPA 数据处理协议管理 */
         <div class="form-group">
           <label class="form-label">DPA 数据处理协议 [Phase 1B]</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#a78bfa;margin-bottom:4px">📋 DPA 状态</div>
+          <div class="grid-2-mt-sm">
+            <div class="box-input">
+              <div class="text-xs text-purple mb-sm">📋 DPA 状态</div>
               <select class="form-select"><option selected>12 份有效 DPA</option><option>3 份待签署</option><option>2 份过期</option><option>全部过期</option></select>
             </div>
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#ef4444;margin-bottom:4px">⚠️ 数据泄露通知</div>
+            <div class="box-input">
+              <div class="text-xs text-red mb-sm">⚠️ 数据泄露通知</div>
               <select class="form-select"><option selected>72h 内通知</option><option>48h 内通知</option><option>无要求</option></select>
             </div>
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#22c55e;margin-bottom:4px">🌍 跨境传输</div>
+            <div class="box-input">
+              <div class="text-xs text-green mb-sm">🌍 跨境传输</div>
               <select class="form-select"><option selected>标准合同条款 SCC</option><option>约束性公司规则 BCR</option><option>充分性认定</option><option>禁止跨境</option></select>
             </div>
-            <div style="background:#111827;padding:8px;border-radius:4px;border:1px solid #1e293b">
-              <div style="font-size:10px;color:#f59e0b;margin-bottom:4px">🔒 数据处理限制</div>
+            <div class="box-input">
+              <div class="text-xs text-amber mb-sm">🔒 数据处理限制</div>
               <select class="form-select"><option selected>仅指定目的</option><option>允许二次使用</option><option>无限制</option></select>
             </div>
           </div>
@@ -716,13 +716,13 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">投资方案</label><select class="form-select"><option selected>零信任架构</option><option>SOC 升级</option><option>安全培训</option></select></div>
           <div class="form-group"><label class="form-label">计算周期</label><select class="form-select"><option>1 年</option><option selected>3 年</option><option>5 年</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#10b981" ?disabled=${executing} @click=${onExecute}>${executing ? html`计算中...` : html`📊 计算 ROI`}</button>
+        <button class="exec-btn exec-btn-teal" ?disabled=${executing} @click=${onExecute}>${executing ? html`计算中...` : html`📊 计算 ROI`}</button>
         <div class="result-section">
           <div class="result-title">零信任架构 ROI（3年）</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">投资总额</span><span class="chip chip-info">¥320万（硬件+软件+服务）</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">风险降低收益</span><span class="chip chip-pass">¥480万（事件减少 65%）</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">合规效率提升</span><span class="chip chip-pass">¥120万（审计时间减少 40%）</span></div></div>
-          <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">净 ROI 87.5%，回收期 1.8 年</div></div>
+          <div class="result-item mt-center"><div class="ri-desc text-muted-sec">净 ROI 87.5%，回收期 1.8 年</div></div>
         </div>
       `;
     }
@@ -731,14 +731,14 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'data-map': {
       return html`
         <div class="form-group"><label class="form-label">数据分类</label><select class="form-select"><option>个人数据</option><option>敏感数据</option><option>跨境数据</option><option selected>全量</option></select></div>
-        <button class="exec-btn" style="background:#a78bfa" ?disabled=${executing} @click=${onExecute}>${executing ? html`生成中...` : html`🗺️ 生成数据地图`}</button>
+        <button class="exec-btn exec-btn-purple" ?disabled=${executing} @click=${onExecute}>${executing ? html`生成中...` : html`🗺️ 生成数据地图`}</button>
         <div class="result-section">
           <div class="result-title">数据资产分布</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">L4 极敏感</span><span class="chip chip-critical">12 个数据集</span></div><div class="ri-desc">生物特征/金融信息</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">L3 敏感</span><span class="chip chip-high">45 个数据集</span></div><div class="ri-desc">个人身份/健康记录</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">L2 内部</span><span class="chip chip-medium">128 个数据集</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">L1 公开</span><span class="chip chip-pass">67 个数据集</span></div></div>
-          <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">跨境数据流 3 条待审查</div></div>
+          <div class="result-item mt-center"><div class="ri-desc text-muted-sec">跨境数据流 3 条待审查</div></div>
         </div>
       `;
     }
@@ -748,18 +748,18 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'gdpr-audit': {
       return html`
         <div class="form-group"><label class="form-label">审计范围</label><select class="form-select"><option>Art.5-6 合法性</option><option>Art.13-14 透明性</option><option>Art.25 隐私设计</option><option selected>全面审计</option></select></div>
-        <button class="exec-btn" style="background:#a78bfa" ?disabled=${executing} =${onExecute}>${executing ? html`审计中...` : html`📜 执行审计`}</button>
+        <button class="exec-btn exec-btn-purple" ?disabled=${executing} =${onExecute}>${executing ? html`审计中...` : html`📜 执行审计`}</button>
         <div class="result-section">
           <div class="result-title">GDPR 审计结果</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">数据处理合法性</span><span class="chip chip-pass">6/6 已记录</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">数据主体权利</span><span class="chip chip-pass">响应率 91%</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">DPIA 完成度</span><span class="chip chip-high">76% — 3 项未完成</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">跨境传输合规</span><span class="chip chip-fail">2 条缺少 SCCs</span></div></div>
-          <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">合规率 87%，2 项需优先整改</div></div>
+          <div class="result-item mt-center"><div class="ri-desc text-muted-sec">合规率 87%，2 项需优先整改</div></div>
         </div>
 
-        <div style="margin-top: 16px; padding: 12px; background: #1e293b; border-radius: 6px; border: 1px solid #334155;">
-          <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #a78bfa;">📋 数据主体权利请求（DSR）</div>
+        <div class="mt-lg p-lg rounded bg-secondary border-default">
+          <div class="text-sm text-purple section-subtitle">📋 数据主体权利请求（DSR）</div>
           
           <div class="form-group">
             <label class="form-label">权利类型</label>
@@ -795,7 +795,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             </select>
           </div>
 
-          <div class="result-section" style="margin-top: 12px;">
+          <div class="result-section mt-md">
             <div class="result-title">响应 SLA 追踪</div>
             <div class="result-item"><div class="ri-header"><span class="ri-title">Art.15 访问权</span><span class="chip chip-pass">23/30天 ✓</span></div><div class="ri-desc">SLA: 30天内响应 | 剩余 7 天</div></div>
             <div class="result-item"><div class="ri-header"><span class="ri-title">Art.16 更正权</span><span class="chip chip-pass">15/30天 ✓</span></div><div class="ri-desc">SLA: 30天内响应 | 剩余 15 天</div></div>
@@ -803,8 +803,8 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
             <div class="result-item"><div class="ri-header"><span class="ri-title">Art.20 携带权</span><span class="chip chip-high">8/30天</span></div><div class="ri-desc">SLA: 30天内响应 | 剩余 22 天</div></div>
           </div>
 
-          <div style="margin-top: 10px; padding: 8px; background: #0f172a; border-radius: 4px; text-align: center;">
-            <span style="font-size: 10px; color: #64748b;">总体响应率: <strong style="color: #22c55e;">91%</strong> | 待处理: <strong style="color: #f59e0b;">12</strong> | SLA 预警: <strong style="color: #ef4444;">2</strong></span>
+          <div class="summary-bar">
+            <span class="text-xs text-muted">总体响应率: <strong class="text-green">91%</strong> | 待处理: <strong class="text-amber">12</strong> | SLA 预警: <strong class="text-red">2</strong></span>
           </div>
         </div>
       `;
@@ -814,7 +814,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'iam-config': {
       return html`
         <div class="form-group"><label class="form-label">检查维度</label><select class="form-select"><option>权限分配</option><option>MFA 覆盖率</option><option>生命周期管理</option><option selected>全面检查</option></select></div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? html`检查中...` : html`🔑 执行检查`}</button>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>${executing ? html`检查中...` : html`🔑 执行检查`}</button>
         <div class="result-section">
           <div class="result-title">IAM 配置审计</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">过度授权账户</span><span class="chip chip-high">23 个超范围权限</span></div></div>
@@ -832,7 +832,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">事件级别</label><select class="form-select"><option>P0 紧急</option><option>P1 高</option><option>P2 中</option><option selected>全部</option></select></div>
           <div class="form-group"><label class="form-label">时间范围</label><select class="form-select"><option>24h</option><option selected>7天</option><option>30天</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#ef4444" ?disabled=${executing} @click=${onExecute}>${executing ? html`查询中...` : html`🚨 查询事件`}</button>
+        <button class="exec-btn exec-btn-red" ?disabled=${executing} @click=${onExecute}>${executing ? html`查询中...` : html`🚨 查询事件`}</button>
         <div class="result-section">
           <div class="result-title">活跃安全事件（7天）</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">INC-2026-0418</span><span class="chip chip-critical">P1 APT C2 通信检测</span></div><div class="ri-desc">10.0.1.45 异常外联</div></div>
@@ -846,14 +846,14 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'kpi-track': {
       return html`
         <div class="form-group"><label class="form-label">KPI 周期</label><select class="form-select"><option selected>4月</option><option>Q2</option><option>2026年度</option></select></div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>${executing ? html`刷新中...` : html`🎯 刷新 KPI`}</button>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>${executing ? html`刷新中...` : html`🎯 刷新 KPI`}</button>
         <div class="result-section">
           <div class="result-title">4月 KPI 达成情况</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">MTTD 检测时间</span><span class="chip chip-high">15min / 目标 12min</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">MTTR 响应时间</span><span class="chip chip-pass">45min / 目标 60min ✓</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">补丁覆盖率</span><span class="chip chip-pass">94% / 目标 90% ✓</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">SOAR 自动化率</span><span class="chip chip-pass">78% / 目标 70% ✓</span></div></div>
-          <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">8 项 KPI 达成率 85%，MTTD 超标需优化</div></div>
+          <div class="result-item mt-center"><div class="ri-desc text-muted-sec">8 项 KPI 达成率 85%，MTTD 超标需优化</div></div>
         </div>
       `;
     }
@@ -865,7 +865,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">日志源</label><select class="form-select"><option selected>SIEM 全量</option><option>防火墙</option><option>DNS</option><option>Web 应用</option></select></div>
           <div class="form-group"><label class="form-label">时间窗口</label><select class="form-select"><option>1h</option><option>6h</option><option selected>24h</option><option>7d</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#f97316" ?disabled=${executing} @click=${onExecute}>${executing ? html`分析中...` : html`📝 分析日志`}</button>
+        <button class="exec-btn exec-btn-orange" ?disabled=${executing} @click=${onExecute}>${executing ? html`分析中...` : html`📝 分析日志`}</button>
         <div class="result-section">
           <div class="result-title">异常日志分析（24h）</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">认证失败激增</span><span class="chip chip-critical">1,247 次 RDP 暴力破解</span></div><div class="ri-desc">来源 45.33.x.x</div></div>
@@ -882,7 +882,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">补丁类型</label><select class="form-select"><option selected>安全补丁</option><option>功能更新</option><option>紧急修复</option></select></div>
           <div class="form-group"><label class="form-label">影响范围</label><select class="form-select"><option selected>关键资产</option><option>生产环境</option><option>全部</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>${executing ? html`检查中...` : html`🔧 检查补丁`}</button>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>${executing ? html`检查中...` : html`🔧 检查补丁`}</button>
         <div class="result-section">
           <div class="result-title">待安装补丁清单</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">CVE-2026-1234 Log4j2</span><span class="chip chip-critical">CVSS 9.1 — 8 台待补</span></div></div>
@@ -899,7 +899,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">测试类型</label><select class="form-select"><option>黑盒测试</option><option selected>灰盒测试</option><option>白盒测试</option><option>红队演练</option></select></div>
           <div class="form-group"><label class="form-label">目标范围</label><select class="form-select"><option>外网边界</option><option>内网横向</option><option>Web 应用</option><option selected>全面测试</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#ef4444" ?disabled=${executing} @click=${onExecute}>${executing ? html`测试中...` : html`🔍 启动渗透测试`}</button>
+        <button class="exec-btn exec-btn-red" ?disabled=${executing} @click=${onExecute}>${executing ? html`测试中...` : html`🔍 启动渗透测试`}</button>
         <div class="result-section">
           <div class="result-title">最近渗透测试结果</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">外网入口突破</span><span class="chip chip-critical">钓鱼获取管理员凭证 4h</span></div></div>
@@ -914,7 +914,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'policy-mgmt': {
       return html`
         <div class="form-group"><label class="form-label">策略类型</label><select class="form-select"><option>信息安全策略</option><option>数据保护策略</option><option>访问控制策略</option><option selected>全部</option></select></div>
-        <button class="exec-btn" style="background:#a78bfa" ?disabled=${executing} @click=${onExecute}>${executing ? html`审查中...` : html`📄 审查策略`}</button>
+        <button class="exec-btn exec-btn-purple" ?disabled=${executing} @click=${onExecute}>${executing ? html`审查中...` : html`📄 审查策略`}</button>
         <div class="result-section">
           <div class="result-title">策略合规性检查</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">数据保留策略</span><span class="chip chip-fail">已过期 — 需更新至 2026 版</span></div></div>
@@ -928,7 +928,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'risk-register': {
       return html`
         <div class="form-group"><label class="form-label">风险类别</label><select class="form-select"><option>技术风险</option><option>合规风险</option><option>运营风险</option><option selected>全部</option></select></div>
-        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? html`加载中...` : html`📋 查看风险`}</button>
+        <button class="exec-btn exec-btn-amber" ?disabled=${executing} @click=${onExecute}>${executing ? html`加载中...` : html`📋 查看风险`}</button>
         <div class="result-section">
           <div class="result-title">活跃风险清单</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">R-001 APT 攻击</span><span class="chip chip-critical">可能性:高 影响:严重</span></div><div class="ri-desc">状态：缓解中</div></div>
@@ -943,7 +943,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'third-party-risk': {
       return html`
         <div class="form-group"><label class="form-label">评估模型</label><select class="form-select"><option>SIG 问卷</option><option>SOGLA</option><option>自定义</option><option selected>全面评估</option></select></div>
-        <button class="exec-btn" style="background:#84cc16" ?disabled=${executing} @click=${onExecute}>${executing ? html`评估中...` : html`🔗 执行评估`}</button>
+        <button class="exec-btn exec-btn-lime" ?disabled=${executing} @click=${onExecute}>${executing ? html`评估中...` : html`🔗 执行评估`}</button>
         <div class="result-section">
           <div class="result-title">第三方风险评估</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">云盾科技</span><span class="chip chip-high">B 级 — DPA 过期</span></div><div class="ri-desc">安全事件响应 SLA 不达标</div></div>
@@ -957,7 +957,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'vendor-eval': {
       return html`
         <div class="form-group"><label class="form-label">评估维度</label><select class="form-select"><option>安全认证</option><option>数据保护</option><option>业务连续性</option><option selected>全面评估</option></select></div>
-        <button class="exec-btn" style="background:#10b981" ?disabled=${executing} @click=${onExecute}>${executing ? html`评估中...` : html`🏢 评估供应商`}</button>
+        <button class="exec-btn exec-btn-teal" ?disabled=${executing} @click=${onExecute}>${executing ? html`评估中...` : html`🏢 评估供应商`}</button>
         <div class="result-section">
           <div class="result-title">供应商安全评级</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">云盾科技</span><span class="chip chip-medium">B 级 — ISO27001 已认证</span></div><div class="ri-desc">数据本地化不达标</div></div>
@@ -971,14 +971,14 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     case 'zero-trust': {
       return html`
         <div class="form-group"><label class="form-label">评估维度</label><select class="form-select"><option>身份验证</option><option>设备安全</option><option>网络分段</option><option selected>全面评估</option></select></div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? html`评估中...` : html`🛡️ 执行评估`}</button>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>${executing ? html`评估中...` : html`🛡️ 执行评估`}</button>
         <div class="result-section">
           <div class="result-title">零信任成熟度（NIST SP 800-207）</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">身份验证</span><span class="chip chip-medium">3.2/5 — MFA 覆盖 87%</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">设备安全</span><span class="chip chip-high">2.8/5 — EDR 覆盖 72%</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">网络分段</span><span class="chip chip-pass">3.5/5 — 微分段 60%</span></div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">应用安全</span><span class="chip chip-medium">3.0/5 — SASE 部署中</span></div></div>
-          <div class="result-item" style="margin-top:8px;text-align:center"><div class="ri-desc" style="color:#94a3b8;font-size:11px;">综合成熟度 3.1/5，优先提升设备安全</div></div>
+          <div class="result-item mt-center"><div class="ri-desc text-muted-sec">综合成熟度 3.1/5，优先提升设备安全</div></div>
         </div>
       `;
     }
@@ -990,18 +990,18 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
           <div class="form-group"><label class="form-label">报告类型</label><select class="form-select"><option>安全态势报告</option><option>合规报告</option><option>风险评估报告</option></select></div>
           <div class="form-group"><label class="form-label">时间范围</label><select class="form-select"><option selected>本月</option><option>本季度</option><option>本年度</option></select></div>
         </div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>${executing ? html`生成中...` : html`📊 生成报告`}</button>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>${executing ? html`生成中...` : html`📊 生成报告`}</button>
         <div class="result-section">
           <div class="result-title">报告预览</div>
-          <div class="result-item" style="line-height:1.6">
-            <div style="font-size:14px;font-weight:700;margin-bottom:8px">安全态势月度报告 — 2026年4月</div>
-            <div style="font-size:11px;color:#94a3b8">
+          <div class="result-item line-relaxed">
+            <div class="section-title">安全态势月度报告 — 2026年4月</div>
+            <div class="text-muted-sec">
               <p><strong>总体态势：</strong>全域安全评分 79/100，活跃事件 7 起。</p>
               <p><strong>关键发现：</strong>APT C2 通信检测（已处置）、GDPR DPIA 完成度待提升。</p>
               <p><strong>建议行动：</strong>优先完成零信任二期、GDPR 差距整改。</p>
             </div>
-            <div style="margin-top:8px;display:flex;gap:8px">
-              <button class="exec-btn" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:6px 12px;width:auto;font-size:11px">📄 导出 PDF</button>
+            <div class="mt-flex">
+              <button class="exec-btn box-btn-secondary">📄 导出 PDF</button>
             </div>
           </div>
         </div>
@@ -1012,7 +1012,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">治理框架</label><select class="form-select"><option selected>ISO 27001</option><option>NIST CSF</option><option>等保2.0</option></select></div>
         <div class="form-group"><label class="form-label">评估范围</label><select class="form-select"><option selected>全组织</option><option>安全部门</option></select></div>
-        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '🛡️ 执行评估'}</button>
+        <button class="exec-btn exec-btn-green" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '🛡️ 执行评估'}</button>
         <div class="result-section"><div class="result-title">治理成熟度评估</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">安全治理</span><span class="chip chip-pass">3.5/5</span></div><div class="ri-desc">Policy/GDR/Risk 三层架构</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">合规管理</span><span class="chip chip-medium">3.2/5</span></div><div class="ri-desc">GDPR/ISO27001 对齐度 92%</div></div>
@@ -1025,7 +1025,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">投资类型</label><select class="form-select"><option selected>安全工具</option><option>人员培训</option><option>基础设施</option></select></div>
         <div class="form-group"><label class="form-label">预算范围</label><select class="form-select"><option>50万以下</option><option selected>50-200万</option><option>200万以上</option></select></div>
-        <button class="exec-btn" style="background:#3b82f6" ?disabled=${executing} @click=${onExecute}>${executing ? '计算中...' : '📈 ROI 分析'}</button>
+        <button class="exec-btn exec-btn-blue" ?disabled=${executing} @click=${onExecute}>${executing ? '计算中...' : '📈 ROI 分析'}</button>
         <div class="result-section"><div class="result-title">ROI 分析结果</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">零信任架构</span><span class="chip chip-pass">ROI 285%</span></div><div class="ri-desc">投资 ¥320万，预期3年回报 ¥912万</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">SOC 升级</span><span class="chip chip-pass">ROI 210%</span></div><div class="ri-desc">投资 ¥180万，预期3年回报 ¥378万</div></div>
@@ -1038,7 +1038,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">培训类型</label><select class="form-select"><option selected>钓鱼模拟</option><option>安全意识课</option><option>合规培训</option></select></div>
         <div class="form-group"><label class="form-label">目标群体</label><select class="form-select"><option selected>全员</option><option>开发团队</option><option>管理层</option></select></div>
-        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '发起中...' : '🎓 发起培训'}</button>
+        <button class="exec-btn exec-btn-violet" ?disabled=${executing} @click=${onExecute}>${executing ? '发起中...' : '🎓 发起培训'}</button>
         <div class="result-section"><div class="result-title">培训效果统计</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">完成率</span><span class="chip chip-pass">87%</span></div><div class="ri-desc">本月已完成 1,305/1,500 人</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">钓鱼识别率</span><span class="chip chip-pass">92%</span></div><div class="ri-desc">较上季度提升 15%</div></div>
@@ -1051,7 +1051,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">Cookie 类型</label><select class="form-select"><option>必要 Cookie</option><option selected>分析 Cookie</option><option>营销 Cookie</option></select></div>
         <div class="form-group"><label class="form-label">合规标准</label><select class="form-select"><option selected>GDPR</option><option>CCPA</option><option>PIPL</option></select></div>
-        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '扫描中...' : '🍪 Cookie 审计'}</button>
+        <button class="exec-btn exec-btn-amber" ?disabled=${executing} @click=${onExecute}>${executing ? '扫描中...' : '🍪 Cookie 审计'}</button>
         <div class="result-section"><div class="result-title">Cookie 合规状态</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">合规 Cookie</span><span class="chip chip-pass">23</span></div><div class="ri-desc">已清理 8 个不合规 Cookie</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">同意率</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">用户 Cookie 同意率达标</div></div>
@@ -1064,7 +1064,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">同意类型</label><select class="form-select"><option selected>明确同意</option><option>默示同意</option><option>选择退出</option></select></div>
         <div class="form-group"><label class="form-label">数据用途</label><select class="form-select"><option selected>营销通信</option><option>数据分析</option><option>第三方共享</option></select></div>
-        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '✅ 同意率分析'}</button>
+        <button class="exec-btn exec-btn-green" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '✅ 同意率分析'}</button>
         <div class="result-section"><div class="result-title">同意管理状态</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">明确同意率</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">营销用途同意 1,410/1,500</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">撤回率</span><span class="chip chip-pass">3.2%</span></div><div class="ri-desc">月度撤回请求 48 件</div></div>
@@ -1077,7 +1077,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">演练类型</label><select class="form-select"><option selected>红蓝对抗</option><option>桌面推演</option><option>实战演练</option><option>合规演练</option></select></div>
         <div class="form-group"><label class="form-label">演练范围</label><select class="form-select"><option selected>全组织</option><option>IT部门</option><option>核心业务</option></select></div>
-        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '规划中...' : '🔥 发起演练'}</button>
+        <button class="exec-btn exec-btn-amber" ?disabled=${executing} @click=${onExecute}>${executing ? '规划中...' : '🔥 发起演练'}</button>
         <div class="result-section"><div class="result-title">演练记录</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">Q1 红蓝对抗</span><span class="chip chip-pass">完成</span></div><div class="ri-desc">发现 12 个弱点，已修复 10 个</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">Q2 桌面推演</span><span class="chip chip-medium">进行中</span></div><div class="ri-desc">勒索场景，3个部门参与</div></div>
@@ -1089,7 +1089,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">流水线阶段</label><select class="form-select"><option selected>SAST</option><option>DAST</option><option>SCA</option><option>容器扫描</option></select></div>
         <div class="form-group"><label class="form-label">项目</label><select class="form-select"><option selected>全部项目</option><option>核心业务</option><option>基础设施</option></select></div>
-        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '扫描中...' : '🔄 安全扫描'}</button>
+        <button class="exec-btn exec-btn-violet" ?disabled=${executing} @click=${onExecute}>${executing ? '扫描中...' : '🔄 安全扫描'}</button>
         <div class="result-section"><div class="result-title">DevSecOps 概览</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">流水线覆盖</span><span class="chip chip-pass">87%</span></div><div class="ri-desc">42/48 仓库已集成安全扫描</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">SAST 漏洞</span><span class="chip chip-pass">23</span></div><div class="ri-desc">高危 5 / 中危 12 / 低危 6</div></div>
@@ -1101,7 +1101,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">评估周期</label><select class="form-select"><option selected>Q2 2026</option><option>Q1 2026</option><option>年度</option></select></div>
         <div class="form-group"><label class="form-label">团队</label><select class="form-select"><option selected>安全团队</option><option>红队</option><option>蓝队</option><option>GRC</option></select></div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '📊 绩效评估'}</button>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '📊 绩效评估'}</button>
         <div class="result-section"><div class="result-title">安全绩效报告</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">团队评级</span><span class="chip chip-pass">B+</span></div><div class="ri-desc">综合评分 85/100，较上季 +5</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">MTTR</span><span class="chip chip-pass">2.3h</span></div><div class="ri-desc">平均响应时间，目标 4h 以内</div></div>
@@ -1114,7 +1114,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">监控维度</label><select class="form-select"><option selected>安全态势</option><option>合规状态</option><option>SLA 达成</option><option>漏洞趋势</option></select></div>
         <div class="form-group"><label class="form-label">供应商</label><select class="form-select"><option selected>全部 (38)</option><option>高风险 (5)</option><option>新增 (3)</option></select></div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? '监控中...' : '👁️ 刷新监控'}</button>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>${executing ? '监控中...' : '👁️ 刷新监控'}</button>
         <div class="result-section"><div class="result-title">供应商监控概览</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">健康供应商</span><span class="chip chip-pass">33/38</span></div><div class="ri-desc">87% 供应商安全评级达标</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">预警</span><span class="chip chip-medium">5</span></div><div class="ri-desc">2 个合规降级 + 3 个漏洞激增</div></div>
@@ -1126,7 +1126,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">SLA 类型</label><select class="form-select"><option selected>安全响应 SLA</option><option>漏洞修复 SLA</option><option>事件通知 SLA</option></select></div>
         <div class="form-group"><label class="form-label">统计周期</label><select class="form-select"><option selected>近30天</option><option>近90天</option><option>本年度</option></select></div>
-        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '统计中...' : '⏱️ SLA 分析'}</button>
+        <button class="exec-btn exec-btn-green" ?disabled=${executing} @click=${onExecute}>${executing ? '统计中...' : '⏱️ SLA 分析'}</button>
         <div class="result-section"><div class="result-title">SLA 达成报告</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">总体 SLA</span><span class="chip chip-pass">94%</span></div><div class="ri-desc">36/38 供应商达到 SLA 标准</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">违约事件</span><span class="chip chip-medium">2</span></div><div class="ri-desc">Vendor-A 响应超时 48h</div></div>
@@ -1138,7 +1138,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">情报源</label><select class="form-select"><option selected>全部源</option><option>NVD</option><option>CISA KEV</option><option>厂商公告</option></select></div>
         <div class="form-group"><label class="form-label">相关组件</label><input class="form-input" value="log4j, openssl, spring" /></div>
-        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '搜索中...' : '🌐 情报查询'}</button>
+        <button class="exec-btn exec-btn-amber" ?disabled=${executing} @click=${onExecute}>${executing ? '搜索中...' : '🌐 情报查询'}</button>
         <div class="result-section"><div class="result-title">供应链威胁情报</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">活跃威胁</span><span class="chip chip-fail">7</span></div><div class="ri-desc">3 个 Critical + 4 个 High 影响在用组件</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">最新告警</span><span class="chip chip-medium">CVE-2026-1234</span></div><div class="ri-desc">OpenSSL 3.x 远程代码执行</div></div>
@@ -1150,7 +1150,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">追踪维度</label><select class="form-select"><option selected>组件来源</option><option>许可证</option><option>版本状态</option></select></div>
         <div class="form-group"><label class="form-label">产品线</label><select class="form-select"><option selected>全部</option><option>核心产品</option><option>内部工具</option></select></div>
-        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '追踪中...' : '📦 物料追踪'}</button>
+        <button class="exec-btn exec-btn-violet" ?disabled=${executing} @click=${onExecute}>${executing ? '追踪中...' : '📦 物料追踪'}</button>
         <div class="result-section"><div class="result-title">物料追踪报告</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">已追踪组件</span><span class="chip chip-pass">156</span></div><div class="ri-desc">覆盖率 92%，6 个未识别来源</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">许可证风险</span><span class="chip chip-medium">3</span></div><div class="ri-desc">GPL 组件需法务审核</div></div>
@@ -1163,7 +1163,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">分析范围</label><select class="form-select"><option selected>核心业务流程</option><option>全部流程</option><option>IT 服务</option></select></div>
         <div class="form-group"><label class="form-label">场景</label><select class="form-select"><option selected>综合中断</option><option>网络攻击</option><option>自然灾害</option><option>供应链中断</option></select></div>
-        <button class="exec-btn" style="background:#f59e0b" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '📉 执行 BIA'}</button>
+        <button class="exec-btn exec-btn-amber" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '📉 执行 BIA'}</button>
         <div class="result-section"><div class="result-title">业务影响分析</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">核心流程覆盖</span><span class="chip chip-pass">88%</span></div><div class="ri-desc">22/25 核心业务流程已完成 BIA</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">最大影响</span><span class="chip chip-fail">¥2.3M/h</span></div><div class="ri-desc">支付系统中断每小时损失预估</div></div>
@@ -1175,7 +1175,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">数据分类</label><select class="form-select"><option selected>全量数据</option><option>敏感数据</option><option>个人数据</option><option>财务数据</option></select></div>
         <div class="form-group"><label class="form-label">加密策略</label><select class="form-select"><option selected>AES-256</option><option>国密SM4</option><option>RSA-4096</option></select></div>
-        <button class="exec-btn" style="background:#06b6d4" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '🗄️ 架构评估'}</button>
+        <button class="exec-btn exec-btn-cyan" ?disabled=${executing} @click=${onExecute}>${executing ? '分析中...' : '🗄️ 架构评估'}</button>
         <div class="result-section"><div class="result-title">数据安全架构</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">数据分类覆盖</span><span class="chip chip-pass">92%</span></div><div class="ri-desc">14,580/15,850 数据资产已分类标记</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">加密覆盖率</span><span class="chip chip-pass">98%</span></div><div class="ri-desc">静态数据 100% + 传输中 96%</div></div>
@@ -1187,7 +1187,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">容灾等级</label><select class="form-select"><option selected>Tier 4 (Active-Active)</option><option>Tier 3 (Hot Standby)</option><option>Tier 2 (Warm)</option></select></div>
         <div class="form-group"><label class="form-label">RTO/RPO 目标</label><select class="form-select"><option selected>RTO 2h / RPO 15min</option><option>RTO 4h / RPO 1h</option><option>RTO 24h / RPO 4h</option></select></div>
-        <button class="exec-btn" style="background:#22c55e" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '🏗️ 容灾评估'}</button>
+        <button class="exec-btn exec-btn-green" ?disabled=${executing} @click=${onExecute}>${executing ? '评估中...' : '🏗️ 容灾评估'}</button>
         <div class="result-section"><div class="result-title">容灾架构评估</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">RTO 达成</span><span class="chip chip-pass">2h</span></div><div class="ri-desc">核心系统实际切换时间 1.8h</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">RPO 达成</span><span class="chip chip-pass">12min</span></div><div class="ri-desc">数据同步延迟在可控范围</div></div>
@@ -1199,7 +1199,7 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
       return html`
         <div class="form-group"><label class="form-label">评审周期</label><select class="form-select"><option selected>本季度</option><option>本年度</option><option>全部</option></select></div>
         <div class="form-group"><label class="form-label">架构域</label><select class="form-select"><option selected>全部</option><option>应用架构</option><option>数据架构</option><option>基础设施</option></select></div>
-        <button class="exec-btn" style="background:#8b5cf6" ?disabled=${executing} @click=${onExecute}>${executing ? '审查中...' : '📋 架构评审'}</button>
+        <button class="exec-btn exec-btn-violet" ?disabled=${executing} @click=${onExecute}>${executing ? '审查中...' : '📋 架构评审'}</button>
         <div class="result-section"><div class="result-title">架构治理报告</div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">评审覆盖率</span><span class="chip chip-pass">100%</span></div><div class="ri-desc">本季 12 个新系统全部通过安全架构评审</div></div>
           <div class="result-item"><div class="ri-header"><span class="ri-title">技术债务</span><span class="chip chip-medium">3</span></div><div class="ri-desc">遗留系统待迁移，预计 Q3 完成</div></div>
@@ -1225,6 +1225,6 @@ export function renderToolContent(toolId: string, roleId: RoleId, executing: boo
     }
 
     default:
-      return html`<div style="color:#64748b;text-align:center;padding:20px">工具面板开发中...</div>`;
+      return html`<div class="text-muted text-center" style="padding:20px">工具面板开发中...</div>`;
   }
 }

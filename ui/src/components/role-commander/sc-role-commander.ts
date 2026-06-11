@@ -4,6 +4,15 @@ import { customElement, state, property } from 'lit/decorators.js'
 // Tool results panel
 import './sc-tool-results-panel';
 import './sc-raci-panel';
+// New role dashboards (Phase U2/U3)
+import '../dashboards/sc-dashboard-ciso';
+import '../dashboards/sc-dashboard-commander';
+import '../dashboards/sc-dashboard-security-expert';
+import '../dashboards/sc-dashboard-secops';
+import '../dashboards/sc-dashboard-architect';
+import '../dashboards/sc-dashboard-privacy';
+import '../dashboards/sc-dashboard-business';
+import '../dashboards/sc-dashboard-supply-chain';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 import type { RoleId } from '../../config/role-tool-config'
 import { ROLE_TOOL_CONFIGS } from '../../config/role-tool-config'
@@ -2467,15 +2476,16 @@ export class ScRoleCommander extends LitElement {
 
   private _renderRoleDashboard() {
     switch (this.roleId) {
-      case 'ciso': return this._renderCisoDashboard()
-      case 'secuclaw-commander': return this._renderCommanderDashboard()
-      case 'security-ops': return this._renderOpsDashboard()
-      case 'security-expert': return this._renderExpertDashboard()
-      case 'privacy-officer': return this._renderPrivacyDashboard()
-      case 'security-architect': return this._renderArchitectDashboard()
-      case 'business-security-officer': return this._renderBizSecDashboard()
-      case 'supply-chain-security': return this._renderSupplyDashboard()
-      default: return this._renderCisoDashboard()
+      case 'ciso': return html`<sc-dashboard-ciso .roleId=${this.roleId}></sc-dashboard-ciso>`
+      case 'secuclaw-commander': return html`<sc-dashboard-commander .roleId=${this.roleId}></sc-dashboard-commander>`
+      case 'security-ops': return html`<sc-dashboard-secops .roleId=${this.roleId}></sc-dashboard-secops>`
+      case 'security-expert': return html`<sc-dashboard-security-expert .roleId=${this.roleId}></sc-dashboard-security-expert>`
+      case 'privacy-officer': return html`<sc-dashboard-privacy .roleId=${this.roleId}></sc-dashboard-privacy>`
+      case 'security-architect': return html`<sc-dashboard-architect .roleId=${this.roleId}></sc-dashboard-architect>`
+      case 'business-security-officer': return html`<sc-dashboard-business .roleId=${this.roleId}></sc-dashboard-business>`
+      case 'supply-chain-security': return html`<sc-dashboard-supply-chain .roleId=${this.roleId}></sc-dashboard-supply-chain>`
+      case 'auditor': return html`<sc-dashboard-ciso .roleId=${this.roleId}></sc-dashboard-ciso>`
+      default: return html`<sc-dashboard-ciso .roleId=${this.roleId}></sc-dashboard-ciso>`
     }
   }
 
