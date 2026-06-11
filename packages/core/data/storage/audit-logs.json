@@ -1332,5 +1332,16 @@
     "details": {
       "gatewayPort": 21981
     }
+  },
+  {
+    "id": "audit_1781212603331_bx8oaai",
+    "action": "configure",
+    "resource": "system",
+    "resourceId": "secuclaw-app",
+    "actor": "system",
+    "timestamp": 1781212603331,
+    "details": {
+      "gatewayPort": 21981
+    }
   }
 ]

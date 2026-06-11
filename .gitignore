@@ -45,3 +45,17 @@ temp/
 # Config with secrets
 config/secrets.json
 .opencode/
+
+# Debug scripts
+debug-*.py
+*.zip
+
+# Backup / scratch
+ui-react-backup/
+.firebase-debug.log
+firebase-debug.log
+
+# Test artifacts
+test-simple.js
+test-2llm.js
+3-llm-test.js
