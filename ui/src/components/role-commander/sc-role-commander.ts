@@ -570,6 +570,384 @@ export class ScRoleCommander extends LitElement {
     .ciso-panel > div[style*="margin"] {
       margin: 0 !important;
     }
+    /* ─── Inline-style replacement utility classes ─── */
+    .t-muted-xs { font-size: 9px; color: #64748b; }
+    .t-muted-10 { font-size: 10px; color: #94a3b8; margin-bottom: 4px; }
+    .t-muted-9b { font-size: 9px; padding: 2px 8px; }
+    .t-muted-gray { font-size: 9px; color: #475569; }
+    .t-muted-9 { font-size: 9px; color: #94a3b8; }
+    .t-muted-8 { font-size: 8px; color: #475569; }
+    .t-muted-8b { font-size: 8px; color: #64748b; }
+    .t-6 { font-size: 6px; }
+    .t-11b-6 { font-size: 11px; font-weight: 600; color: #94a3b8; margin-bottom: 6px; }
+    .t-11b { font-size: 11px; font-weight: 600; color: #94a3b8; }
+    .t-11b-647 { font-size: 11px; font-weight: 600; color: #64748b; }
+    .t-11 { font-size: 11px; color: #94a3b8; }
+    .t-12 { font-size: 12px; }
+    .t-9-475-2 { font-size: 9px; color: #475569; margin-top: 2px; }
+    .pad-8-12 { padding: 8px 12px; }
+    .pad-0 { padding: 0; }
+    .m-0-20 { margin: 0 20px; }
+    .mt-6-fw { margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
+    .mt-4 { margin-top: 4px; }
+    .mt-2-8 { margin-top: 2px; }
+    .mt-0 { margin-top: 0; }
+    .flex-grow { flex: 1; min-width: 0; }
+    .flex-1-8-10 { flex: 1; background: #0f172a; border-radius: 6px; padding: 8px 10px; }
+    .flex-1-6-8 { flex: 1; background: #0f172a; border-radius: 6px; padding: 6px 8px; text-align: center; }
+    .flex-1-6-8-l { flex: 1; background: #0f172a; border-radius: 6px; padding: 6px 8px; }
+    .list-disc-18 { margin: 0 0 16px 0; padding-left: 18px; list-style: disc; }
+    .tag-danger { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: #ef444415; color: #ef4444; border: 1px solid #ef444433; font-weight: 600; }
+    .tag-info-mc { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: #3b82f615; color: #3b82f6; border: 1px solid #3b82f633; font-weight: 600; }
+    .tag-success { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: #22c55e15; color: #22c55e; border: 1px solid #22c55e33; font-weight: 600; }
+    .tag-warn { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: #f59e0b15; color: #f59e0b; border: 1px solid #f59e0b33; font-weight: 600; }
+    .tag-mute { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: #47556915; color: #94a3b8; border: 1px solid #47556933; font-weight: 600; }
+    .tag-tiny-success { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #22c55e15; color: #22c55e; border: 1px solid #22c55e33; }
+    .tag-tiny-mute { font-size: 9px; color: #475569; }
+    .btn-exec { padding: 5px 14px; border-radius: 6px; border: 1px solid #ef4444; color: #fff; font-size: 11px; font-weight: 600; }
+    .btn-exec:hover { filter: brightness(1.1); }
+    .btn-exec:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-tool { padding: 4px 12px; border-radius: 4px; border: 1px solid #334155; background: #1e293b; color: #e2e8f0; font-size: 11px; cursor: pointer; }
+    .metric-strip { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #0f172a; border-radius: 6px; border: 1px solid #1e293b; }
+    .metric-strip-msg { font-size: 11px; color: #64748b; }
+    .metric-strip-hint { margin-left: auto; font-size: 10px; color: #475569; }
+    .progress-thin { height: 4px; background: #1e293b; border-radius: 2px; margin: 4px 0; }
+    .progress-thin-fill-c { height: 100%; background: #ef4444; border-radius: 2px; }
+    .progress-thin-fill-w { height: 100%; background: #f59e0b; border-radius: 2px; }
+    .progress-thin-fill-i { height: 100%; background: #3b82f6; border-radius: 2px; }
+    .cia-card { flex: 1; background: #0f172a; border-radius: 6px; padding: 8px 10px; }
+    .cia-label { font-size: 9px; color: #64748b; }
+    .cia-pct-c { font-size: 13px; font-weight: 700; color: #ef4444; }
+    .cia-pct-w { font-size: 13px; font-weight: 700; color: #f59e0b; }
+    .cia-pct-i { font-size: 13px; font-weight: 700; color: #3b82f6; }
+    .killchain-wrap { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .killchain-tag { display: flex; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 5px; }
+    .killchain-icon { font-size: 11px; }
+    .killchain-label { font-size: 10px; font-weight: 600; }
+    .killchain-status { font-size: 8px; }
+    .killchain-arrow { color: #334155; font-size: 9px; }
+    .mitre-tag { font-size: 9px; padding: 2px 7px; border-radius: 4px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+    .mitre-wrap { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .dark-grid { padding: 14px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+    .dark-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+    .dark-card-bar { position: absolute; top: 0; left: 0; width: 3px; height: 100%; }
+    .dark-card-title { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding-left: 4px; }
+    .dark-card-name { font-size: 11px; font-weight: 600; color: #e2e8f0; }
+    .dark-card-foot { display: flex; align-items: center; gap: 6px; padding-left: 4px; }
+    .dark-card-toolid { font-size: 9px; color: #64748b; }
+    .dark-body { padding: 14px 20px 18px; }
+    .dark-empty { padding: 16px 20px; text-align: center; }
+    .dark-hint { padding: 10px 20px 14px; }
+    .exec-loading { margin-top: 10px; padding: 14px; text-align: center; background: #1a0808; border-radius: 6px; border: 1px solid #3b1111; }
+    .exec-loading-icon { display: inline-block; animation: rc-spin 1s linear infinite; }
+    .exec-loading-msg { color: #ef4444; font-size: 12px; margin-left: 6px; }
+    .exec-result { margin-top: 10px; padding: 12px 14px; background: #0a1a0a; border-radius: 6px; border: 1px solid #1a3a1a; }
+    .exec-result-head { font-size: 11px; color: #22c55e; font-weight: 700; margin-bottom: 4px; }
+    .exec-result-body { font-size: 11px; color: #e2e8f0; line-height: 1.5; }
+    .findings-wrap { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+    .finding-card { padding: 8px 10px; border-radius: 6px; background: transparent; border-left: 3px solid; }
+    .finding-title { font-size: 11px; color: #e2e8f0; font-weight: 600; }
+    .finding-sev { font-size: 9px; text-transform: uppercase; font-weight: 700; }
+    .finding-detail { font-size: 10px; color: #94a3b8; margin-top: 2px; line-height: 1.4; }
+    .dark-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .sim-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .sim-name { font-size: 15px; font-weight: 700; color: #ef4444; }
+    .sim-desc { font-size: 11px; color: #94a3b8; }
+    .findings-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .findings-label { font-size: 11px; font-weight: 600; color: #94a3b8; }
+    .findings-count { font-size: 9px; padding: 2px 8px; border-radius: 4px; background: #ef444415; color: #ef4444; font-weight: 600; }
+    .dark-section { display: flex; align-items: center; gap: 8px; }
+    .dark-section-count { font-size: 10px; color: #ef444480; }
+    .ciso-panel-header-dark { background: linear-gradient(90deg, #1a0808 0%, #0f172a 100%); border-bottom: 1px solid #3b1111; }
+    .empty-tool-link { margin-left: 8px; }
+    .posture-panel-title { display: flex; align-items: center; gap: 8px; }
+    .posture-kpi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .posture-kpi-card { padding: 6px 8px; background: #0f172a; border-radius: 4px; text-align: center; }
+    .posture-kpi-label { font-size: 9px; color: #64748b; }
+    .posture-kpi-value { font-size: 16px; font-weight: 700; }
+    .posture-recommend { margin-top: 8px; padding: 8px 10px; background: #0f172a; border-radius: 6px; border: 1px solid; font-size: 11px; line-height: 1.5; }
+    .posture-pending { display: flex; flex-direction: column; gap: 6px; }
+    .posture-pending-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #0f172a; border-radius: 4px; }
+    .posture-pending-title { flex: 1; font-size: 11px; color: #e2e8f0; }
+    .posture-pending-impact { font-size: 10px; color: #94a3b8; }
+    .posture-pending-urgency { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+    .timeline-mini-row { display: flex; gap: 6px; font-size: 10px; color: #64748b; }
+    .timeline-mini-event { padding: 4px 6px; background: #0f172a; border-radius: 4px; border-left: 2px solid; }
+    .timeline-mini-time { font-size: 9px; color: #64748b; }
+    .timeline-mini-text { font-size: 10px; color: #e2e8f0; }
+    .raci-collab-section { margin-top: 4px; padding-top: 4px; border-top: 1px solid #1e293b; }
+    .raci-collab-label { font-size: 8px; color: #475569; }
+    .section-label-base { font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .tool-section { padding: 0 6px 6px; }
+    .role-grid { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+    .role-item { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
+    .role-item:hover { background: rgba(255,255,255,0.04); }
+    .role-item.active { background: var(--sc-primary-alpha-10); }
+    .role-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .role-name { flex: 1; font-size: 11px; color: #e2e8f0; }
+    .role-badge { font-size: 9px; padding: 1px 4px; border-radius: 2px; background: #1e293b; color: #94a3b8; }
+    @keyframes rc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .flex-no-grow { flex: 0 0 auto; }
+    .flex-center { display: flex; justify-content: center; }
+    .t-e2 { color: #e2e8f0; }
+    .dark-card-base { background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 10px; }
+    .bg-dark-pad8 { background: #0f172a; border-radius: 6px; padding: 8px; }
+    .bg-deep-card { background: #0b1120; border: 1px solid #1e3a5f; border-radius: 8px; margin: 0 14px 8px; }
+    .ciso-panel-header-dark { background: linear-gradient(90deg, #1a0808 0%, #0f172a 100%); border-bottom: 1px solid #3b1111; }
+    .t-dim-2 { font-size: 9px; color: #475569; padding-left: 4px; }
+    .anim-spin { display: inline-block; animation: rc-spin 1s linear infinite; }
+    .grid-2-14 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .phase-arrow { color: #334155; font-size: 9px; }
+    .pad-14-20-18 { padding: 14px 20px 18px; }
+    .pad-16-20 { padding: 16px 20px; text-align: center; }
+    .pad-10-20-14 { padding: 10px 20px 14px; }
+    .pad-8-12-bg { padding: 8px 12px; background: #0f172a; border-radius: 6px; border: 1px solid #1e293b; }
+    .sim-running-bg { margin-top: 10px; padding: 14px; text-align: center; background: #1a0808; border-radius: 6px; border: 1px solid #3b1111; }
+    .sim-result-bg { margin-top: 10px; padding: 12px 14px; background: #0a1a0a; border-radius: 6px; border: 1px solid #1a3a1a; }
+    .sim-result-head { font-size: 11px; color: #22c55e; font-weight: 700; margin-bottom: 4px; }
+    .sim-result-body { font-size: 11px; color: #e2e8f0; line-height: 1.5; }
+    .m-0-20-div { height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent); margin: 0 20px; }
+    .ml-auto { margin-left: auto; }
+    .t-warning-pad4 { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #f59e0b15; color: #f59e0b; border: 1px solid #f59e0b33; font-weight: 600; }
+    .t-critical-pad4 { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #ef444415; color: #ef4444; border: 1px solid #ef444433; font-weight: 600; }
+    .t-info-pad4 { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #3b82f615; color: #3b82f6; border: 1px solid #3b82f633; font-weight: 600; }
+    .t-success-pad4 { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #22c55e15; color: #22c55e; border: 1px solid #22c55e33; font-weight: 600; }
+    .t-muted-pad4 { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #64748b15; color: #94a3b8; border: 1px solid #64748b33; font-weight: 600; }
+    .t-tiny-mute-pad { font-size: 9px; color: #475569; padding-left: 4px; }
+    .t-tag-tiny-mute { font-size: 9px; color: #475569; }
+    .t-tag-warn { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #f59e0b15; color: #f59e0b; }
+    .t-tag-success { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #22c55e15; color: #22c55e; border: 1px solid #22c55e33; }
+    .t-tag-danger { font-size: 9px; padding: 1px 5px; border-radius: 3px; background: #ef444415; color: #ef4444; }
+    .dash-h2 { font-size: 14px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .dash-h2-icon { font-size: 14px; }
+    .dash-h2-pad { font-size: 14px; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 6px; padding: 0 14px; margin-bottom: 8px; }
+    .dash-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 14px; }
+    .dash-card-pad14 { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 14px; }
+    .dash-card-dark { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 0; }
+    .dash-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+    .dash-card-body { min-height: 80px; }
+    .dash-card-foot { font-size: 10px; color: #475569; padding: 4px 0; }
+    .grid-3-rd { display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 16px; }
+    .grid-2-rd { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-5-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .grid-3-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .grid-4-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .grid-2-metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .grid-2-metrics-14 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-mt-8 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .text-mt { font-size: 12px; color: #e2e8f0; font-weight: 600; }
+    .text-mt-sub { font-size: 10px; color: #94a3b8; }
+    .text-mt-11 { font-size: 11px; color: #e2e8f0; font-weight: 600; }
+    .text-mt-9 { font-size: 9px; color: #94a3b8; }
+    .text-9b { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+    .text-9b-success { background: #22c55e15; color: #22c55e; border: 1px solid #22c55e33; }
+    .text-9b-warn { background: #f59e0b15; color: #f59e0b; border: 1px solid #f59e0b33; }
+    .text-9b-danger { background: #ef444415; color: #ef4444; border: 1px solid #ef444433; }
+    .text-9b-info { background: #3b82f615; color: #3b82f6; border: 1px solid #3b82f633; }
+    .text-9b-mute { background: #47556915; color: #94a3b8; border: 1px solid #47556933; }
+    .text-pad-l { padding-left: 4px; }
+    .text-pad-r { padding-right: 4px; }
+    .row-flex-mt8 { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+    .row-flex { display: flex; align-items: center; gap: 8px; }
+    .col-flex { display: flex; flex-direction: column; gap: 4px; }
+    .col-flex-6 { display: flex; flex-direction: column; gap: 6px; }
+    .col-flex-8 { display: flex; flex-direction: column; gap: 8px; }
+    .m-auto { margin: 0 auto; }
+    .m-6-4 { margin: 6px 4px; }
+    .m-8-0 { margin: 8px 0; }
+    .m-10-0 { margin: 10px 0; }
+    .m-12-0 { margin: 12px 0; }
+    .m-14-0 { margin: 14px 0; }
+    .m-t-8 { margin-top: 8px; }
+    .m-t-10 { margin-top: 10px; }
+    .m-t-12 { margin-top: 12px; }
+    .p-8-10 { padding: 8px 10px; }
+    .p-8-12 { padding: 8px 12px; }
+    .p-10-12 { padding: 10px 12px; }
+    .p-12-14 { padding: 12px 14px; }
+    .p-6-10 { padding: 6px 10px; }
+    .p-0 { padding: 0; }
+    .p-4-0 { padding: 4px 0; }
+    .bg-darker { background: #0f172a; }
+    .bg-dark2 { background: #0a1628; }
+    .bg-dark3 { background: #0f1b30; }
+    .bg-dark4 { background: #111827; }
+    .border-subtle { border: 1px solid #1e293b; }
+    .radius-4 { border-radius: 4px; }
+    .radius-6 { border-radius: 6px; }
+    .radius-8 { border-radius: 8px; }
+    .text-bold { font-weight: 700; }
+    .text-semi { font-weight: 600; }
+    .text-mute-9 { font-size: 9px; color: #94a3b8; }
+    .text-mute-9-2 { font-size: 9px; color: #94a3b8; margin-bottom: 2px; }
+    .text-mute-9-6 { font-size: 9px; color: #94a3b8; margin-bottom: 6px; }
+    .text-mute-9-8 { font-size: 9px; color: #94a3b8; margin-bottom: 8px; }
+    .text-mute-10 { font-size: 10px; color: #94a3b8; margin-bottom: 8px; }
+    .text-mute-11 { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+    .text-mute-11-2 { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+    .text-mute-12 { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+    .text-mute-12-8 { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+    .text-mute-9-475 { font-size: 9px; color: #475569; }
+    .text-mute-9-647 { font-size: 9px; color: #64748b; }
+    .text-mute-9-mt2 { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+    .gap-1 { gap: 1px; }
+    .gap-2 { gap: 2px; }
+    .gap-3 { gap: 3px; }
+    .gap-4 { gap: 4px; }
+    .gap-6 { gap: 6px; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .gap-16 { gap: 16px; }
+    .h-100 { height: 100%; }
+    .h-auto { height: auto; }
+    .w-100 { width: 100%; }
+    .w-auto { width: auto; }
+    .w-60 { width: 60px; }
+    .w-80 { width: 80px; }
+    .w-160 { width: 160px; }
+    .w-220 { width: 220px; }
+    .w-50 { width: 50%; }
+    .flex { display: flex; }
+    .flex-center-v { display: flex; align-items: center; }
+    .flex-center-v2 { display: flex; align-items: center; gap: 2px; }
+    .flex-center-v4 { display: flex; align-items: center; gap: 4px; }
+    .flex-center-v6 { display: flex; align-items: center; gap: 6px; }
+    .flex-center-v8 { display: flex; align-items: center; gap: 8px; }
+    .flex-center-v10 { display: flex; align-items: center; gap: 10px; }
+    .flex-center-v12 { display: flex; align-items: center; gap: 12px; }
+    .flex-center-v16 { display: flex; align-items: center; gap: 16px; }
+    .text-475 { color: #475569; }
+    .text-647 { color: #64748b; }
+    .text-94 { color: #94a3b8; }
+    .text-e2 { color: #e2e8f0; }
+    .text-f1 { color: #f1f5f9; }
+    .text-3b { color: #3b82f6; }
+    .text-22 { color: #22c55e; }
+    .text-f5 { color: #f59e0b; }
+    .text-ef { color: #ef4444; }
+    .text-86 { color: #86efac; }
+    .text-8b { color: #8b5cf6; }
+    .grid-center { display: grid; place-items: center; }
+    .bg-08 { background: rgba(255, 255, 255, 0.04); }
+    .pad-8-6 { padding: 8px 6px; }
+    .pad-6-4 { padding: 6px 4px; }
+    .pad-12-10 { padding: 12px 10px; }
+    .pad-14-10 { padding: 14px 10px; }
+    .pad-16-12 { padding: 16px 12px; }
+    .t-c-mute-9 { font-size: 9px; color: #94a3b8; }
+    .t-mute-9-475 { font-size: 9px; color: #475569; }
+    .t-mute-10-475 { font-size: 10px; color: #475569; }
+    .t-mute-10-647 { font-size: 10px; color: #64748b; }
+    .t-mute-11-475 { font-size: 11px; color: #475569; }
+    .t-mute-11-647 { font-size: 11px; color: #64748b; }
+    .t-mute-11-94 { font-size: 11px; color: #94a3b8; }
+    .t-mute-12-94 { font-size: 12px; color: #94a3b8; }
+    .t-mute-13-94 { font-size: 13px; color: #94a3b8; }
+    .t-mute-14-94 { font-size: 14px; color: #94a3b8; }
+    .t-mute-10-94 { font-size: 10px; color: #94a3b8; }
+    .t-mute-12-647 { font-size: 12px; color: #64748b; }
+    .t-mute-9-9b { font-size: 9px; color: #94a3b8; }
+    .t-mute-9-475-t { font-size: 9px; color: #475569; }
+    .t-mute-9-647-t { font-size: 9px; color: #64748b; }
+    .t-9-bold { font-size: 9px; font-weight: 700; }
+    .t-10-bold { font-size: 10px; font-weight: 700; }
+    .t-11-bold { font-size: 11px; font-weight: 700; }
+    .t-12-bold { font-size: 12px; font-weight: 700; }
+    .t-13-bold { font-size: 13px; font-weight: 700; }
+    .t-14-bold { font-size: 14px; font-weight: 700; }
+    .t-15-bold { font-size: 15px; font-weight: 700; }
+    .t-16-bold { font-size: 16px; font-weight: 700; }
+    .t-18-bold { font-size: 18px; font-weight: 700; }
+    .t-20-bold { font-size: 20px; font-weight: 800; }
+    .t-24-bold { font-size: 24px; font-weight: 800; }
+    .t-28-bold { font-size: 28px; font-weight: 800; }
+    .t-32-bold { font-size: 32px; font-weight: 800; }
+    .t-9 { font-size: 9px; }
+    .t-10 { font-size: 10px; }
+    .t-11 { font-size: 11px; }
+    .t-12 { font-size: 12px; }
+    .t-13 { font-size: 13px; }
+    .t-14 { font-size: 14px; }
+    .t-15 { font-size: 15px; }
+    .t-16 { font-size: 16px; }
+    .t-18 { font-size: 18px; }
+    .t-20 { font-size: 20px; }
+    .t-22 { font-size: 22px; }
+    .t-24 { font-size: 24px; }
+    .t-28 { font-size: 28px; }
+    .t-32 { font-size: 32px; }
+    .p-2-4 { padding: 2px 4px; }
+    .p-2-6 { padding: 2px 6px; }
+    .p-2-8 { padding: 2px 8px; }
+    .p-3-6 { padding: 3px 6px; }
+    .p-3-8 { padding: 3px 8px; }
+    .p-3-10 { padding: 3px 10px; }
+    .p-4-6 { padding: 4px 6px; }
+    .p-4-8 { padding: 4px 8px; }
+    .p-4-10 { padding: 4px 10px; }
+    .p-4-12 { padding: 4px 12px; }
+    .p-5-14 { padding: 5px 14px; }
+    .p-6-12 { padding: 6px 12px; }
+    .p-8-14 { padding: 8px 14px; }
+    .p-8-16 { padding: 8px 16px; }
+    .p-10-14 { padding: 10px 14px; }
+    .p-12-16 { padding: 12px 16px; }
+    .p-14-20 { padding: 14px 20px; }
+    .p-16-20 { padding: 16px 20px; }
+    .m-0 { margin: 0; }
+    .m-0-4 { margin: 0 4px; }
+    .m-0-6 { margin: 0 6px; }
+    .m-0-8 { margin: 0 8px; }
+    .m-0-10 { margin: 0 10px; }
+    .m-0-12 { margin: 0 12px; }
+    .m-0-14 { margin: 0 14px; }
+    .m-0-16 { margin: 0 16px; }
+    .m-0-20 { margin: 0 20px; }
+    .m-2-0 { margin: 2px 0; }
+    .m-4-0 { margin: 4px 0; }
+    .m-6-0 { margin: 6px 0; }
+    .m-8-0 { margin: 8px 0; }
+    .m-10-0 { margin: 10px 0; }
+    .m-12-0 { margin: 12px 0; }
+    .m-14-0 { margin: 14px 0; }
+    .m-16-0 { margin: 16px 0; }
+    .m-20-0 { margin: 20px 0; }
+    .mt-2 { margin-top: 2px; }
+    .mt-3 { margin-top: 3px; }
+    .mt-4 { margin-top: 4px; }
+    .mt-6 { margin-top: 6px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-10 { margin-top: 10px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-14 { margin-top: 14px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-20 { margin-top: 20px; }
+    .mb-2 { margin-bottom: 2px; }
+    .mb-4 { margin-bottom: 4px; }
+    .mb-6 { margin-bottom: 6px; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-10 { margin-bottom: 10px; }
+    .mb-12 { margin-bottom: 12px; }
+    .mb-14 { margin-bottom: 14px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-20 { margin-bottom: 20px; }
+    .ml-2 { margin-left: 2px; }
+    .ml-4 { margin-left: 4px; }
+    .ml-6 { margin-left: 6px; }
+    .ml-8 { margin-left: 8px; }
+    .ml-10 { margin-left: 10px; }
+    .ml-12 { margin-left: 12px; }
+    .mr-2 { margin-right: 2px; }
+    .mr-4 { margin-right: 4px; }
+    .mr-6 { margin-right: 6px; }
+    .mr-8 { margin-right: 8px; }
+    .pl-4 { padding-left: 4px; }
+    .pl-6 { padding-left: 6px; }
+    .pl-8 { padding-left: 8px; }
+    .pr-2 { padding-right: 2px; }
+    .pr-4 { padding-right: 4px; }
+    .pr-6 { padding-right: 6px; }
+    .pr-8 { padding-right: 8px; }
   `
 
   private _storeUnsub: (() => void) | null = null
@@ -860,8 +1238,8 @@ export class ScRoleCommander extends LitElement {
             else chart = html`<span style="color:#475569;font-size:10px;">无数据</span>`;
             return html`
               <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:8px 10px;">
-                <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">${cfg.title}</div>
-                <div style="display:flex;justify-content:center;">${chart}</div>
+                <div class="t-muted-10">${cfg.title}</div>
+                <div class="flex-center">${chart}</div>
               </div>
             `;
           })}
@@ -991,9 +1369,9 @@ export class ScRoleCommander extends LitElement {
     const highCount = caps.filter(c => c.severity === 'high').length;
 
     return html`
-      <div class="ciso-panel" style="padding:0;">
+      <div class="ciso-panel" class="pad-0">
         <!-- Header -->
-        <div class="ciso-panel-header" style="background:linear-gradient(90deg,#1a0808 0%,#0f172a 100%);border-bottom:1px solid #3b1111;">
+        <div class="ciso-panel-header" class="ciso-panel-header-dark">
           <span class="ciso-panel-title"><span class="icon">⚔️</span> Dark Side 攻防模拟</span>
           <span style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:10px;color:#ef444480;">${simCount} 项可执行模拟</span>
@@ -1012,11 +1390,11 @@ export class ScRoleCommander extends LitElement {
                 <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:${sevColors[c.severity]};"></div>
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;padding-left:4px;">
                   <span style="font-size:11px;font-weight:600;color:#e2e8f0;">${c.label}</span>
-                  ${hasSim ? html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#22c55e15;color:#22c55e;border:1px solid #22c55e33;">▶ 可执行</span>` : html`<span style="font-size:9px;color:#475569;">工具面板</span>`}
+                  ${hasSim ? html`<span class="tag-tiny-success">▶ 可执行</span>` : html`<span class="t-muted-gray">工具面板</span>`}
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;padding-left:4px;">
                   <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${sevColors[c.severity]}15;color:${sevColors[c.severity]};font-weight:600;">${sevLabels[c.severity]}</span>
-                  <span style="font-size:9px;color:#64748b;">${c.toolId}</span>
+                  <span class="t-muted-xs">${c.toolId}</span>
                 </div>
               </div>
             `;
@@ -1025,7 +1403,7 @@ export class ScRoleCommander extends LitElement {
 
         <!-- Active simulation detail -->
         ${this._darkActiveCap && sims[this._darkActiveCap] ? html`
-          <div class="ciso-divider" style="margin:0 20px;"></div>
+          <div class="ciso-divider" class="m-0-20"></div>
           <div style="padding:14px 20px 18px;">
             ${(() => {
               const sim = sims[this._darkActiveCap];
@@ -1039,7 +1417,7 @@ export class ScRoleCommander extends LitElement {
                 <!-- Simulation header -->
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
                   <span style="font-size:15px;font-weight:700;color:#ef4444;">${sim.name}</span>
-                  <span style="font-size:11px;color:#94a3b8;">${sim.desc}</span>
+                  <span class="t-11">${sim.desc}</span>
                   <button ?disabled=${this._darkSimRunning} style="margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid #ef4444;background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};color:#fff;font-size:11px;cursor:${this._darkSimRunning ? 'wait' : 'pointer'};font-weight:600;"
                     @click=${(e: Event) => { e.stopPropagation(); this._runDarkSimulation(this._darkActiveCap!); }}>
                     ${this._darkSimRunning ? html`<span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span> 执行中...` : '🚀 执行模拟'}
@@ -1049,8 +1427,8 @@ export class ScRoleCommander extends LitElement {
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                   <!-- Left: Kill chain + MITRE + CIA -->
                   <div>
-                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">攻击链阶段</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+                    <div class="t-11b-6">攻击链阶段</div>
+                    <div class="killchain-wrap">
                       ${sim.phases.map((p: any, i: number) => html`
                         <div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:5px;background:${phaseColors[p.status]}12;border:1px solid ${phaseColors[p.status]}35;">
                           <span style="font-size:11px;">${p.icon}</span>
@@ -1061,26 +1439,26 @@ export class ScRoleCommander extends LitElement {
                       `)}
                     </div>
 
-                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">MITRE ATT&CK 映射</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+                    <div class="t-11b-6">MITRE ATT&CK 映射</div>
+                    <div class="killchain-wrap">
                       ${sim.mitre.map((m: string) => html`<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:#1e293b;color:#94a3b8;border:1px solid #334155;">${m}</span>`)}
                     </div>
 
-                    <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px;">CIA 影响评估</div>
+                    <div class="t-11b-6">CIA 影响评估</div>
                     <div style="display:flex;gap:10px;">
-                      <div style="flex:1;background:#0f172a;border-radius:6px;padding:8px 10px;">
-                        <div style="font-size:9px;color:#64748b;">机密性 (C)</div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;margin:4px 0;"><div style="height:100%;width:${sim.impact.confidentiality}%;background:#ef4444;border-radius:2px;"></div></div>
+                      <div class="flex-1-8-10">
+                        <div class="t-muted-xs">机密性 (C)</div>
+                        <div class="progress-thin"><div style="height:100%;width:${sim.impact.confidentiality}%;background:#ef4444;border-radius:2px;"></div></div>
                         <div style="font-size:13px;font-weight:700;color:#ef4444;">${sim.impact.confidentiality}%</div>
                       </div>
-                      <div style="flex:1;background:#0f172a;border-radius:6px;padding:8px 10px;">
-                        <div style="font-size:9px;color:#64748b;">完整性 (I)</div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;margin:4px 0;"><div style="height:100%;width:${sim.impact.integrity}%;background:#f59e0b;border-radius:2px;"></div></div>
+                      <div class="flex-1-8-10">
+                        <div class="t-muted-xs">完整性 (I)</div>
+                        <div class="progress-thin"><div style="height:100%;width:${sim.impact.integrity}%;background:#f59e0b;border-radius:2px;"></div></div>
                         <div style="font-size:13px;font-weight:700;color:#f59e0b;">${sim.impact.integrity}%</div>
                       </div>
-                      <div style="flex:1;background:#0f172a;border-radius:6px;padding:8px 10px;">
-                        <div style="font-size:9px;color:#64748b;">可用性 (A)</div>
-                        <div style="height:4px;background:#1e293b;border-radius:2px;margin:4px 0;"><div style="height:100%;width:${sim.impact.availability}%;background:#3b82f6;border-radius:2px;"></div></div>
+                      <div class="flex-1-8-10">
+                        <div class="t-muted-xs">可用性 (A)</div>
+                        <div class="progress-thin"><div style="height:100%;width:${sim.impact.availability}%;background:#3b82f6;border-radius:2px;"></div></div>
                         <div style="font-size:13px;font-weight:700;color:#3b82f6;">${sim.impact.availability}%</div>
                       </div>
                     </div>
@@ -1089,7 +1467,7 @@ export class ScRoleCommander extends LitElement {
                   <!-- Right: Findings + Result -->
                   <div>
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                      <span style="font-size:11px;font-weight:600;color:#94a3b8;">风险发现</span>
+                      <span class="t-11b">风险发现</span>
                       <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#ef444415;color:#ef4444;font-weight:600;">${totalFindings} 项 · ${critFindings} 高危</span>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
@@ -1227,17 +1605,17 @@ export class ScRoleCommander extends LitElement {
     </svg>`;
 
     return html`
-      <div class="zone zone-decision" style="background:#0b1120;border:1px solid #1e3a5f;border-radius:8px;margin:0 14px 8px;">
-        <div style="padding:8px 12px;">
+      <div class="zone zone-decision" class="bg-deep-card">
+        <div class="pad-8-12">
           <div style="font-size:11px;font-weight:600;color:#60a5fa;margin-bottom:6px;">🧭 ${cfg.title}</div>
           <div style="display:flex;gap:12px;align-items:flex-start;">
-            <div style="flex:0 0 auto;">${unsafeSVG(radarSvg)}</div>
-            <div style="flex:1;min-width:0;">
+            <div class="flex-no-grow">${unsafeSVG(radarSvg)}</div>
+            <div class="flex-grow">
               <div style="display:flex;gap:6px;margin-bottom:6px;">
                 ${cfg.axes.map(ax => html`
                   <div style="flex:1;text-align:center;">
                     <div style="font-size:16px;font-weight:700;color:${ax.color}">${ax.value}</div>
-                    <div style="font-size:9px;color:#64748b;">${ax.label}</div>
+                    <div class="t-muted-xs">${ax.label}</div>
                   </div>
                 `)}
               </div>
@@ -1249,7 +1627,7 @@ export class ScRoleCommander extends LitElement {
                   ${cfg.pendingDecisions.map(d => html`
                     <div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0;">
                       <span style="width:6px;height:6px;border-radius:50%;background:${d.urgencyColor};"></span>
-                      <span style="color:#e2e8f0;">${d.title}</span>
+                      <span class="t-e2">${d.title}</span>
                       <span style="color:#64748b;">· ${d.impact}</span>
                       <span style="margin-left:auto;font-size:9px;padding:1px 5px;border-radius:3px;background:${d.urgencyColor}15;color:${d.urgencyColor};">${d.urgency}</span>
                     </div>
@@ -1315,8 +1693,8 @@ export class ScRoleCommander extends LitElement {
     const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
 
     return html`
-      <div class="zone zone-legal" style="background:#0b1120;border:1px solid #1e3a5f;border-radius:8px;margin:0 14px 8px;">
-        <div style="padding:8px 12px;">
+      <div class="zone zone-legal" class="bg-deep-card">
+        <div class="pad-8-12">
           <div style="font-size:11px;font-weight:600;color:#a78bfa;margin-bottom:6px;">⚖️ Legal 合规面板 · SKILL.md 定义</div>
           <div style="display:flex;gap:8px;margin-bottom:6px;">
             ${cfg.regulations.map(r => html`
@@ -1332,7 +1710,7 @@ export class ScRoleCommander extends LitElement {
               ${cfg.riskItems.map(ri => html`
                 <div style="display:flex;align-items:center;gap:4px;font-size:10px;padding:2px 0;">
                   <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
-                  <span style="color:#e2e8f0;">${ri.desc}</span>
+                  <span class="t-e2">${ri.desc}</span>
                   <span style="margin-left:auto;font-size:9px;padding:0 4px;border-radius:2px;background:${ri.levelColor}15;color:${ri.levelColor};">${ri.level}</span>
                 </div>
               `)}
@@ -1371,22 +1749,22 @@ export class ScRoleCommander extends LitElement {
       <div class="zone zone-framework" style="background:#0b1120;border:1px solid #1e293b;border-radius:8px;margin:0 14px 8px;">
         <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;" @click=${() => { this._showFramework = !this._showFramework; }}>
           <span style="font-size:11px;font-weight:600;color:#67e8f9;">🎯 安全框架覆盖度</span>
-          <span style="font-size:9px;color:#64748b;">MITRE ${mitrePct}% · SCF ${scfPct}%</span>
+          <span class="t-muted-xs">MITRE ${mitrePct}% · SCF ${scfPct}%</span>
           <span style="margin-left:auto;font-size:9px;color:#475569;">${this._showFramework ? '▾' : '▸'}</span>
         </div>
         ${this._showFramework ? html`
           <div style="padding:0 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div style="background:#0f172a;border-radius:6px;padding:8px;">
-              <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
+            <div class="bg-dark-pad8">
+              <div class="t-muted-10">🔴 MITRE ATT&CK</div>
               <div style="font-size:20px;font-weight:700;color:#ef4444;">${mitrePct}%</div>
-              <div style="font-size:9px;color:#475569;">${cfg.mitre.covered} / ${cfg.mitre.total} techniques</div>
-              <div style="margin-top:4px;">${cfg.mitre.topGaps.map(g => html`<div style="font-size:9px;color:#f87171;">• ${g}</div>`)}</div>
+              <div class="t-muted-gray">${cfg.mitre.covered} / ${cfg.mitre.total} techniques</div>
+              <div class="mt-4">${cfg.mitre.topGaps.map(g => html`<div style="font-size:9px;color:#f87171;">• ${g}</div>`)}</div>
             </div>
-            <div style="background:#0f172a;border-radius:6px;padding:8px;">
-              <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
+            <div class="bg-dark-pad8">
+              <div class="t-muted-10">🔵 SCF 安全控制框架</div>
               <div style="font-size:20px;font-weight:700;color:#3b82f6;">${scfPct}%</div>
-              <div style="font-size:9px;color:#475569;">${cfg.scf.covered} / ${cfg.scf.total} controls</div>
-              <div style="margin-top:4px;">${cfg.scf.topGaps.map(g => html`<div style="font-size:9px;color:#60a5fa;">• ${g}</div>`)}</div>
+              <div class="t-muted-gray">${cfg.scf.covered} / ${cfg.scf.total} controls</div>
+              <div class="mt-4">${cfg.scf.topGaps.map(g => html`<div style="font-size:9px;color:#60a5fa;">• ${g}</div>`)}</div>
             </div>
           </div>
         ` : nothing}
@@ -1402,20 +1780,20 @@ export class ScRoleCommander extends LitElement {
       <div style="background:#0b1120;border:1px solid #581c87;border-radius:8px;margin:0 14px 8px;padding:8px 12px;">
         <div style="font-size:11px;font-weight:600;color:#c084fc;margin-bottom:6px;">🔬 隐私计算技术 · SKILL.md Technology</div>
         <div style="display:flex;gap:8px;">
-          <div style="flex:1;background:#0f172a;border-radius:6px;padding:6px 8px;text-align:center;">
-            <div style="font-size:9px;color:#94a3b8;">差分隐私</div>
+          <div class="flex-1-6-8">
+            <div class="t-muted-9">差分隐私</div>
             <div style="font-size:14px;font-weight:700;color:#22c55e;">已部署</div>
-            <div style="font-size:8px;color:#475569;">ε=1.2, 用户行为统计</div>
+            <div class="t-muted-8">ε=1.2, 用户行为统计</div>
           </div>
-          <div style="flex:1;background:#0f172a;border-radius:6px;padding:6px 8px;text-align:center;">
-            <div style="font-size:9px;color:#94a3b8;">同态加密</div>
+          <div class="flex-1-6-8">
+            <div class="t-muted-9">同态加密</div>
             <div style="font-size:14px;font-weight:700;color:#f59e0b;">试点中</div>
-            <div style="font-size:8px;color:#475569;">CKKS方案, 金融数据</div>
+            <div class="t-muted-8">CKKS方案, 金融数据</div>
           </div>
-          <div style="flex:1;background:#0f172a;border-radius:6px;padding:6px 8px;text-align:center;">
-            <div style="font-size:9px;color:#94a3b8;">联邦学习</div>
+          <div class="flex-1-6-8">
+            <div class="t-muted-9">联邦学习</div>
             <div style="font-size:14px;font-weight:700;color:#3b82f6;">规划中</div>
-            <div style="font-size:8px;color:#475569;">跨部门联合建模 Q3</div>
+            <div class="t-muted-8">跨部门联合建模 Q3</div>
           </div>
         </div>
       </div>
@@ -1467,7 +1845,7 @@ export class ScRoleCommander extends LitElement {
       <div style="margin:0 14px 8px;">
         <div style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;" @click=${() => { this._showToolGuide = !this._showToolGuide; }}>
           <span style="font-size:10px;color:#94a3b8;">📖 工具使用指南</span>
-          <span style="font-size:9px;color:#475569;">${guides.length} 项</span>
+          <span class="t-muted-gray">${guides.length} 项</span>
           <span style="margin-left:auto;font-size:9px;color:#334155;">${this._showToolGuide ? '▾' : '▸'}</span>
         </div>
         ${this._showToolGuide ? html`
@@ -1475,7 +1853,7 @@ export class ScRoleCommander extends LitElement {
             ${guides.map(g => html`
               <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:5px 8px;min-width:140px;">
                 <div style="font-size:10px;color:#e2e8f0;">${g.tool}</div>
-                <div style="font-size:8px;color:#64748b;">${g.category}</div>
+                <div class="t-muted-8b">${g.category}</div>
                 <div style="font-size:9px;color:#94a3b8;margin-top:2px;">${g.guide}</div>
               </div>
             `)}
@@ -1507,7 +1885,7 @@ export class ScRoleCommander extends LitElement {
     return html`
       <div class="ciso-divider"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <span style="font-size:11px;font-weight:600;color:#94a3b8;">🛠️ 工具列表</span>
+        <span class="t-11b">🛠️ 工具列表</span>
         <span style="font-size:10px;color:#475569;">${tools.length} 个工具</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;">
@@ -1575,7 +1953,7 @@ export class ScRoleCommander extends LitElement {
                     <div style="font-size:8px;font-weight:600;color:#e2e8f0;text-align:center;line-height:1.2;padding:0 1px;margin-top:2px;max-width:90px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${e.label}</div>
                     <div style="display:flex;align-items:center;gap:2px;margin-top:2px;">
                       <span style="font-size:7px;font-weight:700;padding:0 3px;border-radius:2px;background:${c}18;color:${c};">${e.priority}</span>
-                      ${e.source === 'auto' ? html`<span style="font-size:6px;">🔄</span>` : html`<span style="font-size:6px;">✍</span>`}
+                      ${e.source === 'auto' ? html`<span class="t-6">🔄</span>` : html`<span class="t-6">✍</span>`}
                     </div>
                   </div>
                 `;
@@ -1602,7 +1980,7 @@ export class ScRoleCommander extends LitElement {
 
     return html`
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-        <div style="font-size:11px;color:#94a3b8;">📡 事件时间轴</div>
+        <div class="t-11">📡 事件时间轴</div>
         <div style="font-size:10px;color:#64748b;">${visibleEvents.length} 条${this._showCompleted ? '（全部）' : '进行中'}</div>
         ${completedCount > 0 ? html`
           <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:#64748b;cursor:pointer;user-select:none;" @click=${(e: Event) => { e.preventDefault(); this._showCompleted = !this._showCompleted; }}>
@@ -1680,7 +2058,7 @@ export class ScRoleCommander extends LitElement {
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:${c}18;color:${c};">${e.priority}</span>
             <span style="font-size:9px;padding:1px 5px;border-radius:3px;color:${statusColor[e.status]};background:${statusColor[e.status]}18;">${statusLabel[e.status]}</span>
-            ${e.source === 'auto' ? html`<span style="font-size:8px;color:#3b82f6;">🔄 ${e.toolName}</span>` : html`<span style="font-size:8px;color:#64748b;">✍ 手动</span>`}
+            ${e.source === 'auto' ? html`<span style="font-size:8px;color:#3b82f6;">🔄 ${e.toolName}</span>` : html`<span class="t-muted-8b">✍ 手动</span>`}
           </div>
           <button style="background:none;border:none;color:#64748b;cursor:pointer;font-size:12px;padding:0;" @click=${() => { this._selectedTimelineEvent = null; }}>✕</button>
         </div>
@@ -1699,8 +2077,8 @@ export class ScRoleCommander extends LitElement {
             <input type="datetime-local" class="tl-edit-input" .value=${this._editingTimelineTime} @input=${(ev: Event) => { this._editingTimelineTime = (ev.target as HTMLInputElement).value; }} />
           </div>
           <div style="display:flex;gap:4px;margin-left:54px;">
-            <button class="tl-btn tl-btn-primary" style="font-size:9px;padding:2px 8px;" @click=${() => { if (this._editingTimelineTime) { timelineStore.getState().modifyTime(e.id, new Date(this._editingTimelineTime).toISOString()); } this._editingTimelineEvent = null; this.requestUpdate(); }}>✓ 确认</button>
-            <button class="tl-btn" style="font-size:9px;padding:2px 8px;" @click=${() => { this._editingTimelineEvent = null; }}>取消</button>
+            <button class="tl-btn tl-btn-primary" class="t-muted-9b" @click=${() => { if (this._editingTimelineTime) { timelineStore.getState().modifyTime(e.id, new Date(this._editingTimelineTime).toISOString()); } this._editingTimelineEvent = null; this.requestUpdate(); }}>✓ 确认</button>
+            <button class="tl-btn" class="t-muted-9b" @click=${() => { this._editingTimelineEvent = null; }}>取消</button>
           </div>
         ` : html`
           <div class="tl-edit-row">
@@ -1713,11 +2091,11 @@ export class ScRoleCommander extends LitElement {
         `}
 
         <div class="tl-edit-actions">
-          ${this._editingTimelineEvent !== e.id ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;" @click=${() => { this._editingTimelineEvent = e.id; this._editingTimelineTime = e.modifiedTime ? e.modifiedTime.slice(0, 16) : e.originalTime.slice(0, 16); }}>⏱ 改时间</button>` : nothing}
+          ${this._editingTimelineEvent !== e.id ? html`<button class="tl-btn" class="t-muted-9b" @click=${() => { this._editingTimelineEvent = e.id; this._editingTimelineTime = e.modifiedTime ? e.modifiedTime.slice(0, 16) : e.originalTime.slice(0, 16); }}>⏱ 改时间</button>` : nothing}
           ${e.status === 'open' ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#22c55e;color:#22c55e;" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'completed' }); this._selectedTimelineEvent = null; this.requestUpdate(); }}>✓ 完成</button>` : nothing}
           ${e.status === 'completed' ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#64748b;color:#64748b;" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'closed' }); this.requestUpdate(); }}>✕ 关闭</button>` : nothing}
           ${e.status !== 'open' ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#3b82f6;color:#3b82f6;" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'open' }); this.requestUpdate(); }}>↩ 重开</button>` : nothing}
-          ${e.toolId ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;" @click=${() => { this._selectedTimelineEvent = null; this._openToolPanel(e.toolId!); }}>🔧 打开工具</button>` : nothing}
+          ${e.toolId ? html`<button class="tl-btn" class="t-muted-9b" @click=${() => { this._selectedTimelineEvent = null; this._openToolPanel(e.toolId!); }}>🔧 打开工具</button>` : nothing}
           <button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#ef4444;color:#ef4444;" @click=${() => { timelineStore.getState().deleteEvent(e.id); this._selectedTimelineEvent = null; this.requestUpdate(); }}>🗑 删除</button>
         </div>
       </div>
@@ -1878,11 +2256,11 @@ export class ScRoleCommander extends LitElement {
     const scfPct = fwCfg ? Math.round((fwCfg.scf.covered / fwCfg.scf.total) * 100) : 0;
 
     return html`
-      <div class="ciso-panel" style="padding:0;">
+      <div class="ciso-panel" class="pad-0">
         <!-- ═══ Section A: 决策中心 ═══ -->
         <div style="padding:16px 20px 12px;display:flex;gap:16px;align-items:flex-start;">
-          <div style="flex:0 0 auto;">${unsafeSVG(radarSvg)}</div>
-          <div style="flex:1;min-width:0;">
+          <div class="flex-no-grow">${unsafeSVG(radarSvg)}</div>
+          <div class="flex-grow">
             <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
               <span>🧭 CISO 决策中心</span>
             </div>
@@ -1905,7 +2283,7 @@ export class ScRoleCommander extends LitElement {
                       <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;overflow:hidden;">
                         <div style="font-size:9px;font-weight:700;color:${g.color};padding:4px 8px;background:${g.color}0d;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:6px;">
                           <span>${g.label}</span>
-                          <span style="margin-left:auto;font-size:8px;color:#64748b;">${g.items.length} 项</span>
+                          <span class="metric-strip-hint">${g.items.length} 项</span>
                         </div>
                         ${g.items.map(d => html`
                           <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid #1e293b11;">
@@ -1924,7 +2302,7 @@ export class ScRoleCommander extends LitElement {
           </div>
         </div>
 
-        <div class="ciso-divider" style="margin:0 20px;"></div>
+        <div class="ciso-divider" class="m-0-20"></div>
 
         <!-- ═══ Section B: 合规与覆盖 ═══ -->
         <div style="padding:12px 20px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;">
@@ -1945,7 +2323,7 @@ export class ScRoleCommander extends LitElement {
                   <div style="flex:1;background:#0f172a;border:1px solid #1e293b;border-radius:6px;overflow:hidden;min-width:0;">
                     <div style="font-size:9px;font-weight:700;color:${g.color};padding:4px 8px;background:${g.color}0d;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:4px;">
                       <span>${g.key === 'risk' ? '⚠️' : statusIcon[g.key] || ''} ${g.label}</span>
-                      <span style="margin-left:auto;font-size:8px;color:#64748b;">${g.items.length} 项</span>
+                      <span class="metric-strip-hint">${g.items.length} 项</span>
                     </div>
                     <div style="padding:5px 6px;max-height:110px;overflow-y:auto;">
                       ${g.key === 'risk' ? g.items.map((ri: any) => html`
@@ -1956,7 +2334,7 @@ export class ScRoleCommander extends LitElement {
                         </div>
                       `) : g.items.map((r: any) => html`
                         <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #1e293b11;">
-                          <div style="flex:1;min-width:0;">
+                          <div class="flex-grow">
                             <div style="font-size:10px;color:#e2e8f0;font-weight:500;">${r.name}</div>
                             <div style="font-size:8px;color:#475569;margin-top:1px;">${r.detail}</div>
                           </div>
@@ -1975,22 +2353,22 @@ export class ScRoleCommander extends LitElement {
             <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 安全控制覆盖度</div>
             <div style="font-size:9px;color:#64748b;margin-bottom:6px;line-height:1.4;">基于 MITRE ATT&CK 与 SCF 标准来源评估当前角色的安全控制项覆盖范围</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
-                <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
+              <div class="dark-card-base">
+                <div class="t-muted-10">🔴 MITRE ATT&CK</div>
                 <div style="font-size:24px;font-weight:700;color:#ef4444;line-height:1;">${mitrePct}%</div>
-                <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg?.mitre.covered}/${fwCfg?.mitre.total} techniques</div>
+                <div class="t-9-475-2">${fwCfg?.mitre.covered}/${fwCfg?.mitre.total} techniques</div>
                 ${fwCfg ? html`
-                  <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                  <div class="mt-6-fw">
                     ${fwCfg.mitre.topGaps.map(g => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444411;color:#f87171;border:1px solid #ef444422;">${g}</span>`)}
                   </div>
                 ` : nothing}
               </div>
-              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
-                <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
+              <div class="dark-card-base">
+                <div class="t-muted-10">🔵 SCF 安全控制框架</div>
                 <div style="font-size:24px;font-weight:700;color:#3b82f6;line-height:1;">${scfPct}%</div>
-                <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg?.scf.covered}/${fwCfg?.scf.total} controls</div>
+                <div class="t-9-475-2">${fwCfg?.scf.covered}/${fwCfg?.scf.total} controls</div>
                 ${fwCfg ? html`
-                  <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+                  <div class="mt-6-fw">
                     ${fwCfg.scf.topGaps.map(g => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#3b82f611;color:#60a5fa;border:1px solid #3b82f622;">${g}</span>`)}
                   </div>
                 ` : nothing}
@@ -1999,7 +2377,7 @@ export class ScRoleCommander extends LitElement {
           </div>
         </div>
 
-        <div class="ciso-divider" style="margin:0 20px;"></div>
+        <div class="ciso-divider" class="m-0-20"></div>
 
         <!-- ═══ Section C: 可视化分析 ═══ -->
         <div style="padding:12px 20px 16px;">
@@ -2008,452 +2386,13 @@ export class ScRoleCommander extends LitElement {
             ${vizData.map(item => html`
               <div style="background:#080e1a;border:1px solid #1e293b;border-radius:8px;padding:10px;">
                 <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">${item.title}</div>
-                <div style="display:flex;justify-content:center;">${renderVizChart(item)}</div>
+                <div class="flex-center">${renderVizChart(item)}</div>
               </div>
             `)}
           </div>
         </div>
       </div>
     `;
-  }
-
-  // ─── CISO: Executive Dashboard ───
-  // Layout:
-  //   Row 0: 核心指标 + 工具列表 (full width panel)
-  //   Row 1: 安全态势总览 (unified: Decision + Legal + Framework + SKILL Viz)
-  //   Row 2: Dark Side 攻防模拟 (full width)
-  //   Row 3: 事件时间轴 (full width)
-  //
-  // 信息层级: 决策中心(综合) → 合规与覆盖(详情) → 可视化分析(图表)
-  // 关系: Legal + Framework → Decision Matrix(综合) → SKILL Viz(可视化)
-  private _renderCisoDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-
-        <!-- ── Row 0: Executive Metrics + Tool Guide ── -->
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${[
-              this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '44', numColor: '#fbbf24', unit: '/100', sparkData: [52,48,55,51,47,44,49,46,43,48,45,44], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' })),
-              this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '85%', numColor: '#3b82f6', unit: '达成率', sparkData: [78,80,82,81,83,85,84,85], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P3 轻', badgeColor: '#22c55e' })),
-              this._renderMetricCard(this._mc({ toolId: 'board-report', title: '📋 董事会报告', num: '2', numColor: '#f59e0b', unit: '待提交', sparkData: [3,2,4,2,3,2,1,2], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' })),
-              this._renderMetricCard(this._mc({ toolId: 'budget-dash', title: '💰 预算仪表盘', num: '63%', numColor: '#22c55e', unit: '使用率', sparkData: [45,50,55,58,60,62,63,63], delta: '↑+18%', deltaColor: '#f59e0b', deltaLabel: '本年度', badge: 'P3 轻', badgeColor: '#22c55e' })),
-              this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#3b82f6', unit: '合规率', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' })),
-            ]}
-          </div>
-        </div>
-
-        <!-- ── Row 1: 安全态势总览 (Decision + Legal + Framework + SKILL Viz unified) ── -->
-        ${this._renderCisoPosturePanel()}
-
-        <!-- ── Row 2: Dark Side Simulation (full width) ── -->
-        ${this._renderDarkZone('ciso')}
-
-        <!-- ── Row 3: RACI Tasks ── -->
-        <div class="zone zone-raci">
-          <div style="padding: 8px 14px;">
-            <sc-raci-panel .roleId=${this.roleId}></sc-raci-panel>
-          </div>
-        </div>
-
-        <!-- ── Row 4: Event Timeline (full width) ── -->
-        <div class="ciso-panel">
-          ${this._renderTimelineZone('ciso')}
-        </div>
-
-      </div>
-    `
-  }
-
-  /** Framework Zone — always expanded, no toggle (for CISO merged view) */
-  private _renderFrameworkZoneExpanded(roleId: string) {
-    const cfg = ScRoleCommander.FRAMEWORK_COVERAGE[roleId];
-    if (!cfg) return nothing;
-    const mitrePct = Math.round((cfg.mitre.covered / cfg.mitre.total) * 100);
-    const scfPct = Math.round((cfg.scf.covered / cfg.scf.total) * 100);
-    return html`
-      <div style="padding:8px 12px;">
-        <div style="font-size:11px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 安全框架覆盖度</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:#0f172a;border-radius:6px;padding:8px;">
-            <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
-            <div style="font-size:20px;font-weight:700;color:#ef4444;">${mitrePct}%</div>
-            <div style="font-size:9px;color:#475569;">${cfg.mitre.covered} / ${cfg.mitre.total} techniques</div>
-            <div style="margin-top:4px;">${cfg.mitre.topGaps.map(g => html`<div style="font-size:9px;color:#f87171;">• ${g}</div>`)}</div>
-          </div>
-          <div style="background:#0f172a;border-radius:6px;padding:8px;">
-            <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
-            <div style="font-size:20px;font-weight:700;color:#3b82f6;">${scfPct}%</div>
-            <div style="font-size:9px;color:#475569;">${cfg.scf.covered} / ${cfg.scf.total} controls</div>
-            <div style="margin-top:4px;">${cfg.scf.topGaps.map(g => html`<div style="font-size:9px;color:#60a5fa;">• ${g}</div>`)}</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // ─── 指挥官: 全域态势, AI调度, 事件管理, 风险评分板, 董事会报告 ───
-
-  // ─── Generic Posture Panel — adapts to available modules per role ───
-  private _renderPosturePanel(roleId: string) {
-    const hasDecision = !!ScRoleCommander.DECISION_CONFIGS[roleId];
-    const hasLegal = !!ScRoleCommander.LEGAL_CONFIGS[roleId];
-    const hasFramework = !!ScRoleCommander.FRAMEWORK_COVERAGE[roleId];
-    const hasViz = !!(ScRoleCommander as any)._vizConfigs?.[roleId] || roleId === 'ciso' || roleId === 'security-expert';
-    const hasDark = !!ScRoleCommander.DARK_CAPS[roleId];
-
-    const decCfg = hasDecision ? ScRoleCommander.DECISION_CONFIGS[roleId] : null;
-    const legalCfg = hasLegal ? ScRoleCommander.LEGAL_CONFIGS[roleId] : null;
-    const fwCfg = hasFramework ? ScRoleCommander.FRAMEWORK_COVERAGE[roleId] : null;
-    const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
-
-    const roleTitles: Record<string, string> = {
-      'secuclaw-commander': '指挥官态势总览',
-      'security-ops': '运营态势总览',
-      'security-expert': '专家态势总览',
-      'privacy-officer': '隐私态势总览',
-      'security-architect': '架构态势总览',
-      'business-security-officer': '业务安全态势总览',
-      'supply-chain-security': '供应链态势总览',
-    };
-    const panelTitle = roleTitles[roleId] || '态势总览';
-
-    // ── Decision Radar SVG ──
-    const radarSvg = decCfg ? (() => {
-      const size = 120, cx = size / 2, cy = size / 2, r = size / 2 - 16;
-      const n = decCfg.axes.length;
-      const angleStep = (2 * Math.PI) / n;
-      const startAngle = -Math.PI / 2;
-      const gridPaths = [0.25, 0.5, 0.75, 1.0].map(level => {
-        const pts = Array.from({ length: n }, (_, i) => {
-          const a = startAngle + i * angleStep;
-          return `${(cx + r * level * Math.cos(a)).toFixed(1)},${(cy + r * level * Math.sin(a)).toFixed(1)}`;
-        }).join(' ');
-        return `<polygon points="${pts}" fill="none" stroke="#1e293b" stroke-width="0.5"/>`;
-      }).join('');
-      const axisLines = Array.from({ length: n }, (_, i) => {
-        const a = startAngle + i * angleStep;
-        return `<line x1="${cx}" y1="${cy}" x2="${(cx + r * Math.cos(a)).toFixed(1)}" y2="${(cy + r * Math.sin(a)).toFixed(1)}" stroke="#1e293b" stroke-width="0.5"/>`;
-      }).join('');
-      const dataPoints = decCfg.axes.map((ax: any, i: number) => {
-        const a = startAngle + i * angleStep;
-        const v = (ax.value / ax.max) * r;
-        return { x: cx + v * Math.cos(a), y: cy + v * Math.sin(a), label: ax.label, color: ax.color, value: ax.value };
-      });
-      const dataPoly = dataPoints.map((p: any) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-      const labelsSvg = dataPoints.map((p: any, i: number) => {
-        const a = startAngle + i * angleStep;
-        const lx = cx + (r + 14) * Math.cos(a);
-        const ly = cy + (r + 14) * Math.sin(a);
-        return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${p.color}" font-size="9" font-weight="600">${p.label}</text>`;
-      }).join('');
-      const valueLabels = dataPoints.map((p: any, i: number) => {
-        const a = startAngle + i * angleStep;
-        const lx = cx + (r + 26) * Math.cos(a);
-        const ly = cy + (r + 26) * Math.sin(a);
-        return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" fill="${p.color}" font-size="11" font-weight="700">${p.value}</text>`;
-      }).join('');
-      return `<svg width="${size + 52}" height="${size + 52}" viewBox="-26 -26 ${size + 52} ${size + 52}" xmlns="http://www.w3.org/2000/svg">
-        ${gridPaths}${axisLines}
-        <polygon points="${dataPoly}" fill="#3b82f618" stroke="#3b82f6" stroke-width="1.5"/>
-        ${dataPoints.map((p: any) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${p.color}" stroke="#0f172a" stroke-width="1"/>`).join('')}
-        ${labelsSvg}${valueLabels}
-      </svg>`;
-    })() : '';
-
-    // ── Framework percentages ──
-    const mitrePct = fwCfg ? Math.round((fwCfg.mitre.covered / fwCfg.mitre.total) * 100) : 0;
-    const scfPct = fwCfg ? Math.round((fwCfg.scf.covered / fwCfg.scf.total) * 100) : 0;
-
-    // Count available sections
-    const sectionCount = (hasDecision ? 1 : 0) + (hasLegal || hasFramework ? 1 : 0) + (hasViz ? 1 : 0);
-
-    return html`
-      <div class="ciso-panel" style="padding:0;">
-        ${hasDecision ? html`
-          <!-- Section A: Decision Center -->
-          <div style="padding:16px 20px 12px;display:flex;gap:16px;align-items:flex-start;">
-            <div style="flex:0 0 auto;">${unsafeSVG(radarSvg)}</div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;">🧭 ${panelTitle}</div>
-              <div style="font-size:11px;color:${decCfg.recColor};padding:6px 10px;background:${decCfg.recColor}11;border-radius:6px;border-left:3px solid ${decCfg.recColor};margin-bottom:10px;line-height:1.5;">
-                💡 ${decCfg.recommendation}
-              </div>
-              ${decCfg.pendingDecisions.length > 0 ? html`
-                <div style="font-size:10px;color:#64748b;margin-bottom:4px;">待决策事项</div>
-                ${decCfg.pendingDecisions.map((d: any) => html`
-                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #1e293b11;">
-                    <span style="width:7px;height:7px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
-                    <span style="font-size:11px;color:#e2e8f0;font-weight:500;">${d.title}</span>
-                    <span style="font-size:10px;color:#64748b;">${d.impact}</span>
-                    <span style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:4px;background:${d.urgencyColor}15;color:${d.urgencyColor};font-weight:600;">${d.urgency}</span>
-                  </div>
-                `)}
-              ` : nothing}
-            </div>
-          </div>
-          <div class="ciso-divider" style="margin:0 20px;"></div>
-        ` : html`
-          <!-- Panel header (no decision) -->
-          <div style="padding:14px 20px 10px;">
-            <div style="font-size:14px;font-weight:700;color:#f1f5f9;">🧭 ${panelTitle}</div>
-          </div>
-        `}
-
-        ${(hasLegal || hasFramework) ? html`
-          <!-- Section B: Compliance & Coverage -->
-          <div style="padding:12px 20px;display:grid;grid-template-columns:${hasLegal && hasFramework ? '1.2fr 0.8fr' : '1fr'};gap:16px;">
-            ${hasLegal && legalCfg ? html`
-              <div>
-                <div style="font-size:12px;font-weight:600;color:#a78bfa;margin-bottom:8px;">⚖️ 合规状态</div>
-                <div style="display:grid;grid-template-columns:repeat(${legalCfg.regulations.length},1fr);gap:6px;margin-bottom:8px;">
-                  ${legalCfg.regulations.map((r: any) => html`
-                    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 6px;text-align:center;">
-                      <div style="font-size:9px;color:#64748b;margin-bottom:2px;">${statusIcon[r.status] || ''} ${r.name}</div>
-                      <div style="font-size:20px;font-weight:700;color:${r.color};line-height:1.2;">${r.score}%</div>
-                    </div>
-                  `)}
-                </div>
-                ${legalCfg.riskItems.length > 0 ? html`
-                  <div style="border-top:1px solid #1e293b;padding-top:6px;">
-                    ${legalCfg.riskItems.map((ri: any) => html`
-                      <div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0;">
-                        <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
-                        <span style="color:#e2e8f0;">${ri.desc}</span>
-                        <span style="margin-left:auto;font-size:9px;padding:1px 6px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;">${ri.level}</span>
-                      </div>
-                    `)}
-                  </div>
-                ` : nothing}
-              </div>
-            ` : nothing}
-            ${hasFramework && fwCfg ? html`
-              <div>
-                <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 框架覆盖度</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
-                    <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔴 MITRE ATT&CK</div>
-                    <div style="font-size:24px;font-weight:700;color:#ef4444;line-height:1;">${mitrePct}%</div>
-                    <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg.mitre.covered}/${fwCfg.mitre.total} techniques</div>
-                    <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-                      ${fwCfg.mitre.topGaps.map((g: string) => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444411;color:#f87171;border:1px solid #ef444422;">${g}</span>`)}
-                    </div>
-                  </div>
-                  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px;">
-                    <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">🔵 SCF 安全控制框架</div>
-                    <div style="font-size:24px;font-weight:700;color:#3b82f6;line-height:1;">${scfPct}%</div>
-                    <div style="font-size:9px;color:#475569;margin-top:2px;">${fwCfg.scf.covered}/${fwCfg.scf.total} controls</div>
-                    <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-                      ${fwCfg.scf.topGaps.map((g: string) => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#3b82f611;color:#60a5fa;border:1px solid #3b82f622;">${g}</span>`)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ` : nothing}
-          </div>
-          <div class="ciso-divider" style="margin:0 20px;"></div>
-        ` : nothing}
-
-        ${hasViz ? html`
-          <!-- Section C: Visual Analytics -->
-          <div style="padding:12px 20px 16px;">
-            <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;">📊 可视化分析</div>
-            ${this._renderVizZone(roleId)}
-          </div>
-        ` : nothing}
-      </div>
-    `;
-  }
-
-
-  private _renderCommanderDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'global-situation', title: '🌍 全域态势', num: '58', numColor: '#f59e0b', unit: '/100 风险', sparkData: [62,60,57,55,58,56,54,58], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '本周', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'ai-dispatch', title: '🤖 AI 调度', num: '3', numColor: '#22c55e', unit: '运行中', sparkData: [1,2,2,3,2,3,3,3], delta: '↑+1', deltaColor: '#22c55e', deltaLabel: '较上周', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'incident-mgmt', title: '🚑 事件管理', num: '4', numColor: '#ef4444', unit: '活跃事件', sparkData: [6,5,7,4,5,3,4,4], delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '近7天', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '46', numColor: '#fbbf24', unit: '/100', sparkData: [50,48,52,47,44,46,43,46], delta: '↑+2', deltaColor: '#f59e0b', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'bcp-mgmt', title: '🛡️ BCP 管理', num: '92%', numColor: '#22c55e', unit: '覆盖率', sparkData: [85,87,88,89,90,91,92,92], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'security-governance', title: '🛡️ 安全治理', num: '92%', numColor: '#22c55e', unit: '治理覆盖率', sparkData: [85,87,88,90,91,91,92,92], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'investment-decision', title: '📈 投资决策', num: '340%', numColor: '#22c55e', unit: '安全ROI', sparkData: [280,300,310,320,330,340,340,340], delta: '↑+60%', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'drill-mgmt', title: '🔥 应急演练', num: '3', numColor: '#f59e0b', unit: '本季演练', sparkData: [1,1,2,2,2,3,3,3], delta: '↑+1', deltaColor: '#22c55e', deltaLabel: '较上季', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'devsecops', title: '🔄 DevSecOps', num: '87%', numColor: '#22c55e', unit: '流水线覆盖率', sparkData: [72,75,78,80,83,85,86,87], delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'perf-mgmt', title: '📊 绩效管理', num: 'B+', numColor: '#06b6d4', unit: '安全团队评级', sparkData: [70,72,74,76,78,80,82,85], delta: '↑+15', deltaColor: '#22c55e', deltaLabel: '年度', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-          </div>
-          ${this._renderToolGuideInline('secuclaw-commander')}
-        </div>
-        ${this._renderPosturePanel('secuclaw-commander')}
-        ${this._renderDarkZone('secuclaw-commander')}
-        <!-- ── RACI Tasks ── -->
-        <div class="zone zone-raci">
-          <div style="padding: 8px 14px;">
-            <sc-raci-panel .roleId=${this.roleId}></sc-raci-panel>
-          </div>
-        </div>
-        <div class="ciso-panel">${this._renderTimelineZone('secuclaw-commander')}</div>
-      </div>
-    `
-  }
-  private _renderOpsDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'alert-queue', title: '🚨 告警队列', num: '8', numColor: '#ef4444', unit: '活跃告警', sparkData: [15,22,18,35,28,42,38,8], delta: '↓-30', deltaColor: '#22c55e', deltaLabel: '较昨日', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'incident-mgmt', title: '🚑 事件管理', num: '4', numColor: '#f59e0b', unit: '待处理', sparkData: [7,5,6,4,5,3,4,4], delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '近24h', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'soar-exec', title: '⚡ SOAR 剧本', num: '3', numColor: '#3b82f6', unit: '运行中', sparkData: [1,2,1,2,3,2,3,3], delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '较昨日', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'log-analysis', title: '📜 日志分析', num: '65%', numColor: '#8b5cf6', unit: '覆盖率', sparkData: [55,58,60,62,63,64,65,65], delta: '↑+10%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'threat-intel', title: '📡 威胁情报', num: '12', numColor: '#06b6d4', unit: '新增情报', sparkData: [5,8,6,10,9,12,11,12], delta: '↑+3', deltaColor: '#ef4444', deltaLabel: '本周', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'bcp-mgmt', title: '🛡️ BCP 管理', num: '95%', numColor: '#22c55e', unit: 'BCP覆盖', sparkData: [88,90,91,93,94,95,95,95], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-          </div>
-          ${this._renderToolGuideInline('security-ops')}
-        </div>
-        ${this._renderPosturePanel('security-ops')}
-        ${this._renderDarkZone('security-ops')}
-        <div class="ciso-panel">${this._renderTimelineZone('security-ops')}</div>
-      </div>
-    `
-  }
-  private _renderExpertDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'vuln-scan', title: '🛡️ 漏洞扫描', num: '65', numColor: '#ef4444', unit: '个CVE', sparkData: [72,68,70,65,63,60,65,65], delta: '↑+5', deltaColor: '#ef4444', deltaLabel: '本月新增', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'threat-intel', title: '📡 威胁情报', num: '12', numColor: '#f59e0b', unit: '新增CVE', sparkData: [5,8,6,10,9,12,11,12], delta: '↑+4', deltaColor: '#ef4444', deltaLabel: '本周', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'pen-test', title: '🔍 渗透测试', num: '12', numColor: '#3b82f6', unit: '可利用漏洞', sparkData: [8,9,10,11,10,12,11,12], delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本轮测试', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'incident-mgmt', title: '🚑 事件管理', num: '3', numColor: '#06b6d4', unit: '待取证', sparkData: [5,4,3,4,3,2,3,3], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '近7天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'patch-mgmt', title: '📦 补丁管理', num: '74%', numColor: '#8b5cf6', unit: '高危覆盖', sparkData: [60,63,65,68,70,72,74,74], delta: '↑+14%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-          </div>
-          ${this._renderToolGuideInline('security-expert')}
-        </div>
-        ${this._renderPosturePanel('security-expert')}
-        ${this._renderDarkZone('security-expert')}
-        <div class="ciso-panel">${this._renderTimelineZone('security-expert')}</div>
-      </div>
-    `
-  }
-  private _renderPrivacyDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'gdpr-audit', title: '📜 GDPR 审计', num: '87%', numColor: '#22c55e', unit: '合规率', sparkData: [78,80,82,84,85,86,87,87], delta: '↑+9%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '91%', numColor: '#f59e0b', unit: '整体合规', sparkData: [85,87,88,89,90,91,91,91], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'data-map', title: '🗺️ 数据地图', num: '3', numColor: '#a78bfa', unit: '跨境数据流', sparkData: [2,2,3,3,3,3,3,3], delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '本季度', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'policy-mgmt', title: '📄 策略管理', num: '2', numColor: '#ef4444', unit: '待更新', sparkData: [0,1,1,2,1,2,2,2], delta: '↑+1', deltaColor: '#ef4444', deltaLabel: '本月', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'vendor-eval', title: '🏢 供应商评估', num: '1', numColor: '#f59e0b', unit: '高风险', sparkData: [0,1,1,1,2,1,1,1], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'cookie-mgmt', title: '🍪 Cookie 管理', num: '94%', numColor: '#22c55e', unit: '合规率', sparkData: [88,89,90,91,92,93,94,94], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近月', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'consent-mgmt', title: '✅ 同意管理', num: '96%', numColor: '#22c55e', unit: '用户同意率', sparkData: [90,91,92,93,94,95,96,96], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近月', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-          </div>
-          ${this._renderToolGuideInline('privacy-officer')}
-        </div>
-        ${this._renderPosturePanel('privacy-officer')}
-        <div class="ciso-panel">
-          ${this._renderPrivacyTechZone()}
-        </div>
-        ${this._renderDarkZone('privacy-officer')}
-        <div class="ciso-panel">${this._renderTimelineZone('privacy-officer')}</div>
-      </div>
-    `
-  }
-  private _renderArchitectDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'threat-model', title: '⚠️ 威胁建模', num: '23', numColor: '#ef4444', unit: 'STRIDE威胁', sparkData: [28,25,27,24,23,20,22,23], delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '较上季度', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'zero-trust', title: '🔐 零信任评估', num: '3.2', numColor: '#f59e0b', unit: '/5 成熟度', sparkData: [2.8,3.0,3.1,3.0,3.2,3.1,3.2], delta: '↑+0.4', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'iam-config', title: '🔑 IAM 配置', num: '5', numColor: '#ef4444', unit: '高风险配置', sparkData: [3,4,4,5,6,5,5,5], delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本月新增', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'cloud-security', title: '☁️ 云安全评估', num: '72', numColor: '#06b6d4', unit: '/100 云安全', sparkData: [65,68,70,71,69,72,72,72], delta: '↑+7', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '92%', numColor: '#22c55e', unit: '等保合规率', sparkData: [88,89,90,91,90,92,92,92], delta: '↑+4%', deltaColor: '#22c55e', deltaLabel: '近30天', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'network-seg', title: '🌐 网络分段', num: '4', numColor: '#06b6d4', unit: '安全区域', sparkData: [2,2,3,3,4,4,4,4], delta: '↑+2', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P2 中', badgeColor: '#06b6d4' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'dmz-config', title: '🛡️ DMZ 配置', num: '85%', numColor: '#22c55e', unit: 'DMZ覆盖率', sparkData: [70,75,78,80,82,84,85,85], delta: '↑+15%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'app-sec', title: '💻 应用安全', num: '68', numColor: '#f59e0b', unit: '/100 AppSec', sparkData: [55,58,60,62,64,66,68,68], delta: '↑+13', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'data-arch', title: '🗄️ 数据安全架构', num: '92%', numColor: '#22c55e', unit: '数据分类覆盖', sparkData: [78,82,85,87,89,90,91,92], delta: '↑+14%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'dr-arch', title: '🏗️ 容灾架构', num: '2h', numColor: '#22c55e', unit: 'RPO 目标', sparkData: [8,6,5,4,3,3,2,2], delta: '↓-6h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'arch-governance', title: '📋 架构治理', num: '100%', numColor: '#22c55e', unit: '评审覆盖率', sparkData: [80,85,88,92,95,98,99,100], delta: '↑+20%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-          </div>
-          ${this._renderToolGuideInline('security-architect')}
-        </div>
-        ${this._renderPosturePanel('security-architect')}
-        ${this._renderDarkZone('security-architect')}
-        <div class="ciso-panel">${this._renderTimelineZone('security-architect')}</div>
-      </div>
-    `
-  }
-  private _renderBizSecDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'bcp-mgmt', title: '🛡️ BCP 管理', num: '95%', numColor: '#22c55e', unit: 'BCP覆盖', sparkData: [88,90,91,93,94,95,95,95], delta: '↑+7%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'risk-score', title: '📊 风险评分板', num: '48', numColor: '#fbbf24', unit: '/100 业务风险', sparkData: [42,45,40,44,43,48,46,48], delta: '↑+6', deltaColor: '#ef4444', deltaLabel: '近30天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'cost-calc', title: '🧮 成本计算', num: '340%', numColor: '#22c55e', unit: '安全ROI', sparkData: [280,300,310,320,330,340,340,340], delta: '↑+60%', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'vendor-eval', title: '🏢 供应商评估', num: '1', numColor: '#f59e0b', unit: '高风险', sparkData: [2,2,1,1,2,1,1,1], delta: '↓-1', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'kpi-track', title: '🎯 KPI 追踪', num: '87%', numColor: '#3b82f6', unit: 'BCP达成', sparkData: [78,80,82,84,85,86,87,87], delta: '↑+9%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'sec-awareness', title: '🎓 安全意识培训', num: '82%', numColor: '#22c55e', unit: '培训完成率', sparkData: [70,73,75,78,79,80,81,82], delta: '↑+12%', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'disaster-recovery', title: '🔄 灾难恢复', num: '4h', numColor: '#22c55e', unit: 'RTO目标', sparkData: [8,7,6,5,5,4,4,4], delta: '↓-4h', deltaColor: '#22c55e', deltaLabel: '较上年', badge: 'P2 中', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'bia-analysis', title: '📉 BIA 覆盖率', num: '88%', numColor: '#22c55e', unit: '核心流程已分析', sparkData: [70,74,78,80,83,85,87,88], delta: '↑+18%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#22c55e' }))}
-          </div>
-          ${this._renderToolGuideInline('business-security-officer')}
-        </div>
-        ${this._renderPosturePanel('business-security-officer')}
-        ${this._renderDarkZone('business-security-officer')}
-        <div class="ciso-panel">${this._renderTimelineZone('business-security-officer')}</div>
-      </div>
-    `
-  }
-  private _renderSupplyDashboard() {
-    return html`
-      <div class="ciso-role-grid">
-        <div class="ciso-panel">
-          <div class="ciso-panel-header">
-            <span class="ciso-panel-title"><span class="icon">📊</span> 核心指标</span>
-          </div>
-          <div class="ciso-metrics-strip">
-            ${this._renderMetricCard(this._mc({ toolId: 'sbom-scan', title: '📦 SBOM 扫描', num: '67%', numColor: '#f59e0b', unit: 'SBOM覆盖', sparkData: [45,50,55,58,60,63,65,67], delta: '↑+22%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'vendor-eval', title: '🏢 供应商评估', num: '1', numColor: '#ef4444', unit: 'D级高风险', sparkData: [3,2,2,1,2,1,1,1], delta: '↓-2', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'third-party-risk', title: '👥 第三方风险', num: '12', numColor: '#ef4444', unit: '高风险供应商', sparkData: [8,9,10,11,10,12,11,12], delta: '↑+4', deltaColor: '#ef4444', deltaLabel: '年度变化', badge: 'P1 重', badgeColor: '#ef4444' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'contract-review', title: '📑 合同审查', num: '3', numColor: '#f59e0b', unit: '待审查', sparkData: [1,2,2,3,2,3,3,3], delta: '↑+1', deltaColor: '#f59e0b', deltaLabel: '本月', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'compliance-chk', title: '✅ 合规检查', num: '88%', numColor: '#f59e0b', unit: '供应链合规', sparkData: [80,82,84,85,86,87,88,88], delta: '↑+8%', deltaColor: '#22c55e', deltaLabel: '近90天', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'vendor-audit', title: '📋 供应商审计', num: '5', numColor: '#f59e0b', unit: '待审计', sparkData: [8,7,6,6,5,5,5,5], delta: '↓-3', deltaColor: '#22c55e', deltaLabel: '较上月', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'dpa-mgmt', title: '📜 DPA 管理', num: '12', numColor: '#22c55e', unit: '有效DPA', sparkData: [8,9,10,11,11,12,12,12], delta: '↑+4', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'vendor-monitor', title: '👁️ 供应商监控', num: '38', numColor: '#22c55e', unit: '在线供应商', sparkData: [30,32,34,35,36,37,38,38], delta: '↑+8', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'sla-mgmt', title: '⏱️ SLA 达成', num: '94%', numColor: '#22c55e', unit: 'SLA 合规', sparkData: [88,90,91,92,93,93,94,94], delta: '↑+6%', deltaColor: '#22c55e', deltaLabel: '近半年', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'supply-intel', title: '🌐 供应链情报', num: '7', numColor: '#f59e0b', unit: '活跃威胁', sparkData: [3,4,5,5,6,6,7,7], delta: '↑+2', deltaColor: '#ef4444', deltaLabel: '本周', badge: 'P2 中', badgeColor: '#f59e0b' }))}
-            ${this._renderMetricCard(this._mc({ toolId: 'material-track', title: '📦 物料追踪', num: '156', numColor: '#06b6d4', unit: '组件已追踪', sparkData: [100,110,120,130,140,148,155,156], delta: '↑+56', deltaColor: '#22c55e', deltaLabel: '近季', badge: 'P3 轻', badgeColor: '#22c55e' }))}
-          </div>
-          ${this._renderToolGuideInline('supply-chain-security')}
-        </div>
-        ${this._renderPosturePanel('supply-chain-security')}
-        ${this._renderDarkZone('supply-chain-security')}
-        <div class="ciso-panel">${this._renderTimelineZone('supply-chain-security')}</div>
-      </div>
-    `
   }
   private _iconMap: Record<string, string> = {
     BellRing: '🔔', Play: '▶️', ScrollText: '📜', Siren: '🚨', Globe: '🌍', Bot: '🤖',
@@ -2753,13 +2692,13 @@ export class ScRoleCommander extends LitElement {
               <p style="margin-bottom: 16px; line-height: 1.6; font-size: 12px;">${r?.summary}</p>
               ${r?.risks?.length > 0 ? html`
                 <div style="font-weight: 600; margin-bottom: 8px; color: #ef4444;">⚠️ 风险预警</div>
-                <ul style="margin: 0 0 16px 0; padding-left: 18px; list-style: disc;">
+                <ul class="list-disc-18">
                   ${r.risks.map((s: string) => html`<li style="margin-bottom: 6px; font-size: 12px; color: #fca5a5;">${s}</li>`)}
                 </ul>
               ` : nothing}
               ${r?.positives?.length > 0 ? html`
                 <div style="font-weight: 600; margin-bottom: 8px; color: #22c55e;">✅ 正面趋势</div>
-                <ul style="margin: 0 0 16px 0; padding-left: 18px; list-style: disc;">
+                <ul class="list-disc-18">
                   ${r.positives.map((s: string) => html`<li style="margin-bottom: 6px; font-size: 12px; color: #86efac;">${s}</li>`)}
                 </ul>
               ` : nothing}
