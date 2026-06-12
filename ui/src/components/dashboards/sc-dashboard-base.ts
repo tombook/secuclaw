@@ -42,6 +42,8 @@ export abstract class ScDashboardBase extends LitElement {
     .modal-btn.primary { background: var(--sc-primary, #00d4ff); color: var(--sc-text-inverse, #0f172a); border-color: var(--sc-primary, #00d4ff); font-weight: 600; }
     .modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .modal-result { margin-top: 12px; padding: 10px; background: var(--sc-bg-tertiary, #1f2937); border-radius: 4px; font-size: 12px; color: var(--sc-text-secondary, #9ca3af); white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+    .ai-empty { text-align: center; padding: 20px; color: var(--sc-text-muted, #6b7280); font-size: 11px; }
+    .ai-cap-modal-desc { font-size: 11px; color: var(--sc-text-muted, #6b7280); margin: 0 0 12px; }
   `;
 
   @property({ type: String }) roleId?: string;
@@ -116,7 +118,7 @@ export abstract class ScDashboardBase extends LitElement {
   }
 
   protected _renderAiCapabilities() {
-    if (!this._capabilities.length) return html`<div style="text-align:center;padding:20px;color:var(--sc-text-muted);font-size:11px;">该角色暂无 AI 能力</div>`;
+    if (!this._capabilities.length) return html`<div class="ai-empty">该角色暂无 AI 能力</div>`;
     return html`
       <div class="ai-capability-list" role="list" aria-label="AI 能力列表">
         ${this._capabilities.map(c => {
@@ -180,7 +182,7 @@ export abstract class ScDashboardBase extends LitElement {
       <div class="modal-backdrop" @click=${this._closeExec} role="dialog" aria-label="AI 能力执行">
         <div class="modal" @click=${(e: Event) => e.stopPropagation()}>
           <h3>${cap.icon} ${cap.name} <span style="font-size:10px;background:${al.color}22;color:${al.color};padding:2px 6px;border-radius:3px;margin-left:8px;">${cap.autonomyLevel} ${al.name}</span></h3>
-          <p style="font-size:11px;color:var(--sc-text-muted);margin:0 0 12px;">${cap.description}</p>
+          <p class="ai-cap-modal-desc">${cap.description}</p>
           <textarea class="modal-input" ${ref(this._inputRef)} placeholder="请输入上下文信息（可选）" aria-label="输入"></textarea>
           <div class="modal-actions">
             <button class="modal-btn" @click=${this._closeExec}>关闭</button>

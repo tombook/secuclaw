@@ -21,6 +21,12 @@ export class ScDashboardCiso extends ScDashboardBase {
       .progress-fill.level-warn { background: var(--sc-medium, #f59e0b); }
       .progress-fill.level-bad { background: var(--sc-critical, #ef4444); }
       .progress-value { font-size: 11px; min-width: 32px; text-align: right; color: var(--sc-text-primary, #f9fafb); font-weight: 600; }
+      .compliance-list { display: flex; flex-direction: column; gap: 10px; }
+      .compliance-label { font-size: 12px; color: var(--sc-text-secondary, #9ca3af); min-width: 80px; }
+      .budget-summary { text-align: center; margin-bottom: 8px; }
+      .budget-amount { font-size: 24px; font-weight: 800; color: var(--sc-text-primary, #f9fafb); }
+      .budget-total { font-size: 11px; color: var(--sc-text-muted, #6b7280); }
+      .budget-pct { font-size: 11px; color: var(--sc-low, #22c55e); }
     `,
   ];
 
@@ -54,10 +60,10 @@ export class ScDashboardCiso extends ScDashboardBase {
 
         <div class="panel">
           <h3 class="panel-title">📊 合规框架</h3>
-          <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="compliance-list">
             ${compliance.map(c => html`
               <div class="progress-row">
-                <div style="font-size:12px;color:var(--sc-text-secondary);min-width:80px;">${c.framework}</div>
+                <div class="compliance-label">${c.framework}</div>
                 <div class="progress-track">
                   <div class="progress-fill ${c.score >= 85 ? 'level-good' : c.score >= 70 ? 'level-warn' : 'level-bad'}" style="width:${c.score}%;background:${c.color};"></div>
                 </div>
@@ -71,10 +77,10 @@ export class ScDashboardCiso extends ScDashboardBase {
       <div class="grid-2">
         <div class="panel">
           <h3 class="panel-title">💰 预算分配</h3>
-          <div style="text-align:center;margin-bottom:8px;">
-            <span style="font-size:24px;font-weight:800;color:var(--sc-text-primary);">¥${(budget.used/100).toFixed(0)}万</span>
-            <span style="font-size:11px;color:var(--sc-text-muted);"> / ¥${(budget.total/100).toFixed(0)}万</span>
-            <div style="font-size:11px;color:var(--sc-low);">${budgetPct}% 已使用</div>
+          <div class="budget-summary">
+            <span class="budget-amount">¥${(budget.used/100).toFixed(0)}万</span>
+            <span class="budget-total"> / ¥${(budget.total/100).toFixed(0)}万</span>
+            <div class="budget-pct">${budgetPct}% 已使用</div>
           </div>
           <sc-donut-chart
             .data=${budget.breakdown}

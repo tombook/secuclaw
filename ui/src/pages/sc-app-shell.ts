@@ -656,6 +656,10 @@ export class ScAppShell extends LitElement {
         display: none !important;
       }
     }
+    .raci-collab-section { margin-top: 4px; padding-top: 4px; border-top: 1px solid #1e293b; }
+    .raci-collab-label { font-size: 8px; color: #475569; }
+    .raci-count-label { font-size: 9px; color: #475569; }
+    .kbd-k-text { font-size: 11px; }
 
   `;
 
@@ -1168,7 +1172,7 @@ export class ScAppShell extends LitElement {
           <div class="raci-section">
             <!-- Create task bar -->
             <div class="raci-create-bar">
-              <span style="font-size:9px;color:#475569">${visibleTasks.length} 项任务</span>
+              <span class="raci-count-label">${visibleTasks.length} 项任务</span>
               <button class="raci-create-btn" @click=${() => { this._showCreateTask = !this._showCreateTask; }}>
                 ${this._showCreateTask ? '✕ 取消' : '+ 创建任务'}
               </button>
@@ -1281,8 +1285,8 @@ export class ScAppShell extends LitElement {
             ${this._view === 'role' ? (() => {
               const historyCount = visibleTasks.filter(t => t.history).length;
               return historyCount > 0 ? html`
-                <div class="raci-collab-section" style="margin-top:4px;padding-top:4px;border-top:1px solid #1e293b">
-                  <div class="raci-collab-label" style="font-size:8px;color:#475569">含 ${historyCount} 条历史记录</div>
+                <div class="raci-collab-section">
+                  <div class="raci-collab-label">含 ${historyCount} 条历史记录</div>
                 </div>
               ` : nothing;
             })() : nothing}
@@ -1304,7 +1308,7 @@ export class ScAppShell extends LitElement {
           <div class="header-kpi warning"><span class="kpi-label">待处理</span><span class="kpi-value">23</span></div>
           <span class="header-time">${this._time}</span>
           <button class="kbd-cmd-hint" title="命令面板 (Cmd+K)" @click=${() => { this._commandPaletteOpen = !this._commandPaletteOpen; }}>
-        <span style="font-size:11px">⌘K</span>
+        <span class="kbd-k-text">⌘K</span>
       </button>
       <button class="btn-settings" title="系统配置" @click=${() => { this._showSettings = !this._showSettings; }}>⚙</button>
         </div>

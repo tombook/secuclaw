@@ -948,6 +948,15 @@ export class ScRoleCommander extends LitElement {
     .pr-4 { padding-right: 4px; }
     .pr-6 { padding-right: 6px; }
     .pr-8 { padding-right: 8px; }
+    .text-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .t-7-700-warn { font-size: 7px; font-weight: 700; color: #f59e0b; background: #f59e0b22; padding: 0 2px; border-radius: 2px; }
+    .t-8-700-warn { font-size: 8px; font-weight: 700; background: #f59e0b22; padding: 0 3px; border-radius: 2px; margin-left: 4px; }
+    .t-8-600-e2 { font-size: 8px; font-weight: 600; color: #e2e8f0; text-align: center; line-height: 1.2; padding: 0 1px; margin-top: 2px; max-width: 90px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .t-9-647-cb { display: flex; align-items: center; gap: 4px; font-size: 9px; color: #64748b; cursor: pointer; user-select: none; }
+    .t-8-475-1 { font-size: 8px; color: #475569; margin-top: 1px; }
+    .t-results-toggle { font-size: 10px; padding: 2px 14px; border-radius: 0 0 6px 6px; border: 1px solid var(--sc-border-color); border-top: none; background: var(--sc-bg-secondary); color: #64748b; cursor: pointer; transition: all 0.15s; }
+    .t-status-badge { position: absolute; top: -2px; right: -4px; font-size: 8px; }
+    .t-h-flex-647 { display: flex; align-items: center; gap: 4px; }
   `
 
   private _storeUnsub: (() => void) | null = null
@@ -1225,9 +1234,9 @@ export class ScRoleCommander extends LitElement {
     if (!data) return nothing;
 
     return html`
-      <div class="zone zone-viz" style="background:#080e1a;">
+      <div class="zone zone-viz">
         <div class="zone-label">📊 SKILL 可视化（SKILL.md 定义）</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 10px;">
+        <div class="grid-2-metrics">
           ${configs.map((cfg, i) => {
             const d = data[i] as any;
             let chart;
@@ -1235,9 +1244,9 @@ export class ScRoleCommander extends LitElement {
             else if (cfg.type === 'bar' && d.bars) chart = this._multiBarChart(d.bars, 180, 50);
             else if (cfg.type === 'donut' && d.donut) chart = this._donut(d.donut, 70);
             else if (cfg.type === 'line' && d.lines) chart = this._lineChart(d.lines, 200, 55);
-            else chart = html`<span style="color:#475569;font-size:10px;">无数据</span>`;
+            else chart = html`<span class="t-muted-10">无数据</span>`;
             return html`
-              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:8px 10px;">
+              <div class="dark-card-base">
                 <div class="t-muted-10">${cfg.title}</div>
                 <div class="flex-center">${chart}</div>
               </div>
@@ -1373,27 +1382,27 @@ export class ScRoleCommander extends LitElement {
         <!-- Header -->
         <div class="ciso-panel-header" class="ciso-panel-header-dark">
           <span class="ciso-panel-title"><span class="icon">⚔️</span> Dark Side 攻防模拟</span>
-          <span style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:10px;color:#ef444480;">${simCount} 项可执行模拟</span>
-            <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#ef444415;color:#ef4444;border:1px solid #ef444433;font-weight:600;">🔴 ${highCount} 高危</span>
+          <span class="row-flex">
+            <span class="dark-section-count">${simCount} 项可执行模拟</span>
+            <span class="tag-danger">🔴 ${highCount} 高危</span>
           </span>
         </div>
 
         <!-- Attack scenario grid: all simulations always visible -->
-        <div style="padding:14px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
+        <div class="dark-grid">
           ${caps.map(c => {
             const hasSim = !!sims[c.label];
             const isActive = this._darkActiveCap === c.label;
             return html`
-              <div style="background:${isActive ? `${sevColors[c.severity]}0d` : '#0f172a'};border:1px solid ${isActive ? sevColors[c.severity] : '#1e293b'};border-radius:8px;padding:10px 12px;cursor:pointer;transition:all 0.15s;position:relative;overflow:hidden;"
+              <div style="background:${isActive ? `${sevColors[c.severity]}0d` : '#0f172a'};border:1px solid ${isActive ? sevColors[c.severity] : '#1e293b'};" class="dark-card"
                 @click=${(e: Event) => { e.stopPropagation(); this._darkActiveCap = this._darkActiveCap === c.label ? null : c.label; this._darkSimResult = null; }}>
-                <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:${sevColors[c.severity]};"></div>
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;padding-left:4px;">
-                  <span style="font-size:11px;font-weight:600;color:#e2e8f0;">${c.label}</span>
+                <div style="background:${sevColors[c.severity]};" class="dark-card-bar"></div>
+                <div class="dark-card-title">
+                  <span class="dark-card-name">${c.label}</span>
                   ${hasSim ? html`<span class="tag-tiny-success">▶ 可执行</span>` : html`<span class="t-muted-gray">工具面板</span>`}
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;padding-left:4px;">
-                  <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${sevColors[c.severity]}15;color:${sevColors[c.severity]};font-weight:600;">${sevLabels[c.severity]}</span>
+                <div class="dark-card-foot">
+                  <span style="font-weight:600;background:${sevColors[c.severity]}15;color:${sevColors[c.severity]};" class="t-9-475-2">${sevLabels[c.severity]}</span>
                   <span class="t-muted-xs">${c.toolId}</span>
                 </div>
               </div>
@@ -1404,7 +1413,7 @@ export class ScRoleCommander extends LitElement {
         <!-- Active simulation detail -->
         ${this._darkActiveCap && sims[this._darkActiveCap] ? html`
           <div class="ciso-divider" class="m-0-20"></div>
-          <div style="padding:14px 20px 18px;">
+          <div class="pad-14-20-18">
             ${(() => {
               const sim = sims[this._darkActiveCap];
               const phaseColors: Record<string, string> = { pass: '#22c55e', warn: '#f59e0b', fail: '#ef4444' };
@@ -1415,79 +1424,79 @@ export class ScRoleCommander extends LitElement {
 
               return html`
                 <!-- Simulation header -->
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                  <span style="font-size:15px;font-weight:700;color:#ef4444;">${sim.name}</span>
+                <div class="sim-head">
+                  <span class="sim-name">${sim.name}</span>
                   <span class="t-11">${sim.desc}</span>
-                  <button ?disabled=${this._darkSimRunning} style="margin-left:auto;padding:5px 14px;border-radius:6px;border:1px solid #ef4444;background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};color:#fff;font-size:11px;cursor:${this._darkSimRunning ? 'wait' : 'pointer'};font-weight:600;"
+                  <button ?disabled=${this._darkSimRunning} style="margin-left:auto;background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};cursor:${this._darkSimRunning ? 'wait' : 'pointer'};" class="btn-exec"
                     @click=${(e: Event) => { e.stopPropagation(); this._runDarkSimulation(this._darkActiveCap!); }}>
-                    ${this._darkSimRunning ? html`<span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span> 执行中...` : '🚀 执行模拟'}
+                    ${this._darkSimRunning ? html`<span class="exec-loading-icon">⏳</span> 执行中...` : '🚀 执行模拟'}
                   </button>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="grid-2-14">
                   <!-- Left: Kill chain + MITRE + CIA -->
                   <div>
                     <div class="t-11b-6">攻击链阶段</div>
                     <div class="killchain-wrap">
                       ${sim.phases.map((p: any, i: number) => html`
-                        <div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:5px;background:${phaseColors[p.status]}12;border:1px solid ${phaseColors[p.status]}35;">
-                          <span style="font-size:11px;">${p.icon}</span>
-                          <span style="font-size:10px;color:${phaseColors[p.status]};font-weight:600;">${p.label}</span>
+                        <div style="background:${phaseColors[p.status]}12;border:1px solid ${phaseColors[p.status]}35;" class="killchain-tag">
+                          <span class="killchain-icon">${p.icon}</span>
+                          <span style="color:${phaseColors[p.status]};" class="killchain-label">${p.label}</span>
                           <span style="font-size:8px;color:${phaseColors[p.status]}80;">${phaseLabels[p.status]}</span>
                         </div>
-                        ${i < sim.phases.length - 1 ? html`<span style="color:#334155;font-size:9px;">→</span>` : ''}
+                        ${i < sim.phases.length - 1 ? html`<span class="killchain-arrow">→</span>` : ''}
                       `)}
                     </div>
 
                     <div class="t-11b-6">MITRE ATT&CK 映射</div>
                     <div class="killchain-wrap">
-                      ${sim.mitre.map((m: string) => html`<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:#1e293b;color:#94a3b8;border:1px solid #334155;">${m}</span>`)}
+                      ${sim.mitre.map((m: string) => html`<span class="mitre-tag">${m}</span>`)}
                     </div>
 
                     <div class="t-11b-6">CIA 影响评估</div>
-                    <div style="display:flex;gap:10px;">
+                    <div class="row-flex">
                       <div class="flex-1-8-10">
                         <div class="t-muted-xs">机密性 (C)</div>
                         <div class="progress-thin"><div style="height:100%;width:${sim.impact.confidentiality}%;background:#ef4444;border-radius:2px;"></div></div>
-                        <div style="font-size:13px;font-weight:700;color:#ef4444;">${sim.impact.confidentiality}%</div>
+                        <div class="cia-pct-c">${sim.impact.confidentiality}%</div>
                       </div>
                       <div class="flex-1-8-10">
                         <div class="t-muted-xs">完整性 (I)</div>
                         <div class="progress-thin"><div style="height:100%;width:${sim.impact.integrity}%;background:#f59e0b;border-radius:2px;"></div></div>
-                        <div style="font-size:13px;font-weight:700;color:#f59e0b;">${sim.impact.integrity}%</div>
+                        <div class="cia-pct-w">${sim.impact.integrity}%</div>
                       </div>
                       <div class="flex-1-8-10">
                         <div class="t-muted-xs">可用性 (A)</div>
                         <div class="progress-thin"><div style="height:100%;width:${sim.impact.availability}%;background:#3b82f6;border-radius:2px;"></div></div>
-                        <div style="font-size:13px;font-weight:700;color:#3b82f6;">${sim.impact.availability}%</div>
+                        <div class="cia-pct-i">${sim.impact.availability}%</div>
                       </div>
                     </div>
                   </div>
 
                   <!-- Right: Findings + Result -->
                   <div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <div class="row-flex">
                       <span class="t-11b">风险发现</span>
-                      <span style="font-size:9px;padding:2px 8px;border-radius:4px;background:#ef444415;color:#ef4444;font-weight:600;">${totalFindings} 项 · ${critFindings} 高危</span>
+                      <span class="tag-danger">${totalFindings} 项 · ${critFindings} 高危</span>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+                    <div class="findings-wrap">
                       ${sim.findings.map((f: any) => html`
-                        <div style="padding:8px 10px;border-radius:6px;background:${sevBadgeColors[f.severity]}08;border-left:3px solid ${sevBadgeColors[f.severity]};">
-                          <div style="font-size:11px;color:#e2e8f0;font-weight:600;">${f.title} <span style="font-size:9px;color:${sevBadgeColors[f.severity]};text-transform:uppercase;font-weight:700;">${f.severity}</span></div>
-                          <div style="font-size:10px;color:#94a3b8;margin-top:2px;line-height:1.4;">${f.detail}</div>
+                        <div style="background:${sevBadgeColors[f.severity]}08;border-left:3px solid ${sevBadgeColors[f.severity]};" class="p-8-10">
+                          <div class="dark-card-name">${f.title} <span style="color:${sevBadgeColors[f.severity]};" class="finding-sev">${f.severity}</span></div>
+                          <div class="finding-detail">${f.detail}</div>
                         </div>
                       `)}
                     </div>
 
                     ${this._darkSimRunning ? html`
-                      <div style="margin-top:10px;padding:14px;text-align:center;background:#1a0808;border-radius:6px;border:1px solid #3b1111;">
-                        <span style="display:inline-block;animation:spin 1s linear infinite;">⚙️</span>
-                        <span style="color:#ef4444;font-size:12px;margin-left:6px;">攻击模拟执行中...</span>
+                      <div class="exec-loading">
+                        <span class="exec-loading-icon">⚙️</span>
+                        <span class="exec-loading-msg">攻击模拟执行中...</span>
                       </div>
                     ` : this._darkSimResult && this._darkSimResult.key === this._darkActiveCap ? html`
-                      <div style="margin-top:10px;padding:12px 14px;background:#0a1a0a;border-radius:6px;border:1px solid #1a3a1a;">
-                        <div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:4px;">✅ 模拟完成</div>
-                        <div style="font-size:11px;color:#e2e8f0;line-height:1.5;">${this._darkSimResult.mockResult}</div>
+                      <div class="exec-result">
+                        <div class="exec-result-head">✅ 模拟完成</div>
+                        <div class="exec-result-body">${this._darkSimResult.mockResult}</div>
                       </div>
                     ` : nothing}
                   </div>
@@ -1496,18 +1505,18 @@ export class ScRoleCommander extends LitElement {
             })()}
           </div>
         ` : this._darkActiveCap && !sims[this._darkActiveCap] ? html`
-          <div style="padding:16px 20px;text-align:center;">
-            <span style="font-size:11px;color:#475569;">该场景尚无交互模拟</span>
-            <button style="margin-left:8px;padding:4px 12px;border-radius:4px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:11px;cursor:pointer;"
+          <div class="pad-16-20">
+            <span class="t-muted-gray">该场景尚无交互模拟</span>
+            <button class="btn-tool"
               @click=${() => { const c = caps.find(x => x.label === this._darkActiveCap); if (c) this._openToolPanel(c.toolId); }}>
               🔧 打开工具面板
             </button>
           </div>
         ` : html`
-          <div style="padding:10px 20px 14px;">
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0f172a;border-radius:6px;border:1px solid #1e293b;">
-              <span style="font-size:11px;color:#64748b;">👆 点击上方攻击场景查看详情和执行模拟</span>
-              <span style="margin-left:auto;font-size:10px;color:#475569;">通过模拟攻击识别当前角色的安全风险</span>
+          <div class="pad-10-20-14">
+            <div class="metric-strip">
+              <span class="metric-strip-msg">👆 点击上方攻击场景查看详情和执行模拟</span>
+              <span class="metric-strip-hint">通过模拟攻击识别当前角色的安全风险</span>
             </div>
           </div>
         `}
@@ -1607,13 +1616,13 @@ export class ScRoleCommander extends LitElement {
     return html`
       <div class="zone zone-decision" class="bg-deep-card">
         <div class="pad-8-12">
-          <div style="font-size:11px;font-weight:600;color:#60a5fa;margin-bottom:6px;">🧭 ${cfg.title}</div>
-          <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div class="t-11b-6">🧭 ${cfg.title}</div>
+          <div class="row-flex">
             <div class="flex-no-grow">${unsafeSVG(radarSvg)}</div>
             <div class="flex-grow">
-              <div style="display:flex;gap:6px;margin-bottom:6px;">
+              <div class="row-flex">
                 ${cfg.axes.map(ax => html`
-                  <div style="flex:1;text-align:center;">
+                  <div class="flex-1-6-8">
                     <div style="font-size:16px;font-weight:700;color:${ax.color}">${ax.value}</div>
                     <div class="t-muted-xs">${ax.label}</div>
                   </div>
@@ -1623,12 +1632,12 @@ export class ScRoleCommander extends LitElement {
                 💡 ${cfg.recommendation}
               </div>
               ${cfg.pendingDecisions.length > 0 ? html`
-                <div style="margin-top:6px;">
+                <div class="m-t-8">
                   ${cfg.pendingDecisions.map(d => html`
-                    <div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:3px 0;">
+                    <div class="row-flex">
                       <span style="width:6px;height:6px;border-radius:50%;background:${d.urgencyColor};"></span>
                       <span class="t-e2">${d.title}</span>
-                      <span style="color:#64748b;">· ${d.impact}</span>
+                      <span class="t-muted-xs">· ${d.impact}</span>
                       <span style="margin-left:auto;font-size:9px;padding:1px 5px;border-radius:3px;background:${d.urgencyColor}15;color:${d.urgencyColor};">${d.urgency}</span>
                     </div>
                   `)}
@@ -1695,20 +1704,20 @@ export class ScRoleCommander extends LitElement {
     return html`
       <div class="zone zone-legal" class="bg-deep-card">
         <div class="pad-8-12">
-          <div style="font-size:11px;font-weight:600;color:#a78bfa;margin-bottom:6px;">⚖️ Legal 合规面板 · SKILL.md 定义</div>
-          <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <div class="t-11b-6">⚖️ Legal 合规面板 · SKILL.md 定义</div>
+          <div class="row-flex">
             ${cfg.regulations.map(r => html`
-              <div style="flex:1;background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:6px 8px;text-align:center;">
-                <div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">${statusIcon[r.status]} ${r.name}</div>
+              <div class="flex-1-6-8">
+                <div class="t-muted-10">${statusIcon[r.status]} ${r.name}</div>
                 <div style="font-size:18px;font-weight:700;color:${r.color}">${r.score}%</div>
-                <div style="font-size:8px;color:#475569;margin-top:2px;line-height:1.3;">${r.detail}</div>
+                <div class="t-muted-8">${r.detail}</div>
               </div>
             `)}
           </div>
           ${cfg.riskItems.length > 0 ? html`
-            <div style="border-top:1px solid #1e293b;padding-top:4px;">
+            <div class="mt-4">
               ${cfg.riskItems.map(ri => html`
-                <div style="display:flex;align-items:center;gap:4px;font-size:10px;padding:2px 0;">
+                <div class="row-flex">
                   <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
                   <span class="t-e2">${ri.desc}</span>
                   <span style="margin-left:auto;font-size:9px;padding:0 4px;border-radius:2px;background:${ri.levelColor}15;color:${ri.levelColor};">${ri.level}</span>
@@ -1746,25 +1755,25 @@ export class ScRoleCommander extends LitElement {
     const mitrePct = Math.round((cfg.mitre.covered / cfg.mitre.total) * 100);
     const scfPct = Math.round((cfg.scf.covered / cfg.scf.total) * 100);
     return html`
-      <div class="zone zone-framework" style="background:#0b1120;border:1px solid #1e293b;border-radius:8px;margin:0 14px 8px;">
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;" @click=${() => { this._showFramework = !this._showFramework; }}>
-          <span style="font-size:11px;font-weight:600;color:#67e8f9;">🎯 安全框架覆盖度</span>
+      <div class="zone zone-framework" class="bg-deep-card">
+        <div class="row-flex" @click=${() => { this._showFramework = !this._showFramework; }}>
+          <span class="t-11b-6">🎯 安全框架覆盖度</span>
           <span class="t-muted-xs">MITRE ${mitrePct}% · SCF ${scfPct}%</span>
-          <span style="margin-left:auto;font-size:9px;color:#475569;">${this._showFramework ? '▾' : '▸'}</span>
+          <span class="metric-strip-hint">${this._showFramework ? '▾' : '▸'}</span>
         </div>
         ${this._showFramework ? html`
-          <div style="padding:0 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="grid-2-metrics">
             <div class="bg-dark-pad8">
               <div class="t-muted-10">🔴 MITRE ATT&CK</div>
-              <div style="font-size:20px;font-weight:700;color:#ef4444;">${mitrePct}%</div>
+              <div class="cia-pct-c">${mitrePct}%</div>
               <div class="t-muted-gray">${cfg.mitre.covered} / ${cfg.mitre.total} techniques</div>
-              <div class="mt-4">${cfg.mitre.topGaps.map(g => html`<div style="font-size:9px;color:#f87171;">• ${g}</div>`)}</div>
+              <div class="mt-4">${cfg.mitre.topGaps.map(g => html`<div class="t-muted-9">• ${g}</div>`)}</div>
             </div>
             <div class="bg-dark-pad8">
               <div class="t-muted-10">🔵 SCF 安全控制框架</div>
-              <div style="font-size:20px;font-weight:700;color:#3b82f6;">${scfPct}%</div>
+              <div class="cia-pct-i">${scfPct}%</div>
               <div class="t-muted-gray">${cfg.scf.covered} / ${cfg.scf.total} controls</div>
-              <div class="mt-4">${cfg.scf.topGaps.map(g => html`<div style="font-size:9px;color:#60a5fa;">• ${g}</div>`)}</div>
+              <div class="mt-4">${cfg.scf.topGaps.map(g => html`<div class="t-muted-9">• ${g}</div>`)}</div>
             </div>
           </div>
         ` : nothing}
@@ -1777,22 +1786,22 @@ export class ScRoleCommander extends LitElement {
 
   private _renderPrivacyTechZone() {
     return html`
-      <div style="background:#0b1120;border:1px solid #581c87;border-radius:8px;margin:0 14px 8px;padding:8px 12px;">
-        <div style="font-size:11px;font-weight:600;color:#c084fc;margin-bottom:6px;">🔬 隐私计算技术 · SKILL.md Technology</div>
-        <div style="display:flex;gap:8px;">
+      <div class="bg-deep-card">
+        <div class="t-11b-6">🔬 隐私计算技术 · SKILL.md Technology</div>
+        <div class="row-flex">
           <div class="flex-1-6-8">
             <div class="t-muted-9">差分隐私</div>
-            <div style="font-size:14px;font-weight:700;color:#22c55e;">已部署</div>
+            <div class="cia-pct-i">已部署</div>
             <div class="t-muted-8">ε=1.2, 用户行为统计</div>
           </div>
           <div class="flex-1-6-8">
             <div class="t-muted-9">同态加密</div>
-            <div style="font-size:14px;font-weight:700;color:#f59e0b;">试点中</div>
+            <div class="cia-pct-w">试点中</div>
             <div class="t-muted-8">CKKS方案, 金融数据</div>
           </div>
           <div class="flex-1-6-8">
             <div class="t-muted-9">联邦学习</div>
-            <div style="font-size:14px;font-weight:700;color:#3b82f6;">规划中</div>
+            <div class="cia-pct-i">规划中</div>
             <div class="t-muted-8">跨部门联合建模 Q3</div>
           </div>
         </div>
@@ -1842,19 +1851,19 @@ export class ScRoleCommander extends LitElement {
     const guides = ScRoleCommander.TOOL_GUIDES[roleId];
     if (!guides || guides.length === 0) return nothing;
     return html`
-      <div style="margin:0 14px 8px;">
-        <div style="display:flex;align-items:center;gap:6px;padding:4px 0;cursor:pointer;" @click=${() => { this._showToolGuide = !this._showToolGuide; }}>
-          <span style="font-size:10px;color:#94a3b8;">📖 工具使用指南</span>
+      <div class="m-0-20">
+        <div class="row-flex" @click=${() => { this._showToolGuide = !this._showToolGuide; }}>
+          <span class="t-muted-10">📖 工具使用指南</span>
           <span class="t-muted-gray">${guides.length} 项</span>
-          <span style="margin-left:auto;font-size:9px;color:#334155;">${this._showToolGuide ? '▾' : '▸'}</span>
+          <span class="metric-strip-hint">${this._showToolGuide ? '▾' : '▸'}</span>
         </div>
         ${this._showToolGuide ? html`
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <div class="mt-6-fw">
             ${guides.map(g => html`
-              <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:5px 8px;min-width:140px;">
-                <div style="font-size:10px;color:#e2e8f0;">${g.tool}</div>
+              <div class="dark-card-base">
+                <div class="dark-card-name">${g.tool}</div>
                 <div class="t-muted-8b">${g.category}</div>
-                <div style="font-size:9px;color:#94a3b8;margin-top:2px;">${g.guide}</div>
+                <div class="t-9-475-2">${g.guide}</div>
               </div>
             `)}
           </div>
@@ -1884,20 +1893,20 @@ export class ScRoleCommander extends LitElement {
 
     return html`
       <div class="ciso-divider"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="row-flex">
         <span class="t-11b">🛠️ 工具列表</span>
-        <span style="font-size:10px;color:#475569;">${tools.length} 个工具</span>
+        <span class="t-muted-gray">${tools.length} 个工具</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;">
+      <div class="dark-grid">
         ${tools.map(tool => html`
           <div
-            style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;cursor:pointer;transition:all 0.15s;font-size:11px;color:#e2e8f0;"
+            class="dark-card"
             @click=${() => this._openToolPanel(tool.id)}
             @mouseover=${(e: Event) => { (e.target as HTMLElement).style.borderColor = 'var(--sc-primary-color)'; (e.target as HTMLElement).style.background = 'var(--sc-primary-alpha-10, rgba(59,130,246,0.1))'; }}
             @mouseout=${(e: Event) => { (e.target as HTMLElement).style.borderColor = '#1e293b'; (e.target as HTMLElement).style.background = '#0f172a'; }}
           >
             <span style="width:6px;height:6px;border-radius:50%;background:${this._getToolStatusColor(tool.id)};flex-shrink:0;"></span>
-            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this._resolveIcon(tool.icon)} ${tool.label}</span>
+            <span class="text-ellipsis">${this._resolveIcon(tool.icon)} ${tool.label}</span>
           </div>
         `)}
       </div>
@@ -1906,7 +1915,7 @@ export class ScRoleCommander extends LitElement {
 
   // ─── 时间轴渲染（纯 HTML/CSS） ─────────────────────────────────
   private _timelineV2(events: TimelineEvent[]) {
-    if (events.length === 0) return html`<div style="text-align:center;color:#475569;font-size:11px;padding:16px;">暂无事件，可点击"＋ 录入"或"自动导入"添加</div>`;
+    if (events.length === 0) return html`<div class="pad-16-20">暂无事件，可点击"＋ 录入"或"自动导入"添加</div>`;
     const priorityColors: Record<TimelinePriority, string> = { P1: '#ef4444', P2: '#f59e0b', P3: '#22c55e', INFO: '#3b82f6' };
     const statusOpacity: Record<string, number> = { open: 1, completed: 0.5, closed: 0.3 };
     const formatTime = (iso: string) => {
@@ -1922,7 +1931,7 @@ export class ScRoleCommander extends LitElement {
     }
 
     return html`
-      <div style="position:relative;padding:4px 0;">
+      <div class="p-0">
         ${rows.map((row, ri) => {
           const isReversed = ri % 2 === 1;
           const ordered = isReversed ? [...row].reverse() : row;
@@ -1930,9 +1939,9 @@ export class ScRoleCommander extends LitElement {
           const isFirst = ri === 0;
 
           return html`
-            <div style="display:flex;align-items:flex-start;position:relative;min-height:90px;">
+            <div class="row-flex">
               <!-- 水平连线 -->
-              <div style="position:absolute;top:18px;left:0;right:0;height:2px;background:#1e293b;z-index:0;"></div>
+              <div class="dark-card-bar"></div>
 
               ${ordered.map((e, ci) => {
                 const displayTime = e.modifiedTime ? formatTime(e.modifiedTime) : formatTime(e.originalTime);
@@ -1945,13 +1954,13 @@ export class ScRoleCommander extends LitElement {
 
                 return html`
                   <div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;opacity:${opacity};min-width:0;cursor:pointer;" @click=${(ev: Event) => { ev.stopPropagation(); this._selectedTimelineEvent = this._selectedTimelineEvent === e.id ? null : e.id; this._editingTimelineEvent = null; }}>
-                    <div style="font-size:8px;color:#64748b;margin-bottom:2px;font-family:monospace;">${displayTime}</div>
-                    ${e.modifiedTime ? html`<div style="font-size:7px;font-weight:700;color:#f59e0b;background:#f59e0b22;padding:0 2px;border-radius:2px;">变</div>` : nothing}
+                    <div class="t-muted-8b">${displayTime}</div>
+                    ${e.modifiedTime ? html`<div class="t-7-700-warn">变</div>` : nothing}
                     <div style="width:10px;height:10px;border-radius:50%;background:${c};border:2px solid #0f172a;z-index:2;box-shadow:0 0 6px ${c}55;${statusBadge ? 'position:relative;' : ''}">
                       ${statusBadge ? html`<span style="position:absolute;top:-2px;right:-4px;font-size:8px;">${statusBadge}</span>` : nothing}
                     </div>
-                    <div style="font-size:8px;font-weight:600;color:#e2e8f0;text-align:center;line-height:1.2;padding:0 1px;margin-top:2px;max-width:90px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${e.label}</div>
-                    <div style="display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <div class="t-8-600-e2">${e.label}</div>
+                    <div class="row-flex">
                       <span style="font-size:7px;font-weight:700;padding:0 3px;border-radius:2px;background:${c}18;color:${c};">${e.priority}</span>
                       ${e.source === 'auto' ? html`<span class="t-6">🔄</span>` : html`<span class="t-6">✍</span>`}
                     </div>
@@ -1979,17 +1988,17 @@ export class ScRoleCommander extends LitElement {
     const providers = getTimelineProviders();
 
     return html`
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <div class="row-flex">
         <div class="t-11">📡 事件时间轴</div>
-        <div style="font-size:10px;color:#64748b;">${visibleEvents.length} 条${this._showCompleted ? '（全部）' : '进行中'}</div>
+        <div class="metric-strip-msg">${visibleEvents.length} 条${this._showCompleted ? '（全部）' : '进行中'}</div>
         ${completedCount > 0 ? html`
-          <label style="display:flex;align-items:center;gap:4px;font-size:9px;color:#64748b;cursor:pointer;user-select:none;" @click=${(e: Event) => { e.preventDefault(); this._showCompleted = !this._showCompleted; }}>
+          <label class="t-9-647-cb" @click=${(e: Event) => { e.preventDefault(); this._showCompleted = !this._showCompleted; }}>
             <span style="width:12px;height:12px;border-radius:3px;border:1px solid #475569;display:flex;align-items:center;justify-content:center;font-size:8px;background:${this._showCompleted ? '#3b82f6' : 'transparent'}">${this._showCompleted ? '✓' : ''}</span>
             显示已完成/关闭 (${completedCount})
           </label>
         ` : nothing}
-        ${autoSources.length > 0 ? html`<div style="font-size:9px;color:#3b82f6;">🔄 ${autoSources.map(s => s.toolName).join(', ')}</div>` : nothing}
-        <div style="flex:1;"></div>
+        ${autoSources.length > 0 ? html`<div class="t-muted-9">🔄 ${autoSources.map(s => s.toolName).join(', ')}</div>` : nothing}
+        <div class="flex-grow"></div>
         <button class="tl-btn" @click=${() => { runAutoImport(roleId); this.requestUpdate(); }}>🔄 自动导入</button>
         <button class="tl-btn tl-btn-primary" @click=${() => {
           this._showTimelineForm = !this._showTimelineForm;
@@ -2004,10 +2013,10 @@ export class ScRoleCommander extends LitElement {
 
       ${this._showTimelineForm ? html`
         <div class="tl-form">
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input class="tl-input" style="flex:2;min-width:140px;" placeholder="事件名称，如：零信任方案评审：微隔离改进" .value=${this._timelineFormLabel} @input=${(e: Event) => { this._timelineFormLabel = (e.target as HTMLInputElement).value; }} />
-            <input class="tl-input" style="width:160px;" type="datetime-local" .value=${this._timelineFormTime} @input=${(e: Event) => { this._timelineFormTime = (e.target as HTMLInputElement).value; }} />
-            <select class="tl-input" style="width:70px;" .value=${this._timelineFormPriority} @change=${(e: Event) => { this._timelineFormPriority = (e.target as HTMLSelectElement).value as TimelinePriority; }}>
+          <div class="row-flex">
+            <input class="tl-input" class="flex-grow" placeholder="事件名称，如：零信任方案评审：微隔离改进" .value=${this._timelineFormLabel} @input=${(e: Event) => { this._timelineFormLabel = (e.target as HTMLInputElement).value; }} />
+            <input class="tl-input" class="p-8-10" type="datetime-local" .value=${this._timelineFormTime} @input=${(e: Event) => { this._timelineFormTime = (e.target as HTMLInputElement).value; }} />
+            <select class="tl-input" class="p-8-10" .value=${this._timelineFormPriority} @change=${(e: Event) => { this._timelineFormPriority = (e.target as HTMLSelectElement).value as TimelinePriority; }}>
               <option value="P1">P1</option>
               <option value="P2">P2</option>
               <option value="P3">P3</option>
@@ -2031,7 +2040,7 @@ export class ScRoleCommander extends LitElement {
             }}>✓ 保存</button>
             <button class="tl-btn" @click=${() => { this._showTimelineForm = false; }}>取消</button>
           </div>
-          <input class="tl-input" style="margin-top:6px;width:100%;" placeholder="事件描述（可选）" .value=${this._timelineFormDesc} @input=${(e: Event) => { this._timelineFormDesc = (e.target as HTMLInputElement).value; }} />
+          <input class="tl-input" class="m-t-8" placeholder="事件描述（可选）" .value=${this._timelineFormDesc} @input=${(e: Event) => { this._timelineFormDesc = (e.target as HTMLInputElement).value; }} />
         </div>
       ` : nothing}
     `;
@@ -2054,21 +2063,21 @@ export class ScRoleCommander extends LitElement {
 
     return html`
       <div class="tl-edit-popup" @click=${(ev: Event) => ev.stopPropagation()}>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:${c}18;color:${c};">${e.priority}</span>
+        <div class="row-flex">
+          <div class="row-flex">
+            <span style="font-weight:700;background:${c}18;color:${c};" class="t-9-475-2">${e.priority}</span>
             <span style="font-size:9px;padding:1px 5px;border-radius:3px;color:${statusColor[e.status]};background:${statusColor[e.status]}18;">${statusLabel[e.status]}</span>
-            ${e.source === 'auto' ? html`<span style="font-size:8px;color:#3b82f6;">🔄 ${e.toolName}</span>` : html`<span class="t-muted-8b">✍ 手动</span>`}
+            ${e.source === 'auto' ? html`<span class="t-muted-8b">🔄 ${e.toolName}</span>` : html`<span class="t-muted-8b">✍ 手动</span>`}
           </div>
-          <button style="background:none;border:none;color:#64748b;cursor:pointer;font-size:12px;padding:0;" @click=${() => { this._selectedTimelineEvent = null; }}>✕</button>
+          <button class="btn-tool" @click=${() => { this._selectedTimelineEvent = null; }}>✕</button>
         </div>
 
-        <div style="font-size:11px;font-weight:600;color:#e2e8f0;margin-bottom:4px;">${e.label}</div>
-        ${e.description ? html`<div style="font-size:9px;color:#94a3b8;margin-bottom:8px;">${e.description}</div>` : nothing}
+        <div class="dark-card-name">${e.label}</div>
+        ${e.description ? html`<div class="t-muted-9">${e.description}</div>` : nothing}
 
         <div class="tl-edit-row">
           <span class="tl-edit-label">原始时间</span>
-          <span class="tl-edit-value" style="font-family:monospace;color:#64748b;">${formatTime(e.originalTime)}</span>
+          <span class="tl-edit-value" class="t-muted-8b">${formatTime(e.originalTime)}</span>
         </div>
 
         ${this._editingTimelineEvent === e.id ? html`
@@ -2076,7 +2085,7 @@ export class ScRoleCommander extends LitElement {
             <span class="tl-edit-label">修改为</span>
             <input type="datetime-local" class="tl-edit-input" .value=${this._editingTimelineTime} @input=${(ev: Event) => { this._editingTimelineTime = (ev.target as HTMLInputElement).value; }} />
           </div>
-          <div style="display:flex;gap:4px;margin-left:54px;">
+          <div class="row-flex">
             <button class="tl-btn tl-btn-primary" class="t-muted-9b" @click=${() => { if (this._editingTimelineTime) { timelineStore.getState().modifyTime(e.id, new Date(this._editingTimelineTime).toISOString()); } this._editingTimelineEvent = null; this.requestUpdate(); }}>✓ 确认</button>
             <button class="tl-btn" class="t-muted-9b" @click=${() => { this._editingTimelineEvent = null; }}>取消</button>
           </div>
@@ -2085,18 +2094,18 @@ export class ScRoleCommander extends LitElement {
             <span class="tl-edit-label">当前时间</span>
             <span class="tl-edit-value" style="font-family:monospace;color:${e.modifiedTime ? '#f59e0b' : '#e2e8f0'};">
               ${e.modifiedTime ? formatTime(e.modifiedTime) : formatTime(e.originalTime)}
-              ${e.modifiedTime ? html`<span style="font-size:8px;font-weight:700;background:#f59e0b22;padding:0 3px;border-radius:2px;margin-left:4px;">变</span>` : nothing}
+              ${e.modifiedTime ? html`<span class="t-8-700-warn">变</span>` : nothing}
             </span>
           </div>
         `}
 
         <div class="tl-edit-actions">
           ${this._editingTimelineEvent !== e.id ? html`<button class="tl-btn" class="t-muted-9b" @click=${() => { this._editingTimelineEvent = e.id; this._editingTimelineTime = e.modifiedTime ? e.modifiedTime.slice(0, 16) : e.originalTime.slice(0, 16); }}>⏱ 改时间</button>` : nothing}
-          ${e.status === 'open' ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#22c55e;color:#22c55e;" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'completed' }); this._selectedTimelineEvent = null; this.requestUpdate(); }}>✓ 完成</button>` : nothing}
-          ${e.status === 'completed' ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#64748b;color:#64748b;" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'closed' }); this.requestUpdate(); }}>✕ 关闭</button>` : nothing}
-          ${e.status !== 'open' ? html`<button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#3b82f6;color:#3b82f6;" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'open' }); this.requestUpdate(); }}>↩ 重开</button>` : nothing}
+          ${e.status === 'open' ? html`<button class="tl-btn" class="tag-success" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'completed' }); this._selectedTimelineEvent = null; this.requestUpdate(); }}>✓ 完成</button>` : nothing}
+          ${e.status === 'completed' ? html`<button class="tl-btn" class="tag-mute" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'closed' }); this.requestUpdate(); }}>✕ 关闭</button>` : nothing}
+          ${e.status !== 'open' ? html`<button class="tl-btn" class="tag-info-mc" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'open' }); this.requestUpdate(); }}>↩ 重开</button>` : nothing}
           ${e.toolId ? html`<button class="tl-btn" class="t-muted-9b" @click=${() => { this._selectedTimelineEvent = null; this._openToolPanel(e.toolId!); }}>🔧 打开工具</button>` : nothing}
-          <button class="tl-btn" style="font-size:9px;padding:2px 8px;border-color:#ef4444;color:#ef4444;" @click=${() => { timelineStore.getState().deleteEvent(e.id); this._selectedTimelineEvent = null; this.requestUpdate(); }}>🗑 删除</button>
+          <button class="tl-btn" class="tag-danger" @click=${() => { timelineStore.getState().deleteEvent(e.id); this._selectedTimelineEvent = null; this.requestUpdate(); }}>🗑 删除</button>
         </div>
       </div>
     `;
@@ -2152,10 +2161,10 @@ export class ScRoleCommander extends LitElement {
       : timelineStore.getState().getByRole(roleId).filter(e => e.status === 'open');
     return html`
       <div class="zone zone-timeline">
-        <div class="rd-section" style="padding: 10px 14px;">
+        <div class="rd-section p-8-12">
           ${this._renderTimelineToolbar(roleId)}
-          <div style="overflow-x: auto; padding: 4px 0 8px; position: relative;">
-            <div style="min-width: 860px;">
+          <div class="p-0">
+            <div class="flex-grow">
               ${this._timelineV2(events)}
             </div>
             ${this._renderTimelineEditPopup()}
@@ -2258,10 +2267,10 @@ export class ScRoleCommander extends LitElement {
     return html`
       <div class="ciso-panel" class="pad-0">
         <!-- ═══ Section A: 决策中心 ═══ -->
-        <div style="padding:16px 20px 12px;display:flex;gap:16px;align-items:flex-start;">
+        <div class="row-flex">
           <div class="flex-no-grow">${unsafeSVG(radarSvg)}</div>
           <div class="flex-grow">
-            <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+            <div class="dash-h2">
               <span>🧭 CISO 决策中心</span>
             </div>
             ${decCfg ? html`
@@ -2269,7 +2278,7 @@ export class ScRoleCommander extends LitElement {
                 💡 ${decCfg.recommendation}
               </div>
               ${decCfg.pendingDecisions.length > 0 ? html`
-                <div style="display:flex;flex-direction:column;gap:6px;">
+                <div class="col-flex-6">
                   ${(() => {
                     const urgent = decCfg.pendingDecisions.filter(d => d.urgencyColor === '#ef4444');
                     const high = decCfg.pendingDecisions.filter(d => d.urgencyColor === '#f59e0b');
@@ -2280,17 +2289,17 @@ export class ScRoleCommander extends LitElement {
                       { label: '🔵 常规', items: normal, color: '#3b82f6' },
                     ].filter(g => g.items.length > 0);
                     return groups.map(g => html`
-                      <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;overflow:hidden;">
-                        <div style="font-size:9px;font-weight:700;color:${g.color};padding:4px 8px;background:${g.color}0d;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:6px;">
+                      <div class="dark-card-base">
+                        <div style="font-size:9px;font-weight:700;padding:4px 8px;border-bottom:1px solid #1e293b;color:${g.color};background:${g.color}0d;" class="row-flex">
                           <span>${g.label}</span>
                           <span class="metric-strip-hint">${g.items.length} 项</span>
                         </div>
                         ${g.items.map(d => html`
-                          <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid #1e293b11;">
+                          <div class="row-flex">
                             <span style="width:5px;height:5px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
-                            <span style="font-size:11px;color:#e2e8f0;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.title}</span>
-                            <span style="font-size:10px;color:#64748b;flex-shrink:0;">${d.impact}</span>
-                            <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${d.urgencyColor}15;color:${d.urgencyColor};font-weight:600;flex-shrink:0;">${d.urgency}</span>
+                            <span class="dark-card-name">${d.title}</span>
+                            <span class="t-muted-gray">${d.impact}</span>
+                            <span style="font-weight:600;flex-shrink:0;background:${d.urgencyColor}15;color:${d.urgencyColor};" class="t-9-475-2">${d.urgency}</span>
                           </div>
                         `)}
                       </div>
@@ -2305,11 +2314,11 @@ export class ScRoleCommander extends LitElement {
         <div class="ciso-divider" class="m-0-20"></div>
 
         <!-- ═══ Section B: 合规与覆盖 ═══ -->
-        <div style="padding:12px 20px;display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;">
+        <div class="grid-2-rd">
           <!-- Legal 合规 — 横向3组 -->
           <div>
-            <div style="font-size:12px;font-weight:600;color:#a78bfa;margin-bottom:8px;">⚖️ 合规状态</div>
-            <div style="display:flex;gap:6px;">
+            <div class="t-12">⚖️ 合规状态</div>
+            <div class="row-flex">
               ${(() => {
                 if (!legalCfg) return nothing;
                 const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
@@ -2320,23 +2329,23 @@ export class ScRoleCommander extends LitElement {
                   { key: 'risk', label: '合规风险', items: legalCfg.riskItems.map(ri => ({ name: '', score: 0, color: ri.levelColor, detail: ri.desc, level: ri.level, levelColor: ri.levelColor })) as any[], color: '#ef4444' },
                 ].filter(g => g.items.length > 0);
                 return groups.map(g => html`
-                  <div style="flex:1;background:#0f172a;border:1px solid #1e293b;border-radius:6px;overflow:hidden;min-width:0;">
-                    <div style="font-size:9px;font-weight:700;color:${g.color};padding:4px 8px;background:${g.color}0d;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:4px;">
+                  <div class="dark-card-base">
+                    <div style="font-size:9px;font-weight:700;padding:4px 8px;border-bottom:1px solid #1e293b;color:${g.color};background:${g.color}0d;" class="row-flex">
                       <span>${g.key === 'risk' ? '⚠️' : statusIcon[g.key] || ''} ${g.label}</span>
                       <span class="metric-strip-hint">${g.items.length} 项</span>
                     </div>
-                    <div style="padding:5px 6px;max-height:110px;overflow-y:auto;">
+                    <div class="p-8-10">
                       ${g.key === 'risk' ? g.items.map((ri: any) => html`
-                        <div style="display:flex;align-items:center;gap:4px;font-size:9px;padding:3px 0;border-bottom:1px solid #1e293b11;">
+                        <div class="row-flex">
                           <span style="width:4px;height:4px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
-                          <span style="color:#e2e8f0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ri.desc}</span>
+                          <span class="dark-card-name">${ri.desc}</span>
                           <span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;flex-shrink:0;">${ri.level}</span>
                         </div>
                       `) : g.items.map((r: any) => html`
-                        <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #1e293b11;">
+                        <div class="row-flex">
                           <div class="flex-grow">
-                            <div style="font-size:10px;color:#e2e8f0;font-weight:500;">${r.name}</div>
-                            <div style="font-size:8px;color:#475569;margin-top:1px;">${r.detail}</div>
+                            <div class="dark-card-name">${r.name}</div>
+                            <div class="t-8-475-1">${r.detail}</div>
                           </div>
                           <div style="font-size:16px;font-weight:700;color:${r.color};flex-shrink:0;">${r.score}%</div>
                         </div>
@@ -2350,26 +2359,26 @@ export class ScRoleCommander extends LitElement {
 
           <!-- Framework 覆盖度 -->
           <div>
-            <div style="font-size:12px;font-weight:600;color:#67e8f9;margin-bottom:8px;">🎯 安全控制覆盖度</div>
-            <div style="font-size:9px;color:#64748b;margin-bottom:6px;line-height:1.4;">基于 MITRE ATT&CK 与 SCF 标准来源评估当前角色的安全控制项覆盖范围</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="t-12">🎯 安全控制覆盖度</div>
+            <div class="t-muted-xs">基于 MITRE ATT&CK 与 SCF 标准来源评估当前角色的安全控制项覆盖范围</div>
+            <div class="grid-2-metrics">
               <div class="dark-card-base">
                 <div class="t-muted-10">🔴 MITRE ATT&CK</div>
-                <div style="font-size:24px;font-weight:700;color:#ef4444;line-height:1;">${mitrePct}%</div>
+                <div class="cia-pct-c">${mitrePct}%</div>
                 <div class="t-9-475-2">${fwCfg?.mitre.covered}/${fwCfg?.mitre.total} techniques</div>
                 ${fwCfg ? html`
                   <div class="mt-6-fw">
-                    ${fwCfg.mitre.topGaps.map(g => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ef444411;color:#f87171;border:1px solid #ef444422;">${g}</span>`)}
+                    ${fwCfg.mitre.topGaps.map(g => html`<span class="t-critical-pad4">${g}</span>`)}
                   </div>
                 ` : nothing}
               </div>
               <div class="dark-card-base">
                 <div class="t-muted-10">🔵 SCF 安全控制框架</div>
-                <div style="font-size:24px;font-weight:700;color:#3b82f6;line-height:1;">${scfPct}%</div>
+                <div class="cia-pct-i">${scfPct}%</div>
                 <div class="t-9-475-2">${fwCfg?.scf.covered}/${fwCfg?.scf.total} controls</div>
                 ${fwCfg ? html`
                   <div class="mt-6-fw">
-                    ${fwCfg.scf.topGaps.map(g => html`<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#3b82f611;color:#60a5fa;border:1px solid #3b82f622;">${g}</span>`)}
+                    ${fwCfg.scf.topGaps.map(g => html`<span class="t-info-pad4">${g}</span>`)}
                   </div>
                 ` : nothing}
               </div>
@@ -2380,12 +2389,12 @@ export class ScRoleCommander extends LitElement {
         <div class="ciso-divider" class="m-0-20"></div>
 
         <!-- ═══ Section C: 可视化分析 ═══ -->
-        <div style="padding:12px 20px 16px;">
-          <div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:10px;">📊 可视化分析</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+        <div class="p-12-14">
+          <div class="t-12">📊 可视化分析</div>
+          <div class="grid-4-metrics">
             ${vizData.map(item => html`
-              <div style="background:#080e1a;border:1px solid #1e293b;border-radius:8px;padding:10px;">
-                <div style="font-size:10px;color:#94a3b8;margin-bottom:6px;">${item.title}</div>
+              <div class="dark-card-base">
+                <div class="t-muted-10">${item.title}</div>
                 <div class="flex-center">${renderVizChart(item)}</div>
               </div>
             `)}
@@ -2686,31 +2695,31 @@ export class ScRoleCommander extends LitElement {
           <div class="ai-float-close" @click=${() => { this._aiPanelOpen = false; this._aiPanelResult = null; }}>✕</div>
         </div>
         <div class="ai-float-body">
-          ${this._aiPanelLoading ? html`<div style="text-align: center; padding: 32px;">分析中...</div>` : r?.error ? html`<div style="color: #ef4444;">${r.error}</div>` : html`
+          ${this._aiPanelLoading ? html`<div class="p-8-10">分析中...</div>` : r?.error ? html`<div class="t-muted-xs">${r.error}</div>` : html`
             <div>
-              <div style="font-weight: 600; margin-bottom: 12px;">📊 分析总结</div>
-              <p style="margin-bottom: 16px; line-height: 1.6; font-size: 12px;">${r?.summary}</p>
+              <div class="t-11b">📊 分析总结</div>
+              <p class="t-12">${r?.summary}</p>
               ${r?.risks?.length > 0 ? html`
-                <div style="font-weight: 600; margin-bottom: 8px; color: #ef4444;">⚠️ 风险预警</div>
+                <div class="t-11b">⚠️ 风险预警</div>
                 <ul class="list-disc-18">
-                  ${r.risks.map((s: string) => html`<li style="margin-bottom: 6px; font-size: 12px; color: #fca5a5;">${s}</li>`)}
+                  ${r.risks.map((s: string) => html`<li class="t-12">${s}</li>`)}
                 </ul>
               ` : nothing}
               ${r?.positives?.length > 0 ? html`
-                <div style="font-weight: 600; margin-bottom: 8px; color: #22c55e;">✅ 正面趋势</div>
+                <div class="t-11b">✅ 正面趋势</div>
                 <ul class="list-disc-18">
-                  ${r.positives.map((s: string) => html`<li style="margin-bottom: 6px; font-size: 12px; color: #86efac;">${s}</li>`)}
+                  ${r.positives.map((s: string) => html`<li class="t-12">${s}</li>`)}
                 </ul>
               ` : nothing}
-              <div style="font-weight: 600; margin-bottom: 8px;">💡 优化建议</div>
-              <ol style="margin: 0; padding-left: 18px;">
-                ${r?.suggestions?.map((s: string, i: number) => html`<li style="margin-bottom: 8px; font-size: 12px; line-height: 1.5;">${s}</li>`)}
+              <div class="t-11b">💡 优化建议</div>
+              <ol class="list-disc-18">
+                ${r?.suggestions?.map((s: string, i: number) => html`<li class="t-12">${s}</li>`)}
               </ol>
             </div>
           `}
         </div>
         <div class="ai-float-foot">
-          <button style="padding: 6px 12px; border: 1px solid var(--sc-border-color); background: var(--sc-bg-tertiary); border-radius: 4px; color: var(--sc-text-primary); cursor: pointer;" @click=${() => { this._aiPanelResult = null; this._runRoleAiAnalysis(); }}>🔄 重新分析</button>
+          <button class="btn-tool" @click=${() => { this._aiPanelResult = null; this._runRoleAiAnalysis(); }}>🔄 重新分析</button>
         </div>
       </div>
     `
@@ -2723,7 +2732,7 @@ export class ScRoleCommander extends LitElement {
         <div class="status-bar" style="background: color-mix(in srgb, ${theme['--role-primary']} 8%, transparent); border-bottom: 1px solid color-mix(in srgb, ${theme['--role-primary']} 15%, transparent);">
           <span style="display: flex; align-items: center; gap: 4px;"><span class="status-dot" style="background: ${theme['--role-success']}"></span> <span style="color: ${theme['--role-success']}">系统运行正常</span></span>
           <span>当前角色：${theme.label}</span>
-          <span style="margin-left: auto;">最后更新：${new Date().toLocaleString()}</span>
+          <span class="ml-auto">最后更新：${new Date().toLocaleString()}</span>
         </div>
         <div class="main-content">
           ${this._renderRoleDashboard()}
@@ -2736,7 +2745,7 @@ export class ScRoleCommander extends LitElement {
         ` : nothing}
         ${this.roleId !== 'security-architect' ? html`
           <div style="display:flex;justify-content:center;padding:0 12px;background:#0d1321;border-bottom:1px solid #1e293b;${this._showToolResults ? 'margin-top:-2px;' : ''}">
-            <button style="font-size:10px;padding:2px 14px;border-radius:0 0 6px 6px;border:1px solid var(--sc-border-color);border-top:none;background:var(--sc-bg-secondary);color:#64748b;cursor:pointer;transition:all 0.15s;" @click=${() => { this._showToolResults = !this._showToolResults; }}>
+            <button class="t-results-toggle" @click=${() => { this._showToolResults = !this._showToolResults; }}>
               ${this._showToolResults ? '▾ 收起' : '▴ 展开'}
             </button>
           </div>
@@ -2747,7 +2756,7 @@ export class ScRoleCommander extends LitElement {
           @click=${this._toggleAiPanel}
           title="AI 安全分析助手"
         >🤖</div>
-        ${this._toast ? html`<div style="position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:600;z-index:3000;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b44">⚠ ${this._toast}</div>` : nothing}
+        ${this._toast ? html`<div class="tag-warn">⚠ ${this._toast}</div>` : nothing}
       </div>
     `
   }
