@@ -1,0 +1,36 @@
+[
+  {
+    "name": "ETL to DW",
+    "description": "Daily ETL to data warehouse",
+    "flowType": "etl",
+    "status": "active",
+    "sourceAssetId": "a1",
+    "sourceAssetName": "users-db",
+    "sourceRegion": "cn-north",
+    "sourceClassification": "confidential",
+    "destinationAssetId": "a2",
+    "destinationAssetName": "dw",
+    "destinationRegion": "us-east",
+    "destinationCloud": "aws",
+    "destinationCountry": "US",
+    "protocol": "https",
+    "encryption": "tls",
+    "schedule": "daily 2am",
+    "recordsPerRun": 1000000,
+    "bytesPerRun": 100000000,
+    "createdBy": "alice",
+    "approved": true,
+    "approver": "bob",
+    "tags": [
+      "etl"
+    ],
+    "metadata": {},
+    "id": "flow_4e5093a7-934d-41bd-8183-a5fe725dc049",
+    "createdAt": 1781349428069,
+    "totalRuns": 0,
+    "successCount": 0,
+    "failureCount": 0,
+    "lastRunAt": null,
+    "lastSuccessAt": null
+  }
+]

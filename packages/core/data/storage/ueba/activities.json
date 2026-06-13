@@ -1,0 +1,17 @@
+[
+  {
+    "id": "test-1",
+    "entityId": "alice",
+    "entityType": "user",
+    "activityType": "login",
+    "timestamp": 1781300000000,
+    "hour": 9,
+    "dayOfWeek": 3,
+    "location": "Beijing",
+    "sourceIp": "10.0.0.1",
+    "resource": "dashboard",
+    "bytesTransferred": 1024,
+    "status": "success",
+    "metadata": {}
+  }
+]

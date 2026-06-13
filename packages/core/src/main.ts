@@ -4,6 +4,13 @@ import { SkillLoader } from './skills/loader.js';
 import { MitreLoader } from './knowledge/mitre/loader.js';
 import { ScfLoader } from './knowledge/scf/loader.js';
 import { JsonStore } from './storage/json-store.js';
+import { CachedJsonStore } from './storage/cached-json-store.js';
+import { DualWriteStorage } from './storage/dual-write-storage.js';
+import { PgStorage } from './storage/pg-storage.js';
+import { initPrisma, disconnectPrisma } from './db/prisma.js';
+import { initRedis, disconnectRedis, getRedisSubscriber } from './db/redis.js';
+import { RedisBroadcastAdapter } from './gateway/redis-broadcast-adapter.js';
+import { setTokenBlacklistRedis, setTokenBlacklistStore } from './auth/jwt.js';
 import { RolesService } from './roles/service.js';
 import { RolesRepository } from './roles/repository.js';
 import { DataSeedService } from './data-seed.js';
@@ -51,8 +58,29 @@ import { registerThreatIntelRoutes } from './gateway/routes/threat-intel-routes.
 import { registerMaturityRoutes } from './gateway/routes/maturity-routes.js';
 import { registerBudgetRoutes } from './gateway/routes/budget-routes.js';
 import { registerAttackPathRoutes } from './gateway/routes/attack-path-routes.js';
+import { registerIngestRoutes } from './gateway/routes/ingest-routes.js';
+import { registerThreatIntelIntegrationRoutes } from './gateway/routes/threat-intel-integration-routes.js';
+import { registerAutonomousAgentRoutes } from './gateway/routes/autonomous-agent-routes.js';
+import { registerRemediationRoutes } from './gateway/routes/remediation-routes.js';
+import { registerCspmRoutes } from './gateway/routes/cspm-routes.js';
+import { registerAiSpmRoutes } from './gateway/routes/ai-spm-routes.js';
+import { registerSupplyChainRoutes } from './gateway/routes/supply-chain-routes.js';
+import { registerPrivacyEnhancementRoutes } from './gateway/routes/pet-routes.js';
+import { registerMultiTenantRoutes } from './gateway/routes/multi-tenant-routes.js';
+import { registerSecurityMetricsV2Routes } from './gateway/routes/security-metrics-v2-routes.js';
+import { registerSoarEngineRoutes } from './gateway/routes/soar-engine-routes.js';
+import { registerUebaBaselineRoutes } from './gateway/routes/ueba-baseline-routes.js';
+import { registerSigmaRoutes } from './gateway/routes/sigma-routes.js';
+import { registerAiScmRoutes } from './gateway/routes/ai-scm-routes.js';
+import { registerEasmRoutes } from './gateway/routes/easm-routes.js';
+import { registerRaspRoutes } from './gateway/routes/rasp-routes.js';
+import { registerDspmRoutes } from './gateway/routes/dspm-routes.js';
+import { registerItdrRoutes } from './gateway/routes/itdr-routes.js';
+import { registerPerfRoutes } from './gateway/routes/perf-routes.js';
+import { registerSaasRoutes } from './gateway/routes/saas-routes.js';
 import { AssetsService } from './assets/service.js';
 import { AssetsRepository } from './assets/repository.js';
+import { LlmSecurityKpiService } from './kpi/llm-security-kpi.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[INFO]', ...args),
@@ -68,6 +96,7 @@ class SecuClawApplication {
   private mitreLoader: MitreLoader;
   private scfLoader: ScfLoader;
   private jsonStore: JsonStore;
+  private dualWriteStore: DualWriteStorage;
   private rolesService: RolesService;
   private dataSeedService: DataSeedService;
   private kpiService: KpiService;
@@ -83,7 +112,14 @@ class SecuClawApplication {
     const cfg = this.configService.getAll();
     const storagePath = `${cfg.storage.basePath}/storage`;
 
-    this.jsonStore = new JsonStore(storagePath);
+    // Phase 14：用 DualWriteStorage 包装 CachedJsonStore
+    // constructor 阶段 PG 未就绪，secondary 先为 null（纯 JSON 模式）
+    // initialize() 中 Prisma 初始化后通过 setSecondary 注入 PgStorage
+    const cachedStore = new CachedJsonStore(storagePath, { enabled: true, maxKeys: 1000 });
+    this.dualWriteStore = new DualWriteStorage(cachedStore, null, { enabled: false });
+    // DualWriteStorage 实现 IStorage 接口，Repository 运行时只调用 get/set/delete/exists/list
+    // 类型断言安全：方法签名完全兼容，仅 TS 类型层级不匹配
+    this.jsonStore = this.dualWriteStore as unknown as JsonStore;
     this.skillLoader = new SkillLoader(cfg.storage.skillsPath);
     this.mitreLoader = new MitreLoader(`${cfg.storage.basePath}/mitre/attack-stix-data`);
     this.scfLoader = new ScfLoader(`${cfg.storage.basePath}/scf`);
@@ -121,6 +157,53 @@ class SecuClawApplication {
 
   async initialize(): Promise<void> {
     logger.info('Initializing SecuClaw application...');
+
+    // Phase 14：PostgreSQL 迁移 - 初始化数据库连接 + 注入双写后端
+    const dbCfg = this.configService.getAll().database;
+    if (dbCfg.url) {
+      const prisma = initPrisma(dbCfg.url, dbCfg.poolMax);
+      if (prisma) {
+        this.shutdownHandlers.push(() => disconnectPrisma());
+        // 创建 PgStorage 并注入 DualWriteStorage
+        const pgStorage = new PgStorage(prisma);
+        this.dualWriteStore.setSecondary(pgStorage, {
+          enabled: dbCfg.dualWriteEnabled,
+          readSource: 'primary', // 默认从 JSON 读，数据校验后手动切换到 PG
+        });
+        logger.info(
+          `PostgreSQL 已连接（pool=${dbCfg.poolMax}, dualWrite=${dbCfg.dualWriteEnabled}）`,
+        );
+      }
+    } else {
+      logger.info('未配置 DATABASE_URL，使用 JSON 文件存储模式');
+    }
+
+    // Phase 14：集群模式 - Redis 初始化 + WebSocket 横向广播 + token 黑名单
+    const redisCfg = this.configService.getAll().redis;
+    if (redisCfg.url) {
+      const redis = initRedis(redisCfg.url, redisCfg.keyPrefix);
+      if (redis) {
+        this.shutdownHandlers.push(() => disconnectRedis());
+
+        // 注入 Redis 广播适配器到 GatewayServer
+        const subscriber = getRedisSubscriber();
+        if (subscriber) {
+          const adapter = new RedisBroadcastAdapter(redis, subscriber, {
+            localBroadcast: (event, data) => this.gateway.localBroadcast(event, data),
+            localBroadcastToAll: (event, data) => this.gateway.localBroadcastToAll(event, data),
+          });
+          this.gateway.setRedisAdapter(adapter);
+        }
+
+        // 激活 token 黑名单（Redis 模式：集群共享、自动过期）
+        setTokenBlacklistRedis(this.jsonStore, redis);
+        logger.info('Redis 集群模式已启用（广播 + token 黑名单 + 分布式锁）');
+      }
+    } else {
+      // 降级：激活 JSON 模式的 token 黑名单（比完全无黑名单更安全）
+      setTokenBlacklistStore(this.jsonStore);
+      logger.info('未配置 REDIS_URL，使用单机模式（JSON token 黑名单）');
+    }
 
     logger.info('Initializing roles...');
     await this.rolesService.initializeRoles();
@@ -165,6 +248,7 @@ class SecuClawApplication {
       mitreLoader: this.mitreLoader,
       scfLoader: this.scfLoader,
       assetsService: this.assetsService,
+      storagePath: `${this.configService.getAll().storage.basePath}/storage`,
     });
 
     logger.info('Registering gateway routes...');
@@ -206,6 +290,26 @@ class SecuClawApplication {
   registerMaturityRoutes(handlersMap, deps);
   registerBudgetRoutes(handlersMap, deps);
   registerAttackPathRoutes(handlersMap, deps);
+  registerIngestRoutes(handlersMap, deps);
+  registerThreatIntelIntegrationRoutes(handlersMap, deps);
+  registerAutonomousAgentRoutes(handlersMap, deps);
+  registerRemediationRoutes(handlersMap, deps);
+  registerCspmRoutes(handlersMap, deps);
+  registerAiSpmRoutes(handlersMap, deps);
+  registerSupplyChainRoutes(handlersMap, deps);
+  registerPrivacyEnhancementRoutes(handlersMap, deps);
+  registerMultiTenantRoutes(handlersMap, deps);
+  registerSecurityMetricsV2Routes(handlersMap, deps);
+  registerSoarEngineRoutes(handlersMap, deps);
+  registerUebaBaselineRoutes(handlersMap, deps);
+  registerSigmaRoutes(handlersMap, deps);
+  registerAiScmRoutes(handlersMap, deps);
+  registerEasmRoutes(handlersMap, deps);
+  registerRaspRoutes(handlersMap, deps);
+  registerDspmRoutes(handlersMap, deps);
+  registerItdrRoutes(handlersMap, deps);
+  registerPerfRoutes(handlersMap, deps);
+  registerSaasRoutes(handlersMap, deps);
 
     this.gateway.getRouter().setHandlersFromMap(handlersMap);
     logger.info(`Registered ${this.gateway.getRouter().getMethodCount()} gateway methods`);
@@ -215,6 +319,10 @@ class SecuClawApplication {
 
     this.kpiScheduler.start();
     this.shutdownHandlers.push(() => Promise.resolve(this.kpiScheduler.stop()));
+
+    const llmSecurityKpi = new LlmSecurityKpiService(this.jsonStore);
+    const llmKpiMetrics = await llmSecurityKpi.compute();
+    logger.info(`LLM Security KPI: overall=${llmKpiMetrics.overallSafetyScore}/100 trend=${llmKpiMetrics.trend}`);
 
     logger.info('Starting unified gateway server...');
     await this.gateway.start();

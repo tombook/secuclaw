@@ -1,0 +1,41 @@
+[
+  {
+    "id": "inc_bcb05a77-73f5-42d7-b111-b9fab0bce197",
+    "title": "Brute Force Leading to Successful Login on 203.0.113.42",
+    "status": "open",
+    "severity": "high",
+    "confidence": 0.36,
+    "firstSeen": 1781300000000,
+    "lastSeen": 1781300000000,
+    "alertCount": 1,
+    "alertIds": [
+      "a1"
+    ],
+    "entities": [
+      {
+        "type": "ip",
+        "id": "203.0.113.42",
+        "role": "actor"
+      }
+    ],
+    "killChain": [
+      {
+        "tactic": "reconnaissance",
+        "technique": "T1110",
+        "alertId": "a1",
+        "timestamp": 1781300000000
+      }
+    ],
+    "mitreTechniques": [
+      "T1110"
+    ],
+    "mitreTactics": [
+      "reconnaissance"
+    ],
+    "isAttackChain": false,
+    "requiresEscalation": false,
+    "suggestedAssignee": "tier2-analyst",
+    "suggestedPlaybook": "T1110",
+    "narrative": "Correlated incident with 1 alert(s).\nSeverity: high. Confidence: 0.36.\n- [2026-06-12T21:33:20.000Z] (wazuh/ssh_bruteforce) SSH brute force detected"
+  }
+]

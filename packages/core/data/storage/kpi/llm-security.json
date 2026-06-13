@@ -1,0 +1,16 @@
+{
+  "timestamp": 1781352877960,
+  "overallSafetyScore": 98,
+  "promptInjectionResistance": 100,
+  "jailbreakResistance": 100,
+  "piiLeakagePrevention": 100,
+  "outputSafetyRate": 100,
+  "hallucinationControl": 85,
+  "totalSanitizerRuns": 0,
+  "sanitizerDetections": 0,
+  "totalGarakProbes": 0,
+  "garakPassRate": 100,
+  "aigSkillFindings": 0,
+  "aigCriticalFindings": 0,
+  "trend": "stable"
+}

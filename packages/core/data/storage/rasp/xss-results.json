@@ -1,0 +1,112 @@
+[
+  {
+    "request": {
+      "id": "xss-1",
+      "timestamp": 1781300000000,
+      "applicationId": "web-app",
+      "endpoint": "/comment",
+      "method": "POST",
+      "userId": null,
+      "sessionId": "s1",
+      "sourceIp": "1.2.3.4",
+      "userAgent": "Mozilla/5.0",
+      "parameters": {
+        "comment": "<script>alert(1)</script>"
+      },
+      "context": "html_body",
+      "renderLocation": "response_body",
+      "outputEncoding": "none",
+      "metadata": {}
+    },
+    "allowed": false,
+    "action": "block",
+    "findings": [
+      {
+        "attackType": "reflected_xss",
+        "severity": "critical",
+        "parameter": "comment",
+        "matchedValue": "<script>alert(1)</script>",
+        "matchedPattern": "<script>",
+        "context": "html_body",
+        "description": "Script tag detected in user input.",
+        "bypassAttempt": true,
+        "confidence": 0.97,
+        "evidence": [
+          "<script>alert(1)</script>"
+        ],
+        "recommendedAction": "block",
+        "sanitizedValue": "&lt;script&gt;alert(1)&lt;/script&gt;"
+      },
+      {
+        "attackType": "polyglot_xss",
+        "severity": "medium",
+        "parameter": "comment",
+        "matchedValue": "<script>alert(1)</script>",
+        "matchedPattern": "obfuscation",
+        "context": "html_body",
+        "description": "Suspicious obfuscation patterns detected in input.",
+        "bypassAttempt": true,
+        "confidence": 0.65,
+        "evidence": [
+          "<script>alert(1)</script>"
+        ],
+        "recommendedAction": "log_only",
+        "sanitizedValue": "&lt;script&gt;alert(1)&lt;/script&gt;"
+      }
+    ],
+    "highestSeverity": "critical",
+    "overallConfidence": 0.81,
+    "sanitizedParameters": {
+      "comment": "<script>alert(1)</script>"
+    },
+    "detectionTime": 0,
+    "timestamp": 1781344117471
+  },
+  {
+    "request": {
+      "id": "x1",
+      "timestamp": 1781300000000,
+      "applicationId": "app",
+      "endpoint": "/comment",
+      "method": "POST",
+      "userId": null,
+      "sessionId": "s1",
+      "sourceIp": "1.1.1.1",
+      "userAgent": "Mozilla",
+      "parameters": {
+        "c": "<img src=x onerror=alert(1)>"
+      },
+      "context": "html_body",
+      "renderLocation": "response_body",
+      "outputEncoding": "none",
+      "metadata": {}
+    },
+    "allowed": true,
+    "action": "sanitize",
+    "findings": [
+      {
+        "attackType": "event_handler_injection",
+        "severity": "high",
+        "parameter": "c",
+        "matchedValue": "<img src=x onerror=alert(1)>",
+        "matchedPattern": "on*=",
+        "context": "html_body",
+        "description": "Inline event handler detected in user input.",
+        "bypassAttempt": true,
+        "confidence": 0.9,
+        "evidence": [
+          "<img src=x onerror=alert(1)>"
+        ],
+        "recommendedAction": "sanitize",
+        "sanitizedValue": "&lt;img src=x onerror=alert(1)&gt;"
+      }
+    ],
+    "highestSeverity": "high",
+    "overallConfidence": 0.9,
+    "sanitizedParameters": {
+      "c": "&lt;img src=x onerror=alert(1)&gt;"
+    },
+    "detectionTime": 0,
+    "timestamp": 1781348177898
+  }
+]

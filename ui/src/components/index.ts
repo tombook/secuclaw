@@ -80,6 +80,20 @@ export { ScSecurityRoiCalculator } from './security-roi/sc-security-roi-calculat
 // ============ Threat Modeling ============
 export { ScThreatModelVisualization } from './threat-model/sc-threat-model-visualization.js';
 
+// ============ New Modules (P0/P1 Phase 2) ============
+export { ScNewModulesHub } from './sc-new-modules-hub.js';
+export { ScSoarDashboard } from './detection/sc-soar-dashboard.js';
+export { ScUebaDashboard } from './ueba/sc-ueba-dashboard.js';
+export { ScSigmaDashboard } from './detection/sc-sigma-dashboard.js';
+export { ScAiScmDashboard } from './ai-scm/sc-ai-scm-dashboard.js';
+export { ScEasmDashboard } from './easm/sc-easm-dashboard.js';
+export { ScRaspDashboard } from './rasp/sc-rasp-dashboard.js';
+export { ScDspmDashboard } from './dspm/sc-dspm-dashboard.js';
+export { ScItrdDashboard } from './itdr/sc-itdr-dashboard.js';
+export { ScSaasDashboard } from './saas/sc-saas-dashboard.js';
+export { ScTenantDashboard } from './tenant/sc-tenant-dashboard.js';
+export { ScNotificationCenter } from './notification/sc-notification-center.js';
+
 /**
  * Component Categories:
  * 

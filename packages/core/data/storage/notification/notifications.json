@@ -1,0 +1,22 @@
+[
+  {
+    "id": "ntf_5fb81cef-caee-4c3f-9c4f-89dac2250a1f",
+    "tenantId": "t1",
+    "channel": "email",
+    "priority": "normal",
+    "status": "sent",
+    "template": "alert",
+    "subject": "Test",
+    "body": "Test",
+    "recipient": "alice@example.com",
+    "metadata": {},
+    "attempts": 1,
+    "maxAttempts": 3,
+    "sentAt": 1781352921824,
+    "deliveredAt": 1781352921824,
+    "failedAt": null,
+    "failureReason": null,
+    "retryAfter": null,
+    "createdAt": 1781352921812
+  }
+]

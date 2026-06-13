@@ -1,0 +1,22 @@
+[
+  {
+    "id": "node_4b46e075-f75a-4e95-a1a0-b16cb03169cf",
+    "name": "node-1",
+    "region": "us-east",
+    "status": "active",
+    "healthStatus": "healthy",
+    "url": "https://node1.secuclaw.com",
+    "version": "1.0.0",
+    "uptimeSeconds": 0,
+    "cpu": 0,
+    "memory": 0,
+    "disk": 0,
+    "activeConnections": 0,
+    "requestsPerMinute": 0,
+    "errorsPerMinute": 0,
+    "lastHealthCheck": 1781352795037,
+    "lastHealthMessage": "node registered",
+    "startedAt": 1781352795037,
+    "metadata": {}
+  }
+]

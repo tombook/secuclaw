@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile, unlink, access, rename, readdir } from 'fs/promises';
 // Simple write lock to ensure sequential writes
 import { join, dirname } from 'path';
+import type { IStorage } from './types.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[JsonStore]', ...args),
@@ -8,7 +9,7 @@ const logger = {
   debug: (...args: any[]) => console.log('[JsonStore:DEBUG]', ...args),
 };
 
-export class JsonStore {
+export class JsonStore implements IStorage {
   private basePath: string;
   private writeLock: Promise<void> = Promise.resolve();
 

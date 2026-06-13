@@ -28,3 +28,7 @@ export {
 export { NmapAdapter } from './nmap-adapter.js';
 export { SqlmapAdapter } from './sqlmap-adapter.js';
 export { NucleiAdapter } from './nuclei-adapter.js';
+export { WazuhAdapter } from './wazuh-adapter.js';
+export { FalcoAdapter } from './falco-adapter.js';
+export { OsqueryAdapter } from './osquery-adapter.js';
+export { VelociraptorAdapter } from './velociraptor-adapter.js';

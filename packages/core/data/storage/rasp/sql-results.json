@@ -1,0 +1,175 @@
+[
+  {
+    "request": {
+      "id": "test-1",
+      "timestamp": 1781300000000,
+      "applicationId": "web-app",
+      "endpoint": "/api/users",
+      "method": "GET",
+      "userId": null,
+      "sessionId": "s1",
+      "sourceIp": "1.2.3.4",
+      "userAgent": "curl/7.0",
+      "parameters": {
+        "id": "1 UNION SELECT password FROM users"
+      },
+      "query": null,
+      "database": "mysql",
+      "context": {
+        "source": "http",
+        "route": "/api/users",
+        "referer": null
+      }
+    },
+    "allowed": false,
+    "action": "block",
+    "findings": [
+      {
+        "attackType": "sqli_union",
+        "severity": "high",
+        "parameter": "id",
+        "matchedValue": "UNION SELECT",
+        "matchedPattern": "\\bunion\\s+(all\\s+)?select\\b",
+        "patternDescription": "Detects UNION/UNION ALL SELECT clauses used to combine attacker queries",
+        "confidence": 0.92,
+        "contextSnippet": "1 UNION SELECT password FROM users",
+        "evidence": [
+          "Pattern: UNION SELECT keyword",
+          "Match: UNION SELECT",
+          "Param: id"
+        ],
+        "recommendedAction": "block"
+      },
+      {
+        "attackType": "sqli_union",
+        "severity": "high",
+        "parameter": "id",
+        "matchedValue": "1 UNION SELECT password FROM users",
+        "matchedPattern": "heuristic",
+        "patternDescription": "UNION-style combined query detected",
+        "confidence": 0.85,
+        "contextSnippet": "1 UNION SELECT password FROM users",
+        "evidence": [
+          "Heuristic: UNION-style combined query detected",
+          "Param: id"
+        ],
+        "recommendedAction": "block"
+      }
+    ],
+    "overallConfidence": 0.9360000000000002,
+    "highestSeverity": "high",
+    "detectionTime": 1,
+    "sanitizedParameters": null,
+    "timestamp": 1781344117460
+  },
+  {
+    "request": {
+      "id": "s1",
+      "timestamp": 1781300000000,
+      "applicationId": "app",
+      "endpoint": "/api/users",
+      "method": "GET",
+      "userId": null,
+      "sessionId": "s1",
+      "sourceIp": "1.1.1.1",
+      "userAgent": "curl",
+      "parameters": {
+        "id": "1 OR 1=1; DROP TABLE users--"
+      },
+      "query": null,
+      "database": "mysql",
+      "context": {
+        "source": "http",
+        "route": "/api/users",
+        "referer": null
+      }
+    },
+    "allowed": false,
+    "action": "block",
+    "findings": [
+      {
+        "attackType": "sqli_tautology",
+        "severity": "critical",
+        "parameter": "id",
+        "matchedValue": "OR 1=1",
+        "matchedPattern": "\\b(or|and)\\s+[\\d'\"]+\\s*=\\s*[\\d'\"]+",
+        "patternDescription": "Detects classic tautology predicates (OR/AND with literal equality) used to bypass WHERE clauses",
+        "confidence": 0.95,
+        "contextSnippet": "1 OR 1=1; DROP TABLE users--",
+        "evidence": [
+          "Pattern: OR 1=1 tautology",
+          "Match: OR 1=1",
+          "Param: id"
+        ],
+        "recommendedAction": "block"
+      },
+      {
+        "attackType": "sqli_comment",
+        "severity": "medium",
+        "parameter": "id",
+        "matchedValue": "--",
+        "matchedPattern": "(--|\\/\\*|\\*\\/|#)",
+        "patternDescription": "Detects SQL line or block comments used to terminate the legitimate query",
+        "confidence": 0.7,
+        "contextSnippet": "1 OR 1=1; DROP TABLE users--",
+        "evidence": [
+          "Pattern: SQL comment injection",
+          "Match: --",
+          "Param: id"
+        ],
+        "recommendedAction": "sanitize"
+      },
+      {
+        "attackType": "sqli_stacked",
+        "severity": "critical",
+        "parameter": "id",
+        "matchedValue": "; DROP ",
+        "matchedPattern": ";\\s*(drop|delete|update|insert|create|alter|truncate|exec)\\s+",
+        "patternDescription": "Detects stacked queries that issue DROP/DELETE/UPDATE/INSERT/CREATE/ALTER/TRUNCATE/EXEC",
+        "confidence": 0.96,
+        "contextSnippet": "1 OR 1=1; DROP TABLE users--",
+        "evidence": [
+          "Pattern: Stacked destructive queries",
+          "Match: ; DROP ",
+          "Param: id"
+        ],
+        "recommendedAction": "block"
+      },
+      {
+        "attackType": "sqli_stacked",
+        "severity": "critical",
+        "parameter": "id",
+        "matchedValue": "1 OR 1=1; DROP TABLE users--",
+        "matchedPattern": "heuristic",
+        "patternDescription": "Stacked destructive statement detected",
+        "confidence": 0.95,
+        "contextSnippet": "1 OR 1=1; DROP TABLE users--",
+        "evidence": [
+          "Heuristic: Stacked destructive statement detected",
+          "Param: id"
+        ],
+        "recommendedAction": "block"
+      },
+      {
+        "attackType": "sqli_comment",
+        "severity": "medium",
+        "parameter": "id",
+        "matchedValue": "1 OR 1=1; DROP TABLE users--",
+        "matchedPattern": "heuristic",
+        "patternDescription": "SQL comment terminator detected",
+        "confidence": 0.6,
+        "contextSnippet": "1 OR 1=1; DROP TABLE users--",
+        "evidence": [
+          "Heuristic: SQL comment terminator detected",
+          "Param: id"
+        ],
+        "recommendedAction": "sanitize"
+      }
+    ],
+    "overallConfidence": 0.9987999999999999,
+    "highestSeverity": "critical",
+    "detectionTime": 1,
+    "sanitizedParameters": null,
+    "timestamp": 1781348451847
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "ip": "9.9.9.9",
+    "reputation": "unknown",
+    "score": 70,
+    "sources": [],
+    "country": null,
+    "asn": null,
+    "isp": null,
+    "isTor": false,
+    "isVpn": false,
+    "isProxy": false,
+    "isDatacenter": false,
+    "lastSeen": 1781351124572
+  }
+]

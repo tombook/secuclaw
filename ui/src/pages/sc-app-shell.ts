@@ -18,6 +18,10 @@ import { settingsStore } from '../stores/settings-store';
 import { pluginStore } from '../plugins/index';
 import '../components/sc-command-palette';
 import '../components/tool-panels/panels/evolution-dashboard';
+import '../components/sc-new-modules-hub';
+import '../pages/landing/sc-landing-page';
+import '../pages/auth/sc-auth-page';
+import '../pages/billing/sc-billing-page';
 import type { CommandAction } from '../components/sc-command-palette';
 
 @customElement('sc-app-shell')
@@ -541,6 +545,22 @@ export class ScAppShell extends LitElement {
       transition: all 0.15s;
     }
     .btn-settings:hover { background: #1e293b; color: #fbbf24; border-color: #fbbf24; }
+    .nav-billing-btn, .nav-landing-btn {
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      color: #00d4ff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 4px;
+      transition: all 0.15s;
+    }
+    .nav-billing-btn:hover, .nav-landing-btn:hover {
+      background: rgba(0, 212, 255, 0.2);
+      border-color: #00d4ff;
+    }
 
     /* ─── Main ────────────────────────────────────── */
     .main {
@@ -663,7 +683,7 @@ export class ScAppShell extends LitElement {
 
   `;
 
-  @state() private _view: 'overview' | 'role' | 'market' | 'evolution' = 'overview';
+  @state() private _view: 'overview' | 'role' | 'market' | 'evolution' | 'new-modules' | 'landing' | 'auth' | 'billing' = 'overview';
   @state() private _currentRoleId: RoleId | null = null;
   @state() private _time = this._fmtTime(new Date());
   @state() private _raciActive: 'R' | 'A' | 'C' | 'I' | null = null;
@@ -834,6 +854,12 @@ export class ScAppShell extends LitElement {
       this._view = 'evolution';
     } else if (hash === 'market') {
       this._view = 'market';
+    } else if (hash === 'landing' || hash === '') {
+      this._view = 'landing';
+    } else if (hash === 'auth' || hash.startsWith('auth?')) {
+      this._view = 'auth';
+    } else if (hash === 'billing') {
+      this._view = 'billing';
     }
   }
 
@@ -1127,6 +1153,13 @@ export class ScAppShell extends LitElement {
     const activeLabel = this._currentRoleId ? ROLE_TOOL_CONFIGS[this._currentRoleId].label : '';
     const raci = this._raciStatus();
     const visibleTasks = this._visibleRaciTasks();
+    const isPublicPage = this._view === 'landing' || this._view === 'auth' || this._view === 'billing';
+
+    if (isPublicPage && (this._view === 'landing' || this._view === 'auth')) {
+      return html`
+        ${this._view === 'landing' ? html`<sc-landing-page></sc-landing-page>` : html`<sc-auth-page></sc-auth-page>`}
+      `;
+    }
 
     return html`
       <!-- Sidebar -->
@@ -1165,6 +1198,16 @@ export class ScAppShell extends LitElement {
           >
             <span class="icon">🧬</span>
             <span>自主进化</span>
+          </div>
+          <div
+            class="nav-overview ${this._view === 'new-modules' ? 'active' : ''}"
+            tabindex="0" role="button"
+            @click=${() => { this._view = 'new-modules'; window.location.hash = '#/new-modules'; }}
+            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') { this._view = 'new-modules'; window.location.hash = '#/new-modules'; } }}
+          >
+            <span class="icon">🚀</span>
+            <span>新能力中心</span>
+            <span class="nav-badge">11</span>
           </div>
 
           <!-- RACI (common, always visible) -->
@@ -1300,9 +1343,11 @@ export class ScAppShell extends LitElement {
 
       <!-- Header -->
       <header class="header" style="border-bottom-color: ${activeTheme ? activeTheme.primary + '33' : '#1e293b'}">
-        <span class="header-title">${this._view === 'overview' ? '安全总览' : this._view === 'market' ? '工具市场' : this._view === 'evolution' ? '自主进化' : `${activeLabel} 指挥台`}</span>
-        <span class="header-subtitle">${this._view === 'overview' ? '全域安全态势' : this._view === 'market' ? '安全工具统一接入平台' : this._view === 'evolution' ? '角色能力自进化管理' : activeTheme?.label ?? ''}</span>
+        <span class="header-title">${this._view === 'overview' ? '安全总览' : this._view === 'market' ? '工具市场' : this._view === 'evolution' ? '自主进化' : this._view === 'billing' ? '计费与订阅' : `${activeLabel} 指挥台`}</span>
+        <span class="header-subtitle">${this._view === 'overview' ? '全域安全态势' : this._view === 'market' ? '安全工具统一接入平台' : this._view === 'evolution' ? '角色能力自进化管理' : this._view === 'billing' ? '管理订阅、发票和使用量' : activeTheme?.label ?? ''}</span>
         <div class="header-right">
+          <button class="nav-billing-btn" @click=${() => { this._view = 'billing'; window.location.hash = '#/billing'; }} title="计费与订阅">💰 计费</button>
+          <button class="nav-landing-btn" @click=${() => { this._view = 'landing'; window.location.hash = '#/landing'; }} title="返回公开门户">🌐 门户</button>
           <div class="header-kpi success"><span class="kpi-label">全域</span><span class="kpi-value">79</span></div>
           <div class="header-kpi danger"><span class="kpi-label">事件</span><span class="kpi-value">7</span></div>
           <div class="header-kpi warning"><span class="kpi-label">待处理</span><span class="kpi-value">23</span></div>
@@ -1317,13 +1362,21 @@ export class ScAppShell extends LitElement {
       <!-- Main -->
       <main class="main transition-container">
         <div class="transition-wrapper ${this._transitionState === 'exiting' ? 'exiting' : ''} ${this._transitionState === 'entering' ? 'entering' : ''}">
-          ${this._view === 'market'
-            ? html`<sc-plugin-market></sc-plugin-market>`
-            : this._view === 'evolution'
-              ? html`<evolution-dashboard></evolution-dashboard>`
-              : this._view === 'role'
-                ? html`<sc-role-commander .roleId=${this._currentRoleId!} .raciHighlightTask=${this._raciHighlightTask}></sc-role-commander>`
-                : html`<sc-overview @role-selected=${(e: CustomEvent) => this._switchToRole(e.detail.roleId)}></sc-overview>`
+          ${this._view === 'landing'
+            ? html`<sc-landing-page></sc-landing-page>`
+            : this._view === 'auth'
+              ? html`<sc-auth-page></sc-auth-page>`
+              : this._view === 'billing'
+                ? html`<sc-billing-page></sc-billing-page>`
+                : this._view === 'market'
+                  ? html`<sc-plugin-market></sc-plugin-market>`
+                  : this._view === 'evolution'
+                    ? html`<evolution-dashboard></evolution-dashboard>`
+                    : this._view === 'new-modules'
+                      ? html`<sc-new-modules-hub></sc-new-modules-hub>`
+                      : this._view === 'role'
+                        ? html`<sc-role-commander .roleId=${this._currentRoleId!} .raciHighlightTask=${this._raciHighlightTask}></sc-role-commander>`
+                        : html`<sc-overview @role-selected=${(e: CustomEvent) => this._switchToRole(e.detail.roleId)}></sc-overview>`
           }
         </div>
       </main>

@@ -1,0 +1,146 @@
+[
+  {
+    "id": "pol_21c26ee0-b9fe-4352-a63e-92f00fa46e0d",
+    "name": "PIPL 境内存储",
+    "description": "中国个人信息保护法 — 境内公民个人信息应存储在境内",
+    "framework": "PIPL",
+    "dataClassification": "confidential",
+    "allowedRegions": [
+      "cn-north",
+      "cn-east",
+      "cn-west",
+      "cn-northwest",
+      "cn-southwest"
+    ],
+    "blockedRegions": [
+      "us-east",
+      "us-west",
+      "eu-west",
+      "eu-central",
+      "ap-southeast",
+      "ap-northeast"
+    ],
+    "allowedCountries": [
+      "CN",
+      "HK",
+      "MO"
+    ],
+    "blockedCountries": [
+      "US",
+      "GB",
+      "DE",
+      "FR",
+      "JP"
+    ],
+    "dataTypes": [
+      "pii",
+      "personal_info",
+      "sensitive_personal_info"
+    ],
+    "enforcementLevel": "blocking",
+    "active": true,
+    "createdAt": 1781349427982,
+    "createdBy": "system"
+  },
+  {
+    "id": "pol_d712379f-6c5b-4a32-baa7-3aec4a6f0f05",
+    "name": "GDPR 欧盟外传",
+    "description": "GDPR — 欧盟个人数据外传需有合法基础",
+    "framework": "GDPR",
+    "dataClassification": "confidential",
+    "allowedRegions": [
+      "eu-west",
+      "eu-central",
+      "eu-north"
+    ],
+    "blockedRegions": [],
+    "allowedCountries": [
+      "GB",
+      "DE",
+      "FR",
+      "IT",
+      "ES",
+      "NL",
+      "IE",
+      "BE",
+      "SE"
+    ],
+    "blockedCountries": [],
+    "dataTypes": [
+      "pii",
+      "personal_data"
+    ],
+    "enforcementLevel": "warning",
+    "active": true,
+    "createdAt": 1781349427982,
+    "createdBy": "system"
+  },
+  {
+    "id": "pol_b96b171d-70e5-4cb2-9e53-4d0220a20f42",
+    "name": "中国数据安全法 — 重要数据",
+    "description": "中国数据安全法 — 重要数据境内存储",
+    "framework": "China_Data_Security_Law",
+    "dataClassification": "restricted",
+    "allowedRegions": [
+      "cn-north",
+      "cn-east",
+      "cn-west",
+      "cn-northwest",
+      "cn-southwest"
+    ],
+    "blockedRegions": [
+      "us-east",
+      "us-west",
+      "eu-west",
+      "eu-central",
+      "ap-southeast",
+      "ap-northeast",
+      "me-south"
+    ],
+    "allowedCountries": [
+      "CN",
+      "HK",
+      "MO",
+      "TW"
+    ],
+    "blockedCountries": [
+      "US",
+      "GB",
+      "DE",
+      "FR",
+      "JP",
+      "SG",
+      "AU"
+    ],
+    "dataTypes": [
+      "important_data",
+      "national_data",
+      "pii",
+      "sensitive_personal_info"
+    ],
+    "enforcementLevel": "blocking",
+    "active": true,
+    "createdAt": 1781349427982,
+    "createdBy": "system"
+  },
+  {
+    "id": "pol_e59207a0-a95c-4b81-8f2b-427e1d6cb85d",
+    "name": "PCI DSS 信用卡数据",
+    "description": "PCI DSS — 信用卡数据存储要求",
+    "framework": "PCI_DSS",
+    "dataClassification": "restricted",
+    "allowedRegions": [],
+    "blockedRegions": [],
+    "allowedCountries": [],
+    "blockedCountries": [],
+    "dataTypes": [
+      "cardholder_data",
+      "sensitive_auth_data",
+      "pan"
+    ],
+    "enforcementLevel": "audit",
+    "active": true,
+    "createdAt": 1781349427982,
+    "createdBy": "system"
+  }
+]

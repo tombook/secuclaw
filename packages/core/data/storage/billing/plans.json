@@ -1,0 +1,152 @@
+[
+  {
+    "id": "plan_534eded4-e8fa-495f-882d-ffea4237ffc1",
+    "code": "free",
+    "name": "免费版",
+    "description": "适合个人开发者和 PoC",
+    "price": 0,
+    "currency": "USD",
+    "features": [
+      "基础检测",
+      "社区支持",
+      "1GB 存储"
+    ],
+    "limits": {
+      "users": 3,
+      "assets": 100,
+      "incidents": 50,
+      "apiCallsPerDay": 1000,
+      "storageGb": 1,
+      "retentionDays": 7
+    },
+    "supportedCycles": [
+      "monthly"
+    ],
+    "trialDays": 0,
+    "active": true,
+    "stripePriceId": null
+  },
+  {
+    "id": "plan_f4934aa2-e5ec-46b1-a468-3d19ced4df5f",
+    "code": "starter",
+    "name": "入门版",
+    "description": "适合小团队",
+    "price": 99,
+    "currency": "USD",
+    "features": [
+      "高级检测",
+      "邮件支持",
+      "10GB 存储",
+      "7 天数据保留"
+    ],
+    "limits": {
+      "users": 10,
+      "assets": 1000,
+      "incidents": 500,
+      "apiCallsPerDay": 10000,
+      "storageGb": 10,
+      "retentionDays": 7
+    },
+    "supportedCycles": [
+      "monthly",
+      "annual"
+    ],
+    "trialDays": 14,
+    "active": true,
+    "stripePriceId": "price_starter_monthly"
+  },
+  {
+    "id": "plan_cd734b35-a828-432e-acf3-4d08848e33fb",
+    "code": "professional",
+    "name": "专业版",
+    "description": "适合中型企业",
+    "price": 499,
+    "currency": "USD",
+    "features": [
+      "完整检测套件",
+      "工单支持",
+      "100GB 存储",
+      "30 天数据保留",
+      "RASP/DSPM/ITDR 全部能力"
+    ],
+    "limits": {
+      "users": 50,
+      "assets": 10000,
+      "incidents": 5000,
+      "apiCallsPerDay": 100000,
+      "storageGb": 100,
+      "retentionDays": 30
+    },
+    "supportedCycles": [
+      "monthly",
+      "quarterly",
+      "annual"
+    ],
+    "trialDays": 14,
+    "active": true,
+    "stripePriceId": "price_professional_monthly"
+  },
+  {
+    "id": "plan_ca0c9178-a619-40f6-a492-87e564f4ce92",
+    "code": "enterprise",
+    "name": "企业版",
+    "description": "适合大型企业",
+    "price": 2999,
+    "currency": "USD",
+    "features": [
+      "所有功能",
+      "7x24 支持",
+      "1TB 存储",
+      "365 天数据保留",
+      "SLA 99.99%",
+      "专属客户经理"
+    ],
+    "limits": {
+      "users": 500,
+      "assets": 100000,
+      "incidents": 50000,
+      "apiCallsPerDay": 1000000,
+      "storageGb": 1000,
+      "retentionDays": 365
+    },
+    "supportedCycles": [
+      "monthly",
+      "quarterly",
+      "annual"
+    ],
+    "trialDays": 30,
+    "active": true,
+    "stripePriceId": "price_enterprise_monthly"
+  },
+  {
+    "id": "plan_4fe9979b-202c-4dfb-9341-d167d4d33f97",
+    "code": "mssp",
+    "name": "MSSP 多租户版",
+    "description": "托管安全服务商",
+    "price": 9999,
+    "currency": "USD",
+    "features": [
+      "全部 + 多租户",
+      "白标",
+      "API 访问",
+      "10TB 存储",
+      "不限数据保留",
+      "MSSP 专属功能"
+    ],
+    "limits": {
+      "users": -1,
+      "assets": -1,
+      "incidents": -1,
+      "apiCallsPerDay": -1,
+      "storageGb": 10000,
+      "retentionDays": -1
+    },
+    "supportedCycles": [
+      "quarterly",
+      "annual"
+    ],
+    "trialDays": 30,
+    "active": true,
+    "stripePriceId": "price_mssp_monthly"
+  }
+]

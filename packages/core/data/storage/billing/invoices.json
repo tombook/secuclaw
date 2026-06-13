@@ -1,0 +1,28 @@
+[
+  {
+    "id": "inv_bc294174-c2e3-441c-82c7-80a4612a742a",
+    "number": "INV-1781352921875-965",
+    "tenantId": "t1",
+    "subscriptionId": "sub_67c2a75e-828a-4be9-9bb1-dbe9aa41f2f6",
+    "amount": 499,
+    "tax": 29.94,
+    "total": 528.94,
+    "currency": "USD",
+    "status": "pending",
+    "issuedAt": 1781352921875,
+    "dueAt": 1783944921874,
+    "paidAt": null,
+    "paymentMethod": null,
+    "paymentReference": null,
+    "lineItems": [
+      {
+        "description": "专业版 - monthly",
+        "quantity": 1,
+        "unitPrice": 499,
+        "amount": 499
+      }
+    ],
+    "notes": "",
+    "metadata": {}
+  }
+]

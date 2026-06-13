@@ -1,0 +1,23 @@
+[
+  {
+    "id": "sub_67c2a75e-828a-4be9-9bb1-dbe9aa41f2f6",
+    "tenantId": "t1",
+    "planId": "plan_cd734b35-a828-432e-acf3-4d08848e33fb",
+    "planCode": "professional",
+    "status": "trialing",
+    "cycle": "monthly",
+    "currentPeriodStart": 1781352921874,
+    "currentPeriodEnd": 1783944921874,
+    "trialEndsAt": 1782562521874,
+    "cancelledAt": null,
+    "cancelAt": null,
+    "amount": 499,
+    "currency": "USD",
+    "paymentMethod": "card",
+    "autoRenew": true,
+    "discount": null,
+    "metadata": {},
+    "createdAt": 1781352921874,
+    "updatedAt": 1781352921874
+  }
+]

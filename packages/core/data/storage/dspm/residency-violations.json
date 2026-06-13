@@ -1,0 +1,78 @@
+[
+  {
+    "id": "vio_59f91fb3-90cb-48a7-a67d-fa8301502392",
+    "timestamp": 1781349428031,
+    "policyId": "pol_21c26ee0-b9fe-4352-a63e-92f00fa46e0d",
+    "policyName": "PIPL 境内存储",
+    "framework": "PIPL",
+    "severity": "critical",
+    "status": "open",
+    "assetId": "a1",
+    "assetName": "users-db",
+    "assetType": "database",
+    "dataType": "pii",
+    "classification": "confidential",
+    "currentLocation": "us-east/US",
+    "currentRegion": "us-east",
+    "currentCountry": "US",
+    "destinationLocation": null,
+    "destinationRegion": null,
+    "destinationCountry": null,
+    "description": "Region us-east not in allowed regions: cn-north, cn-east, cn-west, cn-northwest, cn-southwest",
+    "evidence": [
+      "currentRegion",
+      "Region us-east not in allowed regions: cn-north, cn-east, cn-west, cn-northwest, cn-southwest",
+      "policy=PIPL 境内存储",
+      "framework=PIPL"
+    ],
+    "remediation": [
+      "Migrate asset a1 to allowed region",
+      "Update policy to permit this region if business-justified",
+      "Document data transfer mechanism (SCC, BCRs, etc.)",
+      "Notify DPO and compliance team"
+    ],
+    "remediationDeadline": 1781954228031,
+    "resolvedAt": null,
+    "resolvedBy": null,
+    "notes": "",
+    "fine": "¥50M or 5% of revenue"
+  },
+  {
+    "id": "vio_f66528d0-553f-42f0-be15-eaa721403138",
+    "timestamp": 1781349428031,
+    "policyId": "pol_d712379f-6c5b-4a32-baa7-3aec4a6f0f05",
+    "policyName": "GDPR 欧盟外传",
+    "framework": "GDPR",
+    "severity": "high",
+    "status": "open",
+    "assetId": "a1",
+    "assetName": "users-db",
+    "assetType": "database",
+    "dataType": "pii",
+    "classification": "confidential",
+    "currentLocation": "us-east/US",
+    "currentRegion": "us-east",
+    "currentCountry": "US",
+    "destinationLocation": null,
+    "destinationRegion": null,
+    "destinationCountry": null,
+    "description": "Region us-east not in allowed regions: eu-west, eu-central, eu-north",
+    "evidence": [
+      "currentRegion",
+      "Region us-east not in allowed regions: eu-west, eu-central, eu-north",
+      "policy=GDPR 欧盟外传",
+      "framework=GDPR"
+    ],
+    "remediation": [
+      "Migrate asset a1 to allowed region",
+      "Update policy to permit this region if business-justified",
+      "Document data transfer mechanism (SCC, BCRs, etc.)",
+      "Notify DPO and compliance team"
+    ],
+    "remediationDeadline": 1783941428031,
+    "resolvedAt": null,
+    "resolvedBy": null,
+    "notes": "",
+    "fine": "€20M or 4% of global revenue"
+  }
+]

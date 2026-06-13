@@ -1,0 +1,36 @@
+[
+  {
+    "name": "users-db",
+    "type": "database",
+    "location": "cn-north-1",
+    "region": "cn-north",
+    "sizeBytes": 1000000000,
+    "rowCount": 5000000,
+    "classification": "confidential",
+    "piiTypes": [
+      "email",
+      "phone"
+    ],
+    "phi": false,
+    "pci": false,
+    "source": "manual",
+    "tags": [
+      "prod"
+    ],
+    "encryption": "encrypted_at_rest",
+    "accessControl": "rbac",
+    "retentionDays": 365,
+    "residency": "CN",
+    "businessOwner": "alice",
+    "dataSteward": "bob",
+    "monitored": true,
+    "metadata": {},
+    "id": "da_3da933a0-60e1-4333-95a0-19dca75be7a5",
+    "discoveredAt": 1781349428011,
+    "lastScanned": 1781349428011,
+    "riskScore": 35,
+    "riskFactors": [
+      "contains_pii"
+    ]
+  }
+]

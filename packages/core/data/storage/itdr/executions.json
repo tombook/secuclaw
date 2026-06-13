@@ -1,0 +1,60 @@
+[
+  {
+    "id": "exec_008ff561-1237-4af4-bc97-da3298b85ab8",
+    "policyId": "pol_687433e3-3653-4981-9011-6e5413cf7199",
+    "policyName": "Critical Brute Force",
+    "triggeredAt": 1781351125633,
+    "completedAt": 1781351125633,
+    "status": "completed",
+    "threatId": "test-1",
+    "threatType": "brute_force",
+    "severity": "critical",
+    "userId": "alice",
+    "sourceIp": "9.9.9.9",
+    "actions": [
+      {
+        "action": "force_password_reset",
+        "status": "completed",
+        "startedAt": 1781351125633,
+        "completedAt": 1781351125633,
+        "error": null,
+        "result": {
+          "action": "force_password_reset",
+          "userId": "alice"
+        }
+      },
+      {
+        "action": "revoke_sessions",
+        "status": "completed",
+        "startedAt": 1781351125633,
+        "completedAt": 1781351125633,
+        "error": null,
+        "result": {
+          "action": "revoke_sessions",
+          "userId": "alice",
+          "sessionsRevoked": "all"
+        }
+      },
+      {
+        "action": "require_mfa",
+        "status": "completed",
+        "startedAt": 1781351125633,
+        "completedAt": 1781351125633,
+        "error": null,
+        "result": {
+          "action": "require_mfa",
+          "userId": "alice"
+        }
+      }
+    ],
+    "approversRequired": [],
+    "approversGranted": [],
+    "approvedAt": null,
+    "rollbackPossible": true,
+    "rolledBackAt": null,
+    "rollbackReason": null,
+    "durationMs": 0,
+    "notificationsSent": 0,
+    "notes": ""
+  }
+]

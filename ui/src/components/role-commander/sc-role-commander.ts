@@ -957,6 +957,16 @@ export class ScRoleCommander extends LitElement {
     .t-results-toggle { font-size: 10px; padding: 2px 14px; border-radius: 0 0 6px 6px; border: 1px solid var(--sc-border-color); border-top: none; background: var(--sc-bg-secondary); color: #64748b; cursor: pointer; transition: all 0.15s; }
     .t-status-badge { position: absolute; top: -2px; right: -4px; font-size: 8px; }
     .t-h-flex-647 { display: flex; align-items: center; gap: 4px; }
+    .dot-5 { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .tl-event-node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1; min-width: 0; cursor: pointer; }
+    .tl-event-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #0f172a; z-index: 2; }
+    .tl-status-badge { position: absolute; top: -2px; right: -4px; font-size: 8px; }
+    .progress-bar-fill-red { height: 100%; background: #ef4444; border-radius: 2px; }
+    .progress-bar-fill-amber { height: 100%; background: #f59e0b; border-radius: 2px; }
+    .progress-bar-fill-blue { height: 100%; background: #3b82f6; border-radius: 2px; }
+    .zone-status-label { margin-left: auto; font-size: 8px; font-weight: 400; }
+    .tl-toolbar { display: flex; justify-content: center; padding: 0 12px; background: #0d1321; border-bottom: 1px solid #1e293b; }
+    .tl-edit-mono { font-family: monospace; }
   `
 
   private _storeUnsub: (() => void) | null = null
@@ -1378,9 +1388,9 @@ export class ScRoleCommander extends LitElement {
     const highCount = caps.filter(c => c.severity === 'high').length;
 
     return html`
-      <div class="ciso-panel" class="pad-0">
+      <div class="ciso-panel pad-0">
         <!-- Header -->
-        <div class="ciso-panel-header" class="ciso-panel-header-dark">
+        <div class="ciso-panel-header ciso-panel-header-dark">
           <span class="ciso-panel-title"><span class="icon">⚔️</span> Dark Side 攻防模拟</span>
           <span class="row-flex">
             <span class="dark-section-count">${simCount} 项可执行模拟</span>
@@ -1402,7 +1412,7 @@ export class ScRoleCommander extends LitElement {
                   ${hasSim ? html`<span class="tag-tiny-success">▶ 可执行</span>` : html`<span class="t-muted-gray">工具面板</span>`}
                 </div>
                 <div class="dark-card-foot">
-                  <span style="font-weight:600;background:${sevColors[c.severity]}15;color:${sevColors[c.severity]};" class="t-9-475-2">${sevLabels[c.severity]}</span>
+                  <span style="background:${sevColors[c.severity]}15;color:${sevColors[c.severity]};" class="t-9-475-2">${sevLabels[c.severity]}</span>
                   <span class="t-muted-xs">${c.toolId}</span>
                 </div>
               </div>
@@ -1412,7 +1422,7 @@ export class ScRoleCommander extends LitElement {
 
         <!-- Active simulation detail -->
         ${this._darkActiveCap && sims[this._darkActiveCap] ? html`
-          <div class="ciso-divider" class="m-0-20"></div>
+          <div class="ciso-divider m-0-20"></div>
           <div class="pad-14-20-18">
             ${(() => {
               const sim = sims[this._darkActiveCap];
@@ -1427,7 +1437,7 @@ export class ScRoleCommander extends LitElement {
                 <div class="sim-head">
                   <span class="sim-name">${sim.name}</span>
                   <span class="t-11">${sim.desc}</span>
-                  <button ?disabled=${this._darkSimRunning} style="margin-left:auto;background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};cursor:${this._darkSimRunning ? 'wait' : 'pointer'};" class="btn-exec"
+                  <button ?disabled=${this._darkSimRunning} style="background:${this._darkSimRunning ? '#ef444422' : '#ef4444'};cursor:${this._darkSimRunning ? 'wait' : 'pointer'};" class="btn-exec ml-auto"
                     @click=${(e: Event) => { e.stopPropagation(); this._runDarkSimulation(this._darkActiveCap!); }}>
                     ${this._darkSimRunning ? html`<span class="exec-loading-icon">⏳</span> 执行中...` : '🚀 执行模拟'}
                   </button>
@@ -1442,7 +1452,7 @@ export class ScRoleCommander extends LitElement {
                         <div style="background:${phaseColors[p.status]}12;border:1px solid ${phaseColors[p.status]}35;" class="killchain-tag">
                           <span class="killchain-icon">${p.icon}</span>
                           <span style="color:${phaseColors[p.status]};" class="killchain-label">${p.label}</span>
-                          <span style="font-size:8px;color:${phaseColors[p.status]}80;">${phaseLabels[p.status]}</span>
+                          <span style="color:${phaseColors[p.status]}80;" class="killchain-status">${phaseLabels[p.status]}</span>
                         </div>
                         ${i < sim.phases.length - 1 ? html`<span class="killchain-arrow">→</span>` : ''}
                       `)}
@@ -1457,17 +1467,17 @@ export class ScRoleCommander extends LitElement {
                     <div class="row-flex">
                       <div class="flex-1-8-10">
                         <div class="t-muted-xs">机密性 (C)</div>
-                        <div class="progress-thin"><div style="height:100%;width:${sim.impact.confidentiality}%;background:#ef4444;border-radius:2px;"></div></div>
+                        <div class="progress-thin"><div style="width:${sim.impact.confidentiality}%;" class="progress-bar-fill-red"></div></div>
                         <div class="cia-pct-c">${sim.impact.confidentiality}%</div>
                       </div>
                       <div class="flex-1-8-10">
                         <div class="t-muted-xs">完整性 (I)</div>
-                        <div class="progress-thin"><div style="height:100%;width:${sim.impact.integrity}%;background:#f59e0b;border-radius:2px;"></div></div>
+                        <div class="progress-thin"><div style="width:${sim.impact.integrity}%;" class="progress-bar-fill-amber"></div></div>
                         <div class="cia-pct-w">${sim.impact.integrity}%</div>
                       </div>
                       <div class="flex-1-8-10">
                         <div class="t-muted-xs">可用性 (A)</div>
-                        <div class="progress-thin"><div style="height:100%;width:${sim.impact.availability}%;background:#3b82f6;border-radius:2px;"></div></div>
+                        <div class="progress-thin"><div style="width:${sim.impact.availability}%;" class="progress-bar-fill-blue"></div></div>
                         <div class="cia-pct-i">${sim.impact.availability}%</div>
                       </div>
                     </div>
@@ -1614,7 +1624,7 @@ export class ScRoleCommander extends LitElement {
     </svg>`;
 
     return html`
-      <div class="zone zone-decision" class="bg-deep-card">
+      <div class="zone zone-decision bg-deep-card">
         <div class="pad-8-12">
           <div class="t-11b-6">🧭 ${cfg.title}</div>
           <div class="row-flex">
@@ -1623,22 +1633,22 @@ export class ScRoleCommander extends LitElement {
               <div class="row-flex">
                 ${cfg.axes.map(ax => html`
                   <div class="flex-1-6-8">
-                    <div style="font-size:16px;font-weight:700;color:${ax.color}">${ax.value}</div>
+                    <div style="color:${ax.color}" class="posture-kpi-value">${ax.value}</div>
                     <div class="t-muted-xs">${ax.label}</div>
                   </div>
                 `)}
               </div>
-              <div style="font-size:10px;color:${cfg.recColor};padding:4px 8px;background:${cfg.recColor}11;border-radius:4px;border-left:3px solid ${cfg.recColor};">
+              <div style="color:${cfg.recColor};background:${cfg.recColor}11;border-left:3px solid ${cfg.recColor};" class="p-8-10">
                 💡 ${cfg.recommendation}
               </div>
               ${cfg.pendingDecisions.length > 0 ? html`
                 <div class="m-t-8">
                   ${cfg.pendingDecisions.map(d => html`
                     <div class="row-flex">
-                      <span style="width:6px;height:6px;border-radius:50%;background:${d.urgencyColor};"></span>
+                      <span style="background:${d.urgencyColor};" class="role-icon"></span>
                       <span class="t-e2">${d.title}</span>
                       <span class="t-muted-xs">· ${d.impact}</span>
-                      <span style="margin-left:auto;font-size:9px;padding:1px 5px;border-radius:3px;background:${d.urgencyColor}15;color:${d.urgencyColor};">${d.urgency}</span>
+                      <span style="background:${d.urgencyColor}15;color:${d.urgencyColor};" class="ml-auto t-9-475-2">${d.urgency}</span>
                     </div>
                   `)}
                 </div>
@@ -1702,14 +1712,14 @@ export class ScRoleCommander extends LitElement {
     const statusIcon: Record<string, string> = { compliant: '✅', partial: '⚠️', gap: '🔴' };
 
     return html`
-      <div class="zone zone-legal" class="bg-deep-card">
+      <div class="zone zone-legal bg-deep-card">
         <div class="pad-8-12">
           <div class="t-11b-6">⚖️ Legal 合规面板 · SKILL.md 定义</div>
           <div class="row-flex">
             ${cfg.regulations.map(r => html`
               <div class="flex-1-6-8">
                 <div class="t-muted-10">${statusIcon[r.status]} ${r.name}</div>
-                <div style="font-size:18px;font-weight:700;color:${r.color}">${r.score}%</div>
+                <div style="color:${r.color}" class="posture-kpi-value">${r.score}%</div>
                 <div class="t-muted-8">${r.detail}</div>
               </div>
             `)}
@@ -1718,9 +1728,9 @@ export class ScRoleCommander extends LitElement {
             <div class="mt-4">
               ${cfg.riskItems.map(ri => html`
                 <div class="row-flex">
-                  <span style="width:5px;height:5px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
+                  <span style="background:${ri.levelColor};" class="role-icon"></span>
                   <span class="t-e2">${ri.desc}</span>
-                  <span style="margin-left:auto;font-size:9px;padding:0 4px;border-radius:2px;background:${ri.levelColor}15;color:${ri.levelColor};">${ri.level}</span>
+                  <span style="background:${ri.levelColor}15;color:${ri.levelColor};" class="ml-auto t-9-475-2">${ri.level}</span>
                 </div>
               `)}
             </div>
@@ -1755,7 +1765,7 @@ export class ScRoleCommander extends LitElement {
     const mitrePct = Math.round((cfg.mitre.covered / cfg.mitre.total) * 100);
     const scfPct = Math.round((cfg.scf.covered / cfg.scf.total) * 100);
     return html`
-      <div class="zone zone-framework" class="bg-deep-card">
+      <div class="zone zone-framework bg-deep-card">
         <div class="row-flex" @click=${() => { this._showFramework = !this._showFramework; }}>
           <span class="t-11b-6">🎯 安全框架覆盖度</span>
           <span class="t-muted-xs">MITRE ${mitrePct}% · SCF ${scfPct}%</span>
@@ -1905,7 +1915,7 @@ export class ScRoleCommander extends LitElement {
             @mouseover=${(e: Event) => { (e.target as HTMLElement).style.borderColor = 'var(--sc-primary-color)'; (e.target as HTMLElement).style.background = 'var(--sc-primary-alpha-10, rgba(59,130,246,0.1))'; }}
             @mouseout=${(e: Event) => { (e.target as HTMLElement).style.borderColor = '#1e293b'; (e.target as HTMLElement).style.background = '#0f172a'; }}
           >
-            <span style="width:6px;height:6px;border-radius:50%;background:${this._getToolStatusColor(tool.id)};flex-shrink:0;"></span>
+            <span style="background:${this._getToolStatusColor(tool.id)};" class="role-icon"></span>
             <span class="text-ellipsis">${this._resolveIcon(tool.icon)} ${tool.label}</span>
           </div>
         `)}
@@ -1953,15 +1963,15 @@ export class ScRoleCommander extends LitElement {
                 const isRowEnd = ci === row.length - 1;
 
                 return html`
-                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;opacity:${opacity};min-width:0;cursor:pointer;" @click=${(ev: Event) => { ev.stopPropagation(); this._selectedTimelineEvent = this._selectedTimelineEvent === e.id ? null : e.id; this._editingTimelineEvent = null; }}>
+                  <div style="opacity:${opacity};" class="tl-event-node" @click=${(ev: Event) => { ev.stopPropagation(); this._selectedTimelineEvent = this._selectedTimelineEvent === e.id ? null : e.id; this._editingTimelineEvent = null; }}>
                     <div class="t-muted-8b">${displayTime}</div>
                     ${e.modifiedTime ? html`<div class="t-7-700-warn">变</div>` : nothing}
-                    <div style="width:10px;height:10px;border-radius:50%;background:${c};border:2px solid #0f172a;z-index:2;box-shadow:0 0 6px ${c}55;${statusBadge ? 'position:relative;' : ''}">
-                      ${statusBadge ? html`<span style="position:absolute;top:-2px;right:-4px;font-size:8px;">${statusBadge}</span>` : nothing}
+                    <div style="background:${c};box-shadow:0 0 6px ${c}55;${statusBadge ? 'position:relative;' : ''}" class="tl-event-dot">
+                      ${statusBadge ? html`<span class="tl-status-badge">${statusBadge}</span>` : nothing}
                     </div>
                     <div class="t-8-600-e2">${e.label}</div>
                     <div class="row-flex">
-                      <span style="font-size:7px;font-weight:700;padding:0 3px;border-radius:2px;background:${c}18;color:${c};">${e.priority}</span>
+                      <span style="background:${c}18;color:${c};" class="t-9-475-2">${e.priority}</span>
                       ${e.source === 'auto' ? html`<span class="t-6">🔄</span>` : html`<span class="t-6">✍</span>`}
                     </div>
                   </div>
@@ -1970,7 +1980,7 @@ export class ScRoleCommander extends LitElement {
 
               <!-- 行末尾竖向连接线（非最后一行） -->
               ${!isLast ? html`
-                <div style="position:absolute;${isReversed ? 'left:0' : 'right:0'};top:18px;width:2px;height:90px;background:#1e293b;z-index:0;"></div>
+                <div style="${isReversed ? 'left:0' : 'right:0'}" class="dark-card-bar"></div>
               ` : nothing}
             </div>
           `;
@@ -1993,7 +2003,7 @@ export class ScRoleCommander extends LitElement {
         <div class="metric-strip-msg">${visibleEvents.length} 条${this._showCompleted ? '（全部）' : '进行中'}</div>
         ${completedCount > 0 ? html`
           <label class="t-9-647-cb" @click=${(e: Event) => { e.preventDefault(); this._showCompleted = !this._showCompleted; }}>
-            <span style="width:12px;height:12px;border-radius:3px;border:1px solid #475569;display:flex;align-items:center;justify-content:center;font-size:8px;background:${this._showCompleted ? '#3b82f6' : 'transparent'}">${this._showCompleted ? '✓' : ''}</span>
+            <span style="background:${this._showCompleted ? '#3b82f6' : 'transparent'}" class="role-icon">${this._showCompleted ? '✓' : ''}</span>
             显示已完成/关闭 (${completedCount})
           </label>
         ` : nothing}
@@ -2014,9 +2024,9 @@ export class ScRoleCommander extends LitElement {
       ${this._showTimelineForm ? html`
         <div class="tl-form">
           <div class="row-flex">
-            <input class="tl-input" class="flex-grow" placeholder="事件名称，如：零信任方案评审：微隔离改进" .value=${this._timelineFormLabel} @input=${(e: Event) => { this._timelineFormLabel = (e.target as HTMLInputElement).value; }} />
-            <input class="tl-input" class="p-8-10" type="datetime-local" .value=${this._timelineFormTime} @input=${(e: Event) => { this._timelineFormTime = (e.target as HTMLInputElement).value; }} />
-            <select class="tl-input" class="p-8-10" .value=${this._timelineFormPriority} @change=${(e: Event) => { this._timelineFormPriority = (e.target as HTMLSelectElement).value as TimelinePriority; }}>
+            <input class="tl-input flex-grow" placeholder="事件名称，如：零信任方案评审：微隔离改进" .value=${this._timelineFormLabel} @input=${(e: Event) => { this._timelineFormLabel = (e.target as HTMLInputElement).value; }} />
+            <input class="tl-input p-8-10" type="datetime-local" .value=${this._timelineFormTime} @input=${(e: Event) => { this._timelineFormTime = (e.target as HTMLInputElement).value; }} />
+            <select class="tl-input p-8-10" .value=${this._timelineFormPriority} @change=${(e: Event) => { this._timelineFormPriority = (e.target as HTMLSelectElement).value as TimelinePriority; }}>
               <option value="P1">P1</option>
               <option value="P2">P2</option>
               <option value="P3">P3</option>
@@ -2040,7 +2050,7 @@ export class ScRoleCommander extends LitElement {
             }}>✓ 保存</button>
             <button class="tl-btn" @click=${() => { this._showTimelineForm = false; }}>取消</button>
           </div>
-          <input class="tl-input" class="m-t-8" placeholder="事件描述（可选）" .value=${this._timelineFormDesc} @input=${(e: Event) => { this._timelineFormDesc = (e.target as HTMLInputElement).value; }} />
+          <input class="tl-input m-t-8" placeholder="事件描述（可选）" .value=${this._timelineFormDesc} @input=${(e: Event) => { this._timelineFormDesc = (e.target as HTMLInputElement).value; }} />
         </div>
       ` : nothing}
     `;
@@ -2065,8 +2075,8 @@ export class ScRoleCommander extends LitElement {
       <div class="tl-edit-popup" @click=${(ev: Event) => ev.stopPropagation()}>
         <div class="row-flex">
           <div class="row-flex">
-            <span style="font-weight:700;background:${c}18;color:${c};" class="t-9-475-2">${e.priority}</span>
-            <span style="font-size:9px;padding:1px 5px;border-radius:3px;color:${statusColor[e.status]};background:${statusColor[e.status]}18;">${statusLabel[e.status]}</span>
+            <span style="background:${c}18;color:${c};" class="t-9-475-2">${e.priority}</span>
+            <span style="color:${statusColor[e.status]};background:${statusColor[e.status]}18;" class="t-9-475-2">${statusLabel[e.status]}</span>
             ${e.source === 'auto' ? html`<span class="t-muted-8b">🔄 ${e.toolName}</span>` : html`<span class="t-muted-8b">✍ 手动</span>`}
           </div>
           <button class="btn-tool" @click=${() => { this._selectedTimelineEvent = null; }}>✕</button>
@@ -2077,7 +2087,7 @@ export class ScRoleCommander extends LitElement {
 
         <div class="tl-edit-row">
           <span class="tl-edit-label">原始时间</span>
-          <span class="tl-edit-value" class="t-muted-8b">${formatTime(e.originalTime)}</span>
+          <span class="tl-edit-value t-muted-8b">${formatTime(e.originalTime)}</span>
         </div>
 
         ${this._editingTimelineEvent === e.id ? html`
@@ -2086,13 +2096,13 @@ export class ScRoleCommander extends LitElement {
             <input type="datetime-local" class="tl-edit-input" .value=${this._editingTimelineTime} @input=${(ev: Event) => { this._editingTimelineTime = (ev.target as HTMLInputElement).value; }} />
           </div>
           <div class="row-flex">
-            <button class="tl-btn tl-btn-primary" class="t-muted-9b" @click=${() => { if (this._editingTimelineTime) { timelineStore.getState().modifyTime(e.id, new Date(this._editingTimelineTime).toISOString()); } this._editingTimelineEvent = null; this.requestUpdate(); }}>✓ 确认</button>
-            <button class="tl-btn" class="t-muted-9b" @click=${() => { this._editingTimelineEvent = null; }}>取消</button>
+            <button class="tl-btn tl-btn-primary t-muted-9b" @click=${() => { if (this._editingTimelineTime) { timelineStore.getState().modifyTime(e.id, new Date(this._editingTimelineTime).toISOString()); } this._editingTimelineEvent = null; this.requestUpdate(); }}>✓ 确认</button>
+            <button class="tl-btn t-muted-9b" @click=${() => { this._editingTimelineEvent = null; }}>取消</button>
           </div>
         ` : html`
           <div class="tl-edit-row">
             <span class="tl-edit-label">当前时间</span>
-            <span class="tl-edit-value" style="font-family:monospace;color:${e.modifiedTime ? '#f59e0b' : '#e2e8f0'};">
+            <span class="tl-edit-value tl-edit-mono" style="color:${e.modifiedTime ? '#f59e0b' : '#e2e8f0'};">
               ${e.modifiedTime ? formatTime(e.modifiedTime) : formatTime(e.originalTime)}
               ${e.modifiedTime ? html`<span class="t-8-700-warn">变</span>` : nothing}
             </span>
@@ -2100,12 +2110,12 @@ export class ScRoleCommander extends LitElement {
         `}
 
         <div class="tl-edit-actions">
-          ${this._editingTimelineEvent !== e.id ? html`<button class="tl-btn" class="t-muted-9b" @click=${() => { this._editingTimelineEvent = e.id; this._editingTimelineTime = e.modifiedTime ? e.modifiedTime.slice(0, 16) : e.originalTime.slice(0, 16); }}>⏱ 改时间</button>` : nothing}
-          ${e.status === 'open' ? html`<button class="tl-btn" class="tag-success" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'completed' }); this._selectedTimelineEvent = null; this.requestUpdate(); }}>✓ 完成</button>` : nothing}
-          ${e.status === 'completed' ? html`<button class="tl-btn" class="tag-mute" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'closed' }); this.requestUpdate(); }}>✕ 关闭</button>` : nothing}
-          ${e.status !== 'open' ? html`<button class="tl-btn" class="tag-info-mc" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'open' }); this.requestUpdate(); }}>↩ 重开</button>` : nothing}
-          ${e.toolId ? html`<button class="tl-btn" class="t-muted-9b" @click=${() => { this._selectedTimelineEvent = null; this._openToolPanel(e.toolId!); }}>🔧 打开工具</button>` : nothing}
-          <button class="tl-btn" class="tag-danger" @click=${() => { timelineStore.getState().deleteEvent(e.id); this._selectedTimelineEvent = null; this.requestUpdate(); }}>🗑 删除</button>
+          ${this._editingTimelineEvent !== e.id ? html`<button class="tl-btn t-muted-9b" @click=${() => { this._editingTimelineEvent = e.id; this._editingTimelineTime = e.modifiedTime ? e.modifiedTime.slice(0, 16) : e.originalTime.slice(0, 16); }}>⏱ 改时间</button>` : nothing}
+          ${e.status === 'open' ? html`<button class="tl-btn tag-success" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'completed' }); this._selectedTimelineEvent = null; this.requestUpdate(); }}>✓ 完成</button>` : nothing}
+          ${e.status === 'completed' ? html`<button class="tl-btn tag-mute" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'closed' }); this.requestUpdate(); }}>✕ 关闭</button>` : nothing}
+          ${e.status !== 'open' ? html`<button class="tl-btn tag-info-mc" @click=${() => { timelineStore.getState().updateEvent(e.id, { status: 'open' }); this.requestUpdate(); }}>↩ 重开</button>` : nothing}
+          ${e.toolId ? html`<button class="tl-btn t-muted-9b" @click=${() => { this._selectedTimelineEvent = null; this._openToolPanel(e.toolId!); }}>🔧 打开工具</button>` : nothing}
+          <button class="tl-btn tag-danger" @click=${() => { timelineStore.getState().deleteEvent(e.id); this._selectedTimelineEvent = null; this.requestUpdate(); }}>🗑 删除</button>
         </div>
       </div>
     `;
@@ -2133,8 +2143,8 @@ export class ScRoleCommander extends LitElement {
         </div>
         <div class="rd-sub-row">
           <span style="color:${c.deltaColor}">${c.delta}</span>
-          <span style="margin-left:4px">${c.deltaLabel}</span>
-          <span style="margin-left:auto;font-size:9px;padding:1px 5px;border-radius:3px;background:${c.badgeColor}15;color:${c.badgeColor}">${c.badge}</span>
+          <span class="mt-2-8">${c.deltaLabel}</span>
+          <span style="background:${c.badgeColor}15;color:${c.badgeColor}" class="ml-auto t-9-475-2">${c.badge}</span>
         </div>
       </div>
     `;
@@ -2146,7 +2156,7 @@ export class ScRoleCommander extends LitElement {
     const pulse = ago >= 0 && ago < 5;
     return html`
       <div class="zone zone-tools">
-        <div class="zone-label">📐 ${label} <span style="margin-left:auto;font-size:8px;font-weight:400;color:${pulse ? '#22c55e' : '#475569'}">${pulse ? '🟢 实时' : ago >= 0 ? `${ago}s ago` : ''}</span></div>
+        <div class="zone-label">📐 ${label} <span style="color:${pulse ? '#22c55e' : '#475569'}" class="zone-status-label">${pulse ? '🟢 实时' : ago >= 0 ? `${ago}s ago` : ''}</span></div>
         <div class="rd-row rd-5col">
           ${cards.map(c => c)}
         </div>
@@ -2265,7 +2275,7 @@ export class ScRoleCommander extends LitElement {
     const scfPct = fwCfg ? Math.round((fwCfg.scf.covered / fwCfg.scf.total) * 100) : 0;
 
     return html`
-      <div class="ciso-panel" class="pad-0">
+      <div class="ciso-panel pad-0">
         <!-- ═══ Section A: 决策中心 ═══ -->
         <div class="row-flex">
           <div class="flex-no-grow">${unsafeSVG(radarSvg)}</div>
@@ -2274,7 +2284,7 @@ export class ScRoleCommander extends LitElement {
               <span>🧭 CISO 决策中心</span>
             </div>
             ${decCfg ? html`
-              <div style="font-size:11px;color:${decCfg.recColor};padding:6px 10px;background:${decCfg.recColor}11;border-radius:6px;border-left:3px solid ${decCfg.recColor};margin-bottom:10px;line-height:1.5;">
+              <div style="color:${decCfg.recColor};background:${decCfg.recColor}11;border-left:3px solid ${decCfg.recColor};" class="p-8-10">
                 💡 ${decCfg.recommendation}
               </div>
               ${decCfg.pendingDecisions.length > 0 ? html`
@@ -2290,16 +2300,16 @@ export class ScRoleCommander extends LitElement {
                     ].filter(g => g.items.length > 0);
                     return groups.map(g => html`
                       <div class="dark-card-base">
-                        <div style="font-size:9px;font-weight:700;padding:4px 8px;border-bottom:1px solid #1e293b;color:${g.color};background:${g.color}0d;" class="row-flex">
+                        <div style="color:${g.color};background:${g.color}0d;" class="row-flex t-11b p-8-10">
                           <span>${g.label}</span>
                           <span class="metric-strip-hint">${g.items.length} 项</span>
                         </div>
                         ${g.items.map(d => html`
                           <div class="row-flex">
-                            <span style="width:5px;height:5px;border-radius:50%;background:${d.urgencyColor};flex-shrink:0;"></span>
+                            <span style="background:${d.urgencyColor};" class="dot-5"></span>
                             <span class="dark-card-name">${d.title}</span>
                             <span class="t-muted-gray">${d.impact}</span>
-                            <span style="font-weight:600;flex-shrink:0;background:${d.urgencyColor}15;color:${d.urgencyColor};" class="t-9-475-2">${d.urgency}</span>
+                            <span style="background:${d.urgencyColor}15;color:${d.urgencyColor};" class="t-9-475-2">${d.urgency}</span>
                           </div>
                         `)}
                       </div>
@@ -2311,7 +2321,7 @@ export class ScRoleCommander extends LitElement {
           </div>
         </div>
 
-        <div class="ciso-divider" class="m-0-20"></div>
+        <div class="ciso-divider m-0-20"></div>
 
         <!-- ═══ Section B: 合规与覆盖 ═══ -->
         <div class="grid-2-rd">
@@ -2330,16 +2340,16 @@ export class ScRoleCommander extends LitElement {
                 ].filter(g => g.items.length > 0);
                 return groups.map(g => html`
                   <div class="dark-card-base">
-                    <div style="font-size:9px;font-weight:700;padding:4px 8px;border-bottom:1px solid #1e293b;color:${g.color};background:${g.color}0d;" class="row-flex">
+                    <div style="color:${g.color};background:${g.color}0d;" class="row-flex t-11b p-8-10">
                       <span>${g.key === 'risk' ? '⚠️' : statusIcon[g.key] || ''} ${g.label}</span>
                       <span class="metric-strip-hint">${g.items.length} 项</span>
                     </div>
                     <div class="p-8-10">
                       ${g.key === 'risk' ? g.items.map((ri: any) => html`
                         <div class="row-flex">
-                          <span style="width:4px;height:4px;border-radius:50%;background:${ri.levelColor};flex-shrink:0;"></span>
+                          <span style="background:${ri.levelColor};" class="role-icon"></span>
                           <span class="dark-card-name">${ri.desc}</span>
-                          <span style="font-size:8px;padding:1px 5px;border-radius:3px;background:${ri.levelColor}15;color:${ri.levelColor};font-weight:600;flex-shrink:0;">${ri.level}</span>
+                          <span style="background:${ri.levelColor}15;color:${ri.levelColor};" class="t-muted-8b t-9-475-2">${ri.level}</span>
                         </div>
                       `) : g.items.map((r: any) => html`
                         <div class="row-flex">
@@ -2347,7 +2357,7 @@ export class ScRoleCommander extends LitElement {
                             <div class="dark-card-name">${r.name}</div>
                             <div class="t-8-475-1">${r.detail}</div>
                           </div>
-                          <div style="font-size:16px;font-weight:700;color:${r.color};flex-shrink:0;">${r.score}%</div>
+                          <div style="color:${r.color};" class="posture-kpi-value">${r.score}%</div>
                         </div>
                       `)}
                     </div>
@@ -2386,7 +2396,7 @@ export class ScRoleCommander extends LitElement {
           </div>
         </div>
 
-        <div class="ciso-divider" class="m-0-20"></div>
+        <div class="ciso-divider m-0-20"></div>
 
         <!-- ═══ Section C: 可视化分析 ═══ -->
         <div class="p-12-14">
@@ -2730,7 +2740,7 @@ export class ScRoleCommander extends LitElement {
     return html`
       <div class="role-commander" style="--sc-primary-color: ${theme['--role-primary']}; --sc-primary-alpha-10: ${theme['--role-primary']}1A;">
         <div class="status-bar" style="background: color-mix(in srgb, ${theme['--role-primary']} 8%, transparent); border-bottom: 1px solid color-mix(in srgb, ${theme['--role-primary']} 15%, transparent);">
-          <span style="display: flex; align-items: center; gap: 4px;"><span class="status-dot" style="background: ${theme['--role-success']}"></span> <span style="color: ${theme['--role-success']}">系统运行正常</span></span>
+          <span class="row-flex"><span class="status-dot" style="background: ${theme['--role-success']}"></span> <span style="color: ${theme['--role-success']}">系统运行正常</span></span>
           <span>当前角色：${theme.label}</span>
           <span class="ml-auto">最后更新：${new Date().toLocaleString()}</span>
         </div>
@@ -2744,7 +2754,7 @@ export class ScRoleCommander extends LitElement {
           </div>
         ` : nothing}
         ${this.roleId !== 'security-architect' ? html`
-          <div style="display:flex;justify-content:center;padding:0 12px;background:#0d1321;border-bottom:1px solid #1e293b;${this._showToolResults ? 'margin-top:-2px;' : ''}">
+          <div style="${this._showToolResults ? 'margin-top:-2px;' : ''}" class="tl-toolbar">
             <button class="t-results-toggle" @click=${() => { this._showToolResults = !this._showToolResults; }}>
               ${this._showToolResults ? '▾ 收起' : '▴ 展开'}
             </button>

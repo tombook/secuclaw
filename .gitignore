@@ -59,3 +59,16 @@ firebase-debug.log
 test-simple.js
 test-2llm.js
 3-llm-test.js
+
+# Prisma generated client (Phase 14: PostgreSQL 迁移)
+packages/core/src/generated/
+packages/core/prisma/migrations/dev.db*
+
+# Benchmark and test data
+data/bench*/
+data/test-e2e*/
+packages/core/data/test-e2e/
+packages/core/data/test-rasp/
+
+# IDE tool files
+.trae/

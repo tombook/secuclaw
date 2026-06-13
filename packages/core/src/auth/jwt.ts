@@ -8,6 +8,7 @@ export type JWTPayload = {
 
 import crypto from 'crypto';
 import type { JsonStore } from '../storage/json-store.js';
+import type Redis from 'ioredis';
 import { TokenBlacklist } from './token-blacklist.js';
 import { ConfigService } from '../config/config-service.js';
 
@@ -39,8 +40,22 @@ function base64UrlDecodeToObject(str: string): any {
 
 let blacklist: TokenBlacklist | null = null;
 
+/** 使用 JSON 文件存储激活 token 黑名单 */
 export function setTokenBlacklistStore(store: JsonStore): void {
   blacklist = new TokenBlacklist(store);
+}
+
+/**
+ * 使用 Redis 激活 token 黑名单（推荐，集群模式）
+ * 在 main.ts 中 Redis 就绪后调用
+ */
+export function setTokenBlacklistRedis(store: JsonStore, redis: Redis): void {
+  blacklist = new TokenBlacklist(store, redis);
+}
+
+/** 获取当前 blacklist 实例（供外部注入 Redis 后端用） */
+export function getTokenBlacklist(): TokenBlacklist | null {
+  return blacklist;
 }
 
 function signUnsigned(headerB64: string, payloadB64: string): string {

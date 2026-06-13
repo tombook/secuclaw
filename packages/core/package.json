@@ -11,9 +11,20 @@
     "start": "bun src/main.ts",
     "test": "bun test",
     "lint": "eslint src --ext .ts",
-    "clean": "rm -rf dist node_modules"
+    "clean": "rm -rf dist node_modules",
+    "db:generate": "bunx prisma generate",
+    "db:migrate": "bunx prisma migrate dev",
+    "db:push": "bunx prisma db push",
+    "db:studio": "bunx prisma studio",
+    "db:seed": "bun scripts/migrate-json-to-pg.ts",
+    "db:migrate-data": "bun scripts/migrate-json-to-pg.ts",
+    "db:migrate-data:dry-run": "bun scripts/migrate-json-to-pg.ts --dry-run",
+    "db:migrate-data:verify": "bun scripts/migrate-json-to-pg.ts --verify",
+    "postinstall": "prisma generate || true"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/helmet": "^4.0.0",
@@ -24,7 +35,9 @@
     "express": "^5.2.1",
     "gray-matter": "^4.0.3",
     "helmet": "^8.1.0",
+    "ioredis": "^5.11.1",
     "morgan": "^1.10.1",
+    "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "typedi": "^0.10.0",
     "ws": "^8.16.0",
@@ -34,8 +47,10 @@
     "@types/better-sqlite3": "^7.6.8",
     "@types/bun": "latest",
     "@types/compression": "^1.8.1",
+    "@types/pg": "^8.20.0",
     "@types/ws": "^8.5.10",
     "eslint": "^8.56.0",
+    "prisma": "^7.8.0",
     "typescript": "^5.3.3"
   }
 }

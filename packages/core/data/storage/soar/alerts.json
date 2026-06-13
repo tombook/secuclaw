@@ -1,0 +1,17 @@
+[
+  {
+    "id": "a1",
+    "timestamp": 1781300000000,
+    "source": "wazuh",
+    "alertType": "ssh_bruteforce",
+    "severity": "high",
+    "entity": {
+      "type": "ip",
+      "id": "203.0.113.42"
+    },
+    "description": "SSH brute force detected",
+    "rawData": {},
+    "mitreTactic": "reconnaissance",
+    "mitreTechnique": "T1110"
+  }
+]

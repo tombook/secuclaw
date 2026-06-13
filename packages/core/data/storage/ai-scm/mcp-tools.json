@@ -1,0 +1,753 @@
+[
+  {
+    "name": "filesystem-read",
+    "server": "filesystem-mcp",
+    "version": "1.4.2",
+    "description": "Read files and list directories from the local file system",
+    "category": "file_system",
+    "status": "active",
+    "riskLevel": "safe",
+    "riskScore": 0,
+    "riskFactors": [],
+    "capabilities": [
+      "read_file",
+      "list_directory",
+      "stat"
+    ],
+    "permissions": {
+      "readFiles": true,
+      "writeFiles": false,
+      "executeCommands": false,
+      "networkAccess": false,
+      "accessTokens": [],
+      "sensitiveDataAccess": "internal"
+    },
+    "dataEgress": {
+      "canUpload": false,
+      "canDownload": false,
+      "allowedDestinations": []
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "path": "/srv/reports/q1.pdf"
+        },
+        "risk": "low",
+        "reason": "Read-only access to a benign file path"
+      }
+    ],
+    "lastAudited": 1780908272695,
+    "auditNotes": "Audited by secops; low risk, scoped to /srv",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "8edaf59e-9473-46f3-8892-cc46c04145c2",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  },
+  {
+    "name": "filesystem-write",
+    "server": "filesystem-mcp",
+    "version": "1.4.2",
+    "description": "Write or append to files in allowed directories",
+    "category": "file_system",
+    "status": "active",
+    "riskLevel": "safe",
+    "riskScore": 10,
+    "riskFactors": [
+      {
+        "factor": "writeFiles",
+        "weight": 10,
+        "description": "Tool can write to the file system"
+      }
+    ],
+    "capabilities": [
+      "write_file",
+      "append_file",
+      "create_directory"
+    ],
+    "permissions": {
+      "readFiles": true,
+      "writeFiles": true,
+      "executeCommands": false,
+      "networkAccess": false,
+      "accessTokens": [],
+      "sensitiveDataAccess": "internal"
+    },
+    "dataEgress": {
+      "canUpload": false,
+      "canDownload": false,
+      "allowedDestinations": []
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "content"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "path": "/srv/reports/summary.txt",
+          "content": "OK"
+        },
+        "risk": "medium",
+        "reason": "Writes a file to an allowed directory"
+      }
+    ],
+    "lastAudited": 1780476272695,
+    "auditNotes": "Write access limited to /srv",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "2f93259a-3003-462a-a600-c4250d80b24f",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  },
+  {
+    "name": "shell-exec",
+    "server": "shell-mcp",
+    "version": "2.1.0",
+    "description": "Execute shell commands on the host",
+    "category": "shell",
+    "status": "review",
+    "riskLevel": "high",
+    "riskScore": 63,
+    "riskFactors": [
+      {
+        "factor": "executeCommands",
+        "weight": 30,
+        "description": "Tool can execute shell commands on the host"
+      },
+      {
+        "factor": "sensitiveDataAccess:confidential",
+        "weight": 8,
+        "description": "Tool can access confidential data"
+      },
+      {
+        "factor": "canUpload",
+        "weight": 15,
+        "description": "Tool can upload data to external destinations"
+      },
+      {
+        "factor": "writeFiles",
+        "weight": 10,
+        "description": "Tool can write to the file system"
+      }
+    ],
+    "capabilities": [
+      "exec_command",
+      "spawn_process"
+    ],
+    "permissions": {
+      "readFiles": true,
+      "writeFiles": true,
+      "executeCommands": true,
+      "networkAccess": true,
+      "accessTokens": [],
+      "sensitiveDataAccess": "confidential"
+    },
+    "dataEgress": {
+      "canUpload": true,
+      "canDownload": true,
+      "allowedDestinations": [
+        "*"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "command": "ls -la /tmp"
+        },
+        "risk": "high",
+        "reason": "Shell execution with broad host access"
+      }
+    ],
+    "lastAudited": 1777452272695,
+    "auditNotes": "Pending security review; restrict to admin role only",
+    "installedBy": "devops",
+    "lastUsedAt": null,
+    "id": "c1f2b2a9-7481-4c16-9d66-5031d7db2bb1",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 50
+  },
+  {
+    "name": "network-fetch",
+    "server": "http-mcp",
+    "version": "3.0.1",
+    "description": "Fetch arbitrary URLs via HTTP/HTTPS",
+    "category": "network",
+    "status": "active",
+    "riskLevel": "safe",
+    "riskScore": 15,
+    "riskFactors": [
+      {
+        "factor": "canUpload",
+        "weight": 15,
+        "description": "Tool can upload data to external destinations"
+      }
+    ],
+    "capabilities": [
+      "http_get",
+      "http_post",
+      "stream"
+    ],
+    "permissions": {
+      "readFiles": false,
+      "writeFiles": false,
+      "executeCommands": false,
+      "networkAccess": true,
+      "accessTokens": [],
+      "sensitiveDataAccess": "public"
+    },
+    "dataEgress": {
+      "canUpload": true,
+      "canDownload": true,
+      "allowedDestinations": [
+        "api.example.com",
+        "cdn.example.com"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "url": "https://api.example.com/health"
+        },
+        "risk": "medium",
+        "reason": "Egress to an allowed external API"
+      }
+    ],
+    "lastAudited": 1780735472695,
+    "auditNotes": "Domain allowlist enforced",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "d6a96914-2679-4836-a2c4-939a51207d9b",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  },
+  {
+    "name": "database-query",
+    "server": "postgres-mcp",
+    "version": "2.5.0",
+    "description": "Run read-only SQL queries against the warehouse",
+    "category": "database",
+    "status": "active",
+    "riskLevel": "low",
+    "riskScore": 33,
+    "riskFactors": [
+      {
+        "factor": "accessTokens",
+        "weight": 25,
+        "description": "Tool has access to 1 token(s)"
+      },
+      {
+        "factor": "sensitiveDataAccess:confidential",
+        "weight": 8,
+        "description": "Tool can access confidential data"
+      }
+    ],
+    "capabilities": [
+      "select",
+      "explain"
+    ],
+    "permissions": {
+      "readFiles": false,
+      "writeFiles": false,
+      "executeCommands": false,
+      "networkAccess": true,
+      "accessTokens": [
+        "warehouse-readonly"
+      ],
+      "sensitiveDataAccess": "confidential"
+    },
+    "dataEgress": {
+      "canUpload": false,
+      "canDownload": true,
+      "allowedDestinations": [
+        "warehouse.internal"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sql": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "sql"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "sql": "SELECT count(*) FROM users"
+        },
+        "risk": "medium",
+        "reason": "Read-only query against warehouse"
+      }
+    ],
+    "lastAudited": 1780130672695,
+    "auditNotes": "Read-only role enforced at the database",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "ddc12b4c-e7d1-454f-8621-8888e7eaa298",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  },
+  {
+    "name": "database-write",
+    "server": "postgres-mcp",
+    "version": "2.5.0",
+    "description": "Insert, update, or delete rows in the warehouse",
+    "category": "database",
+    "status": "active",
+    "riskLevel": "medium",
+    "riskScore": 50,
+    "riskFactors": [
+      {
+        "factor": "accessTokens",
+        "weight": 25,
+        "description": "Tool has access to 2 token(s)"
+      },
+      {
+        "factor": "sensitiveDataAccess:restricted",
+        "weight": 15,
+        "description": "Tool can access restricted data"
+      },
+      {
+        "factor": "writeFiles",
+        "weight": 10,
+        "description": "Tool can write to the file system"
+      }
+    ],
+    "capabilities": [
+      "insert",
+      "update",
+      "delete",
+      "transaction"
+    ],
+    "permissions": {
+      "readFiles": false,
+      "writeFiles": true,
+      "executeCommands": false,
+      "networkAccess": true,
+      "accessTokens": [
+        "warehouse-readonly",
+        "warehouse-write"
+      ],
+      "sensitiveDataAccess": "restricted"
+    },
+    "dataEgress": {
+      "canUpload": false,
+      "canDownload": true,
+      "allowedDestinations": [
+        "warehouse.internal"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sql": {
+          "type": "string"
+        },
+        "params": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "sql"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "sql": "UPDATE users SET last_login=now() WHERE id=$1",
+          "params": [
+            42
+          ]
+        },
+        "risk": "high",
+        "reason": "Mutates production warehouse state"
+      }
+    ],
+    "lastAudited": 1776156272695,
+    "auditNotes": "Re-audit recommended; write access to restricted tables",
+    "installedBy": "data-eng",
+    "lastUsedAt": null,
+    "id": "690fe181-7aa2-45d4-a89a-5911569b32fb",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 50
+  },
+  {
+    "name": "code-execute",
+    "server": "python-mcp",
+    "version": "0.9.0",
+    "description": "Run arbitrary Python code in a sandboxed interpreter",
+    "category": "code_exec",
+    "status": "review",
+    "riskLevel": "critical",
+    "riskScore": 100,
+    "riskFactors": [
+      {
+        "factor": "executeCommands",
+        "weight": 30,
+        "description": "Tool can execute shell commands on the host"
+      },
+      {
+        "factor": "accessTokens",
+        "weight": 25,
+        "description": "Tool has access to 2 token(s)"
+      },
+      {
+        "factor": "sensitiveDataAccess:top_secret",
+        "weight": 25,
+        "description": "Tool can access top-secret data"
+      },
+      {
+        "factor": "canUpload",
+        "weight": 15,
+        "description": "Tool can upload data to external destinations"
+      },
+      {
+        "factor": "writeFiles",
+        "weight": 10,
+        "description": "Tool can write to the file system"
+      }
+    ],
+    "capabilities": [
+      "eval",
+      "exec",
+      "import"
+    ],
+    "permissions": {
+      "readFiles": true,
+      "writeFiles": true,
+      "executeCommands": true,
+      "networkAccess": true,
+      "accessTokens": [
+        "python-runtime",
+        "s3-read"
+      ],
+      "sensitiveDataAccess": "top_secret"
+    },
+    "dataEgress": {
+      "canUpload": true,
+      "canDownload": true,
+      "allowedDestinations": [
+        "*"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "code": "import os; os.system(\"ls\")"
+        },
+        "risk": "critical",
+        "reason": "Sandbox can be escaped to execute shell commands"
+      }
+    ],
+    "lastAudited": 1773564272695,
+    "auditNotes": "Prior incident: sandbox escape attempted 2025-04-12",
+    "installedBy": "data-eng",
+    "lastUsedAt": null,
+    "id": "a24c765b-74a3-4002-bef2-972fb192a3bd",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 20
+  },
+  {
+    "name": "secret-read",
+    "server": "vault-mcp",
+    "version": "1.0.0",
+    "description": "Read secrets from the central vault",
+    "category": "auth",
+    "status": "active",
+    "riskLevel": "medium",
+    "riskScore": 50,
+    "riskFactors": [
+      {
+        "factor": "accessTokens",
+        "weight": 25,
+        "description": "Tool has access to 2 token(s)"
+      },
+      {
+        "factor": "sensitiveDataAccess:top_secret",
+        "weight": 25,
+        "description": "Tool can access top-secret data"
+      }
+    ],
+    "capabilities": [
+      "read_secret",
+      "list_secrets"
+    ],
+    "permissions": {
+      "readFiles": true,
+      "writeFiles": false,
+      "executeCommands": false,
+      "networkAccess": true,
+      "accessTokens": [
+        "vault-read",
+        "kms-decrypt"
+      ],
+      "sensitiveDataAccess": "top_secret"
+    },
+    "dataEgress": {
+      "canUpload": false,
+      "canDownload": true,
+      "allowedDestinations": [
+        "vault.internal"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "secretPath": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "secretPath"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "secretPath": "prod/db/password"
+        },
+        "risk": "critical",
+        "reason": "Returns plaintext top-secret credentials"
+      }
+    ],
+    "lastAudited": 1781167472695,
+    "auditNotes": "Each invocation is dual-approval gated",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "c22c816e-ac2f-4f7f-82b0-1ab57cb25edb",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  },
+  {
+    "name": "slack-post",
+    "server": "slack-mcp",
+    "version": "4.2.0",
+    "description": "Post messages to Slack channels",
+    "category": "message",
+    "status": "active",
+    "riskLevel": "medium",
+    "riskScore": 40,
+    "riskFactors": [
+      {
+        "factor": "accessTokens",
+        "weight": 25,
+        "description": "Tool has access to 1 token(s)"
+      },
+      {
+        "factor": "canUpload",
+        "weight": 15,
+        "description": "Tool can upload data to external destinations"
+      }
+    ],
+    "capabilities": [
+      "post_message",
+      "list_channels"
+    ],
+    "permissions": {
+      "readFiles": false,
+      "writeFiles": false,
+      "executeCommands": false,
+      "networkAccess": true,
+      "accessTokens": [
+        "slack-bot-token"
+      ],
+      "sensitiveDataAccess": "public"
+    },
+    "dataEgress": {
+      "canUpload": true,
+      "canDownload": false,
+      "allowedDestinations": [
+        "slack.com"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "channel",
+        "text"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "channel": "#alerts",
+          "text": "Deployment succeeded"
+        },
+        "risk": "low",
+        "reason": "Posting a benign message to a public channel"
+      }
+    ],
+    "lastAudited": 1781081072695,
+    "auditNotes": "Bot token scoped to chat:write only",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "4addc464-a0d6-4e35-a618-3100628d54dd",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  },
+  {
+    "name": "email-send",
+    "server": "smtp-mcp",
+    "version": "2.0.4",
+    "description": "Send email via the corporate SMTP relay",
+    "category": "message",
+    "status": "active",
+    "riskLevel": "medium",
+    "riskScore": 48,
+    "riskFactors": [
+      {
+        "factor": "accessTokens",
+        "weight": 25,
+        "description": "Tool has access to 1 token(s)"
+      },
+      {
+        "factor": "sensitiveDataAccess:confidential",
+        "weight": 8,
+        "description": "Tool can access confidential data"
+      },
+      {
+        "factor": "canUpload",
+        "weight": 15,
+        "description": "Tool can upload data to external destinations"
+      }
+    ],
+    "capabilities": [
+      "send_email",
+      "send_with_attachment"
+    ],
+    "permissions": {
+      "readFiles": true,
+      "writeFiles": false,
+      "executeCommands": false,
+      "networkAccess": true,
+      "accessTokens": [
+        "smtp-relay"
+      ],
+      "sensitiveDataAccess": "confidential"
+    },
+    "dataEgress": {
+      "canUpload": true,
+      "canDownload": false,
+      "allowedDestinations": [
+        "smtp.internal"
+      ]
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "to",
+        "subject",
+        "body"
+      ]
+    },
+    "exampleInvocations": [
+      {
+        "input": {
+          "to": "team@example.com",
+          "subject": "Update",
+          "body": "See attached"
+        },
+        "risk": "medium",
+        "reason": "Outbound email may carry confidential content"
+      }
+    ],
+    "lastAudited": 1780303472695,
+    "auditNotes": "Relay enforces DLP scanning",
+    "installedBy": "admin",
+    "lastUsedAt": null,
+    "id": "1f24cf63-f9d8-492e-94fc-85cf6ba7dae6",
+    "createdAt": 1781340272695,
+    "usageCount": 0,
+    "trustScore": 70
+  }
+]

@@ -1,56 +1,43 @@
-# Stage 1: Build dependencies
-FROM node:20-slim AS deps
-WORKDIR /app
-RUN corepack enable pnpm
-COPY package.json pnpm-lock.yaml ./
-COPY packages/core/package.json packages/core/
-RUN pnpm install --frozen-lockfile --prod
+FROM oven/bun:1.1.38-alpine AS builder
 
-# Stage 2: Build source code
-FROM node:20-slim AS builder
-WORKDIR /app
-RUN corepack enable pnpm
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN pnpm --filter @secuclaw/core run build
-RUN pnpm --filter @secuclaw/ui run build
-
-# Stage 3: Production runtime
-FROM node:20-slim
 WORKDIR /app
 
-# Install security updates and runtime dependencies
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends dumb-init tzdata ca-certificates && \
-    rm -rf /var/lib/apt/lists/* && \
-    # Create non-root user for security
-    groupadd -r secuclaw && useradd -r -g secuclaw secuclaw
+COPY package.json bun.lock ./
+COPY packages/core/package.json ./packages/core/
+COPY packages/ui/package.json ./packages/ui/
 
-# Copy build artifacts
+RUN bun install --frozen-lockfile --production=false
+
+COPY packages/core ./packages/core
+COPY packages/ui ./packages/ui
+
+RUN cd packages/core && bun build src/main.ts --outdir dist --target bun --minify
+
+FROM oven/bun:1.1.38-alpine AS runtime
+
+WORKDIR /app
+
+RUN apk add --no-cache tini curl dumb-init
+
+RUN addgroup -S secuclaw && adduser -S secuclaw -G secuclaw
+
 COPY --from=builder /app/packages/core/dist ./dist
-COPY --from=builder /app/packages/core/package.json .
-COPY --from=builder /app/packages/ui/dist ./public
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/packages/core/data ./data
+COPY --from=builder /app/packages/core/node_modules ./node_modules
 
-# Create data directory and set permissions
-RUN mkdir -p /data && chown -R secuclaw:secuclaw /data
-VOLUME /data
+RUN chown -R secuclaw:secuclaw /app
 
-# Environment configuration
-ENV NODE_ENV=production
-ENV PORT=8080
-ENV HOST=0.0.0.0
-ENV DATA_PATH=/data
-ENV STATIC_PATH=/app/public
-
-# Security: Run as non-root user
 USER secuclaw
 
-EXPOSE 8080
+ENV NODE_ENV=production
+ENV PORT=21981
+ENV STORAGE_PATH=/app/data/storage
+ENV LOG_LEVEL=info
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+EXPOSE 21981
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/index.js"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:21981/health || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["bun", "run", "dist/main.js"]

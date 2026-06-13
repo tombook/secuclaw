@@ -1,0 +1,245 @@
+[
+  {
+    "id": "sqli-union-select-3defd86a-aef0-4d00-bba4-794d23853cfa",
+    "name": "UNION SELECT keyword",
+    "description": "Detects UNION/UNION ALL SELECT clauses used to combine attacker queries",
+    "attackType": "sqli_union",
+    "severity": "high",
+    "pattern": {},
+    "confidence": 0.92,
+    "description_zh": "检测 UNION/UNION ALL SELECT 子句合并攻击者查询",
+    "examples": [
+      "' UNION SELECT username, password FROM users--",
+      "1 UNION ALL SELECT NULL,NULL,NULL--"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-tautology-or-1-1-17d3a1ed-22d5-4d5a-bbdf-4c005f1c447c",
+    "name": "OR 1=1 tautology",
+    "description": "Detects classic tautology predicates (OR/AND with literal equality) used to bypass WHERE clauses",
+    "attackType": "sqli_tautology",
+    "severity": "critical",
+    "pattern": {},
+    "confidence": 0.95,
+    "description_zh": "检测经典永真谓词绕过 WHERE 条件",
+    "examples": [
+      "admin' OR '1'='1",
+      "' OR 1=1 --",
+      "' AND 1=1 #"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-sql-comment-6b4c7fcc-a96a-4233-acdb-b6d38e8c09d1",
+    "name": "SQL comment injection",
+    "description": "Detects SQL line or block comments used to terminate the legitimate query",
+    "attackType": "sqli_comment",
+    "severity": "medium",
+    "pattern": {},
+    "confidence": 0.7,
+    "description_zh": "检测 SQL 行/块注释注入",
+    "examples": [
+      "admin'--",
+      "1; DROP TABLE x;/*",
+      "name # comment"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "high"
+  },
+  {
+    "id": "sqli-stacked-queries-1377bf45-b316-4d62-8207-c5d5ecdeb402",
+    "name": "Stacked destructive queries",
+    "description": "Detects stacked queries that issue DROP/DELETE/UPDATE/INSERT/CREATE/ALTER/TRUNCATE/EXEC",
+    "attackType": "sqli_stacked",
+    "severity": "critical",
+    "pattern": {},
+    "confidence": 0.96,
+    "description_zh": "检测堆叠查询触发的破坏性 DDL/DML",
+    "examples": [
+      "1; DROP TABLE users--",
+      "x'; UPDATE accounts SET balance=0;--"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-time-based-sleep-55815b79-9189-4193-b0cc-1f038fd5d994",
+    "name": "Time-based SLEEP function",
+    "description": "Detects sleep/pg_sleep/waitfor/benchmark calls used for blind time-based injection",
+    "attackType": "sqli_time_based",
+    "severity": "high",
+    "pattern": {},
+    "confidence": 0.9,
+    "description_zh": "检测用于盲注的时间函数调用",
+    "examples": [
+      "1' AND SLEEP(5)--",
+      "'; WAITFOR DELAY '0:0:10'--",
+      "BENCHMARK(1000000,MD5(1))"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "medium"
+  },
+  {
+    "id": "sqli-error-extractvalue-b8c724f9-4ab6-424b-8d07-a0fb1955607c",
+    "name": "Error-based extractvalue/updatexml",
+    "description": "Detects MySQL extractvalue/updatexml calls used for error-based extraction",
+    "attackType": "sqli_error_based",
+    "severity": "high",
+    "pattern": {},
+    "confidence": 0.94,
+    "description_zh": "检测 MySQL extractvalue/updatexml 报错注入",
+    "examples": [
+      "AND extractvalue(1,concat(0x7e,version()))",
+      "OR updatexml(1,concat(0x7e,user()),1)"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-xp-cmdshell-6d242ef7-e84c-4374-b9c0-d45fe2ff4471",
+    "name": "xp_cmdshell execution",
+    "description": "Detects SQL Server xp_cmdshell attempts to invoke operating system commands",
+    "attackType": "sqli_error_based",
+    "severity": "critical",
+    "pattern": {},
+    "confidence": 0.99,
+    "description_zh": "检测 SQL Server xp_cmdshell 执行操作系统命令",
+    "examples": [
+      "'; EXEC xp_cmdshell('whoami')--",
+      "1; EXEC master..xp_cmdshell 'net user'"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-information-schema-4399f7f8-3e4b-4d18-ba58-f1b6ca235d45",
+    "name": "Information schema probing",
+    "description": "Detects references to information_schema / pg_catalog / sysobjects / syscolumns used for schema discovery",
+    "attackType": "sqli_union",
+    "severity": "high",
+    "pattern": {},
+    "confidence": 0.88,
+    "description_zh": "检测对信息模式/系统表的探测",
+    "examples": [
+      "UNION SELECT * FROM information_schema.tables",
+      "1' AND 1=(SELECT TOP 1 name FROM sysobjects)"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "medium"
+  },
+  {
+    "id": "sqli-hex-encoding-bypass-0a34a12f-2350-42d5-8c97-52d1e8822939",
+    "name": "Hex-encoded payload",
+    "description": "Detects long hex literals (0x...) often used to bypass string filters",
+    "attackType": "sqli_union",
+    "severity": "medium",
+    "pattern": {},
+    "confidence": 0.6,
+    "description_zh": "检测用于绕过过滤的长十六进制负载",
+    "examples": [
+      "UNION SELECT 0x70617373776f7264",
+      "0x27204f5220313d31202d2d20"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "high"
+  },
+  {
+    "id": "sqli-into-outfile-fb06a451-6612-45c5-826c-e0fff4edb3c9",
+    "name": "INTO OUTFILE / DUMPFILE",
+    "description": "Detects INTO OUTFILE/DUMPFILE statements used to write webshells",
+    "attackType": "sqli_stacked",
+    "severity": "critical",
+    "pattern": {},
+    "confidence": 0.97,
+    "description_zh": "检测 INTO OUTFILE/DUMPFILE 写文件",
+    "examples": [
+      "' UNION SELECT 1,2 INTO OUTFILE '/var/www/shell.php'--",
+      "1; SELECT 0x3c3f706870 INTO DUMPFILE '/tmp/x.php'"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-load-file-268bd53d-7264-4206-8ea4-8cc3236e5cb6",
+    "name": "LOAD_FILE() function",
+    "description": "Detects MySQL LOAD_FILE calls used to read arbitrary server files",
+    "attackType": "sqli_stacked",
+    "severity": "critical",
+    "pattern": {},
+    "confidence": 0.98,
+    "description_zh": "检测 LOAD_FILE 读取服务器任意文件",
+    "examples": [
+      "UNION SELECT LOAD_FILE('/etc/passwd')",
+      "SELECT load_file(0x2f6574632f706173737764)"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-char-function-48feb9a7-20e3-4371-a53e-43556fad00d6",
+    "name": "CHAR() numeric encoding",
+    "description": "Detects CHAR() numeric encoding used to obfuscate strings",
+    "attackType": "sqli_error_based",
+    "severity": "medium",
+    "pattern": {},
+    "confidence": 0.55,
+    "description_zh": "检测 CHAR() 数字编码混淆字符串",
+    "examples": [
+      "CHAR(68,69,70)",
+      "0x/*char*/"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "high"
+  },
+  {
+    "id": "sqli-subquery-select-5917d072-d061-4123-adcd-0aeba8d3d51e",
+    "name": "Parenthesized SELECT subquery",
+    "description": "Detects parenthesized SELECT subqueries used for boolean/data extraction",
+    "attackType": "sqli_union",
+    "severity": "medium",
+    "pattern": {},
+    "confidence": 0.65,
+    "description_zh": "检测括号包裹的 SELECT 子查询",
+    "examples": [
+      "1 AND (SELECT COUNT(*) FROM users)>0",
+      "'; (SELECT password FROM admins LIMIT 1)--"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "medium"
+  },
+  {
+    "id": "sqli-waitfor-delay-quoted-c197bbcd-7a5e-43bc-a21c-c45b87185299",
+    "name": "WAITFOR DELAY with quoted payload",
+    "description": "Detects SQL Server WAITFOR DELAY followed by quoted time argument (time-based blind)",
+    "attackType": "sqli_time_based",
+    "severity": "high",
+    "pattern": {},
+    "confidence": 0.93,
+    "description_zh": "检测 SQL Server WAITFOR DELAY 引号参数盲注",
+    "examples": [
+      "'; WAITFOR DELAY '0:0:5'--",
+      "1; IF 1=1 WAITFOR DELAY '0:0:10'"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "low"
+  },
+  {
+    "id": "sqli-mysql-meta-functions-c1a1811c-91d2-4646-8c17-fa8675b64697",
+    "name": "MySQL metadata functions",
+    "description": "Detects MySQL current_user/database/version/user() metadata calls used in fingerprinting",
+    "attackType": "sqli_error_based",
+    "severity": "medium",
+    "pattern": {},
+    "confidence": 0.5,
+    "description_zh": "检测 MySQL 元数据函数用于指纹识别",
+    "examples": [
+      "UNION SELECT version(),database()",
+      "' AND user()=current_user --"
+    ],
+    "enabled": true,
+    "falsePositiveRisk": "high"
+  }
+]

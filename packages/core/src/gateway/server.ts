@@ -5,6 +5,9 @@ import { createServer, IncomingMessage, Server as HttpServer } from 'http';
 import { Router } from './router.js';
 import { verifyToken } from '../auth/jwt.js';
 import type { JWTPayload } from '../auth/jwt.js';
+import type { RedisBroadcastAdapter } from './redis-broadcast-adapter.js';
+import { checkDatabaseHealth } from '../db/prisma.js';
+import { checkRedisHealth } from '../db/redis.js';
 
 const logger = {
   info: (...args: any[]) => console.log('[Gateway]', ...args),
@@ -64,6 +67,7 @@ export class GatewayServer {
   private clients: Map<string, Client> = new Map();
   private router: Router;
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  private redisAdapter: RedisBroadcastAdapter | null = null;
 
   constructor(config: GatewayConfig) {
     this.config = config;
@@ -93,8 +97,21 @@ export class GatewayServer {
       };
 
       if (req.url === '/health' && req.method === 'GET') {
+        // Phase 14：扩展健康检查，包含 PG 和 Redis 连接状态
+        const [dbHealth, redisHealth] = await Promise.all([
+          checkDatabaseHealth(),
+          checkRedisHealth(),
+        ]);
         setCors(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
+        res.end(JSON.stringify({
+          status: 'ok',
+          timestamp: Date.now(),
+          services: {
+            database: dbHealth,
+            redis: redisHealth,
+          },
+          clients: this.clients.size,
+        }));
         return;
       }
 
@@ -319,11 +336,18 @@ export class GatewayServer {
   }
 
   broadcast(event: string, data: unknown): void {
-    const message: EventMessage = {
-      type: 'event',
-      event,
-      data,
-    };
+    // 本地推送
+    this.localBroadcast(event, data);
+    // 跨实例广播（Redis pub/sub）
+    this.redisAdapter?.publish(event, data, 'subscribed');
+  }
+
+  /**
+   * 仅推送给本机订阅了该事件的客户端
+   * 被 RedisBroadcastAdapter 在收到其他实例消息时回调
+   */
+  localBroadcast(event: string, data: unknown): void {
+    const message: EventMessage = { type: 'event', event, data };
 
     this.clients.forEach((client) => {
       if (client.ws.readyState === WebSocket.OPEN && client.subscriptions.has(event)) {
@@ -334,11 +358,18 @@ export class GatewayServer {
   }
 
   broadcastToAll(event: string, data: unknown): void {
-    const message: EventMessage = {
-      type: 'event',
-      event,
-      data,
-    };
+    // 本地推送
+    this.localBroadcastToAll(event, data);
+    // 跨实例广播（Redis pub/sub）
+    this.redisAdapter?.publish(event, data, 'all');
+  }
+
+  /**
+   * 仅推送给本机所有客户端
+   * 被 RedisBroadcastAdapter 在收到其他实例消息时回调
+   */
+  localBroadcastToAll(event: string, data: unknown): void {
+    const message: EventMessage = { type: 'event', event, data };
 
     this.clients.forEach((client) => {
       if (client.ws.readyState === WebSocket.OPEN) {
@@ -346,6 +377,15 @@ export class GatewayServer {
         this.scheduleFlush(client);
       }
     });
+  }
+
+  /**
+   * 注入 Redis 广播适配器，启用跨实例 WebSocket 广播
+   * 在 main.ts initialize() 中，Redis 就绪后调用
+   */
+  setRedisAdapter(adapter: RedisBroadcastAdapter): void {
+    this.redisAdapter = adapter;
+    logger.info('Redis 广播适配器已注入，跨实例广播已启用');
   }
 
   private bridgeEventBus(): void {

@@ -1,0 +1,74 @@
+[
+  {
+    "id": "rule_0ea07880-872f-4a76-9e74-20c669ce9741",
+    "name": "Brute Force Login",
+    "description": "5+ failed logins from same IP within 60s",
+    "type": "brute_force",
+    "severity": "high",
+    "checkName": "brute_force",
+    "enabled": true
+  },
+  {
+    "id": "rule_c05fb434-cebc-421a-a7e7-6455218b4a91",
+    "name": "Credential Stuffing",
+    "description": "10+ distinct userIds from same IP within 5min",
+    "type": "credential_stuffing",
+    "severity": "high",
+    "checkName": "credential_stuffing",
+    "enabled": true
+  },
+  {
+    "id": "rule_48cb4781-c774-43ca-843a-4edf119e6043",
+    "name": "API Scraping",
+    "description": "100+ GET /api/* from same IP within 60s",
+    "type": "api_scraping",
+    "severity": "high",
+    "checkName": "api_scraping",
+    "enabled": true
+  },
+  {
+    "id": "rule_1a279cfc-c9b5-4e37-a524-2f80458d67c5",
+    "name": "Rate Limit Exceeded",
+    "description": "Requests/min > 2x limit",
+    "type": "rate_limit_exceeded",
+    "severity": "medium",
+    "checkName": "rate_limit_exceeded",
+    "enabled": true
+  },
+  {
+    "id": "rule_76f8ddf5-65e1-4a6c-8dc6-657cf4592744",
+    "name": "Enumeration Attack",
+    "description": "20+ forbidden /api/users/:id access within 1min",
+    "type": "enumeration_attack",
+    "severity": "high",
+    "checkName": "enumeration_attack",
+    "enabled": true
+  },
+  {
+    "id": "rule_9e7a4eba-a236-4f94-80a3-acd9e832fff5",
+    "name": "Session Hijacking",
+    "description": "Same session from 2+ IPs within 5min",
+    "type": "session_hijacking",
+    "severity": "critical",
+    "checkName": "session_hijacking",
+    "enabled": true
+  },
+  {
+    "id": "rule_d5f71568-f063-4b56-8e44-c50851869ee2",
+    "name": "Empty User Agent",
+    "description": "20+ requests with empty UA from same IP within 60s",
+    "type": "user_agent_anomaly",
+    "severity": "medium",
+    "checkName": "user_agent_anomaly",
+    "enabled": true
+  },
+  {
+    "id": "rule_ee3886ca-71b9-463d-ab5a-64bcf84660e8",
+    "name": "Bot Activity",
+    "description": "30+ bot-like requests from same IP within 60s",
+    "type": "bot_activity",
+    "severity": "low",
+    "checkName": "bot_activity",
+    "enabled": true
+  }
+]

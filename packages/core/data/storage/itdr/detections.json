@@ -1,0 +1,60 @@
+[
+  {
+    "id": "det_8e484848-5c32-4b51-b135-b1311e8a58ed",
+    "timestamp": 1781351124560,
+    "attackType": "brute_force",
+    "severity": "high",
+    "title": "Brute Force Attack",
+    "description": "5 failed logins for userId alice from 9.9.9.9 within 60s",
+    "evidence": [
+      "1781351124605: alice → invalid_password",
+      "1781351124705: alice → invalid_password",
+      "1781351124805: alice → invalid_password",
+      "1781351124905: alice → invalid_password",
+      "1781351125005: alice → invalid_password"
+    ],
+    "sourceIp": "9.9.9.9",
+    "asn": 12345,
+    "userIds": [
+      "alice"
+    ],
+    "attemptCount": 5,
+    "timeWindowMs": 60000,
+    "successCount": 0,
+    "confidence": 0.95,
+    "recommendedAction": "disable_account",
+    "blocked": false,
+    "resolvedAt": null,
+    "assignedTo": null,
+    "notes": ""
+  },
+  {
+    "id": "det_ed9bd55f-6ba4-44b8-a865-b393e53dd6a7",
+    "timestamp": 1781351124571,
+    "attackType": "brute_force",
+    "severity": "high",
+    "title": "Brute Force Attack",
+    "description": "6 failed logins for userId alice from 9.9.9.9 within 60s",
+    "evidence": [
+      "1781351124705: alice → invalid_password",
+      "1781351124805: alice → invalid_password",
+      "1781351124905: alice → invalid_password",
+      "1781351125005: alice → invalid_password",
+      "1781351125105: alice → invalid_password"
+    ],
+    "sourceIp": "9.9.9.9",
+    "asn": 12345,
+    "userIds": [
+      "alice"
+    ],
+    "attemptCount": 6,
+    "timeWindowMs": 60000,
+    "successCount": 0,
+    "confidence": 0.95,
+    "recommendedAction": "disable_account",
+    "blocked": false,
+    "resolvedAt": null,
+    "assignedTo": null,
+    "notes": ""
+  }
+]

@@ -1,0 +1,422 @@
+[
+  {
+    "id": "8e2c4f0a-1d3b-4a4e-9b1c-2a0b1c2d3e4f",
+    "title": "Suspicious PowerShell Encoded Command",
+    "description": "Detects usage of PowerShell with encoded command arguments often used to obfuscate payloads",
+    "status": "stable",
+    "level": "high",
+    "author": "SecuClaw",
+    "date": "2025-01-10",
+    "modified": "2025-01-10",
+    "references": [
+      "https://attack.mitre.org/techniques/T1059/001/",
+      "https://docs.microsoft.com/powershell/module/microsoft.powershell.core/start-process"
+    ],
+    "tags": [
+      "attack.execution",
+      "attack.t1059.001",
+      "attack.defense_evasion",
+      "attack.t1027"
+    ],
+    "logsource": {
+      "product": "windows",
+      "category": "process_creation",
+      "service": "powershell"
+    },
+    "detection": {
+      "selection": {
+        "Image": "*\\powershell.exe",
+        "CommandLine": [
+          "*-EncodedCommand*",
+          "*-enc *",
+          "*-e *"
+        ]
+      },
+      "filter": {
+        "CommandLine": "*SQBadmin*"
+      },
+      "condition": "selection and not filter"
+    },
+    "falsepositives": [
+      "Administrative scripts that legitimately use encoded commands"
+    ],
+    "fields": [
+      "Image",
+      "CommandLine",
+      "User",
+      "ParentImage"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "Encoded PowerShell detected",
+        "expected": true,
+        "log": {
+          "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "CommandLine": "powershell -EncodedCommand ZQBjAGgAbwAgACIAdABlAHMAdAAiAA==",
+          "User": "CONTOSO\\alice"
+        }
+      },
+      {
+        "name": "Normal PowerShell",
+        "expected": false,
+        "log": {
+          "Image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "CommandLine": "powershell -File C:\\scripts\\report.ps1"
+        }
+      }
+    ]
+  },
+  {
+    "id": "b1f2c3d4-5e6a-4b7c-8d9e-0f1a2b3c4d5e",
+    "title": "SSH Brute Force Attempt",
+    "description": "Multiple failed SSH authentication attempts originating from a single source",
+    "status": "stable",
+    "level": "medium",
+    "author": "SecuClaw",
+    "date": "2025-01-12",
+    "modified": "2025-01-12",
+    "references": [
+      "https://attack.mitre.org/techniques/T1110/001/"
+    ],
+    "tags": [
+      "attack.credential_access",
+      "attack.t1110.001",
+      "attack.initial_access"
+    ],
+    "logsource": {
+      "product": "linux",
+      "category": "auth",
+      "service": "sshd"
+    },
+    "detection": {
+      "selection": {
+        "event.type": "ssh_login",
+        "status": "failed"
+      },
+      "condition": "selection"
+    },
+    "falsepositives": [
+      "Misconfigured SSH clients, port scanners"
+    ],
+    "fields": [
+      "source.ip",
+      "user.name",
+      "host.name"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "Failed login from external",
+        "expected": true,
+        "log": {
+          "event.type": "ssh_login",
+          "status": "failed",
+          "source.ip": "203.0.113.45",
+          "user.name": "root"
+        }
+      }
+    ]
+  },
+  {
+    "id": "c2d3e4f5-6a7b-4c8d-9e0f-1a2b3c4d5e6f",
+    "title": "Web Shell File Creation",
+    "description": "Detects creation of files with web shell indicators in web server directories",
+    "status": "stable",
+    "level": "critical",
+    "author": "SecuClaw",
+    "date": "2025-01-15",
+    "modified": "2025-01-15",
+    "references": [
+      "https://attack.mitre.org/techniques/T1505/003/"
+    ],
+    "tags": [
+      "attack.persistence",
+      "attack.t1505.003",
+      "attack.t1190"
+    ],
+    "logsource": {
+      "product": "linux",
+      "category": "file_create",
+      "service": "webserver"
+    },
+    "detection": {
+      "selection": {
+        "file.path": [
+          "*/www/*",
+          "*/htdocs/*",
+          "*/public/*"
+        ],
+        "file.extension": [
+          ".php",
+          ".jsp",
+          ".aspx"
+        ]
+      },
+      "condition": "selection"
+    },
+    "falsepositives": [
+      "Legitimate web application deployments"
+    ],
+    "fields": [
+      "file.path",
+      "file.name",
+      "process.executable"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "PHP web shell in webroot",
+        "expected": true,
+        "log": {
+          "file.path": "/var/www/html/uploads/shell.php",
+          "file.extension": ".php",
+          "process.executable": "/usr/bin/wget"
+        }
+      }
+    ]
+  },
+  {
+    "id": "d3e4f5a6-7b8c-4d9e-af10-2b3c4d5e6f70",
+    "title": "Kubernetes Privileged Pod",
+    "description": "Detects creation of pods with privileged security context or host namespace access",
+    "status": "stable",
+    "level": "high",
+    "author": "SecuClaw",
+    "date": "2025-01-18",
+    "modified": "2025-01-18",
+    "references": [
+      "https://attack.mitre.org/techniques/T1611/"
+    ],
+    "tags": [
+      "attack.privilege_escalation",
+      "attack.t1611",
+      "attack.t1078"
+    ],
+    "logsource": {
+      "product": "kubernetes",
+      "category": "audit",
+      "service": "kube-apiserver"
+    },
+    "detection": {
+      "selection": {
+        "verb": "create",
+        "objectRef.resource": "pods",
+        "requestObject.spec.containers[*].securityContext.privileged": true
+      },
+      "condition": "selection"
+    },
+    "falsepositives": [
+      "Trusted DaemonSets and system pods"
+    ],
+    "fields": [
+      "user.username",
+      "objectRef.namespace",
+      "objectRef.name"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "Privileged pod created",
+        "expected": true,
+        "log": {
+          "verb": "create",
+          "objectRef.resource": "pods",
+          "objectRef.namespace": "default",
+          "user.username": "attacker@cluster.local"
+        }
+      }
+    ]
+  },
+  {
+    "id": "e4f5a6b7-8c9d-4e0f-b120-3c4d5e6f7081",
+    "title": "AWS S3 Bucket Policy Change",
+    "description": "Detects modifications to S3 bucket policies that may indicate data exfiltration setup",
+    "status": "stable",
+    "level": "high",
+    "author": "SecuClaw",
+    "date": "2025-01-20",
+    "modified": "2025-01-20",
+    "references": [
+      "https://attack.mitre.org/techniques/T1530/"
+    ],
+    "tags": [
+      "attack.exfiltration",
+      "attack.t1530",
+      "attack.t1078.004"
+    ],
+    "logsource": {
+      "product": "aws",
+      "category": "cloudtrail",
+      "service": "s3"
+    },
+    "detection": {
+      "selection": {
+        "eventSource": "s3.amazonaws.com",
+        "eventName": [
+          "PutBucketPolicy",
+          "DeleteBucketPolicy",
+          "PutBucketAcl"
+        ]
+      },
+      "filter": {
+        "userIdentity.arn": "arn:aws:iam::*:role/aws-service-role/*"
+      },
+      "condition": "selection and not filter"
+    },
+    "falsepositives": [
+      "Authorized security tooling and admin activities"
+    ],
+    "fields": [
+      "eventName",
+      "userIdentity.arn",
+      "requestParameters.bucketName",
+      "sourceIPAddress"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "Public bucket policy change",
+        "expected": true,
+        "log": {
+          "eventSource": "s3.amazonaws.com",
+          "eventName": "PutBucketPolicy",
+          "userIdentity.arn": "arn:aws:iam::123456789012:user/attacker",
+          "sourceIPAddress": "198.51.100.10"
+        }
+      }
+    ]
+  },
+  {
+    "id": "f5a6b7c8-9d0e-4f10-bc21-4d5e6f708192",
+    "title": "Mimikatz LSASS Access",
+    "description": "Detects suspicious access to LSASS process handle by non-system processes",
+    "status": "stable",
+    "level": "critical",
+    "author": "SecuClaw",
+    "date": "2025-01-22",
+    "modified": "2025-01-22",
+    "references": [
+      "https://attack.mitre.org/techniques/T1003/001/",
+      "https://attack.mitre.org/software/S0002/"
+    ],
+    "tags": [
+      "attack.credential_access",
+      "attack.t1003.001",
+      "attack.t1003"
+    ],
+    "logsource": {
+      "product": "windows",
+      "category": "sysmon",
+      "service": "process_access"
+    },
+    "detection": {
+      "selection": {
+        "TargetImage": "*\\lsass.exe",
+        "GrantedAccess": [
+          "*0x1010",
+          "*0x1410",
+          "*0x1438"
+        ]
+      },
+      "filter": {
+        "SourceImage": [
+          "*\\MsMpEng.exe",
+          "*\\System32\\svchost.exe",
+          "*\\wbengine.exe"
+        ]
+      },
+      "condition": "selection and not filter"
+    },
+    "falsepositives": [
+      "Antivirus and EDR products"
+    ],
+    "fields": [
+      "SourceImage",
+      "TargetImage",
+      "SourceProcessId",
+      "SourceUser"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "Mimikatz-style LSASS access",
+        "expected": true,
+        "log": {
+          "SourceImage": "C:\\Tools\\mimikatz.exe",
+          "TargetImage": "C:\\Windows\\System32\\lsass.exe",
+          "GrantedAccess": "0x1010"
+        }
+      }
+    ]
+  },
+  {
+    "id": "a6b7c8d9-0e1f-4a20-bd32-5e6f708192a3",
+    "title": "Linux Passwd File Modification",
+    "description": "Detects changes to /etc/passwd or /etc/shadow outside of expected administrative activity",
+    "status": "stable",
+    "level": "high",
+    "author": "SecuClaw",
+    "date": "2025-01-25",
+    "modified": "2025-01-25",
+    "references": [
+      "https://attack.mitre.org/techniques/T1098/"
+    ],
+    "tags": [
+      "attack.persistence",
+      "attack.t1098",
+      "attack.privilege_escalation"
+    ],
+    "logsource": {
+      "product": "linux",
+      "category": "file_event",
+      "service": "auditd"
+    },
+    "detection": {
+      "selection": {
+        "syscall": "openat",
+        "file.path": [
+          "/etc/passwd",
+          "/etc/shadow",
+          "/etc/sudoers"
+        ],
+        "event.type": [
+          "write",
+          "modify",
+          "append"
+        ]
+      },
+      "filter": {
+        "process.executable": [
+          "/usr/bin/vim",
+          "/usr/bin/nano",
+          "/usr/sbin/visudo"
+        ]
+      },
+      "condition": "selection and not filter"
+    },
+    "falsepositives": [
+      "Package managers, configuration management"
+    ],
+    "fields": [
+      "process.executable",
+      "process.name",
+      "user.name",
+      "file.path"
+    ],
+    "related": [],
+    "tests": [
+      {
+        "name": "Passwd modified by suspicious tool",
+        "expected": true,
+        "log": {
+          "syscall": "openat",
+          "file.path": "/etc/passwd",
+          "event.type": "modify",
+          "process.executable": "/tmp/evil",
+          "user.name": "www-data"
+        }
+      }
+    ]
+  }
+]

@@ -287,6 +287,10 @@ export class AWVSAdapter implements ToolAdapter {
 import { NmapAdapter } from './nmap-adapter.js';
 import { SqlmapAdapter } from './sqlmap-adapter.js';
 import { NucleiAdapter } from './nuclei-adapter.js';
+import { WazuhAdapter } from './wazuh-adapter.js';
+import { FalcoAdapter } from './falco-adapter.js';
+import { OsqueryAdapter } from './osquery-adapter.js';
+import { VelociraptorAdapter } from './velociraptor-adapter.js';
 
 export class ToolRegistry {
   private adapters: Map<string, ToolAdapter> = new Map();
@@ -298,6 +302,10 @@ export class ToolRegistry {
     this.register(new NmapAdapter());
     this.register(new SqlmapAdapter());
     this.register(new NucleiAdapter());
+    this.register(new WazuhAdapter());
+    this.register(new FalcoAdapter());
+    this.register(new OsqueryAdapter());
+    this.register(new VelociraptorAdapter());
   }
 
   register(adapter: ToolAdapter): void {

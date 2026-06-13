@@ -1,101 +1,171 @@
-version: '3.8'
-
-x-base-env: &base-env
-  NODE_ENV: production
-  TZ: Asia/Shanghai
-  LOG_LEVEL: info
+version: '3.9'
 
 services:
-  secuclaw:
-    image: ${DOCKER_IMAGE:-secuclaw/secuclaw:latest}
+  core:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: secuclaw
+    image: secuclaw/core:1.0.0
+    container_name: secuclaw-core
+    restart: unless-stopped
     ports:
-      - "${HTTP_PORT:-80}:8080"
-    volumes:
-      - app-data:/data
+      - "21981:21981"
     environment:
-      <<: *base-env
-      PORT: 8080
-      HOST: 0.0.0.0
-      DATA_PATH: /data
-      STATIC_PATH: /app/public
-      
-      # Security configuration (REQUIRED: change these in production!)
-      JWT_SECRET: ${JWT_SECRET:-generate-strong-secret-key-here-32chars-minimum}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
-      REFRESH_TOKEN_EXPIRES_IN: ${REFRESH_TOKEN_EXPIRES_IN:-7d}
-      ENCRYPTION_SECRET: ${ENCRYPTION_SECRET:-generate-another-strong-secret-key-here}
-      
-      # LLM Configuration
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      OLLAMA_API_BASE: ${OLLAMA_API_BASE:-http://localhost:11434}
-      
-      # Redis configuration (uncomment if using redis profile)
-      # REDIS_URL: redis://redis:6379/0
-      
-      # Notification configuration
-      SMTP_HOST: ${SMTP_HOST:-}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-secuclaw@example.com}
-      
-      # Webhook notification
-      WEBHOOK_URL: ${WEBHOOK_URL:-}
-      
-    restart: unless-stopped
-    depends_on:
-      - redis
-    profiles:
-      - app
-      - all
-
-  redis:
-    image: redis:7-alpine
-    container_name: secuclaw-redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+      - NODE_ENV=production
+      - PORT=21981
+      - STORAGE_PATH=/app/data/storage
+      - LOG_LEVEL=info
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production-please-use-32-byte-random}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://app.secuclaw.com}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-app.secuclaw.com}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - RATE_LIMIT_PER_MINUTE=600
+      - MAX_FILE_SIZE_MB=50
+      # PostgreSQL 迁移与集群模式所需（Phase 14）
+      - DATABASE_URL=${DATABASE_URL:-postgresql://secuclaw:secuclaw_dev_pass@postgres:5432/secuclaw}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - DB_POOL_MAX=${DB_POOL_MAX:-10}
+      - DB_MIGRATE_ON_BOOT=${DB_MIGRATE_ON_BOOT:-false}
+      - DUAL_WRITE_ENABLED=${DUAL_WRITE_ENABLED:-false}
     volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    environment:
-      <<: *base-env
-    profiles:
-      - redis
-      - all
+      - core-data:/app/data
+      - core-logs:/app/logs
+    networks:
+      - secuclaw-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:21981/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # Optional: nginx reverse proxy with SSL
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
     container_name: secuclaw-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-    restart: unless-stopped
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
-      - secuclaw
-    profiles:
-      - nginx
-      - all
+      - core
+    networks:
+      - secuclaw-net
 
-  # Optional: Let's Encrypt SSL certificate auto-renew
-  certbot:
-    image: certbot/certbot
-    container_name: secuclaw-certbot
+  redis:
+    image: redis:7.4-alpine
+    container_name: secuclaw-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
     volumes:
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --email ${LETSENCRYPT_EMAIL:-admin@example.com} --agree-tos --no-eff-email -d ${DOMAIN:-secuclaw.example.com}
-    profiles:
-      - certbot
+      - redis-data:/data
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes
+    networks:
+      - secuclaw-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: secuclaw-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-secuclaw}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secuclaw_dev_pass}
+      - POSTGRES_DB=${POSTGRES_DB:-secuclaw}
+      # 连接池：每个后端连接的 work_mem，避免大排序溢出
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - log_min_duration_statement=500
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secuclaw} -d ${POSTGRES_DB:-secuclaw}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - secuclaw-net
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: secuclaw-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - secuclaw-net
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: secuclaw-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - secuclaw-net
 
 volumes:
-  app-data:
+  core-data:
+  core-logs:
   redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  secuclaw-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

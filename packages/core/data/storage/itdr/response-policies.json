@@ -1,0 +1,142 @@
+[
+  {
+    "id": "pol_687433e3-3653-4981-9011-6e5413cf7199",
+    "name": "Critical Brute Force",
+    "description": "Auto-respond to brute force attacks",
+    "trigger": {
+      "threatType": "brute_force",
+      "severity": "critical"
+    },
+    "actions": [
+      "force_password_reset",
+      "revoke_sessions",
+      "require_mfa"
+    ],
+    "requiresApproval": false,
+    "approvers": [],
+    "cooldownMs": 60000,
+    "active": true,
+    "createdAt": 1781351125613,
+    "createdBy": "system",
+    "lastTriggered": 1781351125633,
+    "triggerCount": 1,
+    "notes": ""
+  },
+  {
+    "id": "pol_b0ebb916-2fe1-43cd-89b6-0cab6aaa6a84",
+    "name": "Credential Stuffing Block",
+    "description": "Block IP and force reset on credential stuffing",
+    "trigger": {
+      "threatType": "credential_stuffing"
+    },
+    "actions": [
+      "block_ip",
+      "force_password_reset",
+      "notify_security_team"
+    ],
+    "requiresApproval": false,
+    "approvers": [],
+    "cooldownMs": 300000,
+    "active": true,
+    "createdAt": 1781351125613,
+    "createdBy": "system",
+    "lastTriggered": null,
+    "triggerCount": 0,
+    "notes": ""
+  },
+  {
+    "id": "pol_723233d2-b8c2-4335-a9c1-c9c03a92feba",
+    "name": "MFA Fatigue Lock",
+    "description": "Lock account on MFA fatigue",
+    "trigger": {
+      "threatType": "mfa_fatigue"
+    },
+    "actions": [
+      "lock_account",
+      "force_mfa_reenroll",
+      "notify_security_team"
+    ],
+    "requiresApproval": true,
+    "approvers": [
+      "security-team"
+    ],
+    "cooldownMs": 600000,
+    "active": true,
+    "createdAt": 1781351125613,
+    "createdBy": "system",
+    "lastTriggered": null,
+    "triggerCount": 0,
+    "notes": ""
+  },
+  {
+    "id": "pol_c5944f02-9a39-498e-8fb8-abbc15d59d80",
+    "name": "Lateral Movement Contain",
+    "description": "Isolate host and disable accounts on lateral movement",
+    "trigger": {
+      "threatType": "lateral_movement"
+    },
+    "actions": [
+      "isolate_host",
+      "disable_api_keys",
+      "revoke_sessions",
+      "notify_security_team"
+    ],
+    "requiresApproval": true,
+    "approvers": [
+      "security-team",
+      "incident-commander"
+    ],
+    "cooldownMs": 60000,
+    "active": true,
+    "createdAt": 1781351125613,
+    "createdBy": "system",
+    "lastTriggered": null,
+    "triggerCount": 0,
+    "notes": ""
+  },
+  {
+    "id": "pol_e05ca3c8-29dd-4595-961f-02def4682de8",
+    "name": "Impossible Travel",
+    "description": "Notify and require MFA on impossible travel",
+    "trigger": {
+      "threatType": "impossible_travel"
+    },
+    "actions": [
+      "notify_user",
+      "require_mfa",
+      "log_only"
+    ],
+    "requiresApproval": false,
+    "approvers": [],
+    "cooldownMs": 300000,
+    "active": true,
+    "createdAt": 1781351125613,
+    "createdBy": "system",
+    "lastTriggered": null,
+    "triggerCount": 0,
+    "notes": ""
+  },
+  {
+    "id": "pol_26cb28c1-b1ba-4d87-a42c-8729bf3de20f",
+    "name": "Breach Replay Response",
+    "description": "Force password reset on breach replay",
+    "trigger": {
+      "threatType": "breach_replay"
+    },
+    "actions": [
+      "force_password_reset",
+      "revoke_tokens",
+      "notify_user",
+      "notify_security_team"
+    ],
+    "requiresApproval": false,
+    "approvers": [],
+    "cooldownMs": 60000,
+    "active": true,
+    "createdAt": 1781351125613,
+    "createdBy": "system",
+    "lastTriggered": null,
+    "triggerCount": 0,
+    "notes": ""
+  }
+]

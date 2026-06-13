@@ -52,6 +52,49 @@ interface ChatRequest {
   forceRefresh?: boolean;
 }
 
+interface CapabilityDefinition {
+  id: string;
+  roleId: string;
+  name: string;
+  description: string;
+  systemPromptSuffix: string;
+  outputType: 'json' | 'markdown' | 'table' | 'free';
+}
+
+const CAPABILITY_CATALOG: Record<string, CapabilityDefinition> = {
+  'ciso-strategy': { id: 'ciso-strategy', roleId: 'ciso', name: 'CISO 战略分析', description: '基于业务风险、监管要求、行业趋势生成安全战略建议', systemPromptSuffix: '请基于业务风险、监管要求和行业趋势，为该角色生成结构化的安全战略建议。', outputType: 'markdown' },
+  'ciso-board-report': { id: 'ciso-board-report', roleId: 'ciso', name: '董事会报告生成', description: '生成面向董事会的安全态势报告', systemPromptSuffix: '请生成一份面向董事会的安全态势报告，包含关键指标、风险、预算建议。', outputType: 'markdown' },
+  'ciso-compliance': { id: 'ciso-compliance', roleId: 'ciso', name: '合规差距分析', description: '分析当前合规状态与目标框架的差距', systemPromptSuffix: '请分析当前合规状态与目标框架的差距，给出修复路径。', outputType: 'markdown' },
+  'ciso-budget': { id: 'ciso-budget', roleId: 'ciso', name: '安全预算优化', description: '基于风险和投资回报优化安全预算分配', systemPromptSuffix: '请基于风险降低和投资回报，优化安全预算分配方案。', outputType: 'markdown' },
+  'commander-posture': { id: 'commander-posture', roleId: 'secuclaw-commander', name: '全域态势综合', description: '汇总分析全域安全态势', systemPromptSuffix: '请汇总分析全域安全态势，识别关键风险和优先事项。', outputType: 'markdown' },
+  'commander-incident': { id: 'commander-incident', roleId: 'secuclaw-commander', name: '事件协调指挥', description: '协调跨角色事件响应', systemPromptSuffix: '请给出该事件的协调指挥建议，包含 RACI 分配。', outputType: 'markdown' },
+  'commander-priority': { id: 'commander-priority', roleId: 'secuclaw-commander', name: '协调优先级排序', description: '对协调任务进行优先级排序', systemPromptSuffix: '请对当前协调任务进行优先级排序，标注 RACI 角色。', outputType: 'markdown' },
+  'commander-resource': { id: 'commander-resource', roleId: 'secuclaw-commander', name: '资源调度建议', description: '基于负载给出资源调度建议', systemPromptSuffix: '请基于当前角色负载给出资源调度建议。', outputType: 'markdown' },
+  'secops-soar': { id: 'secops-soar', roleId: 'security-ops', name: 'SOAR 自动化建议', description: '为高频告警推荐自动化剧本', systemPromptSuffix: '请为该告警场景推荐 SOAR 自动化剧本。', outputType: 'markdown' },
+  'secops-fp': { id: 'secops-fp', roleId: 'security-ops', name: '误报率优化', description: '优化告警误报率', systemPromptSuffix: '请分析误报原因并给出优化建议。', outputType: 'markdown' },
+  'secops-triage': { id: 'secops-triage', roleId: 'security-ops', name: '告警分级', description: '对告警进行智能分级', systemPromptSuffix: '请对该告警进行智能分级和优先级评估。', outputType: 'markdown' },
+  'secops-correlation': { id: 'secops-correlation', roleId: 'security-ops', name: '事件关联分析', description: '将多个告警关联为事件', systemPromptSuffix: '请分析这些告警并关联为完整事件。', outputType: 'markdown' },
+  'secops-hunt': { id: 'secops-hunt', roleId: 'security-ops', name: '威胁狩猎', description: '主动威胁狩猎任务规划', systemPromptSuffix: '请基于 IoC 给出威胁狩猎任务规划。', outputType: 'markdown' },
+  'expert-vuln': { id: 'expert-vuln', roleId: 'security-expert', name: '漏洞优先级', description: '基于风险对漏洞进行优先级排序', systemPromptSuffix: '请基于 CVSS/EPSS/可利用性/资产关键度对漏洞进行优先级排序。', outputType: 'table' },
+  'expert-pentest': { id: 'expert-pentest', roleId: 'security-expert', name: '渗透测试规划', description: '规划定向渗透测试', systemPromptSuffix: '请规划针对该目标的渗透测试步骤。', outputType: 'markdown' },
+  'expert-exploit': { id: 'expert-exploit', roleId: 'security-expert', name: '漏洞利用分析', description: '分析漏洞利用条件和影响', systemPromptSuffix: '请分析该漏洞的利用条件、PoC 和影响。', outputType: 'markdown' },
+  'privacy-dpia': { id: 'privacy-dpia', roleId: 'privacy-officer', name: 'DPIA 影响评估', description: '数据保护影响评估', systemPromptSuffix: '请基于 GDPR/PIPL 给出数据保护影响评估。', outputType: 'markdown' },
+  'privacy-dsr': { id: 'privacy-dsr', roleId: 'privacy-officer', name: 'DSR 处理建议', description: '数据主体请求处理建议', systemPromptSuffix: '请为该数据主体请求给出处理步骤和法务依据。', outputType: 'markdown' },
+  'privacy-breach': { id: 'privacy-breach', roleId: 'privacy-officer', name: '数据泄露通知', description: '评估数据泄露通知义务', systemPromptSuffix: '请评估该泄露事件是否需要通知监管机构和数据主体。', outputType: 'markdown' },
+  'privacy-consent': { id: 'privacy-consent', roleId: 'privacy-officer', name: '同意管理', description: '同意率优化建议', systemPromptSuffix: '请给出同意管理流程的优化建议。', outputType: 'markdown' },
+  'arch-design': { id: 'arch-design', roleId: 'security-architect', name: '安全架构设计', description: '安全架构方案设计', systemPromptSuffix: '请设计该场景的安全架构方案。', outputType: 'markdown' },
+  'arch-threat': { id: 'arch-threat', roleId: 'security-architect', name: '威胁建模', description: 'STRIDE 威胁建模', systemPromptSuffix: '请使用 STRIDE 方法对系统进行威胁建模。', outputType: 'markdown' },
+  'arch-zt': { id: 'arch-zt', roleId: 'security-architect', name: '零信任评估', description: '零信任成熟度评估', systemPromptSuffix: '请基于零信任原则评估当前架构并给出改进路径。', outputType: 'markdown' },
+  'arch-review': { id: 'arch-review', roleId: 'security-architect', name: '架构评审', description: '安全架构评审', systemPromptSuffix: '请对该架构进行安全评审并给出风险点。', outputType: 'markdown' },
+  'biz-bcp': { id: 'biz-bcp', roleId: 'business-security-officer', name: 'BCP 规划', description: '业务连续性计划规划', systemPromptSuffix: '请规划该业务的业务连续性计划。', outputType: 'markdown' },
+  'biz-bia': { id: 'biz-bia', roleId: 'business-security-officer', name: 'BIA 影响分析', description: '业务影响分析', systemPromptSuffix: '请进行业务影响分析（BIA），识别关键流程和 RTO/RPO。', outputType: 'markdown' },
+  'biz-drill': { id: 'biz-drill', roleId: 'business-security-officer', name: '演练设计', description: '业务连续性演练设计', systemPromptSuffix: '请设计业务连续性演练方案。', outputType: 'markdown' },
+  'supply-vendor': { id: 'supply-vendor', roleId: 'supply-chain-security', name: '供应商风险评估', description: '第三方供应商风险评估', systemPromptSuffix: '请评估该供应商的安全风险。', outputType: 'markdown' },
+  'supply-sbom': { id: 'supply-sbom', roleId: 'supply-chain-security', name: 'SBOM 漏洞分析', description: '基于 SBOM 的漏洞影响分析', systemPromptSuffix: '请基于 SBOM 分析漏洞影响范围。', outputType: 'markdown' },
+  'supply-intel': { id: 'supply-intel', roleId: 'supply-chain-security', name: '供应链威胁情报', description: '供应链相关威胁情报分析', systemPromptSuffix: '请分析这些供应链威胁情报。', outputType: 'markdown' },
+  'ciso-incident': { id: 'ciso-incident', roleId: 'ciso', name: 'CISO 事件决策', description: 'CISO 在重大事件中的决策支持', systemPromptSuffix: '请为该重大事件提供 CISO 决策建议。', outputType: 'markdown' },
+};
+
 interface LLMProvider {
   id: string;
   name: string;
@@ -482,5 +525,144 @@ export function registerAiRoutes(
 
   handlers.set('evolution.reviewPrompts', async () => {
     return REVIEW_PROMPTS;
+  });
+
+  handlers.set('ai.capabilities.execute', async (p) => {
+    const { capabilityId, roleId: requestedRoleId, input = {}, llmConfig } = p as {
+      capabilityId: string;
+      roleId?: string;
+      input?: Record<string, unknown>;
+      llmConfig?: Record<string, unknown>;
+    };
+
+    if (!capabilityId) {
+      throw new Error('capabilityId is required');
+    }
+
+    const def = CAPABILITY_CATALOG[capabilityId];
+    const effectiveRoleId = (requestedRoleId || def?.roleId || 'security-expert') as RoleId;
+    onUserMessage(effectiveRoleId);
+
+    const capabilityName = def?.name || capabilityId;
+    const capabilityDesc = def?.description || '执行 AI 能力';
+    const outputType = def?.outputType || 'markdown';
+    const rolePersonaPrompt = rolePersonaManager.buildSystemPrompt(effectiveRoleId);
+    const memoryContext = getMemoryContext(effectiveRoleId);
+
+    const userInputText = Object.keys(input).length > 0
+      ? Object.entries(input).map(([k, v]) => `${k}: ${typeof v === 'object' ? JSON.stringify(v) : String(v)}`).join('\n')
+      : '(无输入参数)';
+
+    if (llmConfig && (llmConfig as any).provider && (llmConfig as any).model) {
+      createLLMService({
+        provider: (llmConfig as any).provider,
+        model: (llmConfig as any).model,
+        apiKey: (llmConfig as any).apiKey,
+        baseUrl: (llmConfig as any).baseUrl,
+        temperature: (llmConfig as any).temperature ?? 0.3,
+        timeout: (llmConfig as any).timeout ?? 15000,
+      } as any);
+    } else {
+      const providers = await loadLLMProviders();
+      const enabledProvider = providers.find((prov: LLMProvider) => prov.enabled && prov.apiKey && prov.baseUrl.includes('.'));
+      if (enabledProvider && (!llmService || !currentLLMConfig)) {
+        createLLMService({
+          provider: enabledProvider.type as any,
+          model: enabledProvider.models[0] || 'glm-4',
+          apiKey: enabledProvider.apiKey,
+          baseUrl: enabledProvider.baseUrl,
+          temperature: 0.3,
+          timeout: 15000,
+        });
+      } else if (!llmService || !currentLLMConfig) {
+        const config = await loadExpertsConfig();
+        if (config.defaultProvider && config.defaultModel) {
+          createLLMService({
+            provider: config.defaultProvider as any,
+            model: config.defaultModel,
+            apiKey: config.defaultApiKey,
+            baseUrl: config.defaultBaseUrl,
+            temperature: 0.3,
+            timeout: 10000,
+          });
+        } else {
+          return {
+            id: `cap_${Date.now()}`,
+            role: 'assistant',
+            content: `# ${capabilityName}\n\nAI 服务未配置。请在设置中添加 LLM provider 并配置 API 密钥。\n\n## 能力描述\n${capabilityDesc}\n\n## 输入参数\n${userInputText}`,
+            timestamp: new Date().toISOString(),
+            capabilityId,
+            stub: true,
+            error: 'NO_LLM_CONFIGURED',
+          };
+        }
+      }
+    }
+
+    try {
+      const systemPrompt = [
+        rolePersonaPrompt.content,
+        memoryContext,
+        `## 当前任务\n任务名称: ${capabilityName}\n任务描述: ${capabilityDesc}\n输出格式: ${outputType === 'table' ? 'Markdown 表格' : outputType === 'json' ? '结构化 JSON' : 'Markdown 文本'}\n\n${def?.systemPromptSuffix || ''}`,
+      ].filter(Boolean).join('\n\n');
+
+      const messages: import('../../ai/llm-types.js').LLMMessage[] = [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user' as const,
+          content: `## 输入\n${userInputText}\n\n请基于以上输入完成任务。`,
+        },
+      ];
+
+      const response = await llmService!.chat(messages);
+
+      chatHistoryBuffer.push(effectiveRoleId, {
+        role: 'user',
+        content: `[${capabilityName}] ${userInputText.substring(0, 200)}`,
+        timestamp: Date.now(),
+      });
+      chatHistoryBuffer.push(effectiveRoleId, {
+        role: 'assistant',
+        content: response.content,
+        timestamp: Date.now(),
+      });
+
+      onTurnComplete(effectiveRoleId, response.content);
+
+      return {
+        id: `cap_${Date.now()}`,
+        role: 'assistant',
+        content: response.content,
+        timestamp: new Date().toISOString(),
+        capabilityId,
+        roleId: effectiveRoleId,
+        outputType,
+      };
+    } catch (error) {
+      if (error instanceof LLMError) {
+        const message = error.code === LLMErrorCode.TIMEOUT
+          ? 'AI 请求超时。请稍后重试。'
+          : error.code === LLMErrorCode.INVALID_CONFIG
+            ? `AI 配置无效: ${error.message}。`
+            : `AI 错误: ${error.message}`;
+        return {
+          id: `cap_${Date.now()}`,
+          role: 'assistant',
+          content: `# ${capabilityName}\n\n${message}\n\n## 能力描述\n${capabilityDesc}`,
+          timestamp: new Date().toISOString(),
+          capabilityId,
+          error: error.code,
+        };
+      }
+      console.error('[ai-routes] ai.capabilities.execute error:', error);
+      return {
+        id: `cap_${Date.now()}`,
+        role: 'assistant',
+        content: `# ${capabilityName}\n\nAI 服务暂时不可用: ${(error as Error).message}\n\n## 能力描述\n${capabilityDesc}`,
+        timestamp: new Date().toISOString(),
+        capabilityId,
+        error: 'SERVICE_ERROR',
+      };
+    }
   });
 }

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "phish_eec5deb8-0155-4ad3-bcc5-8b98c0c85786",
+    "url": "http://acme-corp-login.tk",
+    "domain": "acme-corp-login.tk",
+    "type": "tld_swap",
+    "risk": "low",
+    "status": "active",
+    "brandImpersonated": "acme",
+    "title": "",
+    "description": "Suspicious TLD",
+    "screenshotUrl": null,
+    "firstDetected": 1781341513503,
+    "lastSeen": 1781341513503,
+    "detectionCount": 1,
+    "confidence": 0.3,
+    "evidence": [
+      "Suspicious TLD"
+    ],
+    "serverIp": null,
+    "serverLocation": null,
+    "registrar": null,
+    "sslIssuer": null,
+    "asn": null,
+    "hostingProvider": null,
+    "contentHash": "",
+    "targetBrand": "acme",
+    "targetDomain": "acme.com",
+    "harpoonsUrls": [],
+    "indicators": [
+      {
+        "type": "heuristic",
+        "value": "acme-corp-login.tk",
+        "description": "Suspicious TLD"
+      }
+    ],
+    "reportedTo": [],
+    "reportedAt": null,
+    "takenDownAt": null,
+    "notes": ""
+  }
+]

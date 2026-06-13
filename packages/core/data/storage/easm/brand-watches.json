@@ -1,0 +1,21 @@
+[
+  {
+    "brand": "acme",
+    "description": "Test brand watch",
+    "officialDomains": [
+      "acme.com",
+      "acme.io"
+    ],
+    "keywords": [
+      "acme",
+      "acmecorp"
+    ],
+    "protectionLevel": "high_value",
+    "active": true,
+    "createdBy": "test",
+    "id": "phish_9e313767-693c-418e-9bc6-c9908a72acf9",
+    "createdAt": 1781341513491,
+    "lastCheck": 1781341513503,
+    "totalDetections": 1
+  }
+]

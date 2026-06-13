@@ -1,0 +1,26 @@
+[
+  {
+    "id": "aud_8ea1a86f-6c3c-4fe4-9fdb-84f0fef0274d",
+    "timestamp": 1781352794999,
+    "tenantId": "t1",
+    "actorId": "alice",
+    "actorType": "user",
+    "actorIp": null,
+    "actorUserAgent": null,
+    "action": "login",
+    "resource": "auth",
+    "resourceId": null,
+    "outcome": "success",
+    "severity": "info",
+    "description": "User login successful",
+    "before": null,
+    "after": null,
+    "changes": [],
+    "requestId": null,
+    "sessionId": null,
+    "metadata": {},
+    "tags": [],
+    "hash": "5e3b44fd781e43963ff85de95cc1b2a423f3d57442508f706c50d8812bd1c395",
+    "prevHash": null
+  }
+]

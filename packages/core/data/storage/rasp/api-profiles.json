@@ -1,0 +1,347 @@
+[
+  {
+    "id": "prof_9f461ad3-0cf5-4914-970f-1fcd30808529",
+    "subjectType": "user",
+    "subjectId": "u1",
+    "windowStart": 1781347639820,
+    "windowEnd": 1781347639820,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347639899,
+    "lastSeen": 1781347888477,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_dd6c9f31-2f65-45b8-8383-fb6dd8e41e10",
+    "subjectType": "user",
+    "subjectId": "u2",
+    "windowStart": 1781347639832,
+    "windowEnd": 1781347639832,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347639999,
+    "lastSeen": 1781347888488,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_708a1336-1904-4f6e-972a-2706413d8978",
+    "subjectType": "user",
+    "subjectId": "u3",
+    "windowStart": 1781347639844,
+    "windowEnd": 1781347639844,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347640099,
+    "lastSeen": 1781347888498,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_3e217be7-c54f-4284-b6b6-d84be4891549",
+    "subjectType": "user",
+    "subjectId": "u4",
+    "windowStart": 1781347639856,
+    "windowEnd": 1781347639856,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347640199,
+    "lastSeen": 1781347888508,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_2bc2fff4-0ffe-4095-89bf-bd9c1a244661",
+    "subjectType": "user",
+    "subjectId": "u5",
+    "windowStart": 1781347639867,
+    "windowEnd": 1781347639867,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347640299,
+    "lastSeen": 1781347888518,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_9d7ef5c5-abb6-44ed-8126-686c04b40ed8",
+    "subjectType": "user",
+    "subjectId": "u6",
+    "windowStart": 1781347639878,
+    "windowEnd": 1781347639878,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347640399,
+    "lastSeen": 1781347888528,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_cdac71ce-c0eb-4844-8071-9b17f526824b",
+    "subjectType": "user",
+    "subjectId": "u7",
+    "windowStart": 1781347639889,
+    "windowEnd": 1781347639889,
+    "totalRequests": 2,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 300,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "14.14.14.14",
+      "15.15.15.15"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781347640499,
+    "lastSeen": 1781347888538,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_bd98175e-f6fa-4dc2-b7ba-ebe4415017ff",
+    "subjectType": "user",
+    "subjectId": "x1",
+    "windowStart": 1781348177936,
+    "windowEnd": 1781348177936,
+    "totalRequests": 1,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 150,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "20.20.20.20"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781348178022,
+    "lastSeen": 1781348177936,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_7b99946f-8bd7-4785-8911-904764066017",
+    "subjectType": "user",
+    "subjectId": "x2",
+    "windowStart": 1781348177946,
+    "windowEnd": 1781348177946,
+    "totalRequests": 1,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 150,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "20.20.20.20"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781348178122,
+    "lastSeen": 1781348177946,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_c0f57505-8380-48a4-bdb3-2607c379d7e1",
+    "subjectType": "user",
+    "subjectId": "x3",
+    "windowStart": 1781348177957,
+    "windowEnd": 1781348177957,
+    "totalRequests": 1,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 150,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "20.20.20.20"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781348178222,
+    "lastSeen": 1781348177957,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_69156603-ca40-46f0-83bf-f324cd2e51bb",
+    "subjectType": "user",
+    "subjectId": "x4",
+    "windowStart": 1781348177967,
+    "windowEnd": 1781348177967,
+    "totalRequests": 1,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 150,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "20.20.20.20"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781348178322,
+    "lastSeen": 1781348177967,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_dde8e3ad-8e41-4024-8f08-b25da3230382",
+    "subjectType": "user",
+    "subjectId": "x5",
+    "windowStart": 1781348177978,
+    "windowEnd": 1781348177978,
+    "totalRequests": 1,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 150,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "20.20.20.20"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781348178422,
+    "lastSeen": 1781348177978,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  },
+  {
+    "id": "prof_1e14cc84-3bf0-4e13-8216-07a05d87a7fa",
+    "subjectType": "user",
+    "subjectId": "x6",
+    "windowStart": 1781348177989,
+    "windowEnd": 1781348177989,
+    "totalRequests": 1,
+    "uniqueEndpoints": 1,
+    "failureRate": 1,
+    "avgResponseTime": 50,
+    "dataTransferred": 150,
+    "uniqueUserAgents": [
+      "curl"
+    ],
+    "uniqueIps": [
+      "20.20.20.20"
+    ],
+    "distinctSessions": 0,
+    "firstSeen": 1781348178522,
+    "lastSeen": 1781348177989,
+    "errorCount": 0,
+    "suspiciousScore": 30,
+    "riskFactors": [
+      "high_failure_rate"
+    ]
+  }
+]

@@ -33,6 +33,27 @@ export interface StorageConfig {
   skillsPath: string;
 }
 
+/**
+ * PostgreSQL 数据库配置（Phase 14：性能优化 - PG 迁移）
+ * 用于渐进式双写过渡，默认 url 为空表示未启用 PG
+ */
+export interface DatabaseConfig {
+  url: string;
+  poolMax: number;
+  migrateOnBoot: boolean;
+  /** 双写开关：开启后核心模块同时写 JSON 和 PG，读路径可逐步切换 */
+  dualWriteEnabled: boolean;
+}
+
+/**
+ * Redis 配置（Phase 14：集群模式）
+ * 用于 WebSocket 水平广播、分布式锁、共享会话/token 黑名单
+ */
+export interface RedisConfig {
+  url: string;
+  keyPrefix: string;
+}
+
 export interface LlmConfig {
   defaultProvider: string;
   providers: Record<string, { apiKey: string; model: string; baseUrl: string }>;
@@ -45,6 +66,8 @@ export interface AppConfig {
   api: ApiConfig;
   auth: AuthConfig;
   storage: StorageConfig;
+  database: DatabaseConfig;
+  redis: RedisConfig;
   llm: LlmConfig;
   logLevel: string;
 }
@@ -147,6 +170,17 @@ export class ConfigService {
         basePath: process.env.DATA_PATH ?? storageDefaults.basePath,
         databasePath: process.env.DATABASE_PATH ?? storageDefaults.databasePath,
         skillsPath: process.env.SKILLS_PATH ?? storageDefaults.skillsPath,
+      },
+      // Phase 14：数据库与 Redis 配置，从环境变量读取
+      database: {
+        url: process.env.DATABASE_URL ?? defaults.database?.url ?? '',
+        poolMax: process.env.DB_POOL_MAX ? Number(process.env.DB_POOL_MAX) : (defaults.database?.poolMax ?? 10),
+        migrateOnBoot: process.env.DB_MIGRATE_ON_BOOT === 'true',
+        dualWriteEnabled: process.env.DUAL_WRITE_ENABLED === 'true',
+      },
+      redis: {
+        url: process.env.REDIS_URL ?? defaults.redis?.url ?? '',
+        keyPrefix: process.env.REDIS_KEY_PREFIX ?? defaults.redis?.keyPrefix ?? 'secuclaw:',
       },
       llm: {
         ...defaults.llm!,
