@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>📋 合规管理 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .page-title { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .page-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .search-box { flex: 1; min-width: 200px; position: relative; }
+    .search-box input { width: 100%; padding: 8px 12px 8px 32px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; font-family: inherit; }
+    .search-box input:focus { outline: none; border-color: var(--info); }
+    .search-box::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-4); font-size: 12px; }
+    .filter-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; color: var(--text-2); cursor: pointer; }
+    .filter-pill.active { background: rgba(0, 212, 255, 0.1); border-color: var(--primary); color: var(--primary); }
+    .data-table { background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .fw-card { padding: 16px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 16px; }
+    .fw-icon { font-size: 32px; }
+    .fw-info { flex: 1; }
+    .fw-name { font-size: 14px; font-weight: 700; }
+    .fw-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .fw-progress { width: 200px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">📋 合规管理</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 报告</button>
+        <button class="btn">🔄 自动评估</button>
+        <button class="btn btn-primary">+ 新建框架</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="role-item"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">隐私官</div></div></div>
+      <div class="section-title">合规中心</div>
+      <div class="role-item active"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">合规框架</div></div></div>
+      <div class="role-item"><span class="role-icon">📑</span><div class="role-info"><div class="role-name">控制项</div></div></div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">评估任务</div></div></div>
+      <div class="role-item"><span class="role-icon">📞</span><div class="role-info"><div class="role-name">监管报告</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">DSR</div></div></div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">PIA</div></div></div>
+      <div class="role-item"><span class="role-icon">🌍</span><div class="role-info"><div class="role-name">跨境传输</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">审计跟踪</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-header">
+          <div>
+            <div class="page-title">📋 合规框架</div>
+            <div class="page-sub">12 个框架 · 1,451 个控制项 · 整体达标率 94%</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
+          <div class="kpi-card"><div class="kpi-label">达标率</div><div class="kpi-value" style="color: var(--success);">94%</div><div class="kpi-delta up">▲ 2%</div></div>
+          <div class="kpi-card"><div class="kpi-label">控制项</div><div class="kpi-value">1,451</div><div class="kpi-delta neutral">总框架</div></div>
+          <div class="kpi-card"><div class="kpi-label">通过</div><div class="kpi-value" style="color: var(--success);">1,364</div><div class="kpi-delta up">▲ 12</div></div>
+          <div class="kpi-card"><div class="kpi-label">不达标</div><div class="kpi-value" style="color: var(--danger);">87</div><div class="kpi-delta down">▲ 5 (新增)</div></div>
+          <div class="kpi-card"><div class="kpi-label">下次审计</div><div class="kpi-value" style="font-size: 18px;">2024-09-15</div><div class="kpi-delta warn">92 天后</div></div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box"><input type="text" placeholder="搜索框架、控制项..."></div>
+          <span class="filter-pill active">全部 <span class="count">12</span></span>
+          <span class="filter-pill">🟢 已达标 <span class="count">8</span></span>
+          <span class="filter-pill">🟡 进行中 <span class="count">3</span></span>
+          <span class="filter-pill">🔴 不达标 <span class="count">1</span></span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">🇪🇺</div>
+          <div class="fw-info">
+            <div class="fw-name">GDPR · 通用数据保护条例</div>
+            <div class="fw-meta">2018-05-25 生效 · 219 控制项 · 范围: 欧盟数据主体</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill" style="width: 96%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">210/219 通过 · 9 待优化</div>
+            </div>
+          </div>
+          <span class="badge ok">96% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">🇨🇳</div>
+          <div class="fw-info">
+            <div class="fw-name">PIPL · 个人信息保护法</div>
+            <div class="fw-meta">2021-11-01 生效 · 187 控制项 · 范围: 中国境内</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill" style="width: 92%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">172/187 通过 · 15 待优化</div>
+            </div>
+          </div>
+          <span class="badge ok">92% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">🇺🇸</div>
+          <div class="fw-info">
+            <div class="fw-name">CCPA · 加州消费者隐私法</div>
+            <div class="fw-meta">2020-01-01 生效 · 89 控制项 · 范围: 加州居民</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill warn" style="width: 88%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">78/89 通过 · 11 待优化</div>
+            </div>
+          </div>
+          <span class="badge warn">88% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">💳</div>
+          <div class="fw-info">
+            <div class="fw-name">PCI DSS 4.0 · 支付卡行业</div>
+            <div class="fw-meta">2024-03-31 强制 · 264 控制项 · 范围: 持卡人数据</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill" style="width: 93%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">245/264 通过 · 19 待优化</div>
+            </div>
+          </div>
+          <span class="badge ok">93% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">📋</div>
+          <div class="fw-info">
+            <div class="fw-name">SOC2 Type II</div>
+            <div class="fw-meta">审计中 · 147 控制项 · 范围: 服务组织</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill warn" style="width: 78%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">115/147 通过 · 32 待优化</div>
+            </div>
+          </div>
+          <span class="badge warn">78% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">🏥</div>
+          <div class="fw-info">
+            <div class="fw-name">HIPAA · 健康保险可携性</div>
+            <div class="fw-meta">1996 生效 · 54 控制项 · 范围: PHI</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill" style="width: 95%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">51/54 通过 · 3 待优化</div>
+            </div>
+          </div>
+          <span class="badge ok">95% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">🏗️</div>
+          <div class="fw-info">
+            <div class="fw-name">ISO 27001:2022</div>
+            <div class="fw-meta">93 控制项 · 范围: ISMS</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill" style="width: 90%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">84/93 通过 · 9 待优化</div>
+            </div>
+          </div>
+          <span class="badge ok">90% 达标</span>
+        </div>
+
+        <div class="fw-card">
+          <div class="fw-icon">📚</div>
+          <div class="fw-info">
+            <div class="fw-name">NIST CSF 2.0</div>
+            <div class="fw-meta">2024-02-26 · 106 子类 · 6 大功能</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill" style="width: 89%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">94/106 通过 · 12 待优化</div>
+            </div>
+          </div>
+          <span class="badge ok">89% 达标</span>
+        </div>
+
+        <div class="fw-card" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.04);">
+          <div class="fw-icon">📋</div>
+          <div class="fw-info">
+            <div class="fw-name">SCF (Secure Controls Framework)</div>
+            <div class="fw-meta">1451 控制项 · 范围: 全局</div>
+            <div style="margin-top: 6px;">
+              <div class="progress"><div class="progress-fill danger" style="width: 72%;"></div></div>
+              <div style="font-size: 11px; color: var(--text-3); margin-top: 2px;">1045/1451 通过 · 406 待优化</div>
+            </div>
+          </div>
+          <span class="badge danger">72% 达标</span>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

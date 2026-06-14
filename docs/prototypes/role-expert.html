@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🔍 安全专家 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🔍 安全专家 · 漏洞工作台 + 渗透测试 + 威胁狩猎</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">🔬 启动扫描</button>
+        <button class="btn">🎯 狩猎</button>
+        <button class="btn">👤 王工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="role-item"><span class="role-icon">👔</span><div class="role-info"><div class="role-name">CISO</div></div></div>
+      <div class="role-item active"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">安全专家</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">漏洞管理</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">威胁狩猎</div></div></div>
+      <div class="role-item"><span class="role-icon">💉</span><div class="role-info"><div class="role-name">渗透测试</div></div></div>
+      <div class="role-item"><span class="role-icon">📦</span><div class="role-info"><div class="role-name">SBOM</div></div></div>
+      <div class="role-item"><span class="role-icon">🔬</span><div class="role-info"><div class="role-name">代码审计</div></div></div>
+      <div class="role-item"><span class="role-icon">📚</span><div class="role-info"><div class="role-name">MITRE ATT&CK</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">安全运营</div></div></div>
+      <div class="role-item"><span class="role-icon">🏗️</span><div class="role-info"><div class="role-name">架构师</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card">
+            <div class="kpi-icon">🛡️</div>
+            <div class="kpi-label">未修复漏洞</div>
+            <div class="kpi-value" style="color: var(--danger);">47</div>
+            <div class="kpi-delta down">▲ 8 (本周)</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🔥</div>
+            <div class="kpi-label">Critical</div>
+            <div class="kpi-value" style="color: var(--danger);">3</div>
+            <div class="kpi-delta down">⚠ 需立即处理</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⏱</div>
+            <div class="kpi-label">MTTR 漏洞</div>
+            <div class="kpi-value">5.2<span style="font-size: 14px;">d</span></div>
+            <div class="kpi-delta up">▼ 1.3d</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🎯</div>
+            <div class="kpi-label">狩猎查询</div>
+            <div class="kpi-value">23</div>
+            <div class="kpi-delta up">3 命中</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🧬</div>
+            <div class="kpi-label">覆盖率</div>
+            <div class="kpi-value">87<span style="font-size: 14px;">%</span></div>
+            <div class="kpi-delta neutral">代码 92% / 配置 76%</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🔥 高危漏洞 (CVSS ≥ 7.0)</span>
+              <a class="panel-action">全部 47 个 →</a>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>CVE</th><th>资产</th><th>CVSS</th><th>类型</th><th>状态</th><th>SLA</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="id">CVE-2024-21762</td>
+                  <td class="strong">prod-web-01</td>
+                  <td class="sev critical">9.8</td>
+                  <td>RCE</td>
+                  <td><span class="badge warn">修复中</span></td>
+                  <td>3 / 5</td>
+                </tr>
+                <tr>
+                  <td class="id">CVE-2024-3094</td>
+                  <td class="strong">ci-runner-02</td>
+                  <td class="sev critical">9.4</td>
+                  <td>供应链</td>
+                  <td><span class="badge danger">已分派</span></td>
+                  <td>0 / 5</td>
+                </tr>
+                <tr>
+                  <td class="id">CVE-2024-1086</td>
+                  <td class="strong">k8s-node-05</td>
+                  <td class="sev high">8.6</td>
+                  <td>提权</td>
+                  <td><span class="badge info">验证中</span></td>
+                  <td>2 / 5</td>
+                </tr>
+                <tr>
+                  <td class="id">CVE-2023-50164</td>
+                  <td class="strong">strapi-prod</td>
+                  <td class="sev high">8.1</td>
+                  <td>路径遍历</td>
+                  <td><span class="badge ok">已修复</span></td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td class="id">CVE-2024-0204</td>
+                  <td class="strong">sso-srv-01</td>
+                  <td class="sev high">8.0</td>
+                  <td>认证绕过</td>
+                  <td><span class="badge warn">修复中</span></td>
+                  <td>1 / 5</td>
+                </tr>
+                <tr>
+                  <td class="id">CVE-2023-7104</td>
+                  <td class="strong">session-svc</td>
+                  <td class="sev medium">7.5</td>
+                  <td>SQL 注入</td>
+                  <td><span class="badge info">待分派</span></td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🎯 威胁狩猎查询</span>
+              <button class="btn btn-primary">+ 新建查询</button>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔍</div>
+              <div class="list-content">
+                <div class="list-title">Linux 异常 SUID 文件</div>
+                <div class="list-meta">5 台主机 · 23 项发现</div>
+              </div>
+              <span class="badge ok">3 命中</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔍</div>
+              <div class="list-content">
+                <div class="list-title">云 API 异常调用</div>
+                <div class="list-meta">AWS · 7 天 · MITRE T1078</div>
+              </div>
+              <span class="badge ok">1 命中</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔍</div>
+              <div class="list-content">
+                <div class="list-title">PowerShell 编码命令</div>
+                <div class="list-meta">终端日志 · 30 天</div>
+              </div>
+              <span class="badge warn">0 命中</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔍</div>
+              <div class="list-content">
+                <div class="list-title">异常出站 DNS 隧道</div>
+                <div class="list-meta">DNS 日志 · 7 天</div>
+              </div>
+              <span class="badge ok">2 命中</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔍</div>
+              <div class="list-content">
+                <div class="list-title">容器逃逸模式</div>
+                <div class="list-meta">K8s audit · MITRE T1611</div>
+              </div>
+              <span class="badge warn">0 命中</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🛠️ 渗透测试工具</span>
+            </div>
+            <div class="tool-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="tool-cell"><div class="tool-icon">💉</div><div class="tool-name">SQLMap</div><div class="tool-meta">v1.7</div></div>
+              <div class="tool-cell"><div class="tool-icon">🕷️</div><div class="tool-name">Burp Suite</div><div class="tool-meta">Pro</div></div>
+              <div class="tool-cell"><div class="tool-icon">🌐</div><div class="tool-name">Nmap</div><div class="tool-meta">v7.94</div></div>
+              <div class="tool-cell"><div class="tool-icon">🪓</div><div class="tool-name">Metasploit</div><div class="tool-meta">v6.3</div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📚 MITRE ATT&CK</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <span>已映射技术</span><strong>187 / 200</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <span>已部署检测</span><strong style="color: var(--success);">142</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <span>覆盖度</span><strong>71%</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <span>缺失检测</span><strong style="color: var(--warning);">45</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                <span>最近演练</span><strong>3 天前</strong>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 漏洞趋势 (30d)</span>
+            </div>
+            <svg viewBox="0 0 300 120" style="width: 100%; height: 120px;">
+              <path d="M0,80 L30,75 L60,60 L90,65 L120,50 L150,55 L180,40 L210,45 L240,30 L270,35 L300,20" stroke="#ef4444" stroke-width="2" fill="none"/>
+              <path d="M0,80 L30,75 L60,60 L90,65 L120,50 L150,55 L180,40 L210,45 L240,30 L270,35 L300,20 L300,120 L0,120 Z" fill="rgba(239,68,68,0.1)"/>
+              <text x="10" y="15" fill="#94a3b8" font-size="10">新发现漏洞趋势</text>
+            </svg>
+            <div style="display: flex; gap: 12px; font-size: 11px; color: var(--text-3);">
+              <span>📈 峰值: 23 (D-3)</span>
+              <span>📉 均值: 12/天</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 资产管理 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    /* 列表页专用样式 */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .page-title { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .page-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .page-actions { display: flex; gap: 8px; }
+    .toolbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; background: var(--bg-3);
+      border: 1px solid var(--border); border-radius: 8px;
+      margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .search-box {
+      flex: 1; min-width: 200px; position: relative;
+    }
+    .search-box input {
+      width: 100%; padding: 8px 12px 8px 32px;
+      background: var(--bg-4); border: 1px solid var(--border);
+      border-radius: 4px; color: var(--text); font-size: 12px;
+      font-family: inherit;
+    }
+    .search-box input:focus { outline: none; border-color: var(--info); }
+    .search-box::before {
+      content: '🔍'; position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%); color: var(--text-4); font-size: 12px;
+    }
+    .filter-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; background: var(--bg-4);
+      border: 1px solid var(--border); border-radius: 14px;
+      font-size: 11px; color: var(--text-2); cursor: pointer;
+    }
+    .filter-pill.active { background: rgba(0, 212, 255, 0.1); border-color: var(--primary); color: var(--primary); }
+    .filter-pill .count { color: var(--text-4); font-size: 10px; }
+    .data-table {
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .data-table .tbl { width: 100%; }
+    .data-table .tbl th {
+      position: sticky; top: 0; background: var(--bg-3); z-index: 1;
+    }
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-3);
+    }
+    .page-btn {
+      padding: 4px 10px; background: var(--bg-4); color: var(--text-2);
+      border: 1px solid var(--border); border-radius: 4px;
+      font-size: 11px; cursor: pointer; font-family: inherit;
+    }
+    .page-btn:hover { border-color: var(--info); }
+    .page-btn.active { background: var(--info); color: #fff; border-color: var(--info); }
+    .asset-icon { font-size: 18px; width: 24px; text-align: center; }
+    .risk-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 10px; font-weight: 700; min-width: 50px; text-align: center;
+    }
+    .risk-pill.critical { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    .risk-pill.high { background: rgba(249, 115, 22, 0.15); color: #f97316; }
+    .risk-pill.medium { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .risk-pill.low { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+    .risk-pill.info { background: rgba(100, 116, 139, 0.15); color: var(--text-3); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">📦 资产管理</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📥 导入</button>
+        <button class="btn">📤 导出</button>
+        <button class="btn btn-primary">+ 新增资产</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">资产管理</div>
+      <div class="role-item active"><span class="role-icon">📦</span><div class="role-info"><div class="role-name">资产列表</div></div></div>
+      <div class="role-item"><span class="role-icon">☁️</span><div class="role-info"><div class="role-name">云资产</div></div></div>
+      <div class="role-item"><span class="role-icon">🖥️</span><div class="role-info"><div class="role-name">主机/容器</div></div></div>
+      <div class="role-item"><span class="role-icon">🌐</span><div class="role-info"><div class="role-name">外部攻击面</div></div></div>
+      <div class="role-item"><span class="role-icon">💾</span><div class="role-info"><div class="role-name">数据资产</div></div></div>
+      <div class="role-item"><span class="role-icon">🔗</span><div class="role-info"><div class="role-name">依赖图</div></div></div>
+      <div class="section-title">其他视图</div>
+      <div class="role-item"><span class="role-icon">🚨</span><div class="role-info"><div class="role-name">事件</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">漏洞</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">威胁</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">合规</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-header">
+          <div>
+            <div class="page-title">📦 资产列表</div>
+            <div class="page-sub">共 487 个资产 · 32 待分类 · 5 关键资产</div>
+          </div>
+          <div class="page-actions">
+            <button class="btn">📊 报表</button>
+            <button class="btn">🔄 同步</button>
+          </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
+          <div class="kpi-card"><div class="kpi-label">总资产</div><div class="kpi-value">487</div><div class="kpi-delta up">▲ 12 (本周)</div></div>
+          <div class="kpi-card"><div class="kpi-label">云资产</div><div class="kpi-value">142</div><div class="kpi-delta neutral">AWS 89 / Azure 53</div></div>
+          <div class="kpi-card"><div class="kpi-label">主机/容器</div><div class="kpi-value">38</div><div class="kpi-delta warn">2 异常</div></div>
+          <div class="kpi-card"><div class="kpi-label">关键资产</div><div class="kpi-value" style="color: var(--danger);">5</div><div class="kpi-delta down">需最高保护</div></div>
+          <div class="kpi-card"><div class="kpi-label">影子资产</div><div class="kpi-value" style="color: var(--warning);">3</div><div class="kpi-delta down">⚠ 需纳管</div></div>
+        </div>
+
+        <!-- 过滤工具栏 -->
+        <div class="toolbar">
+          <div class="search-box">
+            <input type="text" placeholder="搜索资产名、IP、标签...">
+          </div>
+          <span class="filter-pill active">全部 <span class="count">487</span></span>
+          <span class="filter-pill">☁️ 云 <span class="count">142</span></span>
+          <span class="filter-pill">🖥️ 主机 <span class="count">38</span></span>
+          <span class="filter-pill">🌐 外部 <span class="count">12</span></span>
+          <span class="filter-pill">💾 数据 <span class="count">187</span></span>
+          <span class="filter-pill">🔗 应用 <span class="count">108</span></span>
+          <span class="filter-pill">⚠ 关键 <span class="count">5</span></span>
+        </div>
+
+        <!-- 资产表 -->
+        <div class="data-table">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width: 30px;"><input type="checkbox"></th>
+                <th>资产</th>
+                <th>类型</th>
+                <th>环境</th>
+                <th>业务关键性</th>
+                <th>暴露面</th>
+                <th>漏洞</th>
+                <th>负责人</th>
+                <th>最后扫描</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">🌐</span><strong>prod-web-01</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">203.0.113.10</span></td>
+                <td>Web 应用</td>
+                <td>生产</td>
+                <td><span class="risk-pill critical">关键</span></td>
+                <td>公网</td>
+                <td><span style="color: var(--danger); font-weight: 700;">12</span></td>
+                <td>王工</td>
+                <td>2h 前</td>
+                <td><span class="dot warn"></span> 待处理</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">🗄️</span><strong>prod-db-01</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">10.0.1.50</span></td>
+                <td>数据库</td>
+                <td>生产</td>
+                <td><span class="risk-pill critical">关键</span></td>
+                <td>内网</td>
+                <td><span style="color: var(--warning); font-weight: 700;">3</span></td>
+                <td>赵工</td>
+                <td>1h 前</td>
+                <td><span class="dot ok"></span> 健康</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">☁️</span><strong>aws-s3-prod</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">s3://acme-prod-data</span></td>
+                <td>对象存储</td>
+                <td>AWS 生产</td>
+                <td><span class="risk-pill high">高</span></td>
+                <td>混合</td>
+                <td><span style="color: var(--warning); font-weight: 700;">5</span></td>
+                <td>李工</td>
+                <td>30m 前</td>
+                <td><span class="dot warn"></span> 1 配置问题</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">🐳</span><strong>k8s-prod-cluster</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">12 nodes</span></td>
+                <td>容器编排</td>
+                <td>K8s 生产</td>
+                <td><span class="risk-pill critical">关键</span></td>
+                <td>内网</td>
+                <td><span style="color: var(--warning); font-weight: 700;">8</span></td>
+                <td>孙工</td>
+                <td>5m 前</td>
+                <td><span class="dot ok"></span> 健康</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">💻</span><strong>ci-runner-02</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">10.0.2.20</span></td>
+                <td>CI 节点</td>
+                <td>生产</td>
+                <td><span class="risk-pill high">高</span></td>
+                <td>内网</td>
+                <td><span style="color: var(--danger); font-weight: 700;">15</span></td>
+                <td>孙工</td>
+                <td>10m 前</td>
+                <td><span class="dot danger"></span> 异常流量</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">🔐</span><strong>sso-srv-01</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">10.0.1.100</span></td>
+                <td>身份认证</td>
+                <td>生产</td>
+                <td><span class="risk-pill critical">关键</span></td>
+                <td>混合</td>
+                <td><span style="color: var(--warning); font-weight: 700;">2</span></td>
+                <td>李工</td>
+                <td>1h 前</td>
+                <td><span class="dot ok"></span> 健康</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">💾</span><strong>data-lake-prod</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">s3 + Athena</span></td>
+                <td>数据湖</td>
+                <td>生产</td>
+                <td><span class="risk-pill high">高</span></td>
+                <td>内网</td>
+                <td><span style="color: var(--danger); font-weight: 700;">20</span></td>
+                <td>钱工</td>
+                <td>20m 前</td>
+                <td><span class="dot warn"></span> 8 开放威胁</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">🌍</span><strong>acme.com (主域)</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">外部域名</span></td>
+                <td>外部资产</td>
+                <td>外部</td>
+                <td><span class="risk-pill medium">中</span></td>
+                <td>公网</td>
+                <td><span style="color: var(--warning); font-weight: 700;">3</span></td>
+                <td>—</td>
+                <td>3h 前</td>
+                <td><span class="dot warn"></span> 子域风险</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">🤖</span><strong>payment-gateway</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">payment.acme.com</span></td>
+                <td>支付接口</td>
+                <td>生产</td>
+                <td><span class="risk-pill critical">关键</span></td>
+                <td>公网</td>
+                <td><span style="color: var(--warning); font-weight: 700;">7</span></td>
+                <td>李工</td>
+                <td>1h 前</td>
+                <td><span class="dot ok"></span> 健康</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">📧</span><strong>mail-server-01</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">10.0.1.200</span></td>
+                <td>邮件服务</td>
+                <td>生产</td>
+                <td><span class="risk-pill medium">中</span></td>
+                <td>公网</td>
+                <td><span style="color: var(--warning); font-weight: 700;">4</span></td>
+                <td>王工</td>
+                <td>2h 前</td>
+                <td><span class="dot ok"></span> 健康</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td><span class="asset-icon">👻</span><strong>shadow-it-saas-01</strong><br><span style="font-size: 10px; color: var(--text-3); font-family: monospace;">未纳管</span></td>
+                <td>影子 SaaS</td>
+                <td>—</td>
+                <td><span class="risk-pill medium">中</span></td>
+                <td>公网</td>
+                <td><span style="color: var(--text-3);">—</span></td>
+                <td>—</td>
+                <td>未扫描</td>
+                <td><span class="dot danger"></span> 影子资产</td>
+                <td>⋯</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div>显示 1-10 / 487 · 已选 0</div>
+            <div>
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">4</button>
+              <button class="page-btn">...</button>
+              <button class="page-btn">49</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>💼 业务安全 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">💼 业务安全 · BCP + BIA + 业务连续性</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📋 BCP 演练</button>
+        <button class="btn">📊 BIA</button>
+        <button class="btn">👤 孙工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="role-item"><span class="role-icon">👔</span><div class="role-info"><div class="role-name">CISO</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">安全专家</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">安全运营</div></div></div>
+      <div class="role-item active"><span class="role-icon">💼</span><div class="role-info"><div class="role-name">业务安全</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">BCP 计划</div></div></div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">BIA 评估</div></div></div>
+      <div class="role-item"><span class="tool-icon">📞</span><div class="role-info"><div class="role-name">危机通讯</div></div></div>
+      <div class="role-item"><span class="role-icon">💰</span><div class="role-info"><div class="role-name">保险覆盖</div></div></div>
+      <div class="role-item"><span class="role-icon">📈</span><div class="role-info"><div class="role-name">风险敞口</div></div></div>
+      <div class="role-item"><span class="role-icon">🏢</span><div class="role-info"><div class="role-name">业务关系</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card">
+            <div class="kpi-icon">🛡️</div>
+            <div class="kpi-label">业务连续性就绪度</div>
+            <div class="kpi-value">82<span style="font-size: 14px;">%</span></div>
+            <div class="kpi-delta up">▲ 5%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">📋</div>
+            <div class="kpi-label">关键业务流程</div>
+            <div class="kpi-value">23</div>
+            <div class="kpi-delta neutral">3 缺计划</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⏱</div>
+            <div class="kpi-label">RTO 中位数</div>
+            <div class="kpi-value">4<span style="font-size: 14px;">h</span></div>
+            <div class="kpi-delta up">▼ 1h</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-label">保险覆盖</div>
+            <div class="kpi-value">$5M</div>
+            <div class="kpi-delta warn">⚠ 网络险待续</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">📋</div>
+            <div class="kpi-label">演练完成度</div>
+            <div class="kpi-value">3<span style="font-size: 14px;">/6</span></div>
+            <div class="kpi-delta down">⚠ 落后进度</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 关键业务流程 (BIA Top 10)</span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>流程</th><th>负责人</th><th>RTO</th><th>RPO</th><th>影响</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="strong">支付处理</td>
+                  <td>财务部</td>
+                  <td>15min</td>
+                  <td>5min</td>
+                  <td>$$$</td>
+                  <td><span class="badge ok">已就绪</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">用户认证 (SSO)</td>
+                  <td>IT 部</td>
+                  <td>30min</td>
+                  <td>0</td>
+                  <td>$$$</td>
+                  <td><span class="badge ok">已就绪</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">订单处理</td>
+                  <td>电商部</td>
+                  <td>1h</td>
+                  <td>15min</td>
+                  <td>$$</td>
+                  <td><span class="badge warn">演练中</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">数据备份</td>
+                  <td>IT 部</td>
+                  <td>4h</td>
+                  <td>1h</td>
+                  <td>$$</td>
+                  <td><span class="badge ok">已就绪</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">客户支持</td>
+                  <td>客服部</td>
+                  <td>2h</td>
+                  <td>4h</td>
+                  <td>$</td>
+                  <td><span class="badge info">计划中</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">财务结算</td>
+                  <td>财务部</td>
+                  <td>8h</td>
+                  <td>4h</td>
+                  <td>$$</td>
+                  <td><span class="badge warn">缺演练</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">邮件系统</td>
+                  <td>IT 部</td>
+                  <td>1h</td>
+                  <td>0</td>
+                  <td>$</td>
+                  <td><span class="badge ok">已就绪</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">CRM 系统</td>
+                  <td>销售部</td>
+                  <td>4h</td>
+                  <td>2h</td>
+                  <td>$</td>
+                  <td><span class="badge danger">缺计划</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📞 危机通讯录</span>
+              <button class="btn btn-primary">+ 添加</button>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">👔</div>
+              <div class="list-content">
+                <div class="list-title">CEO 王总</div>
+                <div class="list-meta">一级联系人 · 24/7</div>
+              </div>
+              <span class="badge danger">P0</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">👔</div>
+              <div class="list-content">
+                <div class="list-title">CFO 李总</div>
+                <div class="list-meta">一级联系人 · 工作时间</div>
+              </div>
+              <span class="badge danger">P0</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">⚖️</div>
+              <div class="list-content">
+                <div class="list-title">外部法律顾问 · 律师事务所</div>
+                <div class="list-meta">数据泄露响应</div>
+              </div>
+              <span class="badge warn">P1</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📞</div>
+              <div class="list-content">
+                <div class="list-title">PR 顾问 · 公关公司</div>
+                <div class="list-meta">媒体应对</div>
+              </div>
+              <span class="badge warn">P1</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🛡️</div>
+              <div class="list-content">
+                <div class="list-title">网络保险公司</div>
+                <div class="list-meta">理赔热线</div>
+              </div>
+              <span class="badge info">P2</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🏛️</div>
+              <div class="list-content">
+                <div class="list-title">网信办 通报热线</div>
+                <div class="list-meta">PIPL 强制 72h</div>
+              </div>
+              <span class="badge danger">P0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📈 业务影响热图</span>
+            </div>
+            <svg viewBox="0 0 300 200" style="width: 100%; height: 200px;">
+              <text x="10" y="15" fill="#94a3b8" font-size="10">影响 (USD/h) ↑</text>
+              <text x="240" y="195" fill="#94a3b8" font-size="10">时间 →</text>
+              <line x1="40" y1="20" x2="40" y2="180" stroke="#1e293b"/>
+              <line x1="40" y1="180" x2="290" y2="180" stroke="#1e293b"/>
+              <!-- 矩阵点 -->
+              <g>
+                <circle cx="60" cy="170" r="8" fill="#22c55e" opacity="0.7"/><text x="73" y="173" fill="#94a3b8" font-size="9">支付</text>
+                <circle cx="100" cy="150" r="10" fill="#22c55e" opacity="0.7"/><text x="115" y="153" fill="#94a3b8" font-size="9">SSO</text>
+                <circle cx="140" cy="130" r="12" fill="#f59e0b" opacity="0.7"/><text x="155" y="133" fill="#94a3b8" font-size="9">订单</text>
+                <circle cx="180" cy="110" r="10" fill="#f59e0b" opacity="0.7"/><text x="195" y="113" fill="#94a3b8" font-size="9">备份</text>
+                <circle cx="220" cy="90" r="8" fill="#ef4444" opacity="0.7"/><text x="232" y="93" fill="#94a3b8" font-size="9">客服</text>
+                <circle cx="260" cy="60" r="6" fill="#ef4444" opacity="0.7"/><text x="270" y="63" fill="#94a3b8" font-size="9">结算</text>
+              </g>
+            </svg>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">💰 保险覆盖</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <span>网络责任险</span><strong style="color: var(--success);">$5M</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <span>技术 E&O</span><strong>$3M</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <span>业务中断险</span><strong style="color: var(--warning);">$2M</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <span>董事责任险</span><strong>$5M</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: var(--warning);">
+                <span>⚠ 7/15 到期</span><strong>3 险种</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                <span>年度保费</span><strong>$48K</strong>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 演练计划</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between;"><strong>桌面演练 6/20</strong><span class="badge warn">计划</span></div>
+                <div style="color: var(--text-3); font-size: 11px; margin-top: 2px;">支付系统故障响应</div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between;"><strong>桌面演练 6/28</strong><span class="badge warn">计划</span></div>
+                <div style="color: var(--text-3); font-size: 11px; margin-top: 2px;">数据泄露应急</div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between;"><strong>实操演练 7/15</strong><span class="badge info">筹备</span></div>
+                <div style="color: var(--text-3); font-size: 11px; margin-top: 2px;">灾备切换 (主→备)</div>
+              </div>
+              <div style="padding: 8px 0;">
+                <div style="display: flex; justify-content: space-between;"><strong>全流程演练 9/1</strong><span class="badge gray">待定</span></div>
+                <div style="color: var(--text-3); font-size: 11px; margin-top: 2px;">端到端业务恢复</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

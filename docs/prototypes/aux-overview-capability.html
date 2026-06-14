@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>📊 安全总览 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    .role-quick-access { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .role-qa-card { padding: 16px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .role-qa-card:hover { border-color: var(--info); transform: translateY(-2px); }
+    .role-qa-icon { font-size: 32px; margin-bottom: 6px; }
+    .role-qa-name { font-size: 13px; font-weight: 700; }
+    .role-qa-stat { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">📊 安全总览 · 跨角色综合态势</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">🔄 刷新</button>
+        <button class="btn">📊 导出报告</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item active"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">角色指挥台</div>
+      <div class="role-item"><span class="role-icon">👔</span><div class="role-info"><div class="role-name">CISO</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">安全专家</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">安全运营</div></div></div>
+      <div class="role-item"><span class="role-icon">🏗️</span><div class="role-info"><div class="role-name">架构师</div></div></div>
+      <div class="role-item"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">隐私官</div></div></div>
+      <div class="role-item"><span class="role-icon">💼</span><div class="role-info"><div class="role-name">业务安全</div></div></div>
+      <div class="role-item"><span class="role-icon">🔗</span><div class="role-info"><div class="role-name">供应链</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">🚀</span><div class="role-info"><div class="role-name">新能力</div></div></div>
+      <div class="role-item"><span class="role-icon">🛒</span><div class="role-info"><div class="role-name">工具市场</div></div></div>
+      <div class="role-item"><span class="role-icon">🧬</span><div class="role-info"><div class="role-name">自主进化</div></div></div>
+      <div class="role-item"><span class="role-icon">📚</span><div class="role-info"><div class="role-name">知识库</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">🛡️ 早上好，张工！欢迎回到 SecuClaw</div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(6, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">安全评分</div><div class="kpi-value" style="color: var(--success);">88</div><div class="kpi-delta up">▲ 2.1</div></div>
+          <div class="kpi-card"><div class="kpi-label">风险评分</div><div class="kpi-value" style="color: var(--warning);">15</div><div class="kpi-delta up">▼ 1.4</div></div>
+          <div class="kpi-card"><div class="kpi-label">活跃事件</div><div class="kpi-value" style="color: var(--warning);">12</div><div class="kpi-delta down">▲ 3</div></div>
+          <div class="kpi-card"><div class="kpi-label">未修复漏洞</div><div class="kpi-value" style="color: var(--danger);">47</div><div class="kpi-delta down">▲ 8</div></div>
+          <div class="kpi-card"><div class="kpi-label">资产</div><div class="kpi-value">487</div><div class="kpi-delta up">▲ 12</div></div>
+          <div class="kpi-card"><div class="kpi-label">待办</div><div class="kpi-value" style="color: var(--warning);">23</div><div class="kpi-delta down">▲ 5</div></div>
+        </div>
+
+        <!-- 8 角色快捷入口 -->
+        <h3 style="font-size: 13px; color: var(--text-3); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.04em;">🚀 进入角色指挥台</h3>
+        <div class="role-quick-access">
+          <div class="role-qa-card">
+            <div class="role-qa-icon">🎖️</div>
+            <div class="role-qa-name">指挥官</div>
+            <div class="role-qa-stat">3 协同中 · 5 战情待审批</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">👔</div>
+            <div class="role-qa-name">CISO 战略官</div>
+            <div class="role-qa-stat">Q2 进度 58% · 5 待审批</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">🔍</div>
+            <div class="role-qa-name">安全专家</div>
+            <div class="role-qa-stat">3 Critical · 8 待修复</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">⚡</div>
+            <div class="role-qa-name">安全运营</div>
+            <div class="role-qa-stat">12 告警 · 3 P1</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">🏗️</div>
+            <div class="role-qa-name">架构师</div>
+            <div class="role-qa-stat">8 设计待审查 · 7 模型</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">🔒</div>
+            <div class="role-qa-name">隐私官</div>
+            <div class="role-qa-stat">5 DSR 待处理 · 187 PII</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">💼</div>
+            <div class="role-qa-name">业务安全</div>
+            <div class="role-qa-stat">3/6 演练 · 23 流程</div>
+          </div>
+          <div class="role-qa-card">
+            <div class="role-qa-icon">🔗</div>
+            <div class="role-qa-name">供应链</div>
+            <div class="role-qa-stat">3 供应商高风险 · 28 漏洞</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 20px;">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📈 综合安全趋势 (90 天)</span>
+            </div>
+            <svg viewBox="0 0 500 180" style="width: 100%; height: 180px;">
+              <defs>
+                <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#22c55e" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="g2" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <g stroke="#1e293b" stroke-width="0.5">
+                <line x1="0" y1="40" x2="500" y2="40"/>
+                <line x1="0" y1="80" x2="500" y2="80"/>
+                <line x1="0" y1="120" x2="500" y2="120"/>
+              </g>
+              <!-- 安全评分 -->
+              <path d="M0,140 L50,135 L100,130 L150,120 L200,110 L250,100 L300,90 L350,80 L400,75 L450,65 L500,50" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <path d="M0,140 L50,135 L100,130 L150,120 L200,110 L250,100 L300,90 L350,80 L400,75 L450,65 L500,50 L500,180 L0,180 Z" fill="url(#g1)"/>
+              <!-- 风险 -->
+              <path d="M0,80 L50,85 L100,90 L150,100 L200,110 L250,115 L300,120 L350,130 L400,135 L450,140 L500,140" stroke="#ef4444" stroke-width="2" fill="none"/>
+              <path d="M0,80 L50,85 L100,90 L150,100 L200,110 L250,115 L300,120 L350,130 L400,135 L450,140 L500,140 L500,180 L0,180 Z" fill="url(#g2)"/>
+              <text x="10" y="20" fill="#22c55e" font-size="11">安全评分 88</text>
+              <text x="120" y="20" fill="#ef4444" font-size="11">风险评分 15</text>
+            </svg>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📰 最近动态</span>
+              <a class="panel-action">全部 →</a>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--danger);">🚨</div>
+              <div class="list-content">
+                <div class="list-title">P1 事件：INC-2024-001 钓鱼邮件</div>
+                <div class="list-meta">2 分钟前 · 张工</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--info);">🛡️</div>
+              <div class="list-content">
+                <div class="list-title">CVE-2024-21762 修复进度 60%</div>
+                <div class="list-meta">1 小时前</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--success);">🤖</div>
+              <div class="list-content">
+                <div class="list-title">SOAR 自动处理 12 个告警</div>
+                <div class="list-meta">2 小时前 · 节省 1.5h</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--warning);">📋</div>
+              <div class="list-content">
+                <div class="list-title">CISO 批准 5 个预算申请</div>
+                <div class="list-meta">3 小时前</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--info);">🧬</div>
+              <div class="list-content">
+                <div class="list-title">AI 推荐 3 条技能自动化</div>
+                <div class="list-meta">昨天 · 采纳 1 条</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 12 大能力状态</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">☁️</span>
+                <div style="flex: 1; font-size: 11px;"><strong>CSPM</strong><br><span style="color: var(--text-3);">8 Critical</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">💾</span>
+                <div style="flex: 1; font-size: 11px;"><strong>DSPM</strong><br><span style="color: var(--text-3);">12 字段</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🌐</span>
+                <div style="flex: 1; font-size: 11px;"><strong>EASM</strong><br><span style="color: var(--text-3);">12 资产</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🛡️</span>
+                <div style="flex: 1; font-size: 11px;"><strong>RASP</strong><br><span style="color: var(--text-3);">247 拦截</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🔐</span>
+                <div style="flex: 1; font-size: 11px;"><strong>ITDR</strong><br><span style="color: var(--text-3);">0 失陷</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">⚡</span>
+                <div style="flex: 1; font-size: 11px;"><strong>SOAR</strong><br><span style="color: var(--text-3);">347 执行</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🧠</span>
+                <div style="flex: 1; font-size: 11px;"><strong>UEBA</strong><br><span style="color: var(--text-3);">23 异常</span></div>
+                <span class="badge warn">3 高风险</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🎯</span>
+                <div style="flex: 1; font-size: 11px;"><strong>Sigma</strong><br><span style="color: var(--text-3);">247 规则</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🤖</span>
+                <div style="flex: 1; font-size: 11px;"><strong>AI-SCM</strong><br><span style="color: var(--text-3);">15 工具</span></div>
+                <span class="badge warn">2 评估</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">📋</span>
+                <div style="flex: 1; font-size: 11px;"><strong>AI-SPM</strong><br><span style="color: var(--text-3);">5 模型</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">🔒</span>
+                <div style="flex: 1; font-size: 11px;"><strong>Privacy</strong><br><span style="color: var(--text-3);">94% 合规</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+              <div style="padding: 8px 10px; background: var(--bg-4); border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">💼</span>
+                <div style="flex: 1; font-size: 11px;"><strong>SaaS 运营</strong><br><span style="color: var(--text-3);">12 租户</span></div>
+                <span class="badge ok">运行</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">👥 团队动态</span>
+              <a class="panel-action">全部 →</a>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">👔</div>
+              <div class="list-content">
+                <div class="list-title">李工 (CISO) 发布了 RACI 任务</div>
+                <div class="list-meta">"排查 INC-2024-001 钓鱼邮件事件" · 5 分钟前</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔍</div>
+              <div class="list-content">
+                <div class="list-title">王工 (Expert) 修复了漏洞</div>
+                <div class="list-meta">"CVE-2024-21762 · 关键资产 prod-web-01" · 12 分钟前</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">⚡</div>
+              <div class="list-content">
+                <div class="list-title">赵工 (SecOps) 接受了任务</div>
+                <div class="list-meta">"响应供应链攻击告警" · 23 分钟前</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔒</div>
+              <div class="list-content">
+                <div class="list-title">钱工 (Privacy) 创建了 DSR</div>
+                <div class="list-meta">"DSR-2024-045 访问请求" · 1 小时前</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🏗️</div>
+              <div class="list-content">
+                <div class="list-title">李工 (Architect) 提交了设计审查</div>
+                <div class="list-meta">"payment-v2.0 架构" · 2 小时前</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

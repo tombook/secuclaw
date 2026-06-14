@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 3 · SSO 登录 + 多租户成员管理 + 计费升级</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0a0f1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .page { padding: 30px; max-width: 1280px; margin: 0 auto; }
+    h1 { color: #00d4ff; margin-bottom: 8px; font-size: 24px; }
+    .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 40px; }
+    .section { margin-bottom: 50px; }
+    .section h2 {
+      font-size: 16px; color: #e2e8f0; margin-bottom: 6px;
+      padding-bottom: 8px; border-bottom: 1px solid #1e293b;
+    }
+    .section .desc { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+    /* ─── SSO 登录页 ─── */
+    .sso-page {
+      max-width: 420px; margin: 0 auto;
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 12px; padding: 36px 32px;
+    }
+    .sso-brand { text-align: center; margin-bottom: 24px; }
+    .sso-brand .icon { font-size: 36px; }
+    .sso-brand h2 {
+      font-size: 20px; font-weight: 800; margin: 8px 0 4px;
+      background: linear-gradient(135deg, #00d4ff, #a855f7);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      border: none; padding: 0;
+    }
+    .sso-brand p { font-size: 12px; color: #94a3b8; }
+    .sso-tenant {
+      text-align: center; padding: 8px 0;
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 6px; margin-bottom: 20px;
+    }
+    .sso-tenant-name { font-size: 13px; font-weight: 600; }
+    .sso-tenant-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .sso-btn {
+      width: 100%; padding: 12px;
+      background: #0f172a; color: #e2e8f0;
+      border: 1px solid #1e293b; border-radius: 6px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-bottom: 10px; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .sso-btn:hover { background: #131d2e; border-color: #3b82f6; }
+    .sso-btn .idp-icon { font-size: 16px; }
+    .sso-divider {
+      display: flex; align-items: center; gap: 8px;
+      margin: 16px 0; font-size: 11px; color: #64748b;
+    }
+    .sso-divider::before, .sso-divider::after {
+      content: ''; flex: 1; height: 1px; background: #1e293b;
+    }
+    .sso-secondary {
+      text-align: center; font-size: 12px; color: #94a3b8;
+    }
+    .sso-secondary a {
+      color: #60a5fa; cursor: pointer; text-decoration: none;
+    }
+    .sso-secondary a:hover { text-decoration: underline; }
+    /* ─── 多租户成员管理 ─── */
+    .tenant-app {
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 12px; overflow: hidden;
+    }
+    .tenant-header {
+      background: #0d1320; padding: 12px 20px;
+      display: flex; align-items: center; gap: 16px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .tenant-logo {
+      width: 32px; height: 32px; border-radius: 6px;
+      background: linear-gradient(135deg, #00d4ff, #a855f7);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 14px;
+    }
+    .tenant-name { font-size: 14px; font-weight: 700; }
+    .tenant-spacer { flex: 1; }
+    .tenant-user {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px;
+    }
+    .tenant-body { display: grid; grid-template-columns: 200px 1fr; }
+    .tenant-nav {
+      background: #0a0f1a; padding: 12px 0;
+      border-right: 1px solid #1e293b;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; font-size: 12px; color: #94a3b8;
+      cursor: pointer;
+    }
+    .nav-item:hover { background: #131d2e; color: #e2e8f0; }
+    .nav-item.active {
+      background: #131d2e; color: #fff;
+      border-left: 2px solid #3b82f6;
+    }
+    .tenant-content { padding: 20px 24px; }
+    .member-toolbar {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1; min-width: 200px; padding: 8px 12px;
+      background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 4px; color: #e2e8f0; font-size: 12px;
+      font-family: inherit;
+    }
+    .search-input:focus { outline: none; border-color: #3b82f6; }
+    .filter-select {
+      padding: 8px 12px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 4px;
+      color: #e2e8f0; font-size: 12px; font-family: inherit;
+    }
+    .invite-btn {
+      padding: 8px 16px; background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border: none; border-radius: 4px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      font-family: inherit;
+    }
+    .batch-btn {
+      padding: 8px 14px; background: transparent; color: #94a3b8;
+      border: 1px solid #1e293b; border-radius: 4px;
+      font-size: 12px; cursor: pointer; font-family: inherit;
+    }
+    .batch-btn:hover { color: #e2e8f0; border-color: #334155; }
+    .member-table {
+      width: 100%; border-collapse: collapse; font-size: 12px;
+    }
+    .member-table th {
+      text-align: left; padding: 8px 10px; color: #94a3b8;
+      font-weight: 600; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.04em; border-bottom: 1px solid #1e293b;
+    }
+    .member-table td {
+      padding: 10px; border-bottom: 1px solid #1a2236; color: #cbd5e1;
+    }
+    .member-table tr:hover td { background: #131d2e; }
+    .member-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, #00d4ff, #a855f7);
+      color: #fff; font-size: 11px; font-weight: 600;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-right: 8px;
+    }
+    .status-dot {
+      display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      margin-right: 4px;
+    }
+    .status-dot.active { background: #22c55e; }
+    .status-dot.disabled { background: #f59e0b; }
+    .status-dot.pending { background: #94a3b8; }
+    .row-checkbox { accent-color: #3b82f6; }
+    /* ─── 计费页 ─── */
+    .billing-page {
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 12px; padding: 28px 32px;
+    }
+    .current-plan {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(168, 85, 247, 0.05));
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px; margin-bottom: 24px;
+    }
+    .plan-info { flex: 1; }
+    .plan-name-big { font-size: 20px; font-weight: 800; }
+    .plan-detail { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .plan-quota-row {
+      display: grid; grid-template-columns: 200px 1fr 60px;
+      align-items: center; gap: 12px; padding: 8px 0;
+      font-size: 12px;
+    }
+    .quota-bar {
+      height: 6px; background: #1e293b; border-radius: 3px;
+      overflow: hidden;
+    }
+    .quota-fill { height: 100%; background: linear-gradient(90deg, #00d4ff, #3b82f6); border-radius: 3px; }
+    .quota-fill.warn { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .plan-tiers {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px; margin-top: 20px;
+    }
+    .tier-card {
+      padding: 18px 16px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 8px;
+      position: relative;
+    }
+    .tier-card.current {
+      border-color: #00d4ff;
+      box-shadow: 0 0 16px rgba(0, 212, 255, 0.2);
+    }
+    .tier-card.popular::before {
+      content: '最受欢迎';
+      position: absolute; top: -10px; left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; padding: 2px 10px; border-radius: 10px;
+      font-size: 10px; font-weight: 700;
+    }
+    .tier-name { font-size: 14px; font-weight: 700; }
+    .tier-price { font-size: 28px; font-weight: 800; margin: 8px 0; }
+    .tier-price small { font-size: 12px; color: #94a3b8; font-weight: 500; }
+    .tier-features { list-style: none; margin: 12px 0; font-size: 12px; color: #cbd5e1; }
+    .tier-features li { padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+    .tier-features li::before { content: '✓'; color: #22c55e; font-weight: 700; }
+    .tier-btn {
+      width: 100%; padding: 8px; border-radius: 4px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      font-family: inherit; margin-top: 8px;
+    }
+    .tier-btn.primary {
+      background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border: none;
+    }
+    .tier-btn.secondary {
+      background: transparent; color: #94a3b8;
+      border: 1px solid #1e293b;
+    }
+    .tier-btn.disabled {
+      background: #1e293b; color: #475569; border: none;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Phase 3 · 企业级功能</h1>
+    <p class="subtitle">SSO 登录 + 多租户成员管理 + 计费升级</p>
+
+    <!-- SSO 登录页 -->
+    <div class="section">
+      <h2>1. 企业 SSO 登录</h2>
+      <p class="desc">acme.secuclaw.com 自动识别租户，3 个 IdP 一键登录 + 本地密码兜底</p>
+
+      <div class="sso-page">
+        <div class="sso-brand">
+          <div class="icon">🐾</div>
+          <h2>SecuClaw</h2>
+          <p>企业统一身份认证</p>
+        </div>
+
+        <div class="sso-tenant">
+          <div class="sso-tenant-name">🏢 Acme Corp Workspace</div>
+          <div class="sso-tenant-sub">检测到您的企业 SSO，请使用企业账号登录</div>
+        </div>
+
+        <button class="sso-btn">
+          <span class="idp-icon">🔐</span> 使用 Google Workspace 登录
+        </button>
+        <button class="sso-btn">
+          <span class="idp-icon">🔑</span> 使用 Okta SSO 登录
+        </button>
+        <button class="sso-btn">
+          <span class="idp-icon">📧</span> 使用 Azure AD 登录
+        </button>
+
+        <div class="sso-divider">其他登录方式</div>
+
+        <div class="sso-secondary">
+          <a>个人账号登录</a> &nbsp;·&nbsp; <a>← 返回门户</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 多租户成员管理 -->
+    <div class="section">
+      <h2>2. 多租户成员管理</h2>
+      <p class="desc">租户管理员邀请/管理成员，搜索筛选 + 批量操作 + 状态徽章</p>
+
+      <div class="tenant-app">
+        <div class="tenant-header">
+          <div class="tenant-logo">A</div>
+          <div>
+            <div class="tenant-name">Acme Corp · 成员管理</div>
+            <div style="font-size: 11px; color: #94a3b8;">租户 ID: tenant_acme_001</div>
+          </div>
+          <div class="tenant-spacer"></div>
+          <div class="tenant-user">
+            <div class="member-avatar">张</div>
+            <div>
+              <div style="font-size: 12px;">张工</div>
+              <div style="font-size: 10px; color: #94a3b8;">👔 管理员</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tenant-body">
+          <div class="tenant-nav">
+            <div class="nav-item">📊 总览</div>
+            <div class="nav-item active">👥 成员</div>
+            <div class="nav-item">🏢 组织</div>
+            <div class="nav-item">💰 计费</div>
+            <div class="nav-item">🔐 安全</div>
+            <div class="nav-item">📋 审计</div>
+            <div class="nav-item">⚙️ 设置</div>
+          </div>
+
+          <div class="tenant-content">
+            <div class="member-toolbar">
+              <input type="text" class="search-input" placeholder="🔍 搜索姓名、邮箱..." value="z">
+              <select class="filter-select">
+                <option>📁 全部部门</option>
+                <option>总经办</option>
+                <option>研发部</option>
+                <option>运维部</option>
+                <option>法务部</option>
+              </select>
+              <select class="filter-select">
+                <option>👤 全部角色</option>
+                <option>CISO</option>
+                <option>SecOps</option>
+                <option>Expert</option>
+                <option>Privacy</option>
+              </select>
+              <button class="batch-btn">📥 批量导入</button>
+              <button class="invite-btn">+ 邀请成员</button>
+            </div>
+
+            <table class="member-table">
+              <thead>
+                <tr>
+                  <th style="width: 30px;"><input type="checkbox" class="row-checkbox"></th>
+                  <th>姓名</th>
+                  <th>邮箱</th>
+                  <th>部门</th>
+                  <th>角色</th>
+                  <th>状态</th>
+                  <th>最后活跃</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox" class="row-checkbox"></td>
+                  <td><span class="member-avatar">张</span><strong>张三</strong></td>
+                  <td>zhang@acme.com</td>
+                  <td>总经办</td>
+                  <td>👔 CISO</td>
+                  <td><span class="status-dot active"></span>活跃</td>
+                  <td>2 小时前</td>
+                  <td>⋯</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" class="row-checkbox"></td>
+                  <td><span class="member-avatar">李</span><strong>李四</strong></td>
+                  <td>li@acme.com</td>
+                  <td>研发部</td>
+                  <td>⚡ SecOps</td>
+                  <td><span class="status-dot active"></span>活跃</td>
+                  <td>5 分钟前</td>
+                  <td>⋯</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" class="row-checkbox"></td>
+                  <td><span class="member-avatar">王</span><strong>王五</strong></td>
+                  <td>wang@acme.com</td>
+                  <td>研发部</td>
+                  <td>🔍 Expert</td>
+                  <td><span class="status-dot active"></span>活跃</td>
+                  <td>1 小时前</td>
+                  <td>⋯</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" class="row-checkbox"></td>
+                  <td><span class="member-avatar">赵</span><strong>赵六</strong></td>
+                  <td>zhao@acme.com</td>
+                  <td>运维部</td>
+                  <td>⚡ SecOps</td>
+                  <td><span class="status-dot disabled"></span>已禁用</td>
+                  <td>3 天前</td>
+                  <td>⋯</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" class="row-checkbox"></td>
+                  <td><span class="member-avatar">钱</span><strong>钱七</strong></td>
+                  <td>qian@acme.com</td>
+                  <td>法务部</td>
+                  <td>🔒 Privacy</td>
+                  <td><span class="status-dot pending"></span>待接受</td>
+                  <td>—</td>
+                  <td>⋯</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; font-size: 12px; color: #94a3b8;">
+              <div>
+                <button class="batch-btn">批量启用</button>
+                <button class="batch-btn">批量禁用</button>
+                <button class="batch-btn">转移部门 ▼</button>
+              </div>
+              <div>
+                < 上一页 &nbsp; 1 2 3 4 5 &nbsp; 下一页 > &nbsp; 共 25 个成员
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 计费升级 -->
+    <div class="section">
+      <h2>3. 计费与升级</h2>
+      <p class="desc">当前用量实时展示 + 3 档定价卡 + 升级确认对话框</p>
+
+      <div class="billing-page">
+        <div class="current-plan">
+          <div style="font-size: 32px;">💎</div>
+          <div class="plan-info">
+            <div class="plan-name-big">Professional 当前</div>
+            <div class="plan-detail">¥999/月 · 自动续费 · 下次扣费 2024-07-15 · 25/50 成员</div>
+          </div>
+          <button class="batch-btn">管理订阅</button>
+          <button class="batch-btn">查看发票</button>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 12px;">📊 本月用量</div>
+        <div class="plan-quota-row">
+          <span>成员席位</span>
+          <div class="quota-bar"><div class="quota-fill" style="width: 50%;"></div></div>
+          <span style="text-align: right;">25/50</span>
+        </div>
+        <div class="plan-quota-row">
+          <span>API 调用</span>
+          <div class="quota-bar"><div class="quota-fill" style="width: 32%;"></div></div>
+          <span style="text-align: right;">3.2K/10K</span>
+        </div>
+        <div class="plan-quota-row">
+          <span>存储</span>
+          <div class="quota-bar"><div class="quota-fill" style="width: 40%;"></div></div>
+          <span style="text-align: right;">8/20 GB</span>
+        </div>
+        <div class="plan-quota-row">
+          <span>数据保留</span>
+          <div class="quota-bar"><div class="quota-fill warn" style="width: 89%;"></div></div>
+          <span style="text-align: right; color: #f59e0b;">80/90 天</span>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 700; margin: 24px 0 12px;">💡 可选升级</div>
+        <div class="plan-tiers">
+          <div class="tier-card">
+            <div class="tier-name">Free</div>
+            <div class="tier-price">¥0<small>/月</small></div>
+            <ul class="tier-features">
+              <li>3 用户席位</li>
+              <li>1K API/天</li>
+              <li>5 GB 存储</li>
+              <li>社区支持</li>
+            </ul>
+            <button class="tier-btn secondary">降级 ↓</button>
+          </div>
+          <div class="tier-card current popular">
+            <div class="tier-name">Professional</div>
+            <div class="tier-price">¥999<small>/月</small></div>
+            <ul class="tier-features">
+              <li>50 用户席位</li>
+              <li>10K API/天</li>
+              <li>20 GB 存储</li>
+              <li>30 天数据保留</li>
+              <li>邮件支持</li>
+            </ul>
+            <button class="tier-btn disabled">当前 ✓</button>
+          </div>
+          <div class="tier-card">
+            <div class="tier-name">Enterprise</div>
+            <div class="tier-price">¥4999<small>/月</small></div>
+            <ul class="tier-features">
+              <li>无限用户席位</li>
+              <li>无限 API</li>
+              <li>无限存储</li>
+              <li>90 天数据保留</li>
+              <li>SSO + 7×24 支持</li>
+            </ul>
+            <button class="tier-btn primary">升级 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

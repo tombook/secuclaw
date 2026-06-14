@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>⚡ 安全运营 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">⚡ 安全运营 · 告警中心 + SOAR + 应急响应</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn" style="background: rgba(239,68,68,0.15); color: var(--danger); border-color: rgba(239,68,68,0.3);">🚨 P1 事件 (1)</button>
+        <button class="btn">🤖 启动 Playbook</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="role-item"><span class="role-icon">👔</span><div class="role-info"><div class="role-name">CISO</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">安全专家</div></div></div>
+      <div class="role-item active"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">安全运营</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">🚨</span><div class="role-info"><div class="role-name">告警中心</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">事件管理</div></div></div>
+      <div class="role-item"><span class="role-icon">🤖</span><div class="role-info"><div class="role-name">SOAR</div></div></div>
+      <div class="role-item"><span class="role-icon">🧠</span><div class="role-info"><div class="role-name">UEBA</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">Sigma 检测</div></div></div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">SIEM</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">Playbook</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card">
+            <div class="kpi-icon">🚨</div>
+            <div class="kpi-label">活跃告警</div>
+            <div class="kpi-value" style="color: var(--warning);">12</div>
+            <div class="kpi-delta down">▲ 5 (1h)</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🔥</div>
+            <div class="kpi-label">P1/P2 事件</div>
+            <div class="kpi-value" style="color: var(--danger);">3</div>
+            <div class="kpi-delta down">▲ 1</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⏱</div>
+            <div class="kpi-label">MTTD</div>
+            <div class="kpi-value">2.3<span style="font-size: 14px;">min</span></div>
+            <div class="kpi-delta up">▼ 0.5min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⏱</div>
+            <div class="kpi-label">MTTR</div>
+            <div class="kpi-value">23<span style="font-size: 14px;">min</span></div>
+            <div class="kpi-delta up">▼ 5min</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🤖</div>
+            <div class="kpi-label">自动化率</div>
+            <div class="kpi-value">67<span style="font-size: 14px;">%</span></div>
+            <div class="kpi-delta up">▲ 4%</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🚨 实时告警流</span>
+              <span class="badge danger" style="background: rgba(239,68,68,0.2);">3 P1</span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>时间</th><th>严重度</th><th>来源</th><th>描述</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>14:32</td>
+                  <td class="sev critical">P1</td>
+                  <td>EDR</td>
+                  <td class="strong">挖矿进程检测 · k8s-node-05</td>
+                  <td><span class="badge danger">调查中</span></td>
+                  <td><a class="panel-action">响应</a></td>
+                </tr>
+                <tr>
+                  <td>14:25</td>
+                  <td class="sev high">P2</td>
+                  <td>WAF</td>
+                  <td class="strong">SQL 注入尝试 · prod-web-01</td>
+                  <td><span class="badge warn">已阻断</span></td>
+                  <td><a class="panel-action">详情</a></td>
+                </tr>
+                <tr>
+                  <td>14:18</td>
+                  <td class="sev high">P2</td>
+                  <td>IDS</td>
+                  <td class="strong">异常出站流量 · ci-runner-02</td>
+                  <td><span class="badge info">分析中</span></td>
+                  <td><a class="panel-action">分析</a></td>
+                </tr>
+                <tr>
+                  <td>14:12</td>
+                  <td class="sev medium">P3</td>
+                  <td>UEBA</td>
+                  <td class="strong">张工 异地登录 · 北京→莫斯科</td>
+                  <td><span class="badge ok">已确认</span></td>
+                  <td><a class="panel-action">关闭</a></td>
+                </tr>
+                <tr>
+                  <td>14:05</td>
+                  <td class="sev low">P4</td>
+                  <td>DSPM</td>
+                  <td class="strong">数据库敏感字段未脱敏 · 12 张表</td>
+                  <td><span class="badge info">已分派</span></td>
+                  <td><a class="panel-action">分派</a></td>
+                </tr>
+                <tr>
+                  <td>13:58</td>
+                  <td class="sev medium">P3</td>
+                  <td>Sigma</td>
+                  <td class="strong">PowerShell Base64 解码 · 3 台主机</td>
+                  <td><span class="badge warn">待审</span></td>
+                  <td><a class="panel-action">详情</a></td>
+                </tr>
+                <tr>
+                  <td>13:45</td>
+                  <td class="sev low">P4</td>
+                  <td>CSPM</td>
+                  <td class="strong">S3 存储桶公开访问 · 1 个</td>
+                  <td><span class="badge ok">已修复</span></td>
+                  <td><a class="panel-action">归档</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🤖 SOAR 自动化执行</span>
+              <button class="btn btn-primary">+ 新建 Playbook</button>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">钓鱼邮件响应 v3.2</div>
+                <div class="list-meta">5 步骤 · 自动隔离 + 通知</div>
+              </div>
+              <span class="badge ok">12 次执行</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">挖矿主机隔离 v2.1</div>
+                <div class="list-meta">3 步骤 · EDR API + Slack</div>
+              </div>
+              <span class="badge warn">3 次失败</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">失陷账号处理 v1.5</div>
+                <div class="list-meta">4 步骤 · 禁用 + 强制重置</div>
+              </div>
+              <span class="badge ok">5 次执行</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">数据外泄阻断 v2.0</div>
+                <div class="list-meta">6 步骤 · DLP + 法律通知</div>
+              </div>
+              <span class="badge ok">8 次执行</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">敏感数据扫描 v1.0</div>
+                <div class="list-meta">扫描 + 报告 · 每日运行</div>
+              </div>
+              <span class="badge info">定时</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 告警统计 (24h)</span>
+            </div>
+            <svg viewBox="0 0 300 120" style="width: 100%; height: 120px;">
+              <g stroke="#1e293b" stroke-width="0.5">
+                <line x1="0" y1="30" x2="300" y2="30"/>
+                <line x1="0" y1="60" x2="300" y2="60"/>
+                <line x1="0" y1="90" x2="300" y2="90"/>
+              </g>
+              <!-- 柱状图 -->
+              <g fill="#3b82f6">
+                <rect x="0" y="50" width="20" height="70"/>
+                <rect x="25" y="60" width="20" height="60"/>
+                <rect x="50" y="40" width="20" height="80"/>
+                <rect x="75" y="55" width="20" height="65"/>
+                <rect x="100" y="30" width="20" height="90"/>
+                <rect x="125" y="45" width="20" height="75"/>
+                <rect x="150" y="35" width="20" height="85"/>
+                <rect x="175" y="50" width="20" height="70"/>
+                <rect x="200" y="25" width="20" height="95"/>
+                <rect x="225" y="40" width="20" height="80"/>
+                <rect x="250" y="55" width="20" height="65"/>
+                <rect x="275" y="45" width="20" height="75"/>
+              </g>
+              <text x="10" y="20" fill="#94a3b8" font-size="10">每小时告警数</text>
+              <text x="10" y="115" fill="#94a3b8" font-size="9">00:00</text>
+              <text x="280" y="115" fill="#94a3b8" font-size="9">24:00</text>
+            </svg>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🎯 告警来源分布</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">EDR</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 45%;"></div></div>
+                <span style="min-width: 50px; text-align: right;">45%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">WAF</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 25%;"></div></div>
+                <span style="min-width: 50px; text-align: right;">25%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">UEBA</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 15%;"></div></div>
+                <span style="min-width: 50px; text-align: right;">15%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">IDS/IPS</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 8%;"></div></div>
+                <span style="min-width: 50px; text-align: right;">8%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">CSPM</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 4%;"></div></div>
+                <span style="min-width: 50px; text-align: right;">4%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">其他</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 3%;"></div></div>
+                <span style="min-width: 50px; text-align: right;">3%</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🎮 应急工具</span>
+            </div>
+            <div class="tool-grid" style="grid-template-columns: 1fr 1fr;">
+              <div class="tool-cell"><div class="tool-icon">🛡️</div><div class="tool-name">隔离主机</div></div>
+              <div class="tool-cell"><div class="tool-icon">🚫</div><div class="tool-name">阻断 IP</div></div>
+              <div class="tool-cell"><div class="tool-icon">🔑</div><div class="tool-name">重置凭证</div></div>
+              <div class="tool-cell"><div class="tool-icon">📞</div><div class="tool-name">通知升级</div></div>
+              <div class="tool-cell"><div class="tool-icon">📋</div><div class="tool-name">取证采集</div></div>
+              <div class="tool-cell"><div class="tool-icon">🚨</div><div class="tool-name">战情室</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

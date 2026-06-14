@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🚨 事件管理 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .page-title { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .page-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .search-box { flex: 1; min-width: 200px; position: relative; }
+    .search-box input { width: 100%; padding: 8px 12px 8px 32px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; font-family: inherit; }
+    .search-box input:focus { outline: none; border-color: var(--info); }
+    .search-box::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-4); font-size: 12px; }
+    .filter-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; color: var(--text-2); cursor: pointer; }
+    .filter-pill.active { background: rgba(0, 212, 255, 0.1); border-color: var(--primary); color: var(--primary); }
+    .filter-pill .count { color: var(--text-4); font-size: 10px; }
+    .data-table { background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .data-table .tbl { width: 100%; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-3); }
+    .page-btn { padding: 4px 10px; background: var(--bg-4); color: var(--text-2); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit; }
+    .page-btn.active { background: var(--info); color: #fff; border-color: var(--info); }
+    .sev-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; min-width: 30px; text-align: center; }
+    .sev-pill.p1 { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .sev-pill.p2 { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+    .sev-pill.p3 { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .sev-pill.p4 { background: rgba(59, 130, 246, 0.2); color: var(--info); }
+    .status-icon { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🚨 事件管理</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn" style="background: rgba(239,68,68,0.15); color: var(--danger); border-color: rgba(239,68,68,0.3);">🚨 战情室</button>
+        <button class="btn">📥 导出</button>
+        <button class="btn btn-primary">+ 上报事件</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">运营中心</div>
+      <div class="role-item active"><span class="role-icon">🚨</span><div class="role-info"><div class="role-name">事件列表</div></div></div>
+      <div class="role-item"><span class="role-icon">📡</span><div class="role-info"><div class="role-name">实时告警</div></div></div>
+      <div class="role-item"><span class="role-icon">🤖</span><div class="role-info"><div class="role-name">SOAR</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">Playbook</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">事件调查</div></div></div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">战后复盘</div></div></div>
+      <div class="section-title">其他视图</div>
+      <div class="role-item"><span class="role-icon">📦</span><div class="role-info"><div class="role-name">资产</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">漏洞</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">威胁</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🚨 事件列表</div>
+            <div class="page-sub">共 156 个事件 · 12 活跃 · 3 P1 · 23 今日新增</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
+          <div class="kpi-card"><div class="kpi-label">活跃事件</div><div class="kpi-value" style="color: var(--warning);">12</div><div class="kpi-delta down">▲ 3 (1h)</div></div>
+          <div class="kpi-card"><div class="kpi-label">P1 / P2</div><div class="kpi-value" style="color: var(--danger);">3 / 5</div><div class="kpi-delta down">⚠ 紧急</div></div>
+          <div class="kpi-card"><div class="kpi-label">MTTD</div><div class="kpi-value">2.3min</div><div class="kpi-delta up">▼ 0.5</div></div>
+          <div class="kpi-card"><div class="kpi-label">MTTR</div><div class="kpi-value">23min</div><div class="kpi-delta up">▼ 5</div></div>
+          <div class="kpi-card"><div class="kpi-label">自动化率</div><div class="kpi-value">67%</div><div class="kpi-delta up">▲ 4%</div></div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box"><input type="text" placeholder="搜索事件 ID、描述、资产..."></div>
+          <span class="filter-pill active">全部 <span class="count">156</span></span>
+          <span class="filter-pill" style="border-color: var(--danger); color: var(--danger);">P1 <span class="count">3</span></span>
+          <span class="filter-pill" style="border-color: #f97316; color: #f97316;">P2 <span class="count">5</span></span>
+          <span class="filter-pill">P3 <span class="count">28</span></span>
+          <span class="filter-pill">P4 <span class="count">120</span></span>
+          <span class="filter-pill">调查中 <span class="count">7</span></span>
+          <span class="filter-pill">已解决 <span class="count">144</span></span>
+        </div>
+
+        <div class="data-table">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width: 30px;"><input type="checkbox"></th>
+                <th>事件 ID</th>
+                <th>标题</th>
+                <th>严重度</th>
+                <th>分类</th>
+                <th>资产</th>
+                <th>状态</th>
+                <th>负责人</th>
+                <th>创建时间</th>
+                <th>SLA 剩余</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-001</td>
+                <td class="strong">钓鱼邮件事件 · 12 人受影响 PII 外泄</td>
+                <td><span class="sev-pill p1">P1</span></td>
+                <td>钓鱼攻击</td>
+                <td>mail-server-01</td>
+                <td><span class="status-icon" style="background: var(--danger);"></span> 调查中</td>
+                <td>🎖️ 张工</td>
+                <td>14:32</td>
+                <td style="color: var(--danger); font-weight: 700;">37min</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-002</td>
+                <td class="strong">挖矿进程检测 · k8s-node-05</td>
+                <td><span class="sev-pill p1">P1</span></td>
+                <td>恶意软件</td>
+                <td>k8s-node-05</td>
+                <td><span class="status-icon" style="background: var(--warning);"></span> 隔离中</td>
+                <td>⚡ 李工</td>
+                <td>14:32</td>
+                <td style="color: var(--warning); font-weight: 700;">1h 23min</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-003</td>
+                <td class="strong">SQL 注入尝试 · 阻断 247 次</td>
+                <td><span class="sev-pill p2">P2</span></td>
+                <td>Web 攻击</td>
+                <td>prod-web-01</td>
+                <td><span class="status-icon" style="background: var(--success);"></span> 已阻断</td>
+                <td>⚡ 张工</td>
+                <td>14:25</td>
+                <td>—</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-004</td>
+                <td class="strong">异常出站流量 · 50GB/h</td>
+                <td><span class="sev-pill p2">P2</span></td>
+                <td>数据外泄</td>
+                <td>ci-runner-02</td>
+                <td><span class="status-icon" style="background: var(--warning);"></span> 分析中</td>
+                <td>🔍 王工</td>
+                <td>14:18</td>
+                <td>5h 42min</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-005</td>
+                <td class="strong">张工 异地登录 · 北京→莫斯科</td>
+                <td><span class="sev-pill p2">P2</span></td>
+                <td>身份异常</td>
+                <td>SSO 账户</td>
+                <td><span class="status-icon" style="background: var(--success);"></span> 已确认</td>
+                <td>👔 李工</td>
+                <td>14:12</td>
+                <td>—</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-006</td>
+                <td class="strong">PowerShell Base64 编码执行</td>
+                <td><span class="sev-pill p3">P3</span></td>
+                <td>可疑活动</td>
+                <td>3 台主机</td>
+                <td><span class="status-icon" style="background: var(--warning);"></span> 待审</td>
+                <td>⚡ 王工</td>
+                <td>13:58</td>
+                <td>22h 02min</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-007</td>
+                <td class="strong">数据库敏感字段未脱敏 · 12 张表</td>
+                <td><span class="sev-pill p3">P3</span></td>
+                <td>数据合规</td>
+                <td>prod-db-01</td>
+                <td><span class="status-icon" style="background: var(--info);"></span> 已分派</td>
+                <td>🔒 钱工</td>
+                <td>14:05</td>
+                <td>2d 8h</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-008</td>
+                <td class="strong">S3 存储桶公开访问</td>
+                <td><span class="sev-pill p4">P4</span></td>
+                <td>配置错误</td>
+                <td>aws-s3-prod</td>
+                <td><span class="status-icon" style="background: var(--success);"></span> 已修复</td>
+                <td>🏗️ 李工</td>
+                <td>13:45</td>
+                <td>—</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-009</td>
+                <td class="strong">失陷凭证在暗网出现</td>
+                <td><span class="sev-pill p1">P1</span></td>
+                <td>凭据泄露</td>
+                <td>5 员工</td>
+                <td><span class="status-icon" style="background: var(--success);"></span> 已处置</td>
+                <td>🔐 张工</td>
+                <td>12:30</td>
+                <td>—</td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">INC-2024-010</td>
+                <td class="strong">容器逃逸尝试 · 阻断</td>
+                <td><span class="sev-pill p2">P2</span></td>
+                <td>权限提升</td>
+                <td>k8s-prod-cluster</td>
+                <td><span class="status-icon" style="background: var(--warning);"></span> 加固中</td>
+                <td>🔍 孙工</td>
+                <td>11:45</td>
+                <td>9h 15min</td>
+                <td>⋯</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div>显示 1-10 / 156 · 已选 0</div>
+            <div>
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">...</button>
+              <button class="page-btn">16</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

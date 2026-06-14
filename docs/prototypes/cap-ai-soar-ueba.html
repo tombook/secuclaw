@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>⚡ SOAR 自动化 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .cap-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; padding: 4px; background: var(--bg-3); border-radius: 8px; }
+    .cap-tab { padding: 8px 14px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text-2); cursor: pointer; }
+    .cap-tab.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--bg); border-color: var(--primary); font-weight: 600; }
+    .playbook-step { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-4); border-radius: 6px; margin-bottom: 4px; font-size: 12px; }
+    .pb-num { width: 22px; height: 22px; border-radius: 50%; background: var(--info); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .pb-num.done { background: var(--success); }
+    .pb-num.fail { background: var(--danger); }
+    .pb-num.run { background: var(--warning); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🚀 新能力中心</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 报告</button>
+        <button class="btn">+ 新建 Playbook</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">新能力中心</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">能力总览</div></div></div>
+      <div class="role-item"><span class="role-icon">☁️</span><div class="role-info"><div class="role-name">CSPM</div></div></div>
+      <div class="role-item"><span class="role-icon">💾</span><div class="role-info"><div class="role-name">DSPM</div></div></div>
+      <div class="role-item"><span class="role-icon">🌐</span><div class="role-info"><div class="role-name">EASM</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">RASP</div></div></div>
+      <div class="role-item"><span class="role-icon">🔐</span><div class="role-info"><div class="role-name">ITDR</div></div></div>
+      <div class="role-item active"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">SOAR</div></div></div>
+      <div class="role-item"><span class="role-icon">🧠</span><div class="role-info"><div class="role-name">UEBA</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">Sigma</div></div></div>
+      <div class="role-item"><span class="role-icon">🤖</span><div class="role-info"><div class="role-name">AI-SCM</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">AI-SPM</div></div></div>
+      <div class="role-item"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">Privacy</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="cap-tabs">
+          <span class="cap-tab">☁️ CSPM</span>
+          <span class="cap-tab">💾 DSPM</span>
+          <span class="cap-tab">🌐 EASM</span>
+          <span class="cap-tab">🛡️ RASP</span>
+          <span class="cap-tab">🔐 ITDR</span>
+          <span class="cap-tab">⚡ SOAR</span>
+          <span class="cap-tab">🧠 UEBA</span>
+          <span class="cap-tab">🎯 Sigma</span>
+          <span class="cap-tab">🤖 AI-SCM</span>
+          <span class="cap-tab active">📋 AI-SPM</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="font-size: 32px;">⚡</div>
+          <div style="flex: 1;">
+            <div style="font-size: 20px; font-weight: 800;">SOAR · 安全编排自动化与响应</div>
+            <div style="font-size: 12px; color: var(--text-3);">Playbook 设计 · 自动执行 · 集成 200+ 工具</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-3);">本月自动化</div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--success);">347</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">Playbook</div><div class="kpi-value">24</div><div class="kpi-delta up">3 本月新增</div></div>
+          <div class="kpi-card"><div class="kpi-label">本月执行</div><div class="kpi-value">347</div><div class="kpi-delta up">▲ 23%</div></div>
+          <div class="kpi-card"><div class="kpi-label">成功率</div><div class="kpi-value" style="color: var(--success);">94%</div><div class="kpi-delta up">▲ 2%</div></div>
+          <div class="kpi-card"><div class="kpi-label">节省时间</div><div class="kpi-value">126h</div><div class="kpi-delta up">▲ 28h</div></div>
+          <div class="kpi-card"><div class="kpi-label">集成</div><div class="kpi-value">42</div><div class="kpi-delta neutral">EDR/SIEM/云/工单</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 Playbook 列表</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">钓鱼邮件响应 v3.2</div>
+                <div class="list-meta">5 步骤 · 12 次执行 · 100% 成功</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">挖矿主机隔离 v2.1</div>
+                <div class="list-meta">3 步骤 · 8 次执行 · 88% 成功</div>
+              </div>
+              <span class="badge warn">部分失败</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">失陷账号处理 v1.5</div>
+                <div class="list-meta">4 步骤 · 5 次执行 · 100% 成功</div>
+              </div>
+              <span class="badge ok">完成</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">数据外泄阻断 v2.0</div>
+                <div class="list-meta">6 步骤 · 8 次执行 · 100% 成功</div>
+              </div>
+              <span class="badge ok">完成</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">敏感数据扫描 v1.0</div>
+                <div class="list-meta">扫描 + 报告 · 每日 09:00 定时</div>
+              </div>
+              <span class="badge info">定时</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🤖</div>
+              <div class="list-content">
+                <div class="list-title">云配置修复 v1.2</div>
+                <div class="list-meta">3 步骤 · 24 次执行 · 92% 成功</div>
+              </div>
+              <span class="badge ok">完成</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">▶️ 当前执行: 钓鱼邮件响应 v3.2</span>
+              <span class="badge warn">执行中 · 3/5</span>
+            </div>
+            <div class="playbook-step">
+              <div class="pb-num done">✓</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">① 接收告警</div>
+                <div style="font-size: 10px; color: var(--text-3);">从邮件网关接收 12 封钓鱼邮件告警</div>
+              </div>
+              <span style="font-size: 10px; color: var(--success);">1.2s</span>
+            </div>
+            <div class="playbook-step">
+              <div class="pb-num done">✓</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">② 邮件隔离</div>
+                <div style="font-size: 10px; color: var(--text-3);">调用 Proofpoint API 隔离 12 封邮件</div>
+              </div>
+              <span style="font-size: 10px; color: var(--success);">3.5s</span>
+            </div>
+            <div class="playbook-step">
+              <div class="pb-num done">✓</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">③ 创建事件</div>
+                <div style="font-size: 10px; color: var(--text-3);">在 SecuClaw 创建 INC-2024-001 P1</div>
+              </div>
+              <span style="font-size: 10px; color: var(--success);">0.8s</span>
+            </div>
+            <div class="playbook-step">
+              <div class="pb-num run">4</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; color: var(--warning);">④ 通知安全团队</div>
+                <div style="font-size: 10px; color: var(--text-3);">Slack #sec-alerts + 邮件 + 短信 (3/4 已通知)</div>
+              </div>
+              <span style="font-size: 10px; color: var(--warning);">运行中...</span>
+            </div>
+            <div class="playbook-step" style="opacity: 0.5;">
+              <div class="pb-num">5</div>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">⑤ 拉起战情室</div>
+                <div style="font-size: 10px; color: var(--text-3);">等待 P1 升级时自动执行</div>
+              </div>
+              <span style="font-size: 10px; color: var(--text-4);">待开始</span>
+            </div>
+            <div style="margin-top: 12px; padding: 10px; background: var(--bg-4); border-radius: 6px; font-size: 11px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-3);">总耗时</span>
+                <strong>5.5s / ~30s 预计</strong>
+              </div>
+              <div class="progress" style="margin-top: 4px;"><div class="progress-fill" style="width: 60%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🔌 集成生态 (42)</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>🛡️ EDR/AV</strong> · CrowdStrike · SentinelOne · Defender · Carbon Black
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>📊 SIEM</strong> · Splunk · Elastic · QRadar · Sentinel
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>☁️ 云</strong> · AWS · Azure · GCP · Kubernetes
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>🔐 IAM</strong> · Okta · Auth0 · Azure AD · Keycloak
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>📧 邮件</strong> · Proofpoint · Mimecast · Exchange
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>💬 通讯</strong> · Slack · Teams · 钉钉 · 企业微信
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border);">
+                <strong>🎫 工单</strong> · Jira · ServiceNow · 禅道
+              </div>
+              <div style="padding: 6px 0;">
+                <strong>🔍 威胁情报</strong> · VirusTotal · AlienVault · MISP
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📈 执行趋势 (30 天)</span>
+            </div>
+            <svg viewBox="0 0 400 150" style="width: 100%; height: 150px;">
+              <g stroke="#1e293b" stroke-width="0.5">
+                <line x1="0" y1="40" x2="400" y2="40"/>
+                <line x1="0" y1="80" x2="400" y2="80"/>
+                <line x1="0" y1="120" x2="400" y2="120"/>
+              </g>
+              <path d="M0,120 L40,100 L80,110 L120,80 L160,90 L200,60 L240,70 L280,40 L320,50 L360,30 L400,20" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <path d="M0,120 L40,100 L80,110 L120,80 L160,90 L200,60 L240,70 L280,40 L320,50 L360,30 L400,20 L400,150 L0,150 Z" fill="rgba(34,197,94,0.1)"/>
+              <text x="10" y="20" fill="#22c55e" font-size="11">每日 Playbook 执行数</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

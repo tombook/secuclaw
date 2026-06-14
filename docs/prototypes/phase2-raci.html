@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 2 · RACI 任务创建对话框 + 卡片</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0a0f1a;
+      color: #e2e8f0;
+      min-height: 100vh; padding: 30px;
+    }
+    h1 { color: #00d4ff; margin-bottom: 8px; }
+    .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 30px; }
+    /* ─── 任务对话框 ─── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .modal {
+      width: 640px;
+      background: #111827; border: 1px solid #334155;
+      border-radius: 12px; padding: 24px 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; color: #64748b;
+      font-size: 18px; cursor: pointer; padding: 4px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+    .form-label .req { color: #ef4444; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 9px 12px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 6px; color: #e2e8f0;
+      font-size: 13px; font-family: inherit;
+    }
+    .form-textarea { resize: vertical; min-height: 60px; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .type-radio { display: flex; gap: 6px; }
+    .type-radio label {
+      flex: 1; padding: 7px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 6px;
+      text-align: center; font-size: 12px; cursor: pointer;
+    }
+    .type-radio input { display: none; }
+    .type-radio label:has(input:checked) {
+      background: rgba(0, 212, 255, 0.08); border-color: #00d4ff;
+    }
+    .type-radio label:has(input:checked) span { color: #00d4ff; font-weight: 600; }
+    .tag-input {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+      padding: 7px 10px; min-height: 38px;
+    }
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 12px; font-size: 12px; color: #00d4ff;
+    }
+    .tag .x { color: #94a3b8; cursor: pointer; }
+    .tag .x:hover { color: #ef4444; }
+    .tag-add {
+      padding: 3px 10px; background: transparent;
+      border: 1px dashed #334155; border-radius: 12px;
+      font-size: 12px; color: #94a3b8; cursor: pointer;
+    }
+    .modal-actions {
+      display: flex; gap: 8px; justify-content: flex-end;
+      margin-top: 24px; padding-top: 20px;
+      border-top: 1px solid #1e293b;
+    }
+    .btn {
+      padding: 9px 20px; background: transparent; color: #94a3b8;
+      border: 1px solid #1e293b; border-radius: 6px; font-size: 13px;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn:hover { color: #e2e8f0; border-color: #334155; }
+    .btn-primary {
+      background: linear-gradient(135deg, #00d4ff, #0ea5e9); color: #0a0f1a;
+      border: none; font-weight: 600; padding: 9px 24px;
+    }
+    .btn-primary:hover { opacity: 0.92; }
+    /* ─── 任务卡片预览（对话框下方）─── */
+    .section { margin-top: 40px; }
+    .section h2 { font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }
+    .task-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 800px; }
+    .task-card {
+      background: #111827; border: 1px solid #1e293b;
+      border-left: 3px solid #3b82f6; border-radius: 8px;
+      padding: 14px 16px; position: relative;
+    }
+    .task-card.type-R { border-left-color: #3b82f6; }
+    .task-card.type-A { border-left-color: #f59e0b; }
+    .task-card.type-C { border-left-color: #8b5cf6; }
+    .task-card.type-I { border-left-color: #6b7280; }
+    .task-card.sla-warning { animation: pulse-warn 2s infinite; }
+    @keyframes pulse-warn {
+      0%, 100% { box-shadow: 0 0 0 rgba(245, 158, 11, 0); }
+      50% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+    }
+    .task-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .task-type-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+    }
+    .task-type-badge.R { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .task-type-badge.A { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .task-type-badge.C { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .task-type-badge.I { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+    .task-menu { color: #64748b; cursor: pointer; padding: 2px 6px; }
+    .task-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .task-meta { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+    .task-meta span { margin-right: 12px; }
+    .sla-warning-text { color: #f59e0b; }
+    .task-comment {
+      font-size: 12px; color: #cbd5e1;
+      background: #0f172a; border-radius: 4px;
+      padding: 6px 10px; margin-bottom: 10px;
+    }
+    .task-assignees { display: flex; gap: -4px; margin-bottom: 10px; }
+    .assignee-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, #00d4ff, #a855f7);
+      color: #fff; font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #111827; margin-left: -6px;
+    }
+    .assignee-avatar:first-child { margin-left: 0; }
+    .task-status {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 10px; font-weight: 600;
+    }
+    .status-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .status-in-progress { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .status-completed { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .status-rejected { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .task-actions {
+      display: flex; gap: 6px; margin-top: 10px;
+    }
+    .task-btn {
+      padding: 5px 12px; background: #0f172a; color: #cbd5e1;
+      border: 1px solid #1e293b; border-radius: 4px;
+      font-size: 11px; cursor: pointer; font-family: inherit;
+    }
+    .task-btn:hover { background: #131d2e; border-color: #3b82f6; color: #fff; }
+    .task-btn.primary {
+      background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border: none; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>Phase 2 · RACI 任务管理</h1>
+  <p class="subtitle">任务创建对话框 + 4 种状态卡片 + SLA 警告</p>
+
+  <!-- 任务创建对话框 -->
+  <div class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📋 创建 RACI 任务</div>
+        <button class="modal-close">×</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📋 任务标题 <span class="req">*</span></label>
+        <input type="text" class="form-input" value="排查 INC-2024-001 钓鱼邮件事件" placeholder="例：排查 INC-2024-001 钓鱼邮件事件">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📝 详细描述</label>
+        <textarea class="form-textarea" rows="2">该事件涉及 12 人 PII 数据外泄风险，需 24 小时内完成初步分析并隔离受影响主机。</textarea>
+      </div>
+
+      <div class="two-col">
+        <div class="form-group">
+          <label class="form-label">🏷️ 任务类型 <span class="req">*</span></label>
+          <div class="type-radio">
+            <label><input type="radio" name="t" checked><span>● R 执行</span></label>
+            <label><input type="radio" name="t"><span>○ A 问责</span></label>
+            <label><input type="radio" name="t"><span>○ C 咨询</span></label>
+            <label><input type="radio" name="t"><span>○ I 知情</span></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">⚡ 优先级 <span class="req">*</span></label>
+          <select class="form-select">
+            <option>🔴 P1 紧急（4h 内响应）</option>
+            <option>🟠 P2 高（24h 内响应）</option>
+            <option>🟡 P3 中（3 天）</option>
+            <option>🟢 P4 低（7 天）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-group">
+          <label class="form-label">👤 分配给角色 <span class="req">*</span></label>
+          <select class="form-select">
+            <option>⚡ 安全运营（SecOps）</option>
+            <option>🎖️ 指挥官（Commander）</option>
+            <option>👔 CISO 战略官</option>
+            <option>🔍 安全专家</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">📅 SLA 截止（可选）</label>
+          <input type="date" class="form-input" value="2024-06-15">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">👥 指定执行人</label>
+        <div class="form-input tag-input">
+          <span class="tag">张工 <span class="x">×</span></span>
+          <span class="tag">李工 <span class="x">×</span></span>
+          <button class="tag-add">+ 添加</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔗 关联资源（可选）</label>
+        <div class="form-input tag-input">
+          <span class="tag">🚨 INC-2024-001 <span class="x">×</span></span>
+          <span class="tag">🛡️ CVE-2024-21762 <span class="x">×</span></span>
+          <button class="tag-add">+ 关联</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn">取消</button>
+        <button class="btn btn-primary">📋 创建任务</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卡片预览 -->
+  <div class="section">
+    <h2>任务卡片（4 种状态）</h2>
+    <div class="task-list">
+      <!-- R 类型 + 待处理 -->
+      <div class="task-card type-R">
+        <div class="task-header">
+          <span class="task-type-badge R">● R 执行</span>
+          <span class="task-menu">⋯</span>
+        </div>
+        <div class="task-title">排查 INC-2024-001 钓鱼邮件事件</div>
+        <div class="task-meta">
+          <span>👔 来自：张工 (CISO)</span>
+        </div>
+        <div class="task-meta">
+          <span>📅 5 分钟前</span>
+          <span>⏰ SLA 剩余 23h</span>
+        </div>
+        <div class="task-comment">💬 "INC-2024-001 涉及 12 人 PII 数据，请紧急处理"</div>
+        <div class="task-assignees">
+          <div class="assignee-avatar">张</div>
+          <div class="assignee-avatar">李</div>
+        </div>
+        <span class="task-status status-pending">🟡 待处理</span>
+        <div class="task-actions">
+          <button class="task-btn primary">开始执行</button>
+          <button class="task-btn">查看详情</button>
+        </div>
+      </div>
+
+      <!-- A 类型 + 待处理（带批准/驳回） -->
+      <div class="task-card type-A">
+        <div class="task-header">
+          <span class="task-type-badge A">● A 问责</span>
+          <span class="task-menu">⋯</span>
+        </div>
+        <div class="task-title">批准 SOC 月度运营报告</div>
+        <div class="task-meta">
+          <span>⚡ 来自：李工 (SecOps)</span>
+        </div>
+        <div class="task-meta">
+          <span>📅 1 小时前</span>
+          <span>⏰ SLA 剩余 47h</span>
+        </div>
+        <div class="task-comment">💬 "本月共处理 247 个告警，自动化率 67%"</div>
+        <div class="task-assignees">
+          <div class="assignee-avatar">王</div>
+        </div>
+        <span class="task-status status-pending">🟡 待审批</span>
+        <div class="task-actions">
+          <button class="task-btn">驳回</button>
+          <button class="task-btn primary">批准</button>
+        </div>
+      </div>
+
+      <!-- R 类型 + 进行中 -->
+      <div class="task-card type-R">
+        <div class="task-header">
+          <span class="task-type-badge R">● R 执行</span>
+          <span class="task-menu">⋯</span>
+        </div>
+        <div class="task-title">修复 CVE-2024-21762 关键漏洞</div>
+        <div class="task-meta">
+          <span>🔍 来自：王工 (Expert)</span>
+        </div>
+        <div class="task-meta">
+          <span>📅 30 分钟前</span>
+          <span>⏰ SLA 剩余 71h</span>
+        </div>
+        <div class="task-comment">💬 "已识别 5 台受影响主机，正在逐台修复"</div>
+        <div class="task-assignees">
+          <div class="assignee-avatar">赵</div>
+          <div class="assignee-avatar">钱</div>
+          <div class="assignee-avatar">孙</div>
+        </div>
+        <span class="task-status status-in-progress">🔵 执行中（3/5）</span>
+        <div class="task-actions">
+          <button class="task-btn primary">标记完成</button>
+          <button class="task-btn">查看详情</button>
+        </div>
+      </div>
+
+      <!-- SLA 警告 -->
+      <div class="task-card type-R sla-warning">
+        <div class="task-header">
+          <span class="task-type-badge R">● R 执行</span>
+          <span class="task-menu">⋯</span>
+        </div>
+        <div class="task-title">响应供应链攻击告警（FedEx 钓鱼）</div>
+        <div class="task-meta">
+          <span>⚡ 来自：赵工 (SecOps)</span>
+        </div>
+        <div class="task-meta">
+          <span>📅 3 小时前</span>
+          <span class="sla-warning-text">⏰ SLA 剩余 47min ⚠️</span>
+        </div>
+        <div class="task-comment">💬 "P1 紧急，需立即响应"</div>
+        <div class="task-assignees">
+          <div class="assignee-avatar">周</div>
+        </div>
+        <span class="task-status status-in-progress">🔵 执行中（紧急）</span>
+        <div class="task-actions">
+          <button class="task-btn primary">立即响应</button>
+          <button class="task-btn">申请延期</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

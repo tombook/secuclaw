@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>👔 CISO 战略官 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">👔 CISO 战略官 · 战略决策 + 预算 + 合规</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 战略报告</button>
+        <button class="btn">💰 预算</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="role-item active"><span class="role-icon">👔</span><div class="role-info"><div class="role-name">CISO 战略官</div></div></div>
+      <div class="section-title">角色指挥台</div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">安全专家</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">安全运营</div></div></div>
+      <div class="role-item"><span class="role-icon">🏗️</span><div class="role-info"><div class="role-name">架构师</div></div></div>
+      <div class="role-item"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">隐私官</div></div></div>
+      <div class="role-item"><span class="role-icon">💼</span><div class="role-info"><div class="role-name">业务安全</div></div></div>
+      <div class="role-item"><span class="role-icon">🔗</span><div class="role-info"><div class="role-name">供应链</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">合规审计</div></div></div>
+      <div class="role-item"><span class="role-icon">📚</span><div class="role-info"><div class="role-name">知识库</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card">
+            <div class="kpi-icon">🛡️</div>
+            <div class="kpi-label">安全评分</div>
+            <div class="kpi-value">88</div>
+            <div class="kpi-delta up">▲ 2.1  本月</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-label">风险评分</div>
+            <div class="kpi-value" style="color: var(--warning);">15</div>
+            <div class="kpi-delta up">▼ 1.4</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">📋</div>
+            <div class="kpi-label">合规达标率</div>
+            <div class="kpi-value">94<span style="font-size: 14px;">%</span></div>
+            <div class="kpi-delta up">▲ 3%  SOC2</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-label">预算使用</div>
+            <div class="kpi-value">67<span style="font-size: 14px;">%</span></div>
+            <div class="kpi-delta neutral">$ 234K / 350K</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🎯</div>
+            <div class="kpi-label">战略目标完成</div>
+            <div class="kpi-value">7<span style="font-size: 14px;">/12</span></div>
+            <div class="kpi-delta up">Q2 进度 58%</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📈 安全战略趋势（90 天）</span>
+              <select class="btn" style="padding: 4px 8px; font-size: 11px;">
+                <option>90 天</option><option>30 天</option><option>1 年</option>
+              </select>
+            </div>
+            <!-- 趋势图（占位 SVG） -->
+            <svg viewBox="0 0 600 200" style="width: 100%; height: 200px;">
+              <defs>
+                <linearGradient id="grad1" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#22c55e" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="grad2" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- 网格 -->
+              <g stroke="#1e293b" stroke-width="0.5">
+                <line x1="0" y1="40" x2="600" y2="40"/>
+                <line x1="0" y1="80" x2="600" y2="80"/>
+                <line x1="0" y1="120" x2="600" y2="120"/>
+                <line x1="0" y1="160" x2="600" y2="160"/>
+              </g>
+              <!-- 安全评分线（绿色） -->
+              <path d="M0,140 L60,135 L120,130 L180,115 L240,118 L300,105 L360,95 L420,80 L480,75 L540,65 L600,50" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <path d="M0,140 L60,135 L120,130 L180,115 L240,118 L300,105 L360,95 L420,80 L480,75 L540,65 L600,50 L600,200 L0,200 Z" fill="url(#grad1)"/>
+              <!-- 风险评分线（蓝色） -->
+              <path d="M0,80 L60,85 L120,90 L180,95 L240,100 L300,105 L360,115 L420,120 L480,130 L540,135 L600,140" stroke="#3b82f6" stroke-width="2" fill="none"/>
+              <path d="M0,80 L60,85 L120,90 L180,95 L240,100 L300,105 L360,115 L420,120 L480,130 L540,135 L600,140 L600,200 L0,200 Z" fill="url(#grad2)"/>
+              <!-- 标签 -->
+              <text x="10" y="20" fill="#22c55e" font-size="11">安全评分 88</text>
+              <text x="120" y="20" fill="#3b82f6" font-size="11">风险评分 15</text>
+            </svg>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">💰 预算分配</span>
+              <a class="panel-action">详细 →</a>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">工具采购</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 80%;"></div></div>
+                <span style="min-width: 60px; text-align: right;">$120K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">人力成本</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill warn" style="width: 92%;"></div></div>
+                <span style="min-width: 60px; text-align: right; color: var(--warning);">$92K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">培训认证</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 35%;"></div></div>
+                <span style="min-width: 60px; text-align: right;">$15K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">应急储备</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 12%;"></div></div>
+                <span style="min-width: 60px; text-align: right;">$5K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                <span style="width: 80px; color: var(--text-3);">外部咨询</span>
+                <div class="progress" style="flex: 1;"><div class="progress-fill" style="width: 5%;"></div></div>
+                <span style="min-width: 60px; text-align: right;">$2K</span>
+              </div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px;">
+                <span style="color: var(--text-3);">已用 $234K / 预算 $350K</span>
+                <span style="color: var(--warning);">⚠ 11 月需追加</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 战略目标 Q2</span>
+              <a class="panel-action">+ 新目标</a>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>目标</th><th>负责人</th><th>进度</th><th>截止</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="strong">零信任架构落地</td>
+                  <td><span class="role-tag architect">🏗️ 李工</span></td>
+                  <td><div class="progress" style="width: 80px;"><div class="progress-fill" style="width: 75%;"></div></div></td>
+                  <td>2024-Q3</td>
+                  <td><span class="badge info">进行中</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">SOC2 Type II 认证</td>
+                  <td><span class="role-tag privacy">🔒 王工</span></td>
+                  <td><div class="progress" style="width: 80px;"><div class="progress-fill" style="width: 60%;"></div></div></td>
+                  <td>2024-Q4</td>
+                  <td><span class="badge warn">滞后</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">MTTD 降低 50%</td>
+                  <td><span class="role-tag secops">⚡ 张工</span></td>
+                  <td><div class="progress" style="width: 80px;"><div class="progress-fill" style="width: 85%;"></div></div></td>
+                  <td>2024-Q2</td>
+                  <td><span class="badge ok">已达成</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">员工安全意识培训</td>
+                  <td><span class="role-tag ciso">👔 张工</span></td>
+                  <td><div class="progress" style="width: 80px;"><div class="progress-fill warn" style="width: 40%;"></div></div></td>
+                  <td>2024-Q3</td>
+                  <td><span class="badge warn">风险</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">供应链 SBOM 100%</td>
+                  <td><span class="role-tag supply">🔗 赵工</span></td>
+                  <td><div class="progress" style="width: 80px;"><div class="progress-fill" style="width: 90%;"></div></div></td>
+                  <td>2024-Q3</td>
+                  <td><span class="badge ok">接近</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📑 待审批</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">💰</div>
+              <div class="list-content">
+                <div class="list-title">追加预算 $50K</div>
+                <div class="list-meta">来源：SecOps · 用于新增 SOAR 平台</div>
+              </div>
+              <span class="list-action">审批</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📋</div>
+              <div class="list-content">
+                <div class="list-title">Q3 安全策略修订</div>
+                <div class="list-meta">5 处变更 · 需董事会备案</div>
+              </div>
+              <span class="list-action">审批</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">👥</div>
+              <div class="list-content">
+                <div class="list-title">招聘安全工程师 × 2</div>
+                <div class="list-meta">预算 60 万 / 年 · 12 轮已过 2 轮</div>
+              </div>
+              <span class="list-action">审批</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">🔐</div>
+              <div class="list-content">
+                <div class="list-title">特权访问策略变更</div>
+                <div class="list-meta">影响 12 个用户 · 已审计</div>
+              </div>
+              <span class="list-action">审批</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 1 · SecuClaw 注册（带角色预选）</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0a0f1a;
+      color: #e2e8f0;
+      display: flex; min-height: 100vh;
+    }
+    /* ─── 左营销区 ─── */
+    .left {
+      width: 50%;
+      padding: 60px 80px;
+      display: flex; flex-direction: column; justify-content: center;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%);
+      border-right: 1px solid #1e293b;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; margin-bottom: 60px; }
+    .brand-text { background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .left h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
+    .left h1 .gradient { background: linear-gradient(135deg, #00d4ff 0%, #a855f7 50%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .left p.sub { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 32px; }
+    .benefit-list { list-style: none; }
+    .benefit-list li {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 0; font-size: 14px; color: #cbd5e1;
+    }
+    .check { color: #22c55e; font-weight: 800; font-size: 16px; }
+    .preset-box {
+      margin-top: 32px; padding: 16px;
+      background: rgba(0, 212, 255, 0.05);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px;
+    }
+    .preset-label { font-size: 12px; color: #94a3b8; margin-bottom: 10px; }
+    .preset-role {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px; background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border-radius: 6px; font-size: 13px; font-weight: 600;
+      margin-right: 8px; margin-bottom: 8px;
+    }
+    .preset-add {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; background: transparent; color: #60a5fa;
+      border: 1px dashed #3b82f6; border-radius: 6px; font-size: 13px;
+      cursor: pointer; font-family: inherit;
+    }
+    .trust { margin-top: 32px; font-size: 12px; color: #64748b; }
+    /* ─── 右表单区 ─── */
+    .right { width: 50%; padding: 60px 80px; display: flex; flex-direction: column; justify-content: center; }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #94a3b8; cursor: pointer; margin-bottom: 24px;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #e2e8f0; }
+    .right h2 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .right .form-sub { font-size: 13px; color: #94a3b8; margin-bottom: 28px; }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+    .form-label .req { color: #ef4444; }
+    .form-input {
+      width: 100%; padding: 10px 12px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 6px; color: #e2e8f0;
+      font-size: 13px; font-family: inherit; transition: all 0.15s;
+    }
+    .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    .form-input::placeholder { color: #475569; }
+    .password-wrap { position: relative; }
+    .password-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #64748b; cursor: pointer; padding: 4px;
+    }
+    .password-toggle:hover { color: #94a3b8; }
+    .password-hint { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .password-strength { display: flex; gap: 4px; margin-top: 6px; }
+    .strength-bar { height: 3px; flex: 1; background: #1e293b; border-radius: 2px; transition: background 0.2s; }
+    .strength-bar.weak.active { background: #ef4444; }
+    .strength-bar.medium.active { background: #f59e0b; }
+    .strength-bar.strong.active { background: #22c55e; }
+    .agreement {
+      display: flex; align-items: flex-start; gap: 8px;
+      margin: 20px 0 24px; font-size: 12px; color: #94a3b8;
+    }
+    .agreement input[type=checkbox] { margin-top: 2px; }
+    .agreement a { color: #60a5fa; text-decoration: none; }
+    .agreement a:hover { text-decoration: underline; }
+    .submit-btn {
+      width: 100%; padding: 12px; background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border: none; border-radius: 6px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: inherit; transition: all 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .login-link { text-align: center; margin-top: 18px; font-size: 12px; color: #94a3b8; }
+    .login-link a { color: #60a5fa; cursor: pointer; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <!-- 左侧：营销 + 角色预选 -->
+  <section class="left">
+    <div class="brand">
+      <span style="font-size: 22px;">🐾</span>
+      <span class="brand-text">SecuClaw</span>
+    </div>
+
+    <h1>
+      <span class="gradient">14 天免费试用</span><br>
+      一键开启企业安全运营
+    </h1>
+    <p class="sub">一站式整合 9 大顶级安全能力，让 7 类安全角色在统一指挥台下协作决策。</p>
+
+    <ul class="benefit-list">
+      <li><span class="check">✓</span> 8 个角色指挥台（指挥官 / CISO / 专家 / 运营 / 架构 / 隐私 / 业务 / 供应链）</li>
+      <li><span class="check">✓</span> 30+ AI 能力（异常检测 / 洞察引擎 / LLM 分析）</li>
+      <li><span class="check">✓</span> 12 大安全能力（CSPM / DSPM / EASM / RASP / ITDR / SOAR / UEBA 等）</li>
+      <li><span class="check">✓</span> RACI 协同矩阵 + 战情室（War Room）</li>
+      <li><span class="check">✓</span> MITRE ATT&CK + SCF 知识库内置</li>
+    </ul>
+
+    <div class="preset-box">
+      <div class="preset-label">📌 已预选角色（试用期间将进入此角色指挥台）</div>
+      <span class="preset-role">🎖️ 指挥官</span>
+      <span class="preset-role">⚡ 安全运营</span>
+      <button class="preset-add">+ 再选一个角色</button>
+    </div>
+
+    <p class="trust">✓ 无需信用卡 &nbsp; · &nbsp; ✓ 1 分钟部署 &nbsp; · &nbsp; ✓ 随时取消</p>
+  </section>
+
+  <!-- 右侧：注册表单 -->
+  <section class="right">
+    <a class="back-link" href="#">← 返回门户</a>
+    <h2>创建您的账号</h2>
+    <p class="form-sub">只需 3 步，开启 14 天免费试用</p>
+
+    <form>
+      <div class="form-group">
+        <label class="form-label">📧 邮箱 <span class="req">*</span></label>
+        <input type="email" class="form-input" placeholder="you@example.com" value="zhang@acme.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔒 密码 <span class="req">*</span></label>
+        <div class="password-wrap">
+          <input type="password" class="form-input" placeholder="至少 8 位" value="MyStr0ngP@ss">
+          <button type="button" class="password-toggle">👁️</button>
+        </div>
+        <div class="password-hint">至少 8 位，包含字母和数字</div>
+        <div class="password-strength">
+          <div class="strength-bar weak active"></div>
+          <div class="strength-bar medium active"></div>
+          <div class="strength-bar strong active"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🏢 公司名（可选）</label>
+        <input type="text" class="form-input" placeholder="Acme Corp" value="Acme Corp">
+      </div>
+
+      <div class="agreement">
+        <input type="checkbox" id="agree" checked>
+        <label for="agree">
+          我已阅读并同意 <a href="#">《服务协议》</a> 和 <a href="#">《隐私政策》</a>，
+          了解 14 天免费试用条款。
+        </label>
+      </div>
+
+      <button type="submit" class="submit-btn">🚀 创建账号并开始试用</button>
+    </form>
+
+    <p class="login-link">
+      已有账号？<a>立即登录</a>
+    </p>
+  </section>
+</body>
+</html>

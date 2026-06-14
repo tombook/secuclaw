@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🎯 威胁情报 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .page-title { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .page-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .search-box { flex: 1; min-width: 200px; position: relative; }
+    .search-box input { width: 100%; padding: 8px 12px 8px 32px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px; font-family: inherit; }
+    .search-box input:focus { outline: none; border-color: var(--info); }
+    .search-box::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-4); font-size: 12px; }
+    .filter-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 14px; font-size: 11px; color: var(--text-2); cursor: pointer; }
+    .filter-pill.active { background: rgba(0, 212, 255, 0.1); border-color: var(--primary); color: var(--primary); }
+    .filter-pill .count { color: var(--text-4); font-size: 10px; }
+    .data-table { background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-3); }
+    .page-btn { padding: 4px 10px; background: var(--bg-4); color: var(--text-2); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit; }
+    .page-btn.active { background: var(--info); color: #fff; border-color: var(--info); }
+    .ttp { display: inline-block; padding: 1px 6px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border-radius: 4px; font-size: 10px; font-family: monospace; }
+    .ioc-type { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; min-width: 50px; text-align: center; }
+    .ioc-type.ip { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+    .ioc-type.domain { background: rgba(168, 85, 247, 0.15); color: var(--accent); }
+    .ioc-type.hash { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .ioc-type.email { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+    .ioc-type.cve { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🎯 威胁情报</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">🔄 同步情报源</button>
+        <button class="btn">📥 导入 STIX</button>
+        <button class="btn btn-primary">+ 新建 IOC</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">威胁中心</div>
+      <div class="role-item active"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">威胁情报</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">威胁狩猎</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">ATT&CK 覆盖</div></div></div>
+      <div class="role-item"><span class="role-icon">🦠</span><div class="role-info"><div class="role-name">恶意软件</div></div></div>
+      <div class="role-item"><span class="role-icon">👥</span><div class="role-info"><div class="role-name">威胁组织</div></div></div>
+      <div class="role-item"><span class="role-icon">📡</span><div class="role-info"><div class="role-name">情报源</div></div></div>
+      <div class="role-item"><span class="role-icon">📚</span><div class="role-info"><div class="role-name">TTPs 库</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🎯 威胁情报</div>
+            <div class="page-sub">IOC 12,847 · 5,621 IP · 3,892 域 · 1,247 Hash · 427 CVE</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
+          <div class="kpi-card"><div class="kpi-label">IOC 总数</div><div class="kpi-value">12,847</div><div class="kpi-delta up">▲ 247 (24h)</div></div>
+          <div class="kpi-card"><div class="kpi-label">命中数</div><div class="kpi-value" style="color: var(--danger);">23</div><div class="kpi-delta down">⚠ 3 待处置</div></div>
+          <div class="kpi-card"><div class="kpi-label">活跃组织</div><div class="kpi-value">42</div><div class="kpi-delta warn">3 高危相关</div></div>
+          <div class="kpi-card"><div class="kpi-label">覆盖 ATT&CK</div><div class="kpi-value">71%</div><div class="kpi-delta up">▲ 4%</div></div>
+          <div class="kpi-card"><div class="kpi-label">情报源</div><div class="kpi-value">18</div><div class="kpi-delta neutral">15 在线</div></div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box"><input type="text" placeholder="搜索 IP/域/Hash/CVE/威胁组织..."></div>
+          <span class="filter-pill active">全部 <span class="count">12,847</span></span>
+          <span class="filter-pill">🔢 IP <span class="count">5,621</span></span>
+          <span class="filter-pill">🌐 域 <span class="count">3,892</span></span>
+          <span class="filter-pill">🔒 Hash <span class="count">1,247</span></span>
+          <span class="filter-pill">📧 邮箱 <span class="count">2,087</span></span>
+          <span class="filter-pill">⚠ 高置信 <span class="count">1,247</span></span>
+          <span class="filter-pill">✓ 已命中 <span class="count">23</span></span>
+        </div>
+
+        <div class="data-table">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width: 30px;"><input type="checkbox"></th>
+                <th>IOC</th>
+                <th>类型</th>
+                <th>关联威胁</th>
+                <th>MITRE TTP</th>
+                <th>置信度</th>
+                <th>首次发现</th>
+                <th>命中数</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">203.0.113.45</td>
+                <td><span class="ioc-type ip">IP</span></td>
+                <td class="strong">APT-29 (Cozy Bear)</td>
+                <td><span class="ttp">T1071</span> <span class="ttp">T1566</span></td>
+                <td><span class="badge ok">95%</span></td>
+                <td>02-15</td>
+                <td><span style="color: var(--danger); font-weight: 700;">3</span></td>
+                <td><span class="badge danger">已命中</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">evil-phishing.com</td>
+                <td><span class="ioc-type domain">域</span></td>
+                <td class="strong">FIN7 钓鱼活动</td>
+                <td><span class="ttp">T1566.001</span></td>
+                <td><span class="badge ok">92%</span></td>
+                <td>06-10</td>
+                <td><span style="color: var(--danger); font-weight: 700;">12</span></td>
+                <td><span class="badge danger">已命中</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">a4f3...d8e2 (SHA256)</td>
+                <td><span class="ioc-type hash">Hash</span></td>
+                <td class="strong">XMRig 挖矿变种</td>
+                <td><span class="ttp">T1496</span></td>
+                <td><span class="badge ok">98%</span></td>
+                <td>06-12</td>
+                <td><span style="color: var(--danger); font-weight: 700;">5</span></td>
+                <td><span class="badge danger">已命中</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">hr-update@acme-secure.com</td>
+                <td><span class="ioc-type email">邮箱</span></td>
+                <td class="strong">BEC 商业邮件诈骗</td>
+                <td><span class="ttp">T1656</span></td>
+                <td><span class="badge warn">78%</span></td>
+                <td>06-11</td>
+                <td><span style="color: var(--warning);">2</span></td>
+                <td><span class="badge warn">监控</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">CVE-2024-3094</td>
+                <td><span class="ioc-type cve">CVE</span></td>
+                <td class="strong">Jia Tan 供应链投毒</td>
+                <td><span class="ttp">T1195.002</span></td>
+                <td><span class="badge ok">99%</span></td>
+                <td>03-29</td>
+                <td><span style="color: var(--danger); font-weight: 700;">5</span></td>
+                <td><span class="badge danger">已命中</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">198.51.100.99</td>
+                <td><span class="ioc-type ip">IP</span></td>
+                <td class="strong">Mirai 僵尸网络</td>
+                <td><span class="ttp">T1071.004</span></td>
+                <td><span class="badge warn">72%</span></td>
+                <td>05-28</td>
+                <td>0</td>
+                <td><span class="badge info">监控</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">malware-c2.xyz</td>
+                <td><span class="ioc-type domain">域</span></td>
+                <td class="strong">Cobalt Strike C2</td>
+                <td><span class="ttp">T1071.001</span></td>
+                <td><span class="badge ok">88%</span></td>
+                <td>06-09</td>
+                <td><span style="color: var(--warning);">1</span></td>
+                <td><span class="badge warn">可疑</span></td>
+                <td>⋯</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="id">b9c2...f4a1 (SHA256)</td>
+                <td><span class="ioc-type hash">Hash</span></td>
+                <td class="strong">Cobalt Strike Beacon</td>
+                <td><span class="ttp">T1055</span></td>
+                <td><span class="badge ok">95%</span></td>
+                <td>06-08</td>
+                <td>0</td>
+                <td><span class="badge info">已封锁</span></td>
+                <td>⋯</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div>显示 1-8 / 12,847 · 已选 0</div>
+            <div>
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">...</button>
+              <button class="page-btn">1605</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🔒 隐私官 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🔒 隐私官 · GDPR + PIPL + DSR + 隐私影响评估</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📋 DSR (5)</button>
+        <button class="btn">📊 PIA</button>
+        <button class="btn">👤 钱工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="role-item"><span class="role-icon">👔</span><div class="role-info"><div class="role-name">CISO</div></div></div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">安全专家</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">安全运营</div></div></div>
+      <div class="role-item"><span class="role-icon">🏗️</span><div class="role-info"><div class="role-name">架构师</div></div></div>
+      <div class="role-item active"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">隐私官</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">DSR 管理</div></div></div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">PIA 评估</div></div></div>
+      <div class="role-item"><span class="role-icon">💾</span><div class="role-info"><div class="role-name">数据映射</div></div></div>
+      <div class="role-item"><span class="role-icon">🌍</span><div class="role-info"><div class="role-name">跨境传输</div></div></div>
+      <div class="role-item"><span class="role-icon">📑</span><div class="role-info"><div class="role-name">合规框架</div></div></div>
+      <div class="role-item"><span class="role-icon">📞</span><div class="role-info"><div class="role-name">监管报告</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card">
+            <div class="kpi-icon">📋</div>
+            <div class="kpi-label">DSR 待处理</div>
+            <div class="kpi-value" style="color: var(--warning);">5</div>
+            <div class="kpi-delta down">▲ 2 (本周)</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">⏱</div>
+            <div class="kpi-label">SLA 平均</div>
+            <div class="kpi-value">8.2<span style="font-size: 14px;">d</span></div>
+            <div class="kpi-delta up">GDPR 30d</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">💾</div>
+            <div class="kpi-label">PII 数据资产</div>
+            <div class="kpi-value">187</div>
+            <div class="kpi-delta up">5 个待分类</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">🌍</div>
+            <div class="kpi-label">跨境传输</div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-delta warn">2 待评估</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon">📑</div>
+            <div class="kpi-label">合规达标</div>
+            <div class="kpi-value">94<span style="font-size: 14px;">%</span></div>
+            <div class="kpi-delta up">▲ 2%</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 数据主体请求 (DSR)</span>
+              <button class="btn btn-primary">+ 新建 DSR</button>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>ID</th><th>类型</th><th>申请人</th><th>提交日</th><th>截止日</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="id">DSR-2024-045</td>
+                  <td>访问请求</td>
+                  <td>张** (u_***82)</td>
+                  <td>06-12</td>
+                  <td>07-12</td>
+                  <td><span class="badge info">处理中</span></td>
+                </tr>
+                <tr>
+                  <td class="id">DSR-2024-044</td>
+                  <td>删除请求</td>
+                  <td>李** (u_***95)</td>
+                  <td>06-11</td>
+                  <td>07-11</td>
+                  <td><span class="badge warn">待法务审</span></td>
+                </tr>
+                <tr>
+                  <td class="id">DSR-2024-043</td>
+                  <td>更正请求</td>
+                  <td>王** (u_***21)</td>
+                  <td>06-10</td>
+                  <td>07-10</td>
+                  <td><span class="badge ok">已完成</span></td>
+                </tr>
+                <tr>
+                  <td class="id">DSR-2024-042</td>
+                  <td>导出请求</td>
+                  <td>赵** (u_***67)</td>
+                  <td>06-09</td>
+                  <td>07-09</td>
+                  <td><span class="badge ok">已完成</span></td>
+                </tr>
+                <tr>
+                  <td class="id">DSR-2024-041</td>
+                  <td>反对处理</td>
+                  <td>钱** (u_***03)</td>
+                  <td>06-08</td>
+                  <td>07-08</td>
+                  <td><span class="badge danger">需 5d 内</span></td>
+                </tr>
+                <tr>
+                  <td class="id">DSR-2024-040</td>
+                  <td>限制处理</td>
+                  <td>孙** (u_***44)</td>
+                  <td>06-07</td>
+                  <td>07-07</td>
+                  <td><span class="badge ok">已完成</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📑 合规框架状态</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>🇪🇺 GDPR</strong>
+                  <span class="badge ok">96%</span>
+                </div>
+                <div class="progress"><div class="progress-fill" style="width: 96%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>🇨🇳 PIPL</strong>
+                  <span class="badge ok">92%</span>
+                </div>
+                <div class="progress"><div class="progress-fill" style="width: 92%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>🇺🇸 CCPA</strong>
+                  <span class="badge warn">88%</span>
+                </div>
+                <div class="progress"><div class="progress-fill warn" style="width: 88%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>🏥 HIPAA</strong>
+                  <span class="badge ok">95%</span>
+                </div>
+                <div class="progress"><div class="progress-fill" style="width: 95%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>💳 PCI DSS 4.0</strong>
+                  <span class="badge ok">93%</span>
+                </div>
+                <div class="progress"><div class="progress-fill" style="width: 93%;"></div></div>
+              </div>
+              <div style="padding: 8px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>📋 SOC2 Type II</strong>
+                  <span class="badge warn">78%</span>
+                </div>
+                <div class="progress"><div class="progress-fill warn" style="width: 78%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">💾 PII 数据资产地图</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+              <div class="tool-cell">
+                <div class="tool-icon">👤</div>
+                <div class="tool-name">身份信息</div>
+                <div class="tool-meta">78 项 · 12 系统</div>
+              </div>
+              <div class="tool-cell">
+                <div class="tool-icon">📞</div>
+                <div class="tool-name">联系方式</div>
+                <div class="tool-meta">52 项 · 8 系统</div>
+              </div>
+              <div class="tool-cell">
+                <div class="tool-icon">💳</div>
+                <div class="tool-name">财务信息</div>
+                <div class="tool-meta">23 项 · 4 系统</div>
+              </div>
+              <div class="tool-cell">
+                <div class="tool-icon">🏥</div>
+                <div class="tool-name">健康数据</div>
+                <div class="tool-meta">8 项 · 2 系统</div>
+              </div>
+              <div class="tool-cell">
+                <div class="tool-icon">📍</div>
+                <div class="tool-name">位置信息</div>
+                <div class="tool-meta">15 项 · 3 系统</div>
+              </div>
+              <div class="tool-cell">
+                <div class="tool-icon">🌐</div>
+                <div class="tool-name">网络行为</div>
+                <div class="tool-meta">67 项 · 6 系统</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 PIA 评估待办</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📊</div>
+              <div class="list-content">
+                <div class="list-title">AI 行为分析</div>
+                <div class="list-meta">高风险 · 涉及 100 万用户</div>
+              </div>
+              <span class="badge danger">高风险</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📊</div>
+              <div class="list-content">
+                <div class="list-title">员工监控扩展</div>
+                <div class="list-meta">中风险 · 涉及 500 员工</div>
+              </div>
+              <span class="badge warn">中风险</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📊</div>
+              <div class="list-content">
+                <div class="list-title">营销自动化</div>
+                <div class="list-meta">中风险 · 已提交</div>
+              </div>
+              <span class="badge info">审查中</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📊</div>
+              <div class="list-content">
+                <div class="list-title">客户画像 v2</div>
+                <div class="list-meta">低风险 · 已批准</div>
+              </div>
+              <span class="badge ok">已批准</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

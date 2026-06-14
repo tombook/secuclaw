@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🛡️ RASP 自保护 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .cap-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; padding: 4px; background: var(--bg-3); border-radius: 8px; }
+    .cap-tab { padding: 8px 14px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text-2); cursor: pointer; }
+    .cap-tab.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--bg); border-color: var(--primary); font-weight: 600; }
+    .protection-rule { padding: 10px 12px; background: var(--bg-4); border-radius: 6px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🚀 新能力中心</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 报告</button>
+        <button class="btn">+ 配置规则</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">新能力中心</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">能力总览</div></div></div>
+      <div class="role-item"><span class="role-icon">☁️</span><div class="role-info"><div class="role-name">CSPM</div></div></div>
+      <div class="role-item"><span class="role-icon">💾</span><div class="role-info"><div class="role-name">DSPM</div></div></div>
+      <div class="role-item"><span class="role-icon">🌐</span><div class="role-info"><div class="role-name">EASM</div></div></div>
+      <div class="role-item active"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">RASP</div></div></div>
+      <div class="role-item"><span class="role-icon">🔐</span><div class="role-info"><div class="role-name">ITDR</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">SOAR</div></div></div>
+      <div class="role-item"><span class="role-icon">🧠</span><div class="role-info"><div class="role-name">UEBA</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">Sigma</div></div></div>
+      <div class="role-item"><span class="role-icon">🤖</span><div class="role-info"><div class="role-name">AI-SCM</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">AI-SPM</div></div></div>
+      <div class="role-item"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">Privacy</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="cap-tabs">
+          <span class="cap-tab">☁️ CSPM</span>
+          <span class="cap-tab">💾 DSPM</span>
+          <span class="cap-tab">🌐 EASM</span>
+          <span class="cap-tab active">🛡️ RASP</span>
+          <span class="cap-tab">🔐 ITDR</span>
+          <span class="cap-tab">⚡ SOAR</span>
+          <span class="cap-tab">🧠 UEBA</span>
+          <span class="cap-tab">🎯 Sigma</span>
+          <span class="cap-tab">🤖 AI-SCM</span>
+          <span class="cap-tab">📋 AI-SPM</span>
+          <span class="cap-tab">🔒 Privacy</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="font-size: 32px;">🛡️</div>
+          <div style="flex: 1;">
+            <div style="font-size: 20px; font-weight: 800;">RASP · 运行时应用自保护</div>
+            <div style="font-size: 12px; color: var(--text-3);">应用内嵌保护 · 实时拦截攻击 · 零日防御</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-3);">已防护应用</div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--success);">38</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">已防护应用</div><div class="kpi-value">38</div><div class="kpi-delta up">▲ 2 本月</div></div>
+          <div class="kpi-card"><div class="kpi-label">攻击拦截 (24h)</div><div class="kpi-value" style="color: var(--success);">247</div><div class="kpi-delta up">▲ 23%</div></div>
+          <div class="kpi-card"><div class="kpi-label">已阻断</div><div class="kpi-value" style="color: var(--success);">100%</div><div class="kpi-delta up">0 漏报</div></div>
+          <div class="kpi-card"><div class="kpi-label">性能影响</div><div class="kpi-value" style="color: var(--success);">&lt; 2%</div><div class="kpi-delta up">无感知</div></div>
+          <div class="kpi-card"><div class="kpi-label">误报率</div><div class="kpi-value">0.3%</div><div class="kpi-delta up">▲ 0.1%</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🛡️ 已配置保护规则 (12 类)</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">💉</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">SQL 注入防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">38 应用 · 247 拦截 (24h)</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">📜</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">XSS 防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">38 应用 · 12 拦截 (24h)</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">📁</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">路径遍历防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">38 应用 · 8 拦截 (24h)</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">🔐</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">认证绕过检测</div>
+                <div style="font-size: 10px; color: var(--text-3);">38 应用 · 3 拦截 (24h)</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">🚪</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">未授权访问防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">38 应用 · 5 拦截 (24h)</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">📤</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">反序列化攻击防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">12 应用 · 0 拦截</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">🦠</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">恶意文件上传防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">8 应用 · 0 拦截</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+            <div class="protection-rule">
+              <span style="font-size: 18px;">💻</span>
+              <div style="flex: 1;">
+                <div style="font-weight: 600;">命令注入防护</div>
+                <div style="font-size: 10px; color: var(--text-3);">12 应用 · 2 拦截</div>
+              </div>
+              <span class="badge ok">运行中</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 攻击拦截 (24h)</span>
+            </div>
+            <svg viewBox="0 0 300 150" style="width: 100%; height: 150px;">
+              <text x="10" y="20" fill="#94a3b8" font-size="11">按类型分布</text>
+              <!-- 条形图 -->
+              <g>
+                <text x="0" y="50" fill="#94a3b8" font-size="9">SQL</text>
+                <rect x="40" y="42" width="200" height="14" fill="#ef4444" rx="2"/>
+                <text x="245" y="52" fill="#e2e8f0" font-size="10">247</text>
+                <text x="0" y="75" fill="#94a3b8" font-size="9">XSS</text>
+                <rect x="40" y="67" width="12" height="14" fill="#f59e0b" rx="2"/>
+                <text x="55" y="77" fill="#e2e8f0" font-size="10">12</text>
+                <text x="0" y="100" fill="#94a3b8" font-size="9">路径</text>
+                <rect x="40" y="92" width="8" height="14" fill="#3b82f6" rx="2"/>
+                <text x="51" y="102" fill="#e2e8f0" font-size="10">8</text>
+                <text x="0" y="125" fill="#94a3b8" font-size="9">认证</text>
+                <rect x="40" y="117" width="3" height="14" fill="#a855f7" rx="2"/>
+                <text x="46" y="127" fill="#e2e8f0" font-size="10">3</text>
+                <text x="0" y="145" fill="#94a3b8" font-size="9">其他</text>
+                <rect x="40" y="138" width="15" height="6" fill="#64748b" rx="2"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🌐 已部署应用 (Top 10)</span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>应用</th><th>语言/框架</th><th>拦截 (24h)</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">prod-web-01</td><td>Node.js + Express</td><td>87</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">payment-gateway</td><td>Java + Spring</td><td>62</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">api-platform</td><td>Python + FastAPI</td><td>45</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">user-portal</td><td>Node.js + Nest</td><td>23</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">admin-console</td><td>Java + Spring Boot</td><td>18</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">crm-system</td><td>PHP + Laravel</td><td>8</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">data-pipeline</td><td>Python + Django</td><td>3</td><td><span class="badge ok">在线</span></td></tr>
+                <tr><td class="strong">legacy-app</td><td>.NET 4.5</td><td>1</td><td><span class="badge warn">待升级</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🔥 实时拦截日志</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--danger);">💉</div>
+              <div class="list-content">
+                <div class="list-title">SQL 注入 · prod-web-01</div>
+                <div class="list-meta">14:25 · IP 203.0.113.45 · payload: ' OR '1'='1</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--warning);">📜</div>
+              <div class="list-content">
+                <div class="list-title">XSS · payment-gateway</div>
+                <div class="list-meta">14:18 · IP 198.51.100.99 · payload: &lt;script&gt;alert(1)&lt;/script&gt;</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--info);">📁</div>
+              <div class="list-content">
+                <div class="list-title">路径遍历 · api-platform</div>
+                <div class="list-meta">14:12 · IP 192.0.2.10 · payload: ../../../etc/passwd</div>
+              </div>
+            </div>
+            <div class="list-item">
+              <div class="list-icon" style="color: var(--accent);">🔐</div>
+              <div class="list-content">
+                <div class="list-title">认证绕过 · admin-console</div>
+                <div class="list-meta">14:05 · IP 192.0.2.20 · JWT 伪造</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

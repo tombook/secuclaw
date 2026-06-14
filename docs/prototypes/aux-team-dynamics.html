@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>👥 团队动态 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+    .tl-item { position: relative; padding: 8px 0 16px 20px; }
+    .tl-item::before { content: ''; position: absolute; left: -20px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--info); box-shadow: 0 0 0 3px var(--bg); }
+    .tl-item.task::before { background: var(--info); }
+    .tl-item.vuln::before { background: #f97316; }
+    .tl-item.incident::before { background: var(--danger); }
+    .tl-item.mention::before { background: var(--accent); }
+    .tl-item.insight::before { background: #ec4899; }
+    .tl-item.tool::before { background: var(--text-3); }
+    .tl-time { font-size: 10px; color: var(--text-4); font-family: monospace; }
+    .tl-content { padding: 8px 12px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; }
+    .tl-meta { display: flex; gap: 8px; font-size: 11px; color: var(--text-3); margin-top: 4px; align-items: center; }
+    .tl-actor { font-weight: 600; }
+    .tl-action { color: var(--text); }
+    .tl-target { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">👥 团队动态</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">🔄 刷新</button>
+        <button class="btn">📥 导出</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">运维</div>
+      <div class="role-item"><span class="role-icon">🖥️</span><div class="role-info"><div class="role-name">系统监控</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">审计日志</div></div></div>
+      <div class="role-item"><span class="role-icon">⚙️</span><div class="role-info"><div class="role-name">系统设置</div></div></div>
+      <div class="role-item"><span class="role-icon">🔔</span><div class="role-info"><div class="role-name">通知中心</div></div></div>
+      <div class="role-item"><span class="role-icon">⌨️</span><div class="role-info"><div class="role-name">命令面板</div></div></div>
+      <div class="role-item active"><span class="role-icon">👥</span><div class="role-info"><div class="role-name">团队动态</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">👥 团队动态</div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">今日动态</div><div class="kpi-value">87</div><div class="kpi-delta up">▲ 12</div></div>
+          <div class="kpi-card"><div class="kpi-label">在线协同</div><div class="kpi-value" style="color: var(--success);">12</div><div class="kpi-delta up">/25</div></div>
+          <div class="kpi-card"><div class="kpi-label">活跃角色</div><div class="kpi-value">5</div><div class="kpi-delta neutral">/8</div></div>
+          <div class="kpi-card"><div class="kpi-label">RACI 协同</div><div class="kpi-value">23</div><div class="kpi-delta up">▲ 5</div></div>
+          <div class="kpi-card"><div class="kpi-label">@提及</div><div class="kpi-value" style="color: var(--accent);">8</div><div class="kpi-delta up">3 待回复</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📅 实时动态时间线</span>
+              <select style="background: var(--bg-4); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; color: var(--text); font-size: 11px; font-family: inherit;">
+                <option>全部</option>
+                <option>仅任务</option>
+                <option>仅事件</option>
+                <option>仅评论</option>
+              </select>
+            </div>
+            <div class="timeline">
+              <div class="tl-item incident">
+                <div class="tl-time">14:32 · 2 分钟前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">🎖️ 张工 (指挥官)</span>
+                    <span class="tl-action"> 升级事件为 P1 并启动战情室</span>
+                    <span class="tl-target"> INC-2024-001</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>🚨 P1 紧急</span>
+                    <span>👥 4 角色协同</span>
+                    <span>⏰ SLA 4h</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item task">
+                <div class="tl-time">14:32 · 2 分钟前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">👔 李工 (CISO)</span>
+                    <span class="tl-action"> 创建 RACI 任务</span>
+                    <span class="tl-target"> "排查 INC-2024-001 钓鱼邮件事件"</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>📋 TSK-2024-089</span>
+                    <span>● R 执行</span>
+                    <span>🔥 P1</span>
+                    <span>分配给 [张工] [李工]</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item mention">
+                <div class="tl-time">14:50 · 5 分钟前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">🔒 钱工 (Privacy)</span>
+                    <span class="tl-action"> 在战情室笔记中 </span>
+                    <span class="tl-target">@提及 张工</span>
+                    <span class="tl-action">：需要确认是否启动 GDPR 72h 通报流程</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>💬 战情室笔记</span>
+                    <span>📌 INC-2024-001</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item vuln">
+                <div class="tl-time">13:18 · 1 小时前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">🔍 王工 (Expert)</span>
+                    <span class="tl-action"> 修复了漏洞</span>
+                    <span class="tl-target"> CVE-2023-50164 (Strapi 路径遍历)</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>🛡️ CVSS 8.1</span>
+                    <span>📦 prod-web-01</span>
+                    <span>✓ 已修复</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item tool">
+                <div class="tl-time">12:30 · 2 小时前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">⚡ 张工 (SecOps)</span>
+                    <span class="tl-action"> 接受了任务</span>
+                    <span class="tl-target"> "响应供应链攻击告警"</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>📋 TSK-2024-081</span>
+                    <span>● R 执行</span>
+                    <span>🔥 P1</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item insight">
+                <div class="tl-time">11:45 · 3 小时前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">✨ AI 引擎</span>
+                    <span class="tl-action"> 检测到您可能想要自动化</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>💡 建议：漏洞评分自动分配</span>
+                    <span>置信度 92%</span>
+                    <span>预计节省 3.5h/周</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item task">
+                <div class="tl-time">10:30 · 4 小时前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">🔒 钱工 (Privacy)</span>
+                    <span class="tl-action"> 创建了 DSR</span>
+                    <span class="tl-target"> "DSR-2024-045 访问请求"</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>📋 申请人: 张** (u_***82)</span>
+                    <span>30 天 SLA</span>
+                    <span>分配给: [钱工]</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item task">
+                <div class="tl-time">09:15 · 5 小时前</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">🏗️ 李工 (Architect)</span>
+                    <span class="tl-action"> 提交了设计审查</span>
+                    <span class="tl-target"> "payment-v2.0 架构"</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>📐 STRIDE 模型</span>
+                    <span>⚠ 2 个阻塞问题</span>
+                    <span>影响 3 服务</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item vuln">
+                <div class="tl-time">昨天 16:30</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">🔍 王工 (Expert)</span>
+                    <span class="tl-action"> 完成狩猎查询</span>
+                    <span class="tl-target"> "Linux 异常 SUID 文件"</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>🎯 5 台主机</span>
+                    <span>3 命中 (已确认)</span>
+                    <span>MITRE T1548</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tl-item task">
+                <div class="tl-time">昨天 14:00</div>
+                <div class="tl-content">
+                  <div>
+                    <span class="tl-actor">👔 李工 (CISO)</span>
+                    <span class="tl-action"> 批准了预算申请</span>
+                    <span class="tl-target"> "追加预算 $50K - SOAR 平台"</span>
+                  </div>
+                  <div class="tl-meta">
+                    <span>💰 $50,000</span>
+                    <span>✓ 已批准</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="panel" style="margin-bottom: 16px;">
+              <div class="panel-header">
+                <span class="panel-title">🟢 当前在线 (12)</span>
+              </div>
+              <div class="list-item">
+                <div style="font-size: 18px;">🎖️</div>
+                <div class="list-content">
+                  <div class="list-title">张工 <span class="badge danger" style="font-size: 9px;">P1 战情</span></div>
+                  <div class="list-meta">指挥官 · 2 分钟前</div>
+                </div>
+                <span class="dot ok"></span>
+              </div>
+              <div class="list-item">
+                <div style="font-size: 18px;">👔</div>
+                <div class="list-content">
+                  <div class="list-title">李工</div>
+                  <div class="list-meta">CISO · 5 分钟前</div>
+                </div>
+                <span class="dot ok"></span>
+              </div>
+              <div class="list-item">
+                <div style="font-size: 18px;">⚡</div>
+                <div class="list-content">
+                  <div class="list-title">张工 (SecOps)</div>
+                  <div class="list-meta">运营 · 在线</div>
+                </div>
+                <span class="dot ok"></span>
+              </div>
+              <div class="list-item">
+                <div style="font-size: 18px;">🔍</div>
+                <div class="list-content">
+                  <div class="list-title">王工</div>
+                  <div class="list-meta">专家 · 3 分钟前</div>
+                </div>
+                <span class="dot ok"></span>
+              </div>
+              <div class="list-item">
+                <div style="font-size: 18px;">🔒</div>
+                <div class="list-content">
+                  <div class="list-title">钱工</div>
+                  <div class="list-meta">隐私官 · 战情室</div>
+                </div>
+                <span class="dot ok"></span>
+              </div>
+              <div class="list-item">
+                <div style="font-size: 18px;">🏗️</div>
+                <div class="list-content">
+                  <div class="list-title">李工 (架构)</div>
+                  <div class="list-meta">架构师 · 1 小时前</div>
+                </div>
+                <span class="dot warn"></span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">📊 团队活动热图</span>
+              </div>
+              <svg viewBox="0 0 300 150" style="width: 100%; height: 150px;">
+                <!-- 7 天 x 24 小时 -->
+                <g fill="#1e293b">
+                  <!-- 占位方格 -->
+                </g>
+                <g>
+                  <!-- 模拟热力图 -->
+                  <!-- 周一 -->
+                  <rect x="10" y="20" width="8" height="8" fill="rgba(34,197,94,0.3)"/>
+                  <rect x="20" y="20" width="8" height="8" fill="rgba(34,197,94,0.6)"/>
+                  <rect x="30" y="20" width="8" height="8" fill="rgba(34,197,94,0.5)"/>
+                  <rect x="40" y="20" width="8" height="8" fill="rgba(239,68,68,0.7)"/>
+                  <rect x="50" y="20" width="8" height="8" fill="rgba(34,197,94,0.4)"/>
+                  <rect x="10" y="32" width="8" height="8" fill="rgba(34,197,94,0.5)"/>
+                  <rect x="20" y="32" width="8" height="8" fill="rgba(34,197,94,0.7)"/>
+                  <rect x="30" y="32" width="8" height="8" fill="rgba(34,197,94,0.6)"/>
+                  <rect x="40" y="32" width="8" height="8" fill="rgba(34,197,94,0.4)"/>
+                  <rect x="50" y="32" width="8" height="8" fill="rgba(34,197,94,0.3)"/>
+                </g>
+                <text x="10" y="15" fill="#94a3b8" font-size="10">近 7 天活跃热图</text>
+                <text x="10" y="120" fill="#94a3b8" font-size="9">周一</text>
+                <text x="10" y="135" fill="#94a3b8" font-size="9">周日</text>
+                <text x="240" y="135" fill="#94a3b8" font-size="9">23:00</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🤖 AI-SCM 工具链安全 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .cap-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; padding: 4px; background: var(--bg-3); border-radius: 8px; }
+    .cap-tab { padding: 8px 14px; background: var(--bg-4); border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--text-2); cursor: pointer; }
+    .cap-tab.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--bg); border-color: var(--primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🚀 新能力中心</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 报告</button>
+        <button class="btn">+ 添加 AI 工具</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">新能力中心</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">能力总览</div></div></div>
+      <div class="role-item"><span class="role-icon">☁️</span><div class="role-info"><div class="role-name">CSPM</div></div></div>
+      <div class="role-item"><span class="role-icon">💾</span><div class="role-info"><div class="role-name">DSPM</div></div></div>
+      <div class="role-item"><span class="role-icon">🌐</span><div class="role-info"><div class="role-name">EASM</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">RASP</div></div></div>
+      <div class="role-item"><span class="role-icon">🔐</span><div class="role-info"><div class="role-name">ITDR</div></div></div>
+      <div class="role-item"><span class="role-icon">⚡</span><div class="role-info"><div class="role-name">SOAR</div></div></div>
+      <div class="role-item"><span class="role-icon">🧠</span><div class="role-info"><div class="role-name">UEBA</div></div></div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">Sigma</div></div></div>
+      <div class="role-item active"><span class="role-icon">🤖</span><div class="role-info"><div class="role-name">AI-SCM</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">AI-SPM</div></div></div>
+      <div class="role-item"><span class="role-icon">🔒</span><div class="role-info"><div class="role-name">Privacy</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="cap-tabs">
+          <span class="cap-tab">☁️ CSPM</span>
+          <span class="cap-tab">💾 DSPM</span>
+          <span class="cap-tab">🌐 EASM</span>
+          <span class="cap-tab">🛡️ RASP</span>
+          <span class="cap-tab">🔐 ITDR</span>
+          <span class="cap-tab">⚡ SOAR</span>
+          <span class="cap-tab">🧠 UEBA</span>
+          <span class="cap-tab">🎯 Sigma</span>
+          <span class="cap-tab active">🤖 AI-SCM</span>
+          <span class="cap-tab">📋 AI-SPM</span>
+          <span class="cap-tab">🔒 Privacy</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <div style="font-size: 32px;">🤖</div>
+          <div style="flex: 1;">
+            <div style="font-size: 20px; font-weight: 800;">AI-SCM · AI 工具链安全</div>
+            <div style="font-size: 12px; color: var(--text-3);">AI 模型与工具的风险评估 · 数据流向审计 · 供应商尽调</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--text-3);">已纳管 AI 工具</div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--success);">15</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">AI 工具</div><div class="kpi-value">15</div><div class="kpi-delta warn">2 需评估</div></div>
+          <div class="kpi-card"><div class="kpi-label">已批准</div><div class="kpi-value" style="color: var(--success);">12</div><div class="kpi-delta up">80%</div></div>
+          <div class="kpi-card"><div class="kpi-label">数据出境</div><div class="kpi-value" style="color: var(--warning);">5</div><div class="kpi-delta warn">⚠ 评估</div></div>
+          <div class="kpi-card"><div class="kpi-label">影子 AI</div><div class="kpi-value" style="color: var(--danger);">3</div><div class="kpi-delta down">⚠ 需纳管</div></div>
+          <div class="kpi-card"><div class="kpi-label">合同审计</div><div class="kpi-value">8/15</div><div class="kpi-delta down">⚠ 7 缺失</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🤖 AI 工具清单</span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>工具</th><th>类型</th><th>数据流向</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="strong">OpenAI GPT-4</td>
+                  <td>LLM API</td>
+                  <td>境外 (美国)</td>
+                  <td><span class="badge warn">评估中</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">Anthropic Claude 3.5</td>
+                  <td>LLM API</td>
+                  <td>境外 (美国)</td>
+                  <td><span class="badge warn">评估中</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">通义千问 (Qwen)</td>
+                  <td>LLM 私有</td>
+                  <td>境内</td>
+                  <td><span class="badge ok">已批准</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">智谱 GLM-4</td>
+                  <td>LLM 私有</td>
+                  <td>境内</td>
+                  <td><span class="badge ok">已批准</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">SecuClaw-AI (自研)</td>
+                  <td>LLM 内部</td>
+                  <td>内部</td>
+                  <td><span class="badge ok">已批准</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">HuggingFace</td>
+                  <td>开源模型</td>
+                  <td>本地推理</td>
+                  <td><span class="badge info">审查中</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">Cursor</td>
+                  <td>代码助手</td>
+                  <td>境外 + 代码</td>
+                  <td><span class="badge warn">需评估</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">GitHub Copilot</td>
+                  <td>代码助手</td>
+                  <td>境外 + 代码</td>
+                  <td><span class="badge warn">需评估</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">Midjourney</td>
+                  <td>图像生成</td>
+                  <td>境外</td>
+                  <td><span class="badge warn">需评估</span></td>
+                </tr>
+                <tr>
+                  <td class="strong">内部 Embedding</td>
+                  <td>Embedding</td>
+                  <td>内部</td>
+                  <td><span class="badge ok">已批准</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">⚠️ 风险评估维度</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>数据出境风险</strong>
+                  <span style="color: var(--warning);">5 高 · 7 中 · 3 低</span>
+                </div>
+                <div class="progress"><div class="progress-fill warn" style="width: 60%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>Prompt 注入风险</strong>
+                  <span style="color: var(--warning);">8 中 · 7 低</span>
+                </div>
+                <div class="progress"><div class="progress-fill warn" style="width: 40%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>敏感数据泄露</strong>
+                  <span style="color: var(--success);">低</span>
+                </div>
+                <div class="progress"><div class="progress-fill" style="width: 15%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>供应商可靠性</strong>
+                  <span style="color: var(--success);">高</span>
+                </div>
+                <div class="progress"><div class="progress-fill" style="width: 85%;"></div></div>
+              </div>
+              <div style="padding: 8px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <strong>合规性 (GDPR/PIPL)</strong>
+                  <span style="color: var(--warning);">中</span>
+                </div>
+                <div class="progress"><div class="progress-fill warn" style="width: 55%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 AI-SPM 模型安全 (关联)</span>
+            </div>
+            <div style="font-size: 12px; line-height: 1.7; color: var(--text-2);">
+              <p><strong>已部署模型：</strong>5 个生产模型</p>
+              <div style="padding: 6px 0; border-bottom: 1px solid #1a2236;">
+                <strong>qwen-72b-finetune</strong> · 内容安全分类 · 推理延迟 80ms<br>
+                <span style="color: var(--text-3); font-size: 10px;">日均推理: 12 万次 · 失败率 0.1%</span>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid #1a2236;">
+                <strong>threat-classifier-v2</strong> · 威胁分类 · 推理延迟 45ms<br>
+                <span style="color: var(--text-3); font-size: 10px;">日均推理: 5 万次 · 失败率 0.05%</span>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid #1a2236;">
+                <strong>anomaly-detector</strong> · 异常检测 · 推理延迟 30ms<br>
+                <span style="color: var(--text-3); font-size: 10px;">日均推理: 8 万次 · 失败率 0.02%</span>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid #1a2236;">
+                <strong>rag-embedder</strong> · 知识库 RAG · 推理延迟 60ms<br>
+                <span style="color: var(--text-3); font-size: 10px;">日均推理: 3 万次</span>
+              </div>
+              <div style="padding: 6px 0;">
+                <strong>pii-redactor</strong> · PII 脱敏 · 推理延迟 25ms<br>
+                <span style="color: var(--text-3); font-size: 10px;">日均推理: 1.2 万次</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📜 AI 合同与 DPA</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📜</div>
+              <div class="list-content">
+                <div class="list-title">OpenAI · MSA + DPA</div>
+                <div class="list-meta">已签 · 2024-12 到期</div>
+              </div>
+              <span class="badge ok">完整</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📜</div>
+              <div class="list-content">
+                <div class="list-title">Anthropic · MSA + DPA</div>
+                <div class="list-meta">已签 · 2024-09 到期</div>
+              </div>
+              <span class="badge ok">完整</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📜</div>
+              <div class="list-content">
+                <div class="list-title">Cursor · 仅有 ToS</div>
+                <div class="list-meta">⚠ 缺 DPA</div>
+              </div>
+              <span class="badge warn">缺失</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📜</div>
+              <div class="list-content">
+                <div class="list-title">GitHub Copilot · ToS</div>
+                <div class="list-meta">⚠ 缺企业协议</div>
+              </div>
+              <span class="badge warn">缺失</span>
+            </div>
+            <div class="list-item">
+              <div class="list-icon">📜</div>
+              <div class="list-content">
+                <div class="list-title">通义千问 · 私有部署协议</div>
+                <div class="list-meta">已签</div>
+              </div>
+              <span class="badge ok">完整</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

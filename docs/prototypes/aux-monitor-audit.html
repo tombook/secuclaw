@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🖥️ 系统监控 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    .monitor-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .sparkline { width: 100%; height: 40px; }
+    .log-line { padding: 4px 8px; font-family: ui-monospace, 'SF Mono', monospace; font-size: 11px; border-bottom: 1px solid #1a2236; }
+    .log-time { color: var(--text-4); }
+    .log-level { display: inline-block; padding: 0 4px; border-radius: 3px; font-size: 10px; font-weight: 700; margin: 0 4px; }
+    .log-level.info { background: rgba(59, 130, 246, 0.2); color: var(--info); }
+    .log-level.warn { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .log-level.error { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🖥️ 系统监控</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 Grafana</button>
+        <button class="btn">🔄 刷新</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">运维</div>
+      <div class="role-item active"><span class="role-icon">🖥️</span><div class="role-info"><div class="role-name">系统监控</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">审计日志</div></div></div>
+      <div class="role-item"><span class="role-icon">⚙️</span><div class="role-info"><div class="role-name">系统设置</div></div></div>
+      <div class="role-item"><span class="role-icon">🔔</span><div class="role-info"><div class="role-name">通知中心</div></div></div>
+      <div class="role-item"><span class="role-icon">⌨️</span><div class="role-info"><div class="role-name">命令面板</div></div></div>
+      <div class="role-item"><span class="role-icon">👥</span><div class="role-info"><div class="role-name">团队动态</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">🖥️ 系统监控 · 实时</div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">CPU</div><div class="kpi-value" style="color: var(--success);">42%</div><div class="kpi-delta up">8 核</div></div>
+          <div class="kpi-card"><div class="kpi-label">内存</div><div class="kpi-value" style="color: var(--success);">67%</div><div class="kpi-delta up">12/16 GB</div></div>
+          <div class="kpi-card"><div class="kpi-label">磁盘</div><div class="kpi-value" style="color: var(--warning);">78%</div><div class="kpi-delta warn">⚠ 250GB 剩</div></div>
+          <div class="kpi-card"><div class="kpi-label">网络 I/O</div><div class="kpi-value">125 MB/s</div><div class="kpi-delta up">in:67 out:58</div></div>
+          <div class="kpi-card"><div class="kpi-label">运行时长</div><div class="kpi-value" style="font-size: 18px;">23d 14h</div><div class="kpi-delta up">✓ 健康</div></div>
+        </div>
+
+        <div class="monitor-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📈 CPU & 内存 (60s)</span>
+            </div>
+            <svg viewBox="0 0 400 120" style="width: 100%; height: 120px;">
+              <g stroke="#1e293b" stroke-width="0.5">
+                <line x1="0" y1="30" x2="400" y2="30"/>
+                <line x1="0" y1="60" x2="400" y2="60"/>
+                <line x1="0" y1="90" x2="400" y2="90"/>
+              </g>
+              <path d="M0,80 L20,70 L40,75 L60,65 L80,72 L100,60 L120,68 L140,55 L160,62 L180,50 L200,58 L220,45 L240,55 L260,40 L280,50 L300,35 L320,45 L340,30 L360,40 L380,28 L400,35" stroke="#22c55e" stroke-width="2" fill="none"/>
+              <path d="M0,100 L20,90 L40,95 L60,80 L80,88 L100,75 L120,85 L140,70 L160,80 L180,65 L200,75 L220,60 L240,72 L260,55 L280,68 L300,50 L320,65 L340,45 L360,60 L380,42 L400,55" stroke="#3b82f6" stroke-width="2" fill="none"/>
+              <text x="10" y="15" fill="#22c55e" font-size="10">CPU 42%</text>
+              <text x="100" y="15" fill="#3b82f6" font-size="10">内存 67%</text>
+            </svg>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🔌 服务健康</span>
+              <span class="badge ok">全部健康</span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>服务</th><th>状态</th><th>延迟</th><th>QPS</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">Core Gateway (Bun)</td><td><span class="dot ok"></span> 在线</td><td>12 ms</td><td>847</td></tr>
+                <tr><td class="strong">PostgreSQL</td><td><span class="dot ok"></span> 健康</td><td>3 ms</td><td>2,341</td></tr>
+                <tr><td class="strong">Redis Cluster</td><td><span class="dot warn"></span> 降级</td><td>—</td><td>—</td></tr>
+                <tr><td class="strong">EventBus</td><td><span class="dot ok"></span> 在线</td><td>1 ms</td><td>3,892</td></tr>
+                <tr><td class="strong">WebSocket</td><td><span class="dot ok"></span> 在线</td><td>5 ms</td><td>247 conn</td></tr>
+                <tr><td class="strong">Prisma</td><td><span class="dot ok"></span> 健康</td><td>8 ms</td><td>1,247</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📋 实时日志 (tail -f)</span>
+              <span class="badge info">实时</span>
+            </div>
+            <div style="background: var(--bg-4); border-radius: 4px; padding: 4px; max-height: 280px; overflow-y: auto;">
+              <div class="log-line"><span class="log-time">14:32:15.234</span><span class="log-level info">INFO</span> [WebSocket] client connected: u-001</div>
+              <div class="log-line"><span class="log-time">14:32:16.451</span><span class="log-level warn">WARN</span> [API] Slow query: assets.find took 1.2s</div>
+              <div class="log-line"><span class="log-time">14:32:17.123</span><span class="log-level info">INFO</span> [RACI] task TSK-2024-089 created</div>
+              <div class="log-line"><span class="log-time">14:32:18.789</span><span class="log-level error">ERROR</span> [Redis] Connection lost, switching to JSON fallback</div>
+              <div class="log-line"><span class="log-time">14:32:20.012</span><span class="log-level info">INFO</span> [Auth] token validated for u-005</div>
+              <div class="log-line"><span class="log-time">14:32:22.345</span><span class="log-level info">INFO</span> [EventBus] emit: incident.created INC-2024-001</div>
+              <div class="log-line"><span class="log-time">14:32:24.567</span><span class="log-level info">INFO</span> [SOAR] Playbook "phishing-response" started</div>
+              <div class="log-line"><span class="log-time">14:32:25.789</span><span class="log-level warn">WARN</span> [Scanner] CSPM scan 12 findings: 3 critical</div>
+              <div class="log-line"><span class="log-time">14:32:27.012</span><span class="log-level info">INFO</span> [WebSocket] broadcast: incident.update to 5 clients</div>
+              <div class="log-line"><span class="log-time">14:32:30.234</span><span class="log-level info">INFO</span> [Prisma] query: 23ms (assets.findMany)</div>
+              <div class="log-line"><span class="log-time">14:32:32.567</span><span class="log-level warn">WARN</span> [RateLimit] client u-001 exceeded 100 req/min</div>
+              <div class="log-line"><span class="log-time">14:32:35.789</span><span class="log-level info">INFO</span> [ToolMarket] plugin installed: k8s-auditor v1.2</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 API 调用统计 (24h)</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <span>总调用</span><strong>2.3M</strong>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <span>成功率</span><strong style="color: var(--success);">99.87%</strong>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <span>P95 延迟</span><strong>247 ms</strong>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <span>P99 延迟</span><strong>892 ms</strong>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <span>4xx 错误</span><strong style="color: var(--warning);">2,341</strong>
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
+                <span>5xx 错误</span><strong style="color: var(--danger);">23</strong>
+              </div>
+              <div style="padding: 6px 0; display: flex; justify-content: space-between;">
+                <span>限流触发</span><strong>247</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

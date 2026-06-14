@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>👥 角色与权限 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .page-title { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .page-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .role-card { padding: 16px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .role-card:hover { border-color: var(--info); transform: translateY(-2px); }
+    .role-card-icon { font-size: 32px; margin-bottom: 8px; }
+    .role-card-name { font-size: 14px; font-weight: 700; }
+    .role-card-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .role-card-meta { display: flex; gap: 8px; margin-top: 10px; font-size: 11px; color: var(--text-3); }
+    .role-card-perm { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .role-card-perm span { padding: 1px 6px; background: var(--bg-4); border-radius: 4px; font-size: 10px; color: var(--text-2); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">👥 角色与权限</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 权限矩阵</button>
+        <button class="btn">📋 审计</button>
+        <button class="btn btn-primary">+ 新建角色</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">权限中心</div>
+      <div class="role-item active"><span class="role-icon">👥</span><div class="role-info"><div class="role-name">角色管理</div></div></div>
+      <div class="role-item"><span class="role-icon">👤</span><div class="role-info"><div class="role-name">用户管理</div></div></div>
+      <div class="role-item"><span class="role-icon">🔐</span><div class="role-info"><div class="role-name">权限矩阵</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">ABAC 策略</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">审计日志</div></div></div>
+      <div class="role-item"><span class="role-icon">🔑</span><div class="role-info"><div class="role-name">API 密钥</div></div></div>
+      <div class="role-item"><span class="role-icon">🚨</span><div class="role-info"><div class="role-name">特权会话</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-header">
+          <div>
+            <div class="page-title">👥 角色与权限管理</div>
+            <div class="page-sub">8 个内置角色 · 247 个权限点 · 12 个自定义角色</div>
+          </div>
+        </div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 16px;">
+          <div class="kpi-card"><div class="kpi-label">总角色数</div><div class="kpi-value">20</div><div class="kpi-delta neutral">8 内置 + 12 自定义</div></div>
+          <div class="kpi-card"><div class="kpi-label">总用户</div><div class="kpi-value">87</div><div class="kpi-delta up">▲ 3 (本周)</div></div>
+          <div class="kpi-card"><div class="kpi-label">活跃用户</div><div class="kpi-value">82</div><div class="kpi-delta up">94%</div></div>
+          <div class="kpi-card"><div class="kpi-label">权限点</div><div class="kpi-value">247</div><div class="kpi-delta neutral">RBAC</div></div>
+          <div class="kpi-card"><div class="kpi-label">MFA 启用</div><div class="kpi-value">76/87</div><div class="kpi-delta warn">⚠ 11 未启用</div></div>
+        </div>
+
+        <h3 style="font-size: 13px; color: var(--text-3); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.04em;">🎭 内置角色（8 大指挥台）</h3>
+        <div class="role-grid">
+          <div class="role-card">
+            <div class="role-card-icon">🎖️</div>
+            <div class="role-card-name">指挥官</div>
+            <div class="role-card-desc">全域态势协调 + 战情室</div>
+            <div class="role-card-meta">
+              <span>👤 5 人</span>
+              <span>🔑 32 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>战情室</span><span>资源调度</span><span>跨角色</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">👔</div>
+            <div class="role-card-name">CISO 战略官</div>
+            <div class="role-card-desc">战略决策 + 预算 + 合规</div>
+            <div class="role-card-meta">
+              <span>👤 8 人</span>
+              <span>🔑 48 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>预算</span><span>合规</span><span>战略</span><span>审批</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">🔍</div>
+            <div class="role-card-name">安全专家</div>
+            <div class="role-card-desc">漏洞 + 渗透 + 威胁狩猎</div>
+            <div class="role-card-meta">
+              <span>👤 12 人</span>
+              <span>🔑 36 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>漏洞</span><span>渗透</span><span>狩猎</span><span>工具</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">⚡</div>
+            <div class="role-card-name">安全运营</div>
+            <div class="role-card-desc">告警 + SOAR + 应急响应</div>
+            <div class="role-card-meta">
+              <span>👤 22 人</span>
+              <span>🔑 42 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>告警</span><span>SOAR</span><span>应急</span><span>取证</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">🏗️</div>
+            <div class="role-card-name">安全架构师</div>
+            <div class="role-card-desc">零信任 + 威胁建模</div>
+            <div class="role-card-meta">
+              <span>👤 6 人</span>
+              <span>🔑 28 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>零信任</span><span>架构图</span><span>审查</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">🔒</div>
+            <div class="role-card-name">隐私官</div>
+            <div class="role-card-desc">GDPR + PIPL + DSR</div>
+            <div class="role-card-meta">
+              <span>👤 4 人</span>
+              <span>🔑 26 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>DSR</span><span>PIA</span><span>合规</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">💼</div>
+            <div class="role-card-name">业务安全</div>
+            <div class="role-card-desc">BCP + BIA + 业务连续性</div>
+            <div class="role-card-meta">
+              <span>👤 5 人</span>
+              <span>🔑 22 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>BCP</span><span>BIA</span><span>保险</span>
+            </div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">🔗</div>
+            <div class="role-card-name">供应链安全</div>
+            <div class="role-card-desc">SBOM + 供应商 + AI-SCM</div>
+            <div class="role-card-meta">
+              <span>👤 7 人</span>
+              <span>🔑 30 权限</span>
+            </div>
+            <div class="role-card-perm">
+              <span>SBOM</span><span>供应商</span><span>AI-SCM</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 13px; color: var(--text-3); margin: 24px 0 8px; text-transform: uppercase; letter-spacing: 0.04em;">🛠️ 自定义角色（12 个）</h3>
+        <div class="role-grid">
+          <div class="role-card">
+            <div class="role-card-icon">👁️</div>
+            <div class="role-card-name">只读审计员</div>
+            <div class="role-card-desc">查看所有数据，不能修改</div>
+            <div class="role-card-meta"><span>👤 3 人</span><span>🔑 12 权限</span></div>
+            <div class="role-card-perm"><span>查看</span><span>导出</span></div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">🛠️</div>
+            <div class="role-card-name">SOAR 开发者</div>
+            <div class="role-card-desc">创建和编辑 Playbook</div>
+            <div class="role-card-meta"><span>👤 2 人</span><span>🔑 18 权限</span></div>
+            <div class="role-card-perm"><span>Playbook</span><span>集成</span></div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">📞</div>
+            <div class="role-card-name">值班工程师</div>
+            <div class="role-card-desc">7x24 一线响应</div>
+            <div class="role-card-meta"><span>👤 8 人</span><span>🔑 14 权限</span></div>
+            <div class="role-card-perm"><span>告警</span><span>通知</span></div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-icon">📊</div>
+            <div class="role-card-name">BI 分析师</div>
+            <div class="role-card-desc">只读 + 自定义报表</div>
+            <div class="role-card-meta"><span>👤 2 人</span><span>🔑 10 权限</span></div>
+            <div class="role-card-perm"><span>报表</span><span>导出</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

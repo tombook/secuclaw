@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>⌨️ 命令面板 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    body { background: rgba(0,0,0,0.5); }
+    .cmd-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-start; justify-content: center; padding-top: 80px; z-index: 100; }
+    .cmd-panel { width: 640px; background: var(--bg-3); border: 1px solid var(--border-2); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); overflow: hidden; }
+    .cmd-search { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .cmd-search input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 16px; font-family: inherit; outline: none; }
+    .cmd-search-icon { font-size: 18px; color: var(--text-3); }
+    .cmd-section { padding: 8px 12px 4px; font-size: 10px; color: var(--text-4); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em; }
+    .cmd-results { max-height: 480px; overflow-y: auto; padding: 0 4px 8px; }
+    .cmd-item { padding: 10px 14px; border-radius: 6px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .cmd-item:hover, .cmd-item.active { background: var(--bg-4); }
+    .cmd-item-icon { font-size: 18px; width: 24px; text-align: center; }
+    .cmd-item-content { flex: 1; min-width: 0; }
+    .cmd-item-name { font-weight: 600; }
+    .cmd-item-sub { font-size: 11px; color: var(--text-3); }
+    .cmd-item-kbd { margin-left: auto; display: flex; gap: 4px; }
+    .cmd-item-kbd span { font-size: 10px; padding: 2px 6px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px; color: var(--text-3); font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="app" style="filter: blur(2px);">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">⌨️ 命令面板</div>
+    </div>
+    <aside class="sidebar">
+      <div class="section-title">运维</div>
+      <div class="role-item"><span class="role-icon">🖥️</span><div class="role-info"><div class="role-name">系统监控</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">审计日志</div></div></div>
+      <div class="role-item"><span class="role-icon">⚙️</span><div class="role-info"><div class="role-name">系统设置</div></div></div>
+      <div class="role-item"><span class="role-icon">🔔</span><div class="role-info"><div class="role-name">通知中心</div></div></div>
+      <div class="role-item active"><span class="role-icon">⌨️</span><div class="role-info"><div class="role-name">命令面板</div></div></div>
+      <div class="role-item"><span class="role-icon">👥</span><div class="role-info"><div class="role-name">团队动态</div></div></div>
+    </aside>
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">⌨️ 命令面板</div>
+        <div class="panel" style="text-align: center; padding: 60px;">
+          <div style="font-size: 64px; margin-bottom: 16px;">⌨️</div>
+          <div style="font-size: 18px; font-weight: 700;">按 ⌘K 或 Ctrl+K 唤起命令面板</div>
+          <div style="font-size: 12px; color: var(--text-3); margin-top: 8px;">快速跳转、搜索、执行操作</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 命令面板浮层 -->
+  <div class="cmd-overlay">
+    <div class="cmd-panel">
+      <div class="cmd-search">
+        <span class="cmd-search-icon">🔍</span>
+        <input type="text" placeholder="搜索命令、页面、工具..." value="" autofocus>
+        <span style="font-size: 11px; color: var(--text-3);">ESC 关闭</span>
+      </div>
+      <div class="cmd-results">
+        <div class="cmd-section">⚡ 建议</div>
+        <div class="cmd-item active">
+          <span class="cmd-item-icon">🎖️</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">切换到：指挥官</div>
+            <div class="cmd-item-sub">全域态势协调中心</div>
+          </div>
+          <div class="cmd-item-kbd"><span>⌘</span><span>1</span></div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">📋</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">创建 RACI 任务</div>
+            <div class="cmd-item-sub">新建任务并分配</div>
+          </div>
+          <div class="cmd-item-kbd"><span>⌘</span><span>⇧</span><span>T</span></div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">🔬</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">启动漏洞扫描</div>
+            <div class="cmd-item-sub">prod-web-01</div>
+          </div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">🤖</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">执行 Playbook</div>
+            <div class="cmd-item-sub">钓鱼邮件响应 v3.2</div>
+          </div>
+        </div>
+
+        <div class="cmd-section">📊 页面</div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">📊</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">安全总览</div>
+            <div class="cmd-item-sub">跨角色综合态势</div>
+          </div>
+          <div class="cmd-item-kbd"><span>g</span><span>o</span></div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">🚨</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">事件列表</div>
+            <div class="cmd-item-sub">12 活跃 · 3 P1</div>
+          </div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">🛡️</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">漏洞列表</div>
+            <div class="cmd-item-sub">47 未修复 · 3 Critical</div>
+          </div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">📋</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">任务中心</div>
+            <div class="cmd-item-sub">12 待我处理</div>
+          </div>
+        </div>
+
+        <div class="cmd-section">👥 角色</div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">🎖️</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">指挥官</div>
+            <div class="cmd-item-sub">全域协调</div>
+          </div>
+          <div class="cmd-item-kbd"><span>⌘</span><span>1</span></div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">👔</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">CISO 战略官</div>
+            <div class="cmd-item-sub">战略 + 合规</div>
+          </div>
+          <div class="cmd-item-kbd"><span>⌘</span><span>2</span></div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">⚡</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">安全运营</div>
+            <div class="cmd-item-sub">告警 + SOAR</div>
+          </div>
+          <div class="cmd-item-kbd"><span>⌘</span><span>4</span></div>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-item-icon">🔒</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-name">隐私官</div>
+            <div class="cmd-item-sub">GDPR + PIPL</div>
+          </div>
+          <div class="cmd-item-kbd"><span>⌘</span><span>6</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

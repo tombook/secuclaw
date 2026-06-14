@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 2 · 战情室（War Room）实时协同</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0a0f1a;
+      color: #e2e8f0;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    /* 顶栏 */
+    .topbar {
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+      border-bottom: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .topbar-icon { font-size: 20px; }
+    .topbar-title { font-size: 14px; font-weight: 700; }
+    .topbar-sub { font-size: 12px; color: #94a3b8; }
+    .topbar-duration {
+      font-family: ui-monospace, monospace; font-size: 13px; font-weight: 700;
+      color: #ef4444; padding: 4px 10px; background: rgba(239, 68, 68, 0.15);
+      border-radius: 4px;
+    }
+    .topbar-spacer { flex: 1; }
+    .exit-btn {
+      padding: 6px 14px; background: transparent; color: #94a3b8;
+      border: 1px solid #334155; border-radius: 4px; font-size: 12px;
+      cursor: pointer; font-family: inherit;
+    }
+    .exit-btn:hover { color: #ef4444; border-color: #ef4444; }
+    /* 主体三栏 */
+    .warroom {
+      flex: 1; display: grid;
+      grid-template-columns: 1fr 320px;
+      grid-template-rows: 1fr auto;
+      gap: 12px; padding: 12px;
+      max-height: calc(100vh - 50px);
+    }
+    .panel {
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 8px; padding: 14px 16px;
+      display: flex; flex-direction: column;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .panel-title { font-size: 13px; font-weight: 700; }
+    .panel-body { flex: 1; overflow-y: auto; }
+    /* 左侧：时间线 */
+    .timeline { position: relative; padding-left: 20px; }
+    .timeline::before {
+      content: ''; position: absolute; left: 6px; top: 0; bottom: 0;
+      width: 2px; background: #1e293b;
+    }
+    .timeline-item { position: relative; padding: 8px 0 14px 16px; }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -20px; top: 14px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #3b82f6; box-shadow: 0 0 0 3px #0a0f1a;
+    }
+    .timeline-item.done::before { background: #22c55e; }
+    .timeline-item.critical::before { background: #ef4444; }
+    .timeline-time { font-size: 10px; color: #64748b; font-family: ui-monospace, monospace; }
+    .timeline-text { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+    /* 右侧：参与者 */
+    .participants { display: flex; flex-direction: column; gap: 8px; }
+    .participant {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px; background: #0f172a; border-radius: 6px;
+    }
+    .p-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #00d4ff, #a855f7);
+      color: #fff; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .p-info { flex: 1; min-width: 0; }
+    .p-name { font-size: 12px; font-weight: 600; }
+    .p-role { font-size: 10px; color: #94a3b8; }
+    .p-mic {
+      font-size: 10px; padding: 2px 6px; border-radius: 4px;
+      background: rgba(100, 116, 139, 0.2); color: #94a3b8;
+    }
+    .p-mic.on { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    /* 笔记区（底部全宽）*/
+    .notes-panel {
+      grid-column: 1 / -1;
+      max-height: 280px;
+    }
+    .note-list { display: flex; flex-direction: column; gap: 6px; }
+    .note {
+      padding: 8px 10px; background: #0f172a; border-radius: 6px;
+      font-size: 12px;
+    }
+    .note-author { font-weight: 600; color: #00d4ff; margin-right: 6px; }
+    .note-time { font-size: 10px; color: #64748b; margin-left: 6px; }
+    .note-input {
+      display: flex; gap: 8px; margin-top: 8px;
+    }
+    .note-input input {
+      flex: 1; padding: 8px 10px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 4px;
+      color: #e2e8f0; font-size: 12px; font-family: inherit;
+    }
+    .note-input input:focus {
+      outline: none; border-color: #3b82f6;
+    }
+    .note-input button {
+      padding: 8px 16px; background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border: none; border-radius: 4px;
+      font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    /* 中间：关键指标 + 决策清单 */
+    .center-stack { display: flex; flex-direction: column; gap: 12px; }
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi-mini {
+      padding: 10px; background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 6px;
+    }
+    .kpi-mini-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-mini-value { font-size: 22px; font-weight: 800; color: #fff; margin-top: 2px; }
+    .kpi-mini-delta { font-size: 10px; color: #94a3b8; }
+    .checklist { display: flex; flex-direction: column; gap: 4px; }
+    .checklist-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; background: #0f172a; border-radius: 4px;
+      font-size: 12px;
+    }
+    .checklist-item input[type=checkbox] { accent-color: #22c55e; }
+    .checklist-item.done { color: #22c55e; text-decoration: line-through; }
+    .checklist-add {
+      padding: 6px; background: transparent; color: #60a5fa;
+      border: 1px dashed #334155; border-radius: 4px;
+      font-size: 11px; cursor: pointer; text-align: center; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="topbar-icon">🚨</span>
+    <div>
+      <div class="topbar-title">战情室：INC-2024-001 钓鱼邮件事件</div>
+      <div class="topbar-sub">P1 紧急 · 涉及 12 人 PII 数据</div>
+    </div>
+    <div class="topbar-duration">⏱ 00:23:45</div>
+    <div class="topbar-spacer"></div>
+    <button class="exit-btn">× 退出战情室</button>
+  </div>
+
+  <!-- 主体 -->
+  <div class="warroom">
+    <!-- 左：时间线 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📅 事件时间线</span>
+        <span style="font-size: 11px; color: #64748b;">实时更新</span>
+      </div>
+      <div class="panel-body">
+        <div class="timeline">
+          <div class="timeline-item done">
+            <div class="timeline-time">00:00:00</div>
+            <div class="timeline-text"><strong>检测到</strong> 12 封钓鱼邮件发送到 Acme Corp 域</div>
+          </div>
+          <div class="timeline-item done">
+            <div class="timeline-time">00:03:12</div>
+            <div class="timeline-text"><strong>自动升级</strong> · SecOps 系统判定 P1 紧急</div>
+          </div>
+          <div class="timeline-item done">
+            <div class="timeline-time">00:12:45</div>
+            <div class="timeline-text"><strong>启动响应</strong> · 张工 (SecOps) 接受指挥</div>
+          </div>
+          <div class="timeline-item done">
+            <div class="timeline-time">00:18:30</div>
+            <div class="timeline-text"><strong>隔离主机</strong> · 5 台可疑终端已断网</div>
+          </div>
+          <div class="timeline-item critical">
+            <div class="timeline-time">00:23:45</div>
+            <div class="timeline-text"><strong>调查中</strong> · 正在溯源攻击路径 <span style="color: #ef4444;">●</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧栈：参与者 + 指标 + 决策 -->
+    <div class="center-stack">
+      <!-- 参与者 -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">👥 参与者 (5)</span>
+        </div>
+        <div class="panel-body">
+          <div class="participants">
+            <div class="participant">
+              <div class="p-avatar">🎖️</div>
+              <div class="p-info">
+                <div class="p-name">张工</div>
+                <div class="p-role">指挥官</div>
+              </div>
+              <span class="p-mic on">🎤 发言中</span>
+            </div>
+            <div class="participant">
+              <div class="p-avatar">👔</div>
+              <div class="p-info">
+                <div class="p-name">李工</div>
+                <div class="p-role">CISO</div>
+              </div>
+              <span class="p-mic">🔇 静音</span>
+            </div>
+            <div class="participant">
+              <div class="p-avatar">🔍</div>
+              <div class="p-info">
+                <div class="p-name">王工</div>
+                <div class="p-role">安全专家</div>
+              </div>
+              <span class="p-mic">🔇 静音</span>
+            </div>
+            <div class="participant">
+              <div class="p-avatar">⚡</div>
+              <div class="p-info">
+                <div class="p-name">赵工</div>
+                <div class="p-role">SecOps</div>
+              </div>
+              <span class="p-mic">🔇 静音</span>
+            </div>
+            <div class="participant">
+              <div class="p-avatar">🔒</div>
+              <div class="p-info">
+                <div class="p-name">钱工</div>
+                <div class="p-role">隐私官</div>
+              </div>
+              <span class="p-mic">🔇 静音</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关键指标 + 决策清单 -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <span class="panel-title">📊 关键指标 + 决策</span>
+        </div>
+        <div class="panel-body">
+          <div class="kpi-grid" style="margin-bottom: 12px;">
+            <div class="kpi-mini">
+              <div class="kpi-mini-label">受影响</div>
+              <div class="kpi-mini-value">12<span style="font-size: 12px; color: #94a3b8;"> 人</span></div>
+            </div>
+            <div class="kpi-mini">
+              <div class="kpi-mini-label">已隔离</div>
+              <div class="kpi-mini-value" style="color: #22c55e;">5<span style="font-size: 12px; color: #94a3b8;">/12 台</span></div>
+            </div>
+            <div class="kpi-mini">
+              <div class="kpi-mini-label">关键资产</div>
+              <div class="kpi-mini-value" style="color: #f59e0b;">1</div>
+            </div>
+            <div class="kpi-mini">
+              <div class="kpi-mini-label">修复进度</div>
+              <div class="kpi-mini-value" style="color: #3b82f6;">60<span style="font-size: 12px; color: #94a3b8;">%</span></div>
+            </div>
+          </div>
+
+          <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 6px;">📋 决策清单</div>
+          <div class="checklist">
+            <div class="checklist-item done">
+              <input type="checkbox" checked>
+              <span>隔离 5 台可疑主机</span>
+            </div>
+            <div class="checklist-item done">
+              <input type="checkbox" checked>
+              <span>通知 CISO + 隐私官</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox">
+              <span>启动法律流程（72h 通报）</span>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox">
+              <span>通知受影响的 12 名员工</span>
+            </div>
+            <button class="checklist-add">+ 添加决策</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部：实时笔记 -->
+    <div class="panel notes-panel">
+      <div class="panel-header">
+        <span class="panel-title">📝 实时笔记（协作）</span>
+        <span style="font-size: 11px; color: #64748b;">5 人在线</span>
+      </div>
+      <div class="panel-body">
+        <div class="note-list">
+          <div class="note">
+            <span class="note-author">🎖️ 张工</span>
+            <span>已隔离 5 台主机，其中 2 台确认被钓鱼，3 台为预防性隔离</span>
+            <span class="note-time">5 分钟前</span>
+          </div>
+          <div class="note">
+            <span class="note-author">🔍 王工</span>
+            <span>漏洞 CVE-2024-21762 是初始入口，建议优先修复</span>
+            <span class="note-time">3 分钟前</span>
+          </div>
+          <div class="note">
+            <span class="note-author">👔 李工</span>
+            <span>需要确认是否启动 GDPR 72h 通报流程？请 @ 钱工确认 PII 范围</span>
+            <span class="note-time">1 分钟前</span>
+          </div>
+          <div class="note">
+            <span class="note-author">⚡ 赵工</span>
+            <span>已对 5 台主机做内存取证，发现可疑进程 svchost.exe 变种</span>
+            <span class="note-time">刚刚</span>
+          </div>
+        </div>
+        <div class="note-input">
+          <input type="text" placeholder="输入笔记... (@ 提及成员，Enter 发送)">
+          <button>发送</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

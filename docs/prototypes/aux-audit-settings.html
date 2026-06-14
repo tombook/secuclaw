@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>📋 审计日志 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    .audit-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: ui-monospace, 'SF Mono', monospace; }
+    .audit-table td { padding: 6px 8px; border-bottom: 1px solid #1a2236; color: var(--text-2); }
+    .audit-table tr:hover td { background: #131d2e; }
+    .audit-table .time { color: var(--text-4); white-space: nowrap; }
+    .audit-table .user { color: var(--primary); }
+    .audit-table .action { color: var(--text); font-weight: 600; }
+    .audit-table .target { color: var(--accent); }
+    .audit-table .ip { color: var(--text-3); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">📋 审计日志</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📥 导出 CSV</button>
+        <button class="btn">🔍 高级搜索</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">运维</div>
+      <div class="role-item"><span class="role-icon">🖥️</span><div class="role-info"><div class="role-name">系统监控</div></div></div>
+      <div class="role-item active"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">审计日志</div></div></div>
+      <div class="role-item"><span class="role-icon">⚙️</span><div class="role-info"><div class="role-name">系统设置</div></div></div>
+      <div class="role-item"><span class="role-icon">🔔</span><div class="role-info"><div class="role-name">通知中心</div></div></div>
+      <div class="role-item"><span class="role-icon">⌨️</span><div class="role-info"><div class="role-name">命令面板</div></div></div>
+      <div class="role-item"><span class="role-icon">👥</span><div class="role-info"><div class="role-name">团队动态</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">📋 审计日志 · 不可篡改 · 留存 90 天</div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">今日操作</div><div class="kpi-value">1,247</div><div class="kpi-delta up">▲ 12%</div></div>
+          <div class="kpi-card"><div class="kpi-label">敏感操作</div><div class="kpi-value" style="color: var(--warning);">23</div><div class="kpi-delta down">⚠ 关注</div></div>
+          <div class="kpi-card"><div class="kpi-label">失败尝试</div><div class="kpi-value" style="color: var(--danger);">8</div><div class="kpi-delta down">▲ 3</div></div>
+          <div class="kpi-card"><div class="kpi-label">活跃用户</div><div class="kpi-value">82</div><div class="kpi-delta up">/87</div></div>
+          <div class="kpi-card"><div class="kpi-label">日志完整性</div><div class="kpi-value" style="color: var(--success);">100%</div><div class="kpi-delta up">✓ 哈希校验</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📋 审计事件流</span>
+            <div style="display: flex; gap: 6px;">
+              <input type="text" placeholder="搜索用户、操作、资源..." style="background: var(--bg-4); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--text); font-size: 11px; font-family: inherit; width: 240px;">
+              <select style="background: var(--bg-4); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; color: var(--text); font-size: 11px; font-family: inherit;">
+                <option>所有用户</option>
+                <option>仅管理员</option>
+              </select>
+            </div>
+          </div>
+          <table class="audit-table">
+            <thead>
+              <tr style="background: var(--bg-3);">
+                <td style="color: var(--text-3); font-weight: 600; font-size: 10px; text-transform: uppercase;">时间</td>
+                <td style="color: var(--text-3); font-weight: 600; font-size: 10px; text-transform: uppercase;">用户</td>
+                <td style="color: var(--text-3); font-weight: 600; font-size: 10px; text-transform: uppercase;">操作</td>
+                <td style="color: var(--text-3); font-weight: 600; font-size: 10px; text-transform: uppercase;">资源</td>
+                <td style="color: var(--text-3); font-weight: 600; font-size: 10px; text-transform: uppercase;">结果</td>
+                <td style="color: var(--text-3); font-weight: 600; font-size: 10px; text-transform: uppercase;">IP</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="time">14:32:15.234</td><td class="user">u-001 张工</td><td class="action">CREATE</td><td class="target">INC-2024-001 (P1)</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.10</td></tr>
+              <tr><td class="time">14:32:10.567</td><td class="user">u-005 王工</td><td class="action">UPDATE</td><td class="target">CVE-2024-21762 status</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.20</td></tr>
+              <tr><td class="time">14:30:22.123</td><td class="user">u-003 李工</td><td class="action">APPROVE</td><td class="target">budget-2024-Q2-additional</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.30</td></tr>
+              <tr><td class="time">14:28:45.789</td><td class="user">u-008 钱工</td><td class="action">CREATE</td><td class="target">DSR-2024-045</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.40</td></tr>
+              <tr><td class="time">14:25:12.234</td><td class="user">u-002 张工 (SecOps)</td><td class="action">EXECUTE</td><td class="target">SOAR Playbook phishing-response v3.2</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.10</td></tr>
+              <tr><td class="time">14:20:33.567</td><td class="user">u-007 孙工</td><td class="action">LOGIN</td><td class="target">SSO + MFA</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.50</td></tr>
+              <tr><td class="time">14:18:55.890</td><td class="user">u-099 unknown</td><td class="action">LOGIN_ATTEMPT</td><td class="target">SSO (invalid password)</td><td style="color: var(--danger);">FAILED</td><td class="ip">198.51.100.99</td></tr>
+              <tr><td class="time">14:15:22.345</td><td class="user">u-006 李工 (Arch)</td><td class="action">CREATE</td><td class="target">threat-model data-lake-v2</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.60</td></tr>
+              <tr><td class="time">14:10:11.789</td><td class="user">u-001 张工</td><td class="action">EXPORT</td><td class="target">audit-logs (2024-06-01 to 06-15)</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.10</td></tr>
+              <tr><td class="time">14:05:33.234</td><td class="user">u-001 张工</td><td class="action">DELETE</td><td class="target">playbook test-pb-v0.1</td><td style="color: var(--warning);">SOFT_DELETE</td><td class="ip">203.0.113.10</td></tr>
+              <tr><td class="time">14:00:00.000</td><td class="user">system</td><td class="action">SCHEDULED</td><td class="target">cspm-daily-scan</td><td style="color: var(--success);">SUCCESS</td><td class="ip">internal</td></tr>
+              <tr><td class="time">13:55:22.567</td><td class="user">u-004 赵工</td><td class="action">UPDATE</td><td class="target">vulnerability CVE-2024-21762 → fix_in_progress</td><td style="color: var(--success);">SUCCESS</td><td class="ip">203.0.113.70</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>🧬 自主进化 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    .skill-card { padding: 12px 14px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .skill-name { font-weight: 600; }
+    .skill-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">🧬 自主进化</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">📊 报告</button>
+        <button class="btn">+ 新建技能</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">🚀</span><div class="role-info"><div class="role-name">新能力</div></div></div>
+      <div class="role-item"><span class="role-icon">🛒</span><div class="role-info"><div class="role-name">工具市场</div></div></div>
+      <div class="role-item active"><span class="role-icon">🧬</span><div class="role-info"><div class="role-name">自主进化</div></div></div>
+      <div class="role-item"><span class="role-icon">📚</span><div class="role-info"><div class="role-name">知识库</div></div></div>
+      <div class="section-title">子系统</div>
+      <div class="role-item"><span class="role-icon">🔍</span><div class="role-info"><div class="role-name">技能扫描</div></div></div>
+      <div class="role-item"><span class="role-icon">💡</span><div class="role-info"><div class="role-name">上下文引擎</div></div></div>
+      <div class="role-item"><span class="role-icon">🎓</span><div class="role-info"><div class="role-name">学习反馈</div></div></div>
+      <div class="role-item"><span class="role-icon">📈</span><div class="role-info"><div class="role-name">效果度量</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">🧬 自主进化系统 · 智能自学习 + 技能自动化</div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">已部署技能</div><div class="kpi-value">64</div><div class="kpi-delta up">▲ 3 本周</div></div>
+          <div class="kpi-card"><div class="kpi-label">本月执行</div><div class="kpi-value">1,247</div><div class="kpi-delta up">▲ 23%</div></div>
+          <div class="kpi-card"><div class="kpi-label">自动化率</div><div class="kpi-value" style="color: var(--success);">67%</div><div class="kpi-delta up">▲ 4%</div></div>
+          <div class="kpi-card"><div class="kpi-label">节省时间</div><div class="kpi-value">126h</div><div class="kpi-delta up">▲ 28h</div></div>
+          <div class="kpi-card"><div class="kpi-label">学习准确度</div><div class="kpi-value">87%</div><div class="kpi-delta up">▲ 3%</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">💡 AI 智能推荐 (5)</span>
+              <a class="panel-action">查看历史 →</a>
+            </div>
+            <div class="skill-card" style="border-color: var(--success);">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span style="font-size: 16px;">✨</span>
+                <span class="skill-name">漏洞评分自动分配</span>
+                <span class="badge ok" style="margin-left: auto;">置信 92%</span>
+              </div>
+              <div class="skill-meta">检测到您 5 次执行"扫描 CVSS&gt;7 → 分配给王工"模式</div>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button class="btn-mini" style="padding: 4px 10px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;">一键启用</button>
+                <button class="btn-mini" style="padding: 4px 10px; background: transparent; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit;">预览</button>
+                <button class="btn-mini" style="padding: 4px 10px; background: transparent; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit; margin-left: auto;">不感兴趣</button>
+              </div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span style="font-size: 16px;">✨</span>
+                <span class="skill-name">高危事件自动通知</span>
+                <span class="badge warn" style="margin-left: auto;">置信 78%</span>
+              </div>
+              <div class="skill-meta">检测到 P1/P2 事件您总是立即通知 CISO + Privacy 官</div>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button class="btn-mini" style="padding: 4px 10px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;">启用</button>
+                <button class="btn-mini" style="padding: 4px 10px; background: transparent; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit;">预览</button>
+              </div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span style="font-size: 16px;">✨</span>
+                <span class="skill-name">常用工具固定</span>
+                <span class="badge ok" style="margin-left: auto;">置信 91%</span>
+              </div>
+              <div class="skill-meta">检测到您 87% 任务使用漏洞管理 + SOAR 工具</div>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <button class="btn-mini" style="padding: 4px 10px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;">启用</button>
+                <button class="btn-mini" style="padding: 4px 10px; background: transparent; color: var(--text-3); border: 1px solid var(--border); border-radius: 4px; font-size: 11px; cursor: pointer; font-family: inherit;">预览</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">📊 学习进度</span>
+            </div>
+            <div style="font-size: 12px;">
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><strong>用户行为模式</strong><span>247 条</span></div>
+                <div class="progress"><div class="progress-fill" style="width: 85%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><strong>场景识别模型</strong><span>87% 准确度</span></div>
+                <div class="progress"><div class="progress-fill" style="width: 87%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><strong>推荐采纳率</strong><span>73%</span></div>
+                <div class="progress"><div class="progress-fill" style="width: 73%;"></div></div>
+              </div>
+              <div style="padding: 8px 0; border-bottom: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><strong>建议质量评分</strong><span>4.3/5.0</span></div>
+                <div class="progress"><div class="progress-fill" style="width: 86%;"></div></div>
+              </div>
+              <div style="padding: 8px 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;"><strong>累计节省</strong><span>428 小时</span></div>
+                <div class="progress"><div class="progress-fill" style="width: 71%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📚 已部署技能 (Top 8)</span>
+            <a class="panel-action">全部 64 →</a>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">挖矿主机自动隔离</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 23 次 · 成功率 100%</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">失陷凭证自动重置</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 8 次 · 成功率 100%</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">钓鱼邮件自动隔离</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 47 次 · 成功率 98%</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">数据外泄自动阻断</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 12 次 · 成功率 100%</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">每日漏洞评分扫描</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 30 次 · 定时</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">云配置自动修复</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 67 次 · 成功率 92%</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">告警去重与聚合</span>
+                <span class="badge ok" style="margin-left: auto;">活跃</span>
+              </div>
+              <div class="skill-meta">执行 1,247 次 · 减少 67% 噪声</div>
+            </div>
+            <div class="skill-card">
+              <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                <span>🤖</span>
+                <span class="skill-name">DLP 异常检测</span>
+                <span class="badge warn" style="margin-left: auto;">需调优</span>
+              </div>
+              <div class="skill-meta">执行 124 次 · 误报率 5%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

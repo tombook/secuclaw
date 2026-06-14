@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 1 · SecuClaw 门户（PC 工作台风格首页）</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0a0f1a;
+      color: #e2e8f0;
+    }
+    /* 整体网格：顶栏 + 侧边栏 + 主区域 */
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 48px 1fr;
+      grid-template-areas: "topbar topbar" "sidebar main";
+      height: 100vh;
+    }
+    /* ─── 顶栏 ─── */
+    .topbar {
+      grid-area: topbar;
+      background: #0d1320;
+      border-bottom: 1px solid #1e293b;
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+    .brand-icon { font-size: 22px; }
+    .brand-text { background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .topbar-title { font-size: 13px; color: #94a3b8; margin-left: 24px; }
+    .topbar-spacer { flex: 1; }
+    .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #64748b; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.6); }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      padding: 6px 14px; background: transparent; color: #94a3b8;
+      border: 1px solid #1e293b; border-radius: 6px; font-size: 12px;
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
+    }
+    .btn:hover { color: #e2e8f0; border-color: #334155; }
+    .btn-primary {
+      background: linear-gradient(135deg, #00d4ff, #0ea5e9); color: #0a0f1a;
+      border: none; font-weight: 600;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    /* ─── 侧边栏 ─── */
+    .sidebar {
+      grid-area: sidebar;
+      background: #0d1320;
+      border-right: 1px solid #1e293b;
+      overflow-y: auto; padding: 12px 0;
+    }
+    .section-title {
+      font-size: 10px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 8px 16px 6px;
+    }
+    .role-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px; cursor: pointer; font-size: 13px;
+      color: #cbd5e1; transition: all 0.12s;
+      border-left: 2px solid transparent;
+    }
+    .role-item:hover { background: #131d2e; color: #fff; }
+    .role-item.active { background: #131d2e; border-left-color: #3b82f6; color: #fff; }
+    .role-icon { font-size: 16px; width: 22px; text-align: center; }
+    .role-info { flex: 1; min-width: 0; }
+    .role-name { font-weight: 500; }
+    .role-desc { font-size: 10px; color: #64748b; margin-top: 1px; }
+    /* ─── 主区域 ─── */
+    .main {
+      grid-area: main;
+      overflow-y: auto;
+      padding: 20px 24px 32px;
+    }
+    .main-inner { max-width: 1600px; }
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      gap: 12px; margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: #111827; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .kpi-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-value { font-size: 26px; font-weight: 800; color: #fff; margin-top: 4px; line-height: 1.1; }
+    .kpi-delta { font-size: 11px; margin-top: 2px; }
+    .kpi-delta.up { color: #22c55e; }
+    .kpi-delta.down { color: #ef4444; }
+    .kpi-delta.neutral { color: #64748b; }
+    .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .panel {
+      background: #111827; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .panel-title { font-size: 13px; font-weight: 700; color: #e2e8f0; }
+    .panel-action { font-size: 11px; color: #60a5fa; cursor: pointer; text-decoration: none; }
+    .panel-action:hover { text-decoration: underline; }
+    /* 能力矩阵 */
+    .cap-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .cap-table th {
+      text-align: left; padding: 8px 10px; color: #94a3b8;
+      font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+      border-bottom: 1px solid #1e293b;
+    }
+    .cap-table td { padding: 8px 10px; border-bottom: 1px solid #1a2236; color: #cbd5e1; }
+    .cap-table tr:hover td { background: #131d2e; }
+    .cap-icon-cell { width: 28px; font-size: 15px; }
+    .cap-name { font-weight: 600; color: #e2e8f0; }
+    .cap-handlers { color: #94a3b8; font-family: ui-monospace, 'SF Mono', monospace; font-size: 11px; }
+    .cap-status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+    .cap-status.ok { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .cap-status.beta { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    /* 快速工具 */
+    .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .tool-cell {
+      padding: 10px; background: #0f172a; border: 1px solid #1e293b;
+      border-radius: 6px; cursor: pointer; transition: all 0.12s; text-align: center;
+    }
+    .tool-cell:hover { border-color: #3b82f6; background: #131d2e; }
+    .tool-icon { font-size: 20px; margin-bottom: 4px; }
+    .tool-name { font-size: 11px; color: #cbd5e1; }
+    /* 计费卡 */
+    .plan-card {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(168, 85, 247, 0.05));
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+    }
+    .plan-tier { font-size: 11px; color: #00d4ff; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+    .plan-name { font-size: 18px; font-weight: 800; margin: 4px 0; }
+    .plan-quota { font-size: 11px; color: #94a3b8; line-height: 1.7; margin-top: 8px; }
+    .plan-quota-row { display: flex; justify-content: space-between; }
+    .plan-quota-row strong { color: #cbd5e1; }
+    /* 服务状态 */
+    .status-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #1a2236; font-size: 12px;
+    }
+    .status-row:last-child { border-bottom: none; }
+    .status-name { color: #cbd5e1; display: flex; align-items: center; gap: 8px; }
+    .status-indicator { width: 8px; height: 8px; border-radius: 50%; }
+    .status-indicator.ok { background: #22c55e; }
+    .status-indicator.warn { background: #f59e0b; }
+    .status-value { color: #94a3b8; font-family: ui-monospace, 'SF Mono', monospace; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- 顶栏 -->
+    <div class="topbar">
+      <div class="brand">
+        <span class="brand-icon">🐾</span>
+        <span class="brand-text">SecuClaw</span>
+      </div>
+      <div class="topbar-title">门户 · 统一安全态势</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-status">
+        <span class="status-dot"></span>
+        <span>系统正常</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn">📖 文档</button>
+        <button class="btn">登录</button>
+        <button class="btn btn-primary">免费试用</button>
+      </div>
+    </div>
+
+    <!-- 侧边栏：8 角色入口 -->
+    <aside class="sidebar">
+      <div class="section-title">角色指挥台</div>
+      <div class="role-item">
+        <span class="role-icon">🎖️</span>
+        <div class="role-info"><div class="role-name">指挥官</div><div class="role-desc">全域态势协调</div></div>
+      </div>
+      <div class="role-item active">
+        <span class="role-icon">👔</span>
+        <div class="role-info"><div class="role-name">CISO 战略官</div><div class="role-desc">战略 + 合规 + 预算</div></div>
+      </div>
+      <div class="role-item">
+        <span class="role-icon">🔍</span>
+        <div class="role-info"><div class="role-name">安全专家</div><div class="role-desc">漏洞 + 渗透</div></div>
+      </div>
+      <div class="role-item">
+        <span class="role-icon">⚡</span>
+        <div class="role-info"><div class="role-name">安全运营</div><div class="role-desc">告警 + SOAR</div></div>
+      </div>
+      <div class="role-item">
+        <span class="role-icon">🏗️</span>
+        <div class="role-info"><div class="role-name">架构师</div><div class="role-desc">零信任 + 威胁建模</div></div>
+      </div>
+      <div class="role-item">
+        <span class="role-icon">🔒</span>
+        <div class="role-info"><div class="role-name">隐私官</div><div class="role-desc">GDPR + PIPL</div></div>
+      </div>
+      <div class="role-item">
+        <span class="role-icon">💼</span>
+        <div class="role-info"><div class="role-name">业务安全</div><div class="role-desc">BCP + BIA</div></div>
+      </div>
+      <div class="role-item">
+        <span class="role-icon">🔗</span>
+        <div class="role-info"><div class="role-name">供应链安全</div><div class="role-desc">SBOM + 供应商</div></div>
+      </div>
+    </aside>
+
+    <!-- 主区域 -->
+    <main class="main">
+      <div class="main-inner">
+        <!-- KPI 行 -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-label">安全评分</div>
+            <div class="kpi-value">88</div>
+            <div class="kpi-delta up">+2.1</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">风险评分</div>
+            <div class="kpi-value">15</div>
+            <div class="kpi-delta up">-1.4</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">核心模块</div>
+            <div class="kpi-value">71</div>
+            <div class="kpi-delta neutral">已就绪</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">API 接口</div>
+            <div class="kpi-value">797</div>
+            <div class="kpi-delta neutral">全部在线</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">事件 (24h)</div>
+            <div class="kpi-value">7</div>
+            <div class="kpi-delta up">-3</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">待办任务</div>
+            <div class="kpi-value">23</div>
+            <div class="kpi-delta down">+5</div>
+          </div>
+        </div>
+
+        <!-- 能力矩阵 + 订阅计划 + 服务状态 -->
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">12 大安全能力</span>
+              <a class="panel-action">查看全部 →</a>
+            </div>
+            <table class="cap-table">
+              <thead><tr><th></th><th>能力</th><th>API 数</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td class="cap-icon-cell">☁️</td><td class="cap-name">CSPM 云安全</td><td class="cap-handlers">22</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">🌐</td><td class="cap-name">EASM 外部攻击面</td><td class="cap-handlers">25</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">🛡️</td><td class="cap-name">RASP 运行时自保护</td><td class="cap-handlers">37</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">💾</td><td class="cap-name">DSPM 数据安全</td><td class="cap-handlers">42</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">🔐</td><td class="cap-name">ITDR 身份威胁</td><td class="cap-handlers">51</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">🤖</td><td class="cap-name">AI-SCM 工具链安全</td><td class="cap-handlers">15</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">⚡</td><td class="cap-name">SOAR 告警关联</td><td class="cap-handlers">12</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">🧠</td><td class="cap-name">UEBA 行为基线</td><td class="cap-handlers">9</td><td><span class="cap-status beta">○ Beta</span></td></tr>
+                <tr><td class="cap-icon-cell">🎯</td><td class="cap-name">Sigma 检测</td><td class="cap-handlers">8</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">📋</td><td class="cap-name">AI-SPM 模型安全</td><td class="cap-handlers">10</td><td><span class="cap-status beta">○ Beta</span></td></tr>
+                <tr><td class="cap-icon-cell">🔒</td><td class="cap-name">Privacy 隐私</td><td class="cap-handlers">11</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+                <tr><td class="cap-icon-cell">💼</td><td class="cap-name">SaaS 运营中心</td><td class="cap-handlers">45</td><td><span class="cap-status ok">● 稳定</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="plan-card">
+              <div class="plan-tier">PROFESSIONAL</div>
+              <div class="plan-name">$99/月</div>
+              <div style="font-size: 11px; color: #94a3b8; line-height: 1.5;">适合中小企业安全团队</div>
+              <div class="plan-quota">
+                <div class="plan-quota-row"><span>用户数</span><strong>10</strong></div>
+                <div class="plan-quota-row"><span>API/天</span><strong>5,000</strong></div>
+                <div class="plan-quota-row"><span>存储</span><strong>10 GB</strong></div>
+                <div class="plan-quota-row"><span>数据保留</span><strong>30 天</strong></div>
+              </div>
+              <button class="btn btn-primary" style="width: 100%; margin-top: 12px; padding: 8px;">升级 / 管理</button>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">服务状态</span>
+                <a class="panel-action">详情 →</a>
+              </div>
+              <div class="status-row">
+                <div class="status-name"><span class="status-indicator ok"></span><span>Core Gateway</span></div>
+                <div class="status-value">ws://:21981</div>
+              </div>
+              <div class="status-row">
+                <div class="status-name"><span class="status-indicator ok"></span><span>PostgreSQL</span></div>
+                <div class="status-value">pool: 10 / 200</div>
+              </div>
+              <div class="status-row">
+                <div class="status-name"><span class="status-indicator warn"></span><span>Redis Cluster</span></div>
+                <div class="status-value">downgraded</div>
+              </div>
+              <div class="status-row">
+                <div class="status-name"><span class="status-indicator ok"></span><span>EventBus</span></div>
+                <div class="status-value">23 events</div>
+              </div>
+              <div class="status-row">
+                <div class="status-name"><span class="status-indicator ok"></span><span>MITRE ATT&CK</span></div>
+                <div class="status-value">1120 techniques</div>
+              </div>
+              <div class="status-row">
+                <div class="status-name"><span class="status-indicator ok"></span><span>SCF Controls</span></div>
+                <div class="status-value">1451 controls</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速工具 + 系统公告 -->
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">快速工具</span>
+              <a class="panel-action">工具市场 →</a>
+            </div>
+            <div class="tool-grid">
+              <div class="tool-cell"><div class="tool-icon">🚨</div><div class="tool-name">事件响应</div></div>
+              <div class="tool-cell"><div class="tool-icon">🎯</div><div class="tool-name">威胁狩猎</div></div>
+              <div class="tool-cell"><div class="tool-icon">📊</div><div class="tool-name">KPI 仪表盘</div></div>
+              <div class="tool-cell"><div class="tool-icon">🧬</div><div class="tool-name">自主进化</div></div>
+              <div class="tool-cell"><div class="tool-icon">🛒</div><div class="tool-name">工具市场</div></div>
+              <div class="tool-cell"><div class="tool-icon">📈</div><div class="tool-name">安全态势</div></div>
+              <div class="tool-cell"><div class="tool-icon">🔍</div><div class="tool-name">资产盘点</div></div>
+              <div class="tool-cell"><div class="tool-icon">📋</div><div class="tool-name">合规审计</div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">系统公告</span>
+            </div>
+            <div style="font-size: 12px; color: #cbd5e1; line-height: 1.7;">
+              <div style="padding: 6px 0; border-bottom: 1px solid #1a2236;">
+                <strong style="color: #00d4ff;">v1.0.0</strong> — Phase 14 性能优化发布
+              </div>
+              <div style="padding: 6px 0; color: #94a3b8; font-size: 11px;">
+                新增 PostgreSQL 迁移 + 集群模式 + 10+ 安全扩展模块
+              </div>
+              <div style="padding: 6px 0; border-bottom: 1px solid #1a2236;">
+                <strong style="color: #a855f7;">v0.9.0</strong> — 自主进化系统 GA
+              </div>
+              <div style="padding: 6px 0; color: #94a3b8; font-size: 11px;">
+                技能扫描 + 上下文引擎 + 智能提示
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

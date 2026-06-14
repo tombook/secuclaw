@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 4 · AI 个性化 + 上下文 + 自动化提议</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #0a0f1a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .page { padding: 30px; max-width: 1280px; margin: 0 auto; }
+    h1 { color: #00d4ff; margin-bottom: 8px; font-size: 24px; }
+    .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 40px; }
+    .section { margin-bottom: 50px; }
+    .section h2 {
+      font-size: 16px; color: #e2e8f0; margin-bottom: 6px;
+      padding-bottom: 8px; border-bottom: 1px solid #1e293b;
+    }
+    .section .desc { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+    /* ─── 顶栏 AI 推荐 ─── */
+    .topbar {
+      background: #0d1320; border: 1px solid #1e293b;
+      border-radius: 12px; padding: 12px 20px;
+      display: flex; align-items: center; gap: 16px;
+      position: relative;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+    .brand-text {
+      background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .spacer { flex: 1; }
+    .ai-icon {
+      position: relative; padding: 6px 8px;
+      background: rgba(168, 85, 247, 0.15);
+      border-radius: 4px; cursor: pointer;
+    }
+    .ai-icon-glow {
+      font-size: 16px;
+      filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.6));
+    }
+    .ai-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: #ef4444; color: #fff;
+      font-size: 10px; font-weight: 700;
+      width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* AI 推荐浮层 */
+    .ai-panel {
+      position: absolute; top: 56px; right: 30px;
+      width: 380px;
+      background: #111827; border: 1px solid #334155;
+      border-radius: 12px; padding: 16px 18px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+    .ai-panel-title {
+      font-size: 13px; font-weight: 700; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ai-rec {
+      padding: 10px 12px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 8px;
+      margin-bottom: 8px; position: relative;
+    }
+    .ai-rec-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .ai-rec-desc { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+    .ai-rec-actions { display: flex; gap: 6px; align-items: center; }
+    .ai-rec-conf {
+      font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 600;
+    }
+    .ai-rec-conf.high { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .ai-rec-conf.medium { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .btn-mini {
+      padding: 4px 10px; background: linear-gradient(135deg, #00d4ff, #0ea5e9);
+      color: #0a0f1a; border: none; border-radius: 4px;
+      font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-mini.secondary {
+      background: transparent; color: #94a3b8;
+      border: 1px solid #1e293b;
+    }
+    .btn-mini.secondary:hover { color: #e2e8f0; border-color: #334155; }
+    .ai-rec-dismiss {
+      position: absolute; top: 8px; right: 8px;
+      color: #64748b; cursor: pointer; font-size: 12px;
+    }
+    .ai-panel-footer {
+      margin-top: 8px; padding-top: 8px;
+      border-top: 1px solid #1e293b;
+      font-size: 11px; color: #60a5fa; cursor: pointer; text-align: center;
+    }
+    /* ─── 上下文引擎 ─── */
+    .context-app {
+      background: #111827; border: 1px solid #1e293b;
+      border-radius: 12px; overflow: hidden;
+    }
+    .ctx-topbar {
+      background: #0d1320; padding: 10px 16px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .ctx-brand { font-size: 13px; font-weight: 700; }
+    .ctx-task-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 4px; font-size: 11px; color: #f59e0b;
+      cursor: pointer;
+    }
+    .ctx-task-badge:hover { background: rgba(245, 158, 11, 0.25); }
+    .ctx-body { padding: 16px 20px; }
+    .ctx-list-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .ctx-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 12px; background: #0f172a; border-radius: 6px;
+      margin-bottom: 6px; font-size: 12px;
+    }
+    .ctx-row.highlight {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .ctx-row-id { color: #94a3b8; font-family: ui-monospace, monospace; min-width: 130px; }
+    .ctx-row-title { flex: 1; color: #cbd5e1; }
+    .ctx-row-tag {
+      font-size: 10px; padding: 2px 6px; border-radius: 4px;
+      background: rgba(0, 212, 255, 0.15); color: #00d4ff;
+    }
+    .ctx-row-tag.current {
+      background: rgba(245, 158, 11, 0.2); color: #f59e0b;
+    }
+    /* 上下文任务浮层 */
+    .ctx-task-popover {
+      margin-top: 12px; padding: 12px 16px;
+      background: rgba(245, 158, 11, 0.05);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+    }
+    .ctx-task-title { font-size: 13px; font-weight: 700; }
+    .ctx-task-meta { font-size: 11px; color: #94a3b8; margin: 4px 0 8px; }
+    .ctx-task-row { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+    .ctx-task-actions { display: flex; gap: 6px; margin-top: 8px; }
+    /* ─── 自动化提议 ─── */
+    .auto-suggestion {
+      position: fixed; bottom: 30px; right: 30px;
+      width: 460px;
+      background: #111827; border: 1px solid #334155;
+      border-radius: 12px; padding: 20px 22px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .suggestion-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+    .suggestion-icon {
+      font-size: 20px;
+      filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
+    }
+    .suggestion-title { font-size: 14px; font-weight: 700; }
+    .suggestion-intro { font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
+    .suggestion-pattern {
+      padding: 10px 12px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 6px;
+      margin-bottom: 12px;
+    }
+    .pattern-title { font-size: 11px; color: #64748b; margin-bottom: 6px; }
+    .pattern-step {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; padding: 4px 0;
+    }
+    .pattern-num {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #1e293b; color: #94a3b8;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; flex-shrink: 0;
+    }
+    .suggestion-preview {
+      padding: 10px 12px;
+      background: rgba(34, 197, 94, 0.05);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 6px; margin-bottom: 12px;
+    }
+    .suggestion-preview-title {
+      font-size: 11px; color: #22c55e; font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .suggestion-preview-detail { font-size: 11px; color: #cbd5e1; }
+    .suggestion-undo {
+      font-size: 10px; color: #64748b; margin-top: 8px; text-align: center;
+    }
+    .suggestion-actions {
+      display: flex; gap: 8px; margin-top: 12px;
+    }
+    .suggestion-actions .btn-mini { flex: 1; padding: 8px 12px; font-size: 12px; }
+    .btn-edit {
+      background: transparent; color: #60a5fa;
+      border: 1px solid #1e293b; border-radius: 4px;
+    }
+    .btn-edit:hover { border-color: #3b82f6; }
+    /* ─── 编辑任务对话框 ─── */
+    .edit-dialog {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 50;
+    }
+    .dialog {
+      width: 560px;
+      background: #111827; border: 1px solid #334155;
+      border-radius: 12px; padding: 24px 28px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .dialog-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
+    .form-input, .form-select {
+      width: 100%; padding: 8px 12px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 4px;
+      color: #e2e8f0; font-size: 13px; font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: #3b82f6; }
+    .action-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; background: #0f172a;
+      border: 1px solid #1e293b; border-radius: 4px;
+      margin-bottom: 6px; font-size: 12px;
+    }
+    .action-num { color: #94a3b8; font-weight: 700; min-width: 18px; }
+    .action-text { flex: 1; color: #cbd5e1; }
+    .action-remove { color: #64748b; cursor: pointer; }
+    .action-remove:hover { color: #ef4444; }
+    .risk-check {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #cbd5e1; margin-top: 4px;
+    }
+    .risk-check input { accent-color: #3b82f6; }
+    .history-row {
+      font-size: 11px; color: #94a3b8;
+      padding: 6px 0; border-top: 1px solid #1e293b;
+      margin-top: 12px; padding-top: 12px;
+    }
+    .dialog-actions {
+      display: flex; gap: 8px; justify-content: flex-end;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Phase 4 · AI 个性化能力</h1>
+    <p class="subtitle">智能推荐 + 上下文引擎 + 自动化提议</p>
+
+    <!-- 1. AI 推荐 -->
+    <div class="section">
+      <h2>1. 顶栏 AI 推荐（悬停展开）</h2>
+      <p class="desc">3 条推荐 + 置信度徽章 + 一键应用</p>
+
+      <div class="topbar">
+        <div class="brand">
+          <span style="font-size: 20px;">🐾</span>
+          <span class="brand-text">SecuClaw</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="ai-icon">
+          <span class="ai-icon-glow">✨</span>
+          <span class="ai-badge">3</span>
+        </div>
+        <div class="member-avatar" style="margin-left: 8px; width: 28px; height: 28px; background: linear-gradient(135deg, #00d4ff, #a855f7); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 600;">张</div>
+
+        <!-- 浮层 -->
+        <div class="ai-panel">
+          <div class="ai-panel-title">
+            <span style="font-size: 16px;">✨</span> AI 推荐 · 3 条
+          </div>
+
+          <div class="ai-rec">
+            <span class="ai-rec-dismiss">×</span>
+            <div class="ai-rec-title">📊 您最近 7 天处理了 5 个事件</div>
+            <div class="ai-rec-desc">建议：使用 AI 事件聚类，自动归类相似事件</div>
+            <div class="ai-rec-actions">
+              <span class="ai-rec-conf high">🟢 87%</span>
+              <button class="btn-mini">应用</button>
+              <button class="btn-mini secondary">不感兴趣</button>
+            </div>
+          </div>
+
+          <div class="ai-rec">
+            <span class="ai-rec-dismiss">×</span>
+            <div class="ai-rec-title">🔍 您的漏洞工作流重复 3 次</div>
+            <div class="ai-rec-desc">建议：自动化"评分→分配"流程</div>
+            <div class="ai-rec-actions">
+              <span class="ai-rec-conf medium">🟡 72%</span>
+              <button class="btn-mini">预览</button>
+              <button class="btn-mini secondary">忽略</button>
+            </div>
+          </div>
+
+          <div class="ai-rec">
+            <span class="ai-rec-dismiss">×</span>
+            <div class="ai-rec-title">👥 张工 (SecOps) 经常处理您的任务</div>
+            <div class="ai-rec-desc">建议：固定为常用执行人</div>
+            <div class="ai-rec-actions">
+              <span class="ai-rec-conf high">🟢 91%</span>
+              <button class="btn-mini">应用</button>
+              <button class="btn-mini secondary">不感兴趣</button>
+            </div>
+          </div>
+
+          <div class="ai-panel-footer">查看全部 12 条 →</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 上下文引擎 -->
+    <div class="section">
+      <h2>2. 上下文引擎（跨页面任务高亮）</h2>
+      <p class="desc">顶栏任务徽章 + 列表中相关项自动高亮</p>
+
+      <div class="context-app">
+        <div class="ctx-topbar">
+          <div class="ctx-brand">🐾 SecuClaw</div>
+          <div class="ctx-task-badge">📌 INC-2024-001 钓鱼邮件 ▼</div>
+          <div class="spacer"></div>
+          <div class="member-avatar" style="width: 26px; height: 26px; background: linear-gradient(135deg, #00d4ff, #a855f7); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600;">张</div>
+        </div>
+
+        <div class="ctx-body">
+          <div class="ctx-list-title">🚨 事件列表</div>
+          <div class="ctx-row highlight">
+            <div class="ctx-row-id">INC-2024-001</div>
+            <div class="ctx-row-title">钓鱼邮件事件 · 已隔离 5 台主机</div>
+            <span class="ctx-row-tag current">📌 当前</span>
+            <span style="color: #f59e0b; font-size: 11px;">🔵 调查中</span>
+          </div>
+          <div class="ctx-row">
+            <div class="ctx-row-id">INC-2024-002</div>
+            <div class="ctx-row-title">VPN 异常登录尝试</div>
+            <span style="color: #94a3b8; font-size: 11px;">🟡 待处理</span>
+          </div>
+          <div class="ctx-row">
+            <div class="ctx-row-id">INC-2024-003</div>
+            <div class="ctx-row-title">数据库慢查询告警</div>
+            <span style="color: #22c55e; font-size: 11px;">🟢 已解决</span>
+          </div>
+          <div class="ctx-row">
+            <div class="ctx-row-id">INC-2024-004</div>
+            <div class="ctx-row-title">员工邮箱被钓鱼</div>
+            <span style="color: #94a3b8; font-size: 11px;">🟡 待处理</span>
+          </div>
+
+          <div class="ctx-task-popover">
+            <div class="ctx-task-title">📌 当前任务：INC-2024-001 钓鱼邮件事件</div>
+            <div class="ctx-task-meta">P1 紧急 · 持续 23 分钟 · 涉及 12 人 PII</div>
+            <div class="ctx-task-row">
+              <span style="color: #00d4ff;">👤</span> 执行人：<strong>张工 (SecOps)</strong>
+            </div>
+            <div class="ctx-task-row">
+              <span style="color: #f59e0b;">👤</span> 问责人：<strong>李工 (CISO)</strong>
+            </div>
+            <div class="ctx-task-actions">
+              <button class="btn-mini">跳转到任务详情</button>
+              <button class="btn-mini secondary">退出任务</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 自动化提议 -->
+    <div class="section">
+      <h2>3. 技能自进化：自动化提议</h2>
+      <p class="desc">检测重复操作 → 提议自动化 → 用户确认 → 创建 Skill</p>
+
+      <div class="auto-suggestion">
+        <div class="suggestion-header">
+          <span class="suggestion-icon">✨</span>
+          <span class="suggestion-title">检测到您可能想要自动化</span>
+        </div>
+        <div class="suggestion-intro">
+          您最近 5 次执行了以下操作（7 天内）：
+        </div>
+
+        <div class="suggestion-pattern">
+          <div class="pattern-title">📊 操作模式（被识别 5 次）</div>
+          <div class="pattern-step">
+            <span class="pattern-num">1</span>
+            <span>打开漏洞列表</span>
+          </div>
+          <div class="pattern-step">
+            <span class="pattern-num">2</span>
+            <span>按 CVSS 评分排序（&gt; 7.0）</span>
+          </div>
+          <div class="pattern-step">
+            <span class="pattern-num">3</span>
+            <span>选中未分配的项</span>
+          </div>
+          <div class="pattern-step">
+            <span class="pattern-num">4</span>
+            <span>分配给王工 (Expert)</span>
+          </div>
+        </div>
+
+        <div class="suggestion-preview">
+          <div class="suggestion-preview-title">💡 建议：创建自动化任务</div>
+          <div class="suggestion-preview-detail">
+            每天 09:00 扫描 CVSS &gt; 7.0 的未分配漏洞，自动分配给王工
+          </div>
+        </div>
+
+        <div class="suggestion-undo">5 秒内可撤销</div>
+
+        <div class="suggestion-actions">
+          <button class="btn-mini btn-edit">编辑任务</button>
+          <button class="btn-mini">启用</button>
+          <button class="btn-mini secondary">取消</button>
+        </div>
+      </div>
+
+      <!-- 编辑任务对话框 -->
+      <div class="edit-dialog">
+        <div class="dialog">
+          <div class="dialog-title">📝 编辑自动化任务</div>
+
+          <div class="form-group">
+            <label class="form-label">任务名称</label>
+            <input type="text" class="form-input" value="漏洞评分自动分配">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">⏰ 触发方式</label>
+            <select class="form-select">
+              <option>每天 09:00 ▼ （仅工作日 ☐）</option>
+              <option>每周一 09:00</option>
+              <option>事件触发：新漏洞创建时</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">🎯 执行动作</label>
+            <div class="action-row">
+              <span class="action-num">1</span>
+              <span class="action-text">扫描 CVSS &gt; <strong>7.0</strong> 的未分配漏洞</span>
+              <span class="action-remove">×</span>
+            </div>
+            <div class="action-row">
+              <span class="action-num">2</span>
+              <span class="action-text">自动分配给 <strong>王工 (Expert)</strong></span>
+              <span class="action-remove">×</span>
+            </div>
+            <div class="action-row">
+              <span class="action-num">3</span>
+              <span class="action-text">通知方式：邮件 ☑️ 站内 ☑️ Slack ☐</span>
+              <span class="action-remove">×</span>
+            </div>
+            <button class="btn-mini secondary" style="width: 100%; margin-top: 4px;">+ 添加动作</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">🛡️ 风险控制</label>
+            <div class="risk-check"><input type="checkbox" checked> 执行前发送预览（涉及 &gt; 5 项时）</div>
+            <div class="risk-check"><input type="checkbox" checked> 自动暂停（3 次连续失败）</div>
+            <div class="risk-check"><input type="checkbox"> 自动恢复（需手动重启）</div>
+          </div>
+
+          <div class="history-row">
+            📊 历史（过去 30 天）: 执行 12 次 · 成功率 100% · 节省时间 3.5 小时
+          </div>
+
+          <div class="dialog-actions">
+            <button class="btn-mini secondary">取消</button>
+            <button class="btn-mini">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

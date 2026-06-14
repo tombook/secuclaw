@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>📚 知识库 · SecuClaw</title>
+  <link rel="stylesheet" href="_shared.css">
+  <style>
+    .page-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; }
+    .kb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .kb-card { padding: 16px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+    .kb-card:hover { border-color: var(--info); }
+    .kb-icon { font-size: 28px; margin-bottom: 8px; }
+    .kb-name { font-weight: 700; }
+    .kb-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .kb-stats { display: flex; gap: 8px; margin-top: 8px; font-size: 11px; color: var(--text-3); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><span class="brand-icon">🐾</span><span class="brand-text">SecuClaw</span></div>
+      <div class="topbar-title">📚 知识库</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="btn">🔍 全局搜索</button>
+        <button class="btn">+ 添加文档</button>
+        <button class="btn">👤 张工</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="section-title">主要视图</div>
+      <div class="role-item"><span class="role-icon">📊</span><div class="role-info"><div class="role-name">安全总览</div></div></div>
+      <div class="role-item"><span class="role-icon">🎖️</span><div class="role-info"><div class="role-name">指挥官</div></div></div>
+      <div class="section-title">能力中心</div>
+      <div class="role-item"><span class="role-icon">🚀</span><div class="role-info"><div class="role-name">新能力</div></div></div>
+      <div class="role-item"><span class="role-icon">🛒</span><div class="role-info"><div class="role-name">工具市场</div></div></div>
+      <div class="role-item"><span class="role-icon">🧬</span><div class="role-info"><div class="role-name">自主进化</div></div></div>
+      <div class="role-item active"><span class="role-icon">📚</span><div class="role-info"><div class="role-name">知识库</div></div></div>
+      <div class="section-title">分类</div>
+      <div class="role-item"><span class="role-icon">🎯</span><div class="role-info"><div class="role-name">MITRE ATT&CK</div></div></div>
+      <div class="role-item"><span class="role-icon">📋</span><div class="role-info"><div class="role-name">SCF 控制</div></div></div>
+      <div class="role-item"><span class="role-icon">🌍</span><div class="role-info"><div class="role-name">威胁情报</div></div></div>
+      <div class="role-item"><span class="role-icon">📖</span><div class="role-info"><div class="role-name">最佳实践</div></div></div>
+      <div class="role-item"><span class="role-icon">🛡️</span><div class="role-info"><div class="role-name">漏洞库</div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="page-title">📚 知识库</div>
+
+        <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card"><div class="kpi-label">文档总数</div><div class="kpi-value">3,247</div><div class="kpi-delta up">▲ 12</div></div>
+          <div class="kpi-card"><div class="kpi-label">威胁库</div><div class="kpi-value">12,847</div><div class="kpi-delta up">IOC</div></div>
+          <div class="kpi-card"><div class="kpi-label">MITRE 技术</div><div class="kpi-value">200</div><div class="kpi-delta neutral">1120 子技术</div></div>
+          <div class="kpi-card"><div class="kpi-label">SCF 控制</div><div class="kpi-value">1,451</div><div class="kpi-delta neutral">34 域</div></div>
+          <div class="kpi-card"><div class="kpi-label">本周访问</div><div class="kpi-value">247</div><div class="kpi-delta up">▲ 23%</div></div>
+        </div>
+
+        <div class="kb-grid">
+          <div class="kb-card">
+            <div class="kb-icon">🎯</div>
+            <div class="kb-name">MITRE ATT&CK</div>
+            <div class="kb-desc">战术技术映射库</div>
+            <div class="kb-stats">
+              <span>📊 200 战术技术</span>
+              <span>📁 14 战术</span>
+            </div>
+          </div>
+          <div class="kb-card">
+            <div class="kb-icon">📋</div>
+            <div class="kb-name">SCF 控制框架</div>
+            <div class="kb-desc">安全控制框架</div>
+            <div class="kb-stats">
+              <span>📊 1,451 控制</span>
+              <span>📁 34 域</span>
+            </div>
+          </div>
+          <div class="kb-card">
+            <div class="kb-icon">🌍</div>
+            <div class="kb-name">威胁情报库</div>
+            <div class="kb-desc">IOC + APT + TTP</div>
+            <div class="kb-stats">
+              <span>📊 12,847 IOC</span>
+              <span>📁 42 威胁组织</span>
+            </div>
+          </div>
+          <div class="kb-card">
+            <div class="kb-icon">📖</div>
+            <div class="kb-name">最佳实践</div>
+            <div class="kb-desc">公司内部 SOP + 指南</div>
+            <div class="kb-stats">
+              <span>📊 87 文档</span>
+              <span>📁 8 类别</span>
+            </div>
+          </div>
+          <div class="kb-card">
+            <div class="kb-icon">🛡️</div>
+            <div class="kb-name">漏洞库 (CVE)</div>
+            <div class="kb-desc">CVE + 修复方案</div>
+            <div class="kb-stats">
+              <span>📊 200K+ CVE</span>
+              <span>📁 全部年份</span>
+            </div>
+          </div>
+          <div class="kb-card">
+            <div class="kb-icon">🎓</div>
+            <div class="kb-name">培训资料</div>
+            <div class="kb-desc">安全意识 + 技能培训</div>
+            <div class="kb-stats">
+              <span>📊 24 课程</span>
+              <span>📁 4 角色</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 13px; color: var(--text-3); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 0.04em;">📑 最近更新</h3>
+        <div class="panel">
+          <table class="tbl">
+            <thead><tr><th>文档</th><th>分类</th><th>大小</th><th>更新时间</th><th>作者</th><th>浏览</th></tr></thead>
+            <tbody>
+              <tr><td class="strong">CVE-2024-21762 完整分析报告</td><td>漏洞库</td><td>47 KB</td><td>2 小时前</td><td>王工</td><td>23</td></tr>
+              <tr><td class="strong">MITRE T1190 缓解措施指南</td><td>最佳实践</td><td>120 KB</td><td>昨天</td><td>李工</td><td>87</td></tr>
+              <tr><td class="strong">SOAR Playbook 编写规范</td><td>最佳实践</td><td>67 KB</td><td>2 天前</td><td>张工</td><td>124</td></tr>
+              <tr><td class="strong">APT-29 攻击组织画像</td><td>威胁情报</td><td>250 KB</td><td>3 天前</td><td>王工</td><td>47</td></tr>
+              <tr><td class="strong">GDPR 数据处理记录模板</td><td>合规框架</td><td>35 KB</td><td>1 周前</td><td>钱工</td><td>87</td></tr>
+              <tr><td class="strong">零信任架构白皮书</td><td>最佳实践</td><td>2.5 MB</td><td>2 周前</td><td>李工</td><td>247</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
