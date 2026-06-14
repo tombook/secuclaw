@@ -1,4 +1,5 @@
 export { registerAuthRoutes } from './auth-routes.js';
+export { registerAccessRoutes } from './access-routes.js';
 export { registerKnowledgeRoutes } from './knowledge-routes.js';
 export { registerCommanderRoutes } from './commander-routes.js';
 export { registerLlmRoutes } from './llm-routes.js';

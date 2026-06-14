@@ -29,6 +29,7 @@ import { CapabilitiesRepository } from './capabilities/repository.js';
 import { ChannelManager } from './channels/channel-manager.js';
 import { ConfigService } from './config/index.js';
 import { registerAuthRoutes } from './gateway/routes/auth-routes.js';
+import { registerAccessRoutes } from './gateway/routes/access-routes.js';
 import { registerAuditRoutes } from './gateway/routes/audit-routes.js';
 import { registerSkillsRoutes } from './gateway/routes/skills-routes.js';
 import { registerChannelsRoutes } from './gateway/routes/channels-routes.js';
@@ -257,6 +258,7 @@ class SecuClawApplication {
     registerSkillsRoutes(this.gateway.getRouter());
     registerChannelsRoutes(this.gateway.getRouter());
     registerCapabilitiesRoutes(this.gateway.getRouter());
+    registerAccessRoutes(this.gateway.getRouter());
 
     const deps = this.gateway.getRouter().getDeps();
     const handlersMap = new Map();
